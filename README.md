@@ -312,7 +312,7 @@ Total Movies: 30
 
 ## Web Frontend
 
-The `web/` directory contains a Next.js dashboard that displays the scraped data with a beautiful UI.
+The `web/` directory contains a Next.js dashboard with a movie-based layout similar to LMS course viewers.
 
 ### Setup
 
@@ -324,17 +324,48 @@ npm run dev
 
 Open http://localhost:3000 to view the dashboard.
 
+### Layout
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  🎬 CineRadar          29 Movies  83 Cities  500 Theatres  │
+├──────────────┬──────────────────────────────────────────────┤
+│  📋 Sidebar  │  🎬 Movie Details                            │
+│              │                                              │
+│  1. Movie A  │  [Poster] Title, Genres, Age Rating          │
+│  2. Movie B  │                                              │
+│  3. Movie C  │  📍 JAKARTA (10 theatres)                    │
+│  * Selected  │    ├─ CGV AEON JGC                           │
+│  4. Movie D  │    │   └─ REGULAR 2D: 12:00, 14:30           │
+│  5. Movie E  │    └─ XXI Plaza Senayan                      │
+│              │        └─ IMAX 2D: 15:00, 18:00              │
+│  [Search]    │                                              │
+│              │  📍 BANDUNG (8 theatres) [collapsed]         │
+└──────────────┴──────────────────────────────────────────────┘
+```
+
 ### Features
 
-- 🎨 **Modern dark theme** with gradient backgrounds
-- 🏙️ **City filter** - Filter movies by city
-- 🎬 **Movie grid** - Browse all movies with posters, genres, and age ratings
-- 📅 **Showtime display** - Click a movie to see theatre schedules:
-  - Theatre names and addresses
-  - Room categories (2D, IMAX, VELVET, GOLD CLASS, etc.)
-  - Ticket prices
-  - Available showtimes
-- 📊 **Stats cards** - Total movies, cities, and theatres at a glance
+**Left Sidebar (Movie Playlist)**
+- Numbered list of all movies with thumbnails
+- Search filter to find movies quickly
+- City count and age rating badges
+- Visual highlight for selected movie
+
+**Right Panel (Movie Details)**
+- Movie header with poster, genres, country, merchants
+- Collapsible city sections (click to expand)
+- Theatre cards with merchant badges and addresses
+- Room categories (2D, IMAX, VELVET, GOLD CLASS, etc.)
+- Colorful showtime buttons with prices
+
+### Components
+
+| Component | Description |
+|-----------|-------------|
+| `MovieBrowser.tsx` | Main wrapper with selection state |
+| `MovieSidebar.tsx` | Left playlist with movie list |
+| `CityShowtimes.tsx` | Right panel with cities/theatres |
 
 ### Data Source
 
