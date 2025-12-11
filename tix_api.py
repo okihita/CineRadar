@@ -110,9 +110,10 @@ class CineRadarScraper:
     def log(self, message: str):
         print(f"[{time.strftime('%H:%M:%S')}] {message}")
         
-    async def fetch_movie_schedule(self, page, movie: Dict, city: Dict) -> List[Dict]:
+    async def fetch_movie_schedule(self, page, context, movie: Dict, city: Dict) -> List[Dict]:
         """
         Fetch theatre schedule for a movie in a specific city.
+        Handles pagination by capturing auth headers and making direct API calls.
         Returns list of theatres with rooms and showtimes.
         """
         movie_id = movie.get('movie_id') or movie.get('id')
@@ -121,27 +122,75 @@ class CineRadarScraper:
         date_str = datetime.now().strftime("%Y-%m-%d")
         
         # Navigate to movie detail page to trigger schedule API
-        # Using URL format: /movies/{slug}-{id}/{date}
         slug = (movie.get('title') or 'movie').lower().replace(' ', '-').replace(':', '')
         url = f"{self.app_base}/movies/{slug}-{movie_id}/{date_str}"
         
-        theatres = []
+        all_theatres = []
+        captured_headers = {}
+        captured_movie_id = None
         
         try:
-            # Setup response capture for schedule API
+            # Capture headers from the first request
+            async def capture_request(route, request):
+                nonlocal captured_headers, captured_movie_id
+                if '/v1/schedules/movies' in request.url and not captured_headers:
+                    captured_headers = await request.all_headers()
+                    import re
+                    match = re.search(r'/schedules/movies/(\d+)', request.url)
+                    if match:
+                        captured_movie_id = match.group(1)
+                await route.continue_()
+            
+            await page.route('**/v1/schedules/movies/**', capture_request)
+            
+            # Navigate and capture page 1 response
             async with page.expect_response(
                 lambda r: '/v1/schedules/movies' in r.url and city_id in r.url,
-                timeout=8000
+                timeout=10000
             ) as response_info:
                 await page.goto(url, wait_until='networkidle')
             
             response = await response_info.value
             data = await response.json()
             
-            # API structure: { "data": { "theaters": [...] } }
+            # Process page 1
             raw_theatres = data.get('data', {}).get('theaters', [])
+            has_next = data.get('data', {}).get('has_next', False)
+            all_theatres.extend(raw_theatres)
             
-            for t in raw_theatres:
+            # Use the actual movie_id from the API response URL
+            actual_movie_id = captured_movie_id or movie_id
+            
+            # Fetch additional pages if has_next is True
+            current_page = 2
+            while has_next and current_page <= 20:  # Safety limit
+                api_url = f"{self.api_base}/v1/schedules/movies/{actual_movie_id}?city_id={city_id}&date={date_str}&page={current_page}"
+                
+                try:
+                    response = await context.request.get(api_url, headers=captured_headers)
+                    data = await response.json()
+                    
+                    if not data.get('success', True):
+                        break
+                    
+                    page_theatres = data.get('data', {}).get('theaters', [])
+                    has_next = data.get('data', {}).get('has_next', False)
+                    
+                    if page_theatres:
+                        all_theatres.extend(page_theatres)
+                    else:
+                        break
+                        
+                    current_page += 1
+                except Exception:
+                    break
+            
+            # Unroute to avoid conflicts
+            await page.unroute('**/v1/schedules/movies/**')
+            
+            # Parse all captured theatres
+            theatres = []
+            for t in all_theatres:
                 theatre = {
                     'theatre_id': t.get('id'),
                     'theatre_name': t.get('name'),
@@ -158,7 +207,7 @@ class CineRadarScraper:
                     }
                     
                     for show in group.get('show_time', []):
-                        if show.get('status') == 1: # 1 means available/active
+                        if show.get('status') == 1:  # 1 means available/active
                             room['showtimes'].append(show.get('display_time'))
                             
                     if room['showtimes']:
@@ -169,7 +218,11 @@ class CineRadarScraper:
                     
         except Exception as e:
             self.log(f"⚠️ Failed to fetch schedules for {movie['title']} in {city_name}: {e}")
-            pass
+            # Try to unroute in case of error
+            try:
+                await page.unroute('**/v1/schedules/movies/**')
+            except:
+                pass
             
         return theatres
 
@@ -277,7 +330,7 @@ class CineRadarScraper:
                             
                         # Fetch schedule if requested
                         if fetch_schedules:
-                            schedules = await self.fetch_movie_schedule(page, movie, city)
+                            schedules = await self.fetch_movie_schedule(page, context, movie, city)
                             if schedules:
                                 self.log(f"   + Fetched schedule for {movie['title']}: {len(schedules)} theatres")
                                 movie_map[movie_id]['schedules'][city_name] = schedules

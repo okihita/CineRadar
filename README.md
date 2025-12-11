@@ -410,10 +410,22 @@ GET https://api-b2b.tix.id/v1/schedules/movies/{movie_id}?city_id={city_id}&date
           }
         ]
       }
-    ]
+    ],
+    "has_next": true  // Pagination indicator
   }
 }
 ```
+
+### Pagination Handling
+
+Theatre results are paginated (10 per page). The scraper handles this by:
+
+1. **Capturing auth headers** from the initial page 1 request
+2. **Checking `has_next`** field in the response
+3. **Using `context.request`** with captured headers to fetch pages 2, 3, etc.
+4. **Stopping** when `has_next` is false or theatres list is empty
+
+This ensures all theatres are captured (e.g., Jakarta has 80+ theatres across 9 pages).
 
 ### Performance Notes
 
