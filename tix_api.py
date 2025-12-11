@@ -110,11 +110,81 @@ class CineRadarScraper:
     def log(self, message: str):
         print(f"[{time.strftime('%H:%M:%S')}] {message}")
         
+    async def fetch_movie_schedule(self, page, movie: Dict, city: Dict) -> List[Dict]:
+        """
+        Fetch theatre schedule for a movie in a specific city.
+        Returns list of theatres with rooms and showtimes.
+        """
+        movie_id = movie.get('movie_id') or movie.get('id')
+        city_id = city.get('id')
+        city_name = city.get('name')
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        
+        # Navigate to movie detail page to trigger schedule API
+        # Using URL format: /movies/{slug}-{id}/{date}
+        slug = (movie.get('title') or 'movie').lower().replace(' ', '-').replace(':', '')
+        url = f"{self.app_base}/movies/{slug}-{movie_id}/{date_str}"
+        
+        theatres = []
+        
+        try:
+            # Setup response capture for schedule API
+            async with page.expect_response(
+                lambda r: '/v1/schedules/movies' in r.url and city_id in r.url,
+                timeout=8000
+            ) as response_info:
+                await page.goto(url, wait_until='networkidle')
+            
+            response = await response_info.value
+            data = await response.json()
+            
+            # API structure: { "data": { "theaters": [...] } }
+            raw_theatres = data.get('data', {}).get('theaters', [])
+            
+            for t in raw_theatres:
+                theatre = {
+                    'theatre_id': t.get('id'),
+                    'theatre_name': t.get('name'),
+                    'merchant': t.get('merchant', {}).get('merchant_name'),
+                    'address': t.get('address'),
+                    'rooms': []
+                }
+                
+                for group in t.get('price_groups', []):
+                    room = {
+                        'category': group.get('category'),
+                        'price': group.get('price_string'),
+                        'showtimes': []
+                    }
+                    
+                    for show in group.get('show_time', []):
+                        if show.get('status') == 1: # 1 means available/active
+                            room['showtimes'].append(show.get('display_time'))
+                            
+                    if room['showtimes']:
+                        theatre['rooms'].append(room)
+                        
+                if theatre['rooms']:
+                    theatres.append(theatre)
+                    
+        except Exception as e:
+            self.log(f"⚠️ Failed to fetch schedules for {movie['title']} in {city_name}: {e}")
+            pass
+            
+        return theatres
+
     async def scrape_all(self, headless: bool = True, 
                          city_limit: Optional[int] = None,
-                         delay: float = 2.0) -> Dict:
-        """Scrape movie availability for all cities."""
+                         specific_city: Optional[str] = None,
+                         fetch_schedules: bool = False,
+                         delay: float = 1.0) -> Dict:
+        """
+        Scrape movie availability for all cities.
+        Optionally fetch detailed schedules (slow).
+        """
         self.log("🎬 Starting movie availability scrape...")
+        if fetch_schedules:
+            self.log("⚠️ Schedule fetching enabled - this will be significantly slower")
         
         playwright = await async_playwright().start()
         browser = await playwright.chromium.launch(
@@ -132,13 +202,21 @@ class CineRadarScraper:
         page = await context.new_page()
         await page.add_init_script("Object.defineProperty(navigator, 'webdriver', { get: () => undefined });")
         
-        cities = self.CITIES[:city_limit] if city_limit else self.CITIES
+        if specific_city:
+            cities = [c for c in self.CITIES if c['name'].upper() == specific_city.upper()]
+            if not cities:
+                self.log(f"❌ City '{specific_city}' not found")
+                return {}
+        else:
+            cities = self.CITIES[:city_limit] if city_limit else self.CITIES
+            
         self.log(f"📍 Processing {len(cities)} cities")
         
         movie_map = {}
         city_stats = {}
         
         try:
+            # Home for auth
             await page.goto(f'{self.app_base}/home', wait_until='networkidle')
             await asyncio.sleep(2)
             
@@ -146,59 +224,75 @@ class CineRadarScraper:
             
             for i, city in enumerate(cities, 1):
                 city_name = city['name']
-                movies = []
+                city_movies = []
                 
                 try:
                     await page.goto(f'{self.app_base}/cities', wait_until='networkidle')
-                    await asyncio.sleep(1)  # Wait for Flutter to fully load
+                    await asyncio.sleep(1)
                     
-                    # Focus and fill search
+                    # Search city
                     search_input = page.locator('input[type="text"]').first
                     await search_input.click()
                     await asyncio.sleep(0.2)
                     await search_input.fill(city_name)
-                    await asyncio.sleep(0.8)  # Wait for search results
+                    await asyncio.sleep(0.8)
                     
-                    # Click and wait for response
+                    # Click city
                     city_result = page.get_by_text(city_name, exact=True)
                     if await city_result.count() > 0:
                         try:
                             async with page.expect_response(
                                 lambda r: '/v1/movies' in r.url and 'api-b2b.tix.id' in r.url,
-                                timeout=15000
+                                timeout=10000
                             ) as response_info:
                                 await city_result.first.click(force=True, timeout=10000)
                             
                             response = await response_info.value
                             data = await response.json()
-                            movies = data.get('data', [])
+                            city_movies = data.get('data', [])
                         except Exception:
                             await asyncio.sleep(2)
                     
+                    # Process movies
+                    city_stats[city_name] = len(city_movies)
+                    
+                    for movie in city_movies:
+                        movie_id = movie.get('movie_id') or movie.get('id')
+                        
+                        if movie_id not in movie_map:
+                            movie_map[movie_id] = {
+                                'id': movie_id,
+                                'title': movie.get('title', 'Unknown'),
+                                'genres': [g.get('name') for g in movie.get('genres', [])],
+                                'poster': movie.get('poster_path', ''),
+                                'age_category': movie.get('age_category', ''),
+                                'country': movie.get('country', ''),
+                                'merchants': [m.get('merchant_name') for m in movie.get('merchant', [])],
+                                'cities': [],
+                                'schedules': {}
+                            }
+                        
+                        if city_name not in movie_map[movie_id]['cities']:
+                            movie_map[movie_id]['cities'].append(city_name)
+                            
+                        # Fetch schedule if requested
+                        if fetch_schedules:
+                            schedules = await self.fetch_movie_schedule(page, movie, city)
+                            if schedules:
+                                self.log(f"   + Fetched schedule for {movie['title']}: {len(schedules)} theatres")
+                                movie_map[movie_id]['schedules'][city_name] = schedules
+                            else:
+                                # self.log(f"   - No schedule found for {movie['title']}")
+                                pass
+                                
                 except Exception:
                     pass
                     
-                city_stats[city_name] = len(movies)
-                
-                for movie in movies:
-                    movie_id = movie.get('movie_id') or movie.get('id')
-                    if movie_id not in movie_map:
-                        movie_map[movie_id] = {
-                            'id': movie_id,
-                            'title': movie.get('title', 'Unknown'),
-                            'genres': [g.get('name') for g in movie.get('genres', [])],
-                            'poster': movie.get('poster_path', ''),
-                            'age_category': movie.get('age_category', ''),
-                            'country': movie.get('country', ''),
-                            'merchants': [m.get('merchant_name') for m in movie.get('merchant', [])],
-                            'cities': []
-                        }
-                    if city_name not in movie_map[movie_id]['cities']:
-                        movie_map[movie_id]['cities'].append(city_name)
-                    
-                if i % 5 == 0 or i == len(cities):
+                if i % 1 == 0:
                     elapsed = time.time() - start_time
-                    self.log(f"   Progress: {i}/{len(cities)} | {len(movie_map)} movies | {city_stats.get(city_name, 0)} in {city_name}")
+                    avg_time = elapsed / i if i > 0 else 0
+                    remaining = (len(cities) - i) * avg_time
+                    self.log(f"   {i}/{len(cities)}: {city_name} ({len(city_movies)} movies) | ETA: {remaining/60:.1f}m")
                     
         finally:
             await browser.close()
@@ -206,8 +300,6 @@ class CineRadarScraper:
             self.log("🏁 Done")
         
         sorted_movies = sorted(movie_map.values(), key=lambda x: len(x['cities']), reverse=True)
-        self.log(f"✅ Found {len(movie_map)} unique movies across {len(cities)} cities")
-        
         return {
             'movies': sorted_movies,
             'city_stats': city_stats,
@@ -218,7 +310,9 @@ class CineRadarScraper:
 
 
 def run_daily_scrape(output_dir: str = "data", headless: bool = True, 
-                     city_limit: Optional[int] = None):
+                     city_limit: Optional[int] = None,
+                     specific_city: Optional[str] = None,
+                     schedules: bool = False):
     async def _run():
         scraper = CineRadarScraper()
         output_path = Path(output_dir)
@@ -230,11 +324,19 @@ def run_daily_scrape(output_dir: str = "data", headless: bool = True,
         print("\n" + "="*60)
         print("🎬 CineRadar - Daily Movie Availability Scraper")
         print(f"📅 Date: {date_str}")
+        print(f"🕒 Schedules: {'Enabled' if schedules else 'Disabled'}")
+        if specific_city:
+            print(f"📍 City: {specific_city}")
         print("="*60 + "\n")
         
-        result = await scraper.scrape_all(headless=headless, city_limit=city_limit)
+        result = await scraper.scrape_all(
+            headless=headless, 
+            city_limit=city_limit,
+            specific_city=specific_city,
+            fetch_schedules=schedules
+        )
         
-        if not result['movies']:
+        if not result or not result['movies']:
             print("❌ No data collected.")
             return None
             
@@ -244,15 +346,7 @@ def run_daily_scrape(output_dir: str = "data", headless: bool = True,
         print(f"Total Cities: {result['total_cities']}")
         print(f"Total Movies: {result['total_movies']}")
         
-        sorted_cities = sorted(result['city_stats'].items(), key=lambda x: x[1], reverse=True)
-        print("\n🏙️ Cities by movie count:")
-        for city, count in sorted_cities[:10]:
-            print(f"   {city:<20} ({count} movies)")
-        
-        zero_count = sum(1 for c, cnt in result['city_stats'].items() if cnt == 0)
-        if zero_count > 0:
-            print(f"\n⚠️ {zero_count} cities with 0 movies")
-            
+        # Save results
         output_file = output_path / f"movies_{date_str}.json"
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump({
@@ -261,7 +355,6 @@ def run_daily_scrape(output_dir: str = "data", headless: bool = True,
                 'movies': result['movies'], 'city_stats': result['city_stats'],
             }, f, indent=2, ensure_ascii=False)
         print(f"\n💾 Saved to: {output_file}")
-        
         return result
         
     return asyncio.run(_run())
@@ -272,6 +365,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='CineRadar Daily Scraper')
     parser.add_argument('--visible', action='store_true', help='Show browser')
     parser.add_argument('--limit', type=int, help='Limit cities')
+    parser.add_argument('--city', type=str, help='Scrape specific city')
+    parser.add_argument('--schedules', action='store_true', help='Fetch theatre schedules (slow)')
     parser.add_argument('--output', default='data', help='Output dir')
     args = parser.parse_args()
-    run_daily_scrape(output_dir=args.output, headless=not args.visible, city_limit=args.limit)
+    
+    run_daily_scrape(
+        output_dir=args.output, 
+        headless=not args.visible, 
+        city_limit=args.limit,
+        specific_city=args.city,
+        schedules=args.schedules
+    )

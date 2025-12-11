@@ -1,14 +1,16 @@
 # CineRadar 🎬
 
-A Python scraper for TIX.id - Indonesia's cinema ticket booking platform. Scrapes movie listings and availability across all Indonesian cities.
+A Python scraper for TIX.id - Indonesia's cinema ticket booking platform. Scrapes movie listings, theatre schedules, and showtimes across all Indonesian cities.
 
 ## Features
 
-- 🏙️ **83+ Indonesian cities** - Scrape movie data from all TIX-supported cities
+- 🏙️ **83 Indonesian cities** - Scrape movie data from all TIX-supported cities
 - 🎬 **Movie availability tracking** - See which movies are showing in which cities
+- 🎭 **Theatre schedules** - Get showtimes with room types, prices, and time slots
 - 🤖 **Anti-bot detection** - Stealth mode with proper auth flow
 - 📊 **Daily reports** - Track movie availability over time
 - ⚡ **Fast & reliable** - Uses Playwright with response interception
+- 🌐 **Next.js dashboard** - Beautiful frontend to browse movies and showtimes
 
 ## Quick Start
 
@@ -32,7 +34,14 @@ python tix_api.py
 python tix_api.py --limit 5 --visible
 
 # Custom output directory
+# Custom output directory
 python tix_api.py --output my_data
+
+# Full scrape with showtimes (slower)
+python tix_api.py --schedules
+
+# Scrape showtimes for specific city
+python tix_api.py --city JAKARTA --schedules
 ```
 
 ### Command Line Options
@@ -42,6 +51,8 @@ python tix_api.py --output my_data
 | `--visible` | Show browser window (default: headless) |
 | `--limit N` | Limit to first N cities (for testing) |
 | `--output DIR` | Output directory (default: `data/`) |
+| `--schedules` | Fetch detailed theatre schedules with showtimes (~45-75 min) |
+| `--city NAME` | Only scrape specific city (e.g., `--city JAKARTA`) |
 
 ## What It Does
 
@@ -52,36 +63,40 @@ python tix_api.py --output my_data
 5. Generates a report showing which movies are in which cities
 6. Saves results to timestamped JSON files
 
-## Output Files
+## 📦 Data Format
 
-### `data/movies_YYYY-MM-DD.json`
-
-Contains full movie availability data:
+The generated JSON file contains:
 
 ```json
 {
-  "scraped_at": "2025-12-11 06:38:03",
+  "scraped_at": "2025-12-11 14:30:00",
   "date": "2025-12-11",
-  "summary": {
-    "total_cities": 83,
-    "total_movies": 27
-  },
   "movies": [
     {
-      "id": "1977633929036906496",
-      "title": "AGAK LAEN: MENYALA PANTIKU!",
-      "genres": ["Drama"],
-      "poster": "https://asset.tix.id/...",
-      "age_category": "R",
-      "country": "Indonesia",
-      "merchants": ["XXI", "CGV", "Cinépolis"],
-      "cities": ["JAKARTA", "BANDUNG", "SURABAYA", ...]
+      "id": "123456",
+      "title": "ZOOTOPIA 2",
+      "genres": ["Animation", "Comedy"],
+      "cities": ["JAKARTA", "SURABAYA"],
+      "schedules": {                  // Only if --schedules is used
+        "JAKARTA": [
+          {
+            "theatre_name": "CIPINANG XXI",
+            "merchant": "XXI",
+            "rooms": [
+              {
+                "category": "REGULAR 2D",
+                "price": "Rp45.000",
+                "showtimes": ["12:30", "14:45", "17:00"]
+              }
+            ]
+          }
+        ]
+      }
     }
   ],
   "city_stats": {
     "JAKARTA": 27,
-    "BANDUNG": 25,
-    ...
+    "BANDUNG": 25
   }
 }
 ```
@@ -297,7 +312,9 @@ Total Movies: 30
 
 ## Web Frontend
 
-The `web/` directory contains a Next.js frontend that displays the scraped data:
+The `web/` directory contains a Next.js dashboard that displays the scraped data with a beautiful UI.
+
+### Setup
 
 ```bash
 cd web
@@ -306,6 +323,72 @@ npm run dev
 ```
 
 Open http://localhost:3000 to view the dashboard.
+
+### Features
+
+- 🎨 **Modern dark theme** with gradient backgrounds
+- 🏙️ **City filter** - Filter movies by city
+- 🎬 **Movie grid** - Browse all movies with posters, genres, and age ratings
+- 📅 **Showtime display** - Click a movie to see theatre schedules:
+  - Theatre names and addresses
+  - Room categories (2D, IMAX, VELVET, GOLD CLASS, etc.)
+  - Ticket prices
+  - Available showtimes
+- 📊 **Stats cards** - Total movies, cities, and theatres at a glance
+
+### Data Source
+
+The frontend reads from `../data/movies_YYYY-MM-DD.json` (most recent file). Run the scraper with `--schedules` to populate showtime data.
+
+## Showtime Scraping Details
+
+When using `--schedules`, the scraper performs additional work:
+
+1. For each movie in each city, navigates to the movie detail page
+2. Intercepts the `/v1/schedules/movies/{movie_id}` API response
+3. Parses nested theatre data structure:
+   - `data.theaters[]` - List of theatres
+   - `theater.price_groups[]` - Room categories (2D, IMAX, etc.)
+   - `price_group.show_time[]` - Individual showtimes
+
+### Schedule API Endpoint
+
+```
+GET https://api-b2b.tix.id/v1/schedules/movies/{movie_id}?city_id={city_id}&date=YYYY-MM-DD
+```
+
+**Response structure:**
+```json
+{
+  "success": true,
+  "data": {
+    "theaters": [
+      {
+        "id": "1178839445860864000",
+        "name": "AEON MALL JGC CGV",
+        "address": "AEON Cakung Mall Lt. 3...",
+        "merchant": {"merchant_name": "CGV"},
+        "price_groups": [
+          {
+            "category": "REGULAR 2D",
+            "price_string": "Rp46.000 - Rp51.000",
+            "show_time": [
+              {"display_time": "12:00", "id": "..."},
+              {"display_time": "14:30", "id": "..."}
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Performance Notes
+
+- **Without `--schedules`**: ~5-8 minutes for all 83 cities
+- **With `--schedules`**: ~45-75 minutes (navigates to each movie page)
+- Use `--limit` or `--city` for faster testing
 
 ## License
 

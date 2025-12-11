@@ -13,6 +13,7 @@ interface Movie {
   country: string;
   merchants: string[];
   cities: string[];
+  schedules?: Record<string, any[]>;
 }
 
 interface MovieData {
@@ -31,13 +32,13 @@ async function getMovieData(): Promise<MovieData | null> {
     const dataDir = path.join(process.cwd(), '..', 'data');
     const files = await fs.readdir(dataDir);
     const movieFiles = files.filter(f => f.startsWith('movies_') && f.endsWith('.json'));
-    
+
     if (movieFiles.length === 0) return null;
-    
+
     // Get most recent file
     movieFiles.sort().reverse();
     const latestFile = movieFiles[0];
-    
+
     const filePath = path.join(dataDir, latestFile);
     const data = await fs.readFile(filePath, 'utf-8');
     return JSON.parse(data);
@@ -49,7 +50,7 @@ async function getMovieData(): Promise<MovieData | null> {
 
 export default async function Home() {
   const data = await getMovieData();
-  
+
   if (!data) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
@@ -66,7 +67,7 @@ export default async function Home() {
 
   // Get unique cities from all movies
   const allCities = [...new Set(data.movies.flatMap(m => m.cities))].sort();
-  
+
   // Sort cities by movie count
   const sortedCities = Object.entries(data.city_stats)
     .sort(([, a], [, b]) => b - a)

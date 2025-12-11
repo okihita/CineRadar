@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import ShowtimeView from './ShowtimeView';
 
 interface Movie {
     id: string;
@@ -12,6 +13,7 @@ interface Movie {
     country: string;
     merchants: string[];
     cities: string[];
+    schedules?: Record<string, any[]>; // Map of City -> Theatres
 }
 
 interface MovieGridProps {
@@ -26,8 +28,8 @@ const AGE_COLORS: Record<string, string> = {
 };
 
 const MERCHANT_COLORS: Record<string, string> = {
-    'XXI': 'bg-red-600',
-    'CGV': 'bg-amber-500',
+    'XXI': 'bg-yellow-600',
+    'CGV': 'bg-red-600',
     'Cinépolis': 'bg-blue-600',
 };
 
@@ -35,6 +37,7 @@ export default function MovieGrid({ movies }: MovieGridProps) {
     const [filteredMovies, setFilteredMovies] = useState(movies);
     const [selectedCity, setSelectedCity] = useState('');
     const [expandedMovie, setExpandedMovie] = useState<string | null>(null);
+    const [showtimeMovie, setShowtimeMovie] = useState<Movie | null>(null);
 
     useEffect(() => {
         const handleCityFilter = (e: CustomEvent) => {
@@ -122,14 +125,20 @@ export default function MovieGrid({ movies }: MovieGridProps) {
                                     </span>
                                 ))}
                             </div>
-                            {movie.country && (
-                                <p className="mt-2 text-xs text-gray-500">{movie.country}</p>
+
+                            {/* Schedule info if city selected */}
+                            {selectedCity && movie.schedules && movie.schedules[selectedCity] && (
+                                <div className="mt-2 pt-2 border-t border-white/10">
+                                    <p className="text-[10px] text-green-400 font-medium">
+                                        📅 {movie.schedules[selectedCity].length} Theatres Available
+                                    </p>
+                                </div>
                             )}
                         </div>
 
-                        {/* Expanded View (Cities) */}
+                        {/* Expanded View (Cities/Showtimes) */}
                         {expandedMovie === movie.id && (
-                            <div className="absolute inset-0 bg-black/95 p-4 overflow-auto z-10 animate-fadeIn">
+                            <div className="absolute inset-0 bg-black/95 p-4 overflow-auto z-10 animate-fadeIn flex flex-col">
                                 <button
                                     onClick={(e) => { e.stopPropagation(); setExpandedMovie(null); }}
                                     className="absolute top-2 right-2 p-1 text-gray-400 hover:text-white"
@@ -138,23 +147,62 @@ export default function MovieGrid({ movies }: MovieGridProps) {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                     </svg>
                                 </button>
-                                <h4 className="text-white font-bold mb-3 pr-6">{movie.title}</h4>
-                                <p className="text-xs text-gray-400 mb-2">Available in {movie.cities.length} cities:</p>
-                                <div className="flex flex-wrap gap-1">
-                                    {movie.cities.sort().map((city) => (
-                                        <span
-                                            key={city}
-                                            className="px-2 py-1 bg-purple-500/20 border border-purple-500/30 rounded-md text-xs text-purple-300"
-                                        >
-                                            {city}
-                                        </span>
-                                    ))}
+
+                                <div className="flex-1">
+                                    <h4 className="text-white font-bold mb-3 pr-6">{movie.title}</h4>
+
+                                    {selectedCity && movie.schedules && movie.schedules[selectedCity] ? (
+                                        <div className="mt-4">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setShowtimeMovie(movie);
+                                                }}
+                                                className="w-full py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                <span>View Showtimes</span>
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                            </button>
+                                            <p className="mt-2 text-xs text-gray-400 text-center">
+                                                For {selectedCity}
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <p className="text-xs text-gray-400 mb-2">Available in {movie.cities.length} cities:</p>
+                                            <div className="flex flex-wrap gap-1">
+                                                {movie.cities.sort().map((city) => (
+                                                    <span
+                                                        key={city}
+                                                        className={`px-2 py-1 border rounded-md text-xs ${city === selectedCity
+                                                            ? 'bg-purple-500 text-white border-purple-500'
+                                                            : 'bg-purple-500/20 border-purple-500/30 text-purple-300'
+                                                            }`}
+                                                    >
+                                                        {city}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         )}
                     </div>
                 ))}
             </div>
+
+            {/* Showtime Modal */}
+            {showtimeMovie && selectedCity && (
+                <ShowtimeView
+                    movieTitle={showtimeMovie.title}
+                    city={selectedCity}
+                    schedules={showtimeMovie.schedules?.[selectedCity] || []}
+                    onClose={() => setShowtimeMovie(null)}
+                />
+            )}
 
             {filteredMovies.length === 0 && (
                 <div className="text-center py-16">
