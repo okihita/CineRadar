@@ -8,6 +8,8 @@ interface TheaterSchedule {
     theatre_name: string;
     merchant: string;
     address: string;
+    lat?: number;
+    lng?: number;
     rooms: {
         category: string;
         price: string;
@@ -232,13 +234,11 @@ export default function TheatreMapExplorer({ cityData, schedulesByCity }: Theatr
                                     attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a>'
                                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                 />
-                                {/* Theatre markers - spread around city center */}
+                                {/* Theatre markers - use real coordinates */}
                                 {cityStats?.theatres.map((theatre, idx) => {
-                                    // Spread markers in a more realistic pattern
-                                    const angle = (idx / cityStats.theatres.length) * 2 * Math.PI;
-                                    const radiusKm = 0.008 + (idx % 5) * 0.004 + Math.random() * 0.002;
-                                    const lat = selectedCoords.lat + Math.sin(angle) * radiusKm;
-                                    const lng = selectedCoords.lng + Math.cos(angle) * radiusKm;
+                                    // Use real geocoded coordinates if available
+                                    const lat = theatre.lat ?? (selectedCoords.lat + Math.sin(idx) * 0.01);
+                                    const lng = theatre.lng ?? (selectedCoords.lng + Math.cos(idx) * 0.01);
 
                                     return (
                                         <CircleMarker
