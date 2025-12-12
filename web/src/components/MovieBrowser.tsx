@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import MovieSidebar from './MovieSidebar';
 import CityShowtimes from './CityShowtimes';
+import Dashboard from './Dashboard';
 
 interface TheaterSchedule {
     theatre_id: string;
@@ -25,6 +26,7 @@ interface Movie {
     country: string;
     merchants: string[];
     cities: string[];
+    is_presale?: boolean;
     schedules?: Record<string, TheaterSchedule[]>;
 }
 
@@ -32,20 +34,49 @@ interface MovieBrowserProps {
     movies: Movie[];
 }
 
+type ViewMode = 'browser' | 'dashboard';
+
 export default function MovieBrowser({ movies }: MovieBrowserProps) {
-    const [selectedMovie, setSelectedMovie] = useState<Movie | null>(movies[0] || null);
+    const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+    const [viewMode, setViewMode] = useState<ViewMode>('browser');
 
     return (
-        <div className="flex h-[calc(100vh-80px)]">
-            {/* Left Sidebar - Movie Playlist */}
-            <MovieSidebar
-                movies={movies}
-                selectedMovie={selectedMovie}
-                onSelectMovie={setSelectedMovie}
-            />
+        <div className="flex flex-col h-[calc(100vh-5rem)]">
+            {/* View Mode Toggle */}
+            <div className="flex items-center justify-center gap-2 py-3 bg-black/20 border-b border-white/10">
+                <button
+                    onClick={() => setViewMode('browser')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewMode === 'browser'
+                            ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25'
+                            : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                        }`}
+                >
+                    🎬 Browse Movies
+                </button>
+                <button
+                    onClick={() => setViewMode('dashboard')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewMode === 'dashboard'
+                            ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25'
+                            : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                        }`}
+                >
+                    📊 Market Insights
+                </button>
+            </div>
 
-            {/* Right Content - City Showtimes */}
-            <CityShowtimes movie={selectedMovie} />
+            {/* Content */}
+            {viewMode === 'browser' ? (
+                <div className="flex flex-1 overflow-hidden">
+                    <MovieSidebar
+                        movies={movies}
+                        selectedMovie={selectedMovie}
+                        onSelectMovie={setSelectedMovie}
+                    />
+                    <CityShowtimes movie={selectedMovie} />
+                </div>
+            ) : (
+                <Dashboard movies={movies} />
+            )}
         </div>
     );
 }
