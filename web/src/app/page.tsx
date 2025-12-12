@@ -39,8 +39,17 @@ interface MovieData {
 
 async function getMovieData(): Promise<MovieData | null> {
   try {
-    const dataDir = path.join(process.cwd(), '..', 'data');
-    const files = await fs.readdir(dataDir);
+    // Try public/data first (for Vercel), fallback to ../data (for local dev)
+    let dataDir = path.join(process.cwd(), 'public', 'data');
+    let files: string[] = [];
+
+    try {
+      files = await fs.readdir(dataDir);
+    } catch {
+      // Fallback to parent data dir for local development
+      dataDir = path.join(process.cwd(), '..', 'data');
+      files = await fs.readdir(dataDir);
+    }
     const movieFiles = files.filter(f => f.startsWith('movies_') && f.endsWith('.json'));
 
     if (movieFiles.length === 0) return null;

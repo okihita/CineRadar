@@ -24,7 +24,8 @@ def run_scrape(
     headless: bool = True,
     city_limit: Optional[int] = None,
     specific_city: Optional[str] = None,
-    schedules: bool = False
+    schedules: bool = False,
+    geocode: bool = False
 ):
     """Run the scraper and save results."""
     
@@ -56,6 +57,13 @@ def run_scrape(
         if not result or not result.get('movies'):
             print("❌ No data collected.")
             return None
+        
+        # Geocode theatres if requested
+        if geocode and schedules:
+            # Build movie_map from result
+            movie_map = {m['id']: m for m in result['movies']}
+            await scraper.geocode_all_theatres(movie_map)
+            result['movies'] = list(movie_map.values())
             
         # Summary
         print("\n" + "=" * 60)
@@ -124,6 +132,10 @@ Examples:
         '--output', default='data', metavar='DIR',
         help='Output directory (default: data)'
     )
+    parser.add_argument(
+        '--geocode', action='store_true',
+        help='Geocode theatre addresses (requires --schedules)'
+    )
     
     args = parser.parse_args()
     
@@ -132,7 +144,8 @@ Examples:
         headless=not args.visible,
         city_limit=args.limit,
         specific_city=args.city,
-        schedules=args.schedules
+        schedules=args.schedules,
+        geocode=args.geocode
     )
 
 
