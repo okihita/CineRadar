@@ -79,6 +79,30 @@ async def run_scrape():
             # Upload to GCS
             await upload_to_gcs(result, filename)
             
+            # Sync theatres to Firestore
+            try:
+                from scraper.firestore_client import sync_theatres_from_scrape, log_scraper_run
+                
+                movies = result.get('movies', [])
+                sync_result = sync_theatres_from_scrape(movies)
+                print(f"🏠 Synced {sync_result['success']}/{sync_result['total']} theatres to Firestore")
+                
+                # Log scraper run
+                cities = set()
+                for movie in movies:
+                    cities.update(movie.get('schedules', {}).keys())
+                
+                log_scraper_run({
+                    'status': 'success',
+                    'movies': len(movies),
+                    'cities': len(cities),
+                    'theatres_synced': sync_result['success'],
+                    'date': date_str
+                })
+                print("📝 Logged scraper run to Firestore")
+            except Exception as e:
+                print(f"⚠️ Firestore sync warning: {e}")
+            
             # Print summary
             movies = result.get('movies', [])
             cities = set()
