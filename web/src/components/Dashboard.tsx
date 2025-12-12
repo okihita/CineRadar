@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import IndonesiaMapSVG from './IndonesiaMapSVG';
+import LeafletMap from './LeafletMap';
 
 interface TheaterSchedule {
     theatre_id: string;
@@ -327,7 +327,7 @@ export default function Dashboard({ movies }: DashboardProps) {
 
             {/* Indonesia Map */}
             <div className="mb-8">
-                <IndonesiaMapSVG
+                <LeafletMap
                     cityData={Object.entries(stats.cityTheatreCounts).map(([city, theatres]) => ({ city, theatres }))}
                 />
             </div>
