@@ -27,7 +27,7 @@ export default function ShowtimeView({ movieTitle, city, schedules, onClose }: S
                             📍 Now Showing in {city} ({schedules.length} Theatres)
                         </p>
                     </div>
-                    <button 
+                    <button
                         onClick={onClose}
                         className="p-2 hover:bg-white/10 rounded-full transition-colors"
                     >
@@ -45,11 +45,10 @@ export default function ShowtimeView({ movieTitle, city, schedules, onClose }: S
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
                                         <h3 className="font-bold text-lg text-white">{theatre.theatre_name}</h3>
-                                        <span className={`px-2 py-0.5 text-xs font-bold rounded ${
-                                            theatre.merchant === 'XXI' ? 'bg-amber-600/80' : 
-                                            theatre.merchant === 'CGV' ? 'bg-red-600/80' : 
-                                            'bg-blue-600/80'
-                                        }`}>
+                                        <span className={`px-2 py-0.5 text-xs font-bold rounded ${theatre.merchant === 'XXI' ? 'bg-amber-600/80' :
+                                                theatre.merchant === 'CGV' ? 'bg-red-600/80' :
+                                                    'bg-blue-600/80'
+                                            }`}>
                                             {theatre.merchant}
                                         </span>
                                     </div>
@@ -65,8 +64,19 @@ export default function ShowtimeView({ movieTitle, city, schedules, onClose }: S
                                             <span className="text-xs text-gray-500">{room.price}</span>
                                         </div>
                                         <div className="flex flex-wrap gap-2">
-                                            {room.showtimes.map((time: string) => (
-                                                <button 
+                                            {/* Past showtimes (grayed out) */}
+                                            {room.past_showtimes?.map((time: string) => (
+                                                <span
+                                                    key={`past-${time}`}
+                                                    className="px-3 py-1 bg-gray-800/50 rounded text-sm text-gray-500 line-through cursor-not-allowed"
+                                                    title="Past showtime"
+                                                >
+                                                    {time}
+                                                </span>
+                                            ))}
+                                            {/* Available showtimes */}
+                                            {room.showtimes?.map((time: string) => (
+                                                <button
                                                     key={time}
                                                     className="px-3 py-1 bg-white/10 hover:bg-purple-600 hover:text-white rounded text-sm text-purple-300 transition-colors"
                                                 >

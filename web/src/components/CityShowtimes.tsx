@@ -12,6 +12,7 @@ interface TheaterSchedule {
         category: string;
         price: string;
         showtimes: string[];
+        past_showtimes?: string[];
     }[];
 }
 
@@ -459,9 +460,9 @@ export default function CityShowtimes({ movie, allMovies = [] }: CityShowtimesPr
                                                             <p className="text-xs text-gray-500 mt-0.5">{theater.address}</p>
                                                         </div>
                                                         <span className={`text-xs px-2 py-1 rounded font-semibold ${theater.merchant === 'XXI' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
-                                                                theater.merchant === 'CGV' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
-                                                                    theater.merchant === 'Cinépolis' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
-                                                                        'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+                                                            theater.merchant === 'CGV' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                                                                theater.merchant === 'Cinépolis' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
+                                                                    'bg-gray-500/20 text-gray-400 border border-gray-500/30'
                                                             }`}>
                                                             {theater.merchant}
                                                         </span>
@@ -475,7 +476,19 @@ export default function CityShowtimes({ movie, allMovies = [] }: CityShowtimesPr
                                                                     <span className="text-sm font-bold text-emerald-400">{room.price}</span>
                                                                 </div>
                                                                 <div className="flex flex-wrap gap-2">
-                                                                    {room.showtimes.map((time, timeIdx) => (
+                                                                    {/* Past showtimes (grayed out) */}
+                                                                    {room.past_showtimes?.map((time: string, timeIdx: number) => (
+                                                                        <span
+                                                                            key={`past-${timeIdx}`}
+                                                                            className="px-3 py-1.5 text-sm rounded-lg font-medium 
+                                                                                bg-gray-700/30 text-gray-500 line-through cursor-not-allowed"
+                                                                            title="Past showtime"
+                                                                        >
+                                                                            {time}
+                                                                        </span>
+                                                                    ))}
+                                                                    {/* Available showtimes */}
+                                                                    {room.showtimes?.map((time: string, timeIdx: number) => (
                                                                         <span
                                                                             key={timeIdx}
                                                                             className={`px-3 py-1.5 text-sm rounded-lg font-medium cursor-pointer transition-all 
