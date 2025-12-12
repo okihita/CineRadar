@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef } from 'react';
+import MovieInsights from './MovieInsights';
 
 interface TheaterSchedule {
     theatre_id: string;
@@ -29,6 +30,7 @@ interface Movie {
 
 interface CityShowtimesProps {
     movie: Movie | null;
+    allMovies?: Movie[];
 }
 
 // Time-of-day helper
@@ -132,7 +134,7 @@ function getAllShowtimes(schedules: Record<string, TheaterSchedule[]>): string[]
     return times;
 }
 
-export default function CityShowtimes({ movie }: CityShowtimesProps) {
+export default function CityShowtimes({ movie, allMovies = [] }: CityShowtimesProps) {
     const [expandedCity, setExpandedCity] = useState<string | null>(null);
     const [disabledChains, setDisabledChains] = useState<Set<string>>(new Set());
     const [selectedCity, setSelectedCity] = useState<string>('');
@@ -252,9 +254,9 @@ export default function CityShowtimes({ movie }: CityShowtimesProps) {
                                 </span>
                             ))}
                             <span className={`px-3 py-1 rounded-full text-sm font-semibold ${movie.age_category === 'SU' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
-                                    movie.age_category === 'R' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
-                                        movie.age_category === 'D' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
-                                            'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+                                movie.age_category === 'R' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
+                                    movie.age_category === 'D' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                                        'bg-gray-500/20 text-gray-400 border border-gray-500/30'
                                 }`}>
                                 {movie.age_category}
                             </span>
@@ -373,9 +375,14 @@ export default function CityShowtimes({ movie }: CityShowtimesProps) {
                     </div>
                 )}
 
+                {/* AI Insights Section */}
+                {allMovies.length > 0 && (
+                    <MovieInsights movie={movie} allMovies={allMovies} />
+                )}
+
                 {/* Cities & Showtimes */}
                 {hasSchedules ? (
-                    <div className="space-y-4">
+                    <div className="space-y-4 mt-6">
                         <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
                             <span className="text-2xl">🎪</span> Showtimes by City
                         </h2>
@@ -438,7 +445,6 @@ export default function CityShowtimes({ movie }: CityShowtimesProps) {
                                                         <div className="flex-1">
                                                             <div className="flex items-center gap-2 flex-wrap">
                                                                 <h4 className="font-medium text-white">{theater.theatre_name}</h4>
-                                                                {/* Badges */}
                                                                 {theater.theatre_name === bestValueTheatre && (
                                                                     <span className="px-2 py-0.5 text-xs bg-emerald-500/20 text-emerald-400 rounded-full border border-emerald-500/30">
                                                                         💰 Best Value
@@ -461,7 +467,6 @@ export default function CityShowtimes({ movie }: CityShowtimesProps) {
                                                         </span>
                                                     </div>
 
-                                                    {/* Room Categories - Ticket Stub Style */}
                                                     <div className="space-y-3">
                                                         {theater.rooms.map((room, idx) => (
                                                             <div key={idx} className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-lg p-3 border-l-4 border-purple-500">
@@ -494,7 +499,7 @@ export default function CityShowtimes({ movie }: CityShowtimesProps) {
                         })}
                     </div>
                 ) : (
-                    <div className="bg-white/5 rounded-xl p-8 text-center border border-white/10 backdrop-blur-sm">
+                    <div className="bg-white/5 rounded-xl p-8 text-center border border-white/10 backdrop-blur-sm mt-6">
                         <span className="text-4xl block mb-4">📍</span>
                         <h3 className="text-lg font-medium text-white mb-2">Available in {movie.cities.length} cities</h3>
                         <div className="flex flex-wrap justify-center gap-2 mt-4">

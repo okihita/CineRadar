@@ -47,8 +47,8 @@ export default function MovieBrowser({ movies }: MovieBrowserProps) {
                 <button
                     onClick={() => setViewMode('browser')}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewMode === 'browser'
-                            ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25'
-                            : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25'
+                        : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
                         }`}
                 >
                     🎬 Browse Movies
@@ -56,8 +56,8 @@ export default function MovieBrowser({ movies }: MovieBrowserProps) {
                 <button
                     onClick={() => setViewMode('dashboard')}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewMode === 'dashboard'
-                            ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25'
-                            : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25'
+                        : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
                         }`}
                 >
                     📊 Market Insights
@@ -72,7 +72,7 @@ export default function MovieBrowser({ movies }: MovieBrowserProps) {
                         selectedMovie={selectedMovie}
                         onSelectMovie={setSelectedMovie}
                     />
-                    <CityShowtimes movie={selectedMovie} />
+                    <CityShowtimes movie={selectedMovie} allMovies={movies} />
                 </div>
             ) : (
                 <Dashboard movies={movies} />
