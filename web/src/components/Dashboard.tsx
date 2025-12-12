@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import IndonesiaMapSVG from './IndonesiaMapSVG';
 
 interface TheaterSchedule {
     theatre_id: string;
@@ -30,61 +31,6 @@ interface Movie {
 interface DashboardProps {
     movies: Movie[];
 }
-
-// City coordinates for Indonesia map (approximate)
-const CITY_COORDS: Record<string, { x: number; y: number }> = {
-    'JAKARTA': { x: 28, y: 58 },
-    'SURABAYA': { x: 42, y: 62 },
-    'BANDUNG': { x: 29, y: 60 },
-    'MEDAN': { x: 12, y: 28 },
-    'SEMARANG': { x: 35, y: 60 },
-    'MAKASSAR': { x: 55, y: 70 },
-    'PALEMBANG': { x: 22, y: 52 },
-    'TANGERANG': { x: 27, y: 58 },
-    'DEPOK': { x: 28, y: 59 },
-    'BEKASI': { x: 29, y: 58 },
-    'BOGOR': { x: 28, y: 60 },
-    'MALANG': { x: 42, y: 64 },
-    'YOGYAKARTA': { x: 36, y: 62 },
-    'SOLO': { x: 37, y: 61 },
-    'DENPASAR': { x: 48, y: 66 },
-    'BALIKPAPAN': { x: 52, y: 52 },
-    'BANJARMASIN': { x: 48, y: 56 },
-    'PONTIANAK': { x: 38, y: 48 },
-    'SAMARINDA': { x: 52, y: 48 },
-    'MANADO': { x: 62, y: 38 },
-    'PEKANBARU': { x: 18, y: 42 },
-    'PADANG': { x: 14, y: 48 },
-    'LAMPUNG': { x: 24, y: 56 },
-    'BATAM': { x: 22, y: 38 },
-    'CIREBON': { x: 31, y: 59 },
-    'CIKARANG': { x: 30, y: 58 },
-    'KARAWANG': { x: 30, y: 58 },
-    'SUKABUMI': { x: 29, y: 61 },
-    'TASIKMALAYA': { x: 31, y: 61 },
-    'GARUT': { x: 30, y: 61 },
-    'SUMEDANG': { x: 30, y: 60 },
-    'PURWOKERTO': { x: 33, y: 61 },
-    'TEGAL': { x: 33, y: 60 },
-    'PEKALONGAN': { x: 34, y: 60 },
-    'MAGELANG': { x: 36, y: 61 },
-    'KEDIRI': { x: 41, y: 63 },
-    'JEMBER': { x: 44, y: 64 },
-    'SIDOARJO': { x: 42, y: 63 },
-    'GRESIK': { x: 41, y: 62 },
-    'MOJOKERTO': { x: 41, y: 63 },
-    'MADIUN': { x: 39, y: 62 },
-    'PROBOLINGGO': { x: 43, y: 63 },
-    'KUPANG': { x: 58, y: 72 },
-    'AMBON': { x: 70, y: 56 },
-    'JAYAPURA': { x: 88, y: 48 },
-    'SORONG': { x: 75, y: 48 },
-    'TERNATE': { x: 68, y: 42 },
-    'KENDARI': { x: 60, y: 64 },
-    'PALU': { x: 56, y: 52 },
-    'MAMUJU': { x: 53, y: 58 },
-    // Default for unknown cities
-};
 
 // Donut chart component
 function DonutChart({ data, colors }: { data: { label: string; value: number }[]; colors: string[] }) {
@@ -152,68 +98,7 @@ function BarChart({ data, maxValue }: { data: { label: string; value: number; co
     );
 }
 
-// Indonesia Map component
-function IndonesiaMap({ cityData }: { cityData: { city: string; theatres: number }[] }) {
-    const maxTheatres = Math.max(...cityData.map(c => c.theatres), 1);
-
-    return (
-        <div className="relative w-full h-64 bg-gradient-to-b from-gray-900 to-gray-800 rounded-xl overflow-hidden border border-white/10">
-            {/* Simple Indonesia outline - stylized */}
-            <svg viewBox="0 0 100 100" className="w-full h-full opacity-20">
-                <path
-                    d="M5,45 Q15,40 25,45 L35,50 Q45,55 55,52 L65,48 Q75,45 85,50 Q90,55 95,50"
-                    stroke="white"
-                    strokeWidth="0.5"
-                    fill="none"
-                />
-                <ellipse cx="30" cy="58" rx="15" ry="8" fill="white" opacity="0.3" />
-                <ellipse cx="55" cy="60" rx="10" ry="5" fill="white" opacity="0.3" />
-                <ellipse cx="45" cy="52" rx="8" ry="4" fill="white" opacity="0.2" />
-                <ellipse cx="15" cy="40" rx="6" ry="8" fill="white" opacity="0.2" />
-                <ellipse cx="65" cy="55" rx="6" ry="4" fill="white" opacity="0.2" />
-                <ellipse cx="80" cy="50" rx="8" ry="6" fill="white" opacity="0.2" />
-            </svg>
-
-            {/* City dots */}
-            {cityData.map((c, i) => {
-                const coords = CITY_COORDS[c.city] || { x: 50, y: 50 };
-                const size = 4 + (c.theatres / maxTheatres) * 12;
-                const opacity = 0.5 + (c.theatres / maxTheatres) * 0.5;
-
-                return (
-                    <div
-                        key={i}
-                        className="absolute transform -translate-x-1/2 -translate-y-1/2 group cursor-pointer"
-                        style={{ left: `${coords.x}%`, top: `${coords.y}%` }}
-                    >
-                        <div
-                            className="rounded-full bg-gradient-to-r from-purple-500 to-pink-500 animate-pulse"
-                            style={{
-                                width: `${size}px`,
-                                height: `${size}px`,
-                                opacity
-                            }}
-                        />
-                        {/* Tooltip */}
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black/90 rounded text-xs text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                            {c.city}: {c.theatres} theatres
-                        </div>
-                    </div>
-                );
-            })}
-
-            {/* Legend */}
-            <div className="absolute bottom-2 right-2 text-xs text-gray-400">
-                <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-purple-500 opacity-50" />
-                    <span>Few</span>
-                    <div className="w-4 h-4 rounded-full bg-purple-500" />
-                    <span>Many theatres</span>
-                </div>
-            </div>
-        </div>
-    );
-}
+// Old IndonesiaMap removed - now using IndonesiaMapSVG component
 
 export default function Dashboard({ movies }: DashboardProps) {
     // Calculate all stats
@@ -442,8 +327,7 @@ export default function Dashboard({ movies }: DashboardProps) {
 
             {/* Indonesia Map */}
             <div className="mb-8">
-                <h3 className="text-lg font-semibold text-white mb-4">🗺️ Theatre Coverage Map</h3>
-                <IndonesiaMap
+                <IndonesiaMapSVG
                     cityData={Object.entries(stats.cityTheatreCounts).map(([city, theatres]) => ({ city, theatres }))}
                 />
             </div>
