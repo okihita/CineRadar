@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import LeafletMap from './LeafletMap';
+import TheatreMapExplorer from './TheatreMapExplorer';
 
 interface TheaterSchedule {
     theatre_id: string;
@@ -110,6 +110,7 @@ export default function Dashboard({ movies }: DashboardProps) {
         const ageCounts: Record<string, number> = {};
         const hourCounts: number[] = Array(24).fill(0);
         const pricesByChain: Record<string, number[]> = {};
+        const schedulesByCity: Record<string, TheaterSchedule[]> = {};
         let totalShowtimes = 0;
         let totalTheatres = 0;
 
@@ -127,6 +128,10 @@ export default function Dashboard({ movies }: DashboardProps) {
                 Object.entries(movie.schedules).forEach(([city, theatres]) => {
                     cityTheatreCounts[city] = (cityTheatreCounts[city] || 0) + theatres.length;
                     totalTheatres += theatres.length;
+
+                    // Aggregate schedules by city for map explorer
+                    if (!schedulesByCity[city]) schedulesByCity[city] = [];
+                    schedulesByCity[city].push(...theatres);
 
                     theatres.forEach(t => {
                         chainCounts[t.merchant] = (chainCounts[t.merchant] || 0) + 1;
@@ -190,7 +195,8 @@ export default function Dashboard({ movies }: DashboardProps) {
             totalMovies: movies.length,
             totalCities: Object.keys(cityTheatreCounts).length,
             totalTheatres,
-            totalShowtimes
+            totalShowtimes,
+            schedulesByCity
         };
     }, [movies]);
 
@@ -325,10 +331,11 @@ export default function Dashboard({ movies }: DashboardProps) {
                 </div>
             </div>
 
-            {/* Indonesia Map */}
+            {/* Indonesia Map - 3 Column Explorer */}
             <div className="mb-8">
-                <LeafletMap
+                <TheatreMapExplorer
                     cityData={Object.entries(stats.cityTheatreCounts).map(([city, theatres]) => ({ city, theatres }))}
+                    schedulesByCity={stats.schedulesByCity}
                 />
             </div>
 
