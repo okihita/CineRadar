@@ -23,6 +23,7 @@ interface Movie {
     country: string;
     merchants: string[];
     cities: string[];
+    is_presale?: boolean;
     schedules?: Record<string, TheaterSchedule[]>;
 }
 
@@ -57,15 +58,20 @@ export default function CityShowtimes({ movie }: CityShowtimesProps) {
                 <div className="flex-1">
                     <h1 className="text-3xl font-bold text-white mb-2">{movie.title}</h1>
                     <div className="flex flex-wrap gap-2 mb-3">
+                        {movie.is_presale && (
+                            <span className="px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full text-sm font-semibold animate-pulse">
+                                🎟️ PRE-SALE
+                            </span>
+                        )}
                         {movie.genres.map((genre) => (
                             <span key={genre} className="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-sm">
                                 {genre}
                             </span>
                         ))}
                         <span className={`px-3 py-1 rounded-full text-sm ${movie.age_category === 'SU' ? 'bg-green-500/20 text-green-400' :
-                                movie.age_category === 'R' ? 'bg-yellow-500/20 text-yellow-400' :
-                                    movie.age_category === 'D' ? 'bg-red-500/20 text-red-400' :
-                                        'bg-gray-500/20 text-gray-400'
+                            movie.age_category === 'R' ? 'bg-yellow-500/20 text-yellow-400' :
+                                movie.age_category === 'D' ? 'bg-red-500/20 text-red-400' :
+                                    'bg-gray-500/20 text-gray-400'
                             }`}>
                             {movie.age_category}
                         </span>
@@ -120,9 +126,9 @@ export default function CityShowtimes({ movie }: CityShowtimesProps) {
                                                     <p className="text-xs text-gray-500 mt-0.5">{theater.address}</p>
                                                 </div>
                                                 <span className={`text-xs px-2 py-1 rounded ${theater.merchant === 'XXI' ? 'bg-blue-500/20 text-blue-400' :
-                                                        theater.merchant === 'CGV' ? 'bg-red-500/20 text-red-400' :
-                                                            theater.merchant === 'Cinépolis' ? 'bg-yellow-500/20 text-yellow-400' :
-                                                                'bg-gray-500/20 text-gray-400'
+                                                    theater.merchant === 'CGV' ? 'bg-red-500/20 text-red-400' :
+                                                        theater.merchant === 'Cinépolis' ? 'bg-yellow-500/20 text-yellow-400' :
+                                                            'bg-gray-500/20 text-gray-400'
                                                     }`}>
                                                     {theater.merchant}
                                                 </span>

@@ -321,6 +321,7 @@ class CineRadarScraper:
                                 'age_category': movie.get('age_category', ''),
                                 'country': movie.get('country', ''),
                                 'merchants': [m.get('merchant_name') for m in movie.get('merchant', [])],
+                                'is_presale': movie.get('presale_flag', 0) == 1,
                                 'cities': [],
                                 'schedules': {}
                             }

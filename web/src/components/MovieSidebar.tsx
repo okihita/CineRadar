@@ -12,6 +12,7 @@ interface Movie {
   country: string;
   merchants: string[];
   cities: string[];
+  is_presale?: boolean;
   schedules?: Record<string, TheaterSchedule[]>;
 }
 
@@ -59,9 +60,8 @@ export default function MovieSidebar({ movies, selectedMovie, onSelectMovie }: M
           <button
             key={movie.id}
             onClick={() => onSelectMovie(movie)}
-            className={`w-full flex items-center gap-3 p-3 border-b border-white/5 transition-all hover:bg-white/10 ${
-              selectedMovie?.id === movie.id ? 'bg-purple-500/30 border-l-4 border-l-purple-500' : ''
-            }`}
+            className={`w-full flex items-center gap-3 p-3 border-b border-white/5 transition-all hover:bg-white/10 ${selectedMovie?.id === movie.id ? 'bg-purple-500/30 border-l-4 border-l-purple-500' : ''
+              }`}
           >
             {/* Index */}
             <span className="text-gray-500 text-sm w-6 flex-shrink-0">{index + 1}</span>
@@ -75,25 +75,28 @@ export default function MovieSidebar({ movies, selectedMovie, onSelectMovie }: M
                 className="object-cover"
                 sizes="48px"
               />
+              {movie.is_presale && (
+                <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[8px] font-bold text-center py-0.5">
+                  PRE-SALE
+                </div>
+              )}
             </div>
 
             {/* Movie Info */}
             <div className="flex-1 text-left min-w-0">
-              <h3 className={`font-medium truncate text-sm ${
-                selectedMovie?.id === movie.id ? 'text-white' : 'text-gray-200'
-              }`}>
+              <h3 className={`font-medium truncate text-sm ${selectedMovie?.id === movie.id ? 'text-white' : 'text-gray-200'
+                }`}>
                 {movie.title}
               </h3>
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-xs text-gray-400">
                   {movie.cities.length} cities
                 </span>
-                <span className={`text-xs px-1.5 py-0.5 rounded ${
-                  movie.age_category === 'SU' ? 'bg-green-500/20 text-green-400' :
-                  movie.age_category === 'R' ? 'bg-yellow-500/20 text-yellow-400' :
-                  movie.age_category === 'D' ? 'bg-red-500/20 text-red-400' :
-                  'bg-gray-500/20 text-gray-400'
-                }`}>
+                <span className={`text-xs px-1.5 py-0.5 rounded ${movie.age_category === 'SU' ? 'bg-green-500/20 text-green-400' :
+                    movie.age_category === 'R' ? 'bg-yellow-500/20 text-yellow-400' :
+                      movie.age_category === 'D' ? 'bg-red-500/20 text-red-400' :
+                        'bg-gray-500/20 text-gray-400'
+                  }`}>
                   {movie.age_category}
                 </span>
               </div>
