@@ -173,14 +173,30 @@ class CineRadarScraper:
                     room = {
                         'category': group.get('category'),
                         'price': group.get('price_string'),
-                        'showtimes': []
+                        'showtimes': [],  # Available times (strings) - backward compatible
+                        'all_showtimes': [],  # All times with status
+                        'past_showtimes': []  # Past/unavailable times
                     }
                     
                     for show in group.get('show_time', []):
-                        if show.get('status') == 1:  # Available
-                            room['showtimes'].append(show.get('display_time'))
+                        display_time = show.get('display_time')
+                        status = show.get('status')
+                        
+                        # Full showtime object with status
+                        showtime_obj = {
+                            'time': display_time,
+                            'status': status,
+                            'is_available': status == 1
+                        }
+                        room['all_showtimes'].append(showtime_obj)
+                        
+                        if status == 1:  # Available
+                            room['showtimes'].append(display_time)
+                        else:  # Past or sold out
+                            room['past_showtimes'].append(display_time)
                             
-                    if room['showtimes']:
+                    # Include room if it has any showtimes (available or past)
+                    if room['all_showtimes']:
                         theatre['rooms'].append(room)
                         
                 if theatre['rooms']:
