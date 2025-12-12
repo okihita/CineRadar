@@ -279,9 +279,9 @@ export default function MovieInsights({ movie, allMovies }: MovieInsightsProps) 
     };
 
     return (
-        <div className="space-y-4 mt-6">
+        <div className="mt-4">
             {/* Performance Badge */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 mb-3">
                 <div className={`px-4 py-2 rounded-lg bg-gradient-to-r ${tierColors[performance.tier]} text-white font-semibold text-sm shadow-lg`}>
                     {tierLabels[performance.tier]}
                 </div>
@@ -291,66 +291,66 @@ export default function MovieInsights({ movie, allMovies }: MovieInsightsProps) 
                     </div>
                 )}
             </div>
-
-            {/* AI Description */}
-            <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-                <div className="flex items-center gap-2 mb-2">
-                    <span className="text-lg">🤖</span>
-                    <h4 className="font-semibold text-white">AI Analysis</h4>
-                </div>
-                <p className="text-gray-300 text-sm leading-relaxed">{insights.description}</p>
-            </div>
-
-            {/* Prediction */}
-            <div className="p-4 bg-gradient-to-r from-purple-900/30 to-pink-900/30 rounded-xl border border-purple-500/20">
-                <div className="flex items-center gap-2 mb-2">
-                    <span className="text-lg">🔮</span>
-                    <h4 className="font-semibold text-white">Performance Prediction</h4>
-                </div>
-                <p className="text-gray-200 text-sm leading-relaxed">{insights.prediction}</p>
-            </div>
-
-            {/* Contributing Factors */}
-            <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-                <div className="flex items-center gap-2 mb-3">
-                    <span className="text-lg">📊</span>
-                    <h4 className="font-semibold text-white">Key Factors</h4>
-                </div>
-                <div className="space-y-2">
-                    {insights.factors.map((f, i) => (
-                        <div key={i} className="flex items-start gap-3 text-sm">
-                            <span className={`mt-0.5 ${f.impact === 'positive' ? 'text-emerald-400' :
-                                    f.impact === 'negative' ? 'text-red-400' :
-                                        'text-amber-400'
-                                }`}>
-                                {f.impact === 'positive' ? '▲' : f.impact === 'negative' ? '▼' : '●'}
-                            </span>
-                            <div>
-                                <span className="font-medium text-white">{f.factor}:</span>
-                                <span className="text-gray-400 ml-1">{f.detail}</span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* Recommendations */}
-            {insights.recommendations.length > 0 && (
-                <div className="p-4 bg-gradient-to-r from-blue-900/30 to-cyan-900/30 rounded-xl border border-blue-500/20">
-                    <div className="flex items-center gap-2 mb-2">
-                        <span className="text-lg">💡</span>
-                        <h4 className="font-semibold text-white">Recommendations</h4>
+            {/* 2-Column Grid for Desktop */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                {/* AI Description */}
+                <div className="p-3 bg-white/5 rounded-lg border border-white/10">
+                    <div className="flex items-center gap-2 mb-1">
+                        <span>🤖</span>
+                        <h4 className="font-semibold text-white text-sm">AI Analysis</h4>
                     </div>
-                    <ul className="space-y-1">
-                        {insights.recommendations.map((rec, i) => (
-                            <li key={i} className="text-gray-300 text-sm flex items-start gap-2">
-                                <span className="text-cyan-400">→</span>
-                                {rec}
-                            </li>
-                        ))}
-                    </ul>
+                    <p className="text-gray-300 text-xs leading-relaxed">{insights.description}</p>
                 </div>
-            )}
+
+                {/* Prediction */}
+                <div className="p-3 bg-gradient-to-r from-purple-900/30 to-pink-900/30 rounded-lg border border-purple-500/20">
+                    <div className="flex items-center gap-2 mb-1">
+                        <span>🔮</span>
+                        <h4 className="font-semibold text-white text-sm">Prediction</h4>
+                    </div>
+                    <p className="text-gray-200 text-xs leading-relaxed">{insights.prediction}</p>
+                </div>
+
+                {/* Contributing Factors */}
+                <div className="p-3 bg-white/5 rounded-lg border border-white/10">
+                    <div className="flex items-center gap-2 mb-2">
+                        <span>📊</span>
+                        <h4 className="font-semibold text-white text-sm">Key Factors</h4>
+                    </div>
+                    <div className="space-y-1">
+                        {insights.factors.slice(0, 4).map((f, i) => (
+                            <div key={i} className="flex items-start gap-2 text-xs">
+                                <span className={`mt-0.5 ${f.impact === 'positive' ? 'text-emerald-400' :
+                                        f.impact === 'negative' ? 'text-red-400' : 'text-amber-400'
+                                    }`}>
+                                    {f.impact === 'positive' ? '▲' : f.impact === 'negative' ? '▼' : '●'}
+                                </span>
+                                <span className="text-gray-300">
+                                    <span className="font-medium text-white">{f.factor}:</span> {f.detail}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Recommendations */}
+                {insights.recommendations.length > 0 && (
+                    <div className="p-3 bg-gradient-to-r from-blue-900/30 to-cyan-900/30 rounded-lg border border-blue-500/20">
+                        <div className="flex items-center gap-2 mb-1">
+                            <span>💡</span>
+                            <h4 className="font-semibold text-white text-sm">Tips</h4>
+                        </div>
+                        <ul className="space-y-1">
+                            {insights.recommendations.map((rec, i) => (
+                                <li key={i} className="text-gray-300 text-xs flex items-start gap-1">
+                                    <span className="text-cyan-400">→</span>
+                                    {rec}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
