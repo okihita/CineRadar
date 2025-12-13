@@ -1,9 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
-import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { Theatre, ScraperRun } from '@/types';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -11,113 +8,41 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { IndonesiaMap } from '@/components/indonesia-map';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ArrowUp, ArrowDown, X, ChevronUp, Download } from 'lucide-react';
 import { REGION_CITIES, getRegion } from '@/lib/regions';
+import { useTheatres, useFilters, useDarkMode } from '@/hooks';
 
 const ITEMS_PER_PAGE = 15;
 
-export default function AdminDashboard() {
-  const [theatres, setTheatres] = useState<Theatre[]>([]);
-  const [runs, setRuns] = useState<ScraperRun[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedMerchant, setSelectedMerchant] = useState<string>('all');
-  const [selectedRegion, setSelectedRegion] = useState<string>('all');
+function DashboardContent() {
+  // Data from custom hooks
+  const { theatres, runs, loading } = useTheatres();
+  const {
+    searchTerm, setSearchTerm,
+    selectedMerchant, setSelectedMerchant,
+    selectedRegion, setSelectedRegion,
+    sortByName, sortByCity,
+    toggleNameSort, toggleCitySort,
+    sortedTheatres, mapTheatres,
+  } = useFilters({ theatres });
+  const { darkMode, setDarkMode } = useDarkMode(false);
+
+  // Local UI state
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedTheatre, setSelectedTheatre] = useState<Theatre | null>(null);
-  const [sortByCity, setSortByCity] = useState<'asc' | 'desc' | null>(null);
-  const [sortByName, setSortByName] = useState<'asc' | 'desc' | null>(null);
-  const [darkMode, setDarkMode] = useState(false);
+  const [selectedTheatre, setSelectedTheatre] = useState<typeof theatres[0] | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
-  // Apply dark mode
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', darkMode);
-  }, [darkMode]);
-
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const theatresSnap = await getDocs(collection(db, 'theatres'));
-        const theatresData: Theatre[] = theatresSnap.docs.map(doc => {
-          const data = doc.data();
-          return {
-            theatre_id: data.theatre_id || doc.id,
-            name: data.name || '',
-            merchant: data.merchant || '',
-            city: data.city || '',
-            address: data.address || '',
-            lat: data.lat,
-            lng: data.lng,
-            place_id: data.place_id,
-            room_types: data.room_types || [],
-            last_seen: data.last_seen || '',
-            created_at: data.created_at || '',
-            updated_at: data.updated_at || ''
-          };
-        });
-        setTheatres(theatresData);
-
-        const runsQuery = query(
-          collection(db, 'scraper_runs'),
-          orderBy('timestamp', 'desc'),
-          limit(5)
-        );
-        const runsSnap = await getDocs(runsQuery);
-        const runsData = runsSnap.docs.map(doc => ({
-          ...doc.data(),
-          id: doc.id
-        })) as ScraperRun[];
-        setRuns(runsData);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchData();
-  }, []);
-
-  const merchants = [...new Set(theatres.map(t => t.merchant))].filter(Boolean).sort();
-  const cities = [...new Set(theatres.map(t => t.city))].sort();
+  // Derived data
+  const merchants = useMemo(() => [...new Set(theatres.map(t => t.merchant))].filter(Boolean).sort(), [theatres]);
+  const cities = useMemo(() => [...new Set(theatres.map(t => t.city))].sort(), [theatres]);
 
   // Filter theatres by merchant first (for region count calculation)
-  const merchantFilteredTheatres = selectedMerchant === 'all'
-    ? theatres
-    : theatres.filter(t => t.merchant === selectedMerchant);
-
-  const filteredTheatres = theatres.filter(t => {
-    const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.city.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesMerchant = selectedMerchant === 'all' || t.merchant === selectedMerchant;
-    const matchesRegion = selectedRegion === 'all' || getRegion(t.city) === selectedRegion;
-    return matchesSearch && matchesMerchant && matchesRegion;
-  });
-
-  // For map: filter by chain/region only (not search) so all markers remain visible
-  const mapTheatres = theatres.filter(t => {
-    const matchesMerchant = selectedMerchant === 'all' || t.merchant === selectedMerchant;
-    const matchesRegion = selectedRegion === 'all' || getRegion(t.city) === selectedRegion;
-    return matchesMerchant && matchesRegion;
-  });
-
-  // Sort by city or name if enabled
-  const sortedTheatres = sortByCity
-    ? [...filteredTheatres].sort((a, b) =>
-      sortByCity === 'asc'
-        ? a.city.localeCompare(b.city)
-        : b.city.localeCompare(a.city)
-    )
-    : sortByName
-      ? [...filteredTheatres].sort((a, b) =>
-        sortByName === 'asc'
-          ? a.name.localeCompare(b.name)
-          : b.name.localeCompare(a.name)
-      )
-      : filteredTheatres;
+  const merchantFilteredTheatres = useMemo(() =>
+    selectedMerchant === 'all' ? theatres : theatres.filter(t => t.merchant === selectedMerchant),
+    [theatres, selectedMerchant]
+  );
 
   // Region breakdown - filtered by selected chain
   const regionBreakdown = Object.keys(REGION_CITIES).map(region => ({
@@ -163,25 +88,11 @@ export default function AdminDashboard() {
 
   // Pagination
   const totalPages = Math.ceil(sortedTheatres.length / ITEMS_PER_PAGE);
+  const safePage = Math.min(currentPage, Math.max(1, totalPages));
   const paginatedTheatres = sortedTheatres.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
+    (safePage - 1) * ITEMS_PER_PAGE,
+    safePage * ITEMS_PER_PAGE
   );
-
-  // Reset page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, selectedMerchant, selectedRegion]);
-
-  const toggleCitySort = () => {
-    setSortByName(null);
-    setSortByCity(prev => prev === 'asc' ? 'desc' : prev === 'desc' ? null : 'asc');
-  };
-
-  const toggleNameSort = () => {
-    setSortByCity(null);
-    setSortByName(prev => prev === 'asc' ? 'desc' : prev === 'desc' ? null : 'asc');
-  };
 
   // Scroll listener for back-to-top button
   useEffect(() => {
@@ -698,5 +609,14 @@ export default function AdminDashboard() {
         </button>
       )}
     </div>
+  );
+}
+
+// Default export with ErrorBoundary wrapper
+export default function AdminDashboard() {
+  return (
+    <ErrorBoundary>
+      <DashboardContent />
+    </ErrorBoundary>
   );
 }
