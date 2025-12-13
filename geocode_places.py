@@ -5,12 +5,15 @@ Returns place_id for accurate Google Maps links.
 """
 import json
 import time
+import os
 import requests
 from pathlib import Path
 from typing import Dict, Optional
 
 # Configuration
-GOOGLE_MAPS_API_KEY = "REDACTED_API_KEY"
+GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY')
+if not GOOGLE_MAPS_API_KEY:
+    raise ValueError("GOOGLE_MAPS_API_KEY environment variable not set")
 PLACES_SEARCH_URL = "https://places.googleapis.com/v1/places:searchText"
 CACHE_FILE = Path(__file__).parent / "data" / "places_cache.json"
 

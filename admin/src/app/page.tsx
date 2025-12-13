@@ -278,7 +278,7 @@ function DashboardContent() {
               theatres={mapTheatres}
               selectedTheatre={selectedTheatre}
               onTheatreSelect={setSelectedTheatre}
-              apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'REDACTED_API_KEY'}
+              apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}
             />
           </CardContent>
         </Card>
@@ -542,7 +542,7 @@ function DashboardContent() {
                         loading="lazy"
                         allowFullScreen
                         referrerPolicy="no-referrer-when-downgrade"
-                        src={`https://www.google.com/maps/embed/v1/place?key=REDACTED_API_KEY&q=${encodeURIComponent(selectedTheatre.name + ' ' + selectedTheatre.city + ' Indonesia')}`}
+                        src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}&q=${encodeURIComponent(selectedTheatre.name + ' ' + selectedTheatre.city + ' Indonesia')}`}
                       />
                     </div>
 

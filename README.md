@@ -117,13 +117,33 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_maps_key
 ```
 
-## How It Works
+## GitHub Actions (Automated Scraping)
 
-1. **Authentication** - Opens browser to TIX.id home page to get auth token
-2. **City Selection** - Navigates to city page, searches and selects each city
-3. **API Interception** - Captures `/v1/movies` response for movie list
-4. **Schedule Fetching** (optional) - For each movie, navigates to detail page and captures `/v1/schedules/movies` API with pagination support
-5. **Output** - Generates timestamped JSON with all data
+The scraper runs automatically via GitHub Actions:
+
+| Workflow | Schedule | Description |
+|----------|----------|-------------|
+| `daily-scrape.yml` | 6:00 AM WIB daily | Scrapes movies + showtimes → Firestore |
+| `monthly-geocode.yml` | 1st of month 7:00 AM | Geocodes new theatres via Google Places |
+
+### Required Secrets
+
+Add these in GitHub → Settings → Secrets → Actions:
+
+| Secret | Value |
+|--------|-------|
+| `GOOGLE_MAPS_API_KEY` | Your Google Maps API key |
+| `FIREBASE_SERVICE_ACCOUNT` | Service account JSON from Firebase Console |
+
+### Manual Trigger
+
+Go to **Actions** → Select workflow → **Run workflow**
+
+### View Logs
+
+Click on any workflow run to see live logs as it executes.
+
+## How It Works
 
 ## 📦 Data Format
 
