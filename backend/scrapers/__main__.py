@@ -4,10 +4,10 @@ CineRadar CLI - Daily Movie Availability Scraper
 Scrapes movie listings and showtimes from TIX.id across all Indonesian cities.
 
 Usage:
-    python -m scraper                    # Basic scrape
-    python -m scraper --schedules        # Include showtimes
-    python -m scraper --city JAKARTA     # Specific city
-    python -m scraper --visible          # Show browser
+    python -m backend.scrapers                    # Basic scrape
+    python -m backend.scrapers --schedules        # Include showtimes
+    python -m backend.scrapers --city JAKARTA     # Specific city
+    python -m backend.scrapers --visible          # Show browser
 """
 import argparse
 import asyncio
@@ -16,7 +16,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from .tix_client import CineRadarScraper
+from backend.services.tix_client import CineRadarScraper
+
 
 
 def run_scrape(

@@ -13,10 +13,10 @@ from typing import Dict, List, Optional
 import aiohttp
 from playwright.async_api import async_playwright
 
-from .config import CITIES, API_BASE, APP_BASE, USER_AGENT, VIEWPORT, LOCALE, TIMEZONE
+from backend.config import CITIES, API_BASE, APP_BASE, USER_AGENT, VIEWPORT, LOCALE, TIMEZONE
 
-# Geocoding cache file
-GEOCODE_CACHE_FILE = os.path.join(os.path.dirname(__file__), '..', 'data', 'geocode_cache.json')
+# Geocoding cache file (relative to project root)
+GEOCODE_CACHE_FILE = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'geocode_cache.json')
 
 
 async def geocode_address(address: str, city: str, session: aiohttp.ClientSession, cache: Dict) -> Optional[Dict]:

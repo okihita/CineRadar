@@ -9,7 +9,7 @@ from pathlib import Path
 # Add parent to path  
 sys.path.insert(0, str(Path(__file__).parent))
 
-from scraper.firestore_client import sync_theatres_from_scrape
+from backend.services.firebase_client import sync_theatres_from_scrape
 
 
 def main():

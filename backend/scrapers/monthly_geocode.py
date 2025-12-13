@@ -15,7 +15,7 @@ GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY')
 if not GOOGLE_MAPS_API_KEY:
     raise ValueError("GOOGLE_MAPS_API_KEY environment variable not set")
 PLACES_SEARCH_URL = "https://places.googleapis.com/v1/places:searchText"
-CACHE_FILE = Path(__file__).parent / "data" / "places_cache.json"
+CACHE_FILE = Path(__file__).parent.parent.parent / "data" / "places_cache.json"
 
 
 def load_cache() -> Dict:
@@ -90,7 +90,7 @@ def geocode_theatre(theatre_name: str, city: str, cache: Dict) -> Optional[Dict]
 
 def main():
     # Find the latest movie file
-    data_dir = Path(__file__).parent / "data"
+    data_dir = Path(__file__).parent.parent.parent / "data"
     movie_files = sorted(data_dir.glob("movies_*.json"), reverse=True)
     
     if not movie_files:

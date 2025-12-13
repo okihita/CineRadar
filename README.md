@@ -25,25 +25,28 @@ A Python scraper for TIX.id - Indonesia's cinema ticket booking platform. Scrape
 
 ```
 CineRadar/
-├── scraper/                 # Python scraper module
-│   ├── __init__.py
-│   ├── __main__.py          # CLI entry point
-│   ├── config.py            # Cities & API configuration
-│   └── tix_client.py        # Core scraping logic
+├── backend/                 # Python backend
+│   ├── scrapers/
+│   │   ├── __main__.py      # CLI entry point
+│   │   └── monthly_geocode.py  # Google Places geocoding
+│   ├── services/
+│   │   ├── tix_client.py    # TIX.id scraper
+│   │   └── firebase_client.py  # Firestore CRUD
+│   └── config.py            # Cities & API configuration
 ├── admin/                   # Next.js admin dashboard
-│   └── src/
-│       ├── app/page.tsx     # Main dashboard
-│       └── components/
-│           └── indonesia-map.tsx  # Google Maps component
-├── web/                     # Next.js frontend (movie browser)
 │   └── src/
 │       ├── app/page.tsx
 │       └── components/
+├── web/                     # Next.js frontend (movie browser)
+├── firebase/                # Firebase configuration
+│   ├── firestore.rules
+│   └── firebase.json
 ├── data/                    # Scraped JSON files
-├── geocode_theatres.py      # Add lat/lng to theatres
+├── .github/workflows/       # GitHub Actions
+│   ├── daily-scrape.yml     # 6am WIB daily
+│   └── monthly-geocode.yml  # 1st of month
 ├── populate_firestore.py    # Upload to Firebase
-├── requirements.txt
-└── README.md
+└── requirements.txt
 ```
 
 ## Quick Start
