@@ -1,0 +1,38 @@
+# Monthly Theatre Geocode
+# Runs on 1st of each month at 7:00 AM WIB (00:00 UTC)
+
+name: Monthly Geocode
+
+on:
+  schedule:
+    # 00:00 UTC on 1st = 07:00 WIB
+    - cron: '0 0 1 * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  geocode:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run geocoder
+        run: python geocode_places.py
+        env:
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+
+      - name: Upload to Firestore
+        run: python populate_firestore.py
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}

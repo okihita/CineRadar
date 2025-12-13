@@ -5,12 +5,34 @@ Manages theatre collection with geocoding data.
 from datetime import datetime
 from typing import Dict, List, Optional
 import os
+import json
+import tempfile
 
 
 def get_firestore_client():
-    """Get Firestore client with proper credentials."""
+    """Get Firestore client with proper credentials.
+    
+    Supports:
+    - FIREBASE_SERVICE_ACCOUNT env var (JSON string) for CI/CD
+    - GOOGLE_APPLICATION_CREDENTIALS file path
+    - Default application credentials (local dev)
+    """
     from google.cloud import firestore
-    return firestore.Client(project='cineradar-481014')
+    
+    # Check for service account JSON in env (for GitHub Actions)
+    service_account_json = os.environ.get('FIREBASE_SERVICE_ACCOUNT')
+    if service_account_json:
+        # Write to temp file for google-cloud-firestore
+        creds_data = json.loads(service_account_json)
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            json.dump(creds_data, f)
+            temp_path = f.name
+        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = temp_path
+        return firestore.Client(project=creds_data.get('project_id', 'cineradar-test'))
+    
+    # Default: use ADC or GOOGLE_APPLICATION_CREDENTIALS
+    return firestore.Client(project=os.environ.get('FIREBASE_PROJECT_ID', 'cineradar-test'))
+
 
 
 def upsert_theatre(theatre_data: Dict) -> bool:
