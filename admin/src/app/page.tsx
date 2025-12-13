@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Theatre, ScraperRun } from '@/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -12,33 +12,9 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { IndonesiaMap } from '@/components/indonesia-map';
 import { ArrowUp, ArrowDown, X, ChevronUp, Download } from 'lucide-react';
+import { REGION_CITIES, getRegion } from '@/lib/regions';
 
 const ITEMS_PER_PAGE = 15;
-
-// City to Region mapping (Indonesian Islands)
-const REGION_CITIES: Record<string, string[]> = {
-  'Jawa': ['JAKARTA', 'BANDUNG', 'SURABAYA', 'SEMARANG', 'YOGYAKARTA', 'MALANG', 'BEKASI', 'TANGERANG', 'DEPOK', 'BOGOR', 'CIREBON', 'SOLO', 'SERANG', 'CILEGON', 'TASIKMALAYA', 'SUKABUMI', 'KARAWANG', 'PURWAKARTA', 'GARUT', 'INDRAMAYU', 'SUMEDANG', 'GRESIK', 'SIDOARJO', 'MOJOKERTO', 'KEDIRI', 'MADIUN', 'PONOROGO', 'PROBOLINGGO', 'TEGAL', 'PEKALONGAN', 'KUDUS', 'PURWOKERTO', 'KLATEN', 'JEMBER'],
-  'Sumatera': ['MEDAN', 'PALEMBANG', 'PEKANBARU', 'PADANG', 'JAMBI', 'LAMPUNG', 'BATAM', 'DUMAI', 'DURI', 'LUBUKLINGGAU', 'PRABUMULIH', 'PANGKAL PINANG', 'PEMATANG SIANTAR', 'RANTAU PRAPAT', 'ROKAN HILIR', 'KISARAN', 'TANJUNG PINANG'],
-  'Kalimantan': ['BALIKPAPAN', 'BANJARMASIN', 'PONTIANAK', 'SAMARINDA', 'TARAKAN', 'PALANGKARAYA', 'SINGKAWANG', 'SAMPIT', 'BANJARBARU', 'KETAPANG', 'KUALA KAPUAS'],
-  'Sulawesi': ['MAKASSAR', 'MANADO', 'PALU', 'KENDARI', 'GORONTALO', 'BAUBAU', 'MAMUJU'],
-  'Bali & NT': ['DENPASAR', 'BALI', 'MATARAM', 'KUPANG'],
-  'Papua & Maluku': ['JAYAPURA', 'SORONG', 'MANOKWARI', 'AMBON', 'TERNATE', 'TIMIKA'],
-};
-
-function getRegion(city: string): string {
-  const upperCity = city.toUpperCase().trim();
-  for (const [region, cities] of Object.entries(REGION_CITIES)) {
-    // Exact match first
-    if (cities.includes(upperCity)) {
-      return region;
-    }
-    // Then check if the city starts with or contains any reference city as a whole word
-    if (cities.some(c => upperCity === c || upperCity.startsWith(c + ' ') || upperCity.endsWith(' ' + c) || upperCity.includes(' ' + c + ' '))) {
-      return region;
-    }
-  }
-  return 'Others';
-}
 
 export default function AdminDashboard() {
   const [theatres, setTheatres] = useState<Theatre[]>([]);
@@ -54,7 +30,6 @@ export default function AdminDashboard() {
   const [darkMode, setDarkMode] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const tableContainerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<HTMLDivElement>(null);
 
   // Apply dark mode
   useEffect(() => {

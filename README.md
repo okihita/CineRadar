@@ -12,6 +12,14 @@ A Python scraper for TIX.id - Indonesia's cinema ticket booking platform. Scrape
 - 📊 **Daily reports** - Track movie availability over time
 - ⚡ **Fast & reliable** - Uses Playwright with response interception
 - 🌐 **Next.js dashboard** - Beautiful frontend to browse movies and showtimes
+- 🗺️ **Admin dashboard** - Theatre intelligence with Google Maps coverage
+
+## Live Demos
+
+| App | URL | Description |
+|-----|-----|-------------|
+| **Web** | Coming soon | Movie browser for end users |
+| **Admin** | [cineradar-admin.vercel.app](https://cineradar-admin.vercel.app/) | Theatre intelligence dashboard |
 
 ## Project Structure
 
@@ -22,14 +30,18 @@ CineRadar/
 │   ├── __main__.py          # CLI entry point
 │   ├── config.py            # Cities & API configuration
 │   └── tix_client.py        # Core scraping logic
-├── web/                     # Next.js frontend
+├── admin/                   # Next.js admin dashboard
+│   └── src/
+│       ├── app/page.tsx     # Main dashboard
+│       └── components/
+│           └── indonesia-map.tsx  # Google Maps component
+├── web/                     # Next.js frontend (movie browser)
 │   └── src/
 │       ├── app/page.tsx
 │       └── components/
-│           ├── MovieSidebar.tsx
-│           ├── CityShowtimes.tsx
-│           └── MovieBrowser.tsx
 ├── data/                    # Scraped JSON files
+├── geocode_theatres.py      # Add lat/lng to theatres
+├── populate_firestore.py    # Upload to Firebase
 ├── requirements.txt
 └── README.md
 ```
@@ -86,6 +98,23 @@ cd web
 npm install
 npm run dev
 # Open http://localhost:3000
+```
+
+### Run Admin Dashboard
+
+```bash
+cd admin
+npm install
+npm run dev
+# Open http://localhost:3000
+```
+
+**Environment variables for admin:**
+```bash
+# admin/.env.local
+NEXT_PUBLIC_FIREBASE_API_KEY=your_key
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_maps_key
 ```
 
 ## How It Works

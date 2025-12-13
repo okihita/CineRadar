@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { APIProvider, Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps';
 import { Theatre } from '@/types';
 
@@ -12,15 +12,8 @@ interface IndonesiaMapProps {
 }
 
 export function IndonesiaMap({ theatres, selectedTheatre, onTheatreSelect, apiKey }: IndonesiaMapProps) {
-    const [selectedId, setSelectedId] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (selectedTheatre) {
-            setSelectedId(selectedTheatre.theatre_id);
-        } else {
-            setSelectedId(null);
-        }
-    }, [selectedTheatre]);
+    // Derive selectedId directly from prop - no useState/useEffect needed
+    const selectedId = selectedTheatre?.theatre_id ?? null;
 
     const validTheatres = theatres.filter(t => typeof t.lat === 'number' && typeof t.lng === 'number');
 
@@ -39,10 +32,7 @@ export function IndonesiaMap({ theatres, selectedTheatre, onTheatreSelect, apiKe
                         <AdvancedMarker
                             key={theatre.theatre_id}
                             position={{ lat: theatre.lat!, lng: theatre.lng! }}
-                            onClick={() => {
-                                setSelectedId(theatre.theatre_id);
-                                onTheatreSelect(theatre);
-                            }}
+                            onClick={() => onTheatreSelect(theatre)}
                             title={theatre.name}
                         >
                             <Pin
