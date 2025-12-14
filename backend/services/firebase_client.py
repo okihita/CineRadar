@@ -28,10 +28,10 @@ def get_firestore_client():
             json.dump(creds_data, f)
             temp_path = f.name
         os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = temp_path
-        return firestore.Client(project=creds_data.get('project_id', 'cineradar-test'))
+        return firestore.Client(project=creds_data.get('project_id', 'cineradar-e47c3'))
     
     # Default: use ADC or GOOGLE_APPLICATION_CREDENTIALS
-    return firestore.Client(project=os.environ.get('FIREBASE_PROJECT_ID', 'cineradar-test'))
+    return firestore.Client(project=os.environ.get('FIREBASE_PROJECT_ID', 'cineradar-e47c3'))
 
 
 
