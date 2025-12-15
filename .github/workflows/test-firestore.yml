@@ -16,11 +16,28 @@ jobs:
       - name: Install dependencies
         run: pip install google-cloud-firestore
       
-      - name: Download latest scrape artifact
+      - name: Create minimal test data
         run: |
-          gh run download 20215543782 --name "scrape-data-20215543782" -D data/
-        env:
-          GH_TOKEN: ${{ github.token }}
+          mkdir -p data
+          cat > data/movies_2025-12-14.json << 'TESTDATA'
+          {
+            "scraped_at": "2025-12-14 06:00:00",
+            "date": "2025-12-14",
+            "movies": [{
+              "id": "test123",
+              "title": "TEST MOVIE",
+              "schedules": {
+                "JAKARTA": [{
+                  "theatre_id": "test_theatre_001",
+                  "theatre_name": "TEST CINEMA",
+                  "merchant": "XXI",
+                  "address": "Test Address",
+                  "rooms": [{"category": "REGULAR 2D"}]
+                }]
+              }
+            }]
+          }
+          TESTDATA
       
       - name: Test Firestore upload
         run: python populate_firestore.py
