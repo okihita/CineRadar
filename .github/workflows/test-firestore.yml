@@ -1,0 +1,28 @@
+name: Test Firestore Upload
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: pip install google-cloud-firestore
+      
+      - name: Download latest scrape artifact
+        run: |
+          gh run download 20215543782 --name "scrape-data-20215543782" -D data/
+        env:
+          GH_TOKEN: ${{ github.token }}
+      
+      - name: Test Firestore upload
+        run: python populate_firestore.py
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
