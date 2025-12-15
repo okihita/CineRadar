@@ -1,25 +1,26 @@
-# Daily Movie Scraper
-# Runs at 6:00 AM WIB (23:00 UTC previous day) every day
+# Daily Movie Scraper - Parallel Edition
+# Splits 83 cities into 9 parallel jobs for ~15 min total runtime
 
 name: Daily Scrape
 
 on:
   schedule:
-    # 23:00 UTC = 06:00 WIB (next day)
-    - cron: '0 23 * * *'
-  workflow_dispatch: # Allow manual trigger
+    - cron: '0 23 * * *'  # 6 AM WIB
+  workflow_dispatch:
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
-
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        batch: [0, 1, 2, 3, 4, 5, 6, 7, 8]
+    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -30,17 +31,49 @@ jobs:
           playwright install chromium
           playwright install-deps chromium
 
-      - name: Run scraper
-        run: python -m backend.scrapers --schedules
+      - name: Run scraper batch ${{ matrix.batch }}
+        run: python -m backend.scrapers --schedules --batch ${{ matrix.batch }} --total-batches 9
         env:
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+
+      - name: Upload batch artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: batch-${{ matrix.batch }}
+          path: data/batch_*.json
+          retention-days: 1
+
+  merge:
+    needs: scrape
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install google-cloud-firestore
+
+      - name: Download all batch artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: data/
+          pattern: batch-*
+          merge-multiple: true
+
+      - name: Merge batches
+        run: python -m backend.scrapers.merge_batches
 
       - name: Upload to Firestore
         run: python populate_firestore.py
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
-      - name: Upload artifact
+      - name: Upload final artifact
         uses: actions/upload-artifact@v4
         with:
           name: scrape-data-${{ github.run_id }}

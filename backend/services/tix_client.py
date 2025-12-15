@@ -300,6 +300,7 @@ class CineRadarScraper:
         headless: bool = True,
         city_limit: Optional[int] = None,
         specific_city: Optional[str] = None,
+        city_names: Optional[List[str]] = None,
         fetch_schedules: bool = False,
     ) -> Dict:
         """
@@ -324,6 +325,9 @@ class CineRadarScraper:
             if not cities:
                 self.log(f"❌ City '{specific_city}' not found")
                 return {}
+        elif city_names:
+            city_names_upper = [n.upper() for n in city_names]
+            cities = [c for c in self.cities if c['name'].upper() in city_names_upper]
         else:
             cities = self.cities[:city_limit] if city_limit else self.cities
             
