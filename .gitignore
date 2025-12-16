@@ -20,7 +20,8 @@ env/
 Thumbs.db
 
 # Project
-data/*.json
+data/batch_*.json
+!data/movies_*.json
 !data/.gitkeep
 
 # Keep env example
