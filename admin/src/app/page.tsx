@@ -524,11 +524,11 @@ function DashboardContent() {
             </Card>
           </div>
 
-          {/* Detail Panel - responsive bottom sheet on mobile */}
-          <div className="lg:col-span-1 max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:right-0 max-lg:z-40 max-lg:transition-transform max-lg:duration-300" style={{ transform: selectedTheatre ? 'translateY(0)' : 'translateY(100%)' }}>
-            <Card className="sticky top-16 max-lg:rounded-b-none max-lg:border-b-0" data-details-panel>
+          {/* Detail Panel */}
+          <div className="lg:col-span-1">
+            <Card className="sticky top-16" data-details-panel>
               <CardHeader className="py-3 px-4">
-                <CardTitle className="text-sm">Details</CardTitle>
+                <CardTitle className="text-sm">Theatre Details</CardTitle>
               </CardHeader>
               <CardContent className="px-4 pb-4">
                 {selectedTheatre ? (
@@ -588,8 +588,8 @@ function DashboardContent() {
                     </Button>
                   </div>
                 ) : (
-                  <div className="text-center py-8">
-                    <p className="text-sm text-muted-foreground">Select a theatre</p>
+                  <div className="text-center py-12 text-muted-foreground">
+                    <p className="text-sm">Click a theatre on the map or table to view details</p>
                   </div>
                 )}
               </CardContent>
@@ -600,44 +600,61 @@ function DashboardContent() {
         {/* Scrape History Section */}
         <Card className="mt-6">
           <CardHeader className="py-3">
-            <CardTitle className="text-sm font-medium">Scrape History</CardTitle>
+            <CardTitle className="text-sm font-medium">Scrape History & Insights</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-24">Date</TableHead>
+                  <TableHead className="w-28">Date</TableHead>
                   <TableHead className="w-20">Status</TableHead>
                   <TableHead className="text-right">Movies</TableHead>
                   <TableHead className="text-right">Cities</TableHead>
                   <TableHead className="text-right">Theatres</TableHead>
                   <TableHead className="text-right">Pre-sales</TableHead>
+                  <TableHead className="w-32">Insights</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {runs.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-4">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-4">
                       No scrape history yet
                     </TableCell>
                   </TableRow>
                 ) : (
-                  runs.map((run) => (
-                    <TableRow key={run.id || run.timestamp}>
-                      <TableCell className="font-mono text-xs">{run.date}</TableCell>
-                      <TableCell>
-                        <Badge variant={run.status === 'success' ? 'default' : run.status === 'partial' ? 'secondary' : 'destructive'} className="text-xs">
-                          {run.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-mono">{run.movies}</TableCell>
-                      <TableCell className="text-right font-mono">{run.cities}</TableCell>
-                      <TableCell className="text-right font-mono">
-                        {run.theatres_success}/{run.theatres_total}
-                      </TableCell>
-                      <TableCell className="text-right font-mono">{run.presales || '-'}</TableCell>
-                    </TableRow>
-                  ))
+                  runs.map((run, idx) => {
+                    const prevRun = runs[idx + 1];
+                    const movieDiff = prevRun ? run.movies - prevRun.movies : 0;
+                    const theatreDiff = prevRun ? run.theatres_total - prevRun.theatres_total : 0;
+                    return (
+                      <TableRow key={run.id || run.timestamp}>
+                        <TableCell className="font-mono text-xs">{run.date}</TableCell>
+                        <TableCell>
+                          <Badge variant={run.status === 'success' ? 'default' : run.status === 'partial' ? 'secondary' : 'destructive'} className="text-xs">
+                            {run.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right font-mono">{run.movies}</TableCell>
+                        <TableCell className="text-right font-mono">{run.cities}</TableCell>
+                        <TableCell className="text-right font-mono">
+                          {run.theatres_success}/{run.theatres_total}
+                          {run.theatres_failed > 0 && <span className="text-red-500 ml-1">({run.theatres_failed} failed)</span>}
+                        </TableCell>
+                        <TableCell className="text-right font-mono">{run.presales || '-'}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {prevRun && (
+                            <span>
+                              {movieDiff !== 0 && <span className={movieDiff > 0 ? 'text-green-600' : 'text-red-500'}>{movieDiff > 0 ? '+' : ''}{movieDiff} movies </span>}
+                              {theatreDiff !== 0 && <span className={theatreDiff > 0 ? 'text-green-600' : 'text-red-500'}>{theatreDiff > 0 ? '+' : ''}{theatreDiff} theatres</span>}
+                              {movieDiff === 0 && theatreDiff === 0 && <span>No change</span>}
+                            </span>
+                          )}
+                          {!prevRun && <span>First run</span>}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>

@@ -30,7 +30,7 @@ export function useTheatres(): UseTheatresReturn {
 
             const [theatreData, runData] = await Promise.all([
                 theatreService.getTheatres(),
-                theatreService.getScraperRuns(5)
+                theatreService.getScraperRuns(10)
             ]);
 
             setTheatres(theatreData);
