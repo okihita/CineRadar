@@ -1,0 +1,39 @@
+# Token Refresh Workflow
+# Runs before daily movie scrape to ensure fresh JWT token
+name: Token Refresh
+
+on:
+  schedule:
+    - cron: '50 22 * * *'  # 5:50 AM WIB (10 min before movie scrape)
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          playwright install chromium
+          playwright install-deps chromium
+
+      - name: Refresh TIX.id token
+        run: python -m backend.scrapers.refresh_token
+        env:
+          TIX_PHONE_NUMBER: ${{ secrets.TIX_PHONE_NUMBER }}
+          TIX_PASSWORD: ${{ secrets.TIX_PASSWORD }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Verify token stored
+        run: python -m backend.scrapers.refresh_token --check
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}

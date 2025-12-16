@@ -14,6 +14,7 @@ import aiohttp
 from playwright.async_api import async_playwright
 
 from backend.config import CITIES, API_BASE, APP_BASE, USER_AGENT, VIEWPORT, LOCALE, TIMEZONE
+from backend.services.base_scraper import BaseScraper
 
 # Geocoding cache file (relative to project root)
 GEOCODE_CACHE_FILE = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'geocode_cache.json')
@@ -64,17 +65,12 @@ async def geocode_address(address: str, city: str, session: aiohttp.ClientSessio
 
 
 
-class CineRadarScraper:
+class CineRadarScraper(BaseScraper):
     """Movie availability scraper for TIX.id"""
     
     def __init__(self):
-        self.api_base = API_BASE
-        self.app_base = APP_BASE
+        super().__init__()
         self.cities = CITIES
-        
-    def log(self, message: str):
-        """Print timestamped log message."""
-        print(f"[{time.strftime('%H:%M:%S')}] {message}")
     
     async def _fetch_movie_schedule(
         self, page, context, movie: Dict, city: Dict
@@ -181,12 +177,14 @@ class CineRadarScraper:
                     for show in group.get('show_time', []):
                         display_time = show.get('display_time')
                         status = show.get('status')
+                        showtime_id = show.get('id')  # Capture showtime ID for seat scraping
                         
                         # Full showtime object with status
                         showtime_obj = {
                             'time': display_time,
                             'status': status,
-                            'is_available': status == 1
+                            'is_available': status == 1,
+                            'showtime_id': showtime_id  # For seat layout API
                         }
                         room['all_showtimes'].append(showtime_obj)
                         
