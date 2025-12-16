@@ -91,13 +91,22 @@ class TokenRefresher(BaseScraper):
             current_url = page.url
             self.log(f"   📍 Post-login URL: {current_url}")
             
-            if '/login' not in current_url:
-                # Capture JWT
+            # Handle about:blank redirect - go back to app to get localStorage
+            if current_url == 'about:blank' or '/login' not in current_url:
+                self.log("   🔄 Navigating to home to capture token...")
+                await page.goto(f'{self.app_base}/home', wait_until='networkidle')
+                await asyncio.sleep(3)
+                await self._save_screenshot(page, "05_after_redirect_to_home")
+                current_url = page.url
+                self.log(f"   📍 Now at: {current_url}")
+            
+            # Try to capture JWT from localStorage
+            try:
                 token = await page.evaluate("localStorage.getItem('authentication_token')")
                 if token:
                     self.auth_token = token
-                    self.log("✅ JWT token captured!")
-                    await self._save_screenshot(page, "05_success_token_captured")
+                    self.log(f"✅ JWT token captured! (length: {len(token)})")
+                    await self._save_screenshot(page, "06_success_token_captured")
                     
                     # Store in Firestore
                     if store_token(token, self._phone):
@@ -106,9 +115,13 @@ class TokenRefresher(BaseScraper):
                     else:
                         self.log("⚠️ Token storage failed")
                         return False
+                else:
+                    self.log("⚠️ No token in localStorage")
+            except Exception as e:
+                self.log(f"⚠️ Could not read localStorage: {e}")
             
-            self.log("❌ Login failed - still on login page")
-            await self._save_screenshot(page, "05_failed_still_on_login")
+            self.log("❌ Login failed - could not capture token")
+            await self._save_screenshot(page, "06_failed_no_token")
             return False
                 
         finally:
