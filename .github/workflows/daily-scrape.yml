@@ -71,9 +71,10 @@ jobs:
 
       - name: Commit data for web app
         run: |
+          cp data/movies_*.json web/public/data/
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f data/movies_*.json
+          git add -f data/movies_*.json web/public/data/movies_*.json
           git commit -m "Daily scrape $(date +%Y-%m-%d)" || echo "No changes"
           git push
 
