@@ -209,3 +209,42 @@ def log_scraper_run(run_data: Dict) -> bool:
     except Exception as e:
         print(f"Error logging scraper run: {e}")
         return False
+
+
+def save_daily_snapshot(data: Dict) -> bool:
+    """Save daily movie snapshot to Firestore for web app."""
+    try:
+        db = get_firestore_client()
+        date = data.get('date', datetime.utcnow().strftime('%Y-%m-%d'))
+        
+        # Slim down movies - remove full schedules, keep only counts
+        slim_movies = []
+        for m in data.get('movies', []):
+            schedules = m.get('schedules', {})
+            schedule_summary = {city: len(theatres) for city, theatres in schedules.items()}
+            slim_movies.append({
+                'id': m.get('id'),
+                'title': m.get('title'),
+                'genres': m.get('genres', []),
+                'poster': m.get('poster'),
+                'age_category': m.get('age_category'),
+                'country': m.get('country'),
+                'merchants': m.get('merchants', []),
+                'is_presale': m.get('is_presale', False),
+                'cities': m.get('cities', []),
+                'theatre_counts': schedule_summary,
+            })
+        
+        db.collection('snapshots').document('latest').set({
+            'scraped_at': data.get('scraped_at'),
+            'date': date,
+            'summary': data.get('summary', {}),
+            'movies': slim_movies,
+            'city_stats': data.get('city_stats', {}),
+        })
+        
+        print(f"   Saved snapshot for {date}")
+        return True
+    except Exception as e:
+        print(f"Error saving snapshot: {e}")
+        return False

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Populate Firestore with scraped data and log run status."""
+"""Populate Firestore with scraped data."""
 import json
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from backend.services.firebase_client import sync_theatres_from_scrape, log_scraper_run
+from backend.services.firebase_client import sync_theatres_from_scrape, log_scraper_run, save_daily_snapshot
 
 
 def main():
@@ -28,8 +28,12 @@ def main():
     summary = data.get('summary', {})
     print(f"🎬 Movies: {len(movies)}")
     
-    # Sync to Firestore
-    print("🔥 Syncing theatres to Firestore...")
+    # Save daily snapshot for web app
+    print("🔥 Saving daily snapshot...")
+    save_daily_snapshot(data)
+    
+    # Sync theatres
+    print("🔥 Syncing theatres...")
     result = sync_theatres_from_scrape(movies)
     
     # Log scraper run
@@ -44,7 +48,7 @@ def main():
         'presales': summary.get('presale_count', 0),
     })
     
-    print(f"\n✅ Done! Theatres: {result['success']}/{result['total']}")
+    print(f"✅ Done! Theatres: {result['success']}/{result['total']}")
 
 
 if __name__ == "__main__":
