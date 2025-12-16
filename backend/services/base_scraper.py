@@ -87,40 +87,40 @@ class BaseScraper:
         
         try:
             await page.goto(f'{self.app_base}/login', wait_until='networkidle')
-            await asyncio.sleep(3)
+            await asyncio.sleep(8)  # Flutter needs time to render
             
             # Strip 62 prefix from phone
             phone_clean = self._phone.lstrip('+').lstrip('62')
             
-            # Check for input fields
-            inputs = page.locator('input')
-            input_count = await inputs.count()
-            self.log(f"   📋 Found {input_count} input fields")
+            # Try get_by_placeholder first (Flutter friendly)
+            phone_field = page.get_by_placeholder('Type your phone number')
+            password_field = page.get_by_placeholder('Type Password')
             
-            if input_count >= 2:
-                # Fill phone (first input)
-                await inputs.nth(0).click()
+            phone_count = await phone_field.count()
+            pass_count = await password_field.count()
+            self.log(f"   📋 Found phone={phone_count}, password={pass_count} via placeholder")
+            
+            if phone_count > 0:
+                await phone_field.click()
                 await asyncio.sleep(0.5)
-                await page.keyboard.type(phone_clean, delay=50)
+                await page.keyboard.type(phone_clean, delay=30)
                 self.log(f"   📱 Typed phone: {phone_clean[:4]}***")
+            
+            if pass_count > 0:
+                await password_field.click()
                 await asyncio.sleep(0.5)
-                
-                # Fill password (second input)
-                await inputs.nth(1).click()
-                await asyncio.sleep(0.5)
-                await page.keyboard.type(self._password, delay=50)
+                await page.keyboard.type(self._password, delay=30)
                 self.log("   🔑 Typed password")
-                await asyncio.sleep(0.5)
             
             # Click Login button
-            login_button = page.get_by_text('Login', exact=True).first
+            await asyncio.sleep(0.5)
+            login_button = page.get_by_role('button', name='Login')
             if await login_button.count() > 0:
                 await login_button.click()
                 self.log("   📤 Clicked Login button")
             else:
-                await page.keyboard.press('Tab')
                 await page.keyboard.press('Enter')
-                self.log("   📤 Pressed Tab+Enter to submit")
+                self.log("   📤 Pressed Enter to submit")
             
             # Wait for login
             await asyncio.sleep(5)

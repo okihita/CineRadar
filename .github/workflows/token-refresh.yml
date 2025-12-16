@@ -10,7 +10,7 @@ on:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     
     steps:
       - uses: actions/checkout@v4
@@ -25,13 +25,24 @@ jobs:
           pip install -r requirements.txt
           playwright install chromium
           playwright install-deps chromium
+          sudo apt-get install -y xvfb
 
-      - name: Refresh TIX.id token
-        run: python -m backend.scrapers.refresh_token
+      - name: Refresh TIX.id token (with xvfb)
+        run: |
+          xvfb-run --auto-servernum --server-args="-screen 0 1280x720x24" \
+            python -m backend.scrapers.refresh_token --debug-screenshots
         env:
           TIX_PHONE_NUMBER: ${{ secrets.TIX_PHONE_NUMBER }}
           TIX_PASSWORD: ${{ secrets.TIX_PASSWORD }}
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Upload debug screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: login-debug-screenshots
+          path: screenshots/*.png
+          retention-days: 3
 
       - name: Verify token stored
         run: python -m backend.scrapers.refresh_token --check

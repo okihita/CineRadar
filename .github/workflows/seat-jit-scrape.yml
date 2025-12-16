@@ -1,0 +1,53 @@
+# Seat Scraper - Just-in-Time Mode
+# Runs every 15 minutes to capture seat occupancy before showtimes
+name: Seat JIT Scrape
+
+on:
+  schedule:
+    # Run every 15 minutes from 9 AM to 11 PM WIB (2 AM to 4 PM UTC)
+    - cron: '*/15 2-16 * * *'
+  workflow_dispatch:
+
+jobs:
+  seat-jit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          playwright install chromium
+          playwright install-deps chromium
+
+      - name: Download latest movie data
+        run: |
+          # Get today's date
+          DATE=$(TZ="Asia/Jakarta" date +%Y-%m-%d)
+          # Download from previous commit's data folder if exists
+          git show HEAD:data/movies_${DATE}.json > data/movies_${DATE}.json 2>/dev/null || echo "No movie data for today"
+
+      - name: Run JIT seat scraper
+        run: python -m backend.scrapers.seat_main --mode jit --jit-window 20
+
+      - name: Upload to Firestore
+        if: success()
+        run: python -m backend.scrapers.upload_seats
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        continue-on-error: true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: seats-jit-${{ github.run_id }}
+          path: data/seats_jit_*.json
+          retention-days: 3
+          if-no-files-found: ignore
