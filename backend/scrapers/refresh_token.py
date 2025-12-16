@@ -102,7 +102,18 @@ class TokenRefresher(BaseScraper):
             
             # Try to capture JWT from localStorage
             try:
-                token = await page.evaluate("localStorage.getItem('authentication_token')")
+                # Debug: list all localStorage keys
+                all_keys = await page.evaluate("Object.keys(localStorage)")
+                self.log(f"   🔑 localStorage keys: {all_keys}")
+                
+                # Try multiple possible token key names
+                token = None
+                for key in ['authentication_token', 'token', 'auth_token', 'jwt', 'access_token']:
+                    token = await page.evaluate(f"localStorage.getItem('{key}')")
+                    if token:
+                        self.log(f"   ✅ Found token under key: {key}")
+                        break
+                
                 if token:
                     self.auth_token = token
                     self.log(f"✅ JWT token captured! (length: {len(token)})")
@@ -116,7 +127,7 @@ class TokenRefresher(BaseScraper):
                         self.log("⚠️ Token storage failed")
                         return False
                 else:
-                    self.log("⚠️ No token in localStorage")
+                    self.log("⚠️ No token found in any localStorage key")
             except Exception as e:
                 self.log(f"⚠️ Could not read localStorage: {e}")
             
