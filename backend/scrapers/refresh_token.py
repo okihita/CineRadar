@@ -75,28 +75,30 @@ class TokenRefresher(BaseScraper):
                 self.log("   🔑 Typed password")
                 await self._save_screenshot(page, "03_after_password_typed")
             
-            # Click Login
+            # Click Login and wait for navigation
             login_button = page.get_by_role('button', name='Login').first
             if await login_button.count() > 0:
-                await login_button.click()
-                self.log("   📤 Clicked Login button")
+                # Click and wait for any navigation
+                async with page.expect_navigation(wait_until='networkidle', timeout=30000):
+                    await login_button.click()
+                    self.log("   📤 Clicked Login button, waiting for navigation...")
             else:
                 await page.keyboard.press('Enter')
                 self.log("   📤 Pressed Enter")
+                await asyncio.sleep(5)
             
-            await asyncio.sleep(5)
             await self._save_screenshot(page, "04_after_login_attempt")
             
             # Check result
             current_url = page.url
             self.log(f"   📍 Post-login URL: {current_url}")
             
-            # Handle about:blank redirect - go back to app to get localStorage
-            if current_url == 'about:blank' or '/login' not in current_url:
-                self.log("   🔄 Navigating to home to capture token...")
-                await page.goto(f'{self.app_base}/home', wait_until='networkidle')
+            # If we're on about:blank or wrong page, navigate back to app
+            if 'app.tix.id' not in current_url:
+                self.log("   🔄 Navigating back to app to capture token...")
+                await page.goto(f'{self.app_base}', wait_until='networkidle')
                 await asyncio.sleep(3)
-                await self._save_screenshot(page, "05_after_redirect_to_home")
+                await self._save_screenshot(page, "05_navigate_back_to_app")
                 current_url = page.url
                 self.log(f"   📍 Now at: {current_url}")
             
