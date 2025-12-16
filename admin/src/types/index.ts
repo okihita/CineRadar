@@ -15,10 +15,14 @@ export interface Theatre {
 
 export interface ScraperRun {
     id?: string;
-    status: string;
-    movies: number;
-    cities: number;
-    theatres_synced: number;
+    status: 'success' | 'partial' | 'failed';
     date: string;
     timestamp: string;
+    movies: number;
+    cities: number;
+    theatres_total: number;
+    theatres_success: number;
+    theatres_failed: number;
+    presales?: number;
+    error?: string;
 }

@@ -596,6 +596,53 @@ function DashboardContent() {
             </Card>
           </div>
         </div>
+
+        {/* Scrape History Section */}
+        <Card className="mt-6">
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm font-medium">Scrape History</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-24">Date</TableHead>
+                  <TableHead className="w-20">Status</TableHead>
+                  <TableHead className="text-right">Movies</TableHead>
+                  <TableHead className="text-right">Cities</TableHead>
+                  <TableHead className="text-right">Theatres</TableHead>
+                  <TableHead className="text-right">Pre-sales</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {runs.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-4">
+                      No scrape history yet
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  runs.map((run) => (
+                    <TableRow key={run.id || run.timestamp}>
+                      <TableCell className="font-mono text-xs">{run.date}</TableCell>
+                      <TableCell>
+                        <Badge variant={run.status === 'success' ? 'default' : run.status === 'partial' ? 'secondary' : 'destructive'} className="text-xs">
+                          {run.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-mono">{run.movies}</TableCell>
+                      <TableCell className="text-right font-mono">{run.cities}</TableCell>
+                      <TableCell className="text-right font-mono">
+                        {run.theatres_success}/{run.theatres_total}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">{run.presales || '-'}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </main>
 
       {/* Back to Top Button */}
