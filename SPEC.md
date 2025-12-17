@@ -183,3 +183,155 @@ backend/
     ├── refresh_token.py     # Token refresh script
     └── __main__.py          # Entry point
 ```
+
+---
+
+## Token Architecture
+
+TIX.id uses a **two-token system** for security:
+
+| Token | localStorage Key | Duration | Purpose |
+|-------|-----------------|----------|---------|
+| Access | `authentication_token` | ~30 min | Sent with every API request |
+| Refresh | `authentication_refresh_token` | ~91 days | Used to get new access tokens |
+
+### Why Two Tokens?
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  If hacker steals ACCESS token → Only 30 min of access     │
+│  If hacker steals REFRESH token → Can get new access tokens │
+│                                                             │
+│  Access tokens are exposed in every API call (higher risk)  │
+│  Refresh tokens stay in localStorage (lower exposure)       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Token Flow
+
+1. **Login** → Get both access (30 min) + refresh (91 days) tokens
+2. **API Calls** → Use access token in `Authorization: Bearer {token}`
+3. **Access Expires** → App automatically uses refresh token to get new access
+4. **Refresh Expires** → User must login again with phone/password
+
+### Current Implementation
+
+- Token refresh stores the **access token** in Firestore
+- Runs daily at 5:50 AM WIB (before 6 AM movie scrape)
+- JIT seat scraper uses stored token via `--use-stored-token`
+
+> [!NOTE]
+> Future improvement: Store refresh token instead and exchange for access token on each scrape. This would allow scraping without daily browser login.
+
+---
+
+## Known Issues & Fixes
+
+### Issue 1: Two Login Buttons (CRITICAL)
+
+**Problem:** TIX.id login page has two buttons labeled "Login":
+- Header button → Navigates to home (does NOT login)
+- Form button → Actually submits login
+
+**Symptom:** Playwright clicks header button, page goes to `about:blank`, no session created.
+
+**Fix:** Use `.last` not `.first` in Playwright selector:
+```python
+# WRONG - clicks header button
+login_button = page.get_by_role('button', name='Login').first
+
+# CORRECT - clicks form button
+login_button = page.get_by_role('button', name='Login').last
+```
+
+### Issue 2: Flutter Rendering in Headless Mode
+
+**Problem:** Flutter canvas-based apps render differently in headless Chromium.
+
+**Symptom:** Input fields not found, page appears blank.
+
+**Fix:** Use `xvfb-run` on Linux (GitHub Actions):
+```yaml
+xvfb-run --auto-servernum --server-args="-screen 0 1280x720x24" \
+  python -m backend.scrapers.refresh_token
+```
+
+### Issue 3: Showtime ID Extraction
+
+**Problem:** CLI was reading wrong field for showtime IDs.
+
+**Data Structure:**
+```json
+{
+  "rooms": [{
+    "category": "2D",
+    "showtimes": ["19:35", "20:00"],        // ❌ No IDs
+    "all_showtimes": [                       // ✅ Has IDs
+      {"time": "19:35", "showtime_id": "123", "is_available": true}
+    ]
+  }]
+}
+```
+
+**Fix:** Changed CLI to read from `all_showtimes`:
+```python
+# WRONG
+for st in room.get('showtimes', []):
+
+# CORRECT
+for st in room.get('all_showtimes', room.get('showtimes', [])):
+```
+
+### Issue 4: Local Firestore Access
+
+**Problem:** Local development uses different Google Cloud project (kadago109 vs cineradar).
+
+**Symptom:** `403 Cloud Firestore API has not been used in project kadago109`
+
+**Fix:** Set `FIREBASE_SERVICE_ACCOUNT` environment variable with CineRadar service account JSON.
+
+---
+
+## Data Structure Reference
+
+### Movie Data (`data/movies_{date}.json`)
+
+```json
+{
+  "scraped_at": "2025-12-17 16:59:35",
+  "date": "2025-12-17",
+  "movies": [{
+    "id": "1961889705591132160",
+    "title": "AVATAR: FIRE AND ASH",
+    "merchants": ["XXI", "CGV", "Cinépolis"],
+    "schedules": {
+      "MALANG": [{
+        "theatre_id": "986744938815295488",
+        "theatre_name": "ARAYA XXI",
+        "merchant": "XXI",
+        "rooms": [{
+          "category": "2D",
+          "price": "Rp35.000",
+          "all_showtimes": [{
+            "time": "19:35",
+            "showtime_id": "2000039256042586112",
+            "status": 1,
+            "is_available": true
+          }]
+        }]
+      }]
+    }
+  }]
+}
+```
+
+### Token Storage (Firestore `auth_tokens/tix_jwt`)
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "stored_at": "2025-12-17T09:06:29.115024",
+  "expires_at": "2025-12-18T05:06:29.115029",
+  "phone": "6285***"
+}
+```
