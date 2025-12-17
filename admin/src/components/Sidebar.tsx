@@ -2,15 +2,21 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { MapPin, Film, Users, ChevronLeft, ChevronRight, DollarSign, Trophy, TrendingUp, Navigation, Settings, Heart, Brain } from 'lucide-react';
+import { LayoutDashboard, MapPin, Film, Users, ChevronLeft, ChevronRight, DollarSign, Trophy, TrendingUp, Navigation, Settings, Heart, Brain } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
 const menuItems = [
   {
+    title: 'Executive Dashboard',
+    description: 'Overview & insights',
+    href: '/',
+    icon: LayoutDashboard,
+  },
+  {
     title: 'Cinema Intelligence',
     description: 'Theatre locations & chains',
-    href: '/',
+    href: '/cinemas',
     icon: MapPin,
   },
   {
@@ -68,6 +74,7 @@ const menuItems = [
     icon: Brain,
   },
 ];
+
 
 
 

@@ -1,686 +1,317 @@
 'use client';
 
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { IndonesiaMap } from '@/components/indonesia-map';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { ArrowUp, ArrowDown, X, ChevronUp, Download } from 'lucide-react';
-import { REGION_CITIES, getRegion } from '@/lib/regions';
-import { useTheatres, useFilters, useDarkMode } from '@/hooks';
+import { PageHeader } from '@/components/PageHeader';
+import {
+    LayoutDashboard, TrendingUp, TrendingDown, AlertTriangle, CheckCircle,
+    XCircle, Film, Building2, MapPin, Lightbulb, ArrowRight, Clock
+} from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
-const ITEMS_PER_PAGE = 15;
-
-function DashboardContent() {
-  // Data from custom hooks
-  const { theatres, runs, loading } = useTheatres();
-  const {
-    searchTerm, setSearchTerm,
-    selectedMerchant, setSelectedMerchant,
-    selectedRegion, setSelectedRegion,
-    sortByName, sortByCity,
-    toggleNameSort, toggleCitySort,
-    sortedTheatres, mapTheatres,
-  } = useFilters({ theatres });
-  const { darkMode, setDarkMode } = useDarkMode(false);
-
-  // Local UI state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedTheatre, setSelectedTheatre] = useState<typeof theatres[0] | null>(null);
-  const [showBackToTop, setShowBackToTop] = useState(false);
-  const tableContainerRef = useRef<HTMLDivElement>(null);
-
-  // Derived data
-  const merchants = useMemo(() => [...new Set(theatres.map(t => t.merchant))].filter(Boolean).sort(), [theatres]);
-  const cities = useMemo(() => [...new Set(theatres.map(t => t.city))].sort(), [theatres]);
-
-  // Filter theatres by merchant first (for region count calculation)
-  const merchantFilteredTheatres = useMemo(() =>
-    selectedMerchant === 'all' ? theatres : theatres.filter(t => t.merchant === selectedMerchant),
-    [theatres, selectedMerchant]
-  );
-
-  // Region breakdown - filtered by selected chain
-  const regionBreakdown = Object.keys(REGION_CITIES).map(region => ({
-    name: region,
-    count: merchantFilteredTheatres.filter(t => getRegion(t.city) === region).length
-  })).filter(r => r.count > 0).sort((a, b) => b.count - a.count);
-
-  const othersCount = merchantFilteredTheatres.filter(t => getRegion(t.city) === 'Others').length;
-  if (othersCount > 0) {
-    regionBreakdown.push({ name: 'Others', count: othersCount });
-  }
-
-  // Merchant breakdown
-  const merchantBreakdown = merchants.map(m => ({
-    name: m,
-    count: theatres.filter(t => t.merchant === m).length,
-  })).sort((a, b) => b.count - a.count);
-
-  // Region breakdown per merchant (for hover stats)
-  const getMerchantRegionBreakdown = (merchantName: string) => {
-    const merchantTheatres = theatres.filter(t => t.merchant === merchantName);
-    const regions: Record<string, number> = {};
-    merchantTheatres.forEach(t => {
-      const region = getRegion(t.city);
-      regions[region] = (regions[region] || 0) + 1;
-    });
-    return Object.entries(regions)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([name, count]) => `${name}: ${Math.round((count / merchantTheatres.length) * 100)}%`)
-      .join(', ');
-  };
-
-  // Last updated timestamp
-  const lastUpdated = runs[0]?.timestamp
-    ? new Date(runs[0].timestamp).toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-    : null;
-
-  // Pagination
-  const totalPages = Math.ceil(sortedTheatres.length / ITEMS_PER_PAGE);
-  const safePage = Math.min(currentPage, Math.max(1, totalPages));
-  const paginatedTheatres = sortedTheatres.slice(
-    (safePage - 1) * ITEMS_PER_PAGE,
-    safePage * ITEMS_PER_PAGE
-  );
-
-  // Scroll listener for back-to-top button
-  useEffect(() => {
-    const handleScroll = () => {
-      setShowBackToTop(window.scrollY > 400);
+interface DashboardData {
+    greeting: string;
+    date: string;
+    timestamp: string;
+    kpis: {
+        revenue: { value: number; delta: string };
+        tickets: { value: number; delta: string };
+        occupancy: { value: number; delta: string };
+        topTheatre: string;
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Scroll to selected theatre row when marker is clicked
-  useEffect(() => {
-    if (selectedTheatre && tableContainerRef.current) {
-      const row = tableContainerRef.current.querySelector(`[data-theatre-id="${selectedTheatre.theatre_id}"]`);
-      if (row) {
-        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }
-  }, [selectedTheatre]);
-
-  const scrollToTop = useCallback(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
-
-  // Export filtered theatres to CSV
-  const exportToCSV = useCallback(() => {
-    const headers = ['Name', 'Chain', 'City', 'Region', 'Address'];
-    const rows = sortedTheatres.map(t => [
-      t.name,
-      t.merchant,
-      t.city,
-      getRegion(t.city),
-      t.address || ''
-    ]);
-    const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `theatres-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }, [sortedTheatres]);
-
-  // Keyboard navigation for table
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (!paginatedTheatres.length) return;
-
-    const currentIndex = selectedTheatre
-      ? paginatedTheatres.findIndex(t => t.theatre_id === selectedTheatre.theatre_id)
-      : -1;
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      const nextIndex = currentIndex < paginatedTheatres.length - 1 ? currentIndex + 1 : 0;
-      setSelectedTheatre(paginatedTheatres[nextIndex]);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      const prevIndex = currentIndex > 0 ? currentIndex - 1 : paginatedTheatres.length - 1;
-      setSelectedTheatre(paginatedTheatres[prevIndex]);
-    } else if (e.key === 'Enter' && selectedTheatre) {
-      // Scroll details panel into view
-      const detailsPanel = document.querySelector('[data-details-panel]');
-      if (detailsPanel) {
-        detailsPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }
-  }, [paginatedTheatres, selectedTheatre]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground text-sm">Loading theatre data...</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* KPI Ticker Bar */}
-      <div className="bg-muted/50 border-b text-xs">
-        <div className="container mx-auto px-4 py-2 flex items-center justify-between gap-6 overflow-x-auto">
-          <div className="flex items-center gap-6 flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              <span className="font-mono font-medium">{theatres.length}</span>
-              <span className="text-muted-foreground">THEATRES</span>
-            </div>
-            <div className="h-3 w-px bg-border"></div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono font-medium">{cities.length}</span>
-              <span className="text-muted-foreground">CITIES</span>
-            </div>
-            <div className="h-3 w-px bg-border"></div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono font-medium">{merchants.length}</span>
-              <span className="text-muted-foreground">CHAINS</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-4 flex-shrink-0">
-            {merchantBreakdown.map(m => (
-              <div
-                key={m.name}
-                className="flex items-center gap-1.5 cursor-help"
-                title={`${m.name} distribution: ${getMerchantRegionBreakdown(m.name)}`}
-              >
-                <span className={`w-2 h-2 rounded-sm ${m.name === 'XXI' ? 'bg-amber-500' :
-                  m.name === 'CGV' ? 'bg-red-500' :
-                    'bg-blue-500'
-                  }`}></span>
-                <span className="font-medium">{m.name}</span>
-                <span className="text-muted-foreground">{Math.round((m.count / theatres.length) * 100)}%</span>
-              </div>
-            ))}
-            {lastUpdated && (
-              <>
-                <div className="h-3 w-px bg-border"></div>
-                <span className="text-muted-foreground">Updated: {lastUpdated}</span>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Header */}
-      <header className="border-b sticky top-0 z-50 bg-background/95 backdrop-blur">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <svg className="w-4 h-4 text-primary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <circle cx="12" cy="12" r="6" />
-                  <circle cx="12" cy="12" r="2" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-lg font-bold tracking-tight">CineRadar</h1>
-                <p className="text-xs text-muted-foreground">Theatre Intelligence</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-muted-foreground">Theme</span>
-                <Switch checked={darkMode} onCheckedChange={setDarkMode} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-4 space-y-4">
-        {/* Full Width Map */}
-        <Card>
-          <CardHeader className="py-3 px-4">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm">Coverage Map</CardTitle>
-              {selectedTheatre && (
-                <div className="flex items-center gap-2 text-xs">
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded font-medium ${selectedTheatre.merchant === 'XXI' ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400' :
-                    selectedTheatre.merchant === 'CGV' ? 'bg-red-500/20 text-red-600 dark:text-red-400' :
-                      'bg-blue-500/20 text-blue-600 dark:text-blue-400'
-                    }`}>
-                    {selectedTheatre.merchant}
-                  </span>
-                  <span className="font-medium">{selectedTheatre.name}</span>
-                  <span className="text-muted-foreground">• {selectedTheatre.city}</span>
-                  <button
-                    onClick={() => setSelectedTheatre(null)}
-                    className="text-muted-foreground hover:text-foreground ml-1"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <IndonesiaMap
-              theatres={mapTheatres}
-              selectedTheatre={selectedTheatre}
-              onTheatreSelect={setSelectedTheatre}
-              apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Filters - below map */}
-        <Card>
-          <CardContent className="px-4 py-3">
-            <div className="flex flex-wrap items-center gap-4">
-              {/* Chain Filter */}
-              <div className="flex items-center gap-2">
-                <label className="text-xs font-medium text-muted-foreground">CHAIN</label>
-                <div className="flex flex-wrap gap-1.5">
-                  <Badge
-                    variant={selectedMerchant === 'all' ? 'default' : 'outline'}
-                    className="cursor-pointer text-xs px-3 py-1"
-                    onClick={() => setSelectedMerchant('all')}
-                  >
-                    All ({theatres.length})
-                  </Badge>
-                  {merchantBreakdown.map((m) => (
-                    <span
-                      key={m.name}
-                      className={`inline-flex items-center cursor-pointer text-xs px-3 py-1 rounded-md font-medium transition-colors ${selectedMerchant === m.name
-                        ? m.name === 'XXI' ? 'bg-amber-500 text-white'
-                          : m.name === 'CGV' ? 'bg-red-600 text-white'
-                            : 'bg-blue-600 text-white'
-                        : 'border hover:bg-muted'
-                        }`}
-                      onClick={() => setSelectedMerchant(m.name)}
-                    >
-                      {m.name} ({m.count})
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="h-4 w-px bg-border hidden sm:block"></div>
-
-              {/* Region Filter */}
-              <div className="flex items-center gap-2">
-                <label className="text-xs font-medium text-muted-foreground">REGION</label>
-                <div className="flex flex-wrap gap-1.5">
-                  <Badge
-                    variant={selectedRegion === 'all' ? 'default' : 'outline'}
-                    className="cursor-pointer text-xs px-3 py-1"
-                    onClick={() => setSelectedRegion('all')}
-                  >
-                    All
-                  </Badge>
-                  {regionBreakdown.map((r) => (
-                    <Badge
-                      key={r.name}
-                      variant={selectedRegion === r.name ? 'default' : 'outline'}
-                      className="cursor-pointer text-xs px-3 py-1"
-                      onClick={() => setSelectedRegion(r.name)}
-                    >
-                      {r.name} ({r.count})
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-
-              {/* Clear button */}
-              {(selectedMerchant !== 'all' || selectedRegion !== 'all' || searchTerm) && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 text-xs ml-auto"
-                  onClick={() => {
-                    setSelectedMerchant('all');
-                    setSelectedRegion('all');
-                    setSearchTerm('');
-                  }}
-                >
-                  Clear All
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Bottom Row: Table + Detail */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Theatre Table */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader className="py-3 px-4">
-                <div className="flex items-center justify-between gap-4">
-                  <CardTitle className="text-sm flex-shrink-0">
-                    Theatres
-                    <span className="font-normal text-muted-foreground ml-2">
-                      {sortedTheatres.length} results
-                    </span>
-                  </CardTitle>
-                  {/* Search - above table */}
-                  <div className="relative max-w-xs">
-                    <Input
-                      placeholder="Search theatre, city..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="h-8 text-sm pr-8"
-                    />
-                    {searchTerm && (
-                      <button
-                        onClick={() => setSearchTerm('')}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs gap-1"
-                    onClick={exportToCSV}
-                    title="Export filtered results to CSV"
-                  >
-                    <Download className="w-3 h-3" />
-                    Export
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div
-                  ref={tableContainerRef}
-                  className="overflow-x-auto max-h-[500px] overflow-y-auto focus:outline-none"
-                  tabIndex={0}
-                  onKeyDown={handleKeyDown}
-                >
-                  <Table>
-                    <TableHeader className="sticky top-0 bg-background z-10">
-                      <TableRow className="text-xs">
-                        <TableHead
-                          className="pl-4 py-2 cursor-pointer hover:bg-muted/50 select-none"
-                          onClick={toggleNameSort}
-                        >
-                          <span className="inline-flex items-center gap-1">
-                            Theatre
-                            {sortByName === 'asc' && <ArrowUp className="w-3 h-3" />}
-                            {sortByName === 'desc' && <ArrowDown className="w-3 h-3" />}
-                          </span>
-                        </TableHead>
-                        <TableHead className="py-2">Chain</TableHead>
-                        <TableHead
-                          className="cursor-pointer hover:bg-muted/50 select-none py-2"
-                          onClick={toggleCitySort}
-                        >
-                          <span className="inline-flex items-center gap-1">
-                            City
-                            {sortByCity === 'asc' && <ArrowUp className="w-3 h-3" />}
-                            {sortByCity === 'desc' && <ArrowDown className="w-3 h-3" />}
-                          </span>
-                        </TableHead>
-                        <TableHead className="text-right pr-4 py-2"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {paginatedTheatres.length > 0 ? paginatedTheatres.map((theatre, index) => (
-                        <TableRow
-                          key={theatre.theatre_id}
-                          data-theatre-id={theatre.theatre_id}
-                          className={`cursor-pointer text-sm transition-colors ${selectedTheatre?.theatre_id === theatre.theatre_id
-                            ? 'bg-primary/10 border-l-2 border-l-primary'
-                            : index % 2 === 0
-                              ? 'bg-transparent hover:bg-muted/50'
-                              : 'bg-muted/20 hover:bg-muted/50'
-                            }`}
-                          onClick={() => setSelectedTheatre(theatre)}
-                        >
-                          <TableCell className="pl-4 py-2">
-                            <p className="font-medium text-sm">{theatre.name}</p>
-                          </TableCell>
-                          <TableCell className="py-2">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${theatre.merchant === 'XXI' ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400' :
-                              theatre.merchant === 'CGV' ? 'bg-red-500/20 text-red-600 dark:text-red-400' :
-                                'bg-blue-500/20 text-blue-600 dark:text-blue-400'
-                              }`}>
-                              {theatre.merchant}
-                            </span>
-                          </TableCell>
-                          <TableCell className="py-2">
-                            <p className="text-sm">{theatre.city}</p>
-                            <p className="text-xs text-muted-foreground">{getRegion(theatre.city)}</p>
-                          </TableCell>
-                          <TableCell className="text-right pr-4 py-2">
-                            <span className="text-xs text-muted-foreground">→</span>
-                          </TableCell>
-                        </TableRow>
-                      )) : (
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-center py-12">
-                            <div className="text-muted-foreground">
-                              <p className="text-sm font-medium mb-2">No theatres found</p>
-                              <p className="text-xs mb-4">Try adjusting your filters or search term</p>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-xs"
-                                onClick={() => {
-                                  setSelectedMerchant('all');
-                                  setSelectedRegion('all');
-                                  setSearchTerm('');
-                                }}
-                              >
-                                Clear all filters
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-between px-4 py-2 border-t text-xs">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 text-xs"
-                      disabled={currentPage === 1}
-                      onClick={() => setCurrentPage(p => p - 1)}
-                    >
-                      ←
-                    </Button>
-                    <span className="text-muted-foreground">
-                      {currentPage} / {totalPages}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 text-xs"
-                      disabled={currentPage === totalPages}
-                      onClick={() => setCurrentPage(p => p + 1)}
-                    >
-                      →
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Detail Panel */}
-          <div className="lg:col-span-1">
-            <Card className="sticky top-16" data-details-panel>
-              <CardHeader className="py-3 px-4">
-                <CardTitle className="text-sm">Theatre Details</CardTitle>
-              </CardHeader>
-              <CardContent className="px-4 pb-4">
-                {selectedTheatre ? (
-                  <div className="space-y-4">
-                    {/* Map */}
-                    <div className="rounded-lg overflow-hidden border aspect-video">
-                      <iframe
-                        width="100%"
-                        height="100%"
-                        style={{ border: 0 }}
-                        loading="lazy"
-                        allowFullScreen
-                        referrerPolicy="no-referrer-when-downgrade"
-                        src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}&q=${encodeURIComponent(selectedTheatre.name + ' ' + selectedTheatre.city + ' Indonesia')}`}
-                      />
-                    </div>
-
-                    {/* Info */}
-                    <div>
-                      <h3 className="font-semibold">{selectedTheatre.name}</h3>
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium mt-1 ${selectedTheatre.merchant === 'XXI' ? 'bg-amber-500 text-white' :
-                        selectedTheatre.merchant === 'CGV' ? 'bg-red-600 text-white' :
-                          'bg-blue-600 text-white'
-                        }`}>
-                        {selectedTheatre.merchant}
-                      </span>
-                    </div>
-
-                    <div className="space-y-2 text-sm">
-                      <div>
-                        <p className="text-xs text-muted-foreground">Address</p>
-                        <p className="text-sm">{selectedTheatre.address || '-'}</p>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <p className="text-xs text-muted-foreground">City</p>
-                          <p className="text-sm font-medium">{selectedTheatre.city}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Region</p>
-                          <p className="text-sm font-medium">{getRegion(selectedTheatre.city)}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <Button
-                      size="sm"
-                      className="w-full text-xs"
-                      onClick={() => window.open(
-                        selectedTheatre.place_id
-                          ? `https://www.google.com/maps/place/?q=place_id:${selectedTheatre.place_id}`
-                          : `https://www.google.com/maps?q=${selectedTheatre.lat},${selectedTheatre.lng}`,
-                        '_blank'
-                      )}
-                    >
-                      Open in Maps →
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <p className="text-sm">Click a theatre on the map or table to view details</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Scrape History Section */}
-        <Card className="mt-6">
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm font-medium">Scrape History & Insights</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-28">Date</TableHead>
-                  <TableHead className="w-20">Status</TableHead>
-                  <TableHead className="text-right">Movies</TableHead>
-                  <TableHead className="text-right">Cities</TableHead>
-                  <TableHead className="text-right">Theatres</TableHead>
-                  <TableHead className="text-right">Pre-sales</TableHead>
-                  <TableHead className="w-32">Insights</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {runs.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-4">
-                      No scrape history yet
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  runs.map((run, idx) => {
-                    const prevRun = runs[idx + 1];
-                    const movieDiff = prevRun ? run.movies - prevRun.movies : 0;
-                    const theatreDiff = prevRun ? run.theatres_total - prevRun.theatres_total : 0;
-                    return (
-                      <TableRow key={run.id || run.timestamp}>
-                        <TableCell className="font-mono text-xs">{run.date}</TableCell>
-                        <TableCell>
-                          <Badge variant={run.status === 'success' ? 'default' : run.status === 'partial' ? 'secondary' : 'destructive'} className="text-xs">
-                            {run.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right font-mono">{run.movies}</TableCell>
-                        <TableCell className="text-right font-mono">{run.cities}</TableCell>
-                        <TableCell className="text-right font-mono">
-                          {run.theatres_success}/{run.theatres_total}
-                          {run.theatres_failed > 0 && <span className="text-red-500 ml-1">({run.theatres_failed} failed)</span>}
-                        </TableCell>
-                        <TableCell className="text-right font-mono">{run.presales || '-'}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {prevRun && (
-                            <span>
-                              {movieDiff !== 0 && <span className={movieDiff > 0 ? 'text-green-600' : 'text-red-500'}>{movieDiff > 0 ? '+' : ''}{movieDiff} movies </span>}
-                              {theatreDiff !== 0 && <span className={theatreDiff > 0 ? 'text-green-600' : 'text-red-500'}>{theatreDiff > 0 ? '+' : ''}{theatreDiff} theatres</span>}
-                              {movieDiff === 0 && theatreDiff === 0 && <span>No change</span>}
-                            </span>
-                          )}
-                          {!prevRun && <span>First run</span>}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </main>
-
-      {/* Back to Top Button */}
-      {showBackToTop && (
-        <button
-          onClick={scrollToTop}
-          className="fixed bottom-6 right-6 z-50 bg-primary text-primary-foreground p-3 rounded-full shadow-lg hover:bg-primary/90 transition-all duration-200 animate-in fade-in slide-in-from-bottom-4"
-          title="Back to top"
-        >
-          <ChevronUp className="w-5 h-5" />
-        </button>
-      )}
-    </div>
-  );
+    alerts: Array<{ type: string; title: string; subtitle?: string; action: string; link: string }>;
+    timeline: Array<{ hour: string; occupancy: number; status: string; note: string; current?: boolean }>;
+    hotMovies: Array<{ title: string; genre: string; occupancy: number; revenue: number }>;
+    topTheatres: Array<{ name: string; chain: string; revenue: number; occupancy: number }>;
+    cityPerformance: Array<{ name: string; region: string; occupancy: number; revenue: number }>;
+    aiInsight: { type: string; text: string };
 }
 
-// Default export with ErrorBoundary wrapper
-export default function AdminDashboard() {
-  return (
-    <ErrorBoundary>
-      <DashboardContent />
-    </ErrorBoundary>
-  );
+function formatRupiah(value: number): string {
+    if (value >= 1_000_000_000) return `Rp${(value / 1_000_000_000).toFixed(1)}B`;
+    if (value >= 1_000_000) return `Rp${(value / 1_000_000).toFixed(0)}M`;
+    if (value >= 1_000) return `Rp${(value / 1_000).toFixed(0)}K`;
+    return `Rp${value}`;
+}
+
+function DeltaBadge({ value }: { value: string }) {
+    const isPositive = value.startsWith('+') || (!value.startsWith('-') && parseFloat(value) > 0);
+    const isNegative = value.startsWith('-') || parseFloat(value) < 0;
+
+    return (
+        <span className={`inline-flex items-center gap-1 text-sm font-medium ${isPositive ? 'text-green-600' : isNegative ? 'text-red-600' : 'text-muted-foreground'
+            }`}>
+            {isPositive ? <TrendingUp className="w-4 h-4" /> : isNegative ? <TrendingDown className="w-4 h-4" /> : null}
+            {isPositive && !value.startsWith('+') ? '+' : ''}{value}%
+        </span>
+    );
+}
+
+export default function ExecutiveDashboard() {
+    const [data, setData] = useState<DashboardData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch('/api/dashboard');
+            const json = await res.json();
+            setData(json);
+            setLastUpdated(new Date());
+        } catch (e) { }
+        finally { setLoading(false); }
+    };
+
+    useEffect(() => { fetchData(); }, []);
+
+    if (loading || !data) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-muted-foreground text-sm">Loading executive dashboard...</p>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-background text-foreground p-4 md:p-6">
+            {/* Header */}
+            <div className="mb-6">
+                <PageHeader
+                    title={`${data.greeting}, Admin`}
+                    description={data.date}
+                    icon={<LayoutDashboard className="w-6 h-6 text-primary" />}
+                    lastUpdated={lastUpdated.toLocaleTimeString()}
+                    onRefresh={fetchData}
+                    isRefreshing={loading}
+                    showMockBadge={true}
+                />
+            </div>
+
+            {/* KPI Scoreboard */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/30">
+                    <CardContent className="pt-4">
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            💰 Revenue Today
+                        </p>
+                        <p className="text-2xl font-bold">{formatRupiah(data.kpis.revenue.value)}</p>
+                        <DeltaBadge value={data.kpis.revenue.delta} />
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="pt-4">
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            🎫 Tickets Sold
+                        </p>
+                        <p className="text-2xl font-bold">{data.kpis.tickets.value.toLocaleString()}</p>
+                        <DeltaBadge value={data.kpis.tickets.delta} />
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="pt-4">
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            📊 Avg Occupancy
+                        </p>
+                        <p className="text-2xl font-bold">{data.kpis.occupancy.value}%</p>
+                        <DeltaBadge value={data.kpis.occupancy.delta} />
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-amber-500/10 to-amber-500/5 border-amber-500/30">
+                    <CardContent className="pt-4">
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            🏆 Top Theatre
+                        </p>
+                        <p className="text-lg font-bold truncate">{data.kpis.topTheatre}</p>
+                        <p className="text-xs text-muted-foreground">Highest revenue today</p>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Alerts Section */}
+            <Card className="mb-6 border-amber-500/50 bg-amber-500/5">
+                <CardHeader className="py-3">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 text-amber-500" />
+                        Alerts & Actions
+                        <Badge variant="outline" className="ml-2">{data.alerts.length}</Badge>
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                    <div className="space-y-2">
+                        {data.alerts.map((alert, i) => (
+                            <div key={i} className={`flex items-center justify-between p-3 rounded-lg border ${alert.type === 'warning' ? 'bg-amber-500/10 border-amber-500/30' :
+                                    alert.type === 'success' ? 'bg-green-500/10 border-green-500/30' :
+                                        'bg-red-500/10 border-red-500/30'
+                                }`}>
+                                <div className="flex items-center gap-3">
+                                    {alert.type === 'warning' && <AlertTriangle className="w-5 h-5 text-amber-500" />}
+                                    {alert.type === 'success' && <CheckCircle className="w-5 h-5 text-green-500" />}
+                                    {alert.type === 'danger' && <XCircle className="w-5 h-5 text-red-500" />}
+                                    <div>
+                                        <p className="text-sm font-medium">{alert.title}</p>
+                                        {alert.subtitle && <p className="text-xs text-muted-foreground">{alert.subtitle}</p>}
+                                    </div>
+                                </div>
+                                <Link href={alert.link}>
+                                    <Badge variant="outline" className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors">
+                                        {alert.action} <ArrowRight className="w-3 h-3 ml-1" />
+                                    </Badge>
+                                </Link>
+                            </div>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                {/* Today's Timeline */}
+                <Card>
+                    <CardHeader className="py-3">
+                        <CardTitle className="text-sm flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-blue-500" />
+                            Today's Timeline
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                        <div className="space-y-2">
+                            {data.timeline.map((t) => (
+                                <div key={t.hour} className={`flex items-center gap-3 p-2 rounded ${t.current ? 'bg-primary/10 border border-primary/30' : ''}`}>
+                                    <span className="text-xs font-mono w-12">{t.hour}</span>
+                                    <div className={`w-3 h-3 rounded-full ${t.status === 'peak' ? 'bg-green-500' :
+                                            t.status === 'slow' ? 'bg-red-500' : 'bg-amber-500'
+                                        }`} />
+                                    <div className="flex-1">
+                                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full ${t.status === 'peak' ? 'bg-green-500' : t.status === 'slow' ? 'bg-red-500' : 'bg-amber-500'}`}
+                                                style={{ width: `${t.occupancy}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <span className="text-xs font-mono w-10">{t.occupancy}%</span>
+                                    {t.current && <Badge variant="default" className="text-xs">Now</Badge>}
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* What's Hot */}
+                <Card>
+                    <CardHeader className="py-3">
+                        <CardTitle className="text-sm flex items-center gap-2">
+                            <Film className="w-4 h-4 text-purple-500" />
+                            What's Hot Today
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                        <div className="space-y-3">
+                            {data.hotMovies.map((movie, i) => (
+                                <div key={movie.title} className="flex items-center gap-3">
+                                    <span className="text-lg">{['🥇', '🥈', '🥉', '4️⃣', '5️⃣'][i]}</span>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium truncate">{movie.title}</p>
+                                        <p className="text-xs text-muted-foreground">{movie.genre}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className={`text-sm font-bold ${movie.occupancy >= 70 ? 'text-green-600' : movie.occupancy >= 50 ? 'text-amber-600' : 'text-red-600'}`}>
+                                            {movie.occupancy}%
+                                        </p>
+                                        {movie.occupancy < 40 && (
+                                            <Badge variant="destructive" className="text-xs">Push Promo</Badge>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <Link href="/movies" className="block mt-4">
+                            <Badge variant="outline" className="w-full justify-center py-1.5 hover:bg-muted cursor-pointer">
+                                View All Movies <ArrowRight className="w-3 h-3 ml-1" />
+                            </Badge>
+                        </Link>
+                    </CardContent>
+                </Card>
+
+                {/* Top Theatres */}
+                <Card>
+                    <CardHeader className="py-3">
+                        <CardTitle className="text-sm flex items-center gap-2">
+                            <Building2 className="w-4 h-4 text-cyan-500" />
+                            Theatre Pulse
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                        <div className="h-[200px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={data.topTheatres} layout="vertical" margin={{ left: 0, right: 10 }}>
+                                    <XAxis type="number" hide />
+                                    <YAxis
+                                        dataKey="name"
+                                        type="category"
+                                        width={100}
+                                        tick={{ fontSize: 10 }}
+                                        tickFormatter={(v) => v.length > 15 ? v.slice(0, 15) + '...' : v}
+                                    />
+                                    <Tooltip formatter={(v: number) => [formatRupiah(v), 'Revenue']} />
+                                    <Bar dataKey="revenue" radius={[0, 4, 4, 0]}>
+                                        {data.topTheatres.map((t, i) => (
+                                            <Cell key={i} fill={['#10b981', '#22c55e', '#84cc16', '#eab308', '#f59e0b'][i]} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                        <Link href="/cinemas" className="block mt-2">
+                            <Badge variant="outline" className="w-full justify-center py-1.5 hover:bg-muted cursor-pointer">
+                                View All Theatres <ArrowRight className="w-3 h-3 ml-1" />
+                            </Badge>
+                        </Link>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* AI Insight */}
+            <Card className="border-violet-500/30 bg-gradient-to-r from-violet-500/10 to-purple-500/10">
+                <CardContent className="py-4">
+                    <div className="flex items-start gap-4">
+                        <div className="w-10 h-10 rounded-full bg-violet-500/20 flex items-center justify-center flex-shrink-0">
+                            <Lightbulb className="w-5 h-5 text-violet-500" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-violet-600 dark:text-violet-400 mb-1">💡 AI Insight of the Day</p>
+                            <p className="text-sm">{data.aiInsight.text}</p>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Quick Links */}
+            <div className="mt-6 flex flex-wrap gap-2 justify-center">
+                {[
+                    { label: 'Cinemas', href: '/cinemas' },
+                    { label: 'Movies', href: '/movies' },
+                    { label: 'Audience', href: '/audience' },
+                    { label: 'Revenue', href: '/revenue' },
+                    { label: 'Competition', href: '/competition' },
+                    { label: 'Trends', href: '/trends' },
+                    { label: 'Analytics', href: '/analytics' },
+                ].map((link) => (
+                    <Link key={link.href} href={link.href}>
+                        <Badge variant="outline" className="cursor-pointer hover:bg-muted px-3 py-1.5">
+                            {link.label}
+                        </Badge>
+                    </Link>
+                ))}
+            </div>
+        </div>
+    );
 }
