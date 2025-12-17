@@ -26,3 +26,4 @@ data/batch_*.json
 
 # Keep env example
 !.env.example
+apk_analysis/
