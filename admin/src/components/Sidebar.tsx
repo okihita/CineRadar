@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { MapPin, Film, Users, ChevronLeft, ChevronRight, DollarSign, Trophy, TrendingUp } from 'lucide-react';
+import { MapPin, Film, Users, ChevronLeft, ChevronRight, DollarSign, Trophy, TrendingUp, Navigation, Settings, Heart } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -43,7 +43,26 @@ const menuItems = [
     href: '/trends',
     icon: TrendingUp,
   },
+  {
+    title: 'Location Intelligence',
+    description: 'Catchment & expansion',
+    href: '/location',
+    icon: Navigation,
+  },
+  {
+    title: 'Operations Intelligence',
+    description: 'Scheduling & capacity',
+    href: '/operations',
+    icon: Settings,
+  },
+  {
+    title: 'Engagement Intelligence',
+    description: 'Loyalty & promotions',
+    href: '/engagement',
+    icon: Heart,
+  },
 ];
+
 
 
 export function Sidebar() {
