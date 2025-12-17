@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { MapPin, Film, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MapPin, Film, Users, ChevronLeft, ChevronRight, DollarSign, Trophy, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -25,7 +25,26 @@ const menuItems = [
     href: '/audience',
     icon: Users,
   },
+  {
+    title: 'Revenue Intelligence',
+    description: 'Pricing & forecasting',
+    href: '/revenue',
+    icon: DollarSign,
+  },
+  {
+    title: 'Competition Intelligence',
+    description: 'Market share & rivals',
+    href: '/competition',
+    icon: Trophy,
+  },
+  {
+    title: 'Trend Intelligence',
+    description: 'Genre & seasonal patterns',
+    href: '/trends',
+    icon: TrendingUp,
+  },
 ];
+
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -60,7 +79,7 @@ export function Sidebar() {
         {menuItems.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;
-          
+
           return (
             <Link
               key={item.href}
