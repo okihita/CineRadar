@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { MapPin, Film, Users, ChevronLeft, ChevronRight, DollarSign, Trophy, TrendingUp, Navigation, Settings, Heart } from 'lucide-react';
+import { MapPin, Film, Users, ChevronLeft, ChevronRight, DollarSign, Trophy, TrendingUp, Navigation, Settings, Heart, Brain } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -61,7 +61,14 @@ const menuItems = [
     href: '/engagement',
     icon: Heart,
   },
+  {
+    title: 'Advanced Analytics',
+    description: 'Predictions & scenarios',
+    href: '/analytics',
+    icon: Brain,
+  },
 ];
+
 
 
 
