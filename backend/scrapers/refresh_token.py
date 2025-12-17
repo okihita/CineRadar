@@ -45,9 +45,9 @@ class TokenRefresher(BaseScraper):
         playwright, browser, context, page = await self._init_browser(headless)
         
         try:
-            # Navigate to login
-            await page.goto(f'{self.app_base}/login', wait_until='networkidle')
-            await asyncio.sleep(5)
+            # Navigate to login - wait longer for Flutter to render
+            await page.goto(f'{self.app_base}/login', wait_until='networkidle', timeout=60000)
+            await asyncio.sleep(15)  # Flutter needs time to render
             await self._save_screenshot(page, "01_login_page_loaded")
             
             # Strip 62 prefix from phone
@@ -75,13 +75,35 @@ class TokenRefresher(BaseScraper):
                 self.log("   🔑 Typed password")
                 await self._save_screenshot(page, "03_after_password_typed")
             
-            # Click Login and wait for navigation
+            # Click Login - listen for popup/new page
             login_button = page.get_by_role('button', name='Login').first
             if await login_button.count() > 0:
-                # Click and wait for any navigation
-                async with page.expect_navigation(wait_until='networkidle', timeout=30000):
-                    await login_button.click()
-                    self.log("   📤 Clicked Login button, waiting for navigation...")
+                # Try to catch any new page/popup that opens
+                try:
+                    async with context.expect_page(timeout=10000) as new_page_info:
+                        await login_button.click()
+                        self.log("   📤 Clicked Login, waiting for new page...")
+                    
+                    new_page = await new_page_info.value
+                    self.log(f"   📍 New page opened: {new_page.url}")
+                    await new_page.wait_for_load_state('networkidle')
+                    await asyncio.sleep(3)
+                    
+                    # Try to get token from new page
+                    new_page_url = new_page.url
+                    self.log(f"   📍 New page final URL: {new_page_url}")
+                    await new_page.screenshot(path=str(self.screenshot_dir / "04a_new_page.png"))
+                    
+                    # Try localStorage on new page
+                    all_keys = await new_page.evaluate("Object.keys(localStorage)")
+                    self.log(f"   🔑 New page localStorage: {all_keys}")
+                    
+                    page = new_page  # Switch to new page
+                    
+                except Exception as popup_error:
+                    self.log(f"   ⚠️ No popup detected: {popup_error}")
+                    # Fall back to waiting for navigation on same page
+                    await asyncio.sleep(5)
             else:
                 await page.keyboard.press('Enter')
                 self.log("   📤 Pressed Enter")
@@ -93,28 +115,35 @@ class TokenRefresher(BaseScraper):
             current_url = page.url
             self.log(f"   📍 Post-login URL: {current_url}")
             
-            # If we're on about:blank or wrong page, navigate back to app
-            if 'app.tix.id' not in current_url:
-                self.log("   🔄 Navigating back to app to capture token...")
-                await page.goto(f'{self.app_base}', wait_until='networkidle')
-                await asyncio.sleep(3)
-                await self._save_screenshot(page, "05_navigate_back_to_app")
-                current_url = page.url
-                self.log(f"   📍 Now at: {current_url}")
-            
             # Try to capture JWT from localStorage
             try:
                 # Debug: list all localStorage keys
                 all_keys = await page.evaluate("Object.keys(localStorage)")
                 self.log(f"   🔑 localStorage keys: {all_keys}")
                 
-                # Try multiple possible token key names
-                token = None
-                for key in ['authentication_token', 'token', 'auth_token', 'jwt', 'access_token']:
-                    token = await page.evaluate(f"localStorage.getItem('{key}')")
-                    if token:
-                        self.log(f"   ✅ Found token under key: {key}")
+                # Also check sessionStorage
+                session_keys = await page.evaluate("Object.keys(sessionStorage)")
+                self.log(f"   🔑 sessionStorage keys: {session_keys}")
+                
+                # Check cookies
+                cookies = await context.cookies()
+                cookie_names = [c['name'] for c in cookies]
+                self.log(f"   🍪 Cookies: {cookie_names}")
+                
+                # Look for token in cookies
+                for cookie in cookies:
+                    if 'token' in cookie['name'].lower() or 'auth' in cookie['name'].lower():
+                        self.log(f"   ✅ Found token cookie: {cookie['name']}")
+                        token = cookie['value']
                         break
+                
+                # Try multiple possible token key names in localStorage
+                if not token:
+                    for key in ['authentication_token', 'token', 'auth_token', 'jwt', 'access_token']:
+                        token = await page.evaluate(f"localStorage.getItem('{key}')")
+                        if token:
+                            self.log(f"   ✅ Found token under key: {key}")
+                            break
                 
                 if token:
                     self.auth_token = token
