@@ -116,6 +116,7 @@ class TokenRefresher(BaseScraper):
                 self.log(f"   🍪 Cookies: {cookie_names}")
                 
                 # Look for token in cookies
+                token = None  # Initialize before checking
                 for cookie in cookies:
                     if 'token' in cookie['name'].lower() or 'auth' in cookie['name'].lower():
                         self.log(f"   ✅ Found token cookie: {cookie['name']}")
