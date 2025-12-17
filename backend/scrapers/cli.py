@@ -156,17 +156,20 @@ def extract_showtimes_from_data(
                 merchant = theatre.get('merchant', '')
                 
                 for room in theatre.get('rooms', []):
-                    room_name = room.get('room_name', room.get('room_category', ''))
+                    room_name = room.get('category', room.get('room_name', ''))
                     
-                    for showtime_str in room.get('showtimes', []):
-                        if isinstance(showtime_str, dict):
-                            st_id = showtime_str.get('showtime_id')
-                            st_time = showtime_str.get('time', '')
+                    # Use all_showtimes which contains showtime_id
+                    for showtime_obj in room.get('all_showtimes', room.get('showtimes', [])):
+                        if isinstance(showtime_obj, dict):
+                            st_id = showtime_obj.get('showtime_id')
+                            st_time = showtime_obj.get('time', '')
+                            is_available = showtime_obj.get('is_available', True)
                         else:
                             st_id = None
-                            st_time = showtime_str
+                            st_time = showtime_obj
+                            is_available = True
                         
-                        if st_id:
+                        if st_id and is_available:
                             showtimes.append({
                                 'showtime_id': st_id,
                                 'showtime': st_time,
