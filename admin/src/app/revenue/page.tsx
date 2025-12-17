@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { DollarSign, TrendingUp, TrendingDown, Building2, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { useCachedFetch } from '@/hooks/useCachedFetch';
+import { SkeletonPage } from '@/components/Skeleton';
 
 interface RevenueData {
     stats: {
@@ -31,40 +32,16 @@ function formatRupiah(value: number): string {
 }
 
 export default function RevenuePage() {
-    const [data, setData] = useState<RevenueData | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const { data, loading, error } = useCachedFetch<RevenueData>('/api/revenue');
 
-    useEffect(() => {
-        async function fetchData() {
-            try {
-                const res = await fetch('/api/revenue');
-                const json = await res.json();
-                if (json.error) setError(json.error);
-                else setData(json);
-            } catch { setError('Failed to load revenue data'); }
-            finally { setLoading(false); }
-        }
-        fetchData();
-    }, []);
-
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-muted-foreground text-sm">Loading revenue data...</p>
-                </div>
-            </div>
-        );
-    }
+    if (loading) return <SkeletonPage />;
 
     if (error || !data) {
         return (
             <div className="min-h-screen flex items-center justify-center p-6">
                 <Card className="max-w-md border-destructive">
                     <CardContent className="pt-6 text-center">
-                        <p className="text-destructive mb-4">{error}</p>
+                        <p className="text-destructive mb-4">{error?.message || 'Failed to load'}</p>
                         <p className="text-sm text-muted-foreground">Run: <code className="bg-muted px-2 py-1 rounded">python backend/mock_data_generator.py</code></p>
                     </CardContent>
                 </Card>
@@ -140,7 +117,7 @@ export default function RevenuePage() {
                                     <TableRow key={chain.chain}>
                                         <TableCell>
                                             <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${chain.chain === 'XXI' ? 'bg-amber-500 text-white' :
-                                                    chain.chain === 'CGV' ? 'bg-red-600 text-white' : 'bg-blue-600 text-white'
+                                                chain.chain === 'CGV' ? 'bg-red-600 text-white' : 'bg-blue-600 text-white'
                                                 }`}>{chain.chain}</span>
                                         </TableCell>
                                         <TableCell className="font-mono">{formatRupiah(chain.total_revenue)}</TableCell>

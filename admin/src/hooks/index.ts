@@ -2,3 +2,4 @@
 export { useTheatres } from './useTheatres';
 export { useFilters } from './useFilters';
 export { useDarkMode } from './useDarkMode';
+export { useCachedFetch } from './useCachedFetch';
