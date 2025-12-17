@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { DashboardLayout } from "@/components/DashboardLayout";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CineRadar Admin | Theatre Intelligence Dashboard",
+  title: "CineRadar Admin | Intelligence Dashboard",
   description: "Manage and monitor Indonesian cinema theatre data with CineRadar's admin dashboard.",
   icons: {
     icon: "/icon.svg",
@@ -26,11 +27,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <DashboardLayout>
+          {children}
+        </DashboardLayout>
       </body>
     </html>
   );
