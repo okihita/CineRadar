@@ -76,7 +76,9 @@ class TokenRefresher(BaseScraper):
                 await self._save_screenshot(page, "03_after_password_typed")
             
             # Click Login - simple approach
-            login_button = page.get_by_role('button', name='Login').first
+            # IMPORTANT: TIX.id has TWO Login buttons - header (fake) and form (real)
+            # Must use .last to get the form button, not .first!
+            login_button = page.get_by_role('button', name='Login').last
             if await login_button.count() > 0:
                 await login_button.click()
                 self.log("   📤 Clicked Login button")

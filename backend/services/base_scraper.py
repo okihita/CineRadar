@@ -114,7 +114,9 @@ class BaseScraper:
             
             # Click Login button
             await asyncio.sleep(0.5)
-            login_button = page.get_by_role('button', name='Login')
+            # IMPORTANT: TIX.id has TWO Login buttons - header (fake) and form (real)
+            # Must use .last to get the form button, not .first!
+            login_button = page.get_by_role('button', name='Login').last
             if await login_button.count() > 0:
                 await login_button.click()
                 self.log("   📤 Clicked Login button")

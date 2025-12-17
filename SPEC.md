@@ -33,14 +33,23 @@ TIX_PASSWORD=qwer1234
 
 ### Login Flow
 
+> [!CAUTION]
+> TIX.id has **TWO Login buttons** on the login page:
+> - **Header button** (top) - Navigates back to home, does NOT login!
+> - **Form button** (below password) - Actually calls the login API
+> 
+> Use `.last` or element index 5 for Playwright, NOT `.first`!
+
 1. Navigate to `https://app.tix.id/login`
-2. Wait for page load (Flutter app, may take 3-5 seconds)
-3. Find input fields (Flutter renders canvas, use indexed inputs)
+2. Wait for page load (Flutter app, may take 5-15 seconds)
+3. Find input fields (Flutter renders canvas, use `get_by_placeholder`)
 4. Fill phone number (strip `+62` prefix, type via keyboard)
 5. Fill password (type via keyboard)
-6. Click "Login" button or press Enter
-7. Wait for redirect (success = `/home` or `/login-success`)
-8. Extract JWT from `localStorage.getItem('authentication_token')`
+6. Click **LAST** "Login" button (`.last`, NOT `.first`) or press Enter
+7. Wait for redirect (success = `/home` or URL with `login-success`)
+8. Extract tokens from localStorage:
+   - `authentication_token` - Access token (valid ~30 min)
+   - `authentication_refresh_token` - Refresh token (valid ~91 days)
 
 ### Token Storage
 - **Location**: Firestore collection `auth_tokens`, document `tix_jwt`
