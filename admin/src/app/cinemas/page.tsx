@@ -164,11 +164,59 @@ function DashboardContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground text-sm">Loading theatre data...</p>
-        </div>
+      <div className="min-h-screen bg-background text-foreground animate-pulse">
+        {/* Skeleton KPI Ticker */}
+        <div className="bg-muted/50 border-b h-10"></div>
+
+        {/* Skeleton Header */}
+        <header className="border-b h-14"></header>
+
+        <main className="container mx-auto px-4 py-4 space-y-4">
+          {/* Skeleton Map */}
+          <div className="rounded-lg border bg-card">
+            <div className="py-3 px-4 border-b">
+              <div className="h-4 w-24 bg-muted rounded"></div>
+            </div>
+            <div className="p-4">
+              <div className="h-[300px] bg-muted rounded-lg flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                  <span className="text-sm text-muted-foreground">Loading map...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Skeleton Filters */}
+          <div className="rounded-lg border bg-card p-4">
+            <div className="flex gap-4">
+              <div className="h-8 w-24 bg-muted rounded"></div>
+              <div className="h-8 w-20 bg-muted rounded"></div>
+              <div className="h-8 w-20 bg-muted rounded"></div>
+              <div className="h-8 w-20 bg-muted rounded"></div>
+            </div>
+          </div>
+
+          {/* Skeleton Table */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2 rounded-lg border bg-card">
+              <div className="py-3 px-4 border-b flex justify-between">
+                <div className="h-4 w-20 bg-muted rounded"></div>
+                <div className="h-8 w-40 bg-muted rounded"></div>
+              </div>
+              <div className="p-4 space-y-3">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-4">
+                    <div className="h-4 w-32 bg-muted rounded"></div>
+                    <div className="h-6 w-16 bg-muted rounded"></div>
+                    <div className="h-4 w-24 bg-muted rounded"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-lg border bg-card h-[300px]"></div>
+          </div>
+        </main>
       </div>
     );
   }
