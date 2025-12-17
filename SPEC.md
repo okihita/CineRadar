@@ -192,8 +192,24 @@ TIX.id uses a **two-token system** for security:
 
 | Token | localStorage Key | Duration | Purpose |
 |-------|-----------------|----------|---------|
-| Access | `authentication_token` | ~30 min | Sent with every API request |
+| Access | `authentication_token` | **~30 min** (verified) | Sent with every API request |
 | Refresh | `authentication_refresh_token` | ~91 days | Used to get new access tokens |
+
+### Verified Test Results (Dec 18, 2025)
+
+```
+✅ Access Token Test:
+   - Captured via localStorage after login
+   - Expires in exactly 30 minutes
+   - Works for seat layout API calls
+   - Example: Token at 04:22:08 expired at 04:52:04
+
+✅ Seat API Test (KEDIRI MALL CGV, 10:00 showtime):
+   - Total seats: 126
+   - Sold seats: 1  
+   - Occupancy: 0.8%
+   - API: GET https://api-b2b.tix.id/v1/movies/cgv/layout?show_time_id={id}
+```
 
 ### Why Two Tokens?
 
@@ -214,14 +230,28 @@ TIX.id uses a **two-token system** for security:
 3. **Access Expires** → App automatically uses refresh token to get new access
 4. **Refresh Expires** → User must login again with phone/password
 
+### Refresh Token Investigation (Dec 18, 2025)
+
+Tested approaches to use refresh token programmatically:
+
+| Approach | Result | Notes |
+|----------|--------|-------|
+| POST to `/v1/auth/refresh` | 401 | Endpoint exists but rejected |
+| POST to `/v1/auth/token/refresh` | 401 | Endpoint exists but rejected |
+| POST to `/v1/refresh-token` | 401 | Endpoint exists but rejected |
+| Use refresh token as Bearer | 401 | Invalid token error |
+
+**Conclusion:** TIX.id's refresh flow is handled by Flutter client-side interceptors, not a public API. The refresh token cannot be used programmatically without reverse-engineering the Flutter app's network layer.
+
 ### Current Implementation
 
 - Token refresh stores the **access token** in Firestore
 - Runs daily at 5:50 AM WIB (before 6 AM movie scrape)
 - JIT seat scraper uses stored token via `--use-stored-token`
+- Token valid for ~30 minutes after capture
 
-> [!NOTE]
-> Future improvement: Store refresh token instead and exchange for access token on each scrape. This would allow scraping without daily browser login.
+> [!IMPORTANT]
+> Since access tokens expire in 30 min, the JIT seat scraper (every 15 min) must work within this window. The daily token refresh at 5:50 AM provides a fresh token that's valid until ~6:20 AM, enough for the morning seat scrape.
 
 ---
 
