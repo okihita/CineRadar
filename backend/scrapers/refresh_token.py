@@ -75,45 +75,28 @@ class TokenRefresher(BaseScraper):
                 self.log("   🔑 Typed password")
                 await self._save_screenshot(page, "03_after_password_typed")
             
-            # Click Login - listen for popup/new page
+            # Click Login - simple approach
             login_button = page.get_by_role('button', name='Login').first
             if await login_button.count() > 0:
-                # Try to catch any new page/popup that opens
-                try:
-                    async with context.expect_page(timeout=10000) as new_page_info:
-                        await login_button.click()
-                        self.log("   📤 Clicked Login, waiting for new page...")
-                    
-                    new_page = await new_page_info.value
-                    self.log(f"   📍 New page opened: {new_page.url}")
-                    await new_page.wait_for_load_state('networkidle')
-                    await asyncio.sleep(3)
-                    
-                    # Try to get token from new page
-                    new_page_url = new_page.url
-                    self.log(f"   📍 New page final URL: {new_page_url}")
-                    await new_page.screenshot(path=str(self.screenshot_dir / "04a_new_page.png"))
-                    
-                    # Try localStorage on new page
-                    all_keys = await new_page.evaluate("Object.keys(localStorage)")
-                    self.log(f"   🔑 New page localStorage: {all_keys}")
-                    
-                    page = new_page  # Switch to new page
-                    
-                except Exception as popup_error:
-                    self.log(f"   ⚠️ No popup detected: {popup_error}")
-                    # Fall back to waiting for navigation on same page
-                    await asyncio.sleep(5)
+                await login_button.click()
+                self.log("   📤 Clicked Login button")
             else:
                 await page.keyboard.press('Enter')
                 self.log("   📤 Pressed Enter")
-                await asyncio.sleep(5)
             
-            await self._save_screenshot(page, "04_after_login_attempt")
+            # Wait for any processing
+            await asyncio.sleep(5)
+            await self._save_screenshot(page, "04_after_login_click")
+            self.log(f"   📍 After click URL: {page.url}")
             
-            # Check result
+            # Navigate to home to check session
+            self.log("   🔄 Navigating to home...")
+            await page.goto(f'{self.app_base}/home', wait_until='networkidle', timeout=30000)
+            await asyncio.sleep(5)
+            await self._save_screenshot(page, "05_at_home_page")
+            
             current_url = page.url
-            self.log(f"   📍 Post-login URL: {current_url}")
+            self.log(f"   📍 Home page URL: {current_url}")
             
             # Try to capture JWT from localStorage
             try:
