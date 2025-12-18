@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/PageHeader';
 import { formatWIBShort } from '@/lib/timeUtils';
-import { Database, RefreshCw, AlertTriangle, CheckCircle2, XCircle, Calendar } from 'lucide-react';
+import { Database, RefreshCw, AlertTriangle, CheckCircle2, XCircle, Calendar, FolderOpen, ChevronDown, ChevronRight } from 'lucide-react';
 
 interface ScraperRun {
     id?: string;
@@ -21,6 +21,13 @@ interface ScraperRun {
     presales?: number;
 }
 
+interface CollectionStats {
+    name: string;
+    count: number;
+    sample: Record<string, unknown> | null;
+    fields: string[];
+}
+
 interface ScraperStats {
     totalRuns: number;
     successRate: number;
@@ -31,8 +38,10 @@ interface ScraperStats {
 
 export default function ScraperPage() {
     const [runs, setRuns] = useState<ScraperRun[]>([]);
+    const [collections, setCollections] = useState<CollectionStats[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [expandedCollection, setExpandedCollection] = useState<string | null>(null);
 
     const fetchData = async () => {
         try {
@@ -40,6 +49,7 @@ export default function ScraperPage() {
             if (response.ok) {
                 const data = await response.json();
                 setRuns(data.runs || []);
+                setCollections(data.collections || []);
             }
         } catch (error) {
             console.error('Error fetching scraper data:', error);
@@ -73,6 +83,8 @@ export default function ScraperPage() {
         lastRunTime: runs[0]?.timestamp ? formatWIBShort(runs[0].timestamp) : 'Never',
     };
 
+    const totalDocuments = collections.reduce((sum, c) => sum + c.count, 0);
+
     const statusIcon = (status: string) => {
         switch (status) {
             case 'success': return <CheckCircle2 className="w-4 h-4 text-green-500" />;
@@ -80,6 +92,10 @@ export default function ScraperPage() {
             case 'failed': return <XCircle className="w-4 h-4 text-red-500" />;
             default: return null;
         }
+    };
+
+    const toggleCollection = (name: string) => {
+        setExpandedCollection(expandedCollection === name ? null : name);
     };
 
     if (loading) {
@@ -135,6 +151,75 @@ export default function ScraperPage() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Database Explorer Section */}
+            <Card className="mb-6">
+                <CardHeader className="py-3">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <FolderOpen className="w-4 h-4" />
+                        Database Explorer
+                        <Badge variant="secondary" className="ml-2">
+                            {totalDocuments.toLocaleString()} documents
+                        </Badge>
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-2">
+                        {collections.map((col) => (
+                            <div key={col.name} className="border rounded-lg overflow-hidden">
+                                <button
+                                    onClick={() => toggleCollection(col.name)}
+                                    className="w-full flex items-center justify-between p-3 bg-muted/30 hover:bg-muted/50 transition-colors"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        {expandedCollection === col.name ? (
+                                            <ChevronDown className="w-4 h-4" />
+                                        ) : (
+                                            <ChevronRight className="w-4 h-4" />
+                                        )}
+                                        <Database className="w-4 h-4 text-muted-foreground" />
+                                        <span className="font-mono text-sm font-medium">{col.name}</span>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <Badge variant="outline">
+                                            {col.count.toLocaleString()} docs
+                                        </Badge>
+                                        <span className="text-xs text-muted-foreground">
+                                            {col.fields.length} fields
+                                        </span>
+                                    </div>
+                                </button>
+
+                                {expandedCollection === col.name && (
+                                    <div className="p-4 border-t bg-background">
+                                        {/* Fields */}
+                                        <div className="mb-4">
+                                            <div className="text-xs font-medium text-muted-foreground mb-2">Fields:</div>
+                                            <div className="flex flex-wrap gap-1">
+                                                {col.fields.map((field) => (
+                                                    <Badge key={field} variant="secondary" className="text-xs font-mono">
+                                                        {field}
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Sample Document */}
+                                        {col.sample && (
+                                            <div>
+                                                <div className="text-xs font-medium text-muted-foreground mb-2">Sample Document:</div>
+                                                <pre className="p-3 bg-muted rounded-lg text-xs font-mono overflow-x-auto whitespace-pre-wrap">
+                                                    {JSON.stringify(col.sample, null, 2)}
+                                                </pre>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
 
             {/* Schedule Info */}
             <Card className="mb-6">
