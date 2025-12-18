@@ -12,6 +12,35 @@
 
 *Uses token from Token Refresh
 
+## Default Behavior
+
+> [!IMPORTANT]
+> **Every morning at 6:00 AM WIB**, the scraper automatically runs to get fresh movie showtimes for all cities in Indonesia.
+
+### Daily Pipeline (Automatic)
+
+```
+5:50 AM WIB  → Token Refresh (login, capture JWT)
+6:00 AM WIB  → Movie + Theatre Scrape (9 parallel batches)
+                ├── Scrape ~90 cities
+                ├── Get all movies and showtimes
+                ├── Merge results
+                └── Upload to Firestore (snapshots/latest)
+```
+
+### Data Flow
+
+```
+TIX.id Website → Scraper (GitHub Actions) → Firestore → 
+  ├── Admin Dashboard (admin.cineradar-id.vercel.app)
+  └── Public Website (cineradar-id.vercel.app)
+```
+
+### No Manual Intervention Required
+- Scraper runs automatically via GitHub Actions schedule
+- Data is stored in Firestore (no static files in repo)
+- Website fetches from Firestore REST API with 5-min cache
+
 ---
 
 ## Scraper 1: Token Refresh
