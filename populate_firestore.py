@@ -2,6 +2,7 @@
 """Populate Firestore with scraped data."""
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -11,14 +12,21 @@ from backend.services.firebase_client import sync_theatres_from_scrape, log_scra
 
 def main():
     data_dir = Path(__file__).parent / "data"
-    movie_files = sorted(data_dir.glob("movies_*.json"), reverse=True)
     
-    if not movie_files:
-        print("❌ No movie data files found")
-        log_scraper_run({'status': 'failed', 'error': 'No data files found', 'movies': 0, 'theatres': 0})
-        return
+    # Use today's date to find the correct file
+    today = datetime.now().strftime("%Y-%m-%d")
+    input_file = data_dir / f"movies_{today}.json"
     
-    input_file = movie_files[0]
+    # Fall back to latest file if today's doesn't exist
+    if not input_file.exists():
+        movie_files = sorted(data_dir.glob("movies_*.json"), reverse=True)
+        if movie_files:
+            input_file = movie_files[0]
+        else:
+            print("❌ No movie data files found")
+            log_scraper_run({'status': 'failed', 'error': 'No data files found', 'movies': 0, 'theatres': 0})
+            return
+    
     print(f"📂 Loading: {input_file}")
     
     with open(input_file, 'r', encoding='utf-8') as f:
