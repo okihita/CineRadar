@@ -25,4 +25,9 @@ export const firebaseTheatreService: TheatreService = {
     }
 };
 
+// Standalone exports for direct imports
+export const getScraperRuns = (limitCount?: number) => firebaseTheatreService.getScraperRuns(limitCount);
+export const getTheatres = () => firebaseTheatreService.getTheatres();
+
 export default firebaseTheatreService;
+

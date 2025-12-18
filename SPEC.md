@@ -58,6 +58,20 @@ TIX.id Website → Scraper (GitHub Actions) → Firestore →
 - Admin: Use `formatWIB()` from `@/lib/timeUtils.ts`
 - Web: Use `formatWIB()` function with `timeZone: 'Asia/Jakarta'`
 
+### Admin Dashboard Navigation
+
+| Page | URL | Purpose |
+|------|-----|---------|
+| Executive Dashboard | `/` | Overview & KPIs |
+| Cinema Intelligence | `/cinemas` | Theatre locations & mapping |
+| Movie Intelligence | `/movies` | Showtimes & schedules |
+| **Scraper Monitor** | `/scraper` | Run history & data collection status |
+| Advanced Analytics | `/analytics` | Predictions & scenarios |
+
+> [!NOTE]
+> The **Scraper Monitor** is a dedicated page for tracking data collection runs.
+> It shows run history, success rates, and schedule information.
+
 ---
 
 ## Scraper 1: Token Refresh

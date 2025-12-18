@@ -641,69 +641,6 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* Scrape History Section */}
-        <Card className="mt-6">
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm font-medium">Scrape History & Insights</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-28">Date</TableHead>
-                  <TableHead className="w-20">Status</TableHead>
-                  <TableHead className="text-right">Movies</TableHead>
-                  <TableHead className="text-right">Cities</TableHead>
-                  <TableHead className="text-right">Theatres</TableHead>
-                  <TableHead className="text-right">Pre-sales</TableHead>
-                  <TableHead className="w-32">Insights</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {runs.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-4">
-                      No scrape history yet
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  runs.map((run, idx) => {
-                    const prevRun = runs[idx + 1];
-                    const movieDiff = prevRun ? run.movies - prevRun.movies : 0;
-                    const theatreDiff = prevRun ? run.theatres_total - prevRun.theatres_total : 0;
-                    return (
-                      <TableRow key={run.id || run.timestamp}>
-                        <TableCell className="font-mono text-xs">{run.date}</TableCell>
-                        <TableCell>
-                          <Badge variant={run.status === 'success' ? 'default' : run.status === 'partial' ? 'secondary' : 'destructive'} className="text-xs">
-                            {run.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right font-mono">{run.movies}</TableCell>
-                        <TableCell className="text-right font-mono">{run.cities}</TableCell>
-                        <TableCell className="text-right font-mono">
-                          {run.theatres_success}/{run.theatres_total}
-                          {run.theatres_failed > 0 && <span className="text-red-500 ml-1">({run.theatres_failed} failed)</span>}
-                        </TableCell>
-                        <TableCell className="text-right font-mono">{run.presales || '-'}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {prevRun && (
-                            <span>
-                              {movieDiff !== 0 && <span className={movieDiff > 0 ? 'text-green-600' : 'text-red-500'}>{movieDiff > 0 ? '+' : ''}{movieDiff} movies </span>}
-                              {theatreDiff !== 0 && <span className={theatreDiff > 0 ? 'text-green-600' : 'text-red-500'}>{theatreDiff > 0 ? '+' : ''}{theatreDiff} theatres</span>}
-                              {movieDiff === 0 && theatreDiff === 0 && <span>No change</span>}
-                            </span>
-                          )}
-                          {!prevRun && <span>First run</span>}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
       </main>
 
       {/* Back to Top Button */}

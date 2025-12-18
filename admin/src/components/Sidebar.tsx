@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, MapPin, Film, Users, ChevronLeft, ChevronRight, DollarSign, Trophy, TrendingUp, Navigation, Settings, Heart, Brain } from 'lucide-react';
+import { LayoutDashboard, MapPin, Film, Users, ChevronLeft, ChevronRight, DollarSign, Trophy, TrendingUp, Navigation, Settings, Heart, Brain, Database } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -72,6 +72,12 @@ const menuItems = [
     description: 'Predictions & scenarios',
     href: '/analytics',
     icon: Brain,
+  },
+  {
+    title: 'Scraper Monitor',
+    description: 'Data collection & runs',
+    href: '/scraper',
+    icon: Database,
   },
 ];
 
