@@ -87,8 +87,8 @@ Login to TIX.id and capture JWT token for authenticated API calls.
 
 ### Credentials (from `.env`)
 ```
-TIX_PHONE_NUMBER=628567881764
-TIX_PASSWORD=qwer1234
+TIX_PHONE_NUMBER=+62XXXXXXXXXX
+TIX_PASSWORD=<your_password>
 ```
 
 ### Login Flow
@@ -223,8 +223,8 @@ python -m backend.scrapers.cli seats --mode morning
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `TIX_PHONE_NUMBER` | TIX.id login phone | `628567881764` |
-| `TIX_PASSWORD` | TIX.id login password | `qwer1234` |
+| `TIX_PHONE_NUMBER` | TIX.id login phone | `+62XXXXXXXXXX` |
+| `TIX_PASSWORD` | TIX.id login password | `<your_password>` |
 | `FIREBASE_SERVICE_ACCOUNT` | Firebase credentials JSON | `{...}` |
 
 ---
@@ -425,3 +425,62 @@ for st in room.get('all_showtimes', room.get('showtimes', [])):
   "phone": "6285***"
 }
 ```
+
+---
+
+## Data Contracts (Pydantic Schemas)
+
+> [!IMPORTANT]
+> All data passing through the pipeline is validated using Pydantic V2 schemas.
+> This ensures data integrity and prevents corrupted data from reaching Firestore.
+
+### Schema Files
+
+| Schema | File | Purpose |
+|--------|------|---------|
+| `MovieSchema` | `backend/schemas/movie.py` | Complete movie with schedules |
+| `DailySnapshotSchema` | `backend/schemas/movie.py` | Full daily scrape output |
+| `TheatreSchema` | `backend/schemas/theatre.py` | Theatre for Firestore storage |
+| `TokenSchema` | `backend/schemas/token.py` | JWT with TTL validation |
+| `ScraperRunSchema` | `backend/schemas/scraper_run.py` | Scraper run logging |
+
+### Validation Points
+
+| Pipeline Step | Validation Applied |
+|---------------|-------------------|
+| Batch merge | `DailySnapshotSchema` validates merged output |
+| Firestore upload | `TheatreSchema` validates each theatre |
+| Token retrieval | Token expiry check before use |
+| Pre-seat-scrape | Token TTL ≥ 25 minutes verified |
+
+### Integrity Assertions
+
+After schema validation, these assertions are checked:
+
+```python
+assert len(movies) >= 10       # At least 10 movies expected
+assert len(city_stats) >= 50   # At least 50 cities expected (normally ~83)
+```
+
+### Failure Modes
+
+| Failure | GitHub Action Behavior |
+|---------|----------------------|
+| Schema validation fails | Exit with code 1, no Firestore write |
+| Token expired | Seat scrape skipped, error in logs |
+| Integrity assertion fails | Exit with code 1, data not uploaded |
+| Token TTL < 25 min | Seat scrape job fails fast |
+
+### CLI Validation Commands
+
+```bash
+# Validate today's movie data
+python -m backend.scrapers.validate
+
+# Validate specific file
+python -m backend.scrapers.validate --file data/movies_2025-12-18.json
+
+# Check token TTL (exit 1 if < 25 min remaining)
+python -m backend.scrapers.refresh_token --check-min-ttl 25
+```
+

@@ -35,16 +35,29 @@ def get_firestore_client():
 
 
 
-def upsert_theatre(theatre_data: Dict) -> bool:
+def upsert_theatre(theatre_data: Dict, validate: bool = True) -> bool:
     """
     Insert or update a theatre in Firestore.
     
     Args:
         theatre_data: dict with theatre_id, name, merchant, city, address, lat, lng, room_types
+        validate: Whether to validate with Pydantic before writing
     
     Returns:
         True if successful
     """
+    # Validate with Pydantic if enabled
+    if validate:
+        try:
+            from backend.schemas.theatre import TheatreSchema
+            from pydantic import ValidationError
+            TheatreSchema.model_validate(theatre_data)
+        except ValidationError as e:
+            print(f"⚠️ Validation failed for theatre {theatre_data.get('theatre_id')}: {e.errors()}")
+            return False
+        except ImportError:
+            pass  # Pydantic not available, skip validation
+    
     try:
         db = get_firestore_client()
         theatre_id = theatre_data.get('theatre_id')

@@ -160,6 +160,8 @@ def main():
     parser = argparse.ArgumentParser(description='Refresh TIX.id JWT Token')
     parser.add_argument('--visible', action='store_true', help='Show browser window')
     parser.add_argument('--check', action='store_true', help='Check current token status')
+    parser.add_argument('--check-min-ttl', type=int, metavar='MINUTES',
+                        help='Check that token has at least N minutes TTL remaining. Exit 1 if not.')
     parser.add_argument('--debug-screenshots', action='store_true', help='Save screenshots at each step')
     args = parser.parse_args()
     
@@ -175,6 +177,34 @@ def main():
         else:
             print("❌ No token found")
         return
+    
+    if args.check_min_ttl is not None:
+        # Check token has minimum TTL for seat scraping
+        storage = get_storage()
+        info = storage.get_token_info()
+        if not info:
+            print("❌ No token found in storage")
+            sys.exit(1)
+        
+        try:
+            from datetime import datetime
+            expires_at = datetime.fromisoformat(info.get('expires_at', '2000-01-01'))
+            minutes_remaining = int((expires_at - datetime.utcnow()).total_seconds() / 60)
+            
+            print(f"📋 Token TTL Check:")
+            print(f"   Expires at: {info.get('expires_at')}")
+            print(f"   Minutes remaining: {minutes_remaining}")
+            print(f"   Required minimum: {args.check_min_ttl}")
+            
+            if minutes_remaining >= args.check_min_ttl:
+                print(f"✅ Token has sufficient TTL ({minutes_remaining} >= {args.check_min_ttl})")
+                sys.exit(0)
+            else:
+                print(f"❌ Token TTL too low ({minutes_remaining} < {args.check_min_ttl})")
+                sys.exit(1)
+        except Exception as e:
+            print(f"❌ Error checking token TTL: {e}")
+            sys.exit(1)
     
     async def _run():
         refresher = TokenRefresher(debug_screenshots=args.debug_screenshots)

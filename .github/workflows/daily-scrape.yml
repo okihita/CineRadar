@@ -52,7 +52,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install google-cloud-firestore
+        run: pip install google-cloud-firestore pydantic>=2.5.0
 
       - name: Download all batch artifacts
         uses: actions/download-artifact@v4
@@ -63,6 +63,9 @@ jobs:
 
       - name: Merge batches
         run: python -m backend.scrapers.merge_batches
+
+      - name: Validate merged data
+        run: python -m backend.scrapers.validate
 
       - name: Upload to Firestore
         run: python populate_firestore.py
@@ -107,8 +110,15 @@ jobs:
           git pull origin ${{ github.ref_name }}
           ls -la data/
 
+      - name: Verify token TTL before seat scrape
+        run: python -m backend.scrapers.refresh_token --check-min-ttl 25
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
       - name: Run morning seat scraper batch ${{ matrix.batch }}
         run: python -m backend.scrapers.cli seats --mode morning --batch ${{ matrix.batch }} --total-batches 9
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
       - name: Upload seat batch artifact
         uses: actions/upload-artifact@v4

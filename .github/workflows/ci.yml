@@ -1,0 +1,76 @@
+# CineRadar CI - Lint and Test
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'tests/**'
+      - 'requirements.txt'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'tests/**'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install ruff
+        run: pip install ruff
+      
+      - name: Lint with ruff
+        run: ruff check backend/ --output-format=github
+  
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+      
+      - name: Run tests
+        run: pytest tests/ -v --tb=short --cov=backend --cov-report=term-missing
+      
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          fail_ci_if_error: false
+  
+  type-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install mypy
+        run: pip install mypy
+      
+      - name: Type check domain layer
+        run: mypy backend/domain/ --ignore-missing-imports
