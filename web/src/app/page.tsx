@@ -1,5 +1,3 @@
-import { promises as fs } from 'fs';
-import path from 'path';
 import MovieBrowser from '@/components/MovieBrowser';
 
 interface TheaterSchedule {
@@ -24,6 +22,7 @@ interface Movie {
   merchants: string[];
   cities: string[];
   schedules?: Record<string, TheaterSchedule[]>;
+  theatre_counts?: Record<string, number>;
 }
 
 interface MovieData {
@@ -39,18 +38,75 @@ interface MovieData {
 
 async function getMovieData(): Promise<MovieData | null> {
   try {
-    const dataDir = path.join(process.cwd(), 'public', 'data');
-    const files = await fs.readdir(dataDir);
-    const movieFiles = files.filter(f => f.startsWith('movies_') && f.endsWith('.json'));
-    if (movieFiles.length === 0) return null;
-    
-    movieFiles.sort().reverse();
-    const data = await fs.readFile(path.join(dataDir, movieFiles[0]), 'utf-8');
-    return JSON.parse(data);
+    // Fetch directly from Firestore REST API (works during build and SSR)
+    const projectId = 'cineradar-481014';
+    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/snapshots/latest`;
+
+    const response = await fetch(url, {
+      next: { revalidate: 300 } // Cache for 5 minutes
+    });
+
+    if (!response.ok) {
+      console.error('Firestore fetch failed:', response.status);
+      return null;
+    }
+
+    const firestoreDoc = await response.json();
+    const fields = firestoreDoc.fields || {};
+
+    // Transform Firestore format to our format
+    return {
+      scraped_at: fields.scraped_at?.stringValue || '',
+      date: fields.date?.stringValue || '',
+      summary: {
+        total_cities: parseInt(fields.summary?.mapValue?.fields?.total_cities?.integerValue || '0', 10),
+        total_movies: parseInt(fields.summary?.mapValue?.fields?.total_movies?.integerValue || '0', 10),
+      },
+      movies: parseMoviesArray(fields.movies?.arrayValue?.values || []),
+      city_stats: parseCityStats(fields.city_stats?.mapValue?.fields || {}),
+    };
   } catch (error) {
     console.error('Error loading movie data:', error);
     return null;
   }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function parseMoviesArray(values: any[]): Movie[] {
+  return values.map(v => {
+    const m = v.mapValue?.fields || {};
+    return {
+      id: m.id?.stringValue || '',
+      title: m.title?.stringValue || '',
+      genres: (m.genres?.arrayValue?.values || []).map((g: { stringValue: string }) => g.stringValue),
+      poster: m.poster?.stringValue || '',
+      age_category: m.age_category?.stringValue || '',
+      country: m.country?.stringValue || '',
+      merchants: (m.merchants?.arrayValue?.values || []).map((x: { stringValue: string }) => x.stringValue),
+      cities: (m.cities?.arrayValue?.values || []).map((x: { stringValue: string }) => x.stringValue),
+      theatre_counts: parseTheatreCounts(m.theatre_counts?.mapValue?.fields || {}),
+    };
+  });
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function parseTheatreCounts(fields: any): Record<string, number> {
+  const result: Record<string, number> = {};
+  for (const [city, val] of Object.entries(fields)) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    result[city] = parseInt((val as any).integerValue || '0', 10);
+  }
+  return result;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function parseCityStats(fields: any): Record<string, number> {
+  const result: Record<string, number> = {};
+  for (const [city, val] of Object.entries(fields)) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    result[city] = parseInt((val as any).integerValue || '0', 10);
+  }
+  return result;
 }
 
 export default async function Home() {
@@ -70,9 +126,11 @@ export default async function Home() {
     );
   }
 
-  // Calculate total theatres
+  // Calculate total theatres from theatre_counts (Firestore) or schedules (legacy)
   const totalTheatres = data.movies.reduce((acc, movie) => {
-    if (movie.schedules) {
+    if (movie.theatre_counts) {
+      return acc + Object.values(movie.theatre_counts).reduce((sum, count) => sum + count, 0);
+    } else if (movie.schedules) {
       return acc + Object.values(movie.schedules).reduce((sum, theaters) => sum + theaters.length, 0);
     }
     return acc;

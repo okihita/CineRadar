@@ -1,12 +1,16 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow public read access to theatres and scraper_runs
+    // Allow public read access to theatres, scraper_runs, and snapshots
     match /theatres/{theatreId} {
       allow read: if true;
       allow write: if false;
     }
     match /scraper_runs/{runId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /snapshots/{snapshotId} {
       allow read: if true;
       allow write: if false;
     }
