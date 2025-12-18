@@ -12,6 +12,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ArrowUp, ArrowDown, X, ChevronUp, Download } from 'lucide-react';
 import { REGION_CITIES, getRegion } from '@/lib/regions';
 import { useTheatres, useFilters, useDarkMode } from '@/hooks';
+import { formatWIBShort } from '@/lib/timeUtils';
 
 const ITEMS_PER_PAGE = 15;
 
@@ -76,14 +77,9 @@ function DashboardContent() {
       .join(', ');
   };
 
-  // Last updated timestamp
+  // Last updated timestamp (WIB)
   const lastUpdated = runs[0]?.timestamp
-    ? new Date(runs[0].timestamp).toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    ? formatWIBShort(runs[0].timestamp)
     : null;
 
   // Pagination

@@ -41,6 +41,23 @@ TIX.id Website → Scraper (GitHub Actions) → Firestore →
 - Data is stored in Firestore (no static files in repo)
 - Website fetches from Firestore REST API with 5-min cache
 
+### Time Display Convention
+
+> [!IMPORTANT]
+> **Database/Backend**: All timestamps stored as UTC/GMT  
+> **Web/Admin Apps**: All times displayed as WIB (Jakarta time, UTC+7)
+
+| Layer | Timezone | Example |
+|-------|----------|---------|
+| Firestore | UTC | `2025-12-18T00:15:08.000Z` |
+| Backend/Scraper | UTC | `datetime.utcnow()` |
+| Admin Dashboard | WIB | `Dec 18, 7:15 AM WIB` |
+| Public Website | WIB | `Dec 18, 7:15 AM WIB` |
+
+**Implementation:**
+- Admin: Use `formatWIB()` from `@/lib/timeUtils.ts`
+- Web: Use `formatWIB()` function with `timeZone: 'Asia/Jakarta'`
+
 ---
 
 ## Scraper 1: Token Refresh

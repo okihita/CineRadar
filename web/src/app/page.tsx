@@ -109,6 +109,27 @@ function parseCityStats(fields: any): Record<string, number> {
   return result;
 }
 
+/**
+ * Format date/time to WIB (Jakarta time)
+ * Keeps database as UTC, displays as WIB
+ */
+function formatWIB(date: string | null | undefined): string {
+  if (!date) return 'N/A';
+
+  // Handle both ISO strings and "YYYY-MM-DD HH:mm:ss" format
+  const d = new Date(date.includes('T') ? date : date.replace(' ', 'T') + 'Z');
+  if (isNaN(d.getTime())) return date; // Return original if can't parse
+
+  return d.toLocaleString('en-US', {
+    timeZone: 'Asia/Jakarta',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }) + ' WIB';
+}
+
 export default async function Home() {
   const data = await getMovieData();
 
@@ -167,7 +188,7 @@ export default async function Home() {
             )}
             <div className="text-right text-sm border-l border-white/10 pl-6">
               <p className="text-gray-400">{data.date}</p>
-              <p className="text-xs text-gray-500">{data.scraped_at}</p>
+              <p className="text-xs text-gray-500">{formatWIB(data.scraped_at)}</p>
             </div>
           </div>
         </div>
