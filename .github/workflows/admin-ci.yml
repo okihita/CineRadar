@@ -31,6 +31,16 @@ jobs:
           cache: 'npm'
           cache-dependency-path: admin/package-lock.json
 
+      - name: Verify lock file sync
+        run: |
+          # Fail fast if package-lock.json is out of sync
+          npm install --package-lock-only --ignore-scripts
+          if ! git diff --exit-code package-lock.json; then
+            echo "❌ ERROR: package-lock.json is out of sync with package.json"
+            echo "Run 'cd admin && npm install' locally and commit the updated lock file"
+            exit 1
+          fi
+
       - name: Install dependencies
         run: npm ci
 

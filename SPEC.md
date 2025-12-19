@@ -104,6 +104,24 @@ cd admin && npm run dev
 cd web && npm run dev -- --port 3001
 ```
 
+### Package Lock File Sync
+
+> [!CAUTION]
+> **After modifying `package.json`**, always run `npm install` to update the lock file:
+
+```bash
+# After changing admin/package.json
+cd admin && npm install
+
+# After changing web/package.json  
+cd web && npm install
+
+# Commit both files together
+git add package.json package-lock.json
+```
+
+CI will fail with `npm ci` if the lock file is out of sync.
+
 ---
 
 ## Scraper 1: Token Refresh
