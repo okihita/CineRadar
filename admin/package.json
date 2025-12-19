@@ -20,7 +20,7 @@
     "@vis.gl/react-google-maps": "^1.7.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "firebase": "^12.6.0",
+    "firebase": "^12.7.0",
     "html2canvas": "^1.4.1",
     "lucide-react": "^0.561.0",
     "next": "16.0.10",
