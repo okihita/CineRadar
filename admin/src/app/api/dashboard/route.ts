@@ -61,10 +61,12 @@ function getMockData() {
 }
 
 export async function GET() {
+    // IMPORTANT: Return mock data immediately on Vercel (before any better-sqlite3 import)
     if (isServerless) {
         return NextResponse.json(getMockData());
     }
 
+    // Only load better-sqlite3 on non-serverless environments
     try {
         const path = await import('path');
         const Database = (await import('better-sqlite3')).default;
