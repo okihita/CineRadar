@@ -6,12 +6,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { IndonesiaMap } from '@/components/indonesia-map';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { ArrowUp, ArrowDown, X, ChevronUp, Download } from 'lucide-react';
+import { PageHeader } from '@/components/PageHeader';
+import { ArrowUp, ArrowDown, X, ChevronUp, Download, MapPin } from 'lucide-react';
 import { REGION_CITIES, getRegion } from '@/lib/regions';
-import { useTheatres, useFilters, useDarkMode } from '@/hooks';
+import { useTheatres, useFilters } from '@/hooks';
 import { formatWIBShort } from '@/lib/timeUtils';
 
 const ITEMS_PER_PAGE = 15;
@@ -27,7 +27,6 @@ function DashboardContent() {
     toggleNameSort, toggleCitySort,
     sortedTheatres, mapTheatres,
   } = useFilters({ theatres });
-  const { darkMode, setDarkMode } = useDarkMode(false);
 
   // Local UI state
   const [currentPage, setCurrentPage] = useState(1);
@@ -264,32 +263,16 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* Header */}
-      <header className="border-b sticky top-0 z-50 bg-background/95 backdrop-blur">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <svg className="w-4 h-4 text-primary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <circle cx="12" cy="12" r="6" />
-                  <circle cx="12" cy="12" r="2" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-lg font-bold tracking-tight">CineRadar</h1>
-                <p className="text-xs text-muted-foreground">Theatre Intelligence</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-muted-foreground">Theme</span>
-                <Switch checked={darkMode} onCheckedChange={setDarkMode} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Page Header - no mock badge since this uses real Firestore data */}
+      <div className="container mx-auto px-4 pt-4">
+        <PageHeader
+          title="Cinema Intelligence"
+          description="Theatre locations, chains, and coverage across Indonesia"
+          icon={<MapPin className="w-6 h-6 text-primary" />}
+          lastUpdated={lastUpdated || undefined}
+          showMockBadge={false}
+        />
+      </div>
 
       <main className="container mx-auto px-4 py-4 space-y-4">
         {/* Full Width Map */}
