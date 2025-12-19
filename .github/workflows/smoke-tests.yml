@@ -1,0 +1,113 @@
+# Smoke tests for production admin dashboard
+# Runs after each deploy to verify all API endpoints work
+name: Smoke Tests
+
+on:
+  # Run after successful Vercel deploy (triggered by push to main)
+  push:
+    branches: [main]
+    paths:
+      - 'admin/**'
+  # Allow manual trigger
+  workflow_dispatch:
+  # Also run on schedule to catch any runtime issues
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight UTC (7 AM WIB)
+
+env:
+  ADMIN_URL: https://cineradar-admin.vercel.app
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Wait for Vercel to deploy (typically 1-2 minutes)
+    # For push events, add a delay; for manual/schedule, run immediately
+    
+    steps:
+      - name: Wait for Vercel deploy
+        if: github.event_name == 'push'
+        run: |
+          echo "⏳ Waiting 120s for Vercel to deploy..."
+          sleep 120
+
+      - name: Test all API endpoints return 200
+        run: |
+          echo "🧪 Testing all admin API endpoints..."
+          
+          ENDPOINTS=(
+            "/api/dashboard"
+            "/api/movies"
+            "/api/scraper"
+            "/api/analytics"
+            "/api/audience"
+            "/api/competition"
+            "/api/engagement"
+            "/api/location"
+            "/api/operations"
+            "/api/revenue"
+            "/api/trends"
+          )
+          
+          FAILED=0
+          
+          for endpoint in "${ENDPOINTS[@]}"; do
+            echo -n "  Testing ${endpoint}... "
+            
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${ADMIN_URL}${endpoint}" --max-time 30)
+            
+            if [ "$HTTP_CODE" -eq 200 ]; then
+              echo "✅ OK (${HTTP_CODE})"
+            else
+              echo "❌ FAILED (${HTTP_CODE})"
+              FAILED=$((FAILED + 1))
+            fi
+          done
+          
+          echo ""
+          if [ $FAILED -gt 0 ]; then
+            echo "❌ ${FAILED} endpoint(s) failed!"
+            exit 1
+          else
+            echo "✅ All ${#ENDPOINTS[@]} endpoints passed!"
+          fi
+
+      - name: Validate critical JSON responses
+        run: |
+          echo "🔍 Validating JSON structure of critical endpoints..."
+          
+          # Dashboard - check for kpis.revenue
+          echo -n "  /api/dashboard has kpis.revenue... "
+          if curl -sf "${ADMIN_URL}/api/dashboard" | jq -e '.kpis.revenue' > /dev/null 2>&1; then
+            echo "✅ OK"
+          else
+            echo "❌ FAILED - missing kpis.revenue"
+            exit 1
+          fi
+          
+          # Movies - check for array or total count
+          echo -n "  /api/movies has data... "
+          if curl -sf "${ADMIN_URL}/api/movies" | jq -e '.total or .showtimes' > /dev/null 2>&1; then
+            echo "✅ OK"
+          else
+            echo "❌ FAILED - invalid structure"
+            exit 1
+          fi
+          
+          # Scraper - check for runs array
+          echo -n "  /api/scraper has runs... "
+          if curl -sf "${ADMIN_URL}/api/scraper" | jq -e '.runs' > /dev/null 2>&1; then
+            echo "✅ OK"
+          else
+            echo "❌ FAILED - missing runs"
+            exit 1
+          fi
+          
+          echo ""
+          echo "✅ All JSON validations passed!"
+
+      - name: Report success
+        if: success()
+        run: |
+          echo "🎉 All smoke tests passed!"
+          echo "📊 Tested: 11 endpoints, 3 JSON validations"
