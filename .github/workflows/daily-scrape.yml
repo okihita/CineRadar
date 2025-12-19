@@ -30,7 +30,7 @@ jobs:
           playwright install-deps chromium
 
       - name: Run scraper batch ${{ matrix.batch }}
-        run: python -m backend.scrapers --schedules --batch ${{ matrix.batch }} --total-batches 9
+        run: python -m backend.cli --schedules --batch ${{ matrix.batch }} --total-batches 9
 
       - name: Upload batch artifact
         uses: actions/upload-artifact@v4
@@ -62,10 +62,10 @@ jobs:
           merge-multiple: true
 
       - name: Merge batches
-        run: python -m backend.scrapers.merge_batches
+        run: python -m backend.cli.merge_batches
 
       - name: Validate merged data
-        run: python -m backend.scrapers.validate
+        run: python -m backend.cli.validate
 
       - name: Upload to Firestore
         run: python populate_firestore.py
@@ -111,12 +111,12 @@ jobs:
           ls -la data/
 
       - name: Verify token TTL before seat scrape
-        run: python -m backend.scrapers.refresh_token --check-min-ttl 25
+        run: python -m backend.cli.refresh_token --check-min-ttl 25
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
       - name: Run morning seat scraper batch ${{ matrix.batch }}
-        run: python -m backend.scrapers.cli seats --mode morning --batch ${{ matrix.batch }} --total-batches 9
+        run: python -m backend.cli.cli seats --mode morning --batch ${{ matrix.batch }} --total-batches 9
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
@@ -150,7 +150,7 @@ jobs:
           merge-multiple: true
 
       - name: Merge and upload seat data
-        run: python -m backend.scrapers.upload_seats
+        run: python -m backend.cli.upload_seats
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 

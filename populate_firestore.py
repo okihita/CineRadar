@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from backend.services.firebase_client import sync_theatres_from_scrape, log_scraper_run, save_daily_snapshot
+from backend.infrastructure._legacy.firebase_client import sync_theatres_from_scrape, log_scraper_run, save_daily_snapshot
 
 
 def main():

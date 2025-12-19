@@ -35,7 +35,7 @@ jobs:
 
       - name: Run JIT seat scraper
         run: |
-          python -m backend.scrapers.cli seats \
+          python -m backend.cli.cli seats \
             --mode jit \
             --jit-window ${{ github.event.inputs.window_minutes || '20' }} \
             --use-stored-token
@@ -43,6 +43,6 @@ jobs:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
       - name: Upload to Firestore
-        run: python -m backend.scrapers.upload_seats --jit
+        run: python -m backend.cli.upload_seats --jit
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}

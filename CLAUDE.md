@@ -9,7 +9,12 @@ Cinema movie and seat availability tracker for Indonesian cinemas. Scrapes TIX.i
 backend/
 ├── domain/           # Pure Python dataclasses + errors
 ├── application/      # Use cases + ports (interfaces)
-├── infrastructure/   # Scrapers, repositories, CLI
+├── infrastructure/
+│   ├── scrapers/     # Clean scraper implementations
+│   ├── repositories/ # Firestore, file storage
+│   ├── cli/          # CLI commands
+│   └── _legacy/      # Legacy tix_client (don't modify)
+├── cli/              # Main CLI entry points
 └── schemas/          # Pydantic validation
 ```
 

@@ -49,7 +49,7 @@ class TixSeatScraper(BaseScraper, ISeatScraper):
 
         # Use legacy scraper for now
         # TODO: Migrate full logic here
-        from backend.services.seat_scraper import SeatScraper
+        from backend.infrastructure._legacy.seat_scraper import SeatScraper
 
         legacy_scraper = SeatScraper()
         legacy_scraper.auth_token = self.auth_token

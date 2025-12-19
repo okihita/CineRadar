@@ -195,7 +195,7 @@ def run_token(args):
 
     # Default: run token refresh
     # Fall back to legacy script for now
-    from backend.scrapers.refresh_token import main as legacy_main
+    from backend.cli.refresh_token import main as legacy_main
     return legacy_main()
 
 

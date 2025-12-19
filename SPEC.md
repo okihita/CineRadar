@@ -135,13 +135,13 @@ TIX_PASSWORD=<your_password>
 ### CLI Usage
 ```bash
 # Refresh token (headless)
-python -m backend.scrapers.refresh_token
+python -m backend.cli.refresh_token
 
 # Refresh token (visible browser)
-python -m backend.scrapers.refresh_token --visible
+python -m backend.cli.refresh_token --visible
 
 # Check token status
-python -m backend.scrapers.refresh_token --check
+python -m backend.cli.refresh_token --check
 ```
 
 ### GitHub Actions
@@ -176,8 +176,8 @@ Scrape daily movie listings, showtimes, and theatre information.
 
 ### CLI Usage
 ```bash
-python -m backend.scrapers.cli movies --city JAKARTA
-python -m backend.scrapers.cli movies --batch 0 --total-batches 9
+python -m backend.cli.cli movies --city JAKARTA
+python -m backend.cli.cli movies --batch 0 --total-batches 9
 ```
 
 ---
@@ -211,10 +211,10 @@ Headers:
 ### CLI Usage
 ```bash
 # JIT mode (uses stored token)
-python -m backend.scrapers.cli seats --mode jit --use-stored-token
+python -m backend.cli.cli seats --mode jit --use-stored-token
 
 # Manual mode (with login)
-python -m backend.scrapers.cli seats --mode morning
+python -m backend.cli.cli seats --mode morning
 ```
 
 ---
@@ -343,7 +343,7 @@ login_button = page.get_by_role('button', name='Login').last
 **Fix:** Use `xvfb-run` on Linux (GitHub Actions):
 ```yaml
 xvfb-run --auto-servernum --server-args="-screen 0 1280x720x24" \
-  python -m backend.scrapers.refresh_token
+  python -m backend.cli.refresh_token
 ```
 
 ### Issue 3: Showtime ID Extraction
@@ -475,13 +475,13 @@ assert len(city_stats) >= 50   # At least 50 cities expected (normally ~83)
 
 ```bash
 # Validate today's movie data
-python -m backend.scrapers.validate
+python -m backend.cli.validate
 
 # Validate specific file
-python -m backend.scrapers.validate --file data/movies_2025-12-18.json
+python -m backend.cli.validate --file data/movies_2025-12-18.json
 
 # Check token TTL (exit 1 if < 25 min remaining)
-python -m backend.scrapers.refresh_token --check-min-ttl 25
+python -m backend.cli.refresh_token --check-min-ttl 25
 ```
 
 ---

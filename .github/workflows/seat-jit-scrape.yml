@@ -35,11 +35,11 @@ jobs:
           git show HEAD:data/movies_${DATE}.json > data/movies_${DATE}.json 2>/dev/null || echo "No movie data for today"
 
       - name: Run JIT seat scraper
-        run: python -m backend.scrapers.seat_main --mode jit --jit-window 20
+        run: python -m backend.cli.seat_main --mode jit --jit-window 20
 
       - name: Upload to Firestore
         if: success()
-        run: python -m backend.scrapers.upload_seats
+        run: python -m backend.cli.upload_seats
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         continue-on-error: true

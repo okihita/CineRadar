@@ -28,7 +28,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run geocoder
-        run: python -m backend.scrapers.monthly_geocode
+        run: python -m backend.cli.monthly_geocode
         env:
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
 

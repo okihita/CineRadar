@@ -30,7 +30,7 @@ jobs:
       - name: Refresh TIX.id token (with xvfb)
         run: |
           xvfb-run --auto-servernum --server-args="-screen 0 1280x720x24" \
-            python -m backend.scrapers.refresh_token --debug-screenshots
+            python -m backend.cli.refresh_token --debug-screenshots
         env:
           TIX_PHONE_NUMBER: ${{ secrets.TIX_PHONE_NUMBER }}
           TIX_PASSWORD: ${{ secrets.TIX_PASSWORD }}
@@ -57,6 +57,6 @@ jobs:
 
       - name: Verify token stored
         if: success()
-        run: python -m backend.scrapers.refresh_token --check
+        run: python -m backend.cli.refresh_token --check
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
