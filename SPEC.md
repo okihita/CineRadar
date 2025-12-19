@@ -484,3 +484,86 @@ python -m backend.scrapers.validate --file data/movies_2025-12-18.json
 python -m backend.scrapers.refresh_token --check-min-ttl 25
 ```
 
+---
+
+## CI/CD Pipeline
+
+### Workflow Overview
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `ci.yml` | Push/PR to `backend/**` | Lint, test, type-check Python |
+| `admin-ci.yml` | Push/PR to `admin/**` | Lint, type-check, build Next.js |
+| `pr-checks.yml` | Pull requests | Unified quality gate |
+| `smoke-tests.yml` | Push to `admin/**` + daily | Test production APIs |
+| `security-scan.yml` | Push/PR + weekly | CodeQL security analysis |
+| `failure-reporter.yml` | Workflow failures | Auto-create GitHub issues |
+| `daily-scrape.yml` | Daily 6 AM WIB | Movie + seat scraping |
+| `token-refresh.yml` | Daily 5:50 AM WIB | JWT token refresh |
+
+### Quality Gates (Required for Merge)
+
+The `PR Checks` workflow serves as a single required status check for branch protection:
+
+```
+PR Checks
+├── backend-quality
+│   ├── ruff lint
+│   ├── mypy type check
+│   └── pytest (70% coverage minimum)
+└── frontend-quality
+    ├── TypeScript type check
+    └── Next.js build
+```
+
+### Automated Dependency Updates
+
+Dependabot is configured for:
+- **Python** (`requirements.txt`) - Weekly
+- **npm** (`admin/`, `web/`) - Weekly  
+- **GitHub Actions** - Weekly
+
+### Security Scanning
+
+CodeQL runs on:
+- Every push to `main`
+- Every pull request
+- Weekly scheduled scan
+
+Languages: Python, JavaScript/TypeScript
+
+### Alerting
+
+When critical workflows fail (`Daily Scrape`, `Token Refresh`, `Smoke Tests`):
+1. GitHub issue is automatically created
+2. Labeled with `workflow-failure` and `bug`
+3. Contains link to failed run
+
+### Smoke Tests
+
+Production API endpoints are tested:
+- After every `admin/**` push (with 2-min Vercel deploy delay)
+- Daily at 7 AM WIB
+- Manually via `workflow_dispatch`
+
+**11 endpoints tested:**
+- `/api/dashboard` (validates `kpis.revenue`)
+- `/api/movies` (validates `total` or `showtimes`)
+- `/api/scraper` (validates `runs`)
+- All other analytics endpoints (HTTP 200 check)
+
+### Local CI Commands
+
+```bash
+# Backend
+ruff check backend/                    # Lint
+mypy backend/domain/ --ignore-missing  # Type check
+pytest tests/ -v --cov=backend         # Test with coverage
+
+# Frontend (from admin/)
+npm run lint                           # ESLint
+npx tsc --noEmit                       # Type check
+npm run build                          # Production build
+```
+
+

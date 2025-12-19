@@ -1,5 +1,10 @@
 # CineRadar 🎬
 
+[![CI](https://github.com/okihita/CineRadar/actions/workflows/ci.yml/badge.svg)](https://github.com/okihita/CineRadar/actions/workflows/ci.yml)
+[![Admin CI](https://github.com/okihita/CineRadar/actions/workflows/admin-ci.yml/badge.svg)](https://github.com/okihita/CineRadar/actions/workflows/admin-ci.yml)
+[![Smoke Tests](https://github.com/okihita/CineRadar/actions/workflows/smoke-tests.yml/badge.svg)](https://github.com/okihita/CineRadar/actions/workflows/smoke-tests.yml)
+[![Daily Scrape](https://github.com/okihita/CineRadar/actions/workflows/daily-scrape.yml/badge.svg)](https://github.com/okihita/CineRadar/actions/workflows/daily-scrape.yml)
+
 A Python scraper for TIX.id - Indonesia's cinema ticket booking platform. Scrapes movie listings, theatre schedules, and showtimes across all Indonesian cities.
 
 ## Features

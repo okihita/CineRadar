@@ -1,0 +1,66 @@
+# Workflow Failure Notifications
+# Sends summary of failures for critical workflows
+name: Failure Reporter
+
+on:
+  workflow_run:
+    workflows: 
+      - "Daily Scrape"
+      - "Token Refresh"
+      - "Smoke Tests"
+    types:
+      - completed
+
+jobs:
+  report-failure:
+    name: Report Failure
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    
+    steps:
+      - name: Create failure issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const workflowName = context.payload.workflow_run.name;
+            const runUrl = context.payload.workflow_run.html_url;
+            const runId = context.payload.workflow_run.id;
+            const branch = context.payload.workflow_run.head_branch;
+            
+            const title = `🚨 ${workflowName} failed`;
+            const body = `## Workflow Failure Alert
+            
+            | Field | Value |
+            |-------|-------|
+            | **Workflow** | ${workflowName} |
+            | **Branch** | ${branch} |
+            | **Run ID** | ${runId} |
+            | **Status** | ❌ Failed |
+            
+            [View failed run](${runUrl})
+            
+            ---
+            *This issue was automatically created by the failure reporter.*`;
+            
+            // Check if issue already exists for this run
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'workflow-failure'
+            });
+            
+            const existingIssue = issues.data.find(i => i.title === title);
+            
+            if (!existingIssue) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['workflow-failure', 'bug']
+              });
+              console.log(`Created issue: ${title}`);
+            } else {
+              console.log(`Issue already exists: ${title}`);
+            }

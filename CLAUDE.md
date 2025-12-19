@@ -71,7 +71,35 @@ from backend.domain.errors import (
 2. `ruff check backend/` → Must be clean
 3. Update `CHANGELOG.md` if adding features
 
-## Current State (2025-12-18)
+## Current State (2025-12-19)
 - Architecture: Clean Architecture ✅
 - Tests: 67 passing ✅
+- CI/CD: Comprehensive ✅
 - Score: 10/10 ✅
+
+## CI/CD Workflows
+```bash
+# Triggered on PR
+pr-checks.yml        # Required for merge (lint + test + build)
+
+# Triggered on push to main
+ci.yml               # Backend lint/test/type-check
+admin-ci.yml         # Frontend lint/type-check/build
+smoke-tests.yml      # Production API tests
+
+# Scheduled
+daily-scrape.yml     # 6 AM WIB - Movies + seats
+token-refresh.yml    # 5:50 AM WIB - JWT refresh
+security-scan.yml    # Weekly CodeQL scan
+
+# On failure
+failure-reporter.yml # Auto-creates GitHub issues
+```
+
+## PR Requirements
+PRs must pass `pr-checks.yml` which includes:
+- `ruff check backend/` 
+- `mypy backend/domain/`
+- `pytest tests/ --cov-fail-under=70`
+- `npm run build` in admin/
+
