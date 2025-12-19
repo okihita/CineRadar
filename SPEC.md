@@ -72,6 +72,38 @@ TIX.id Website → Scraper (GitHub Actions) → Firestore →
 > The **Scraper Monitor** is a dedicated page for tracking data collection runs.
 > It shows run history, success rates, and schedule information.
 
+### Network Diagnostics (Before Debugging Production)
+
+> [!TIP]
+> Before debugging production issues, check local network connectivity first:
+
+```bash
+# Quick connectivity check with timing
+curl -s -o /dev/null -w "DNS: %{time_namelookup}s | Connect: %{time_connect}s | Total: %{time_total}s | HTTP: %{http_code}\n" https://cineradar-admin.vercel.app/api/dashboard
+
+# Expected: HTTP 200, Total < 3s
+# If DNS > 1s or Connect > 2s, network issue likely
+```
+
+### Local Server Health Check (Before Local Testing)
+
+> [!IMPORTANT]
+> **AI Agents / Developers**: Before testing on localhost, verify the dev server is running:
+
+```bash
+# Check if admin dev server is running (port 3000)
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 || echo "NOT RUNNING"
+
+# Check if web dev server is running (port 3001)
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3001 || echo "NOT RUNNING"
+
+# Start admin dev server if needed
+cd admin && npm run dev
+
+# Start web dev server if needed  
+cd web && npm run dev -- --port 3001
+```
+
 ---
 
 ## Scraper 1: Token Refresh
