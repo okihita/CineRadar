@@ -264,8 +264,8 @@ function DashboardContent() {
       <main className="px-6 pb-6 pt-4 space-y-4">
         {/* Map + KPI Cards Side by Side */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-4">
-          {/* Map Card - no padding */}
-          <Card className="overflow-hidden">
+          {/* Map Card - no vertical padding */}
+          <Card className="overflow-hidden py-0">
             <IndonesiaMap
               theatres={mapTheatres}
               selectedTheatre={selectedTheatre}
