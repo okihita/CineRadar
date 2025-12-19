@@ -4,15 +4,15 @@ Pydantic V2 models for data validation across the scraping pipeline.
 """
 
 from backend.schemas.movie import (
-    ShowtimeSchema,
-    RoomSchema,
-    TheatreScheduleSchema,
-    MovieSchema,
     DailySnapshotSchema,
+    MovieSchema,
+    RoomSchema,
+    ShowtimeSchema,
+    TheatreScheduleSchema,
 )
+from backend.schemas.scraper_run import ScraperRunSchema
 from backend.schemas.theatre import TheatreSchema
 from backend.schemas.token import TokenSchema
-from backend.schemas.scraper_run import ScraperRunSchema
 
 __all__ = [
     # Movie schemas

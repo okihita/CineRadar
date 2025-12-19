@@ -2,16 +2,16 @@
 Token Schema
 Validates JWT tokens with TTL checking for TIX.id API authentication.
 """
-from pydantic import BaseModel, Field, field_validator, model_validator
-from datetime import datetime, timedelta
-from typing import Optional
+from datetime import datetime
+
+from pydantic import BaseModel, Field, field_validator
 
 
 class TokenSchema(BaseModel):
     """JWT token with TTL validation.
-    
+
     Used to ensure tokens are valid before seat scraping runs.
-    
+
     Example:
         {
             "token": "eyJhbGciOiJIUzI1NiIs...",
@@ -21,7 +21,7 @@ class TokenSchema(BaseModel):
         }
     """
     token: str = Field(..., min_length=50, description="JWT token (typically 100+ chars)")
-    phone: Optional[str] = Field(None, description="Masked phone number")
+    phone: str | None = Field(None, description="Masked phone number")
     stored_at: str = Field(..., description="ISO timestamp when token was stored")
     expires_at: str = Field(..., description="ISO timestamp when token expires")
 
@@ -32,7 +32,7 @@ class TokenSchema(BaseModel):
         try:
             datetime.fromisoformat(v)
         except ValueError:
-            raise ValueError(f"Invalid ISO timestamp: {v}")
+            raise ValueError(f"Invalid ISO timestamp: {v}") from None
         return v
 
     def get_expiry_datetime(self) -> datetime:
@@ -51,10 +51,10 @@ class TokenSchema(BaseModel):
 
     def is_valid_for_scrape(self, min_minutes: int = 30) -> bool:
         """Check if token has enough TTL for a scrape run.
-        
+
         Args:
             min_minutes: Minimum minutes of validity required
-            
+
         Returns:
             True if token will be valid for at least min_minutes
         """

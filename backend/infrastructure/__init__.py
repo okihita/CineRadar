@@ -10,13 +10,13 @@ This layer connects to external systems:
 """
 
 # Re-export for convenience
-from backend.infrastructure.scrapers import TixMovieScraper, TixSeatScraper
 from backend.infrastructure.repositories import (
+    FileMovieRepository,
     FirestoreMovieRepository,
     FirestoreTheatreRepository,
     FirestoreTokenRepository,
-    FileMovieRepository,
 )
+from backend.infrastructure.scrapers import TixMovieScraper, TixSeatScraper
 
 __all__ = [
     # Scrapers

@@ -21,34 +21,33 @@ from backend.config import CITIES
 
 def create_movie_scraper():
     """Factory to create movie scraping use case with dependencies."""
-    from backend.infrastructure.scrapers import TixMovieScraper
+    from backend.application.use_cases import ScrapeMoviesUseCase
     from backend.infrastructure.repositories import (
         FirestoreMovieRepository,
         FirestoreTheatreRepository,
-        FileMovieRepository,
     )
-    from backend.application.use_cases import ScrapeMoviesUseCase
-    
+    from backend.infrastructure.scrapers import TixMovieScraper
+
     scraper = TixMovieScraper()
     movie_repo = FirestoreMovieRepository()
     theatre_repo = FirestoreTheatreRepository()
-    
+
     return ScrapeMoviesUseCase(scraper, movie_repo, theatre_repo)
 
 
 def create_file_movie_scraper(data_dir: str = "data"):
     """Factory for file-based storage (no Firestore)."""
-    from backend.infrastructure.scrapers import TixMovieScraper
+    from backend.application.use_cases import ScrapeMoviesUseCase
     from backend.infrastructure.repositories import (
         FileMovieRepository,
         FirestoreTheatreRepository,
     )
-    from backend.application.use_cases import ScrapeMoviesUseCase
-    
+    from backend.infrastructure.scrapers import TixMovieScraper
+
     scraper = TixMovieScraper()
     movie_repo = FileMovieRepository(data_dir)
     theatre_repo = FirestoreTheatreRepository()
-    
+
     return ScrapeMoviesUseCase(scraper, movie_repo, theatre_repo)
 
 
@@ -58,7 +57,7 @@ def run_movies(args):
     print("🎬 CineRadar - Movie Availability Scraper (Clean Architecture)")
     print(f"📅 Date: {datetime.now().strftime('%Y-%m-%d')}")
     print("=" * 60 + "\n")
-    
+
     async def _run():
         # Determine cities
         if args.batch is not None:
@@ -71,7 +70,7 @@ def run_movies(args):
             cities = [args.city.upper()]
         else:
             cities = None
-        
+
         # Create and execute use case
         if args.local:
             use_case = create_file_movie_scraper(args.output)
@@ -79,7 +78,7 @@ def run_movies(args):
         else:
             use_case = create_movie_scraper()
             save_to_storage = True
-        
+
         result = await use_case.execute(
             cities=cities,
             fetch_schedules=args.schedules,
@@ -87,23 +86,23 @@ def run_movies(args):
             sync_theatres=args.schedules,
             headless=not args.visible,
         )
-        
+
         if result.success:
-            print(f"\n✅ Success!")
+            print("\n✅ Success!")
             print(f"   🎬 Movies: {result.movie_count}")
             print(f"   🏙️ Cities: {result.cities_scraped}")
             print(f"   🏢 Theatres synced: {result.theatres_synced}")
         else:
             print(f"\n❌ Failed: {result.error}")
             return 1
-        
+
         # Save to file if using batch mode
         if args.batch is not None:
-            from backend.infrastructure.repositories import FileMovieRepository
             from backend.domain.models import ScrapeResult
-            
-            file_repo = FileMovieRepository(args.output)
-            
+            from backend.infrastructure.repositories import FileMovieRepository
+
+            FileMovieRepository(args.output)
+
             # Create result for file save
             date_str = datetime.now().strftime("%Y-%m-%d")
             scrape_result = ScrapeResult(
@@ -112,49 +111,49 @@ def run_movies(args):
                 date=date_str,
                 cities_scraped=result.cities_scraped,
             )
-            
+
             # Save with batch suffix
             import json
             from pathlib import Path
-            
+
             output_file = Path(args.output) / f"batch_{args.batch}_{date_str}.json"
             with open(output_file, 'w', encoding='utf-8') as f:
                 data = scrape_result.to_dict()
                 data['batch'] = args.batch
                 json.dump(data, f, indent=2, ensure_ascii=False)
-            
+
             print(f"💾 Saved to: {output_file}")
-        
+
         return 0
-    
+
     return asyncio.run(_run())
 
 
 def run_validate(args):
     """Run data validation command."""
     from backend.application.use_cases import ValidateDataUseCase
-    
+
     use_case = ValidateDataUseCase(
         min_movies=args.min_movies,
         min_cities=args.min_cities,
     )
-    
+
     result = use_case.validate_file(args.file)
-    
+
     print(f"📂 Validating: {args.file}")
     print(f"   🎬 Movies: {result.movies}")
     print(f"   🏙️ Cities: {result.cities}")
-    
+
     if result.errors:
         print(f"❌ Errors ({len(result.errors)}):")
         for err in result.errors[:5]:
             print(f"   • {err}")
-    
+
     if result.warnings:
         print(f"⚠️ Warnings ({len(result.warnings)}):")
         for warn in result.warnings[:3]:
             print(f"   • {warn}")
-    
+
     if result.valid:
         print("\n🎉 Validation PASSED!")
         return 0
@@ -166,13 +165,13 @@ def run_validate(args):
 def run_token(args):
     """Run token commands."""
     from backend.infrastructure.repositories import FirestoreTokenRepository
-    
+
     repo = FirestoreTokenRepository()
-    
+
     if args.check:
         token = repo.get_current()
         if token:
-            print(f"📋 Token Info:")
+            print("📋 Token Info:")
             print(f"   Stored at: {token.stored_at}")
             print(f"   Expires at: {token.expires_at}")
             print(f"   Minutes remaining: {token.minutes_until_expiry}")
@@ -180,20 +179,20 @@ def run_token(args):
         else:
             print("❌ No token found")
         return 0
-    
+
     if args.check_min_ttl is not None:
         token = repo.get_current()
         if not token:
             print("❌ No token found")
             return 1
-        
+
         if token.minutes_until_expiry >= args.check_min_ttl:
             print(f"✅ Token valid for {token.minutes_until_expiry} min (need {args.check_min_ttl})")
             return 0
         else:
             print(f"❌ Token only valid for {token.minutes_until_expiry} min (need {args.check_min_ttl})")
             return 1
-    
+
     # Default: run token refresh
     # Fall back to legacy script for now
     from backend.scrapers.refresh_token import main as legacy_main
@@ -213,9 +212,9 @@ Examples:
   python -m backend.infrastructure.cli token --check
         """
     )
-    
+
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
-    
+
     # Movies subcommand
     movies_parser = subparsers.add_parser('movies', help='Scrape movie availability')
     movies_parser.add_argument('--visible', action='store_true', help='Show browser window')
@@ -225,21 +224,21 @@ Examples:
     movies_parser.add_argument('--batch', type=int, help='Batch number (0-indexed)')
     movies_parser.add_argument('--total-batches', type=int, default=9)
     movies_parser.add_argument('--local', action='store_true', help='Save to file only, no Firestore')
-    
+
     # Validate subcommand
     validate_parser = subparsers.add_parser('validate', help='Validate movie data')
     validate_parser.add_argument('--file', '-f', required=True, help='File to validate')
     validate_parser.add_argument('--min-movies', type=int, default=10)
     validate_parser.add_argument('--min-cities', type=int, default=50)
-    
+
     # Token subcommand
     token_parser = subparsers.add_parser('token', help='Token management')
     token_parser.add_argument('--check', action='store_true', help='Check current token')
     token_parser.add_argument('--check-min-ttl', type=int, help='Check min TTL in minutes')
     token_parser.add_argument('--refresh', action='store_true', help='Refresh token')
-    
+
     args = parser.parse_args()
-    
+
     if args.command == 'movies':
         sys.exit(run_movies(args))
     elif args.command == 'validate':

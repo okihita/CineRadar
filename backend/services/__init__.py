@@ -14,14 +14,14 @@ Migration Path:
 
 For new code, use the infrastructure layer:
     from backend.infrastructure import TixMovieScraper
-    
+
 Not:
     from backend.services.tix_client import CineRadarScraper  # Legacy
 """
 
-from backend.services.tix_client import CineRadarScraper
-from backend.services.seat_scraper import SeatScraper
 from backend.services.base_scraper import BaseScraper as LegacyBaseScraper
+from backend.services.seat_scraper import SeatScraper
+from backend.services.tix_client import CineRadarScraper
 
 __all__ = [
     'CineRadarScraper',

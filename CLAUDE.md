@@ -37,6 +37,18 @@ python -m backend.infrastructure.cli movies --city JAKARTA --schedules --local
 3. **Type hints required** - All public functions
 4. **Tests mirror structure** - `tests/test_domain_models.py` for `domain/models/`
 
+## Linting Rules (ruff)
+**Must pass before commit: `ruff check backend/`**
+
+| Error | Fix |
+|-------|-----|
+| `W293` | No trailing whitespace on blank lines |
+| `E722` | No bare `except:` - use `except Exception:` |
+| `B007` | Unused loop vars must start with `_` (e.g., `_movie_id`) |
+| `I001` | Imports must be sorted (run `ruff check --fix`) |
+| `UP035` | Use `dict` not `typing.Dict` |
+| `UP045` | Use `X | None` not `Optional[X]` |
+
 ## Domain Errors
 ```python
 from backend.domain.errors import (

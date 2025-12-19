@@ -5,9 +5,11 @@ CineRadar Scrapers Entry Point
 This module provides backward compatibility by redirecting to the unified CLI.
 For new usage, prefer: python -m backend.scrapers.cli [movies|seats] [options]
 """
-import sys
-from backend.scrapers.cli import main as cli_main, run_movie_scrape
 import argparse
+import sys
+
+from backend.scrapers.cli import main as cli_main
+from backend.scrapers.cli import run_movie_scrape
 
 # If called directly as package, default to movie scraping for backward compatibility
 if __name__ == "__main__":
@@ -25,9 +27,9 @@ if __name__ == "__main__":
         parser.add_argument('--output', default='data')
         parser.add_argument('--batch', type=int, help='Batch number (0-indexed)')
         parser.add_argument('--total-batches', type=int, default=9)
-        
+
         args = parser.parse_args()
-        
+
         run_movie_scrape(
             output_dir=args.output,
             headless=not args.visible,

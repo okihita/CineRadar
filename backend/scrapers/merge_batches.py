@@ -11,34 +11,34 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 def merge_batches(data_dir: str = "data", validate: bool = True) -> bool:
     """Merge batch files into single daily output.
-    
+
     Args:
         data_dir: Directory containing batch files
         validate: Whether to validate merged output with Pydantic
-        
+
     Returns:
         True if merge (and validation) successful
     """
     data_path = Path(data_dir)
     date_str = datetime.now().strftime("%Y-%m-%d")
-    
+
     # Find all batch files
     batch_files = sorted(data_path.glob("batch_*_*.json"))
     print(f"📦 Found {len(batch_files)} batch files")
-    
+
     if not batch_files:
         print("❌ No batch files found")
         return False
-    
+
     # Merge movies
     movie_map = {}
     city_stats = {}
-    
+
     for batch_file in batch_files:
         print(f"   Loading {batch_file.name}")
-        with open(batch_file, 'r', encoding='utf-8') as f:
+        with open(batch_file, encoding='utf-8') as f:
             data = json.load(f)
-        
+
         for movie in data.get('movies', []):
             movie_id = movie['id']
             if movie_id in movie_map:
@@ -52,13 +52,13 @@ def merge_batches(data_dir: str = "data", validate: bool = True) -> bool:
                         existing['schedules'][city] = schedules
             else:
                 movie_map[movie_id] = movie
-        
+
         city_stats.update(data.get('city_stats', {}))
-    
+
     # Sort by city count
     movies = sorted(movie_map.values(), key=lambda x: len(x.get('cities', [])), reverse=True)
     presales = [m for m in movies if m.get('is_presale')]
-    
+
     # Build output data
     output_data = {
         'scraped_at': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -71,13 +71,14 @@ def merge_batches(data_dir: str = "data", validate: bool = True) -> bool:
         'movies': movies,
         'city_stats': city_stats,
     }
-    
+
     # Validate with Pydantic if enabled
     if validate:
         try:
-            from backend.schemas.movie import DailySnapshotSchema
             from pydantic import ValidationError
-            
+
+            from backend.schemas.movie import DailySnapshotSchema
+
             print("🔍 Validating merged data...")
             validated = DailySnapshotSchema.model_validate(output_data)
             print(f"✅ Validation passed: {len(validated.movies)} movies, {len(validated.city_stats)} cities")
@@ -89,12 +90,12 @@ def merge_batches(data_dir: str = "data", validate: bool = True) -> bool:
             return False
         except ImportError:
             print("⚠️ Pydantic not available, skipping validation")
-    
+
     # Save merged result
     output_file = data_path / f"movies_{date_str}.json"
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump(output_data, f, indent=2, ensure_ascii=False)
-    
+
     print(f"✅ Merged {len(movies)} movies from {len(city_stats)} cities")
     print(f"💾 Saved to: {output_file}")
     return True

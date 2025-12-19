@@ -2,13 +2,13 @@
 Theatre Schema
 Validates theatre data for Firestore storage.
 """
+
 from pydantic import BaseModel, Field, field_validator
-from typing import List, Optional
 
 
 class TheatreSchema(BaseModel):
     """Theatre location for Firestore.
-    
+
     Example:
         {
             "theatre_id": "986744938815295488",
@@ -25,11 +25,11 @@ class TheatreSchema(BaseModel):
     name: str = Field(..., min_length=1)
     merchant: str = Field(..., description="Cinema chain: XXI, CGV, or Cinépolis")
     city: str = Field(..., min_length=1)
-    address: Optional[str] = None
-    lat: Optional[float] = Field(None, ge=-90, le=90, description="Latitude")
-    lng: Optional[float] = Field(None, ge=-180, le=180, description="Longitude")
-    place_id: Optional[str] = Field(None, description="Google Places ID")
-    room_types: List[str] = Field(default_factory=list)
+    address: str | None = None
+    lat: float | None = Field(None, ge=-90, le=90, description="Latitude")
+    lng: float | None = Field(None, ge=-180, le=180, description="Longitude")
+    place_id: str | None = Field(None, description="Google Places ID")
+    room_types: list[str] = Field(default_factory=list)
 
     @field_validator('merchant')
     @classmethod
