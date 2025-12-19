@@ -72,6 +72,21 @@ TIX.id Website → Scraper (GitHub Actions) → Firestore →
 > The **Scraper Monitor** is a dedicated page for tracking data collection runs.
 > It shows run history, success rates, and schedule information.
 
+### Geographic Regions (6 Regions)
+
+All 83 Indonesian cities are mapped to exactly 6 regions. **No "Others" category allowed.**
+
+| Region | Example Cities | Count |
+|--------|----------------|-------|
+| **Jawa** | Jakarta, Bandung, Surabaya, Semarang, Yogyakarta | ~36 |
+| **Sumatera** | Medan, Palembang, Pekanbaru, Batam, Padang | ~19 |
+| **Kalimantan** | Balikpapan, Banjarmasin, Pontianak, Samarinda | ~12 |
+| **Sulawesi** | Makassar, Manado, Palu, Kendari, Gorontalo | ~7 |
+| **Bali & NT** | Bali, Mataram, Kupang | ~3 |
+| **Papua & Maluku** | Jayapura, Sorong, Ambon, Ternate, Timika | ~6 |
+
+Region mapping defined in: `admin/src/lib/regions.ts`
+
 ### Network Diagnostics (Before Debugging Production)
 
 > [!TIP]
@@ -121,6 +136,92 @@ git add package.json package-lock.json
 ```
 
 CI will fail with `npm ci` if the lock file is out of sync.
+
+### Next.js Hydration Rules
+
+> [!WARNING]
+> **Prevent hydration mismatch errors** by following these rules:
+
+1. **Never access `document` or `window` during render** - only in `useEffect` or event handlers
+2. **Use `suppressHydrationWarning`** on `<html>` and `<body>` tags (already applied in `layout.tsx`)
+3. **Defer theme initialization** to client-side `useEffect`:
+```tsx
+useEffect(() => {
+  const saved = localStorage.getItem('darkMode');
+  document.documentElement.classList.toggle('dark', saved === 'true');
+}, []);
+```
+4. **Don't use `Date.now()` or `Math.random()`** in component render
+
+### Runtime API Availability
+
+> [!CAUTION]
+> **TypeScript passing ≠ Runtime working**. External APIs load asynchronously.
+
+```tsx
+// ❌ WRONG: google.maps.marker may not be loaded yet
+const marker = new google.maps.marker.AdvancedMarkerElement({...});
+
+// ✅ CORRECT: Use library hook to wait for API
+const markerLib = useMapsLibrary('marker');
+useEffect(() => {
+  if (!markerLib) return; // Wait for API
+  const marker = new markerLib.AdvancedMarkerElement({...});
+}, [markerLib]);
+```
+
+Always use library hooks (`useMapsLibrary`) when working with Google Maps or similar async-loaded APIs.
+
+### Cinema Intelligence Map Configuration
+
+| Setting | Value | Reason |
+|---------|-------|--------|
+| **Default zoom** | 5.5 | Shows all of Indonesia |
+| **Clustering radius** | 80px | Groups nearby theatres |
+| **Clustering max zoom** | 14 | At zoom 15+, show individual markers |
+| **POI toggle** | ❌ Not implemented | Requires 4 custom map styles in Google Cloud Console (too much maintenance) |
+
+### Brand Colors (Chains)
+
+| Chain | Color | Hex | Source |
+|-------|-------|-----|--------|
+| **XXI** | Tan/Gold | `#CFAB7A` | Official brand |
+| **CGV** | CG Red | `#E03C31` | Official brand |
+| **Cinépolis** | Midnight Blue | `#002069` | Official brand |
+
+### Region Colors (Non-conflicting with chains)
+
+| Region | Color | Hex |
+|--------|-------|-----|
+| Jawa | Teal | `#0d9488` |
+| Sumatera | Purple | `#7c3aed` |
+| Kalimantan | Pink | `#db2777` |
+| Sulawesi | Orange | `#ea580c` |
+| Bali & NT | Cyan | `#0891b2` |
+| Papua & Maluku | Lime | `#65a30d` |
+
+### UI Features
+
+| Feature | Description |
+|---------|-------------|
+| **Cluster hover tooltip** | 300ms delay, shows chain breakdown with percentages |
+| **Search highlighting** | Yellow highlight on matching text in table |
+| **Region filter pan** | Clicking region badge pans map to region center |
+| **InfoWindow** | Compact popup with chain badge, location, room types, action buttons |
+
+### Region Center Coordinates
+
+| Region | Lat | Lng | Zoom |
+|--------|-----|-----|------|
+| Indonesia (All) | -2.5 | 118 | 5.5 |
+| Jawa | -7.0 | 110.4 | 7 |
+| Sumatera | -0.5 | 101.5 | 6 |
+| Kalimantan | 0.5 | 116.5 | 6 |
+| Sulawesi | -2.0 | 121.0 | 6.5 |
+| Bali & NT | -8.5 | 118.0 | 7 |
+| Papua & Maluku | -3.5 | 135.0 | 6 |
+
+**Map library:** `@vis.gl/react-google-maps` + `@googlemaps/markerclusterer`
 
 ---
 

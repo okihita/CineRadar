@@ -1,8 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Moon, Sun, Search, RefreshCw, X } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface PageHeaderProps {
@@ -24,24 +22,6 @@ export function PageHeader({
     isRefreshing,
     showMockBadge = true,
 }: PageHeaderProps) {
-    const [darkMode, setDarkMode] = useState(false);
-    const [searchOpen, setSearchOpen] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
-
-    useEffect(() => {
-        const saved = localStorage.getItem('darkMode');
-        const isDark = saved === 'true' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
-        setDarkMode(isDark);
-        document.documentElement.classList.toggle('dark', isDark);
-    }, []);
-
-    const toggleDarkMode = () => {
-        const newValue = !darkMode;
-        setDarkMode(newValue);
-        localStorage.setItem('darkMode', String(newValue));
-        document.documentElement.classList.toggle('dark', newValue);
-    };
-
     return (
         <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             {/* Left: Title and description */}
@@ -67,65 +47,21 @@ export function PageHeader({
                 </div>
             </div>
 
-            {/* Right: Actions */}
-            <div className="flex items-center gap-2">
-                {/* Search */}
-                <div className={cn(
-                    'flex items-center transition-all duration-200',
-                    searchOpen ? 'w-48' : 'w-8'
-                )}>
-                    {searchOpen ? (
-                        <div className="relative w-full">
-                            <Input
-                                placeholder="Search..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="h-8 pr-8 text-sm"
-                                autoFocus
-                                onBlur={() => !searchTerm && setSearchOpen(false)}
-                            />
-                            <button
-                                onClick={() => { setSearchTerm(''); setSearchOpen(false); }}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                            >
-                                <X className="w-4 h-4" />
-                            </button>
-                        </div>
-                    ) : (
-                        <button
-                            onClick={() => setSearchOpen(true)}
-                            className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                            title="Search"
-                        >
-                            <Search className="w-4 h-4" />
-                        </button>
-                    )}
-                </div>
-
-                {/* Refresh */}
-                {onRefresh && (
-                    <button
-                        onClick={onRefresh}
-                        disabled={isRefreshing}
-                        className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-                        title="Refresh data"
-                    >
-                        <RefreshCw className={cn('w-4 h-4', isRefreshing && 'animate-spin')} />
-                    </button>
-                )}
-
-                {/* Dark Mode Toggle */}
+            {/* Right: Refresh only (theme toggle is in sidebar) */}
+            {onRefresh && (
                 <button
-                    onClick={toggleDarkMode}
-                    className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                    title={darkMode ? 'Light mode' : 'Dark mode'}
+                    onClick={onRefresh}
+                    disabled={isRefreshing}
+                    className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                    title="Refresh data"
                 >
-                    {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                    <RefreshCw className={cn('w-4 h-4', isRefreshing && 'animate-spin')} />
                 </button>
-            </div>
+            )}
         </div>
     );
 }
 
 // Re-export time utilities for backward compatibility
 export { formatRelativeWIB as formatRelativeTime, formatWIB, formatWIBShort, formatWIBDate } from '@/lib/timeUtils';
+

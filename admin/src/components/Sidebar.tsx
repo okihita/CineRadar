@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, MapPin, Film, Users, ChevronLeft, ChevronRight, DollarSign, Trophy, TrendingUp, Navigation, Settings, Heart, Brain, Database } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 const menuItems = [
@@ -88,6 +88,14 @@ const menuItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+
+  // Initialize theme on client mount (prevents hydration mismatch)
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('darkMode');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const isDark = savedTheme === 'true' || (!savedTheme && prefersDark);
+    document.documentElement.classList.toggle('dark', isDark);
+  }, []);
 
   return (
     <aside

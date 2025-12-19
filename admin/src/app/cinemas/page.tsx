@@ -16,6 +16,38 @@ import { formatWIBShort } from '@/lib/timeUtils';
 
 const ITEMS_PER_PAGE = 15;
 
+// Region center coordinates for map panning
+const REGION_CENTERS: Record<string, { lat: number; lng: number; zoom: number }> = {
+  'Jawa': { lat: -7.0, lng: 110.4, zoom: 7 },
+  'Sumatera': { lat: -0.5, lng: 101.5, zoom: 6 },
+  'Kalimantan': { lat: 0.5, lng: 116.5, zoom: 6 },
+  'Sulawesi': { lat: -2.0, lng: 121.0, zoom: 6.5 },
+  'Bali & NT': { lat: -8.5, lng: 118.0, zoom: 7 },
+  'Papua & Maluku': { lat: -3.5, lng: 135.0, zoom: 6 },
+  'all': { lat: -2.5, lng: 118, zoom: 5.5 },
+};
+
+// Helper function for SVG donut arc
+function describeDonutArc(cx: number, cy: number, outerR: number, innerR: number, startAngle: number, endAngle: number): string {
+  const toRad = (deg: number) => (deg - 90) * Math.PI / 180;
+  const outerStart = { x: cx + outerR * Math.cos(toRad(startAngle)), y: cy + outerR * Math.sin(toRad(startAngle)) };
+  const outerEnd = { x: cx + outerR * Math.cos(toRad(endAngle)), y: cy + outerR * Math.sin(toRad(endAngle)) };
+  const innerStart = { x: cx + innerR * Math.cos(toRad(endAngle)), y: cy + innerR * Math.sin(toRad(endAngle)) };
+  const innerEnd = { x: cx + innerR * Math.cos(toRad(startAngle)), y: cy + innerR * Math.sin(toRad(startAngle)) };
+  const largeArc = endAngle - startAngle > 180 ? 1 : 0;
+  return `M ${outerStart.x} ${outerStart.y} A ${outerR} ${outerR} 0 ${largeArc} 1 ${outerEnd.x} ${outerEnd.y} L ${innerStart.x} ${innerStart.y} A ${innerR} ${innerR} 0 ${largeArc} 0 ${innerEnd.x} ${innerEnd.y} Z`;
+}
+
+// Helper function to highlight search matches
+function highlightText(text: string, searchTerm: string): React.ReactNode {
+  if (!searchTerm.trim()) return text;
+  const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  const parts = text.split(regex);
+  return parts.map((part, i) =>
+    regex.test(part) ? <mark key={i} className="bg-yellow-200 dark:bg-yellow-800 rounded px-0.5">{part}</mark> : part
+  );
+}
+
 function DashboardContent() {
   // Data from custom hooks
   const { theatres, runs, loading } = useTheatres();
@@ -32,6 +64,7 @@ function DashboardContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedTheatre, setSelectedTheatre] = useState<typeof theatres[0] | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number; zoom: number } | null>(null);
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
   // Derived data
@@ -218,169 +251,239 @@ function DashboardContent() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* KPI Ticker Bar */}
-      <div className="bg-muted/50 border-b text-xs">
-        <div className="container mx-auto px-4 py-2 flex items-center justify-between gap-6 overflow-x-auto">
-          <div className="flex items-center gap-6 flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              <span className="font-mono font-medium">{theatres.length}</span>
-              <span className="text-muted-foreground">THEATRES</span>
-            </div>
-            <div className="h-3 w-px bg-border"></div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono font-medium">{cities.length}</span>
-              <span className="text-muted-foreground">CITIES</span>
-            </div>
-            <div className="h-3 w-px bg-border"></div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono font-medium">{merchants.length}</span>
-              <span className="text-muted-foreground">CHAINS</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-4 flex-shrink-0">
-            {merchantBreakdown.map(m => (
-              <div
-                key={m.name}
-                className="flex items-center gap-1.5 cursor-help"
-                title={`${m.name} distribution: ${getMerchantRegionBreakdown(m.name)}`}
-              >
-                <span className={`w-2 h-2 rounded-sm ${m.name === 'XXI' ? 'bg-amber-500' :
-                  m.name === 'CGV' ? 'bg-red-500' :
-                    'bg-blue-500'
-                  }`}></span>
-                <span className="font-medium">{m.name}</span>
-                <span className="text-muted-foreground">{Math.round((m.count / theatres.length) * 100)}%</span>
-              </div>
-            ))}
-            {lastUpdated && (
-              <>
-                <div className="h-3 w-px bg-border"></div>
-                <span className="text-muted-foreground">Updated: {lastUpdated}</span>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
       {/* Page Header - no mock badge since this uses real Firestore data */}
-      <div className="container mx-auto px-4 pt-4">
+      <div className="px-6 pt-6">
         <PageHeader
           title="Cinema Intelligence"
           description="Theatre locations, chains, and coverage across Indonesia"
           icon={<MapPin className="w-6 h-6 text-primary" />}
-          lastUpdated={lastUpdated || undefined}
           showMockBadge={false}
         />
       </div>
 
-      <main className="container mx-auto px-4 py-4 space-y-4">
-        {/* Full Width Map */}
-        <Card>
-          <CardHeader className="py-3 px-4">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm">Coverage Map</CardTitle>
-              {selectedTheatre && (
-                <div className="flex items-center gap-2 text-xs">
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded font-medium ${selectedTheatre.merchant === 'XXI' ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400' :
-                    selectedTheatre.merchant === 'CGV' ? 'bg-red-500/20 text-red-600 dark:text-red-400' :
-                      'bg-blue-500/20 text-blue-600 dark:text-blue-400'
-                    }`}>
-                    {selectedTheatre.merchant}
-                  </span>
-                  <span className="font-medium">{selectedTheatre.name}</span>
-                  <span className="text-muted-foreground">• {selectedTheatre.city}</span>
-                  <button
-                    onClick={() => setSelectedTheatre(null)}
-                    className="text-muted-foreground hover:text-foreground ml-1"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="px-4 pb-4">
+      <main className="px-6 pb-6 pt-4 space-y-4">
+        {/* Map + KPI Cards Side by Side */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-4">
+          {/* Map Card - no padding */}
+          <Card className="overflow-hidden">
             <IndonesiaMap
               theatres={mapTheatres}
               selectedTheatre={selectedTheatre}
               onTheatreSelect={setSelectedTheatre}
               apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}
+              lastUpdated={lastUpdated}
+              center={mapCenter}
             />
-          </CardContent>
-        </Card>
+          </Card>
+
+          {/* KPI Cards - Vertical Stack */}
+          <div className="flex flex-col gap-3">
+            {/* Cities with Region Pie Chart */}
+            <Card className="p-3">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs text-muted-foreground">THEATRES BY REGION</p>
+                <p className="text-lg font-bold font-mono">{theatres.length}</p>
+              </div>
+              {/* Region Donut Chart - Full Width */}
+              <div className="flex justify-center mb-3">
+                <svg width="160" height="160" viewBox="0 0 160 160">
+                  {(() => {
+                    const total = theatres.length || 1;
+                    let currentAngle = 0;
+                    const colors = ['#0d9488', '#7c3aed', '#db2777', '#ea580c', '#0891b2', '#65a30d']; // Region colors: teal, purple, pink, orange, cyan, lime
+                    return regionBreakdown.map((r, i) => {
+                      const ratio = r.count / total;
+                      const angle = ratio * 360;
+                      const path = describeDonutArc(80, 80, 65, 40, currentAngle, currentAngle + angle);
+                      currentAngle += angle;
+                      return (
+                        <g key={r.name}>
+                          <path d={path} fill={colors[i % colors.length]} className="cursor-help">
+                            <title>{r.name}: {r.count} ({Math.round(ratio * 100)}%)</title>
+                          </path>
+                        </g>
+                      );
+                    });
+                  })()}
+                  <text x="80" y="85" textAnchor="middle" className="fill-foreground text-lg font-bold">{theatres.length}</text>
+                </svg>
+              </div>
+              {/* Legend - Single Column with Full Names */}
+              <div className="space-y-1 text-xs">
+                {regionBreakdown.map((r, i) => {
+                  const colors = ['#0d9488', '#7c3aed', '#db2777', '#ea580c', '#0891b2', '#65a30d']; // Region colors
+                  const percentage = Math.round((r.count / (theatres.length || 1)) * 100);
+                  return (
+                    <div key={r.name} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: colors[i] }}></span>
+                        <span className="text-muted-foreground">{r.name}</span>
+                      </div>
+                      <span className="font-mono text-foreground">{r.count} <span className="text-muted-foreground">({percentage}%)</span></span>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+
+            {/* Chain Distribution by Region - consolidated */}
+            <Card className="p-3">
+              <p className="text-xs text-muted-foreground mb-2">CHAIN DISTRIBUTION</p>
+              <div className="space-y-2.5 text-sm">
+                {/* Indonesia total row */}
+                {(() => {
+                  const xxi = theatres.filter(t => t.merchant === 'XXI').length;
+                  const cgv = theatres.filter(t => t.merchant === 'CGV').length;
+                  const cine = theatres.filter(t => t.merchant === 'Cinépolis').length;
+                  const total = theatres.length || 1;
+                  return (
+                    <div className="pb-2 border-b border-border/50 mb-2">
+                      <div className="flex justify-between mb-1">
+                        <span className="font-medium text-foreground">Indonesia</span>
+                        <span className="font-mono font-bold">{theatres.length}</span>
+                      </div>
+                      <div className="flex h-2.5 rounded-full overflow-hidden bg-muted mb-1.5">
+                        <div style={{ width: `${(xxi / total) * 100}%`, backgroundColor: '#CFAB7A' }} />
+                        <div style={{ width: `${(cgv / total) * 100}%`, backgroundColor: '#E03C31' }} />
+                        <div style={{ width: `${(cine / total) * 100}%`, backgroundColor: '#002069' }} />
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span style={{ color: '#CFAB7A' }}>XXI: {xxi}</span>
+                        <span style={{ color: '#E03C31' }}>CGV: {cgv}</span>
+                        <span style={{ color: '#002069' }}>Cinépolis: {cine}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
+                {/* Region rows */}
+                {regionBreakdown.map(r => {
+                  const regionTheatres = theatres.filter(t => getRegion(t.city) === r.name);
+                  const xxi = regionTheatres.filter(t => t.merchant === 'XXI').length;
+                  const cgv = regionTheatres.filter(t => t.merchant === 'CGV').length;
+                  const cine = regionTheatres.filter(t => t.merchant === 'Cinépolis').length;
+                  const total = regionTheatres.length || 1;
+                  return (
+                    <div key={r.name}>
+                      <div className="flex justify-between mb-0.5 text-xs">
+                        <span className="text-muted-foreground">{r.name}</span>
+                        <div className="flex gap-2 font-mono">
+                          <span style={{ color: '#CFAB7A' }}>{xxi}</span>
+                          <span style={{ color: '#E03C31' }}>{cgv}</span>
+                          <span style={{ color: '#002069' }}>{cine}</span>
+                          <span className="text-foreground font-medium">{r.count}</span>
+                        </div>
+                      </div>
+                      <div className="flex h-2 rounded-full overflow-hidden bg-muted">
+                        <div style={{ width: `${(xxi / total) * 100}%`, backgroundColor: '#CFAB7A' }} />
+                        <div style={{ width: `${(cgv / total) * 100}%`, backgroundColor: '#E03C31' }} />
+                        <div style={{ width: `${(cine / total) * 100}%`, backgroundColor: '#002069' }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+
+
+          </div>
+        </div>
 
         {/* Filters - below map */}
         <Card>
           <CardContent className="px-4 py-3">
             <div className="flex flex-wrap items-center gap-4">
-              {/* Chain Filter */}
-              <div className="flex items-center gap-2">
-                <label className="text-xs font-medium text-muted-foreground">CHAIN</label>
-                <div className="flex flex-wrap gap-1.5">
-                  <Badge
-                    variant={selectedMerchant === 'all' ? 'default' : 'outline'}
-                    className="cursor-pointer text-xs px-3 py-1"
-                    onClick={() => setSelectedMerchant('all')}
-                  >
-                    All ({theatres.length})
-                  </Badge>
-                  {merchantBreakdown.map((m) => (
+              {/* Filters - Stacked layout */}
+              <div className="flex flex-col gap-2 flex-1">
+                {/* Chain Filter Row */}
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-medium text-muted-foreground w-14">CHAIN</label>
+                  <div className="flex flex-wrap gap-1.5">
                     <span
-                      key={m.name}
-                      className={`inline-flex items-center cursor-pointer text-xs px-3 py-1 rounded-md font-medium transition-colors ${selectedMerchant === m.name
-                        ? m.name === 'XXI' ? 'bg-amber-500 text-white'
-                          : m.name === 'CGV' ? 'bg-red-600 text-white'
-                            : 'bg-blue-600 text-white'
-                        : 'border hover:bg-muted'
-                        }`}
-                      onClick={() => setSelectedMerchant(m.name)}
+                      className={`inline-flex items-center cursor-pointer text-xs px-3 py-1 rounded-md font-medium transition-colors ${selectedMerchant === 'all' ? 'bg-foreground text-background' : 'border hover:bg-muted'}`}
+                      onClick={() => setSelectedMerchant('all')}
                     >
-                      {m.name} ({m.count})
+                      All ({theatres.length})
                     </span>
-                  ))}
+                    {merchantBreakdown.map((m) => {
+                      const colors: Record<string, { bg: string; border: string }> = {
+                        'XXI': { bg: '#CFAB7A', border: '#CFAB7A' },
+                        'CGV': { bg: '#E03C31', border: '#E03C31' },
+                        'Cinépolis': { bg: '#002069', border: '#002069' },
+                      };
+                      const c = colors[m.name] || { bg: '#666', border: '#666' };
+                      const isSelected = selectedMerchant === m.name;
+                      return (
+                        <span
+                          key={m.name}
+                          className="inline-flex items-center cursor-pointer text-xs px-3 py-1 rounded-md font-medium transition-colors"
+                          style={{
+                            backgroundColor: isSelected ? c.bg : 'transparent',
+                            color: isSelected ? 'white' : 'inherit',
+                            border: `1px solid ${c.border}`,
+                          }}
+                          onClick={() => setSelectedMerchant(m.name)}
+                        >
+                          {m.name} ({m.count})
+                        </span>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
 
-              <div className="h-4 w-px bg-border hidden sm:block"></div>
-
-              {/* Region Filter */}
-              <div className="flex items-center gap-2">
-                <label className="text-xs font-medium text-muted-foreground">REGION</label>
-                <div className="flex flex-wrap gap-1.5">
-                  <Badge
-                    variant={selectedRegion === 'all' ? 'default' : 'outline'}
-                    className="cursor-pointer text-xs px-3 py-1"
-                    onClick={() => setSelectedRegion('all')}
-                  >
-                    All
-                  </Badge>
-                  {regionBreakdown.map((r) => (
-                    <Badge
-                      key={r.name}
-                      variant={selectedRegion === r.name ? 'default' : 'outline'}
-                      className="cursor-pointer text-xs px-3 py-1"
-                      onClick={() => setSelectedRegion(r.name)}
+                {/* Region Filter Row */}
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-medium text-muted-foreground w-14">REGION</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    <span
+                      className={`inline-flex items-center cursor-pointer text-xs px-3 py-1 rounded-md font-medium transition-colors ${selectedRegion === 'all' ? 'bg-foreground text-background' : 'border hover:bg-muted'}`}
+                      onClick={() => {
+                        setSelectedRegion('all');
+                        setMapCenter(REGION_CENTERS['all']);
+                      }}
                     >
-                      {r.name} ({r.count})
-                    </Badge>
-                  ))}
+                      All
+                    </span>
+                    {regionBreakdown.map((r, i) => {
+                      const colors = ['#0d9488', '#7c3aed', '#db2777', '#ea580c', '#0891b2', '#65a30d'];
+                      const c = colors[i];
+                      const isSelected = selectedRegion === r.name;
+                      return (
+                        <span
+                          key={r.name}
+                          className="inline-flex items-center cursor-pointer text-xs px-3 py-1 rounded-md font-medium transition-colors"
+                          style={{
+                            backgroundColor: isSelected ? c : 'transparent',
+                            color: isSelected ? 'white' : 'inherit',
+                            border: `1px solid ${c}`,
+                          }}
+                          onClick={() => {
+                            setSelectedRegion(r.name);
+                            setMapCenter(REGION_CENTERS[r.name] || REGION_CENTERS['all']);
+                          }}
+                        >
+                          {r.name} ({r.count})
+                        </span>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
-              {/* Clear button */}
+              {/* Clear button with X icon */}
               {(selectedMerchant !== 'all' || selectedRegion !== 'all' || searchTerm) && (
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
-                  className="h-6 text-xs ml-auto"
+                  className="h-7 text-xs gap-1 flex-shrink-0"
                   onClick={() => {
                     setSelectedMerchant('all');
                     setSelectedRegion('all');
                     setSearchTerm('');
+                    setMapCenter(REGION_CENTERS['all']);
                   }}
                 >
-                  Clear All
+                  <X className="w-3 h-3" />
+                  Clear
                 </Button>
               )}
             </div>
@@ -477,18 +580,23 @@ function DashboardContent() {
                           onClick={() => setSelectedTheatre(theatre)}
                         >
                           <TableCell className="pl-4 py-2">
-                            <p className="font-medium text-sm">{theatre.name}</p>
+                            <p className="font-medium text-sm">{highlightText(theatre.name, searchTerm)}</p>
                           </TableCell>
                           <TableCell className="py-2">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${theatre.merchant === 'XXI' ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400' :
-                              theatre.merchant === 'CGV' ? 'bg-red-500/20 text-red-600 dark:text-red-400' :
-                                'bg-blue-500/20 text-blue-600 dark:text-blue-400'
-                              }`}>
+                            <span
+                              className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                              style={{
+                                backgroundColor: theatre.merchant === 'XXI' ? 'rgba(207,171,122,0.2)' :
+                                  theatre.merchant === 'CGV' ? 'rgba(224,60,49,0.2)' : 'rgba(0,32,105,0.2)',
+                                color: theatre.merchant === 'XXI' ? '#CFAB7A' :
+                                  theatre.merchant === 'CGV' ? '#E03C31' : '#002069'
+                              }}
+                            >
                               {theatre.merchant}
                             </span>
                           </TableCell>
                           <TableCell className="py-2">
-                            <p className="text-sm">{theatre.city}</p>
+                            <p className="text-sm">{highlightText(theatre.city, searchTerm)}</p>
                             <p className="text-xs text-muted-foreground">{getRegion(theatre.city)}</p>
                           </TableCell>
                           <TableCell className="text-right pr-4 py-2">
