@@ -1,0 +1,23 @@
+{
+    "name": "cinepoint-spider",
+    "version": "1.0.0",
+    "description": "Comprehensive Cinepoint data scraper for box office and movie analytics",
+    "type": "module",
+    "scripts": {
+        "scrape:movies": "npx tsx src/scrapers/movies.ts",
+        "scrape:boxoffice": "npx tsx src/scrapers/boxOffice.ts",
+        "scrape:showtimes": "npx tsx src/scrapers/showtimes.ts",
+        "scrape:insights": "npx tsx src/scrapers/insights.ts",
+        "backfill": "npx tsx scripts/backfill-historical.ts",
+        "sync": "npx tsx scripts/daily-sync.ts"
+    },
+    "dependencies": {
+        "@google-cloud/bigquery": "^8.1.1",
+        "firebase-admin": "^13.0.2"
+    },
+    "devDependencies": {
+        "@types/node": "^22.10.2",
+        "tsx": "^4.19.2",
+        "typescript": "^5.7.2"
+    }
+}
