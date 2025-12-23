@@ -10,14 +10,14 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from backend.cli.cli import load_movie_data, extract_showtimes_from_data
+from backend.cli.cli import extract_showtimes_from_data, load_movie_data
 from backend.infrastructure._legacy.seat_scraper import SeatScraper
 
 
 def find_nearest_showtime(showtimes: list[dict]) -> dict | None:
     """Find the showtime closest to now (preferring upcoming)."""
     now = datetime.now()
-    
+
     def time_diff(st):
         time_str = st.get('showtime', '00:00')
         try:
@@ -35,27 +35,27 @@ def find_nearest_showtime(showtimes: list[dict]) -> dict | None:
             return abs(diff)
         except (ValueError, IndexError):
             return float('inf')
-    
+
     valid = [st for st in showtimes if time_diff(st) != float('inf')]
     if not valid:
         return None
-    
+
     return min(valid, key=time_diff)
 
 
 async def main():
     print("🎬 Finding nearest showtime...")
-    
+
     # Load movie data
     movie_data = load_movie_data()
     if not movie_data:
         print("❌ No movie data found")
         return
-    
+
     # Extract all showtimes
     showtimes = extract_showtimes_from_data(movie_data)
     print(f"📋 Found {len(showtimes)} total showtimes")
-    
+
     # Find nearest (with fallback)
     def time_diff_for_sort(st):
         time_str = st.get('showtime', '00:00')
@@ -74,22 +74,22 @@ async def main():
             return diff  # Return positive diff (smaller = sooner)
         except (ValueError, IndexError):
             return float('inf')
-    
+
     # Sort by time difference
     now = datetime.now()
     valid_showtimes = [st for st in showtimes if time_diff_for_sort(st) != float('inf')]
     valid_showtimes.sort(key=time_diff_for_sort)
-    
+
     if not valid_showtimes:
         print("❌ No upcoming showtimes found")
         return
-    
+
     # Initialize scraper
     scraper = SeatScraper()
     if not scraper.load_token_from_storage():
         print("❌ Could not load token")
         return
-    
+
     # Try up to 5 showtimes until one works
     layout = None
     selected = None
@@ -99,28 +99,28 @@ async def main():
         print(f"   🏢 {nearest['theatre_name']} ({nearest['merchant']})")
         print(f"   🕐 {nearest['showtime']}")
         print(f"   📍 {nearest['city']}")
-        
+
         layout = await scraper._fetch_seat_layout_api(
             nearest['showtime_id'],
             nearest['merchant']
         )
-        
+
         if layout:
             selected = nearest
             break
         else:
             print("   ⚠️ Failed, trying next...")
-    
+
     if not layout or not selected:
         print("❌ Failed to fetch any seat layout after 5 attempts")
         return
-    
+
     nearest = selected
-    
+
     # Calculate occupancy (layout already fetched above)
     occupancy = scraper.calculate_occupancy(layout)
     print(f"   ✅ {occupancy['unavailable_seats']}/{occupancy['total_seats']} unavailable ({occupancy['occupancy_pct']}%)")
-    
+
     # Build output data
     output = {
         'scraped_at': datetime.now().isoformat(),
@@ -138,12 +138,12 @@ async def main():
         'occupancy': occupancy,
         'seat_map': layout.get('data', {}).get('seat_map', []),
     }
-    
+
     # Save to file
     output_path = Path('data/live_seat_snapshot.json')
     with open(output_path, 'w') as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
-    
+
     print(f"\n💾 Saved to {output_path}")
 
 

@@ -261,7 +261,7 @@ def save_daily_snapshot(data: dict) -> bool:
 
         # Save to 'latest' (overwrites previous)
         db.collection('snapshots').document('latest').set(snapshot_data)
-        print(f"   Saved snapshot to 'latest'")
+        print("   Saved snapshot to 'latest'")
 
         # Also save to dated document (archive)
         db.collection('snapshots').document(date).set(snapshot_data)

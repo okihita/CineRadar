@@ -3,10 +3,11 @@
 Generate mock admission data for CineRadar.
 Populates `daily_admissions` collection in Firestore with realistic-looking mock data.
 """
-import argparse
 import random
 from datetime import datetime, timedelta
+
 from backend.infrastructure._legacy.firebase_client import get_firestore_client
+
 
 def get_latest_snapshot():
     """Fetch latest snapshot directly from Firestore."""
@@ -37,7 +38,7 @@ def generate_mock_admissions(days: int = 7):
     print(f"🎬 Generating mock data for {len(movies)} movies over {days} days...")
 
     start_date = datetime.now() - timedelta(days=days)
-    
+
     total_written = 0
     batch = db.batch()
     batch_count = 0
@@ -54,37 +55,37 @@ def generate_mock_admissions(days: int = 7):
         for movie in movies:
             movie_id = movie.get('id')
             movie_title = movie.get('title')
-            
+
             # Base popularity (random but consistent per movie)
             popularity_seed = hash(movie_id) % 100
             base_occupancy = 0.3 + (popularity_seed / 200)  # 0.3 - 0.8 base
-            
+
             if is_weekend:
                 base_occupancy *= 1.5  # Higher on weekends
-            
+
             # Generate mock showtimes
             mock_showtimes = []
             daily_total = 0
-            
+
             # Create 10-20 mock showtimes per day per movie
             num_showtimes = random.randint(10, 20)
-            
+
             cities = ['JAKARTA', 'SURABAYA', 'BANDUNG', 'MEDAN', 'AMBON']
-            
+
             for _ in range(num_showtimes):
                 city = random.choice(cities)
                 hour = random.randint(10, 22)
                 minute = random.choice([0, 15, 30, 45])
                 time = f"{hour:02d}:{minute:02d}"
-                
+
                 capacity = random.choice([150, 180, 220, 300])
-                
+
                 # Random occupancy with some noise
                 occupancy = min(0.98, max(0.05, random.normalvariate(base_occupancy, 0.15)))
                 admissions = int(capacity * occupancy)
-                
+
                 daily_total += admissions
-                
+
                 mock_showtimes.append({
                     'time': time,
                     'city': city,
@@ -113,7 +114,7 @@ def generate_mock_admissions(days: int = 7):
                 batch.commit()
                 batch = db.batch()
                 batch_count = 0
-                print(f"      Saved batch...")
+                print("      Saved batch...")
 
     if batch_count > 0:
         batch.commit()

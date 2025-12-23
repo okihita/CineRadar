@@ -13,11 +13,11 @@ import sys
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any
 
+from backend.domain.models import SeatOccupancy
 from backend.infrastructure.scrapers.seat_scraper import TixSeatScraper
 from backend.infrastructure.token_refresher import TokenRefresher, TokenRefreshError
-from backend.domain.models import SeatOccupancy
 
 # --- Configuration ---
 SCRAPE_INTERVAL_MINUTES = 5
@@ -57,11 +57,11 @@ class RateLimiter:
             now = time.time()
             # Remove old timestamps
             self.timestamps = [t for t in self.timestamps if now - t <= self.time_window]
-            
+
             if len(self.timestamps) < self.max_rate:
                 self.timestamps.append(now)
                 return
-            
+
             # Wait a bit before checking again
             await asyncio.sleep(0.5)
 
@@ -84,34 +84,34 @@ class GranularScraper:
             logger.error(f"❌ Token refresh failed: {e}")
             return False
 
-    async def _scrape_single(self, task: Dict[str, Any]):
+    async def _scrape_single(self, task: dict[str, Any]):
         """Perform a single scrape task with anti-bot delays."""
         showtime_id = task['id']
         movie_title = task['movie']
-        theatre_name = task['theatre']
-        
+        task['theatre']
+
         # 1. Anti-bot: Rate Limiting
         await self.rate_limiter.acquire()
-        
+
         # 2. Anti-bot: Random Delay
         delay = random.uniform(MIN_DELAY_BETWEEN_REQUESTS, MAX_DELAY_BETWEEN_REQUESTS)
         logger.info(f"⏳ Waiting {delay:.2f}s before scraping {movie_title}...")
         await asyncio.sleep(delay)
-        
+
         # 3. Perform Scrape
         try:
             # Token check before every request
             await self._check_and_refresh_token()
-            
+
             # TODO: Add UA rotation to the underlying scraper if possible
-            # For now, we rely on the header rotation if implemented in base, 
+            # For now, we rely on the header rotation if implemented in base,
             # or we just rely on the delay.
-            
+
             results = await self.scraper.scrape_seats(
                 showtime_ids=[showtime_id],
                 merchant=task.get('merchant', 'XXI') # Default to XXI for now
             )
-            
+
             if results:
                 result = results[0]
                 self._save_result(result, task)
@@ -120,16 +120,16 @@ class GranularScraper:
             else:
                 logger.warning(f"⚠️ Empty result for {movie_title}")
                 return False
-                
+
         except Exception as e:
             logger.error(f"❌ Error scraping {showtime_id}: {e}")
             return False
 
-    def _save_result(self, occupancy: SeatOccupancy, task: Dict[str, Any]):
+    def _save_result(self, occupancy: SeatOccupancy, task: dict[str, Any]):
         """Save observation to JSON line file."""
         filename = f"jit_{task['date']}_{task['movie'].replace(' ', '_')}_{task['start_time'].replace(':','')}.jsonl"
         filepath = self.data_dir / filename
-        
+
         record = {
             "timestamp": datetime.utcnow().isoformat(),
             "showtime_id": occupancy.showtime_id,
@@ -140,14 +140,14 @@ class GranularScraper:
             "sold_seats": occupancy.sold_seats,
             "occupancy_pct": occupancy.occupancy_pct
         }
-        
+
         with open(filepath, 'a') as f:
             f.write(json.dumps(record) + "\n")
 
-    async def monitor(self, showtime_tasks: List[Dict[str, Any]]):
+    async def monitor(self, showtime_tasks: list[dict[str, Any]]):
         """Main monitoring loop."""
         logger.info(f"🚀 Starting monitoring for {len(showtime_tasks)} showtimes")
-        
+
         # Initial validation
         if not await self._check_and_refresh_token():
             logger.error("❌ Initial token check failed. Aborting.")
@@ -156,25 +156,25 @@ class GranularScraper:
         while True:
             # 1. Filter completed/past showtimes
             # For now, assuming we monitor until manual stop or end of day
-            
+
             # 2. Schedule batch
             batch_start = time.time()
             tasks = []
-            
+
             for task in showtime_tasks:
                 tasks.append(self._scrape_single(task))
-            
+
             # Run batch concurrently (limited by RateLimiter internally)
             await asyncio.gather(*tasks)
-            
+
             # 3. Wait for next interval
             elapsed = time.time() - batch_start
             wait_time = (SCRAPE_INTERVAL_MINUTES * 60) - elapsed
-            
+
             # Anti-bot: Jitter
             jitter = random.uniform(-JITTER_SECONDS, JITTER_SECONDS)
             wait_time += jitter
-            
+
             if wait_time > 0:
                 next_run = datetime.now() + timedelta(seconds=wait_time)
                 logger.info(f"💤 Batch complete. Sleeping {wait_time:.1f}s until {next_run.strftime('%H:%M:%S')}...")
@@ -191,7 +191,7 @@ async def main():
     parser.add_argument('--interval', type=int, default=SCRAPE_INTERVAL_MINUTES, help='Scrape interval in minutes')
     parser.add_argument('--limit', type=int, default=100, help='Max showtimes to monitor')
     args = parser.parse_args()
-    
+
     # Determine input file
     if args.file:
         file_path = Path(args.file)
@@ -202,25 +202,25 @@ async def main():
             logger.error("❌ No movie data files found in data/!")
             return
         file_path = files[-1]
-        
+
     logger.info(f"📂 Loading data from {file_path}")
-    
+
     tasks = []
-    
+
     try:
-        with open(file_path, 'r') as f:
+        with open(file_path) as f:
             data = json.load(f)
-            
+
         now = datetime.now()
         movies = data.get('movies', [])
         logger.info(f"   Found {len(movies)} movies in file")
-        
+
         for m in movies:
             title = m.get('title')
             # Filter by movie title
             if args.movie and args.movie.lower() not in title.lower():
                 continue
-                
+
             for city, schedules in m.get('schedules', {}).items():
                 # Filter by city
                 if args.city and args.city.upper() != city.upper():
@@ -229,28 +229,28 @@ async def main():
                 for theatre in schedules:
                     theatre_name = theatre.get('theatre_name')
                     merchant = theatre.get('merchant')
-                    
+
                     for room in theatre.get('rooms', []):
                         # Use all_showtimes
                         showtimes = room.get('all_showtimes', [])
                         if not showtimes:
                             showtimes = room.get('showtimes', [])
-                            
+
                         for st in showtimes:
                             if isinstance(st, dict):
                                 st_time = st.get('time')
                                 st_id = st.get('showtime_id')
                             else:
                                 continue
-                                
+
                             if not st_id or not st_time:
                                 continue
-                                
+
                             # Parse time
                             try:
                                 sh, sm = map(int, st_time.split(':'))
                                 st_dt = now.replace(hour=sh, minute=sm, second=0, microsecond=0)
-                                
+
                                 # Only future showtimes
                                 if st_dt > now:
                                     tasks.append({
@@ -263,19 +263,19 @@ async def main():
                                         'date': data.get('date'),
                                         'interval': args.interval
                                     })
-                            except:
+                            except Exception:
                                 continue
-                                
+
     except FileNotFoundError:
         logger.error(f"❌ File {file_path} not found!")
         return
 
     logger.info(f"✅ Found {len(tasks)} upcoming showtimes matching criteria.")
-    
+
     if args.limit and len(tasks) > args.limit:
         logger.warning(f"⚠️ Limit applied: keeping first {args.limit} of {len(tasks)} tasks")
         tasks = tasks[:args.limit]
-    
+
     if not tasks:
         logger.warning("No upcoming showtimes found. Exiting.")
         return

@@ -55,7 +55,7 @@ class SeatScraper(BaseScraper):
     def _count_seat(self, status: int, counters: dict) -> None:
         """
         Helper to increment counters based on status.
-        
+
         Status codes (verified Dec 23, 2025):
         - 1: Available (can purchase)
         - 5: Unavailable (sold or blocked - cannot distinguish)
@@ -73,12 +73,12 @@ class SeatScraper(BaseScraper):
         """
         Parse seat layout response and calculate occupancy.
         Handles both nested (XXI/CGV) and flat (Cinépolis) structures.
-        
+
         Note: API cannot distinguish "sold" from "blocked/maintenance".
         Occupancy is an upper-bound estimate.
         """
         counters = {'total': 0, 'unavailable': 0, 'available': 0}
-        
+
         data = layout_data.get('data', {})
         seat_map = data.get('seat_map', [])
 
