@@ -1,59 +1,44 @@
 # Dependabot Configuration
-# Automated dependency updates for security and maintenance
+# Weekly grouped updates to reduce PR noise
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates
+
 version: 2
 updates:
-  # Python dependencies
-  - package-ecosystem: "pip"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "06:00"
-      timezone: "Asia/Jakarta"
-    commit-message:
-      prefix: "deps"
-    labels:
-      - "dependencies"
-      - "python"
-    open-pull-requests-limit: 5
-
-  # npm dependencies for admin dashboard
-  - package-ecosystem: "npm"
-    directory: "/admin"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "06:00"
-      timezone: "Asia/Jakarta"
-    commit-message:
-      prefix: "deps"
-    labels:
-      - "dependencies"
-      - "javascript"
-    open-pull-requests-limit: 5
-
-  # npm dependencies for web app
-  - package-ecosystem: "npm"
-    directory: "/web"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "06:00"
-      timezone: "Asia/Jakarta"
-    commit-message:
-      prefix: "deps"
-    labels:
-      - "dependencies"
-      - "javascript"
-    open-pull-requests-limit: 5
-
   # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+    groups:
+      actions:
+        patterns:
+          - "*"
     commit-message:
       prefix: "ci"
-    labels:
-      - "dependencies"
-      - "ci"
+
+  # Python (pip)
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      python-deps:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "deps"
+
+  # npm (admin frontend)
+  - package-ecosystem: "npm"
+    directory: "/admin"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      npm-deps:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "deps(admin)"
