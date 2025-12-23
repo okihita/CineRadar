@@ -15,7 +15,7 @@ import aiohttp
 
 from backend.config import USER_AGENT
 from backend.infrastructure._legacy.base_scraper import BaseScraper
-from backend.infrastructure._legacy.token_storage import get_token
+from backend.infrastructure.repositories import FirestoreTokenRepository
 
 
 class SeatScraper(BaseScraper):
@@ -39,12 +39,16 @@ class SeatScraper(BaseScraper):
         Returns:
             True if token loaded successfully
         """
-        token = get_token()
-        if token:
-            # Strip quotes that may have been captured from localStorage
-            self.auth_token = token.strip('"')
-            self.log("✅ Loaded token from storage")
-            return True
+        try:
+            repo = FirestoreTokenRepository()
+            token = repo.get_current()
+            if token and token.token:
+                # Strip quotes that may have been captured from localStorage
+                self.auth_token = token.token.strip('"')
+                self.log("✅ Loaded token from storage")
+                return True
+        except Exception as e:
+            self.log(f"⚠️ Failed to load token: {e}")
         self.log("⚠️ No valid token in storage")
         return False
 
