@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/PageHeader';
-import { formatWIBShort } from '@/lib/timeUtils';
+import { formatWIBShort, formatWIBWithRelative } from '@/lib/timeUtils';
 import { Database, RefreshCw, AlertTriangle, CheckCircle2, XCircle, Calendar, FolderOpen, ChevronDown, ChevronRight } from 'lucide-react';
 
 interface ScraperRun {
@@ -197,7 +197,7 @@ export default function ScraperPage() {
                                     <div>
                                         <div className="font-semibold capitalize">{morningScrape.status}</div>
                                         <div className="text-xs text-muted-foreground">
-                                            {formatWIBShort(morningScrape.timestamp)}
+                                            {formatWIBWithRelative(morningScrape.timestamp)}
                                         </div>
                                     </div>
                                 </div>
@@ -242,7 +242,7 @@ export default function ScraperPage() {
                                     <div>
                                         <div className="font-semibold">{jitSummary.totalRuns} runs today</div>
                                         <div className="text-xs text-muted-foreground">
-                                            Last: {formatWIBShort(jitSummary.lastRun)}
+                                            Last: {formatWIBWithRelative(jitSummary.lastRun)}
                                         </div>
                                     </div>
                                 </div>

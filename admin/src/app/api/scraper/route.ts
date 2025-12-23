@@ -12,26 +12,39 @@ interface CollectionStats {
     fields: string[];
 }
 
+// Helper to get date string in WIB timezone
+function getWIBDateString(date: Date): string {
+    return date.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }); // en-CA gives YYYY-MM-DD format
+}
+
+// Helper to get hour in WIB timezone
+function getWIBHour(date: Date): number {
+    return parseInt(date.toLocaleString('en-US', { timeZone: 'Asia/Jakarta', hour: 'numeric', hour12: false }));
+}
+
 export async function GET() {
     try {
         // Fetch scraper runs
         const runs = await getScraperRuns(30);
 
-        // Get today's date in UTC (matches Firestore timestamps)
-        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        // Get today's date in WIB timezone (the timezone we care about for "today")
+        const todayWIB = getWIBDateString(new Date());
 
-        // Find today's morning scrape (run_type: movies, morning hours)
+        // Find today's morning scrape (run_type: movies, morning hours in WIB)
         const todayMorningScrape = runs.find(run => {
-            const runDate = run.timestamp?.split('T')[0];
-            const runHour = parseInt(run.timestamp?.split('T')[1]?.split(':')[0] || '99');
-            const isMorning = runHour >= 5 && runHour <= 8; // 5-8 AM UTC (noon-3PM WIB for 6AM cron)
-            return runDate === today && (run.run_type === 'movies' || isMorning);
+            if (!run.timestamp) return false;
+            const runDate = new Date(run.timestamp);
+            const runDateWIB = getWIBDateString(runDate);
+            const runHourWIB = getWIBHour(runDate);
+            const isMorning = runHourWIB >= 5 && runHourWIB <= 9; // 5-9 AM WIB
+            return runDateWIB === todayWIB && (run.run_type === 'movies' || isMorning);
         });
 
         // Find all today's JIT runs and consolidate
         const todayJITRuns = runs.filter(run => {
-            const runDate = run.timestamp?.split('T')[0];
-            return runDate === today && run.run_type === 'seats';
+            if (!run.timestamp) return false;
+            const runDateWIB = getWIBDateString(new Date(run.timestamp));
+            return runDateWIB === todayWIB && run.run_type === 'seats';
         });
 
         const jitSummary = todayJITRuns.length > 0 ? {
