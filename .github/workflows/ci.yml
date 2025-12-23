@@ -1,4 +1,5 @@
-# CineRadar CI - Lint and Test
+# CineRadar CI - Unified Quality Gates
+# Runs on push to main and pull requests
 name: CI
 
 on:
@@ -8,71 +9,75 @@ on:
       - 'backend/**'
       - 'tests/**'
       - 'requirements.txt'
+      - 'admin/**'
   pull_request:
     branches: [main]
-    paths:
-      - 'backend/**'
-      - 'tests/**'
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      
-      - name: Install ruff
-        run: pip install ruff
-      
-      - name: Lint with ruff
-        run: ruff check backend/ --output-format=github
-  
-  test:
+  # Backend: Lint, Type Check, Test
+  backend:
+    name: Backend
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install pytest pytest-cov
-      
+          pip install ruff mypy pytest pytest-cov pytest-asyncio
+
+      - name: Lint
+        run: ruff check backend/ --output-format=github
+
+      - name: Type check domain layer
+        run: mypy backend/domain/ --ignore-missing-imports
+
       - name: Run tests
         run: pytest tests/ -v --tb=short --cov=backend --cov-report=term-missing
         env:
           PYTHONPATH: ${{ github.workspace }}
-      
+
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         if: always()
         with:
           fail_ci_if_error: false
-  
-  type-check:
+
+  # Frontend: Type Check and Build
+  frontend:
+    name: Frontend
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    
+    timeout-minutes: 10
+
+    defaults:
+      run:
+        working-directory: admin
+
     steps:
       - uses: actions/checkout@v4
-      
-      - uses: actions/setup-python@v5
+
+      - uses: actions/setup-node@v4
         with:
-          python-version: '3.11'
-      
-      - name: Install mypy
-        run: pip install mypy
-      
-      - name: Type check domain layer
-        run: mypy backend/domain/ --ignore-missing-imports
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: admin/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Build check
+        run: npm run build
+        env:
+          NEXT_PUBLIC_FIREBASE_API_KEY: dummy
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: dummy
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: dummy
