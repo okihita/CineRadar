@@ -6,6 +6,7 @@ Represents a JWT authentication token.
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from typing import Any
 
 
 @dataclass
@@ -81,7 +82,7 @@ class Token:
         else:
             return f"⚠️ Only {self.minutes_until_expiry} minutes remaining (need {self.MIN_SCRAPE_TTL_MINUTES})"
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             'token': self.token,
@@ -91,7 +92,7 @@ class Token:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'Token':
+    def from_dict(cls, data: dict[str, Any]) -> 'Token':
         """Create from dictionary."""
         return cls(
             token=data.get('token', ''),
@@ -101,7 +102,7 @@ class Token:
         )
 
     @classmethod
-    def create_new(cls, token: str, phone: str = None, ttl_hours: int = None) -> 'Token':
+    def create_new(cls, token: str, phone: str | None = None, ttl_hours: int | None = None) -> 'Token':
         """Create a new token with computed expiry.
 
         Args:

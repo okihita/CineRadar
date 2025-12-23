@@ -51,6 +51,8 @@ jobs:
       
       - name: Run tests
         run: pytest tests/ -v --tb=short --cov=backend --cov-report=term-missing
+        env:
+          PYTHONPATH: ${{ github.workspace }}
       
       - name: Upload coverage
         uses: codecov/codecov-action@v4

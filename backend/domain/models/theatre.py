@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from backend.domain.models.movie import TheatreSchedule
@@ -86,7 +86,7 @@ class Theatre:
         """Validate merchant is a known cinema chain."""
         return self.merchant in self.VALID_MERCHANTS
 
-    def set_location(self, lat: float, lng: float, place_id: str = None) -> None:
+    def set_location(self, lat: float, lng: float, place_id: str | None = None) -> None:
         """Set geocoded location."""
         self.lat = lat
         self.lng = lng
@@ -99,7 +99,7 @@ class Theatre:
         if room_type and room_type not in self.room_types:
             self.room_types.append(room_type)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             'theatre_id': self.theatre_id,
@@ -117,7 +117,7 @@ class Theatre:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> Theatre:
+    def from_dict(cls, data: dict[str, Any]) -> Theatre:
         """Create from dictionary."""
         return cls(
             theatre_id=data.get('theatre_id', ''),

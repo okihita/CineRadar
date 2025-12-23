@@ -16,6 +16,7 @@ Usage:
         # Handle any scraping error
         log_and_retry()
 """
+from typing import Any
 
 
 class CineRadarError(Exception):
@@ -25,7 +26,7 @@ class CineRadarError(Exception):
     This allows catching all CineRadar errors with a single except clause.
     """
 
-    def __init__(self, message: str = "", details: dict = None):
+    def __init__(self, message: str = "", details: dict[str, Any] | None = None):
         super().__init__(message)
         self.message = message
         self.details = details or {}
@@ -67,7 +68,7 @@ class TokenExpiredError(ScrapingError):
     - API returns 401 with expired token
     """
 
-    def __init__(self, message: str = "Token has expired", expires_at: str = None):
+    def __init__(self, message: str = "Token has expired", expires_at: str | None = None):
         super().__init__(message, {"expires_at": expires_at} if expires_at else {})
         self.expires_at = expires_at
 
@@ -89,7 +90,7 @@ class RateLimitError(ScrapingError):
     Raised when TIX.id API returns 429 or similar.
     """
 
-    def __init__(self, message: str = "Rate limit exceeded", retry_after: int = None):
+    def __init__(self, message: str = "Rate limit exceeded", retry_after: int | None = None):
         super().__init__(message, {"retry_after": retry_after} if retry_after else {})
         self.retry_after = retry_after
 
@@ -107,7 +108,7 @@ class ValidationError(CineRadarError):
     - Data format is incorrect
     """
 
-    def __init__(self, message: str, field: str = None, value=None):
+    def __init__(self, message: str, field: str | None = None, value: Any = None):
         details = {}
         if field:
             details["field"] = field
@@ -127,7 +128,7 @@ class DataNotFoundError(CineRadarError):
     - Theatre not in database
     """
 
-    def __init__(self, message: str, entity_type: str = None, entity_id: str = None):
+    def __init__(self, message: str, entity_type: str | None = None, entity_id: str | None = None):
         details = {}
         if entity_type:
             details["entity_type"] = entity_type
@@ -193,6 +194,6 @@ class ConfigurationError(CineRadarError):
     - Invalid configuration value
     """
 
-    def __init__(self, message: str, config_key: str = None):
+    def __init__(self, message: str, config_key: str | None = None):
         super().__init__(message, {"config_key": config_key} if config_key else {})
         self.config_key = config_key

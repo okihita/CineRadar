@@ -5,6 +5,7 @@ Represents seat availability data for a showtime.
 """
 
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
@@ -106,7 +107,7 @@ class SeatOccupancy:
             self.occupancy_pct = round(self.sold_seats / self.total_seats * 100, 1)
             self.available_seats = self.total_seats - self.sold_seats
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             'showtime_id': self.showtime_id,
@@ -131,7 +132,7 @@ class SeatOccupancy:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'SeatOccupancy':
+    def from_dict(cls, data: dict[str, Any]) -> 'SeatOccupancy':
         """Create from dictionary."""
         seat_grades = {}
         for name, stats in data.get('seat_grades', {}).items():

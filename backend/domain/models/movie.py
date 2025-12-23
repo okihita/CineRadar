@@ -6,6 +6,7 @@ Pure Python dataclasses with no external dependencies.
 """
 
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
@@ -48,7 +49,7 @@ class Showtime:
         """Check if this is an evening showtime (after 6 PM)."""
         return self.hour >= 18
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             'time': self.time,
@@ -58,7 +59,7 @@ class Showtime:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'Showtime':
+    def from_dict(cls, data: dict[str, Any]) -> 'Showtime':
         """Create from dictionary."""
         return cls(
             time=data.get('time', ''),
@@ -93,7 +94,7 @@ class Room:
         """Number of available showtimes."""
         return sum(1 for st in self.showtimes if st.is_available)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             'category': self.category,
@@ -103,7 +104,7 @@ class Room:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'Room':
+    def from_dict(cls, data: dict[str, Any]) -> 'Room':
         """Create from dictionary."""
         # Handle both 'all_showtimes' and legacy 'showtimes' formats
         all_showtimes = data.get('all_showtimes', [])
@@ -150,7 +151,7 @@ class TheatreSchedule:
         """List of room categories available."""
         return [room.category for room in self.rooms]
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             'theatre_id': self.theatre_id,
@@ -161,7 +162,7 @@ class TheatreSchedule:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'TheatreSchedule':
+    def from_dict(cls, data: dict[str, Any]) -> 'TheatreSchedule':
         """Create from dictionary."""
         return cls(
             theatre_id=data.get('theatre_id', ''),
@@ -227,7 +228,7 @@ class Movie:
         """Get schedules for a specific city."""
         return self.schedules.get(city.upper(), [])
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             'id': self.id,
@@ -246,7 +247,7 @@ class Movie:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'Movie':
+    def from_dict(cls, data: dict[str, Any]) -> 'Movie':
         """Create from dictionary."""
         schedules = {}
         for city, theatres in data.get('schedules', {}).items():
@@ -289,7 +290,7 @@ class ScrapeResult:
         """Number of presale movies."""
         return sum(1 for m in self.movies if m.is_presale)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             'scraped_at': self.scraped_at,
