@@ -9,19 +9,17 @@ This layer connects to external systems:
 - CLI (entry points)
 """
 
-# Re-export for convenience
+# Re-export repositories for convenience
+# NOTE: Scrapers are NOT imported here to avoid requiring playwright
+# Import scrapers directly: from backend.infrastructure.scrapers import TixMovieScraper
 from backend.infrastructure.repositories import (
     FileMovieRepository,
     FirestoreMovieRepository,
     FirestoreTheatreRepository,
     FirestoreTokenRepository,
 )
-from backend.infrastructure.scrapers import TixMovieScraper, TixSeatScraper
 
 __all__ = [
-    # Scrapers
-    'TixMovieScraper',
-    'TixSeatScraper',
     # Repositories
     'FirestoreMovieRepository',
     'FirestoreTheatreRepository',
