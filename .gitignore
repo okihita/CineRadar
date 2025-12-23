@@ -22,10 +22,16 @@ env/
 .DS_Store
 Thumbs.db
 
-# Project
+# Project - Scraped data (regenerated from Firestore)
+data/movies_*.json
 data/batch_*.json
-!data/movies_*.json
+data/seats_*.json
+data/jit_granular/
+data/live_seat_snapshot.json
 !data/.gitkeep
+!data/cities.json
+!data/geocode_cache.json
+!data/places_cache.json
 
 # Keep env example
 !.env.example
