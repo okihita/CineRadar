@@ -17,6 +17,31 @@ export async function GET() {
         // Fetch scraper runs
         const runs = await getScraperRuns(30);
 
+        // Get today's date in UTC (matches Firestore timestamps)
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+        // Find today's morning scrape (run_type: movies, morning hours)
+        const todayMorningScrape = runs.find(run => {
+            const runDate = run.timestamp?.split('T')[0];
+            const runHour = parseInt(run.timestamp?.split('T')[1]?.split(':')[0] || '99');
+            const isMorning = runHour >= 5 && runHour <= 8; // 5-8 AM UTC (noon-3PM WIB for 6AM cron)
+            return runDate === today && (run.run_type === 'movies' || isMorning);
+        });
+
+        // Find all today's JIT runs and consolidate
+        const todayJITRuns = runs.filter(run => {
+            const runDate = run.timestamp?.split('T')[0];
+            return runDate === today && run.run_type === 'seats';
+        });
+
+        const jitSummary = todayJITRuns.length > 0 ? {
+            totalRuns: todayJITRuns.length,
+            totalShowtimes: todayJITRuns.reduce((sum, r) => sum + (r.showtimes_scraped || 0), 0),
+            successfulShowtimes: todayJITRuns.reduce((sum, r) => sum + (r.showtimes_success || 0), 0),
+            firstRun: todayJITRuns[todayJITRuns.length - 1]?.timestamp,
+            lastRun: todayJITRuns[0]?.timestamp,
+        } : null;
+
         // Fetch collection stats in parallel
         const collectionStats: CollectionStats[] = await Promise.all(
             COLLECTIONS.map(async (name) => {
@@ -45,6 +70,7 @@ export async function GET() {
                 date: run.date,
                 timestamp: run.timestamp,
                 status: run.status,
+                run_type: run.run_type,
                 movies: run.movies || 0,
                 cities: run.cities || 0,
                 theatres_total: run.theatres_total || 0,
@@ -53,10 +79,18 @@ export async function GET() {
                 presales: run.presales || 0,
             })),
             collections: collectionStats,
+            todayMorningScrape: todayMorningScrape ? {
+                status: todayMorningScrape.status,
+                timestamp: todayMorningScrape.timestamp,
+                movies: todayMorningScrape.movies || 0,
+                cities: todayMorningScrape.cities || 0,
+                theatres: todayMorningScrape.theatres_total || 0,
+            } : null,
+            todayJITSummary: jitSummary,
         });
     } catch (error) {
         console.error('Error fetching scraper data:', error);
-        return NextResponse.json({ runs: [], collections: [] }, { status: 500 });
+        return NextResponse.json({ runs: [], collections: [], todayMorningScrape: null, todayJITSummary: null }, { status: 500 });
     }
 }
 

@@ -16,6 +16,7 @@ export interface Theatre {
 export interface ScraperRun {
     id?: string;
     status: 'success' | 'partial' | 'failed';
+    run_type?: 'movies' | 'seats' | 'token' | 'unknown';
     date: string;
     timestamp: string;
     movies: number;
@@ -25,4 +26,7 @@ export interface ScraperRun {
     theatres_failed: number;
     presales?: number;
     error?: string;
+    // JIT seat scrape specific fields
+    showtimes_scraped?: number;
+    showtimes_success?: number;
 }
