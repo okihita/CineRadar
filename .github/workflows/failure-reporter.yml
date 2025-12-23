@@ -11,6 +11,9 @@ on:
     types:
       - completed
 
+permissions:
+  issues: write
+
 jobs:
   report-failure:
     name: Report Failure
