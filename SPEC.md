@@ -72,6 +72,23 @@ TIX.id Website → Scraper (GitHub Actions) → Firestore →
 > The **Scraper Monitor** is a dedicated page for tracking data collection runs.
 > It shows run history, success rates, and schedule information.
 
+### Frontend Applications
+
+| App | Directory | Purpose | URL |
+|-----|-----------|---------|-----|
+| **Admin Dashboard** | `admin/` | Internal analytics & monitoring | `cineradar-admin.vercel.app` |
+| **Consumer Web App** | `web/` | Public-facing movie discovery | `cineradar-id.vercel.app` |
+
+**Admin Dashboard (`admin/`):**
+- Full admin dashboard with Firebase, Recharts, shadcn/ui
+- Theatre mapping, movie analytics, scraper monitoring
+- CI/CD via `admin-ci.yml` and `smoke-tests.yml`
+
+**Consumer Web App (`web/`):**
+- Public-facing web app for end users
+- Movie discovery with map-based theatre locations
+- Uses Leaflet for interactive maps
+
 ### Geographic Regions (6 Regions)
 
 All 83 Indonesian cities are mapped to exactly 6 regions. **No "Others" category allowed.**
