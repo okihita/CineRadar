@@ -3,8 +3,9 @@
 name: JIT Seats
 
 on:
-  schedule:
-    - cron: '*/15 * * * *'  # Every 15 minutes
+  # Disabled - uncomment to re-enable
+  # schedule:
+  #   - cron: '*/15 * * * *'  # Every 15 minutes
   workflow_dispatch:
     inputs:
       window_minutes:
