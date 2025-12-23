@@ -30,30 +30,11 @@ jobs:
       - name: Refresh TIX.id token (with xvfb)
         run: |
           xvfb-run --auto-servernum --server-args="-screen 0 1280x720x24" \
-            python -m backend.cli.refresh_token --debug-screenshots
+            python -m backend.cli.refresh_token
         env:
-          TIX_PHONE_NUMBER: ${{ secrets.TIX_PHONE_NUMBER }}
+          TIX_PHONE: ${{ secrets.TIX_PHONE }}
           TIX_PASSWORD: ${{ secrets.TIX_PASSWORD }}
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-
-      - name: Upload debug screenshots
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: login-debug-screenshots
-          path: screenshots/*.png
-          retention-days: 3
-
-      - name: Commit screenshots for viewing
-        if: always()
-        run: |
-          mkdir -p debug
-          cp screenshots/*.png debug/ 2>/dev/null || true
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add debug/*.png 2>/dev/null || true
-          git commit -m "Debug: Token refresh screenshots $(date +%Y-%m-%d_%H%M)" || echo "No screenshots to commit"
-          git push || true
 
       - name: Verify token stored
         if: success()

@@ -18,19 +18,8 @@ from backend.infrastructure.repositories.firestore_token import get_storage, sto
 class TokenRefresher(BaseScraper):
     """Dedicated scraper for token refresh only."""
 
-    def __init__(self, debug_screenshots: bool = False):
+    def __init__(self):
         super().__init__()
-        self.debug_screenshots = debug_screenshots
-        if debug_screenshots:
-            self.screenshot_dir = Path("screenshots")
-            self.screenshot_dir.mkdir(exist_ok=True)
-
-    async def _save_screenshot(self, page, name: str):
-        """Save screenshot if debug mode is enabled."""
-        if self.debug_screenshots:
-            path = self.screenshot_dir / f"{name}.png"
-            await page.screenshot(path=str(path))
-            self.log(f"   📸 Screenshot saved: {path}")
 
     async def refresh_token(self, headless: bool = True) -> bool:
         """
@@ -47,7 +36,6 @@ class TokenRefresher(BaseScraper):
             # Navigate to login - wait longer for Flutter to render
             await page.goto(f'{self.app_base}/login', wait_until='networkidle', timeout=60000)
             await asyncio.sleep(15)  # Flutter needs time to render
-            await self._save_screenshot(page, "01_login_page_loaded")
 
             # Strip 62 prefix from phone
             phone_clean = self._phone.lstrip('+').lstrip('62')
@@ -65,14 +53,12 @@ class TokenRefresher(BaseScraper):
                 await asyncio.sleep(0.5)
                 await page.keyboard.type(phone_clean, delay=30)
                 self.log(f"   📱 Typed phone: {phone_clean[:4]}***")
-                await self._save_screenshot(page, "02_after_phone_typed")
 
             if pass_count > 0:
                 await password_field.click()
                 await asyncio.sleep(0.5)
                 await page.keyboard.type(self._password, delay=30)
                 self.log("   🔑 Typed password")
-                await self._save_screenshot(page, "03_after_password_typed")
 
             # Click Login - simple approach
             # IMPORTANT: TIX.id has TWO Login buttons - header (fake) and form (real)
@@ -87,14 +73,12 @@ class TokenRefresher(BaseScraper):
 
             # Wait for any processing
             await asyncio.sleep(5)
-            await self._save_screenshot(page, "04_after_login_click")
             self.log(f"   📍 After click URL: {page.url}")
 
             # Navigate to home to check session
             self.log("   🔄 Navigating to home...")
             await page.goto(f'{self.app_base}/home', wait_until='networkidle', timeout=30000)
             await asyncio.sleep(5)
-            await self._save_screenshot(page, "05_at_home_page")
 
             current_url = page.url
             self.log(f"   📍 Home page URL: {current_url}")
@@ -145,7 +129,6 @@ class TokenRefresher(BaseScraper):
                         token = token[1:-1]
                     self.auth_token = token
                     self.log(f"✅ JWT token captured! (length: {len(token)})")
-                    await self._save_screenshot(page, "06_success_token_captured")
 
                     # Store in Firestore (with refresh token if available)
                     if store_token(token, self._phone, refresh_token=refresh_token):
@@ -175,18 +158,19 @@ def main():
     parser.add_argument('--check', action='store_true', help='Check current token status')
     parser.add_argument('--check-min-ttl', type=int, metavar='MINUTES',
                         help='Check that token has at least N minutes TTL remaining. Exit 1 if not.')
-    parser.add_argument('--debug-screenshots', action='store_true', help='Save screenshots at each step')
     args = parser.parse_args()
 
     if args.check:
         storage = get_storage()
-        info = storage.get_token_info()
-        if info:
+        token = storage.get_current()
+        if token:
             print("📋 Token Info:")
-            print(f"   Stored at: {info.get('stored_at')}")
-            print(f"   Expires at: {info.get('expires_at')}")
-            print(f"   Phone: {info.get('phone')}")
-            print(f"   Valid: {storage.is_token_valid()}")
+            print(f"   Stored at: {token.stored_at}")
+            print(f"   Age: {token.age_minutes} minutes")
+            print(f"   TTL: {token.minutes_until_expiry} minutes remaining")
+            print(f"   Phone: {token.phone}")
+            print(f"   Valid: {storage.is_valid()}")
+            print(f"   Has refresh token: {bool(token.refresh_token)}")
         else:
             print("❌ No token found")
         return
@@ -200,12 +184,11 @@ def main():
             sys.exit(1)
 
         try:
-            from datetime import datetime
-            expires_at = datetime.fromisoformat(info.get('expires_at', '2000-01-01'))
-            minutes_remaining = int((expires_at - datetime.utcnow()).total_seconds() / 60)
+            token = storage.get_current()
+            minutes_remaining = token.minutes_until_expiry
 
             print("📋 Token TTL Check:")
-            print(f"   Expires at: {info.get('expires_at')}")
+            print(f"   Stored at: {token.stored_at}")
             print(f"   Minutes remaining: {minutes_remaining}")
             print(f"   Required minimum: {args.check_min_ttl}")
 
@@ -220,7 +203,7 @@ def main():
             sys.exit(1)
 
     async def _run():
-        refresher = TokenRefresher(debug_screenshots=args.debug_screenshots)
+        refresher = TokenRefresher()
         return await refresher.refresh_token(headless=not args.visible)
 
     success = asyncio.run(_run())

@@ -40,7 +40,7 @@ class BaseScraper:
         self.api_base = API_BASE
         self.app_base = APP_BASE
         self.auth_token: str | None = None
-        self._phone = os.environ.get('TIX_PHONE_NUMBER', '')
+        self._phone = os.environ.get('TIX_PHONE', '')
         self._password = os.environ.get('TIX_PASSWORD', '')
 
     def log(self, message: str) -> None:
@@ -128,7 +128,7 @@ class BaseScraper:
             LoginFailedError: If login fails
         """
         if not self._phone or not self._password:
-            raise LoginFailedError("No credentials provided - set TIX_PHONE_NUMBER and TIX_PASSWORD")
+            raise LoginFailedError("No credentials provided - set TIX_PHONE and TIX_PASSWORD")
 
         self.log("🔐 Logging in to TIX.id...")
 
