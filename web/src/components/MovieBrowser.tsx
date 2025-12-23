@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import MovieSidebar from './MovieSidebar';
 import CityShowtimes from './CityShowtimes';
 import Dashboard from './Dashboard';
@@ -36,9 +36,86 @@ interface MovieBrowserProps {
 
 type ViewMode = 'browser' | 'dashboard';
 
+// Fetch movie schedule from Firestore
+async function fetchMovieSchedule(movieId: string, date: string): Promise<Record<string, TheaterSchedule[]> | null> {
+    try {
+        const projectId = 'cineradar-481014';
+        const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/schedules/${date}/movies/${movieId}`;
+        
+        const response = await fetch(url);
+        if (!response.ok) return null;
+        
+        const doc = await response.json();
+        const fields = doc.fields || {};
+        
+        // Parse the cities map from Firestore format
+        const citiesMap = fields.cities?.mapValue?.fields || {};
+        const schedules: Record<string, TheaterSchedule[]> = {};
+        
+        for (const [city, cityData] of Object.entries(citiesMap)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const theatersArray = (cityData as any)?.arrayValue?.values || [];
+            schedules[city] = theatersArray.map((t: { mapValue?: { fields?: Record<string, unknown> } }) => {
+                const tf = t.mapValue?.fields || {};
+                return {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    theatre_id: (tf.theatre_id as any)?.stringValue || '',
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    theatre_name: (tf.theatre_name as any)?.stringValue || '',
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    merchant: (tf.merchant as any)?.stringValue || '',
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    address: (tf.address as any)?.stringValue || '',
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    rooms: ((tf.rooms as any)?.arrayValue?.values || []).map((r: { mapValue?: { fields?: Record<string, unknown> } }) => {
+                        const rf = r.mapValue?.fields || {};
+                        return {
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            category: (rf.category as any)?.stringValue || '',
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            price: (rf.price as any)?.stringValue || '',
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            showtimes: ((rf.showtimes as any)?.arrayValue?.values || []).map((s: { stringValue?: string }) => s.stringValue || ''),
+                        };
+                    }),
+                };
+            });
+        }
+        
+        return schedules;
+    } catch (error) {
+        console.error('Error fetching schedule:', error);
+        return null;
+    }
+}
+
 export default function MovieBrowser({ movies }: MovieBrowserProps) {
     const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+    const [movieWithSchedules, setMovieWithSchedules] = useState<Movie | null>(null);
+    const [loadingSchedule, setLoadingSchedule] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>('browser');
+
+    // Fetch schedules when movie is selected
+    useEffect(() => {
+        if (!selectedMovie) {
+            setMovieWithSchedules(null);
+            return;
+        }
+
+        // Get today's date in YYYY-MM-DD format
+        const today = new Date().toLocaleDateString('en-CA'); // Returns YYYY-MM-DD
+        
+        setLoadingSchedule(true);
+        fetchMovieSchedule(selectedMovie.id, today)
+            .then(schedules => {
+                if (schedules) {
+                    setMovieWithSchedules({ ...selectedMovie, schedules });
+                } else {
+                    setMovieWithSchedules(selectedMovie);
+                }
+            })
+            .finally(() => setLoadingSchedule(false));
+    }, [selectedMovie]);
 
     return (
         <div className="flex flex-col h-[calc(100vh-5rem)]">
@@ -72,7 +149,16 @@ export default function MovieBrowser({ movies }: MovieBrowserProps) {
                         selectedMovie={selectedMovie}
                         onSelectMovie={setSelectedMovie}
                     />
-                    <CityShowtimes movie={selectedMovie} allMovies={movies} />
+                    {loadingSchedule ? (
+                        <div className="flex-1 flex items-center justify-center">
+                            <div className="text-center">
+                                <div className="animate-spin text-4xl mb-4">🎬</div>
+                                <p className="text-gray-400">Loading showtimes...</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <CityShowtimes movie={movieWithSchedules} allMovies={movies} />
+                    )}
                 </div>
             ) : (
                 <Dashboard movies={movies} />
@@ -80,3 +166,4 @@ export default function MovieBrowser({ movies }: MovieBrowserProps) {
         </div>
     );
 }
+

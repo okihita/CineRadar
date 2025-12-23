@@ -225,7 +225,10 @@ def log_scraper_run(run_data: dict) -> bool:
 
 
 def save_daily_snapshot(data: dict) -> bool:
-    """Save daily movie snapshot to Firestore for web app."""
+    """Save daily movie snapshot to Firestore for web app.
+
+    Saves to both 'latest' (for current access) and dated document (for history).
+    """
     try:
         db = get_firestore_client()
         date = data.get('date', datetime.utcnow().strftime('%Y-%m-%d'))
@@ -248,15 +251,22 @@ def save_daily_snapshot(data: dict) -> bool:
                 'theatre_counts': schedule_summary,
             })
 
-        db.collection('snapshots').document('latest').set({
+        snapshot_data = {
             'scraped_at': data.get('scraped_at'),
             'date': date,
             'summary': data.get('summary', {}),
             'movies': slim_movies,
             'city_stats': data.get('city_stats', {}),
-        })
+        }
 
-        print(f"   Saved snapshot for {date}")
+        # Save to 'latest' (overwrites previous)
+        db.collection('snapshots').document('latest').set(snapshot_data)
+        print(f"   Saved snapshot to 'latest'")
+
+        # Also save to dated document (archive)
+        db.collection('snapshots').document(date).set(snapshot_data)
+        print(f"   Archived snapshot to '{date}'")
+
         return True
     except Exception as e:
         print(f"Error saving snapshot: {e}")
