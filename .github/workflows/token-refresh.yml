@@ -1,10 +1,12 @@
 # Token Refresh Workflow
-# Runs before daily movie scrape to ensure fresh JWT token
+# Full Login via Playwright - runs every ~60 days or on manual trigger
+# For daily scraping, use API refresh instead (see token_refresher.py)
 name: Token Refresh
 
 on:
   schedule:
-    - cron: '50 22 * * *'  # 5:50 AM WIB (10 min before movie scrape)
+    # 1st of every 2nd month @ 5:50 AM WIB (22:50 UTC previous day)
+    - cron: '50 22 1 */2 *'
   workflow_dispatch:  # Manual trigger
 
 jobs:
@@ -28,6 +30,7 @@ jobs:
           sudo apt-get install -y xvfb
 
       - name: Refresh TIX.id token (with xvfb)
+        id: refresh
         run: |
           xvfb-run --auto-servernum --server-args="-screen 0 1280x720x24" \
             python -m backend.cli.refresh_token
@@ -41,3 +44,34 @@ jobs:
         run: python -m backend.cli.refresh_token --check
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Alert on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = '🚨 Token Refresh Failed - Login Flow May Have Changed';
+            const body = `## Token Refresh Workflow Failed
+            
+            **Run ID:** ${{ github.run_id }}
+            **Time:** ${new Date().toISOString()}
+            
+            The Playwright-based login to TIX.id failed. This usually means:
+            - The login page UI has changed (buttons moved, selectors changed)
+            - TIX.id is temporarily down
+            - Credentials are invalid
+            
+            **Action Required:**
+            1. Check the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            2. Update \`backend/cli/refresh_token.py\` if selectors changed
+            3. Re-run the workflow manually
+            
+            cc @${{ github.repository_owner }}`;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['bug', 'token-refresh']
+            });

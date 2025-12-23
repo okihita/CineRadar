@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import List, Dict, Any
 
 from backend.infrastructure.scrapers.seat_scraper import TixSeatScraper
-from backend.infrastructure.repositories.firestore_token import get_storage, store_token
+from backend.infrastructure.token_refresher import TokenRefresher, TokenRefreshError
 from backend.domain.models import SeatOccupancy
 
 # --- Configuration ---
@@ -69,59 +69,20 @@ class GranularScraper:
     def __init__(self):
         self.scraper = TixSeatScraper()
         self.rate_limiter = RateLimiter(MAX_REQUESTS_PER_MINUTE)
-        self.token_repo = get_storage()
+        self.token_refresher = TokenRefresher()
         self.data_dir = Path("data/jit_granular")
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.active_monitors = []
 
     async def _check_and_refresh_token(self) -> bool:
-        """Ensure valid token exists, refresh if needed."""
-        token = self.token_repo.get_current()
-        
-        # If no token, or expired, can't proceed without browser login (for now)
-        # BUT if we have a refresh token, we can use it!
-        
-        if not token:
-            logger.error("❌ No token found in storage.")
+        """Ensure valid token exists using hybrid refresh strategy."""
+        try:
+            token = await self.token_refresher.ensure_valid_token()
+            self.scraper.set_token(token.token)
+            return True
+        except TokenRefreshError as e:
+            logger.error(f"❌ Token refresh failed: {e}")
             return False
-
-        # Proactive refresh if < 10 mins remaining
-        minutes_left = token.minutes_until_expiry
-        if minutes_left < 10:
-            logger.warning(f"⚠️ Token expiring soon ({minutes_left:.1f} min). Attempting refresh...")
-            if token.refresh_token:
-                import requests
-                try:
-                    # Using sync request for simplicity in this async method
-                    resp = requests.post(
-                        'https://api-b2b.tix.id/v1/users/refresh',
-                        headers={
-                            'Authorization': f'Bearer {token.refresh_token}',
-                            'Content-Type': 'application/json',
-                            'platform': 'web',
-                        }
-                    )
-                    if resp.status_code == 200:
-                        new_data = resp.json().get('data', {})
-                        new_access_token = new_data.get('token')
-                        if new_access_token:
-                            # Store new token, preserving the old refresh token
-                            store_token(new_access_token, token.phone, refresh_token=token.refresh_token)
-                            logger.info("✅ Token refreshed successfully via API!")
-                            # Reload repo to get new object
-                            self.token_repo = get_storage()
-                            token = self.token_repo.get_current()
-                        else:
-                            logger.error("❌ Refresh response missing token data")
-                    else:
-                        logger.error(f"❌ Refresh failed: {resp.status_code} {resp.text}")
-                except Exception as e:
-                    logger.error(f"❌ Refresh exception: {e}")
-            else:
-                logger.error("❌ No refresh token available! Cannot programmatic refresh.")
-        
-        self.scraper.set_token(token.token)
-        return True
 
     async def _scrape_single(self, task: Dict[str, Any]):
         """Perform a single scrape task with anti-bot delays."""
