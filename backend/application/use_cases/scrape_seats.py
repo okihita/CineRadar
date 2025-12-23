@@ -19,6 +19,7 @@ from backend.domain.models import SeatOccupancy
 @dataclass
 class ScrapSeatsResult:
     """Result of the seat scraping use case."""
+
     occupancies: list[SeatOccupancy]
     showtimes_checked: int
     success: bool
@@ -83,7 +84,7 @@ class ScrapSeatsUseCase:
                     occupancies=[],
                     showtimes_checked=0,
                     success=False,
-                    error="No token available - run token refresh first"
+                    error="No token available - run token refresh first",
                 )
 
             if not token.is_valid_for_scrape:
@@ -91,7 +92,7 @@ class ScrapSeatsUseCase:
                     occupancies=[],
                     showtimes_checked=0,
                     success=False,
-                    error=f"Token expires in {token.minutes_until_expiry} minutes (need 25+)"
+                    error=f"Token expires in {token.minutes_until_expiry} minutes (need 25+)",
                 )
 
             # Set token on scraper
@@ -108,7 +109,7 @@ class ScrapSeatsUseCase:
                     occupancies=[],
                     showtimes_checked=0,
                     success=True,  # Not a failure, just no data
-                    error="No showtimes with IDs found"
+                    error="No showtimes with IDs found",
                 )
 
             # Step 3: Scrape seats
@@ -126,24 +127,14 @@ class ScrapSeatsUseCase:
 
         except TokenExpiredError as e:
             return ScrapSeatsResult(
-                occupancies=[],
-                showtimes_checked=0,
-                success=False,
-                error=f"Token expired: {e}"
+                occupancies=[], showtimes_checked=0, success=False, error=f"Token expired: {e}"
             )
         except ScrapingError as e:
             return ScrapSeatsResult(
-                occupancies=[],
-                showtimes_checked=0,
-                success=False,
-                error=f"Scraping failed: {e}"
+                occupancies=[], showtimes_checked=0, success=False, error=f"Scraping failed: {e}"
             )
 
-    async def _get_showtime_ids_from_movies(
-        self,
-        city: str | None,
-        limit: int | None
-    ) -> list[str]:
+    async def _get_showtime_ids_from_movies(self, city: str | None, limit: int | None) -> list[str]:
         """Extract showtime IDs from today's movie data."""
         snapshot = self.movie_repo.get_latest_snapshot()
         if not snapshot:

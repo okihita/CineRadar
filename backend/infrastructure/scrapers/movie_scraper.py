@@ -5,7 +5,6 @@ Implements IMovieScraper interface for scraping movie data from TIX.id.
 This is the concrete implementation that contains the actual scraping logic.
 """
 
-
 from backend.application.ports.scraper import IMovieScraper
 from backend.config import CITIES
 from backend.domain.models import Movie
@@ -49,7 +48,7 @@ class TixMovieScraper(BaseScraper, IMovieScraper):
         """
         # Filter cities if specified
         if cities:
-            cities_to_scrape = [c for c in self.cities if c['name'] in cities]
+            cities_to_scrape = [c for c in self.cities if c["name"] in cities]
         else:
             cities_to_scrape = self.cities
 
@@ -60,16 +59,16 @@ class TixMovieScraper(BaseScraper, IMovieScraper):
         legacy_scraper = CineRadarScraper()
         result = await legacy_scraper.scrape(
             headless=headless,
-            city_names=[c['name'] for c in cities_to_scrape],
+            city_names=[c["name"] for c in cities_to_scrape],
             fetch_schedules=fetch_schedules,
         )
 
-        if not result or not result.get('movies'):
+        if not result or not result.get("movies"):
             return []
 
         # Convert legacy dict format to domain objects
         movies = []
-        for movie_data in result.get('movies', []):
+        for movie_data in result.get("movies", []):
             movie = Movie.from_dict(movie_data)
             movies.append(movie)
 

@@ -36,16 +36,15 @@ UA_POOL = [
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler("jit_scraper.log")
-    ]
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout), logging.FileHandler("jit_scraper.log")],
 )
 logger = logging.getLogger("JITScraper")
 
+
 class RateLimiter:
     """Simple sliding window rate limiter."""
+
     def __init__(self, max_rate: int, time_window: int = 60):
         self.max_rate = max_rate
         self.time_window = time_window
@@ -64,6 +63,7 @@ class RateLimiter:
 
             # Wait a bit before checking again
             await asyncio.sleep(0.5)
+
 
 class GranularScraper:
     def __init__(self):
@@ -86,9 +86,9 @@ class GranularScraper:
 
     async def _scrape_single(self, task: dict[str, Any]):
         """Perform a single scrape task with anti-bot delays."""
-        showtime_id = task['id']
-        movie_title = task['movie']
-        task['theatre']
+        showtime_id = task["id"]
+        movie_title = task["movie"]
+        task["theatre"]
 
         # 1. Anti-bot: Rate Limiting
         await self.rate_limiter.acquire()
@@ -109,7 +109,7 @@ class GranularScraper:
 
             results = await self.scraper.scrape_seats(
                 showtime_ids=[showtime_id],
-                merchant=task.get('merchant', 'XXI') # Default to XXI for now
+                merchant=task.get("merchant", "XXI"),  # Default to XXI for now
             )
 
             if results:
@@ -127,7 +127,7 @@ class GranularScraper:
 
     def _save_result(self, occupancy: SeatOccupancy, task: dict[str, Any]):
         """Save observation to JSON line file."""
-        filename = f"jit_{task['date']}_{task['movie'].replace(' ', '_')}_{task['start_time'].replace(':','')}.jsonl"
+        filename = f"jit_{task['date']}_{task['movie'].replace(' ', '_')}_{task['start_time'].replace(':', '')}.jsonl"
         filepath = self.data_dir / filename
 
         record = {
@@ -138,10 +138,10 @@ class GranularScraper:
             "showtime": occupancy.showtime,
             "total_seats": occupancy.total_seats,
             "sold_seats": occupancy.sold_seats,
-            "occupancy_pct": occupancy.occupancy_pct
+            "occupancy_pct": occupancy.occupancy_pct,
         }
 
-        with open(filepath, 'a') as f:
+        with open(filepath, "a") as f:
             f.write(json.dumps(record) + "\n")
 
     async def monitor(self, showtime_tasks: list[dict[str, Any]]):
@@ -177,19 +177,27 @@ class GranularScraper:
 
             if wait_time > 0:
                 next_run = datetime.now() + timedelta(seconds=wait_time)
-                logger.info(f"💤 Batch complete. Sleeping {wait_time:.1f}s until {next_run.strftime('%H:%M:%S')}...")
+                logger.info(
+                    f"💤 Batch complete. Sleeping {wait_time:.1f}s until {next_run.strftime('%H:%M:%S')}..."
+                )
                 await asyncio.sleep(wait_time)
             else:
-                logger.warning(f"⚠️ Batch took too long ({elapsed:.1f}s). Starting next immediately.")
+                logger.warning(
+                    f"⚠️ Batch took too long ({elapsed:.1f}s). Starting next immediately."
+                )
+
 
 async def main():
     import argparse
-    parser = argparse.ArgumentParser(description='JIT Granular Seat Scraper')
-    parser.add_argument('--file', help='Path to movies JSON file', default=None)
-    parser.add_argument('--city', help='Filter by city name (e.g. JAKARTA)')
-    parser.add_argument('--movie', help='Filter by movie title (partial match)')
-    parser.add_argument('--interval', type=int, default=SCRAPE_INTERVAL_MINUTES, help='Scrape interval in minutes')
-    parser.add_argument('--limit', type=int, default=100, help='Max showtimes to monitor')
+
+    parser = argparse.ArgumentParser(description="JIT Granular Seat Scraper")
+    parser.add_argument("--file", help="Path to movies JSON file", default=None)
+    parser.add_argument("--city", help="Filter by city name (e.g. JAKARTA)")
+    parser.add_argument("--movie", help="Filter by movie title (partial match)")
+    parser.add_argument(
+        "--interval", type=int, default=SCRAPE_INTERVAL_MINUTES, help="Scrape interval in minutes"
+    )
+    parser.add_argument("--limit", type=int, default=100, help="Max showtimes to monitor")
     args = parser.parse_args()
 
     # Determine input file
@@ -212,34 +220,34 @@ async def main():
             data = json.load(f)
 
         now = datetime.now()
-        movies = data.get('movies', [])
+        movies = data.get("movies", [])
         logger.info(f"   Found {len(movies)} movies in file")
 
         for m in movies:
-            title = m.get('title')
+            title = m.get("title")
             # Filter by movie title
             if args.movie and args.movie.lower() not in title.lower():
                 continue
 
-            for city, schedules in m.get('schedules', {}).items():
+            for city, schedules in m.get("schedules", {}).items():
                 # Filter by city
                 if args.city and args.city.upper() != city.upper():
                     continue
 
                 for theatre in schedules:
-                    theatre_name = theatre.get('theatre_name')
-                    merchant = theatre.get('merchant')
+                    theatre_name = theatre.get("theatre_name")
+                    merchant = theatre.get("merchant")
 
-                    for room in theatre.get('rooms', []):
+                    for room in theatre.get("rooms", []):
                         # Use all_showtimes
-                        showtimes = room.get('all_showtimes', [])
+                        showtimes = room.get("all_showtimes", [])
                         if not showtimes:
-                            showtimes = room.get('showtimes', [])
+                            showtimes = room.get("showtimes", [])
 
                         for st in showtimes:
                             if isinstance(st, dict):
-                                st_time = st.get('time')
-                                st_id = st.get('showtime_id')
+                                st_time = st.get("time")
+                                st_id = st.get("showtime_id")
                             else:
                                 continue
 
@@ -248,21 +256,23 @@ async def main():
 
                             # Parse time
                             try:
-                                sh, sm = map(int, st_time.split(':'))
+                                sh, sm = map(int, st_time.split(":"))
                                 st_dt = now.replace(hour=sh, minute=sm, second=0, microsecond=0)
 
                                 # Only future showtimes
                                 if st_dt > now:
-                                    tasks.append({
-                                        'id': st_id,
-                                        'movie': title,
-                                        'theatre': theatre_name,
-                                        'city': city,
-                                        'merchant': merchant,
-                                        'start_time': st_time,
-                                        'date': data.get('date'),
-                                        'interval': args.interval
-                                    })
+                                    tasks.append(
+                                        {
+                                            "id": st_id,
+                                            "movie": title,
+                                            "theatre": theatre_name,
+                                            "city": city,
+                                            "merchant": merchant,
+                                            "start_time": st_time,
+                                            "date": data.get("date"),
+                                            "interval": args.interval,
+                                        }
+                                    )
                             except Exception:
                                 continue
 
@@ -274,7 +284,7 @@ async def main():
 
     if args.limit and len(tasks) > args.limit:
         logger.warning(f"⚠️ Limit applied: keeping first {args.limit} of {len(tasks)} tasks")
-        tasks = tasks[:args.limit]
+        tasks = tasks[: args.limit]
 
     if not tasks:
         logger.warning("No upcoming showtimes found. Exiting.")
@@ -283,6 +293,7 @@ async def main():
     # Start scraper
     scraper = GranularScraper()
     await scraper.monitor(tasks)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

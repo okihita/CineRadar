@@ -17,13 +17,13 @@ from backend.domain.models.theatre import Theatre
 from backend.domain.models.token import Token
 
 __all__ = [
-    'Showtime',
-    'Room',
-    'TheatreSchedule',
-    'Movie',
-    'ScrapeResult',
-    'Theatre',
-    'Token',
-    'SeatOccupancy',
-    'SeatGradeStats',
+    "Showtime",
+    "Room",
+    "TheatreSchedule",
+    "Movie",
+    "ScrapeResult",
+    "Theatre",
+    "Token",
+    "SeatOccupancy",
+    "SeatGradeStats",
 ]

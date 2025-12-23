@@ -15,6 +15,7 @@ from backend.domain.models import Token
 @dataclass
 class RefreshTokenResult:
     """Result of token refresh."""
+
     token: Token | None
     success: bool
     error: str | None = None
@@ -65,20 +66,16 @@ class RefreshTokenUseCase:
 
             if not success:
                 return RefreshTokenResult(
-                    token=None,
-                    success=False,
-                    error="Login failed - could not capture token"
+                    token=None, success=False, error="Login failed - could not capture token"
                 )
 
             # Step 2: Create token domain object
             # Note: The scraper implementation should set auth_token after login
-            token_string = getattr(self.scraper, 'auth_token', None)
+            token_string = getattr(self.scraper, "auth_token", None)
 
             if not token_string:
                 return RefreshTokenResult(
-                    token=None,
-                    success=False,
-                    error="Login succeeded but no token captured"
+                    token=None, success=False, error="Login succeeded but no token captured"
                 )
 
             token = Token.create_new(token_string, phone)
@@ -86,9 +83,7 @@ class RefreshTokenUseCase:
             # Step 3: Store token
             if not self.token_repo.store(token):
                 return RefreshTokenResult(
-                    token=token,
-                    success=False,
-                    error="Token captured but storage failed"
+                    token=token, success=False, error="Token captured but storage failed"
                 )
 
             return RefreshTokenResult(
@@ -97,17 +92,9 @@ class RefreshTokenUseCase:
             )
 
         except LoginFailedError as e:
-            return RefreshTokenResult(
-                token=None,
-                success=False,
-                error=f"Login failed: {e}"
-            )
+            return RefreshTokenResult(token=None, success=False, error=f"Login failed: {e}")
         except Exception as e:
-            return RefreshTokenResult(
-                token=None,
-                success=False,
-                error=f"Unexpected error: {e}"
-            )
+            return RefreshTokenResult(token=None, success=False, error=f"Unexpected error: {e}")
 
     def check_current_token(self) -> RefreshTokenResult:
         """Check status of current stored token.
@@ -118,17 +105,13 @@ class RefreshTokenUseCase:
         token = self.token_repo.get_current()
 
         if not token:
-            return RefreshTokenResult(
-                token=None,
-                success=False,
-                error="No token stored"
-            )
+            return RefreshTokenResult(token=None, success=False, error="No token stored")
 
         if token.is_expired:
             return RefreshTokenResult(
                 token=token,
                 success=False,
-                error=f"Token expired {abs(token.minutes_until_expiry)} minutes ago"
+                error=f"Token expired {abs(token.minutes_until_expiry)} minutes ago",
             )
 
         return RefreshTokenResult(

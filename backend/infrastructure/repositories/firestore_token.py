@@ -23,16 +23,16 @@ def _get_firestore_client():
     """
     from google.cloud import firestore
 
-    service_account_json = os.environ.get('FIREBASE_SERVICE_ACCOUNT')
+    service_account_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
     if service_account_json:
         creds_data = json.loads(service_account_json)
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(creds_data, f)
             temp_path = f.name
-        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = temp_path
-        return firestore.Client(project=creds_data.get('project_id', 'cineradar-481014'))
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = temp_path
+        return firestore.Client(project=creds_data.get("project_id", "cineradar-481014"))
 
-    return firestore.Client(project=os.environ.get('FIREBASE_PROJECT_ID', 'cineradar-481014'))
+    return firestore.Client(project=os.environ.get("FIREBASE_PROJECT_ID", "cineradar-481014"))
 
 
 class FirestoreTokenRepository(ITokenRepository):
@@ -53,8 +53,8 @@ class FirestoreTokenRepository(ITokenRepository):
             print(f"Token valid for {current.minutes_until_expiry} min")
     """
 
-    COLLECTION = 'auth_tokens'
-    DOC_ID = 'tix_jwt'
+    COLLECTION = "auth_tokens"
+    DOC_ID = "tix_jwt"
     DEFAULT_TTL_HOURS = 20
 
     def __init__(self):
@@ -182,4 +182,3 @@ def store_token(token: str, phone: str = None, refresh_token: str = None) -> boo
     repo = FirestoreTokenRepository()
     token_obj = Token.create_new(token, phone, refresh_token=refresh_token)
     return repo.store(token_obj)
-

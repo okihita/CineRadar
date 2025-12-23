@@ -54,11 +54,11 @@ class FileMovieRepository(IMovieRepository):
             for movie in result.movies:
                 for city in movie.cities:
                     city_stats[city] = city_stats.get(city, 0) + 1
-            data['city_stats'] = city_stats
+            data["city_stats"] = city_stats
 
             # Save to dated file
             output_file = self.data_dir / f"movies_{result.date}.json"
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
 
             return True
@@ -76,10 +76,7 @@ class FileMovieRepository(IMovieRepository):
             ScrapeResult or None if no snapshots exist
         """
         try:
-            movie_files = sorted(
-                self.data_dir.glob("movies_*.json"),
-                reverse=True
-            )
+            movie_files = sorted(self.data_dir.glob("movies_*.json"), reverse=True)
 
             if not movie_files:
                 return None
@@ -109,16 +106,16 @@ class FileMovieRepository(IMovieRepository):
     def _load_file(self, file_path: Path) -> ScrapeResult | None:
         """Load a movie data file."""
         try:
-            with open(file_path, encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
 
-            movies = [Movie.from_dict(m) for m in data.get('movies', [])]
+            movies = [Movie.from_dict(m) for m in data.get("movies", [])]
 
             return ScrapeResult(
                 movies=movies,
-                scraped_at=data.get('scraped_at', ''),
-                date=data.get('date', ''),
-                cities_scraped=len(data.get('city_stats', {})),
+                scraped_at=data.get("scraped_at", ""),
+                date=data.get("date", ""),
+                cities_scraped=len(data.get("city_stats", {})),
                 success=True,
             )
 

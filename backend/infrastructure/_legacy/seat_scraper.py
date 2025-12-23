@@ -7,6 +7,7 @@ Approach:
 2. Use direct API calls with aiohttp for seat layout data
 3. This bypasses Flutter UI navigation issues
 """
+
 import asyncio
 import time
 from datetime import datetime
@@ -23,10 +24,10 @@ class SeatScraper(BaseScraper):
 
     # Merchant to API path mapping
     MERCHANT_PATHS = {
-        'CGV': 'cgv',
-        'XXI': 'xxi',
-        'Cinépolis': 'cinepolis',
-        'CINEPOLIS': 'cinepolis',
+        "CGV": "cgv",
+        "XXI": "xxi",
+        "Cinépolis": "cinepolis",
+        "CINEPOLIS": "cinepolis",
     }
 
     def __init__(self):
@@ -66,11 +67,11 @@ class SeatScraper(BaseScraper):
         - 6: Unavailable (sold or blocked - cannot distinguish)
         """
         if status == 1:  # Available
-            counters['available'] += 1
-            counters['total'] += 1
+            counters["available"] += 1
+            counters["total"] += 1
         elif status in (5, 6):  # Unavailable (sold or blocked)
-            counters['unavailable'] += 1
-            counters['total'] += 1
+            counters["unavailable"] += 1
+            counters["total"] += 1
         # Other statuses are ignored
 
     def calculate_occupancy(self, layout_data: dict) -> dict:
@@ -81,37 +82,33 @@ class SeatScraper(BaseScraper):
         Note: API cannot distinguish "sold" from "blocked/maintenance".
         Occupancy is an upper-bound estimate.
         """
-        counters = {'total': 0, 'unavailable': 0, 'available': 0}
+        counters = {"total": 0, "unavailable": 0, "available": 0}
 
-        data = layout_data.get('data', {})
-        seat_map = data.get('seat_map', [])
+        data = layout_data.get("data", {})
+        seat_map = data.get("seat_map", [])
 
         for item in seat_map:
             # Check if this is a row container (XXI/CGV) or a direct seat (Cinépolis)
-            if 'seat_rows' in item:
+            if "seat_rows" in item:
                 # Nested structure (XXI/CGV)
-                for seat in item.get('seat_rows', []):
-                    self._count_seat(seat.get('status', 0), counters)
+                for seat in item.get("seat_rows", []):
+                    self._count_seat(seat.get("status", 0), counters)
             else:
                 # Flat structure (Cinépolis)
-                status = item.get('seat_status', item.get('status', 0))
+                status = item.get("seat_status", item.get("status", 0))
                 self._count_seat(status, counters)
 
-        total_seats = counters['total']
-        occupancy_pct = (counters['unavailable'] / total_seats * 100) if total_seats > 0 else 0
+        total_seats = counters["total"]
+        occupancy_pct = (counters["unavailable"] / total_seats * 100) if total_seats > 0 else 0
 
         return {
-            'total_seats': total_seats,
-            'unavailable_seats': counters['unavailable'],
-            'available_seats': counters['available'],
-            'occupancy_pct': round(occupancy_pct, 1),
+            "total_seats": total_seats,
+            "unavailable_seats": counters["unavailable"],
+            "available_seats": counters["available"],
+            "occupancy_pct": round(occupancy_pct, 1),
         }
 
-    async def _fetch_seat_layout_api(
-        self,
-        showtime_id: str,
-        merchant: str
-    ) -> dict | None:
+    async def _fetch_seat_layout_api(self, showtime_id: str, merchant: str) -> dict | None:
         """
         Fetch seat layout via direct API call using JWT token.
 
@@ -133,14 +130,14 @@ class SeatScraper(BaseScraper):
         url = f"https://api-b2b.tix.id/v1/movies/{merchant_path}/layout"
 
         headers = {
-            'Authorization': f'Bearer {self.auth_token}',
-            'Accept': 'application/json',
-            'User-Agent': USER_AGENT,
+            "Authorization": f"Bearer {self.auth_token}",
+            "Accept": "application/json",
+            "User-Agent": USER_AGENT,
         }
 
         params = {
-            'show_time_id': showtime_id,
-            'tz': '7'  # UTC+7 offset (not timezone name)
+            "show_time_id": showtime_id,
+            "tz": "7",  # UTC+7 offset (not timezone name)
         }
 
         try:
@@ -148,10 +145,12 @@ class SeatScraper(BaseScraper):
                 async with session.get(url, headers=headers, params=params) as response:
                     if response.status == 200:
                         data = await response.json()
-                        if data.get('success'):
+                        if data.get("success"):
                             return data
                         else:
-                            self.log(f"   ⚠️ API error: {data.get('error', {}).get('message', 'Unknown')}")
+                            self.log(
+                                f"   ⚠️ API error: {data.get('error', {}).get('message', 'Unknown')}"
+                            )
                     elif response.status == 401:
                         self.log("   ⚠️ Auth token expired - need to re-login")
                     else:
@@ -162,10 +161,7 @@ class SeatScraper(BaseScraper):
 
         return None
 
-    async def scrape_showtime_occupancy(
-        self,
-        showtime_info: dict
-    ) -> dict | None:
+    async def scrape_showtime_occupancy(self, showtime_info: dict) -> dict | None:
         """
         Scrape seat occupancy for a single showtime via direct API call.
 
@@ -175,8 +171,8 @@ class SeatScraper(BaseScraper):
         Returns:
             Dict with occupancy data or None
         """
-        show_time_id = showtime_info.get('showtime_id')
-        merchant = showtime_info.get('merchant')
+        show_time_id = showtime_info.get("showtime_id")
+        merchant = showtime_info.get("merchant")
 
         if not show_time_id or not merchant:
             return None
@@ -189,24 +185,21 @@ class SeatScraper(BaseScraper):
         occupancy = self.calculate_occupancy(layout_data)
 
         return {
-            'date': showtime_info.get('date', datetime.now().strftime('%Y-%m-%d')),
-            'showtime_id': show_time_id,
-            'movie_id': showtime_info.get('movie_id'),
-            'movie_title': showtime_info.get('movie_title'),
-            'theatre_id': showtime_info.get('theatre_id'),
-            'theatre_name': showtime_info.get('theatre_name'),
-            'city': showtime_info.get('city'),
-            'merchant': merchant,
-            'room_category': showtime_info.get('room_category'),
-            'showtime': showtime_info.get('showtime'),
-            'scraped_at': datetime.now().isoformat(),
-            **occupancy
+            "date": showtime_info.get("date", datetime.now().strftime("%Y-%m-%d")),
+            "showtime_id": show_time_id,
+            "movie_id": showtime_info.get("movie_id"),
+            "movie_title": showtime_info.get("movie_title"),
+            "theatre_id": showtime_info.get("theatre_id"),
+            "theatre_name": showtime_info.get("theatre_name"),
+            "city": showtime_info.get("city"),
+            "merchant": merchant,
+            "room_category": showtime_info.get("room_category"),
+            "showtime": showtime_info.get("showtime"),
+            "scraped_at": datetime.now().isoformat(),
+            **occupancy,
         }
 
-    async def _init_browser_and_auth(
-        self,
-        headless: bool = True
-    ) -> tuple:
+    async def _init_browser_and_auth(self, headless: bool = True) -> tuple:
         """
         Initialize browser and login to TIX.id using base class methods.
 
@@ -222,7 +215,7 @@ class SeatScraper(BaseScraper):
         showtimes: list[dict],
         headless: bool = True,
         batch_size: int = 10,
-        delay_between_requests: float = 0.5
+        delay_between_requests: float = 0.5,
     ) -> list[dict]:
         """
         Scrape seat occupancy for a list of showtimes.
@@ -271,7 +264,7 @@ class SeatScraper(BaseScraper):
                     elapsed = time.time() - start_time
                     avg_time = elapsed / i
                     remaining = (len(showtimes) - i) * avg_time
-                    self.log(f"   Progress: {i}/{len(showtimes)} | ETA: {remaining/60:.1f}m")
+                    self.log(f"   Progress: {i}/{len(showtimes)} | ETA: {remaining / 60:.1f}m")
 
         finally:
             await self._close_browser(playwright, browser, context, page)
@@ -280,9 +273,7 @@ class SeatScraper(BaseScraper):
         return results
 
     async def scrape_all_showtimes_api_only(
-        self,
-        showtimes: list[dict],
-        delay_between_requests: float = 0.3
+        self, showtimes: list[dict], delay_between_requests: float = 0.3
     ) -> list[dict]:
         """
         Scrape seat occupancy using API calls only (no browser).

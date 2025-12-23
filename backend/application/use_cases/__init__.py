@@ -11,8 +11,8 @@ from backend.application.use_cases.scrape_seats import ScrapSeatsUseCase
 from backend.application.use_cases.validate_data import ValidateDataUseCase
 
 __all__ = [
-    'ScrapeMoviesUseCase',
-    'ScrapSeatsUseCase',
-    'RefreshTokenUseCase',
-    'ValidateDataUseCase',
+    "ScrapeMoviesUseCase",
+    "ScrapSeatsUseCase",
+    "RefreshTokenUseCase",
+    "ValidateDataUseCase",
 ]

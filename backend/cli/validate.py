@@ -11,6 +11,7 @@ Exit codes:
     0 - Validation passed
     1 - Validation failed
 """
+
 import json
 import sys
 from datetime import datetime
@@ -56,7 +57,7 @@ def validate_daily_scrape(data_dir: str = "data", file_path: str | None = None) 
     print(f"📂 Validating: {input_file}")
 
     try:
-        with open(input_file, encoding='utf-8') as f:
+        with open(input_file, encoding="utf-8") as f:
             data = json.load(f)
     except json.JSONDecodeError as e:
         print(f"❌ Invalid JSON: {e}")
@@ -73,7 +74,7 @@ def validate_daily_scrape(data_dir: str = "data", file_path: str | None = None) 
     except ValidationError as e:
         print("❌ Schema validation FAILED:")
         for error in e.errors():
-            loc = ' → '.join(str(x) for x in error['loc'])
+            loc = " → ".join(str(x) for x in error["loc"])
             print(f"   {loc}: {error['msg']}")
         return False
 
@@ -105,8 +106,8 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Validate CineRadar scraped data")
-    parser.add_argument('--file', '-f', help="Specific file to validate")
-    parser.add_argument('--data-dir', '-d', default="data", help="Data directory")
+    parser.add_argument("--file", "-f", help="Specific file to validate")
+    parser.add_argument("--data-dir", "-d", default="data", help="Data directory")
 
     args = parser.parse_args()
 

@@ -6,6 +6,7 @@ Usage:
     python -m backend.cli movies [options]    # Scrape movie availability
     python -m backend.cli seats [options]     # Scrape seat occupancy
 """
+
 import argparse
 import asyncio
 import json
@@ -20,6 +21,7 @@ from backend.infrastructure._legacy.tix_client import CineRadarScraper
 # MOVIE SCRAPER COMMANDS
 # ============================================================================
 
+
 def run_movie_scrape(
     output_dir: str = "data",
     headless: bool = True,
@@ -28,7 +30,7 @@ def run_movie_scrape(
     schedules: bool = False,
     batch: int | None = None,
     total_batches: int = 9,
-    max_retries: int = 3
+    max_retries: int = 3,
 ):
     """Run the movie availability scraper with retry logic."""
 
@@ -45,8 +47,10 @@ def run_movie_scrape(
             cities_per_batch = len(CITIES) // total_batches + 1
             start_idx = batch * cities_per_batch
             end_idx = min(start_idx + cities_per_batch, len(CITIES))
-            city_names = [c['name'] for c in CITIES[start_idx:end_idx]]
-            print(f"🔢 Batch {batch}/{total_batches-1}: cities {start_idx}-{end_idx-1} ({len(city_names)} cities)")
+            city_names = [c["name"] for c in CITIES[start_idx:end_idx]]
+            print(
+                f"🔢 Batch {batch}/{total_batches - 1}: cities {start_idx}-{end_idx - 1} ({len(city_names)} cities)"
+            )
         else:
             city_names = None
 
@@ -65,18 +69,18 @@ def run_movie_scrape(
                     city_limit=city_limit,
                     specific_city=specific_city,
                     city_names=city_names,
-                    fetch_schedules=schedules
+                    fetch_schedules=schedules,
                 )
-                if result and result.get('movies'):
+                if result and result.get("movies"):
                     break
             except Exception as e:
                 print(f"⚠️ Attempt {attempt + 1}/{max_retries} failed: {e}")
                 if attempt < max_retries - 1:
-                    wait = 2 ** attempt * 5
+                    wait = 2**attempt * 5
                     print(f"   Retrying in {wait}s...")
                     await asyncio.sleep(wait)
 
-        if not result or not result.get('movies'):
+        if not result or not result.get("movies"):
             print("❌ No data collected after retries.")
             return None
 
@@ -89,14 +93,19 @@ def run_movie_scrape(
         else:
             output_file = output_path / f"movies_{date_str}.json"
 
-        with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump({
-                'scraped_at': timestamp,
-                'date': date_str,
-                'batch': batch,
-                'movies': result['movies'],
-                'city_stats': result['city_stats'],
-            }, f, indent=2, ensure_ascii=False)
+        with open(output_file, "w", encoding="utf-8") as f:
+            json.dump(
+                {
+                    "scraped_at": timestamp,
+                    "date": date_str,
+                    "batch": batch,
+                    "movies": result["movies"],
+                    "city_stats": result["city_stats"],
+                },
+                f,
+                indent=2,
+                ensure_ascii=False,
+            )
 
         print(f"💾 Saved to: {output_file}")
         return result
@@ -107,6 +116,7 @@ def run_movie_scrape(
 # ============================================================================
 # SEAT SCRAPER COMMANDS
 # ============================================================================
+
 
 def load_movie_data(data_dir: str = "data") -> dict | None:
     """Load today's movie data from the daily scrape."""
@@ -132,53 +142,57 @@ def extract_showtimes_from_data(
     movie_data: dict,
     city_filter: str | None = None,
     limit: int | None = None,
-    jit_window_minutes: int = 20
+    jit_window_minutes: int = 20,
 ) -> list[dict]:
     """Extract showtime info from movie data for seat scraping."""
     showtimes = []
 
-    for movie in movie_data.get('movies', []):
-        movie_id = movie.get('movie_id')
-        movie_title = movie.get('title', '')
+    for movie in movie_data.get("movies", []):
+        movie_id = movie.get("movie_id")
+        movie_title = movie.get("title", "")
 
-        schedules = movie.get('schedules', {})
+        schedules = movie.get("schedules", {})
 
         for city_name, theatres in schedules.items():
             if city_filter and city_name.upper() != city_filter.upper():
                 continue
 
             for theatre in theatres:
-                theatre_id = theatre.get('theatre_id')
-                theatre_name = theatre.get('theatre_name', '')
-                merchant = theatre.get('merchant', '')
+                theatre_id = theatre.get("theatre_id")
+                theatre_name = theatre.get("theatre_name", "")
+                merchant = theatre.get("merchant", "")
 
-                for room in theatre.get('rooms', []):
-                    room_name = room.get('category', room.get('room_name', ''))
+                for room in theatre.get("rooms", []):
+                    room_name = room.get("category", room.get("room_name", ""))
 
                     # Use all_showtimes which contains showtime_id
-                    for showtime_obj in room.get('all_showtimes', room.get('showtimes', [])):
+                    for showtime_obj in room.get("all_showtimes", room.get("showtimes", [])):
                         if isinstance(showtime_obj, dict):
-                            st_id = showtime_obj.get('showtime_id')
-                            st_time = showtime_obj.get('time', '')
-                            is_available = showtime_obj.get('is_available', True)
+                            st_id = showtime_obj.get("showtime_id")
+                            st_time = showtime_obj.get("time", "")
+                            is_available = showtime_obj.get("is_available", True)
                         else:
                             st_id = None
                             st_time = showtime_obj
                             is_available = True
 
                         if st_id and is_available:
-                            showtimes.append({
-                                'showtime_id': st_id,
-                                'showtime': st_time,
-                                'movie_id': movie_id,
-                                'movie_title': movie_title,
-                                'theatre_id': theatre_id,
-                                'theatre_name': theatre_name,
-                                'merchant': merchant,
-                                'room_name': room_name,
-                                'city': city_name,
-                                'date': movie_data.get('date', datetime.now().strftime('%Y-%m-%d'))
-                            })
+                            showtimes.append(
+                                {
+                                    "showtime_id": st_id,
+                                    "showtime": st_time,
+                                    "movie_id": movie_id,
+                                    "movie_title": movie_title,
+                                    "theatre_id": theatre_id,
+                                    "theatre_name": theatre_name,
+                                    "merchant": merchant,
+                                    "room_name": room_name,
+                                    "city": city_name,
+                                    "date": movie_data.get(
+                                        "date", datetime.now().strftime("%Y-%m-%d")
+                                    ),
+                                }
+                            )
 
     if limit:
         showtimes = showtimes[:limit]
@@ -203,16 +217,13 @@ def filter_jit_showtimes(showtimes: list[dict], window_minutes: int = 20) -> lis
 
     filtered = []
     for st in showtimes:
-        time_str = st.get('showtime', '')
+        time_str = st.get("showtime", "")
         try:
             # Parse HH:MM format
-            parts = time_str.split(':')
+            parts = time_str.split(":")
             if len(parts) == 2:
                 show_time = now.replace(
-                    hour=int(parts[0]),
-                    minute=int(parts[1]),
-                    second=0,
-                    microsecond=0
+                    hour=int(parts[0]), minute=int(parts[1]), second=0, microsecond=0
                 )
 
                 # Check if within window
@@ -233,7 +244,7 @@ def run_seat_scrape(
     total_batches: int = 9,
     output_dir: str = "data",
     jit_window: int = 20,
-    use_stored_token: bool = False
+    use_stored_token: bool = False,
 ):
     """Run seat scraping based on mode."""
 
@@ -259,7 +270,7 @@ def run_seat_scrape(
             print(f"🔢 Batch {batch}: {len(showtimes)} showtimes")
 
         # JIT mode: filter to upcoming showtimes only
-        if mode == 'jit':
+        if mode == "jit":
             showtimes = filter_jit_showtimes(showtimes, jit_window)
             if not showtimes:
                 print(f"📋 No showtimes in next {jit_window} minutes")
@@ -278,9 +289,7 @@ def run_seat_scrape(
             results = await scraper.scrape_all_showtimes_api_only(showtimes)
         else:
             results = await scraper.scrape_all_showtimes(
-                showtimes,
-                headless=headless,
-                batch_size=10
+                showtimes, headless=headless, batch_size=10
             )
 
         # Save results
@@ -293,13 +302,17 @@ def run_seat_scrape(
             else:
                 filename = f"seats_{mode}_{date_str}.json"
 
-            with open(output_path / filename, 'w') as f:
-                json.dump({
-                    'scraped_at': datetime.now().isoformat(),
-                    'mode': mode,
-                    'count': len(results),
-                    'results': results
-                }, f, indent=2)
+            with open(output_path / filename, "w") as f:
+                json.dump(
+                    {
+                        "scraped_at": datetime.now().isoformat(),
+                        "mode": mode,
+                        "count": len(results),
+                        "results": results,
+                    },
+                    f,
+                    indent=2,
+                )
 
             print(f"💾 Saved {len(results)} results to {filename}")
 
@@ -312,9 +325,10 @@ def run_seat_scrape(
 # CLI ENTRY POINT
 # ============================================================================
 
+
 def main():
     parser = argparse.ArgumentParser(
-        description='CineRadar - TIX.id Movie & Seat Scraper',
+        description="CineRadar - TIX.id Movie & Seat Scraper",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -322,36 +336,40 @@ Examples:
   python -m backend.cli movies --batch 0 --total-batches 9
   python -m backend.cli seats --mode morning
   python -m backend.cli seats --city JAKARTA --limit 10
-        """
+        """,
     )
 
-    subparsers = parser.add_subparsers(dest='command', help='Scraper command')
+    subparsers = parser.add_subparsers(dest="command", help="Scraper command")
 
     # Movies subcommand
-    movies_parser = subparsers.add_parser('movies', help='Scrape movie availability')
-    movies_parser.add_argument('--visible', action='store_true', help='Show browser window')
-    movies_parser.add_argument('--limit', type=int, help='Limit number of cities')
-    movies_parser.add_argument('--city', type=str, help='Scrape specific city')
-    movies_parser.add_argument('--schedules', action='store_true', help='Include schedules')
-    movies_parser.add_argument('--output', default='data', help='Output directory')
-    movies_parser.add_argument('--batch', type=int, help='Batch number (0-indexed)')
-    movies_parser.add_argument('--total-batches', type=int, default=9)
+    movies_parser = subparsers.add_parser("movies", help="Scrape movie availability")
+    movies_parser.add_argument("--visible", action="store_true", help="Show browser window")
+    movies_parser.add_argument("--limit", type=int, help="Limit number of cities")
+    movies_parser.add_argument("--city", type=str, help="Scrape specific city")
+    movies_parser.add_argument("--schedules", action="store_true", help="Include schedules")
+    movies_parser.add_argument("--output", default="data", help="Output directory")
+    movies_parser.add_argument("--batch", type=int, help="Batch number (0-indexed)")
+    movies_parser.add_argument("--total-batches", type=int, default=9)
 
     # Seats subcommand
-    seats_parser = subparsers.add_parser('seats', help='Scrape seat occupancy')
-    seats_parser.add_argument('--mode', choices=['morning', 'jit'], default='morning')
-    seats_parser.add_argument('--visible', action='store_true', help='Show browser window')
-    seats_parser.add_argument('--city', type=str, help='Filter by city')
-    seats_parser.add_argument('--limit', type=int, help='Limit showtimes')
-    seats_parser.add_argument('--output', default='data', help='Output directory')
-    seats_parser.add_argument('--batch', type=int, help='Batch number')
-    seats_parser.add_argument('--total-batches', type=int, default=9)
-    seats_parser.add_argument('--jit-window', type=int, default=20, help='JIT window in minutes')
-    seats_parser.add_argument('--use-stored-token', action='store_true', help='Use token from Firestore instead of logging in')
+    seats_parser = subparsers.add_parser("seats", help="Scrape seat occupancy")
+    seats_parser.add_argument("--mode", choices=["morning", "jit"], default="morning")
+    seats_parser.add_argument("--visible", action="store_true", help="Show browser window")
+    seats_parser.add_argument("--city", type=str, help="Filter by city")
+    seats_parser.add_argument("--limit", type=int, help="Limit showtimes")
+    seats_parser.add_argument("--output", default="data", help="Output directory")
+    seats_parser.add_argument("--batch", type=int, help="Batch number")
+    seats_parser.add_argument("--total-batches", type=int, default=9)
+    seats_parser.add_argument("--jit-window", type=int, default=20, help="JIT window in minutes")
+    seats_parser.add_argument(
+        "--use-stored-token",
+        action="store_true",
+        help="Use token from Firestore instead of logging in",
+    )
 
     args = parser.parse_args()
 
-    if args.command == 'movies':
+    if args.command == "movies":
         run_movie_scrape(
             output_dir=args.output,
             headless=not args.visible,
@@ -359,9 +377,9 @@ Examples:
             specific_city=args.city,
             schedules=args.schedules,
             batch=args.batch,
-            total_batches=args.total_batches
+            total_batches=args.total_batches,
         )
-    elif args.command == 'seats':
+    elif args.command == "seats":
         run_seat_scrape(
             mode=args.mode,
             headless=not args.visible,
@@ -371,7 +389,7 @@ Examples:
             total_batches=args.total_batches,
             output_dir=args.output,
             jit_window=args.jit_window,
-            use_stored_token=args.use_stored_token
+            use_stored_token=args.use_stored_token,
         )
     else:
         parser.print_help()

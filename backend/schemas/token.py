@@ -2,6 +2,7 @@
 Token Schema
 Validates JWT tokens with TTL checking for TIX.id API authentication.
 """
+
 from datetime import datetime
 
 from pydantic import BaseModel, Field, field_validator
@@ -20,12 +21,13 @@ class TokenSchema(BaseModel):
             "expires_at": "2025-12-18T05:06:29.115029"
         }
     """
+
     token: str = Field(..., min_length=50, description="JWT token (typically 100+ chars)")
     phone: str | None = Field(None, description="Masked phone number")
     stored_at: str = Field(..., description="ISO timestamp when token was stored")
     expires_at: str = Field(..., description="ISO timestamp when token expires")
 
-    @field_validator('stored_at', 'expires_at')
+    @field_validator("stored_at", "expires_at")
     @classmethod
     def validate_iso_timestamp(cls, v):
         """Ensure timestamps are valid ISO format."""
@@ -63,6 +65,7 @@ class TokenSchema(BaseModel):
 
 class TokenValidationResult(BaseModel):
     """Result of token validation check."""
+
     is_valid: bool
     minutes_remaining: int
     message: str

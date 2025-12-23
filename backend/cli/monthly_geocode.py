@@ -3,6 +3,7 @@
 Geocode theatres using Google Places API (New) for exact building locations.
 Returns place_id for accurate Google Maps links.
 """
+
 import json
 import os
 import time
@@ -11,7 +12,7 @@ from pathlib import Path
 import requests
 
 # Configuration
-GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY')
+GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY")
 if not GOOGLE_MAPS_API_KEY:
     raise ValueError("GOOGLE_MAPS_API_KEY environment variable not set")
 PLACES_SEARCH_URL = "https://places.googleapis.com/v1/places:searchText"
@@ -21,14 +22,14 @@ CACHE_FILE = Path(__file__).parent.parent.parent / "data" / "places_cache.json"
 def load_cache() -> dict:
     """Load cached place data."""
     if CACHE_FILE.exists():
-        with open(CACHE_FILE, encoding='utf-8') as f:
+        with open(CACHE_FILE, encoding="utf-8") as f:
             return json.load(f)
     return {}
 
 
 def save_cache(cache: dict):
     """Save cache to file."""
-    with open(CACHE_FILE, 'w', encoding='utf-8') as f:
+    with open(CACHE_FILE, "w", encoding="utf-8") as f:
         json.dump(cache, f, indent=2, ensure_ascii=False)
 
 
@@ -46,10 +47,10 @@ def search_place(theatre_name: str, city: str) -> dict | None:
             headers={
                 "Content-Type": "application/json",
                 "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
-                "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location"
+                "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location",
             },
             json={"textQuery": query},
-            timeout=15
+            timeout=15,
         )
 
         data = response.json()
@@ -65,7 +66,7 @@ def search_place(theatre_name: str, city: str) -> dict | None:
                 "lng": location.get("longitude"),
                 "formatted_address": place.get("formattedAddress"),
                 "name": display_name.get("text"),
-                "query_used": query
+                "query_used": query,
             }
     except Exception as e:
         print(f"    Error: {str(e)[:80]}")
@@ -102,10 +103,10 @@ def main():
     print("=" * 60)
     print(f"Input: {input_file}")
 
-    with open(input_file, encoding='utf-8') as f:
+    with open(input_file, encoding="utf-8") as f:
         data = json.load(f)
 
-    movies = data.get('movies', [])
+    movies = data.get("movies", [])
     print(f"Movies: {len(movies)}")
 
     # Load cache
@@ -115,22 +116,21 @@ def main():
     # Collect unique theatres
     theatres = {}
     for movie in movies:
-        schedules = movie.get('schedules', {})
+        schedules = movie.get("schedules", {})
         for city, city_theatres in schedules.items():
             for theatre in city_theatres:
-                theatre_id = theatre.get('theatre_id')
+                theatre_id = theatre.get("theatre_id")
                 if theatre_id and theatre_id not in theatres:
                     theatres[theatre_id] = {
-                        'name': theatre.get('theatre_name'),
-                        'city': city,
-                        'theatre_ref': theatre
+                        "name": theatre.get("theatre_name"),
+                        "city": city,
+                        "theatre_ref": theatre,
                     }
 
     print(f"Unique theatres: {len(theatres)}")
 
     # Count how many need geocoding
-    need_geocoding = sum(1 for t in theatres.values()
-                         if f"{t['name']}|{t['city']}" not in cache)
+    need_geocoding = sum(1 for t in theatres.values() if f"{t['name']}|{t['city']}" not in cache)
     from_cache = len(theatres) - need_geocoding
 
     print(f"From cache: {from_cache}")
@@ -149,7 +149,7 @@ def main():
         cache_key = f"{t['name']}|{t['city']}"
 
         if cache_key not in cache:
-            result = geocode_theatre(t['name'], t['city'], cache)
+            result = geocode_theatre(t["name"], t["city"], cache)
             processed += 1
 
             if result:
@@ -169,9 +169,9 @@ def main():
         # Apply geocode data to theatre
         if cache_key in cache:
             place_data = cache[cache_key]
-            t['theatre_ref']['lat'] = place_data.get('lat')
-            t['theatre_ref']['lng'] = place_data.get('lng')
-            t['theatre_ref']['place_id'] = place_data.get('place_id')
+            t["theatre_ref"]["lat"] = place_data.get("lat")
+            t["theatre_ref"]["lng"] = place_data.get("lng")
+            t["theatre_ref"]["place_id"] = place_data.get("place_id")
 
     # Final progress
     if need_geocoding > 0:
@@ -183,13 +183,12 @@ def main():
     print(f"💾 Cache saved: {len(cache)} entries")
 
     # Save updated data
-    with open(input_file, 'w', encoding='utf-8') as f:
+    with open(input_file, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
     print(f"💾 Data saved: {input_file}")
 
     # Count theatres with place_id
-    with_place_id = sum(1 for t in theatres.values()
-                        if t['theatre_ref'].get('place_id'))
+    with_place_id = sum(1 for t in theatres.values() if t["theatre_ref"].get("place_id"))
     without_place_id = len(theatres) - with_place_id
 
     print(f"\n✅ Done! {with_place_id} theatres with place_id, {without_place_id} without")

@@ -6,6 +6,7 @@ Logs into TIX.id and stores the JWT token in Firestore.
 Usage:
     python -m backend.cli.refresh_token [--visible] [--debug-screenshots]
 """
+
 import argparse
 import asyncio
 import sys
@@ -33,15 +34,15 @@ class TokenRefresher(BaseScraper):
 
         try:
             # Navigate to login - wait longer for Flutter to render
-            await page.goto(f'{self.app_base}/login', wait_until='networkidle', timeout=60000)
+            await page.goto(f"{self.app_base}/login", wait_until="networkidle", timeout=60000)
             await asyncio.sleep(15)  # Flutter needs time to render
 
             # Strip 62 prefix from phone
-            phone_clean = self._phone.lstrip('+').lstrip('62')
+            phone_clean = self._phone.lstrip("+").lstrip("62")
 
             # Try to find inputs
-            phone_field = page.get_by_placeholder('Type your phone number')
-            password_field = page.get_by_placeholder('Type Password')
+            phone_field = page.get_by_placeholder("Type your phone number")
+            password_field = page.get_by_placeholder("Type Password")
 
             phone_count = await phone_field.count()
             pass_count = await password_field.count()
@@ -62,12 +63,12 @@ class TokenRefresher(BaseScraper):
             # Click Login - simple approach
             # IMPORTANT: TIX.id has TWO Login buttons - header (fake) and form (real)
             # Must use .last to get the form button, not .first!
-            login_button = page.get_by_role('button', name='Login').last
+            login_button = page.get_by_role("button", name="Login").last
             if await login_button.count() > 0:
                 await login_button.click()
                 self.log("   📤 Clicked Login button")
             else:
-                await page.keyboard.press('Enter')
+                await page.keyboard.press("Enter")
                 self.log("   📤 Pressed Enter")
 
             # Wait for any processing
@@ -76,7 +77,7 @@ class TokenRefresher(BaseScraper):
 
             # Navigate to home to check session
             self.log("   🔄 Navigating to home...")
-            await page.goto(f'{self.app_base}/home', wait_until='networkidle', timeout=30000)
+            await page.goto(f"{self.app_base}/home", wait_until="networkidle", timeout=30000)
             await asyncio.sleep(5)
 
             current_url = page.url
@@ -94,28 +95,36 @@ class TokenRefresher(BaseScraper):
 
                 # Check cookies
                 cookies = await context.cookies()
-                cookie_names = [c['name'] for c in cookies]
+                cookie_names = [c["name"] for c in cookies]
                 self.log(f"   🍪 Cookies: {cookie_names}")
 
                 # Look for token in cookies
                 token = None  # Initialize before checking
                 refresh_token = None  # Also capture refresh token
                 for cookie in cookies:
-                    if 'token' in cookie['name'].lower() or 'auth' in cookie['name'].lower():
+                    if "token" in cookie["name"].lower() or "auth" in cookie["name"].lower():
                         self.log(f"   ✅ Found token cookie: {cookie['name']}")
-                        token = cookie['value']
+                        token = cookie["value"]
                         break
 
                 # Try multiple possible token key names in localStorage
                 if not token:
-                    for key in ['authentication_token', 'token', 'auth_token', 'jwt', 'access_token']:
+                    for key in [
+                        "authentication_token",
+                        "token",
+                        "auth_token",
+                        "jwt",
+                        "access_token",
+                    ]:
                         token = await page.evaluate(f"localStorage.getItem('{key}')")
                         if token:
                             self.log(f"   ✅ Found token under key: {key}")
                             break
 
                 # Also get refresh token from localStorage
-                refresh_token = await page.evaluate("localStorage.getItem('authentication_refresh_token')")
+                refresh_token = await page.evaluate(
+                    "localStorage.getItem('authentication_refresh_token')"
+                )
                 if refresh_token:
                     # Strip quotes if present
                     if refresh_token.startswith('"') and refresh_token.endswith('"'):
@@ -152,11 +161,15 @@ class TokenRefresher(BaseScraper):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Refresh TIX.id JWT Token')
-    parser.add_argument('--visible', action='store_true', help='Show browser window')
-    parser.add_argument('--check', action='store_true', help='Check current token status')
-    parser.add_argument('--check-min-ttl', type=int, metavar='MINUTES',
-                        help='Check that token has at least N minutes TTL remaining. Exit 1 if not.')
+    parser = argparse.ArgumentParser(description="Refresh TIX.id JWT Token")
+    parser.add_argument("--visible", action="store_true", help="Show browser window")
+    parser.add_argument("--check", action="store_true", help="Check current token status")
+    parser.add_argument(
+        "--check-min-ttl",
+        type=int,
+        metavar="MINUTES",
+        help="Check that token has at least N minutes TTL remaining. Exit 1 if not.",
+    )
     args = parser.parse_args()
 
     if args.check:

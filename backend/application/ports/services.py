@@ -14,11 +14,7 @@ class IGeocodingService(ABC):
     """
 
     @abstractmethod
-    async def geocode(
-        self,
-        address: str,
-        city: str
-    ) -> tuple[float, float] | None:
+    async def geocode(self, address: str, city: str) -> tuple[float, float] | None:
         """Geocode an address to lat/lng coordinates.
 
         Args:
@@ -32,9 +28,7 @@ class IGeocodingService(ABC):
 
     @abstractmethod
     async def geocode_with_place_id(
-        self,
-        address: str,
-        city: str
+        self, address: str, city: str
     ) -> tuple[float, float, str] | None:
         """Geocode an address and return place ID.
 
@@ -55,12 +49,7 @@ class INotificationService(ABC):
     """
 
     @abstractmethod
-    def send_alert(
-        self,
-        title: str,
-        message: str,
-        severity: str = "info"
-    ) -> bool:
+    def send_alert(self, title: str, message: str, severity: str = "info") -> bool:
         """Send an alert notification.
 
         Args:

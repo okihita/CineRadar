@@ -14,6 +14,7 @@ from backend.domain.models import Movie, ScrapeResult
 @dataclass
 class ValidationResult:
     """Result of data validation."""
+
     valid: bool
     movies: int
     cities: int
@@ -90,10 +91,7 @@ class ValidateDataUseCase:
             errors.append(f"Too few cities: {city_count} < {self.min_cities}")
 
         # Data quality checks
-        movies_without_schedules = sum(
-            1 for m in result.movies
-            if not m.schedules
-        )
+        movies_without_schedules = sum(1 for m in result.movies if not m.schedules)
         if movies_without_schedules > movie_count * 0.5:
             warnings.append(f"{movies_without_schedules}/{movie_count} movies have no schedules")
 
@@ -133,7 +131,7 @@ class ValidateDataUseCase:
             )
 
         try:
-            with open(path, encoding='utf-8') as f:
+            with open(path, encoding="utf-8") as f:
                 data = json.load(f)
         except json.JSONDecodeError as e:
             return ValidationResult(
@@ -156,27 +154,27 @@ class ValidateDataUseCase:
             DailySnapshotSchema.model_validate(data)
 
             # Convert Pydantic model back to our domain object
-            movies = [Movie.from_dict(m) for m in data.get('movies', [])]
+            movies = [Movie.from_dict(m) for m in data.get("movies", [])]
 
             result = ScrapeResult(
                 movies=movies,
-                scraped_at=data.get('scraped_at', ''),
-                date=data.get('date', ''),
-                cities_scraped=len(data.get('city_stats', {})),
+                scraped_at=data.get("scraped_at", ""),
+                date=data.get("date", ""),
+                cities_scraped=len(data.get("city_stats", {})),
             )
 
             return self.validate_result(result)
 
         except PydanticValidationError as e:
             for err in e.errors():
-                loc = ' → '.join(str(x) for x in err['loc'])
+                loc = " → ".join(str(x) for x in err["loc"])
                 errors.append(f"Schema error at {loc}: {err['msg']}")
 
             # Still count what we can
-            movies = data.get('movies', [])
+            movies = data.get("movies", [])
             cities = set()
             for m in movies:
-                cities.update(m.get('cities', []))
+                cities.update(m.get("cities", []))
 
             return ValidationResult(
                 valid=False,
@@ -190,8 +188,8 @@ class ValidateDataUseCase:
             # Pydantic not available, do basic validation
             warnings.append("Pydantic not available, using basic validation")
 
-            movies = data.get('movies', [])
-            cities = data.get('city_stats', {})
+            movies = data.get("movies", [])
+            cities = data.get("city_stats", {})
 
             if len(movies) < self.min_movies:
                 errors.append(f"Too few movies: {len(movies)} < {self.min_movies}")

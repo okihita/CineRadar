@@ -125,11 +125,7 @@ class ITheatreRepository(ABC):
 
     @abstractmethod
     def update_location(
-        self,
-        theatre_id: str,
-        lat: float,
-        lng: float,
-        place_id: str = None
+        self, theatre_id: str, lat: float, lng: float, place_id: str = None
     ) -> bool:
         """Update theatre location.
 

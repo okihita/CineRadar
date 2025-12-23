@@ -9,7 +9,7 @@ from backend.infrastructure.scrapers.movie_scraper import TixMovieScraper
 from backend.infrastructure.scrapers.seat_scraper import TixSeatScraper
 
 __all__ = [
-    'BaseScraper',
-    'TixMovieScraper',
-    'TixSeatScraper',
+    "BaseScraper",
+    "TixMovieScraper",
+    "TixSeatScraper",
 ]

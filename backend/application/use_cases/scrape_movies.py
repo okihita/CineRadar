@@ -21,6 +21,7 @@ from backend.domain.models import Movie, ScrapeResult, Theatre
 @dataclass
 class ScrapeMoviesResult:
     """Result of the scrape movies use case."""
+
     movies: list[Movie]
     cities_scraped: int
     theatres_synced: int
@@ -103,7 +104,7 @@ class ScrapeMoviesUseCase:
                     cities_scraped=0,
                     theatres_synced=0,
                     success=False,
-                    error="No movies found during scrape"
+                    error="No movies found during scrape",
                 )
 
             # Step 2: Calculate city count
@@ -139,7 +140,7 @@ class ScrapeMoviesUseCase:
                 cities_scraped=0,
                 theatres_synced=0,
                 success=False,
-                error=f"Scraping failed: {e}"
+                error=f"Scraping failed: {e}",
             )
         except Exception as e:
             return ScrapeMoviesResult(
@@ -147,7 +148,7 @@ class ScrapeMoviesUseCase:
                 cities_scraped=0,
                 theatres_synced=0,
                 success=False,
-                error=f"Unexpected error: {e}"
+                error=f"Unexpected error: {e}",
             )
 
     async def _sync_theatres(self, movies: list[Movie]) -> int:

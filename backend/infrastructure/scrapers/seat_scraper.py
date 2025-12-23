@@ -4,7 +4,6 @@ TIX.id Seat Scraper
 Implements ISeatScraper interface for scraping seat occupancy data.
 """
 
-
 from backend.application.ports.scraper import ISeatScraper
 from backend.domain.errors import TokenExpiredError
 from backend.domain.models import SeatOccupancy
@@ -55,7 +54,7 @@ class TixSeatScraper(BaseScraper, ISeatScraper):
         legacy_scraper.auth_token = self.auth_token
 
         # Convert showtime_ids to the format expected by legacy scraper
-        showtimes = [{'showtime_id': sid} for sid in showtime_ids]
+        showtimes = [{"showtime_id": sid} for sid in showtime_ids]
 
         results = await legacy_scraper.scrape_all_showtimes_api_only(showtimes)
 
@@ -66,21 +65,21 @@ class TixSeatScraper(BaseScraper, ISeatScraper):
         occupancies = []
         for result in results:
             occ = SeatOccupancy(
-                showtime_id=result.get('showtime_id', ''),
-                movie_id=result.get('movie_id'),
-                movie_title=result.get('movie_title'),
-                theatre_id=result.get('theatre_id'),
-                theatre_name=result.get('theatre_name'),
-                city=result.get('city'),
-                merchant=result.get('merchant', merchant),
-                room_category=result.get('room_name'),
-                showtime=result.get('showtime'),
-                date=result.get('date'),
-                scraped_at=result.get('scraped_at'),
-                total_seats=result.get('total_seats', 0),
-                sold_seats=result.get('sold_seats', 0),
-                available_seats=result.get('available_seats', 0),
-                occupancy_pct=result.get('occupancy_pct', 0.0),
+                showtime_id=result.get("showtime_id", ""),
+                movie_id=result.get("movie_id"),
+                movie_title=result.get("movie_title"),
+                theatre_id=result.get("theatre_id"),
+                theatre_name=result.get("theatre_name"),
+                city=result.get("city"),
+                merchant=result.get("merchant", merchant),
+                room_category=result.get("room_name"),
+                showtime=result.get("showtime"),
+                date=result.get("date"),
+                scraped_at=result.get("scraped_at"),
+                total_seats=result.get("total_seats", 0),
+                sold_seats=result.get("sold_seats", 0),
+                available_seats=result.get("available_seats", 0),
+                occupancy_pct=result.get("occupancy_pct", 0.0),
             )
             occupancies.append(occ)
 

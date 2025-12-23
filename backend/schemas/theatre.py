@@ -21,6 +21,7 @@ class TheatreSchema(BaseModel):
             "room_types": ["2D", "GOLD CLASS"]
         }
     """
+
     theatre_id: str = Field(..., min_length=1)
     name: str = Field(..., min_length=1)
     merchant: str = Field(..., description="Cinema chain: XXI, CGV, or Cinépolis")
@@ -31,16 +32,16 @@ class TheatreSchema(BaseModel):
     place_id: str | None = Field(None, description="Google Places ID")
     room_types: list[str] = Field(default_factory=list)
 
-    @field_validator('merchant')
+    @field_validator("merchant")
     @classmethod
     def validate_merchant(cls, v):
         """Validate merchant is a known cinema chain."""
-        valid = {'XXI', 'CGV', 'Cinépolis', 'CINEPOLIS'}
+        valid = {"XXI", "CGV", "Cinépolis", "CINEPOLIS"}
         if v not in valid:
             raise ValueError(f"Unknown merchant '{v}', expected one of {valid}")
         return v
 
-    @field_validator('city')
+    @field_validator("city")
     @classmethod
     def uppercase_city(cls, v):
         """Ensure city is uppercase for consistency."""

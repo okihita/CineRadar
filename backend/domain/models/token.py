@@ -30,6 +30,7 @@ class Token:
         >>> token.is_expired
         True  # If current time is past stored_at + 30 min
     """
+
     token: str
     stored_at: str
     phone: str | None = None
@@ -83,22 +84,22 @@ class Token:
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         data = {
-            'token': self.token,
-            'phone': self.phone,
-            'stored_at': self.stored_at,
+            "token": self.token,
+            "phone": self.phone,
+            "stored_at": self.stored_at,
         }
         if self.refresh_token:
-            data['refresh_token'] = self.refresh_token
+            data["refresh_token"] = self.refresh_token
         return data
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> 'Token':
+    def from_dict(cls, data: dict[str, Any]) -> "Token":
         """Create from dictionary."""
         return cls(
-            token=data.get('token', ''),
-            phone=data.get('phone'),
-            stored_at=data.get('stored_at', ''),
-            refresh_token=data.get('refresh_token'),
+            token=data.get("token", ""),
+            phone=data.get("phone"),
+            stored_at=data.get("stored_at", ""),
+            refresh_token=data.get("refresh_token"),
         )
 
     @classmethod
@@ -107,7 +108,7 @@ class Token:
         token: str,
         phone: str | None = None,
         refresh_token: str | None = None,
-    ) -> 'Token':
+    ) -> "Token":
         """Create a new token.
 
         Args:

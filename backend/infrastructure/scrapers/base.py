@@ -4,6 +4,7 @@ CineRadar Base Scraper
 Common functionality for all TIX.id scrapers.
 Provides browser initialization, login, and logging.
 """
+
 import asyncio
 import os
 import time
@@ -40,8 +41,8 @@ class BaseScraper:
         self.api_base = API_BASE
         self.app_base = APP_BASE
         self.auth_token: str | None = None
-        self._phone = os.environ.get('TIX_PHONE_NUMBER', '')
-        self._password = os.environ.get('TIX_PASSWORD', '')
+        self._phone = os.environ.get("TIX_PHONE_NUMBER", "")
+        self._password = os.environ.get("TIX_PASSWORD", "")
 
     def log(self, message: str) -> None:
         """Print timestamped log message.
@@ -52,8 +53,7 @@ class BaseScraper:
         print(f"[{time.strftime('%H:%M:%S')}] {message}")
 
     async def _init_browser(
-        self,
-        headless: bool = True
+        self, headless: bool = True
     ) -> tuple[Playwright, Browser, BrowserContext, Page]:
         """Initialize Playwright browser with anti-detection settings.
 
@@ -70,7 +70,7 @@ class BaseScraper:
             playwright = await async_playwright().start()
             browser = await playwright.chromium.launch(
                 headless=headless,
-                args=['--disable-blink-features=AutomationControlled', '--no-sandbox']
+                args=["--disable-blink-features=AutomationControlled", "--no-sandbox"],
             )
 
             context = await browser.new_context(
@@ -93,11 +93,7 @@ class BaseScraper:
             raise PageLoadError(f"Failed to initialize browser: {e}") from e
 
     async def _close_browser(
-        self,
-        playwright: Playwright,
-        browser: Browser,
-        context: BrowserContext,
-        page: Page
+        self, playwright: Playwright, browser: Browser, context: BrowserContext, page: Page
     ) -> None:
         """Clean up browser resources.
 
@@ -128,20 +124,22 @@ class BaseScraper:
             LoginFailedError: If login fails
         """
         if not self._phone or not self._password:
-            raise LoginFailedError("No credentials provided - set TIX_PHONE_NUMBER and TIX_PASSWORD")
+            raise LoginFailedError(
+                "No credentials provided - set TIX_PHONE_NUMBER and TIX_PASSWORD"
+            )
 
         self.log("🔐 Logging in to TIX.id...")
 
         try:
-            await page.goto(f'{self.app_base}/login', wait_until='networkidle', timeout=60000)
+            await page.goto(f"{self.app_base}/login", wait_until="networkidle", timeout=60000)
             await asyncio.sleep(8)  # Flutter needs time to render
 
             # Strip 62 prefix from phone
-            phone_clean = self._phone.lstrip('+').lstrip('62')
+            phone_clean = self._phone.lstrip("+").lstrip("62")
 
             # Try get_by_placeholder (Flutter friendly)
-            phone_field = page.get_by_placeholder('Type your phone number')
-            password_field = page.get_by_placeholder('Type Password')
+            phone_field = page.get_by_placeholder("Type your phone number")
+            password_field = page.get_by_placeholder("Type Password")
 
             phone_count = await phone_field.count()
             pass_count = await password_field.count()
@@ -165,13 +163,13 @@ class BaseScraper:
             # IMPORTANT: TIX.id has TWO Login buttons - header (fake) and form (real)
             # Must use .last to get the form button!
             await asyncio.sleep(0.5)
-            login_button = page.get_by_role('button', name='Login').last
+            login_button = page.get_by_role("button", name="Login").last
 
             if await login_button.count() > 0:
                 await login_button.click()
                 self.log("   📤 Clicked Login button")
             else:
-                await page.keyboard.press('Enter')
+                await page.keyboard.press("Enter")
                 self.log("   📤 Pressed Enter to submit")
 
             # Wait for login to complete
@@ -181,7 +179,7 @@ class BaseScraper:
             current_url = page.url
             self.log(f"   📍 Post-login URL: {current_url}")
 
-            if '/login' not in current_url or 'login-success' in current_url:
+            if "/login" not in current_url or "login-success" in current_url:
                 # Try to capture JWT token
                 await self._capture_token(page)
                 self.log("✅ Login successful")
@@ -205,7 +203,7 @@ class BaseScraper:
         """
         try:
             # Try localStorage first
-            for key in ['authentication_token', 'token', 'auth_token', 'jwt', 'access_token']:
+            for key in ["authentication_token", "token", "auth_token", "jwt", "access_token"]:
                 token = await page.evaluate(f"localStorage.getItem('{key}')")
                 if token:
                     self.auth_token = token
@@ -216,8 +214,8 @@ class BaseScraper:
             context = page.context
             cookies = await context.cookies()
             for cookie in cookies:
-                if 'token' in cookie['name'].lower() or 'auth' in cookie['name'].lower():
-                    self.auth_token = cookie['value']
+                if "token" in cookie["name"].lower() or "auth" in cookie["name"].lower():
+                    self.auth_token = cookie["value"]
                     self.log(f"   ✅ Token captured from cookie['{cookie['name']}']")
                     return True
 

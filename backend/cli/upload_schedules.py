@@ -3,6 +3,7 @@
 Upload movie schedules to Firestore.
 Creates per-movie documents in schedules/{date}/movies/{movie_id} collection.
 """
+
 import json
 import os
 from datetime import datetime
@@ -14,11 +15,11 @@ from google.oauth2 import service_account
 
 def get_firestore_client():
     """Initialize Firestore client from service account."""
-    sa_json = os.environ.get('FIREBASE_SERVICE_ACCOUNT')
+    sa_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
     if sa_json:
         sa_info = json.loads(sa_json)
         credentials = service_account.Credentials.from_service_account_info(sa_info)
-        return firestore.Client(credentials=credentials, project=sa_info['project_id'])
+        return firestore.Client(credentials=credentials, project=sa_info["project_id"])
     else:
         # Local development - use default credentials
         return firestore.Client()
@@ -42,7 +43,7 @@ def load_movie_data(data_dir: str = "data") -> dict | None:
     movie_files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
     latest_file = movie_files[0]
 
-    with open(latest_file, encoding='utf-8') as f:
+    with open(latest_file, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -57,16 +58,16 @@ def transform_for_firestore(movie: dict, date: str) -> dict:
         Transformed dict ready for Firestore.
     """
     return {
-        'movie_id': movie.get('id', ''),
-        'title': movie.get('title', ''),
-        'poster': movie.get('poster', ''),
-        'genres': movie.get('genres', []),
-        'age_category': movie.get('age_category', ''),
-        'merchants': movie.get('merchants', []),
-        'is_presale': movie.get('is_presale', False),
-        'date': date,
-        'uploaded_at': datetime.utcnow().isoformat(),
-        'cities': movie.get('schedules', {}),
+        "movie_id": movie.get("id", ""),
+        "title": movie.get("title", ""),
+        "poster": movie.get("poster", ""),
+        "genres": movie.get("genres", []),
+        "age_category": movie.get("age_category", ""),
+        "merchants": movie.get("merchants", []),
+        "is_presale": movie.get("is_presale", False),
+        "date": date,
+        "uploaded_at": datetime.utcnow().isoformat(),
+        "cities": movie.get("schedules", {}),
     }
 
 
@@ -86,14 +87,14 @@ def upload_schedules_to_firestore(movies: list, date: str):
 
     uploaded = 0
     for movie in movies:
-        movie_id = movie.get('id')
+        movie_id = movie.get("id")
         if not movie_id:
             continue
 
         schedule_doc = transform_for_firestore(movie, date)
 
         # Write to schedules/{date}/movies/{movie_id}
-        doc_ref = db.collection('schedules').document(date).collection('movies').document(movie_id)
+        doc_ref = db.collection("schedules").document(date).collection("movies").document(movie_id)
         doc_ref.set(schedule_doc)
         uploaded += 1
         print(f"   ✓ {movie.get('title', movie_id)[:40]}")
@@ -111,8 +112,8 @@ def main():
         print("❌ No movie files found in data/")
         return
 
-    movies = data.get('movies', [])
-    date = data.get('date', datetime.now().strftime('%Y-%m-%d'))
+    movies = data.get("movies", [])
+    date = data.get("date", datetime.now().strftime("%Y-%m-%d"))
 
     print(f"📂 Loaded {len(movies)} movies for {date}")
     upload_schedules_to_firestore(movies, date)
@@ -122,4 +123,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 class TokenRefreshError(Exception):
     """Raised when all token refresh methods fail."""
+
     pass
 
 
@@ -152,7 +153,9 @@ class TokenRefresher:
                         return str(runs[0]["id"])
                 return "triggered"  # Fallback if we can't get run ID
             else:
-                logger.error(f"❌ Failed to trigger workflow: {response.status_code} {response.text}")
+                logger.error(
+                    f"❌ Failed to trigger workflow: {response.status_code} {response.text}"
+                )
 
         except requests.RequestException as e:
             logger.error(f"❌ Workflow trigger request failed: {e}")

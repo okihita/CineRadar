@@ -2,6 +2,7 @@
 Scraper Run Schema
 Validates scraper run log entries for Firestore.
 """
+
 from datetime import datetime
 from typing import Literal
 
@@ -25,10 +26,11 @@ class ScraperRunSchema(BaseModel):
             "presales": 5
         }
     """
-    status: Literal['success', 'partial', 'failed'] = Field(
+
+    status: Literal["success", "partial", "failed"] = Field(
         ..., description="success=all OK, partial=some failures, failed=critical error"
     )
-    date: str | None = Field(None, pattern=r'^\d{4}-\d{2}-\d{2}$')
+    date: str | None = Field(None, pattern=r"^\d{4}-\d{2}-\d{2}$")
     movies: int = Field(ge=0, default=0)
     theatres_total: int = Field(ge=0, default=0)
     theatres_success: int = Field(ge=0, default=0)
@@ -38,7 +40,7 @@ class ScraperRunSchema(BaseModel):
     error: str | None = Field(None, description="Error message if status is 'failed'")
     timestamp: str = Field(
         default_factory=lambda: datetime.utcnow().isoformat(),
-        description="ISO timestamp of when this run was logged"
+        description="ISO timestamp of when this run was logged",
     )
 
     def is_healthy(self) -> bool:
@@ -47,8 +49,4 @@ class ScraperRunSchema(BaseModel):
         Returns:
             True if status is 'success' and basic thresholds met
         """
-        return (
-            self.status == 'success' and
-            self.movies >= 10 and
-            self.cities >= 50
-        )
+        return self.status == "success" and self.movies >= 10 and self.cities >= 50

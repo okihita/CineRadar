@@ -10,10 +10,10 @@ from backend.application.ports.services import IGeocodingService
 from backend.application.ports.storage import IMovieRepository, ITheatreRepository, ITokenRepository
 
 __all__ = [
-    'IMovieScraper',
-    'ISeatScraper',
-    'IMovieRepository',
-    'ITheatreRepository',
-    'ITokenRepository',
-    'IGeocodingService',
+    "IMovieScraper",
+    "ISeatScraper",
+    "IMovieRepository",
+    "ITheatreRepository",
+    "ITokenRepository",
+    "IGeocodingService",
 ]

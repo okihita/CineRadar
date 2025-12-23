@@ -11,6 +11,7 @@ Usage:
     python -m backend.infrastructure.cli token [options]
     python -m backend.infrastructure.cli validate [options]
 """
+
 import argparse
 import asyncio
 import sys
@@ -64,8 +65,8 @@ def run_movies(args):
             cities_per_batch = len(CITIES) // args.total_batches + 1
             start_idx = args.batch * cities_per_batch
             end_idx = min(start_idx + cities_per_batch, len(CITIES))
-            cities = [c['name'] for c in CITIES[start_idx:end_idx]]
-            print(f"🔢 Batch {args.batch}/{args.total_batches-1}: {len(cities)} cities")
+            cities = [c["name"] for c in CITIES[start_idx:end_idx]]
+            print(f"🔢 Batch {args.batch}/{args.total_batches - 1}: {len(cities)} cities")
         elif args.city:
             cities = [args.city.upper()]
         else:
@@ -117,9 +118,9 @@ def run_movies(args):
             from pathlib import Path
 
             output_file = Path(args.output) / f"batch_{args.batch}_{date_str}.json"
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 data = scrape_result.to_dict()
-                data['batch'] = args.batch
+                data["batch"] = args.batch
                 json.dump(data, f, indent=2, ensure_ascii=False)
 
             print(f"💾 Saved to: {output_file}")
@@ -187,22 +188,27 @@ def run_token(args):
             return 1
 
         if token.minutes_until_expiry >= args.check_min_ttl:
-            print(f"✅ Token valid for {token.minutes_until_expiry} min (need {args.check_min_ttl})")
+            print(
+                f"✅ Token valid for {token.minutes_until_expiry} min (need {args.check_min_ttl})"
+            )
             return 0
         else:
-            print(f"❌ Token only valid for {token.minutes_until_expiry} min (need {args.check_min_ttl})")
+            print(
+                f"❌ Token only valid for {token.minutes_until_expiry} min (need {args.check_min_ttl})"
+            )
             return 1
 
     # Default: run token refresh
     # Fall back to legacy script for now
     from backend.cli.refresh_token import main as legacy_main
+
     return legacy_main()
 
 
 def main():
     """CLI entry point."""
     parser = argparse.ArgumentParser(
-        description='CineRadar - TIX.id Movie & Seat Scraper (Clean Architecture)',
+        description="CineRadar - TIX.id Movie & Seat Scraper (Clean Architecture)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -210,40 +216,42 @@ Examples:
   python -m backend.infrastructure.cli movies --batch 0 --total-batches 9
   python -m backend.infrastructure.cli validate --file data/movies_2025-12-18.json
   python -m backend.infrastructure.cli token --check
-        """
+        """,
     )
 
-    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # Movies subcommand
-    movies_parser = subparsers.add_parser('movies', help='Scrape movie availability')
-    movies_parser.add_argument('--visible', action='store_true', help='Show browser window')
-    movies_parser.add_argument('--city', type=str, help='Scrape specific city')
-    movies_parser.add_argument('--schedules', action='store_true', help='Include showtimes')
-    movies_parser.add_argument('--output', default='data', help='Output directory')
-    movies_parser.add_argument('--batch', type=int, help='Batch number (0-indexed)')
-    movies_parser.add_argument('--total-batches', type=int, default=9)
-    movies_parser.add_argument('--local', action='store_true', help='Save to file only, no Firestore')
+    movies_parser = subparsers.add_parser("movies", help="Scrape movie availability")
+    movies_parser.add_argument("--visible", action="store_true", help="Show browser window")
+    movies_parser.add_argument("--city", type=str, help="Scrape specific city")
+    movies_parser.add_argument("--schedules", action="store_true", help="Include showtimes")
+    movies_parser.add_argument("--output", default="data", help="Output directory")
+    movies_parser.add_argument("--batch", type=int, help="Batch number (0-indexed)")
+    movies_parser.add_argument("--total-batches", type=int, default=9)
+    movies_parser.add_argument(
+        "--local", action="store_true", help="Save to file only, no Firestore"
+    )
 
     # Validate subcommand
-    validate_parser = subparsers.add_parser('validate', help='Validate movie data')
-    validate_parser.add_argument('--file', '-f', required=True, help='File to validate')
-    validate_parser.add_argument('--min-movies', type=int, default=10)
-    validate_parser.add_argument('--min-cities', type=int, default=50)
+    validate_parser = subparsers.add_parser("validate", help="Validate movie data")
+    validate_parser.add_argument("--file", "-f", required=True, help="File to validate")
+    validate_parser.add_argument("--min-movies", type=int, default=10)
+    validate_parser.add_argument("--min-cities", type=int, default=50)
 
     # Token subcommand
-    token_parser = subparsers.add_parser('token', help='Token management')
-    token_parser.add_argument('--check', action='store_true', help='Check current token')
-    token_parser.add_argument('--check-min-ttl', type=int, help='Check min TTL in minutes')
-    token_parser.add_argument('--refresh', action='store_true', help='Refresh token')
+    token_parser = subparsers.add_parser("token", help="Token management")
+    token_parser.add_argument("--check", action="store_true", help="Check current token")
+    token_parser.add_argument("--check-min-ttl", type=int, help="Check min TTL in minutes")
+    token_parser.add_argument("--refresh", action="store_true", help="Refresh token")
 
     args = parser.parse_args()
 
-    if args.command == 'movies':
+    if args.command == "movies":
         sys.exit(run_movies(args))
-    elif args.command == 'validate':
+    elif args.command == "validate":
         sys.exit(run_validate(args))
-    elif args.command == 'token':
+    elif args.command == "token":
         sys.exit(run_token(args))
     else:
         parser.print_help()

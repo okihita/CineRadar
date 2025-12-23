@@ -4,7 +4,6 @@ Firestore Movie Repository
 Implements IMovieRepository using Firebase Firestore.
 """
 
-
 from backend.application.ports.storage import IMovieRepository
 from backend.domain.models import Movie, ScrapeResult
 from backend.infrastructure.repositories.firestore_token import _get_firestore_client
@@ -26,8 +25,8 @@ class FirestoreMovieRepository(IMovieRepository):
         latest = repo.get_latest_snapshot()
     """
 
-    COLLECTION = 'snapshots'
-    LATEST_DOC = 'latest'
+    COLLECTION = "snapshots"
+    LATEST_DOC = "latest"
 
     def __init__(self):
         self._db = None
@@ -57,15 +56,15 @@ class FirestoreMovieRepository(IMovieRepository):
             for movie in result.movies:
                 for city in movie.cities:
                     city_stats[city] = city_stats.get(city, 0) + 1
-            data['city_stats'] = city_stats
+            data["city_stats"] = city_stats
 
             # Calculate theatre counts per movie
-            for movie_data in data['movies']:
+            for movie_data in data["movies"]:
                 theatre_counts = {}
                 movie = Movie.from_dict(movie_data)
                 for city, schedules in movie.schedules.items():
                     theatre_counts[city] = len(schedules)
-                movie_data['theatre_counts'] = theatre_counts
+                movie_data["theatre_counts"] = theatre_counts
 
             # Save to dated document
             date_doc = self.db.collection(self.COLLECTION).document(result.date)
@@ -126,12 +125,12 @@ class FirestoreMovieRepository(IMovieRepository):
 
     def _dict_to_result(self, data: dict) -> ScrapeResult:
         """Convert Firestore dict to ScrapeResult."""
-        movies = [Movie.from_dict(m) for m in data.get('movies', [])]
+        movies = [Movie.from_dict(m) for m in data.get("movies", [])]
 
         return ScrapeResult(
             movies=movies,
-            scraped_at=data.get('scraped_at', ''),
-            date=data.get('date', ''),
-            cities_scraped=len(data.get('city_stats', {})),
+            scraped_at=data.get("scraped_at", ""),
+            date=data.get("date", ""),
+            cities_scraped=len(data.get("city_stats", {})),
             success=True,
         )

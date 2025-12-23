@@ -26,6 +26,7 @@ class Showtime:
         >>> st.is_evening
         True
     """
+
     time: str  # HH:MM format
     showtime_id: str | None = None
     status: int = 1
@@ -35,7 +36,7 @@ class Showtime:
     def hour(self) -> int:
         """Extract hour from time string."""
         try:
-            return int(self.time.split(':')[0])
+            return int(self.time.split(":")[0])
         except (ValueError, IndexError):
             return 0
 
@@ -52,20 +53,20 @@ class Showtime:
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
-            'time': self.time,
-            'showtime_id': self.showtime_id,
-            'status': self.status,
-            'is_available': self.is_available,
+            "time": self.time,
+            "showtime_id": self.showtime_id,
+            "status": self.status,
+            "is_available": self.is_available,
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> 'Showtime':
+    def from_dict(cls, data: dict[str, Any]) -> "Showtime":
         """Create from dictionary."""
         return cls(
-            time=data.get('time', ''),
-            showtime_id=data.get('showtime_id'),
-            status=data.get('status', 1),
-            is_available=data.get('is_available', True),
+            time=data.get("time", ""),
+            showtime_id=data.get("showtime_id"),
+            status=data.get("status", 1),
+            is_available=data.get("is_available", True),
         )
 
 
@@ -80,6 +81,7 @@ class Room:
         price: Price string (e.g., "Rp35.000")
         showtimes: List of available showtimes
     """
+
     category: str
     price: str
     showtimes: list[Showtime] = field(default_factory=list)
@@ -97,27 +99,27 @@ class Room:
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
-            'category': self.category,
-            'price': self.price,
-            'all_showtimes': [st.to_dict() for st in self.showtimes],
-            'showtimes': [st.time for st in self.showtimes],  # Legacy format
+            "category": self.category,
+            "price": self.price,
+            "all_showtimes": [st.to_dict() for st in self.showtimes],
+            "showtimes": [st.time for st in self.showtimes],  # Legacy format
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> 'Room':
+    def from_dict(cls, data: dict[str, Any]) -> "Room":
         """Create from dictionary."""
         # Handle both 'all_showtimes' and legacy 'showtimes' formats
-        all_showtimes = data.get('all_showtimes', [])
+        all_showtimes = data.get("all_showtimes", [])
         if all_showtimes and isinstance(all_showtimes[0], dict):
             showtimes = [Showtime.from_dict(st) for st in all_showtimes]
         else:
             # Legacy format: just time strings
-            legacy = data.get('showtimes', [])
+            legacy = data.get("showtimes", [])
             showtimes = [Showtime(time=t) for t in legacy if isinstance(t, str)]
 
         return cls(
-            category=data.get('category', ''),
-            price=data.get('price', ''),
+            category=data.get("category", ""),
+            price=data.get("price", ""),
             showtimes=showtimes,
         )
 
@@ -135,6 +137,7 @@ class TheatreSchedule:
         address: Physical address
         rooms: Available screening rooms
     """
+
     theatre_id: str
     theatre_name: str
     merchant: str
@@ -154,22 +157,22 @@ class TheatreSchedule:
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
-            'theatre_id': self.theatre_id,
-            'theatre_name': self.theatre_name,
-            'merchant': self.merchant,
-            'address': self.address,
-            'rooms': [room.to_dict() for room in self.rooms],
+            "theatre_id": self.theatre_id,
+            "theatre_name": self.theatre_name,
+            "merchant": self.merchant,
+            "address": self.address,
+            "rooms": [room.to_dict() for room in self.rooms],
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> 'TheatreSchedule':
+    def from_dict(cls, data: dict[str, Any]) -> "TheatreSchedule":
         """Create from dictionary."""
         return cls(
-            theatre_id=data.get('theatre_id', ''),
-            theatre_name=data.get('theatre_name', ''),
-            merchant=data.get('merchant', ''),
-            address=data.get('address'),
-            rooms=[Room.from_dict(r) for r in data.get('rooms', [])],
+            theatre_id=data.get("theatre_id", ""),
+            theatre_name=data.get("theatre_name", ""),
+            merchant=data.get("merchant", ""),
+            address=data.get("address"),
+            rooms=[Room.from_dict(r) for r in data.get("rooms", [])],
         )
 
 
@@ -198,6 +201,7 @@ class Movie:
         >>> movie.is_showing_in("JAKARTA")
         False
     """
+
     id: str
     title: str
     genres: list[str] = field(default_factory=list)
@@ -231,38 +235,37 @@ class Movie:
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
-            'id': self.id,
-            'title': self.title,
-            'genres': self.genres,
-            'poster': self.poster,
-            'age_category': self.age_category,
-            'country': self.country,
-            'merchants': self.merchants,
-            'is_presale': self.is_presale,
-            'cities': self.cities,
-            'schedules': {
-                city: [ts.to_dict() for ts in theatres]
-                for city, theatres in self.schedules.items()
+            "id": self.id,
+            "title": self.title,
+            "genres": self.genres,
+            "poster": self.poster,
+            "age_category": self.age_category,
+            "country": self.country,
+            "merchants": self.merchants,
+            "is_presale": self.is_presale,
+            "cities": self.cities,
+            "schedules": {
+                city: [ts.to_dict() for ts in theatres] for city, theatres in self.schedules.items()
             },
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> 'Movie':
+    def from_dict(cls, data: dict[str, Any]) -> "Movie":
         """Create from dictionary."""
         schedules = {}
-        for city, theatres in data.get('schedules', {}).items():
+        for city, theatres in data.get("schedules", {}).items():
             schedules[city] = [TheatreSchedule.from_dict(t) for t in theatres]
 
         return cls(
-            id=data.get('id', ''),
-            title=data.get('title', ''),
-            genres=data.get('genres', []),
-            poster=data.get('poster'),
-            age_category=data.get('age_category'),
-            country=data.get('country'),
-            merchants=data.get('merchants', []),
-            is_presale=data.get('is_presale', False),
-            cities=data.get('cities', []),
+            id=data.get("id", ""),
+            title=data.get("title", ""),
+            genres=data.get("genres", []),
+            poster=data.get("poster"),
+            age_category=data.get("age_category"),
+            country=data.get("country"),
+            merchants=data.get("merchants", []),
+            is_presale=data.get("is_presale", False),
+            cities=data.get("cities", []),
             schedules=schedules,
         )
 
@@ -273,6 +276,7 @@ class ScrapeResult:
 
     Contains scraped movies plus metadata about the scrape.
     """
+
     movies: list[Movie]
     scraped_at: str
     date: str
@@ -293,12 +297,12 @@ class ScrapeResult:
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
-            'scraped_at': self.scraped_at,
-            'date': self.date,
-            'summary': {
-                'total_cities': self.cities_scraped,
-                'total_movies': self.movie_count,
-                'presale_count': self.presale_count,
+            "scraped_at": self.scraped_at,
+            "date": self.date,
+            "summary": {
+                "total_cities": self.cities_scraped,
+                "total_movies": self.movie_count,
+                "presale_count": self.presale_count,
             },
-            'movies': [m.to_dict() for m in self.movies],
+            "movies": [m.to_dict() for m in self.movies],
         }

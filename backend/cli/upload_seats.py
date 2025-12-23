@@ -3,6 +3,7 @@
 Upload seat snapshots to Firestore.
 Merges batch files if present and uploads to seat_snapshots collection.
 """
+
 import json
 import os
 from datetime import datetime
@@ -14,11 +15,11 @@ from google.oauth2 import service_account
 
 def get_firestore_client():
     """Initialize Firestore client from service account."""
-    sa_json = os.environ.get('FIREBASE_SERVICE_ACCOUNT')
+    sa_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
     if sa_json:
         sa_info = json.loads(sa_json)
         credentials = service_account.Credentials.from_service_account_info(sa_info)
-        return firestore.Client(credentials=credentials, project=sa_info['project_id'])
+        return firestore.Client(credentials=credentials, project=sa_info["project_id"])
     else:
         # Local development - use default credentials
         return firestore.Client()
@@ -34,19 +35,19 @@ def merge_seat_batches(data_dir: str = "data") -> list:
     if batch_files:
         print(f"📂 Found {len(batch_files)} batch files to merge")
         for batch_file in sorted(batch_files):
-            with open(batch_file, encoding='utf-8') as f:
+            with open(batch_file, encoding="utf-8") as f:
                 batch_data = json.load(f)
-                seats = batch_data.get('seats', [])
+                seats = batch_data.get("seats", [])
                 all_seats.extend(seats)
                 print(f"   + {batch_file.name}: {len(seats)} seats")
     else:
         # Try single file
         seat_files = list(data_path.glob("seats_*.json"))
         for seat_file in seat_files:
-            if 'batch' not in seat_file.name:
-                with open(seat_file, encoding='utf-8') as f:
+            if "batch" not in seat_file.name:
+                with open(seat_file, encoding="utf-8") as f:
                     data = json.load(f)
-                    seats = data.get('seats', [])
+                    seats = data.get("seats", [])
                     all_seats.extend(seats)
                     print(f"   + {seat_file.name}: {len(seats)} seats")
 
@@ -60,14 +61,14 @@ def upload_seats_to_firestore(seats: list, batch_size: int = 500):
         return
 
     db = get_firestore_client()
-    collection = db.collection('seat_snapshots')
+    collection = db.collection("seat_snapshots")
 
     print(f"📤 Uploading {len(seats)} seat snapshots to Firestore...")
 
     uploaded = 0
     for i in range(0, len(seats), batch_size):
         batch = db.batch()
-        chunk = seats[i:i + batch_size]
+        chunk = seats[i : i + batch_size]
 
         for seat in chunk:
             # Create document ID from showtime_id + snapshot_type + timestamp

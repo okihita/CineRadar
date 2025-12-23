@@ -16,6 +16,7 @@ Usage:
         # Handle any scraping error
         log_and_retry()
 """
+
 from typing import Any
 
 
@@ -41,11 +42,13 @@ class CineRadarError(Exception):
 # Scraping Errors
 # =============================================================================
 
+
 class ScrapingError(CineRadarError):
     """Error during web scraping operations.
 
     Parent class for all scraping-related errors.
     """
+
     pass
 
 
@@ -57,6 +60,7 @@ class LoginFailedError(ScrapingError):
     - Login page not loading
     - CAPTCHA or anti-bot detection triggered
     """
+
     pass
 
 
@@ -81,6 +85,7 @@ class PageLoadError(ScrapingError):
     - Network timeout
     - Page returns error status
     """
+
     pass
 
 
@@ -98,6 +103,7 @@ class RateLimitError(ScrapingError):
 # =============================================================================
 # Data Errors
 # =============================================================================
+
 
 class ValidationError(CineRadarError):
     """Data validation failed.
@@ -145,6 +151,7 @@ class IntegrityError(CineRadarError):
     - Duplicate IDs detected
     - Referential integrity violated
     """
+
     pass
 
 
@@ -152,11 +159,13 @@ class IntegrityError(CineRadarError):
 # Storage Errors
 # =============================================================================
 
+
 class StorageError(CineRadarError):
     """Error accessing storage.
 
     Parent class for all storage-related errors.
     """
+
     pass
 
 
@@ -168,6 +177,7 @@ class FirestoreError(StorageError):
     - Write operation failed
     - Permission denied
     """
+
     pass
 
 
@@ -179,12 +189,14 @@ class FileStorageError(StorageError):
     - Permission denied
     - Disk full
     """
+
     pass
 
 
 # =============================================================================
 # Configuration Errors
 # =============================================================================
+
 
 class ConfigurationError(CineRadarError):
     """Configuration error.

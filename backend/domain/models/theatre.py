@@ -46,6 +46,7 @@ class Theatre:
         >>> theatre.is_premium
         False
     """
+
     theatre_id: str
     name: str
     merchant: str
@@ -60,10 +61,10 @@ class Theatre:
     updated_at: str | None = None
 
     # Valid merchants (for validation)
-    VALID_MERCHANTS = {'XXI', 'CGV', 'Cinépolis', 'CINEPOLIS'}
+    VALID_MERCHANTS = {"XXI", "CGV", "Cinépolis", "CINEPOLIS"}
 
     # Premium room types
-    PREMIUM_ROOMS = {'IMAX', 'GOLD CLASS', 'VELVET', 'PREMIERE', '4DX', 'SCREENX'}
+    PREMIUM_ROOMS = {"IMAX", "GOLD CLASS", "VELVET", "PREMIERE", "4DX", "SCREENX"}
 
     @property
     def has_location(self) -> bool:
@@ -102,36 +103,36 @@ class Theatre:
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
-            'theatre_id': self.theatre_id,
-            'name': self.name,
-            'merchant': self.merchant,
-            'city': self.city,
-            'address': self.address,
-            'lat': self.lat,
-            'lng': self.lng,
-            'place_id': self.place_id,
-            'room_types': self.room_types,
-            'last_seen': self.last_seen,
-            'created_at': self.created_at,
-            'updated_at': self.updated_at,
+            "theatre_id": self.theatre_id,
+            "name": self.name,
+            "merchant": self.merchant,
+            "city": self.city,
+            "address": self.address,
+            "lat": self.lat,
+            "lng": self.lng,
+            "place_id": self.place_id,
+            "room_types": self.room_types,
+            "last_seen": self.last_seen,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
         }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Theatre:
         """Create from dictionary."""
         return cls(
-            theatre_id=data.get('theatre_id', ''),
-            name=data.get('name', ''),
-            merchant=data.get('merchant', ''),
-            city=data.get('city', '').upper(),
-            address=data.get('address'),
-            lat=data.get('lat'),
-            lng=data.get('lng'),
-            place_id=data.get('place_id'),
-            room_types=data.get('room_types', []),
-            last_seen=data.get('last_seen'),
-            created_at=data.get('created_at'),
-            updated_at=data.get('updated_at'),
+            theatre_id=data.get("theatre_id", ""),
+            name=data.get("name", ""),
+            merchant=data.get("merchant", ""),
+            city=data.get("city", "").upper(),
+            address=data.get("address"),
+            lat=data.get("lat"),
+            lng=data.get("lng"),
+            place_id=data.get("place_id"),
+            room_types=data.get("room_types", []),
+            last_seen=data.get("last_seen"),
+            created_at=data.get("created_at"),
+            updated_at=data.get("updated_at"),
         )
 
     @classmethod
