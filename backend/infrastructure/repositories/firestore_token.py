@@ -168,16 +168,18 @@ def get_storage() -> FirestoreTokenRepository:
     return FirestoreTokenRepository()
 
 
-def store_token(token: str, phone: str = None) -> bool:
+def store_token(token: str, phone: str = None, refresh_token: str = None) -> bool:
     """Store a token string (legacy compat).
 
     Args:
         token: JWT token string
         phone: Phone number used for login
+        refresh_token: Refresh token for programmatic refresh
 
     Returns:
         True if stored successfully
     """
     repo = FirestoreTokenRepository()
-    token_obj = Token.create_new(token, phone)
+    token_obj = Token.create_new(token, phone, refresh_token=refresh_token)
     return repo.store(token_obj)
+

@@ -416,22 +416,72 @@ backend/
 | Token | localStorage Key | Actual TTL | Purpose |
 |-------|-----------------|------------|---------|
 | **Access** | `authentication_token` | **30 minutes** | Bearer token for API calls |
-| **Refresh** | `authentication_refresh_token` | ~91 days | Exists but not usable programmatically |
+| **Refresh** | `authentication_refresh_token` | **~91 days** | Used for programmatic token refresh |
 
 ### Token Lifecycle Flowchart
 
 ```mermaid
 flowchart TD
-    A[Playwright Login] --> B[Capture from localStorage]
-    B --> C[Strip quotes]
-    C --> D[Store in Firestore]
-    D --> E[Seat Scraper reads token]
-    E --> F{API Call}
-    F -->|200 OK| G[Success]
-    F -->|401| H[Token Expired]
-    H --> I[Re-login via Playwright]
-    I --> B
+    A[Initial: Playwright Login] --> B[Capture tokens from localStorage]
+    B --> C[Store both tokens in Firestore]
+    C --> D[Seat Scraper checks token TTL]
+    D --> E{TTL > 5 min?}
+    E -->|Yes| F[Use stored access token]
+    E -->|No| G[Call /v1/users/refresh API]
+    G --> H[Get new access token]
+    H --> I[Update Firestore]
+    I --> F
+    F --> J[API Call]
+    J -->|200 OK| K[Success]
+    J -->|401| L[Refresh token expired]
+    L --> M[Re-login via Playwright]
+    M --> B
 ```
+
+### Programmatic Token Refresh (Discovered Dec 23, 2025)
+
+> [!IMPORTANT]
+> **No browser needed!** We can refresh tokens via API using the refresh token.
+
+**Endpoint:**
+```http
+POST https://api-b2b.tix.id/v1/users/refresh
+Authorization: Bearer <REFRESH_TOKEN>
+Content-Type: application/json
+
+(empty body)
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIs..."  // New access token (30 min TTL)
+  }
+}
+```
+
+**Python Example:**
+```python
+import requests
+
+response = requests.post(
+    'https://api-b2b.tix.id/v1/users/refresh',
+    headers={
+        'Authorization': f'Bearer {refresh_token}',
+        'Content-Type': 'application/json',
+        'platform': 'web',
+    }
+)
+new_access_token = response.json()['data']['token']
+```
+
+**Key Points:**
+- Works **before** token expiration (proactive refresh)
+- Works **after** token expiration (recovery)
+- Refresh token lasts ~91 days
+- Initial login still requires Playwright (to get refresh token)
 
 ### Firestore Storage
 
@@ -440,19 +490,24 @@ Tokens are stored at `auth_tokens/tix_jwt`:
 ```json
 {
     "token": "eyJhbGciOiJIUzI1NiIs...",
+    "refresh_token": "eyJhbGciOiJIUzI1NiIs...",
     "phone": "6285***",
-    "stored_at": "2025-12-23T06:26:40.591620",
-    "expires_at": "2025-12-24T02:26:40.591620"
+    "stored_at": "2025-12-23T06:26:40.591620"
 }
 ```
 
-> [!WARNING]
-> The `expires_at` field is **not accurate**. We set it to 20 hours, but the actual token dies in 30 minutes. This is a known limitation - TIX.id doesn't expose the real expiry.
+> [!NOTE]
+> `expires_at` was removed in favor of a fixed 30-minute TTL calculation from `stored_at`.
 
 ### How to Refresh Tokens
 
-**Method: Playwright Login** (required for seat scraping)
+**Method 1: API Refresh (Preferred)**
+```bash
+# Test the refresh API
+python -m backend.cli.test_refresh_api
+```
 
+**Method 2: Playwright Login (Initial setup or refresh token expired)**
 ```bash
 # Refresh token (headless)
 python -m backend.cli.refresh_token
@@ -515,6 +570,7 @@ xvfb-run --auto-servernum python -m backend.cli.refresh_token
 | `401 EXPIRED_EVENT_DETAIL` | Showtime already started | Use fresh movie data |
 | `401` after fresh login | Token not stripped | Check first/last char of token |
 | Login hangs | Flutter rendering issue | Use `xvfb-run` |
+| Refresh API returns 401 | Refresh token expired (~91 days) | Re-login via Playwright |
 
 ### GitHub Actions Integration
 
@@ -527,13 +583,13 @@ on:
   workflow_dispatch:
 ```
 
-### Future: GCP Token Keeper (Planned)
+### Future: JIT Scraping with Proactive Refresh
 
-For continuous seat scraping, deploy a token keeper daemon on GCP:
-- **Instance:** e2-micro (free tier)
-- **Location:** us-central1
-- **Refresh interval:** Every 20 minutes during 5am-midnight WIB
-- **Fallback:** Seat scraper attempts its own refresh on 401
+For just-in-time seat scraping:
+1. Check token TTL before each API call
+2. If TTL < 5 min, call `/v1/users/refresh` 
+3. Store new access token, continue scraping
+4. No browser needed for ~91 days (refresh token lifetime)
 
 ---
 

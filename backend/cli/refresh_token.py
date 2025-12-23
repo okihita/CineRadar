@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 from backend.infrastructure._legacy.base_scraper import BaseScraper
-from backend.infrastructure._legacy.token_storage import get_storage, store_token
+from backend.infrastructure.repositories.firestore_token import get_storage, store_token
 
 
 class TokenRefresher(BaseScraper):
@@ -116,6 +116,7 @@ class TokenRefresher(BaseScraper):
 
                 # Look for token in cookies
                 token = None  # Initialize before checking
+                refresh_token = None  # Also capture refresh token
                 for cookie in cookies:
                     if 'token' in cookie['name'].lower() or 'auth' in cookie['name'].lower():
                         self.log(f"   ✅ Found token cookie: {cookie['name']}")
@@ -130,6 +131,14 @@ class TokenRefresher(BaseScraper):
                             self.log(f"   ✅ Found token under key: {key}")
                             break
 
+                # Also get refresh token from localStorage
+                refresh_token = await page.evaluate("localStorage.getItem('authentication_refresh_token')")
+                if refresh_token:
+                    # Strip quotes if present
+                    if refresh_token.startswith('"') and refresh_token.endswith('"'):
+                        refresh_token = refresh_token[1:-1]
+                    self.log(f"   ✅ Found refresh token (length: {len(refresh_token)})")
+
                 if token:
                     # Strip extra quotes if present (localStorage returns JSON-encoded strings)
                     if token.startswith('"') and token.endswith('"'):
@@ -138,9 +147,11 @@ class TokenRefresher(BaseScraper):
                     self.log(f"✅ JWT token captured! (length: {len(token)})")
                     await self._save_screenshot(page, "06_success_token_captured")
 
-                    # Store in Firestore
-                    if store_token(token, self._phone):
+                    # Store in Firestore (with refresh token if available)
+                    if store_token(token, self._phone, refresh_token=refresh_token):
                         self.log("✅ Token stored in Firestore!")
+                        if refresh_token:
+                            self.log("✅ Refresh token also stored!")
                         return True
                     else:
                         self.log("⚠️ Token storage failed")
