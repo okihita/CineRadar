@@ -355,7 +355,9 @@ Headers:
 ```
 
 ### Data Captured
-- `seat_map[]`: seat_yn, seat_status (1=available, 0=sold), seat_grd_cd
+- `seat_map[]`:
+    - **XXI/CGV**: Nested `seat_rows[]` with `status` (1 = sold, 5 = available)
+    - **Cinépolis**: Flat list with `seat_status`
 - `price_group[]`: seat grades and prices
 - Calculated: total_seats, sold_seats, occupancy_pct
 

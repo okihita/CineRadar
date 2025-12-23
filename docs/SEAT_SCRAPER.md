@@ -71,26 +71,58 @@ User-Agent: Mozilla/5.0...
 
 ### Response Format
 
+### Response Format
+
+There are two variations of the API response structure depending on the merchant:
+
+#### Type A: Nested Structure (XXI, CGV)
+```json
+{
+    "success": true,
+    "data": {
+        "seat_map": [
+            {
+                "seat_code": "A",
+                "seat_rows": [
+                    {"seat_row": "A1", "status": 5},
+                    {"seat_row": "A2", "status": 1}
+                ]
+            }
+        ]
+    }
+}
+```
+
+#### Type B: Flat List Structure (Cinépolis)
+```json
+{
+    "success": true,
+    "data": {
+        "seat_map": [
+            {
+                "row_name": "A",
+                "seat_no": "1",
+                "seat_status": 1
+            },
+            {
+                "row_name": "A",
+                "seat_no": "2",
+                "seat_status": 1
+            }
+        ]
+    }
+}
+```
+
+> **Note**: The scraper automatically handles both formats. For flat lists, `seat_status` is used.
+
 ```json
 {
     "success": true,
     "data": {
         "user_seat_purchased": 0,
-        "user_seat_daily_limit": 10,
-        "max_horizontal_seat": 17,
-        "max_vertical_seat": 11,
         "price": 30000,
-        "seat_map": [
-            {
-                "seat_code": "A",
-                "max_row": 17,
-                "seat_rows": [
-                    {"seat_row": "A1", "status": 5},
-                    {"seat_row": "A2", "status": 1},
-                    {"seat_row": "A3", "status": 6}
-                ]
-            }
-        ]
+        "seat_map": [...] 
     }
 }
 ```

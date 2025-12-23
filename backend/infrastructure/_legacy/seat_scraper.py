@@ -52,52 +52,50 @@ class SeatScraper(BaseScraper):
         """Convert merchant name to API path."""
         return self.MERCHANT_PATHS.get(merchant, merchant.lower())
 
+    def _count_seat(self, status: int, counters: dict) -> None:
+        """Helper to increment counters based on status."""
+        if status == 1:  # Sold
+            counters['sold'] += 1
+            counters['total'] += 1
+        elif status == 5:  # Available
+            counters['available'] += 1
+            counters['total'] += 1
+        elif status == 6:  # Blocked/reserved
+            counters['blocked'] += 1
+            # Don't count blocked in total for occupancy calculation
+
     def calculate_occupancy(self, layout_data: dict) -> dict:
         """
         Parse seat layout response and calculate occupancy.
-
-        B2B API format:
-        - seat_map[].seat_code: Row letter (A, B, C, ...)
-        - seat_map[].seat_rows[].seat_row: Seat ID (A1, A2, ...)
-        - seat_map[].seat_rows[].status:
-            1 = sold
-            5 = available
-            6 = blocked/reserved
-
-        Returns:
-            Dict with total_seats, sold_seats, available_seats, occupancy_pct
+        Handles both nested (XXI/CGV) and flat (Cinépolis) structures.
         """
-        total_seats = 0
-        sold_seats = 0
-        available_seats = 0
-        blocked_seats = 0
-
+        counters = {'total': 0, 'sold': 0, 'available': 0, 'blocked': 0}
+        
         data = layout_data.get('data', {})
         seat_map = data.get('seat_map', [])
 
-        for row in seat_map:
-            for seat in row.get('seat_rows', []):
-                status = seat.get('status', 0)
+        for item in seat_map:
+            # Check if this is a row container (XXI/CGV) or a direct seat (Cinépolis)
+            if 'seat_rows' in item:
+                # Nested structure (XXI/CGV)
+                for seat in item.get('seat_rows', []):
+                    self._count_seat(seat.get('status', 0), counters)
+            else:
+                # Flat structure (Cinépolis)
+                # Note: Cinépolis status might differ, but assuming 1=Sold similar to others.
+                # If further debugging shows different codes, update mapping here.
+                status = item.get('seat_status', item.get('status', 0))
+                self._count_seat(status, counters)
 
-                if status == 1:  # Sold
-                    sold_seats += 1
-                    total_seats += 1
-                elif status == 5:  # Available
-                    available_seats += 1
-                    total_seats += 1
-                elif status == 6:  # Blocked/reserved
-                    blocked_seats += 1
-                    # Don't count blocked in total for occupancy calculation
-
-        # Calculate occupancy based on sellable seats only
-        sellable = sold_seats + available_seats
-        occupancy_pct = (sold_seats / sellable * 100) if sellable > 0 else 0
+        total_seats = counters['total']
+        sellable = counters['sold'] + counters['available']
+        occupancy_pct = (counters['sold'] / sellable * 100) if sellable > 0 else 0
 
         return {
             'total_seats': total_seats,
-            'sold_seats': sold_seats,
-            'available_seats': available_seats,
-            'blocked_seats': blocked_seats,
+            'sold_seats': counters['sold'],
+            'available_seats': counters['available'],
+            'blocked_seats': counters['blocked'],
             'occupancy_pct': round(occupancy_pct, 1),
         }
 
