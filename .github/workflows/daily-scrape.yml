@@ -33,7 +33,7 @@ jobs:
         run: python -m backend.cli --schedules --batch ${{ matrix.batch }} --total-batches 9
 
       - name: Upload batch artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: batch-${{ matrix.batch }}
           path: data/batch_*.json
@@ -79,7 +79,7 @@ jobs:
 
       - name: Upload final artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: scrape-data-${{ github.run_id }}
           path: data/movies_*.json
@@ -127,7 +127,7 @@ jobs:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
       - name: Upload seat batch artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: seat-batch-${{ matrix.batch }}
           path: data/seats_morning_*.json
@@ -162,7 +162,7 @@ jobs:
 
       - name: Upload final seat artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: seats-morning-${{ github.run_id }}
           path: data/seats_morning_*.json
