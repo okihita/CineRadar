@@ -202,34 +202,34 @@ class TestToken:
         assert token.minutes_until_expiry > 0
     
     def test_is_expired(self):
-        # Create expired token
+        # Create expired token (stored 2 hours ago, TTL is 30 min)
+        from datetime import datetime, timedelta
+        old_time = (datetime.utcnow() - timedelta(hours=2)).isoformat()
         expired = Token(
             token="test",
-            stored_at="2020-01-01T00:00:00",
-            expires_at="2020-01-01T01:00:00",
+            stored_at=old_time,
         )
         assert expired.is_expired == True
         
-        # Create valid token
-        valid = Token.create_new("test", ttl_hours=1)
+        # Create valid token (stored now)
+        valid = Token.create_new("test")
         assert valid.is_expired == False
     
     def test_is_valid_for_scrape(self):
-        # Valid token with plenty of time
-        valid = Token.create_new("test", ttl_hours=2)
+        # Valid token with plenty of time (just created)
+        valid = Token.create_new("test")
         assert valid.is_valid_for_scrape == True
         
-        # Token about to expire
+        # Token about to expire (stored 26 min ago, only 4 min left)
         now = datetime.utcnow()
         almost_expired = Token(
             token="test",
-            stored_at=now.isoformat(),
-            expires_at=(now + timedelta(minutes=10)).isoformat(),
+            stored_at=(now - timedelta(minutes=26)).isoformat(),
         )
-        assert almost_expired.is_valid_for_scrape == False
+        assert almost_expired.is_valid_for_scrape == False  # < 5 min remaining
     
     def test_status_message(self):
-        valid = Token.create_new("test", ttl_hours=1)
+        valid = Token.create_new("test")
         assert "✅" in valid.get_status_message()
 
 

@@ -35,9 +35,14 @@ class TestLoadMovieData:
 
     def test_loads_most_recent_file(self, tmp_path: Path):
         """Should load the most recently modified JSON file."""
+        import time
+        
         # Create older file
         old_file = tmp_path / "movies_2025-12-22.json"
         old_file.write_text(json.dumps({"date": "2025-12-22", "movies": []}))
+        
+        # Ensure at least 0.1 second difference in mtime
+        time.sleep(0.1)
 
         # Create newer file
         new_file = tmp_path / "movies_2025-12-23.json"
