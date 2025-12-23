@@ -211,11 +211,29 @@ def sync_theatres_from_scrape(movies: list[dict]) -> dict:
     return {"total": len(seen_theatres), "success": success, "failed": failed}
 
 
-def log_scraper_run(run_data: dict) -> bool:
-    """Log a scraper run to Firestore."""
+def log_scraper_run(run_data: dict, run_type: str = "movies") -> bool:
+    """Log a scraper run to Firestore with datetime-based ID.
+
+    Args:
+        run_data: Run metadata (status, counts, etc.)
+        run_type: Type of run ('movies', 'seats', 'token', etc.)
+
+    Returns:
+        True if successful
+
+    Document ID format: YYYY-MM-DDTHH-MM-SS_type
+    Example: 2025-12-23T06-00-00_movies
+    """
     try:
         db = get_firestore_client()
-        db.collection("scraper_runs").add({**run_data, "timestamp": datetime.utcnow().isoformat()})
+        timestamp = datetime.utcnow()
+
+        # Create human-readable document ID
+        doc_id = timestamp.strftime("%Y-%m-%dT%H-%M-%S") + f"_{run_type}"
+
+        db.collection("scraper_runs").document(doc_id).set(
+            {**run_data, "timestamp": timestamp.isoformat(), "run_type": run_type}
+        )
         return True
     except Exception as e:
         print(f"Error logging scraper run: {e}")
