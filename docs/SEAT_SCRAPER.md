@@ -129,44 +129,24 @@ There are two variations of the API response structure depending on the merchant
 
 ### Seat Status Codes
 
+> [!IMPORTANT]
+> **Verified Dec 23, 2025**: Status codes are the opposite of initial assumptions.
+
 | Status | Meaning | Count In Occupancy? |
 |--------|---------|---------------------|
-| `1` | **Sold** ❌ | Yes (numerator) |
-| `5` | **Available** ✅ | Yes (denominator) |
-| `6` | **Blocked/Reserved** 🚫 | No |
+| `1` | **Available** ✅ (can purchase) | Yes (denominator only) |
+| `5` | **Unavailable** ❌ (sold or blocked) | Yes (numerator) |
+| `6` | **Unavailable** ❌ (sold or blocked) | Yes (numerator) |
 
-**Occupancy Formula**: `sold / (sold + available) * 100`
+**Limitation**: The API does not distinguish between "sold" and "under maintenance/blocked". Both statuses 5 and 6 appear identical. Treat occupancy as an **upper bound** estimate.
+
+**Occupancy Formula**: `unavailable / (unavailable + available) * 100`
 
 ---
 
 ## Token Management
 
-### Token Storage
-
-Tokens are stored in Firestore at `auth_tokens/tix_jwt`:
-
-```json
-{
-    "token": "eyJhbG...",
-    "phone": "6285***",
-    "stored_at": "2025-12-23T02:21:30.743621",
-    "expires_at": "2025-12-23T22:21:30.743649"
-}
-```
-
-### Token Lifetime
-
-- **TTL**: ~20 hours
-- **Refresh**: Daily via `token-refresh.yml` workflow before scraping
-- **Validation**: Check `expires_at` before using
-
-### ⚠️ Token Bug (Fixed)
-
-The token from localStorage may include extra quotes (`"eyJ..."`). The scraper now strips these:
-
-```python
-self.auth_token = token.strip('"')
-```
+> See [SPEC.md - Token Architecture](/SPEC.md#token-architecture-single-source-of-truth) for complete token documentation including storage, lifecycle, bugs, and troubleshooting.
 
 ---
 

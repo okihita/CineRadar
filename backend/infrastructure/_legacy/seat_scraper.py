@@ -53,23 +53,31 @@ class SeatScraper(BaseScraper):
         return self.MERCHANT_PATHS.get(merchant, merchant.lower())
 
     def _count_seat(self, status: int, counters: dict) -> None:
-        """Helper to increment counters based on status."""
-        if status == 1:  # Sold
-            counters['sold'] += 1
-            counters['total'] += 1
-        elif status == 5:  # Available
+        """
+        Helper to increment counters based on status.
+        
+        Status codes (verified Dec 23, 2025):
+        - 1: Available (can purchase)
+        - 5: Unavailable (sold or blocked - cannot distinguish)
+        - 6: Unavailable (sold or blocked - cannot distinguish)
+        """
+        if status == 1:  # Available
             counters['available'] += 1
             counters['total'] += 1
-        elif status == 6:  # Blocked/reserved
-            counters['blocked'] += 1
-            # Don't count blocked in total for occupancy calculation
+        elif status in (5, 6):  # Unavailable (sold or blocked)
+            counters['unavailable'] += 1
+            counters['total'] += 1
+        # Other statuses are ignored
 
     def calculate_occupancy(self, layout_data: dict) -> dict:
         """
         Parse seat layout response and calculate occupancy.
         Handles both nested (XXI/CGV) and flat (Cinépolis) structures.
+        
+        Note: API cannot distinguish "sold" from "blocked/maintenance".
+        Occupancy is an upper-bound estimate.
         """
-        counters = {'total': 0, 'sold': 0, 'available': 0, 'blocked': 0}
+        counters = {'total': 0, 'unavailable': 0, 'available': 0}
         
         data = layout_data.get('data', {})
         seat_map = data.get('seat_map', [])
@@ -82,20 +90,16 @@ class SeatScraper(BaseScraper):
                     self._count_seat(seat.get('status', 0), counters)
             else:
                 # Flat structure (Cinépolis)
-                # Note: Cinépolis status might differ, but assuming 1=Sold similar to others.
-                # If further debugging shows different codes, update mapping here.
                 status = item.get('seat_status', item.get('status', 0))
                 self._count_seat(status, counters)
 
         total_seats = counters['total']
-        sellable = counters['sold'] + counters['available']
-        occupancy_pct = (counters['sold'] / sellable * 100) if sellable > 0 else 0
+        occupancy_pct = (counters['unavailable'] / total_seats * 100) if total_seats > 0 else 0
 
         return {
             'total_seats': total_seats,
-            'sold_seats': counters['sold'],
+            'unavailable_seats': counters['unavailable'],
             'available_seats': counters['available'],
-            'blocked_seats': counters['blocked'],
             'occupancy_pct': round(occupancy_pct, 1),
         }
 
@@ -147,7 +151,8 @@ class SeatScraper(BaseScraper):
                     elif response.status == 401:
                         self.log("   ⚠️ Auth token expired - need to re-login")
                     else:
-                        self.log(f"   ⚠️ API returned {response.status}")
+                        body = await response.text()
+                        self.log(f"   ⚠️ API returned {response.status}: {body[:200]}")
         except Exception as e:
             self.log(f"   ⚠️ API call failed: {e}")
 

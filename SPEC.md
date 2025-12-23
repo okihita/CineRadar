@@ -356,10 +356,17 @@ Headers:
 
 ### Data Captured
 - `seat_map[]`:
-    - **XXI/CGV**: Nested `seat_rows[]` with `status` (1 = sold, 5 = available)
+    - **XXI/CGV**: Nested `seat_rows[]` with `status`
     - **Cinépolis**: Flat list with `seat_status`
+- **Status Codes** (verified Dec 23, 2025):
+    - `1` = **Available** (can be purchased)
+    - `5` = **Unavailable** (sold or blocked - cannot distinguish)
+    - `6` = **Unavailable** (sold or blocked - cannot distinguish)
 - `price_group[]`: seat grades and prices
-- Calculated: total_seats, sold_seats, occupancy_pct
+- Calculated: total_seats, unavailable_seats, available_seats, occupancy_pct
+
+> [!IMPORTANT]
+> The API does not distinguish between "sold" and "under maintenance/blocked". Both appear as status 5 or 6. Occupancy estimates should be treated as upper bounds.
 
 ### CLI Usage
 ```bash
@@ -399,107 +406,143 @@ backend/
 
 ---
 
-## Token Architecture
+## Token Architecture (Single Source of Truth)
 
-TIX.id uses a **two-token system** for security:
+> [!NOTE]
+> This is the authoritative documentation for TIX.id authentication. All other docs reference this section.
 
-| Token | localStorage Key | Duration | Purpose |
-|-------|-----------------|----------|---------|
-| Access | `authentication_token` | **~30 min** (verified) | Sent with every API request |
-| Refresh | `authentication_refresh_token` | ~91 days | Used to get new access tokens |
+### Token Types
 
-### Verified Test Results (Dec 18, 2025)
+| Token | localStorage Key | Actual TTL | Purpose |
+|-------|-----------------|------------|---------|
+| **Access** | `authentication_token` | **30 minutes** | Bearer token for API calls |
+| **Refresh** | `authentication_refresh_token` | ~91 days | Exists but not usable programmatically |
 
-```
-✅ Access Token Test:
-   - Captured via localStorage after login
-   - Expires in exactly 30 minutes
-   - Works for seat layout API calls
-   - Example: Token at 04:22:08 expired at 04:52:04
+### Token Lifecycle Flowchart
 
-✅ Seat API Test (KEDIRI MALL CGV, 10:00 showtime):
-   - Total seats: 126
-   - Sold seats: 1  
-   - Occupancy: 0.8%
-   - API: GET https://api-b2b.tix.id/v1/movies/cgv/layout?show_time_id={id}
-```
-
-### Why Two Tokens?
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  If hacker steals ACCESS token → Only 30 min of access     │
-│  If hacker steals REFRESH token → Can get new access tokens │
-│                                                             │
-│  Access tokens are exposed in every API call (higher risk)  │
-│  Refresh tokens stay in localStorage (lower exposure)       │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    A[Playwright Login] --> B[Capture from localStorage]
+    B --> C[Strip quotes]
+    C --> D[Store in Firestore]
+    D --> E[Seat Scraper reads token]
+    E --> F{API Call}
+    F -->|200 OK| G[Success]
+    F -->|401| H[Token Expired]
+    H --> I[Re-login via Playwright]
+    I --> B
 ```
 
-### Token Flow
+### Firestore Storage
 
-1. **Login** → Get both access (30 min) + refresh (91 days) tokens
-2. **API Calls** → Use access token in `Authorization: Bearer {token}`
-3. **Access Expires** → App automatically uses refresh token to get new access
-4. **Refresh Expires** → User must login again with phone/password
+Tokens are stored at `auth_tokens/tix_jwt`:
 
-### Refresh Token Investigation (Dec 18, 2025)
+```json
+{
+    "token": "eyJhbGciOiJIUzI1NiIs...",
+    "phone": "6285***",
+    "stored_at": "2025-12-23T06:26:40.591620",
+    "expires_at": "2025-12-24T02:26:40.591620"
+}
+```
 
-Tested approaches to use refresh token programmatically:
+> [!WARNING]
+> The `expires_at` field is **not accurate**. We set it to 20 hours, but the actual token dies in 30 minutes. This is a known limitation - TIX.id doesn't expose the real expiry.
 
-| Approach | Result | Notes |
-|----------|--------|-------|
-| POST to `/v1/auth/refresh` | 401 | Endpoint exists but rejected |
-| POST to `/v1/auth/token/refresh` | 401 | Endpoint exists but rejected |
-| POST to `/v1/refresh-token` | 401 | Endpoint exists but rejected |
-| Use refresh token as Bearer | 401 | Invalid token error |
+### How to Refresh Tokens
 
-**Conclusion:** TIX.id's refresh flow is handled by Flutter client-side interceptors, not a public API. The refresh token cannot be used programmatically without reverse-engineering the Flutter app's network layer.
+**Method: Playwright Login** (required for seat scraping)
 
-### Current Implementation
+```bash
+# Refresh token (headless)
+python -m backend.cli.refresh_token
 
-- Token refresh stores the **access token** in Firestore
-- Runs daily at 5:50 AM WIB (before 6 AM movie scrape)
-- JIT seat scraper uses stored token via `--use-stored-token`
-- Token valid for ~30 minutes after capture
+# Refresh with visible browser (debugging)
+python -m backend.cli.refresh_token --visible
 
-> [!IMPORTANT]
-> Since access tokens expire in 30 min, the JIT seat scraper (every 15 min) must work within this window. The daily token refresh at 5:50 AM provides a fresh token that's valid until ~6:20 AM, enough for the morning seat scrape.
+# Check token status
+python -m backend.cli.refresh_token --check
+```
+
+**The `/v1/auth` endpoint does NOT help for seat scraping:**
+
+```http
+POST https://api-b2b.tix.id/v1/auth
+Content-Type: application/json
+
+{"client_id": "tixid_guest"}
+```
+
+This returns a **guest token** that cannot access seat layout APIs. Only login tokens work.
+
+### Known Bugs & Fixes
+
+#### Bug 1: Token Stored With Quotes (FIXED Dec 23, 2025)
+
+**Symptom:** All API calls return 401 even with fresh token.
+
+**Cause:** `localStorage.getItem()` returns tokens wrapped in quotes: `"eyJ..."` instead of `eyJ...`
+
+**Fix:** `refresh_token.py` now strips quotes before storing:
+```python
+if token.startswith('"') and token.endswith('"'):
+    token = token[1:-1]
+```
+
+#### Bug 2: Two Login Buttons
+
+**Symptom:** Playwright clicks wrong button, page goes to `about:blank`.
+
+**Fix:** Use `.last` selector:
+```python
+login_button = page.get_by_role('button', name='Login').last
+```
+
+#### Bug 3: Flutter Rendering in Headless Mode
+
+**Symptom:** Page appears blank, elements not found.
+
+**Fix:** Use `xvfb-run` on Linux:
+```bash
+xvfb-run --auto-servernum python -m backend.cli.refresh_token
+```
+
+### Troubleshooting Guide
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `401 INVALID_TOKEN` | Token has quotes | Re-run `refresh_token.py` (bug is fixed) |
+| `401 EXPIRED_EVENT_DETAIL` | Showtime already started | Use fresh movie data |
+| `401` after fresh login | Token not stripped | Check first/last char of token |
+| Login hangs | Flutter rendering issue | Use `xvfb-run` |
+
+### GitHub Actions Integration
+
+Token refresh runs daily at 5:50 AM WIB via `.github/workflows/token-refresh.yml`:
+
+```yaml
+on:
+  schedule:
+    - cron: '50 22 * * *'  # 5:50 AM WIB (UTC+7)
+  workflow_dispatch:
+```
+
+### Future: GCP Token Keeper (Planned)
+
+For continuous seat scraping, deploy a token keeper daemon on GCP:
+- **Instance:** e2-micro (free tier)
+- **Location:** us-central1
+- **Refresh interval:** Every 20 minutes during 5am-midnight WIB
+- **Fallback:** Seat scraper attempts its own refresh on 401
 
 ---
 
 ## Known Issues & Fixes
 
-### Issue 1: Two Login Buttons (CRITICAL)
+> [!NOTE]
+> For token-related bugs (quote stripping, two login buttons, Flutter headless mode), see [Token Architecture - Known Bugs](#known-bugs--fixes) above.
 
-**Problem:** TIX.id login page has two buttons labeled "Login":
-- Header button → Navigates to home (does NOT login)
-- Form button → Actually submits login
-
-**Symptom:** Playwright clicks header button, page goes to `about:blank`, no session created.
-
-**Fix:** Use `.last` not `.first` in Playwright selector:
-```python
-# WRONG - clicks header button
-login_button = page.get_by_role('button', name='Login').first
-
-# CORRECT - clicks form button
-login_button = page.get_by_role('button', name='Login').last
-```
-
-### Issue 2: Flutter Rendering in Headless Mode
-
-**Problem:** Flutter canvas-based apps render differently in headless Chromium.
-
-**Symptom:** Input fields not found, page appears blank.
-
-**Fix:** Use `xvfb-run` on Linux (GitHub Actions):
-```yaml
-xvfb-run --auto-servernum --server-args="-screen 0 1280x720x24" \
-  python -m backend.cli.refresh_token
-```
-
-### Issue 3: Showtime ID Extraction
+### Issue 1: Showtime ID Extraction
 
 **Problem:** CLI was reading wrong field for showtime IDs.
 
@@ -525,7 +568,7 @@ for st in room.get('showtimes', []):
 for st in room.get('all_showtimes', room.get('showtimes', [])):
 ```
 
-### Issue 4: Local Firestore Access
+### Issue 2: Local Firestore Access
 
 **Problem:** Local development uses different Google Cloud project (kadago109 vs cineradar).
 

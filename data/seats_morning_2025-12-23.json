@@ -1,0 +1,25 @@
+{
+  "scraped_at": "2025-12-23T09:50:02.178128",
+  "mode": "morning",
+  "count": 1,
+  "results": [
+    {
+      "date": "2025-12-23",
+      "showtime_id": "2001883972795187200",
+      "movie_id": null,
+      "movie_title": "AVATAR: FIRE AND ASH",
+      "theatre_id": "973818519885975552",
+      "theatre_name": "AMBON CITY CENTER XXI",
+      "city": "AMBON",
+      "merchant": "XXI",
+      "room_category": null,
+      "showtime": "12:05",
+      "scraped_at": "2025-12-23T09:50:01.877393",
+      "total_seats": 96,
+      "sold_seats": 10,
+      "available_seats": 86,
+      "blocked_seats": 91,
+      "occupancy_pct": 10.4
+    }
+  ]
+}

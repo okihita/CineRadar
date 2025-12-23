@@ -1,0 +1,722 @@
+{
+  "scraped_at": "2025-12-23T12:58:36.803380",
+  "showtime": {
+    "movie_title": "AVATAR: FIRE AND ASH",
+    "movie_id": null,
+    "theatre_name": "AMBON CITY CENTER XXI",
+    "theatre_id": "973818519885975552",
+    "merchant": "XXI",
+    "city": "AMBON",
+    "room_name": "2D",
+    "time": "13:35",
+    "showtime_id": "2003100339967967232"
+  },
+  "occupancy": {
+    "total_seats": 160,
+    "unavailable_seats": 160,
+    "available_seats": 0,
+    "occupancy_pct": 100.0
+  },
+  "seat_map": [
+    {
+      "seat_code": "A",
+      "max_row": 16,
+      "seat_rows": [
+        {
+          "seat_row": "A1",
+          "status": 5
+        },
+        {
+          "seat_row": "A2",
+          "status": 6
+        },
+        {
+          "seat_row": "A3",
+          "status": 6
+        },
+        {
+          "seat_row": "A4",
+          "status": 6
+        },
+        {
+          "seat_row": "A5",
+          "status": 6
+        },
+        {
+          "seat_row": "A6",
+          "status": 6
+        },
+        {
+          "seat_row": "A7",
+          "status": 6
+        },
+        {
+          "seat_row": "A8",
+          "status": 5
+        },
+        {
+          "seat_row": "A9",
+          "status": 6
+        },
+        {
+          "seat_row": "A10",
+          "status": 6
+        },
+        {
+          "seat_row": "A11",
+          "status": 5
+        },
+        {
+          "seat_row": "A12",
+          "status": 5
+        },
+        {
+          "seat_row": "A13",
+          "status": 5
+        },
+        {
+          "seat_row": "A14",
+          "status": 5
+        },
+        {
+          "seat_row": "A15",
+          "status": 6
+        },
+        {
+          "seat_row": "A16",
+          "status": 6
+        }
+      ]
+    },
+    {
+      "seat_code": "B",
+      "max_row": 16,
+      "seat_rows": [
+        {
+          "seat_row": "B1",
+          "status": 5
+        },
+        {
+          "seat_row": "B2",
+          "status": 5
+        },
+        {
+          "seat_row": "B3",
+          "status": 5
+        },
+        {
+          "seat_row": "B4",
+          "status": 5
+        },
+        {
+          "seat_row": "B5",
+          "status": 5
+        },
+        {
+          "seat_row": "B6",
+          "status": 5
+        },
+        {
+          "seat_row": "B7",
+          "status": 5
+        },
+        {
+          "seat_row": "B8",
+          "status": 5
+        },
+        {
+          "seat_row": "B9",
+          "status": 5
+        },
+        {
+          "seat_row": "B10",
+          "status": 5
+        },
+        {
+          "seat_row": "B11",
+          "status": 6
+        },
+        {
+          "seat_row": "B12",
+          "status": 5
+        },
+        {
+          "seat_row": "B13",
+          "status": 5
+        },
+        {
+          "seat_row": "B14",
+          "status": 6
+        },
+        {
+          "seat_row": "B15",
+          "status": 6
+        },
+        {
+          "seat_row": "B16",
+          "status": 6
+        }
+      ]
+    },
+    {
+      "seat_code": "C",
+      "max_row": 16,
+      "seat_rows": [
+        {
+          "seat_row": "C1",
+          "status": 6
+        },
+        {
+          "seat_row": "C2",
+          "status": 6
+        },
+        {
+          "seat_row": "C3",
+          "status": 6
+        },
+        {
+          "seat_row": "C4",
+          "status": 6
+        },
+        {
+          "seat_row": "C5",
+          "status": 6
+        },
+        {
+          "seat_row": "C6",
+          "status": 5
+        },
+        {
+          "seat_row": "C7",
+          "status": 5
+        },
+        {
+          "seat_row": "C8",
+          "status": 5
+        },
+        {
+          "seat_row": "C9",
+          "status": 6
+        },
+        {
+          "seat_row": "C10",
+          "status": 6
+        },
+        {
+          "seat_row": "C11",
+          "status": 6
+        },
+        {
+          "seat_row": "C12",
+          "status": 5
+        },
+        {
+          "seat_row": "C13",
+          "status": 5
+        },
+        {
+          "seat_row": "C14",
+          "status": 6
+        },
+        {
+          "seat_row": "C15",
+          "status": 5
+        },
+        {
+          "seat_row": "C16",
+          "status": 5
+        }
+      ]
+    },
+    {
+      "seat_code": "D",
+      "max_row": 16,
+      "seat_rows": [
+        {
+          "seat_row": "D1",
+          "status": 6
+        },
+        {
+          "seat_row": "D2",
+          "status": 6
+        },
+        {
+          "seat_row": "D3",
+          "status": 6
+        },
+        {
+          "seat_row": "D4",
+          "status": 6
+        },
+        {
+          "seat_row": "D5",
+          "status": 5
+        },
+        {
+          "seat_row": "D6",
+          "status": 5
+        },
+        {
+          "seat_row": "D7",
+          "status": 6
+        },
+        {
+          "seat_row": "D8",
+          "status": 6
+        },
+        {
+          "seat_row": "D9",
+          "status": 5
+        },
+        {
+          "seat_row": "D10",
+          "status": 5
+        },
+        {
+          "seat_row": "D11",
+          "status": 5
+        },
+        {
+          "seat_row": "D12",
+          "status": 5
+        },
+        {
+          "seat_row": "D13",
+          "status": 5
+        },
+        {
+          "seat_row": "D14",
+          "status": 5
+        },
+        {
+          "seat_row": "D15",
+          "status": 5
+        },
+        {
+          "seat_row": "D16",
+          "status": 5
+        }
+      ]
+    },
+    {
+      "seat_code": "E",
+      "max_row": 16,
+      "seat_rows": [
+        {
+          "seat_row": "E1",
+          "status": 6
+        },
+        {
+          "seat_row": "E2",
+          "status": 6
+        },
+        {
+          "seat_row": "E3",
+          "status": 5
+        },
+        {
+          "seat_row": "E4",
+          "status": 5
+        },
+        {
+          "seat_row": "E5",
+          "status": 6
+        },
+        {
+          "seat_row": "E6",
+          "status": 6
+        },
+        {
+          "seat_row": "E7",
+          "status": 6
+        },
+        {
+          "seat_row": "E8",
+          "status": 6
+        },
+        {
+          "seat_row": "E9",
+          "status": 6
+        },
+        {
+          "seat_row": "E10",
+          "status": 6
+        },
+        {
+          "seat_row": "E11",
+          "status": 6
+        },
+        {
+          "seat_row": "E12",
+          "status": 6
+        },
+        {
+          "seat_row": "E13",
+          "status": 6
+        },
+        {
+          "seat_row": "E14",
+          "status": 6
+        },
+        {
+          "seat_row": "E15",
+          "status": 5
+        },
+        {
+          "seat_row": "E16",
+          "status": 5
+        }
+      ]
+    },
+    {
+      "seat_code": "F",
+      "max_row": 16,
+      "seat_rows": [
+        {
+          "seat_row": "F1",
+          "status": 6
+        },
+        {
+          "seat_row": "F2",
+          "status": 6
+        },
+        {
+          "seat_row": "F3",
+          "status": 6
+        },
+        {
+          "seat_row": "F4",
+          "status": 6
+        },
+        {
+          "seat_row": "F5",
+          "status": 6
+        },
+        {
+          "seat_row": "F6",
+          "status": 5
+        },
+        {
+          "seat_row": "F7",
+          "status": 5
+        },
+        {
+          "seat_row": "F8",
+          "status": 5
+        },
+        {
+          "seat_row": "F9",
+          "status": 6
+        },
+        {
+          "seat_row": "F10",
+          "status": 6
+        },
+        {
+          "seat_row": "F11",
+          "status": 6
+        },
+        {
+          "seat_row": "F12",
+          "status": 6
+        },
+        {
+          "seat_row": "F13",
+          "status": 6
+        },
+        {
+          "seat_row": "F14",
+          "status": 6
+        },
+        {
+          "seat_row": "F15",
+          "status": 6
+        },
+        {
+          "seat_row": "F16",
+          "status": 6
+        }
+      ]
+    },
+    {
+      "seat_code": "G",
+      "max_row": 16,
+      "seat_rows": [
+        {
+          "seat_row": "G1",
+          "status": 6
+        },
+        {
+          "seat_row": "G2",
+          "status": 6
+        },
+        {
+          "seat_row": "G3",
+          "status": 6
+        },
+        {
+          "seat_row": "G4",
+          "status": 6
+        },
+        {
+          "seat_row": "G5",
+          "status": 6
+        },
+        {
+          "seat_row": "G6",
+          "status": 6
+        },
+        {
+          "seat_row": "G7",
+          "status": 6
+        },
+        {
+          "seat_row": "G8",
+          "status": 6
+        },
+        {
+          "seat_row": "G9",
+          "status": 6
+        },
+        {
+          "seat_row": "G10",
+          "status": 6
+        },
+        {
+          "seat_row": "G11",
+          "status": 6
+        },
+        {
+          "seat_row": "G12",
+          "status": 5
+        },
+        {
+          "seat_row": "G13",
+          "status": 5
+        },
+        {
+          "seat_row": "G14",
+          "status": 5
+        },
+        {
+          "seat_row": "G15",
+          "status": 5
+        },
+        {
+          "seat_row": "G16",
+          "status": 5
+        }
+      ]
+    },
+    {
+      "seat_code": "H",
+      "max_row": 16,
+      "seat_rows": [
+        {
+          "seat_row": "H1",
+          "status": 6
+        },
+        {
+          "seat_row": "H2",
+          "status": 6
+        },
+        {
+          "seat_row": "H3",
+          "status": 6
+        },
+        {
+          "seat_row": "H4",
+          "status": 6
+        },
+        {
+          "seat_row": "H5",
+          "status": 5
+        },
+        {
+          "seat_row": "H6",
+          "status": 5
+        },
+        {
+          "seat_row": "H7",
+          "status": 5
+        },
+        {
+          "seat_row": "H8",
+          "status": 5
+        },
+        {
+          "seat_row": "H9",
+          "status": 5
+        },
+        {
+          "seat_row": "H10",
+          "status": 5
+        },
+        {
+          "seat_row": "H11",
+          "status": 5
+        },
+        {
+          "seat_row": "H12",
+          "status": 6
+        },
+        {
+          "seat_row": "H13",
+          "status": 6
+        },
+        {
+          "seat_row": "H14",
+          "status": 6
+        },
+        {
+          "seat_row": "H15",
+          "status": 5
+        },
+        {
+          "seat_row": "H16",
+          "status": 5
+        }
+      ]
+    },
+    {
+      "seat_code": "J",
+      "max_row": 16,
+      "seat_rows": [
+        {
+          "seat_row": "J1",
+          "status": 6
+        },
+        {
+          "seat_row": "J2",
+          "status": 6
+        },
+        {
+          "seat_row": "J3",
+          "status": 5
+        },
+        {
+          "seat_row": "J4",
+          "status": 6
+        },
+        {
+          "seat_row": "J5",
+          "status": 5
+        },
+        {
+          "seat_row": "J6",
+          "status": 5
+        },
+        {
+          "seat_row": "J7",
+          "status": 6
+        },
+        {
+          "seat_row": "J8",
+          "status": 6
+        },
+        {
+          "seat_row": "J9",
+          "status": 6
+        },
+        {
+          "seat_row": "J10",
+          "status": 6
+        },
+        {
+          "seat_row": "J11",
+          "status": 6
+        },
+        {
+          "seat_row": "J12",
+          "status": 6
+        },
+        {
+          "seat_row": "J13",
+          "status": 6
+        },
+        {
+          "seat_row": "J14",
+          "status": 6
+        },
+        {
+          "seat_row": "J15",
+          "status": 6
+        },
+        {
+          "seat_row": "J16",
+          "status": 5
+        }
+      ]
+    },
+    {
+      "seat_code": "K",
+      "max_row": 16,
+      "seat_rows": [
+        {
+          "seat_row": "K1",
+          "status": 6
+        },
+        {
+          "seat_row": "K2",
+          "status": 6
+        },
+        {
+          "seat_row": "K3",
+          "status": 6
+        },
+        {
+          "seat_row": "K4",
+          "status": 6
+        },
+        {
+          "seat_row": "K5",
+          "status": 6
+        },
+        {
+          "seat_row": "K6",
+          "status": 6
+        },
+        {
+          "seat_row": "K7",
+          "status": 5
+        },
+        {
+          "seat_row": "K8",
+          "status": 6
+        },
+        {
+          "seat_row": "K9",
+          "status": 6
+        },
+        {
+          "seat_row": "K10",
+          "status": 6
+        },
+        {
+          "seat_row": "K11",
+          "status": 6
+        },
+        {
+          "seat_row": "K12",
+          "status": 6
+        },
+        {
+          "seat_row": "K13",
+          "status": 6
+        },
+        {
+          "seat_row": "K14",
+          "status": 6
+        },
+        {
+          "seat_row": "K15",
+          "status": 6
+        },
+        {
+          "seat_row": "K16",
+          "status": 6
+        }
+      ]
+    }
+  ]
+}

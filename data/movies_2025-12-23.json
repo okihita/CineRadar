@@ -1,0 +1,280 @@
+{
+  "scraped_at": "2025-12-23 12:20:11",
+  "date": "2025-12-23",
+  "batch": null,
+  "movies": [
+    {
+      "id": "1961889705591132160",
+      "title": "AVATAR: FIRE AND ASH",
+      "genres": [
+        "Sci-fi",
+        "Adventure",
+        "Fantasy"
+      ],
+      "poster": "https://asset.tix.id/movie_poster_v2/8032ae1d-29e3-4e81-b1a8-bfe1cdd52fbc.webp",
+      "age_category": "R",
+      "country": "",
+      "merchants": [
+        "XXI"
+      ],
+      "is_presale": false,
+      "cities": [
+        "AMBON"
+      ],
+      "schedules": {
+        "AMBON": [
+          {
+            "theatre_id": "973818519885975552",
+            "theatre_name": "AMBON CITY CENTER XXI",
+            "merchant": "XXI",
+            "address": "Ambon City Center Lnt. Dasar\r\nJalan Wolter Monginsidi\r\nPasso - Ambon\r\n\r\n",
+            "rooms": [
+              {
+                "category": "2D",
+                "price": "Rp30.000",
+                "showtimes": [
+                  "13:05",
+                  "13:35",
+                  "15:45",
+                  "16:15",
+                  "16:45",
+                  "17:15",
+                  "19:25",
+                  "19:55",
+                  "20:25",
+                  "20:55"
+                ],
+                "all_showtimes": [
+                  {
+                    "time": "12:05",
+                    "status": 0,
+                    "is_available": false,
+                    "showtime_id": "2001883972795187200"
+                  },
+                  {
+                    "time": "12:35",
+                    "status": 0,
+                    "is_available": false,
+                    "showtime_id": "1999846627388506112"
+                  },
+                  {
+                    "time": "13:05",
+                    "status": 1,
+                    "is_available": true,
+                    "showtime_id": "2001883973663408128"
+                  },
+                  {
+                    "time": "13:35",
+                    "status": 1,
+                    "is_available": true,
+                    "showtime_id": "2003100339967967232"
+                  },
+                  {
+                    "time": "15:45",
+                    "status": 1,
+                    "is_available": true,
+                    "showtime_id": "2001883973743099904"
+                  },
+                  {
+                    "time": "16:15",
+                    "status": 1,
+                    "is_available": true,
+                    "showtime_id": "1999846627468197888"
+                  },
+                  {
+                    "time": "16:45",
+                    "status": 1,
+                    "is_available": true,
+                    "showtime_id": "2001883973885706240"
+                  },
+                  {
+                    "time": "17:15",
+                    "status": 1,
+                    "is_available": true,
+                    "showtime_id": "2003100340303511552"
+                  },
+                  {
+                    "time": "19:25",
+                    "status": 1,
+                    "is_available": true,
+                    "showtime_id": "2001883974015729664"
+                  },
+                  {
+                    "time": "19:55",
+                    "status": 1,
+                    "is_available": true,
+                    "showtime_id": "1999846627543695360"
+                  },
+                  {
+                    "time": "20:25",
+                    "status": 1,
+                    "is_available": true,
+                    "showtime_id": "2001883974217056256"
+                  },
+                  {
+                    "time": "20:55",
+                    "status": 1,
+                    "is_available": true,
+                    "showtime_id": "2003100340576141312"
+                  }
+                ],
+                "past_showtimes": [
+                  "12:05",
+                  "12:35"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "1977633929036906496",
+      "title": "AGAK LAEN: MENYALA PANTIKU!",
+      "genres": [
+        "Drama"
+      ],
+      "poster": "https://asset.tix.id/movie_poster_v2/8018f5c0-d9bc-4850-9ce6-47f7b60c6839.webp",
+      "age_category": "R",
+      "country": "Indonesia",
+      "merchants": [
+        "XXI"
+      ],
+      "is_presale": false,
+      "cities": [
+        "AMBON"
+      ],
+      "schedules": {
+        "AMBON": [
+          {
+            "theatre_id": "973818519885975552",
+            "theatre_name": "AMBON CITY CENTER XXI",
+            "merchant": "XXI",
+            "address": "Ambon City Center Lnt. Dasar\r\nJalan Wolter Monginsidi\r\nPasso - Ambon\r\n\r\n",
+            "rooms": [
+              {
+                "category": "2D",
+                "price": "Rp30.000",
+                "showtimes": [
+                  "14:25",
+                  "16:40",
+                  "18:55",
+                  "21:10"
+                ],
+                "all_showtimes": [
+                  {
+                    "time": "12:10",
+                    "status": 0,
+                    "is_available": false,
+                    "showtime_id": "2003100338772590592"
+                  },
+                  {
+                    "time": "14:25",
+                    "status": 1,
+                    "is_available": true,
+                    "showtime_id": "2003100338965528576"
+                  },
+                  {
+                    "time": "16:40",
+                    "status": 1,
+                    "is_available": true,
+                    "showtime_id": "2003100339145883648"
+                  },
+                  {
+                    "time": "18:55",
+                    "status": 1,
+                    "is_available": true,
+                    "showtime_id": "2003100339217186816"
+                  },
+                  {
+                    "time": "21:10",
+                    "status": 1,
+                    "is_available": true,
+                    "showtime_id": "2003100339322044416"
+                  }
+                ],
+                "past_showtimes": [
+                  "12:10"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "1973281810662113280",
+      "title": "ZOOTOPIA 2",
+      "genres": [
+        "Animation",
+        "Adventure"
+      ],
+      "poster": "https://asset.tix.id/movie_poster_v2/b4be76f4-d4eb-4909-a747-045756e2224e.webp",
+      "age_category": "SU",
+      "country": "USA",
+      "merchants": [
+        "XXI"
+      ],
+      "is_presale": false,
+      "cities": [
+        "AMBON"
+      ],
+      "schedules": {
+        "AMBON": [
+          {
+            "theatre_id": "973818519885975552",
+            "theatre_name": "AMBON CITY CENTER XXI",
+            "merchant": "XXI",
+            "address": "Ambon City Center Lnt. Dasar\r\nJalan Wolter Monginsidi\r\nPasso - Ambon\r\n\r\n",
+            "rooms": [
+              {
+                "category": "2D",
+                "price": "Rp30.000",
+                "showtimes": [
+                  "14:25",
+                  "18:35"
+                ],
+                "all_showtimes": [
+                  {
+                    "time": "14:25",
+                    "status": 1,
+                    "is_available": true,
+                    "showtime_id": "2003100336943874048"
+                  },
+                  {
+                    "time": "18:35",
+                    "status": 1,
+                    "is_available": true,
+                    "showtime_id": "2003100337069703168"
+                  }
+                ],
+                "past_showtimes": []
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "1984204228519870464",
+      "title": "TIMUR",
+      "genres": [
+        "Action"
+      ],
+      "poster": "https://asset.tix.id/movie_poster_v2/980c5d46-17c2-4969-8699-9be12ecac801.webp",
+      "age_category": "D",
+      "country": "Indonesia",
+      "merchants": [
+        "XXI"
+      ],
+      "is_presale": false,
+      "cities": [
+        "AMBON"
+      ],
+      "schedules": {}
+    }
+  ],
+  "city_stats": {
+    "AMBON": 9
+  }
+}

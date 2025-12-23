@@ -1,6 +1,6 @@
-'use client';
 
 import { useState, useMemo, useRef } from 'react';
+import { AdmissionStats } from './MovieBrowser';
 import MovieInsights from './MovieInsights';
 
 interface TheaterSchedule {
@@ -26,7 +26,9 @@ interface Movie {
     merchants: string[];
     cities: string[];
     is_presale?: boolean;
+
     schedules?: Record<string, TheaterSchedule[]>;
+    admissionStats?: AdmissionStats;
 }
 
 interface CityShowtimesProps {
@@ -65,6 +67,40 @@ function getTimeIcon(time: string): string {
         case 'evening': return '🌆';
         case 'night': return '🌙';
     }
+}
+
+
+
+// Sparkline component for admission history
+function AdmissionSparkline({ history }: { history: { date: string; admissions: number }[] }) {
+    if (!history || history.length === 0) return null;
+
+    // Fill in last 7 days if history is incomplete
+    const filledHistory = Array(7).fill(0).map((_, i) => {
+        const d = new Date();
+        d.setDate(d.getDate() - (6 - i));
+        const dateStr = d.toLocaleDateString('en-CA');
+        const match = history.find(h => h.date === dateStr);
+        return { date: dateStr, val: match ? match.admissions : 0 };
+    });
+
+    const max = Math.max(...filledHistory.map(h => h.val), 10); // Min max reference
+
+    return (
+        <div className="flex flex-col items-end">
+            <div className="flex items-end gap-1 h-8">
+                {filledHistory.map((item, i) => (
+                    <div
+                        key={i}
+                        className={`w-1.5 rounded-t transition-all ${item.val > 0 ? 'bg-gradient-to-t from-green-500 to-emerald-400' : 'bg-white/5'}`}
+                        style={{ height: `${Math.max((item.val / max) * 100, 10)}%` }}
+                        title={`${item.date}: ${item.val.toLocaleString()} admissions`}
+                    />
+                ))}
+            </div>
+            <span className="text-[10px] text-gray-500 font-mono mt-1">7 DAYS TREND</span>
+        </div>
+    );
 }
 
 // Sparkline component for showtime density
@@ -227,311 +263,329 @@ export default function CityShowtimes({ movie, allMovies = [] }: CityShowtimesPr
 
             {/* Content */}
             <div className="relative z-20 p-6">
-                {/* Movie Header - Cinematic Style */}
-                <div className="flex items-start gap-6 mb-6">
-                    {/* Poster with glow effect */}
-                    <div className="relative flex-shrink-0">
-                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl blur-xl opacity-50 scale-105" />
-                        <div className="relative w-36 h-52 rounded-xl overflow-hidden shadow-2xl border-2 border-white/20">
-                            <img src={movie.poster} alt={movie.title} className="w-full h-full object-cover" />
+                {/* Header Content */}
+                <div className="flex flex-col md:flex-row gap-8 relative z-10">
+                    {/* Poster Card */}
+                    <div className="md:w-64 flex-shrink-0 group perspective-1000">
+                        <div className="relative aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl transition-transform duration-500 group-hover:rotate-y-12 bg-black/50 border border-white/10 ring-1 ring-white/5 backdrop-blur-sm">
+                            {movie.poster ? (
+                                <img
+                                    src={movie.poster}
+                                    alt={movie.title}
+                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-white/5">
+                                    <span className="text-4xl">🎬</span>
+                                </div>
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
+
+                            {/* Admission Badge on Poster */}
+                            {movie.admissionStats && (
+                                <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md border border-white/10 rounded-lg px-2 py-1.5 flex flex-col items-center shadow-xl">
+                                    <span className="text-[10px] uppercase tracking-wider text-green-400 font-bold mb-0.5">Admissions</span>
+                                    <span className="text-base font-bold text-white leading-none">
+                                        {(movie.admissionStats.total_admissions || 0).toLocaleString()}
+                                    </span>
+                                </div>
+                            )}
                         </div>
                     </div>
 
-                    <div className="flex-1 min-w-0">
-                        {/* Title with neon effect */}
-                        <h1 className="text-3xl font-bold text-white mb-2 drop-shadow-[0_0_10px_rgba(168,85,247,0.5)]">
-                            {movie.title}
-                        </h1>
-
-                        <div className="flex flex-wrap gap-2 mb-3">
+                    {/* Info */}
+                    <div className="flex-1 pt-2">
+                        <div className="flex flex-wrap items-center gap-3 mb-4">
                             {movie.is_presale && (
-                                <span className="px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full text-sm font-semibold animate-pulse shadow-lg shadow-orange-500/50">
-                                    🎟️ PRE-SALE
+                                <span className="px-3 py-1 text-xs font-bold tracking-wider text-yellow-300 bg-yellow-500/10 border border-yellow-500/20 rounded-full animate-pulse shadow-[0_0_15px_rgba(234,179,8,0.2)]">
+                                    PRESALE ACTIVE
                                 </span>
                             )}
-                            {movie.genres.map((genre) => (
-                                <span key={genre} className="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-sm backdrop-blur-sm border border-purple-500/30">
-                                    {genre}
+                            {movie.age_category && (
+                                <span className="px-3 py-1 text-xs font-bold text-white bg-white/10 border border-white/10 rounded-full backdrop-blur-sm">
+                                    {movie.age_category}
                                 </span>
-                            ))}
-                            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${movie.age_category === 'SU' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
-                                movie.age_category === 'R' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
-                                    movie.age_category === 'D' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
-                                        'bg-gray-500/20 text-gray-400 border border-gray-500/30'
-                                }`}>
-                                {movie.age_category}
+                            )}
+                            <span className="px-3 py-1 text-xs font-medium text-gray-300 bg-black/20 border border-white/5 rounded-full">
+                                {movie.country || 'International'}
                             </span>
                         </div>
 
-                        <p className="text-gray-400 text-sm mb-3">
-                            {movie.country} • {movie.merchants.join(' • ')}
-                        </p>
+                        <div className="flex justify-between items-start">
+                            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-white/70 tracking-tight mb-2 leading-none drop-shadow-2xl">
+                                {movie.title}
+                            </h1>
 
-                        {/* Quick Stats Bar - Data Rich */}
-                        {hasSchedules && stats && (
-                            <div className="flex flex-wrap gap-4 items-center p-3 bg-white/5 rounded-lg border border-white/10 backdrop-blur-sm">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-2xl">🏙️</span>
-                                    <div>
-                                        <div className="text-lg font-bold text-white">{movie.cities.length}</div>
-                                        <div className="text-xs text-gray-500">cities</div>
-                                    </div>
-                                </div>
-                                <div className="w-px h-8 bg-white/20" />
-                                <div className="flex items-center gap-2">
-                                    <span className="text-2xl">🎭</span>
-                                    <div>
-                                        <div className="text-lg font-bold text-white">{stats.totalTheatres}</div>
-                                        <div className="text-xs text-gray-500">theatres</div>
-                                    </div>
-                                </div>
-                                <div className="w-px h-8 bg-white/20" />
-                                <div className="flex items-center gap-2">
-                                    <span className="text-2xl">🎬</span>
-                                    <div>
-                                        <div className="text-lg font-bold text-white">{stats.allShowtimes.length}</div>
-                                        <div className="text-xs text-gray-500">showtimes</div>
-                                    </div>
-                                </div>
-                                {stats.priceRange && (
-                                    <>
-                                        <div className="w-px h-8 bg-white/20" />
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-2xl">💰</span>
-                                            <div>
-                                                <div className="text-lg font-bold text-emerald-400">
-                                                    {formatPrice(stats.priceRange.min)} - {formatPrice(stats.priceRange.max)}
-                                                </div>
-                                                <div className="text-xs text-gray-500">price range</div>
-                                            </div>
+                            <p className="text-gray-400 text-sm mb-3">
+                                {movie.country} • {movie.merchants.join(' • ')}
+                            </p>
+
+                            {/* Quick Stats Bar - Data Rich */}
+                            {hasSchedules && stats && (
+                                <div className="flex flex-wrap gap-4 items-center p-3 bg-white/5 rounded-lg border border-white/10 backdrop-blur-sm">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-2xl">🏙️</span>
+                                        <div>
+                                            <div className="text-lg font-bold text-white">{movie.cities.length}</div>
+                                            <div className="text-xs text-gray-500">cities</div>
                                         </div>
-                                    </>
-                                )}
-                                <div className="w-px h-8 bg-white/20" />
-                                {/* Sparkline */}
-                                <div className="flex items-center gap-2">
-                                    <div>
-                                        <div className="text-xs text-gray-500 mb-1">Showtime density (10am-11pm)</div>
-                                        <ShowtimeSparkline showtimes={stats.allShowtimes} />
                                     </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Filter Bar */}
-                {hasSchedules && (
-                    <div className="mb-6 p-4 bg-white/5 rounded-xl border border-white/10 backdrop-blur-sm">
-                        <div className="flex flex-wrap items-center gap-4">
-                            {/* City Quick Jump */}
-                            <div className="flex items-center gap-2">
-                                <span className="text-sm text-gray-400">🏙️ Jump to:</span>
-                                <select
-                                    value={selectedCity}
-                                    onChange={(e) => handleCityJump(e.target.value)}
-                                    className="bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                >
-                                    <option value="" className="bg-gray-900">Select city...</option>
-                                    {cities.map(city => (
-                                        <option key={city} value={city} className="bg-gray-900">{city}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* Divider */}
-                            <div className="h-6 w-px bg-white/20" />
-
-                            {/* Chain Filters */}
-                            <div className="flex items-center gap-2">
-                                <span className="text-sm text-gray-400">🎬 Chains:</span>
-                                {availableChains.map(chain => (
-                                    <button
-                                        key={chain}
-                                        onClick={() => toggleChain(chain)}
-                                        className={`px-3 py-1 text-xs rounded-full transition-all ${isChainEnabled(chain)
-                                            ? chain === 'XXI' ? 'bg-blue-500/30 text-blue-300 border border-blue-500/50 shadow-lg shadow-blue-500/20'
-                                                : chain === 'CGV' ? 'bg-red-500/30 text-red-300 border border-red-500/50 shadow-lg shadow-red-500/20'
-                                                    : chain === 'Cinépolis' ? 'bg-yellow-500/30 text-yellow-300 border border-yellow-500/50 shadow-lg shadow-yellow-500/20'
-                                                        : 'bg-gray-500/30 text-gray-300 border border-gray-500/50'
-                                            : 'bg-white/5 text-gray-500 border border-white/10 line-through'
-                                            }`}
-                                    >
-                                        {chain}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Divider */}
-                            <div className="h-6 w-px bg-white/20" />
-
-                            {/* Time Legend */}
-                            <div className="flex items-center gap-2 text-xs text-gray-400">
-                                <span>🌅 Morning</span>
-                                <span>☀️ Afternoon</span>
-                                <span>🌆 Evening</span>
-                                <span>🌙 Night</span>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* AI Insights Section */}
-                {allMovies.length > 0 && (
-                    <MovieInsights movie={movie} allMovies={allMovies} />
-                )}
-
-                {/* Cities & Showtimes */}
-                {hasSchedules ? (
-                    <div className="space-y-4 mt-6">
-                        <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                            <span className="text-2xl">🎪</span> Showtimes by City
-                        </h2>
-                        {cities.map((city) => {
-                            const theaters = filterTheaters(movie.schedules![city]);
-                            if (theaters.length === 0) return null;
-
-                            // Find best value and most showtimes
-                            let bestValueTheatre = '';
-                            let mostShowtimesTheatre = '';
-                            let lowestPrice = Infinity;
-                            let maxShowtimes = 0;
-
-                            theaters.forEach(t => {
-                                let theatreShowtimes = 0;
-                                t.rooms.forEach(r => {
-                                    theatreShowtimes += r.showtimes.length;
-                                    const matches = r.price.match(/\d+[.,]?\d*/);
-                                    if (matches) {
-                                        const price = parseInt(matches[0].replace(/[.,]/g, ''), 10);
-                                        if (price < lowestPrice) {
-                                            lowestPrice = price;
-                                            bestValueTheatre = t.theatre_name;
-                                        }
-                                    }
-                                });
-                                if (theatreShowtimes > maxShowtimes) {
-                                    maxShowtimes = theatreShowtimes;
-                                    mostShowtimesTheatre = t.theatre_name;
-                                }
-                            });
-
-                            return (
-                                <div
-                                    key={city}
-                                    ref={el => { cityRefs.current[city] = el; }}
-                                    className="bg-white/5 rounded-xl overflow-hidden border border-white/10 backdrop-blur-sm hover:border-purple-500/30 transition-all"
-                                >
-                                    <button
-                                        onClick={() => setExpandedCity(expandedCity === city ? null : city)}
-                                        className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-2xl">🏙️</span>
-                                            <div className="text-left">
-                                                <h3 className="text-lg font-semibold text-white">{city}</h3>
-                                                <p className="text-sm text-gray-400">{theaters.length} theatre{theaters.length > 1 ? 's' : ''}</p>
-                                            </div>
+                                    <div className="w-px h-8 bg-white/20" />
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-2xl">🎭</span>
+                                        <div>
+                                            <div className="text-lg font-bold text-white">{stats.totalTheatres}</div>
+                                            <div className="text-xs text-gray-500">theatres</div>
                                         </div>
-                                        <span className={`text-gray-400 transition-transform ${expandedCity === city ? 'rotate-180' : ''}`}>
-                                            ▼
-                                        </span>
-                                    </button>
-
-                                    {expandedCity === city && (
-                                        <div className="border-t border-white/10 divide-y divide-white/5">
-                                            {theaters.map((theater) => (
-                                                <div key={theater.theatre_id || theater.theatre_name} className="p-4">
-                                                    <div className="flex items-start justify-between mb-3">
-                                                        <div className="flex-1">
-                                                            <div className="flex items-center gap-2 flex-wrap">
-                                                                <h4 className="font-medium text-white">{theater.theatre_name}</h4>
-                                                                {theater.theatre_name === bestValueTheatre && (
-                                                                    <span className="px-2 py-0.5 text-xs bg-emerald-500/20 text-emerald-400 rounded-full border border-emerald-500/30">
-                                                                        💰 Best Value
-                                                                    </span>
-                                                                )}
-                                                                {theater.theatre_name === mostShowtimesTheatre && theaters.length > 1 && (
-                                                                    <span className="px-2 py-0.5 text-xs bg-purple-500/20 text-purple-400 rounded-full border border-purple-500/30">
-                                                                        🎬 Most Showtimes
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                            <p className="text-xs text-gray-500 mt-0.5">{theater.address}</p>
-                                                        </div>
-                                                        <span className={`text-xs px-2 py-1 rounded font-semibold ${theater.merchant === 'XXI' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
-                                                            theater.merchant === 'CGV' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
-                                                                theater.merchant === 'Cinépolis' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
-                                                                    'bg-gray-500/20 text-gray-400 border border-gray-500/30'
-                                                            }`}>
-                                                            {theater.merchant}
-                                                        </span>
+                                    </div>
+                                    <div className="w-px h-8 bg-white/20" />
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-2xl">🎬</span>
+                                        <div>
+                                            <div className="text-lg font-bold text-white">{stats.allShowtimes.length}</div>
+                                            <div className="text-xs text-gray-500">showtimes</div>
+                                        </div>
+                                    </div>
+                                    {stats.priceRange && (
+                                        <>
+                                            <div className="w-px h-8 bg-white/20" />
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-2xl">💰</span>
+                                                <div>
+                                                    <div className="text-lg font-bold text-emerald-400">
+                                                        {formatPrice(stats.priceRange.min)} - {formatPrice(stats.priceRange.max)}
                                                     </div>
-
-                                                    <div className="space-y-3">
-                                                        {theater.rooms.map((room, idx) => (
-                                                            <div key={idx} className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-lg p-3 border-l-4 border-purple-500">
-                                                                <div className="flex items-center justify-between mb-2">
-                                                                    <span className="text-sm font-medium text-gray-300">{room.category}</span>
-                                                                    <span className="text-sm font-bold text-emerald-400">{room.price}</span>
-                                                                </div>
-                                                                <div className="flex flex-wrap gap-2">
-                                                                    {/* Past showtimes (grayed out) */}
-                                                                    {room.past_showtimes?.map((time: string, timeIdx: number) => (
-                                                                        <span
-                                                                            key={`past-${timeIdx}`}
-                                                                            className="px-3 py-1.5 text-sm rounded-lg font-medium 
-                                                                                bg-gray-700/30 text-gray-500 line-through cursor-not-allowed"
-                                                                            title="Past showtime"
-                                                                        >
-                                                                            {time}
-                                                                        </span>
-                                                                    ))}
-                                                                    {/* Available showtimes */}
-                                                                    {room.showtimes?.map((time: string, timeIdx: number) => (
-                                                                        <span
-                                                                            key={timeIdx}
-                                                                            className={`px-3 py-1.5 text-sm rounded-lg font-medium cursor-pointer transition-all 
-                                                                                bg-gradient-to-r ${getTimeStyle(time)} 
-                                                                                hover:scale-105 hover:shadow-lg shadow-md`}
-                                                                            title={`${getTimeIcon(time)} ${getTimeOfDay(time)}`}
-                                                                        >
-                                                                            {time}
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
+                                                    <div className="text-xs text-gray-500">price range</div>
                                                 </div>
-                                            ))}
-                                        </div>
+                                            </div>
+                                        </>
                                     )}
+                                    <div className="w-px h-8 bg-white/20" />
+                                    {/* Sparkline */}
+                                    <div className="flex items-center gap-2">
+                                        <div>
+                                            <div className="text-xs text-gray-500 mb-1">Showtime density (10am-11pm)</div>
+                                            <ShowtimeSparkline showtimes={stats.allShowtimes} />
+                                        </div>
+                                    </div>
                                 </div>
-                            );
-                        })}
-                    </div>
-                ) : (
-                    <div className="bg-white/5 rounded-xl p-8 text-center border border-white/10 backdrop-blur-sm mt-6">
-                        <span className="text-4xl block mb-4">📍</span>
-                        <h3 className="text-lg font-medium text-white mb-2">Available in {movie.cities.length} cities</h3>
-                        <div className="flex flex-wrap justify-center gap-2 mt-4">
-                            {movie.cities.slice(0, 20).map((city) => (
-                                <span key={city} className="px-3 py-1 bg-white/10 text-gray-300 rounded-full text-sm">
-                                    {city}
-                                </span>
-                            ))}
-                            {movie.cities.length > 20 && (
-                                <span className="px-3 py-1 bg-white/10 text-gray-400 rounded-full text-sm">
-                                    +{movie.cities.length - 20} more
-                                </span>
                             )}
                         </div>
-                        <p className="text-gray-500 text-sm mt-4">
-                            Run scraper with --schedules flag to get detailed showtimes
-                        </p>
                     </div>
-                )}
+
+                    {/* Filter Bar */}
+                    {hasSchedules && (
+                        <div className="mb-6 p-4 bg-white/5 rounded-xl border border-white/10 backdrop-blur-sm">
+                            <div className="flex flex-wrap items-center gap-4">
+                                {/* City Quick Jump */}
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm text-gray-400">🏙️ Jump to:</span>
+                                    <select
+                                        value={selectedCity}
+                                        onChange={(e) => handleCityJump(e.target.value)}
+                                        className="bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    >
+                                        <option value="" className="bg-gray-900">Select city...</option>
+                                        {cities.map(city => (
+                                            <option key={city} value={city} className="bg-gray-900">{city}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Divider */}
+                                <div className="h-6 w-px bg-white/20" />
+
+                                {/* Chain Filters */}
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm text-gray-400">🎬 Chains:</span>
+                                    {availableChains.map(chain => (
+                                        <button
+                                            key={chain}
+                                            onClick={() => toggleChain(chain)}
+                                            className={`px-3 py-1 text-xs rounded-full transition-all ${isChainEnabled(chain)
+                                                ? chain === 'XXI' ? 'bg-blue-500/30 text-blue-300 border border-blue-500/50 shadow-lg shadow-blue-500/20'
+                                                    : chain === 'CGV' ? 'bg-red-500/30 text-red-300 border border-red-500/50 shadow-lg shadow-red-500/20'
+                                                        : chain === 'Cinépolis' ? 'bg-yellow-500/30 text-yellow-300 border border-yellow-500/50 shadow-lg shadow-yellow-500/20'
+                                                            : 'bg-gray-500/30 text-gray-300 border border-gray-500/50'
+                                                : 'bg-white/5 text-gray-500 border border-white/10 line-through'
+                                                }`}
+                                        >
+                                            {chain}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Divider */}
+                                <div className="h-6 w-px bg-white/20" />
+
+                                {/* Time Legend */}
+                                <div className="flex items-center gap-2 text-xs text-gray-400">
+                                    <span>🌅 Morning</span>
+                                    <span>☀️ Afternoon</span>
+                                    <span>🌆 Evening</span>
+                                    <span>🌙 Night</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* AI Insights Section */}
+                    {allMovies.length > 0 && (
+                        <MovieInsights movie={movie} allMovies={allMovies} />
+                    )}
+
+                    {/* Cities & Showtimes */}
+                    {hasSchedules ? (
+                        <div className="space-y-4 mt-6">
+                            <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                                <span className="text-2xl">🎪</span> Showtimes by City
+                            </h2>
+                            {cities.map((city) => {
+                                const theaters = filterTheaters(movie.schedules![city]);
+                                if (theaters.length === 0) return null;
+
+                                // Find best value and most showtimes
+                                let bestValueTheatre = '';
+                                let mostShowtimesTheatre = '';
+                                let lowestPrice = Infinity;
+                                let maxShowtimes = 0;
+
+                                theaters.forEach(t => {
+                                    let theatreShowtimes = 0;
+                                    t.rooms.forEach(r => {
+                                        theatreShowtimes += r.showtimes.length;
+                                        const matches = r.price.match(/\d+[.,]?\d*/);
+                                        if (matches) {
+                                            const price = parseInt(matches[0].replace(/[.,]/g, ''), 10);
+                                            if (price < lowestPrice) {
+                                                lowestPrice = price;
+                                                bestValueTheatre = t.theatre_name;
+                                            }
+                                        }
+                                    });
+                                    if (theatreShowtimes > maxShowtimes) {
+                                        maxShowtimes = theatreShowtimes;
+                                        mostShowtimesTheatre = t.theatre_name;
+                                    }
+                                });
+
+                                return (
+                                    <div
+                                        key={city}
+                                        ref={el => { cityRefs.current[city] = el; }}
+                                        className="bg-white/5 rounded-xl overflow-hidden border border-white/10 backdrop-blur-sm hover:border-purple-500/30 transition-all"
+                                    >
+                                        <button
+                                            onClick={() => setExpandedCity(expandedCity === city ? null : city)}
+                                            className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-2xl">🏙️</span>
+                                                <div className="text-left">
+                                                    <h3 className="text-lg font-semibold text-white">{city}</h3>
+                                                    <p className="text-sm text-gray-400">{theaters.length} theatre{theaters.length > 1 ? 's' : ''}</p>
+                                                </div>
+                                            </div>
+                                            <span className={`text-gray-400 transition-transform ${expandedCity === city ? 'rotate-180' : ''}`}>
+                                                ▼
+                                            </span>
+                                        </button>
+
+                                        {expandedCity === city && (
+                                            <div className="border-t border-white/10 divide-y divide-white/5">
+                                                {theaters.map((theater) => (
+                                                    <div key={theater.theatre_id || theater.theatre_name} className="p-4">
+                                                        <div className="flex items-start justify-between mb-3">
+                                                            <div className="flex-1">
+                                                                <div className="flex items-center gap-2 flex-wrap">
+                                                                    <h4 className="font-medium text-white">{theater.theatre_name}</h4>
+                                                                    {theater.theatre_name === bestValueTheatre && (
+                                                                        <span className="px-2 py-0.5 text-xs bg-emerald-500/20 text-emerald-400 rounded-full border border-emerald-500/30">
+                                                                            💰 Best Value
+                                                                        </span>
+                                                                    )}
+                                                                    {theater.theatre_name === mostShowtimesTheatre && theaters.length > 1 && (
+                                                                        <span className="px-2 py-0.5 text-xs bg-purple-500/20 text-purple-400 rounded-full border border-purple-500/30">
+                                                                            🎬 Most Showtimes
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <p className="text-xs text-gray-500 mt-0.5">{theater.address}</p>
+                                                            </div>
+                                                            <span className={`text-xs px-2 py-1 rounded font-semibold ${theater.merchant === 'XXI' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                                                                theater.merchant === 'CGV' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                                                                    theater.merchant === 'Cinépolis' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
+                                                                        'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+                                                                }`}>
+                                                                {theater.merchant}
+                                                            </span>
+                                                        </div>
+
+                                                        <div className="space-y-3">
+                                                            {theater.rooms.map((room, idx) => (
+                                                                <div key={idx} className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-lg p-3 border-l-4 border-purple-500">
+                                                                    <div className="flex items-center justify-between mb-2">
+                                                                        <span className="text-sm font-medium text-gray-300">{room.category}</span>
+                                                                        <span className="text-sm font-bold text-emerald-400">{room.price}</span>
+                                                                    </div>
+                                                                    <div className="flex flex-wrap gap-2">
+                                                                        {/* Past showtimes (grayed out) */}
+                                                                        {room.past_showtimes?.map((time: string, timeIdx: number) => (
+                                                                            <span
+                                                                                key={`past-${timeIdx}`}
+                                                                                className="px-3 py-1.5 text-sm rounded-lg font-medium 
+                                                                                bg-gray-700/30 text-gray-500 line-through cursor-not-allowed"
+                                                                                title="Past showtime"
+                                                                            >
+                                                                                {time}
+                                                                            </span>
+                                                                        ))}
+                                                                        {/* Available showtimes */}
+                                                                        {room.showtimes?.map((time: string, timeIdx: number) => (
+                                                                            <span
+                                                                                key={timeIdx}
+                                                                                className={`px-3 py-1.5 text-sm rounded-lg font-medium cursor-pointer transition-all 
+                                                                                bg-gradient-to-r ${getTimeStyle(time)} 
+                                                                                hover:scale-105 hover:shadow-lg shadow-md`}
+                                                                                title={`${getTimeIcon(time)} ${getTimeOfDay(time)}`}
+                                                                            >
+                                                                                {time}
+                                                                            </span>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="bg-white/5 rounded-xl p-8 text-center border border-white/10 backdrop-blur-sm mt-6">
+                            <span className="text-4xl block mb-4">📍</span>
+                            <h3 className="text-lg font-medium text-white mb-2">Available in {movie.cities.length} cities</h3>
+                            <div className="flex flex-wrap justify-center gap-2 mt-4">
+                                {movie.cities.slice(0, 20).map((city) => (
+                                    <span key={city} className="px-3 py-1 bg-white/10 text-gray-300 rounded-full text-sm">
+                                        {city}
+                                    </span>
+                                ))}
+                                {movie.cities.length > 20 && (
+                                    <span className="px-3 py-1 bg-white/10 text-gray-400 rounded-full text-sm">
+                                        +{movie.cities.length - 20} more
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-gray-500 text-sm mt-4">
+                                Run scraper with --schedules flag to get detailed showtimes
+                            </p>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

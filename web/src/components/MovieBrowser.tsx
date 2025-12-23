@@ -17,6 +17,20 @@ interface TheaterSchedule {
     }[];
 }
 
+export interface AdmissionStats {
+    total_admissions: number;
+    showtimes: {
+        time: string;
+        city: string;
+        theatre: string;
+        capacity: number;
+        admissions: number;
+        occupancy_pct: number;
+    }[];
+    updated_at: string;
+    history: { date: string; admissions: number }[];
+}
+
 interface Movie {
     id: string;
     title: string;
@@ -28,6 +42,7 @@ interface Movie {
     cities: string[];
     is_presale?: boolean;
     schedules?: Record<string, TheaterSchedule[]>;
+    admissionStats?: AdmissionStats;
 }
 
 interface MovieBrowserProps {
@@ -41,17 +56,17 @@ async function fetchMovieSchedule(movieId: string, date: string): Promise<Record
     try {
         const projectId = 'cineradar-481014';
         const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/schedules/${date}/movies/${movieId}`;
-        
+
         const response = await fetch(url);
         if (!response.ok) return null;
-        
+
         const doc = await response.json();
         const fields = doc.fields || {};
-        
+
         // Parse the cities map from Firestore format
         const citiesMap = fields.cities?.mapValue?.fields || {};
         const schedules: Record<string, TheaterSchedule[]> = {};
-        
+
         for (const [city, cityData] of Object.entries(citiesMap)) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const theatersArray = (cityData as any)?.arrayValue?.values || [];
@@ -81,10 +96,81 @@ async function fetchMovieSchedule(movieId: string, date: string): Promise<Record
                 };
             });
         }
-        
+
         return schedules;
     } catch (error) {
         console.error('Error fetching schedule:', error);
+        return null;
+    }
+}
+
+// Fetch admission stats from Firestore (Current day + 7 day history)
+async function fetchMovieAdmissions(movieId: string, date: string): Promise<AdmissionStats | null> {
+    try {
+        const projectId = 'cineradar-481014';
+        const baseUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/daily_admissions`;
+
+        // Helper to fetch a single date
+        const fetchDate = async (d: string) => {
+            const res = await fetch(`${baseUrl}/${d}/movies/${movieId}`);
+            if (!res.ok) return null;
+            return res.json();
+        };
+
+        // Generate last 7 dates
+        const dates: string[] = [];
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(date);
+            d.setDate(d.getDate() - i);
+            dates.push(d.toLocaleDateString('en-CA'));
+        }
+
+        // Fetch all in parallel
+        const results = await Promise.all(dates.map(d => fetchDate(d)));
+
+        // Process today's data (first result)
+        const todayDoc = results[0];
+        const fields = todayDoc?.fields || {};
+
+        // Helper parse integer
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const parseIntVal = (val: any) => parseInt(val?.integerValue || '0');
+
+        const total = parseIntVal(fields.total_admissions);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const updated = (fields.updated_at as any)?.stringValue || '';
+
+        // Parse showtimes
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const showtimes = ((fields.showtimes as any)?.arrayValue?.values || []).map((s: { mapValue?: { fields?: any } }) => {
+            const f = s.mapValue?.fields || {};
+            return {
+                time: f.time?.stringValue || '',
+                city: f.city?.stringValue || '',
+                theatre: f.theatre?.stringValue || '',
+                capacity: parseIntVal(f.capacity),
+                admissions: parseIntVal(f.admissions),
+                occupancy_pct: parseFloat(f.occupancy_pct?.doubleValue || '0'),
+            };
+        });
+
+        // Process history
+        const history = results.map((doc, i) => {
+            const f = doc?.fields || {};
+            return {
+                date: dates[i],
+                admissions: parseIntVal(f.total_admissions) // Returns 0 if doc missing
+            };
+        }).reverse(); // Sort oldest to newest
+
+        return {
+            total_admissions: total,
+            showtimes,
+            updated_at: updated,
+            history
+        };
+    } catch (error) {
+        console.error('Error fetching admissions:', error);
         return null;
     }
 }
@@ -104,15 +190,19 @@ export default function MovieBrowser({ movies }: MovieBrowserProps) {
 
         // Get today's date in YYYY-MM-DD format
         const today = new Date().toLocaleDateString('en-CA'); // Returns YYYY-MM-DD
-        
+
         setLoadingSchedule(true);
-        fetchMovieSchedule(selectedMovie.id, today)
-            .then(schedules => {
-                if (schedules) {
-                    setMovieWithSchedules({ ...selectedMovie, schedules });
-                } else {
-                    setMovieWithSchedules(selectedMovie);
-                }
+
+        Promise.all([
+            fetchMovieSchedule(selectedMovie.id, today),
+            fetchMovieAdmissions(selectedMovie.id, today)
+        ])
+            .then(([schedules, admissionStats]) => {
+                setMovieWithSchedules({
+                    ...selectedMovie,
+                    schedules: schedules || undefined,
+                    admissionStats: admissionStats || undefined
+                });
             })
             .finally(() => setLoadingSchedule(false));
     }, [selectedMovie]);

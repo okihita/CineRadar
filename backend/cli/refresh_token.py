@@ -131,6 +131,9 @@ class TokenRefresher(BaseScraper):
                             break
 
                 if token:
+                    # Strip extra quotes if present (localStorage returns JSON-encoded strings)
+                    if token.startswith('"') and token.endswith('"'):
+                        token = token[1:-1]
                     self.auth_token = token
                     self.log(f"✅ JWT token captured! (length: {len(token)})")
                     await self._save_screenshot(page, "06_success_token_captured")
