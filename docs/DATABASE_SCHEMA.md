@@ -168,10 +168,29 @@ erDiagram
 - **Updated by:** `sync_theatres_from_scrape()`
 
 ### `snapshots`
-- **Document ID:** `latest` (single document)
-- **Purpose:** Daily movie data for web app
+- **Document ID:** `latest` or `{YYYY-MM-DD}`
+- **Purpose:** Daily movie data for web app (slim version)
 - **Updated by:** `save_daily_snapshot()`
-- **Note:** Only contains `theatre_counts`, not full schedules
+- **Note:** Contains `theatre_counts` only, not full schedules
+- **Archive:** Both `latest` and dated documents are saved for history
+
+### `schedules/{date}/movies/{movie_id}`
+- **Document ID:** `{movie_id}` (TIX.id movie ID)
+- **Purpose:** Full showtime data for each movie by date
+- **Updated by:** `upload_schedules.py`
+- **Structure:**
+  ```
+  schedules/
+  └── 2025-12-23/           # Date document
+      └── movies/           # Subcollection
+          └── {movie_id}/   # Movie document
+              ├── movie_id: string
+              ├── title: string
+              ├── date: string
+              └── cities: Map<city_name, TheaterSchedule[]>
+  ```
+- **Access:** Public read via REST API
+- **Used by:** Web app fetches on movie selection
 
 ### `seat_snapshots`
 - **Document ID:** `{showtime_id}_{type}_{time}`
@@ -187,3 +206,28 @@ erDiagram
 - **Document ID:** `tix_token`
 - **Purpose:** JWT token storage
 - **Updated by:** Token refresh workflow
+
+---
+
+## Data Flow
+
+```mermaid
+flowchart LR
+    subgraph Scraper["Daily Scrape"]
+        A[TIX.id API] --> B[movies_YYYY-MM-DD.json]
+    end
+    
+    subgraph Upload["Firestore Upload"]
+        B --> C[populate_firestore.py]
+        B --> D[upload_schedules.py]
+        C --> E[snapshots/latest]
+        C --> F[snapshots/date]
+        D --> G[schedules/date/movies/id]
+    end
+    
+    subgraph WebApp["Web App"]
+        E --> H[Movie List]
+        G --> I[Showtime Display]
+    end
+```
+
