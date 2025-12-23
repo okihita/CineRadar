@@ -37,3 +37,4 @@ data/live_seat_snapshot.json
 !.env.example
 apk_analysis/
 
+*.log
