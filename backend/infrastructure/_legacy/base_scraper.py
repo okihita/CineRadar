@@ -18,7 +18,7 @@ class BaseScraper:
         self.api_base = API_BASE
         self.app_base = APP_BASE
         self.auth_token: str | None = None
-        self._phone = os.environ.get('TIX_PHONE', '')
+        self._phone = os.environ.get('TIX_PHONE_NUMBER', '')
         self._password = os.environ.get('TIX_PASSWORD', '')
 
     def log(self, message: str) -> None:

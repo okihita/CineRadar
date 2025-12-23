@@ -32,7 +32,7 @@ jobs:
           xvfb-run --auto-servernum --server-args="-screen 0 1280x720x24" \
             python -m backend.cli.refresh_token
         env:
-          TIX_PHONE: ${{ secrets.TIX_PHONE }}
+          TIX_PHONE_NUMBER: ${{ secrets.TIX_PHONE_NUMBER }}
           TIX_PASSWORD: ${{ secrets.TIX_PASSWORD }}
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
