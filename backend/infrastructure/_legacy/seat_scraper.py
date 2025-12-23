@@ -41,7 +41,8 @@ class SeatScraper(BaseScraper):
         """
         token = get_token()
         if token:
-            self.auth_token = token
+            # Strip quotes that may have been captured from localStorage
+            self.auth_token = token.strip('"')
             self.log("✅ Loaded token from storage")
             return True
         self.log("⚠️ No valid token in storage")
@@ -55,62 +56,49 @@ class SeatScraper(BaseScraper):
         """
         Parse seat layout response and calculate occupancy.
 
+        B2B API format:
+        - seat_map[].seat_code: Row letter (A, B, C, ...)
+        - seat_map[].seat_rows[].seat_row: Seat ID (A1, A2, ...)
+        - seat_map[].seat_rows[].status:
+            1 = sold
+            5 = available
+            6 = blocked/reserved
+
         Returns:
             Dict with total_seats, sold_seats, available_seats, occupancy_pct
         """
         total_seats = 0
         sold_seats = 0
         available_seats = 0
-
-        # TIX.id API returns: data.seat_map array with:
-        # - seat_yn: "1" = real seat, "0" = aisle/empty
-        # - seat_status: 1 = available, 0 = sold/booked
-        # - seat_grd_cd: seat grade code (maps to price_group)
-        # - seat_grd_nm: seat grade name (e.g., "SATIN", "SWEETBOX")
+        blocked_seats = 0
 
         data = layout_data.get('data', {})
         seat_map = data.get('seat_map', [])
-        price_groups = data.get('price_group', [])
 
-        # Build price group lookup
-        grade_names = {pg.get('seat_grd_cd'): pg.get('seat_grd_nm', 'REGULAR')
-                       for pg in price_groups}
+        for row in seat_map:
+            for seat in row.get('seat_rows', []):
+                status = seat.get('status', 0)
 
-        # Count seats by grade
-        grade_stats = {}
+                if status == 1:  # Sold
+                    sold_seats += 1
+                    total_seats += 1
+                elif status == 5:  # Available
+                    available_seats += 1
+                    total_seats += 1
+                elif status == 6:  # Blocked/reserved
+                    blocked_seats += 1
+                    # Don't count blocked in total for occupancy calculation
 
-        for seat in seat_map:
-            # Skip aisles/empty spaces (seat_yn = "0")
-            if seat.get('seat_yn') != '1':
-                continue
-
-            seat_status = seat.get('seat_status', 0)
-            grade_cd = seat.get('seat_grd_cd', 'unknown')
-            grade_nm = grade_names.get(grade_cd, 'REGULAR')
-
-            if grade_nm not in grade_stats:
-                grade_stats[grade_nm] = {'total': 0, 'available': 0, 'sold': 0}
-
-            grade_stats[grade_nm]['total'] += 1
-
-            # seat_status: 1 = available, 0 = sold
-            if seat_status == 1:
-                grade_stats[grade_nm]['available'] += 1
-                available_seats += 1
-            else:
-                grade_stats[grade_nm]['sold'] += 1
-                sold_seats += 1
-
-            total_seats += 1
-
-        occupancy_pct = (sold_seats / total_seats * 100) if total_seats > 0 else 0
+        # Calculate occupancy based on sellable seats only
+        sellable = sold_seats + available_seats
+        occupancy_pct = (sold_seats / sellable * 100) if sellable > 0 else 0
 
         return {
             'total_seats': total_seats,
             'sold_seats': sold_seats,
             'available_seats': available_seats,
+            'blocked_seats': blocked_seats,
             'occupancy_pct': round(occupancy_pct, 1),
-            'seat_grades': grade_stats  # Breakdown by seat type (SATIN, SWEETBOX, etc.)
         }
 
     async def _fetch_seat_layout_api(
@@ -135,7 +123,8 @@ class SeatScraper(BaseScraper):
             return None
 
         merchant_path = self._get_merchant_path(merchant)
-        url = f"{self.api_base}/v1/movies/{merchant_path}/layout"
+        # Use B2B API endpoint (not consumer API)
+        url = f"https://api-b2b.tix.id/v1/movies/{merchant_path}/layout"
 
         headers = {
             'Authorization': f'Bearer {self.auth_token}',
@@ -145,7 +134,7 @@ class SeatScraper(BaseScraper):
 
         params = {
             'show_time_id': showtime_id,
-            'tz': 'Asia/Jakarta'
+            'tz': '7'  # UTC+7 offset (not timezone name)
         }
 
         try:
