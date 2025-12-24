@@ -1,40 +1,69 @@
 /**
  * Firebase Admin SDK Client using REST API
- * Avoids gRPC native module issues with Next.js Turbopack
+ * Uses direct JWT signing for Vercel compatibility (no gRPC, no google-auth-library issues)
  */
 
-import { GoogleAuth } from 'google-auth-library';
+import jwt from 'jsonwebtoken';
 
 const PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'cineradar-481014';
 const FIRESTORE_BASE_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
 
-let authClient: GoogleAuth | null = null;
-
-function getAuthClient(): GoogleAuth {
-    if (!authClient) {
-        const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-
-        if (serviceAccountJson) {
-            const credentials = JSON.parse(serviceAccountJson);
-            authClient = new GoogleAuth({
-                credentials,
-                scopes: ['https://www.googleapis.com/auth/datastore'],
-            });
-        } else {
-            // Use application default credentials for local dev
-            authClient = new GoogleAuth({
-                scopes: ['https://www.googleapis.com/auth/datastore'],
-            });
-        }
-    }
-    return authClient;
-}
+// Token cache
+let cachedToken: { token: string; expiry: number } | null = null;
 
 async function getAccessToken(): Promise<string> {
-    const auth = getAuthClient();
-    const client = await auth.getClient();
-    const token = await client.getAccessToken();
-    return token.token || '';
+    // Return cached token if still valid (with 5 min buffer)
+    if (cachedToken && Date.now() < cachedToken.expiry - 300000) {
+        return cachedToken.token;
+    }
+
+    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+
+    if (!serviceAccountJson) {
+        console.error('FIREBASE_SERVICE_ACCOUNT_KEY not set');
+        throw new Error('Missing Firebase service account credentials');
+    }
+
+    const serviceAccount = JSON.parse(serviceAccountJson);
+
+    // Create JWT for Google OAuth2
+    const now = Math.floor(Date.now() / 1000);
+    const payload = {
+        iss: serviceAccount.client_email,
+        sub: serviceAccount.client_email,
+        aud: 'https://oauth2.googleapis.com/token',
+        iat: now,
+        exp: now + 3600, // 1 hour
+        scope: 'https://www.googleapis.com/auth/datastore',
+    };
+
+    const signedJwt = jwt.sign(payload, serviceAccount.private_key, { algorithm: 'RS256' });
+
+    // Exchange JWT for access token
+    const response = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+            grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+            assertion: signedJwt,
+        }),
+    });
+
+    if (!response.ok) {
+        const error = await response.text();
+        console.error('Token exchange failed:', error);
+        throw new Error('Failed to get access token');
+    }
+
+    const data = await response.json();
+
+    // Cache the token
+    cachedToken = {
+        token: data.access_token,
+        expiry: Date.now() + (data.expires_in * 1000),
+    };
+
+    return cachedToken.token;
 }
 
 interface FirestoreValue {
