@@ -272,9 +272,11 @@ export default function ScraperPage() {
                 </Card>
             </div>
 
+            {/* JIT Monitor temporarily disabled - causes performance issues in production
             <div className="mb-6">
                 <JITGranularMonitor />
             </div>
+            */}
 
             {/* Database Explorer Section */}
             <Card className="mb-6">
