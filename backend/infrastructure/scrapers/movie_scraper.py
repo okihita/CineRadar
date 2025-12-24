@@ -54,7 +54,7 @@ class TixMovieScraper(BaseScraper, IMovieScraper):
 
         # Use the legacy scraper for now
         # TODO: Migrate full scraping logic here
-        from backend.infrastructure._legacy.tix_client import CineRadarScraper
+        from backend.infrastructure.core.tix_client import CineRadarScraper
 
         legacy_scraper = CineRadarScraper()
         result = await legacy_scraper.scrape(

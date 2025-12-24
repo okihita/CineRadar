@@ -12,7 +12,7 @@ backend/
 ├── infrastructure/
 │   ├── scrapers/     # Clean scraper wrappers
 │   ├── repositories/ # Firestore, file storage, utilities
-│   └── _legacy/      # Core scrapers (tix_client, seat_scraper)
+│   └── core/         # Core scrapers (tix_client, seat_scraper)
 ├── cli/              # All CLI entry points
 └── schemas/          # Pydantic validation
 ```

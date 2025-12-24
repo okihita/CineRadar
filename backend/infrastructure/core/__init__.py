@@ -1,5 +1,5 @@
 """
-Backend Services Module (Legacy Scrapers)
+Backend Services Module (Core Scrapers)
 
 > [!NOTE]
 > This module contains the core scraping implementations using Playwright.
@@ -14,9 +14,9 @@ For new code, use the infrastructure layer:
     from backend.infrastructure.scrapers import TixMovieScraper
 
 Import scrapers directly when needed:
-    from backend.infrastructure._legacy.base_scraper import BaseScraper
-    from backend.infrastructure._legacy.seat_scraper import SeatScraper
-    from backend.infrastructure._legacy.tix_client import CineRadarScraper
+    from backend.infrastructure.core.base_scraper import BaseScraper
+    from backend.infrastructure.core.seat_scraper import SeatScraper
+    from backend.infrastructure.core.tix_client import CineRadarScraper
 """
 
 # Don't import scrapers here - they require playwright

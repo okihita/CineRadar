@@ -14,7 +14,7 @@ import aiohttp
 from playwright.async_api import async_playwright
 
 from backend.config import CITIES, LOCALE, TIMEZONE, USER_AGENT, VIEWPORT
-from backend.infrastructure._legacy.base_scraper import BaseScraper
+from backend.infrastructure.core.base_scraper import BaseScraper
 
 # Geocoding cache file (relative to project root)
 GEOCODE_CACHE_FILE = os.path.join(

@@ -14,8 +14,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from backend.config import CITIES
-from backend.infrastructure._legacy.seat_scraper import SeatScraper
-from backend.infrastructure._legacy.tix_client import CineRadarScraper
+from backend.infrastructure.core.seat_scraper import SeatScraper
+from backend.infrastructure.core.tix_client import CineRadarScraper
 
 # ============================================================================
 # MOVIE SCRAPER COMMANDS

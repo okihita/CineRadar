@@ -11,7 +11,7 @@ import argparse
 import asyncio
 import sys
 
-from backend.infrastructure._legacy.base_scraper import BaseScraper
+from backend.infrastructure.core.base_scraper import BaseScraper
 from backend.infrastructure.repositories.firestore_token import get_storage, store_token
 
 

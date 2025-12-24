@@ -15,7 +15,7 @@ from datetime import datetime
 import aiohttp
 
 from backend.config import USER_AGENT
-from backend.infrastructure._legacy.base_scraper import BaseScraper
+from backend.infrastructure.core.base_scraper import BaseScraper
 from backend.infrastructure.repositories import FirestoreTokenRepository
 
 
