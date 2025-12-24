@@ -16,9 +16,9 @@ jobs:
         batch: [0, 1, 2, 3, 4, 5, 6, 7, 8]
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -33,7 +33,7 @@ jobs:
         run: python -m backend.cli --schedules --batch ${{ matrix.batch }} --total-batches 9
 
       - name: Upload batch artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: batch-${{ matrix.batch }}
           path: data/batch_*.json
@@ -45,9 +45,9 @@ jobs:
     timeout-minutes: 10
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -55,7 +55,7 @@ jobs:
         run: pip install google-cloud-firestore pydantic>=2.5.0
 
       - name: Download all batch artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           path: data/
           pattern: batch-*
@@ -79,7 +79,7 @@ jobs:
 
       - name: Upload final artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: scrape-data-${{ github.run_id }}
           path: data/movies_*.json
@@ -92,9 +92,9 @@ jobs:
     timeout-minutes: 5
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -128,12 +128,12 @@ jobs:
         batch: [0, 1, 2, 3, 4, 5, 6, 7, 8]
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: ${{ github.ref }}
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -157,7 +157,7 @@ jobs:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
       - name: Upload seat batch artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: seat-batch-${{ matrix.batch }}
           path: data/seats_morning_*.json
@@ -169,9 +169,9 @@ jobs:
     timeout-minutes: 10
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -179,7 +179,7 @@ jobs:
         run: pip install google-cloud-firestore
 
       - name: Download all seat batch artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           path: data/
           pattern: seat-batch-*
@@ -192,7 +192,7 @@ jobs:
 
       - name: Upload final seat artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: seats-morning-${{ github.run_id }}
           path: data/seats_morning_*.json
