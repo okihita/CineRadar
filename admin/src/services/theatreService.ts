@@ -2,7 +2,7 @@
  * Theatre Service - Abstracts data fetching from GCP Firestore
  */
 
-import { firestoreClient } from '@/lib/firebase';
+import { firestoreRestClient } from '@/lib/firestore-rest';
 import { Theatre, ScraperRun } from '@/types';
 
 export interface TheatreService {
@@ -12,16 +12,16 @@ export interface TheatreService {
 
 export const firebaseTheatreService: TheatreService = {
     async getTheatres(): Promise<Theatre[]> {
-        const docs = await firestoreClient.getCollection('theatres');
+        const docs = await firestoreRestClient.getCollection('theatres');
         return docs.map(doc => ({
-            theatre_id: doc.id,
+            theatre_id: doc.id as string,
             ...doc
         })) as Theatre[];
     },
 
     async getScraperRuns(limitCount = 5): Promise<ScraperRun[]> {
-        const docs = await firestoreClient.getCollectionWithQuery('scraper_runs', 'timestamp', limitCount);
-        return docs as ScraperRun[];
+        const docs = await firestoreRestClient.getCollectionWithQuery('scraper_runs', 'timestamp', limitCount);
+        return docs as unknown as ScraperRun[];
     }
 };
 

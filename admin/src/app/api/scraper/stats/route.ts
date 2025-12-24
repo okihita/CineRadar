@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { firestoreClient } from '@/lib/firebase';
+import { firestoreRestClient } from '@/lib/firestore-rest';
 
 // Known Firestore collections - excluded auth_tokens for security/timeout
 const COLLECTIONS = ['theatres', 'scraper_runs', 'snapshots', 'seat_snapshots'];
@@ -20,8 +20,8 @@ export async function GET() {
                 try {
                     // Note: getCollectionCount can be slow for large collections
                     const [count, sample] = await Promise.all([
-                        firestoreClient.getCollectionCount(name),
-                        firestoreClient.getSampleDocument(name),
+                        firestoreRestClient.getCollectionCount(name),
+                        firestoreRestClient.getSampleDocument(name),
                     ]);
 
                     // Extract field names from sample
