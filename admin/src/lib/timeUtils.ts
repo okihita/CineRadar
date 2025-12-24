@@ -2,11 +2,28 @@
  * Time utilities for displaying times in WIB (Jakarta time)
  * 
  * CONVENTION:
- * - All dates in database/backend are stored as UTC
+ * - All dates in database/backend are stored as WIB (no timezone suffix)
+ * - When parsing, we append +07:00 to treat them correctly
  * - All dates displayed in UI are shown in WIB (Asia/Jakarta)
  */
 
 const WIB_TIMEZONE = 'Asia/Jakarta';
+
+/**
+ * Parse a date string that's stored as WIB (without timezone suffix)
+ * Appends +07:00 so JavaScript interprets it correctly
+ */
+function parseAsWIB(date: Date | string): Date {
+    if (date instanceof Date) return date;
+
+    // If already has timezone info, parse directly
+    if (date.includes('Z') || date.includes('+') || date.includes('-', 10)) {
+        return new Date(date);
+    }
+
+    // Append WIB offset (+07:00) for proper interpretation
+    return new Date(date + '+07:00');
+}
 
 /**
  * Format a date to WIB time string
@@ -15,7 +32,7 @@ const WIB_TIMEZONE = 'Asia/Jakarta';
 export function formatWIB(date: Date | string | null | undefined): string {
     if (!date) return 'N/A';
 
-    const d = typeof date === 'string' ? new Date(date) : date;
+    const d = parseAsWIB(date);
     if (isNaN(d.getTime())) return 'Invalid date';
 
     return d.toLocaleString('en-US', {
@@ -36,7 +53,7 @@ export function formatWIB(date: Date | string | null | undefined): string {
 export function formatWIBShort(date: Date | string | null | undefined): string {
     if (!date) return 'N/A';
 
-    const d = typeof date === 'string' ? new Date(date) : date;
+    const d = parseAsWIB(date);
     if (isNaN(d.getTime())) return 'Invalid date';
 
     return d.toLocaleString('en-US', {
@@ -56,7 +73,7 @@ export function formatWIBShort(date: Date | string | null | undefined): string {
 export function formatWIBDate(date: Date | string | null | undefined): string {
     if (!date) return 'N/A';
 
-    const d = typeof date === 'string' ? new Date(date) : date;
+    const d = parseAsWIB(date);
     if (isNaN(d.getTime())) return 'Invalid date';
 
     return d.toLocaleDateString('en-US', {
@@ -74,7 +91,7 @@ export function formatWIBDate(date: Date | string | null | undefined): string {
 export function formatWIBTime(date: Date | string | null | undefined): string {
     if (!date) return 'N/A';
 
-    const d = typeof date === 'string' ? new Date(date) : date;
+    const d = parseAsWIB(date);
     if (isNaN(d.getTime())) return 'Invalid date';
 
     return d.toLocaleTimeString('en-US', {
@@ -92,7 +109,7 @@ export function formatWIBTime(date: Date | string | null | undefined): string {
 export function formatRelativeWIB(date: Date | string | null | undefined): string {
     if (!date) return 'N/A';
 
-    const d = typeof date === 'string' ? new Date(date) : date;
+    const d = parseAsWIB(date);
     if (isNaN(d.getTime())) return 'Invalid date';
 
     const now = new Date();
@@ -119,7 +136,7 @@ export function formatRelativeWIB(date: Date | string | null | undefined): strin
 export function formatWIBWithRelative(date: Date | string | null | undefined): string {
     if (!date) return 'N/A';
 
-    const d = typeof date === 'string' ? new Date(date) : date;
+    const d = parseAsWIB(date);
     if (isNaN(d.getTime())) return 'Invalid date';
 
     const absolute = formatWIBShort(d);
