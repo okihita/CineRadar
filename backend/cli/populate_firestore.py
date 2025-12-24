@@ -16,7 +16,9 @@ from backend.infrastructure.repositories.firestore_utils import (
 
 
 def main():
-    data_dir = Path(__file__).parent / "data"
+    # Use project root data/ directory (same as merge_batches.py)
+    project_root = Path(__file__).parent.parent.parent
+    data_dir = project_root / "data"
 
     # Use today's date to find the correct file
     today = datetime.now().strftime("%Y-%m-%d")
