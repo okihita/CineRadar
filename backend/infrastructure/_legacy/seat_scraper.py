@@ -57,7 +57,7 @@ class SeatScraper(BaseScraper):
         """Convert merchant name to API path."""
         return self.MERCHANT_PATHS.get(merchant, merchant.lower())
 
-    def _count_seat(self, status: int, counters: dict) -> None:
+    def _count_seat(self, status: int, counters: dict) -> int:
         """
         Helper to increment counters based on status.
 
@@ -65,14 +65,20 @@ class SeatScraper(BaseScraper):
         - 1: Available (can purchase)
         - 5: Unavailable (sold or blocked - cannot distinguish)
         - 6: Unavailable (sold or blocked - cannot distinguish)
+        
+        Returns:
+            1 if available, 0 if unavailable, -1 if other
         """
         if status == 1:  # Available
             counters["available"] += 1
             counters["total"] += 1
+            return 1
         elif status in (5, 6):  # Unavailable (sold or blocked)
             counters["unavailable"] += 1
             counters["total"] += 1
-        # Other statuses are ignored
+            return 0
+        # Other statuses (aisles, etc) are ignored in counts
+        return -1
 
     def calculate_occupancy(self, layout_data: dict) -> dict:
         """
@@ -83,6 +89,7 @@ class SeatScraper(BaseScraper):
         Occupancy is an upper-bound estimate.
         """
         counters = {"total": 0, "unavailable": 0, "available": 0}
+        layout_grid = []
 
         data = layout_data.get("data", {})
         seat_map = data.get("seat_map", [])
@@ -91,12 +98,25 @@ class SeatScraper(BaseScraper):
             # Check if this is a row container (XXI/CGV) or a direct seat (Cinépolis)
             if "seat_rows" in item:
                 # Nested structure (XXI/CGV)
+                row_name = item.get("row_name", "")
+                row_statuses = []
                 for seat in item.get("seat_rows", []):
-                    self._count_seat(seat.get("status", 0), counters)
+                    status_code = self._count_seat(seat.get("status", 0), counters)
+                    if status_code != -1:
+                        row_statuses.append(status_code)
+                if row_statuses:
+                    layout_grid.append([row_name, row_statuses])
             else:
-                # Flat structure (Cinépolis)
+                # Flat structure (Cinépolis) - Group by seat name prefix if possible
+                # But Cinépolis often sends it in a way that we might just want to store as is
                 status = item.get("seat_status", item.get("status", 0))
-                self._count_seat(status, counters)
+                status_code = self._count_seat(status, counters)
+                # For flat, we might just have a list of all seats. 
+                # To keep it consistent, we wrap in a single "ALL" row if nested list not found
+                if status_code != -1:
+                    if not layout_grid:
+                        layout_grid.append(["ALL", []])
+                    layout_grid[0][1].append(status_code)
 
         total_seats = counters["total"]
         occupancy_pct = (counters["unavailable"] / total_seats * 100) if total_seats > 0 else 0
@@ -106,6 +126,7 @@ class SeatScraper(BaseScraper):
             "unavailable_seats": counters["unavailable"],
             "available_seats": counters["available"],
             "occupancy_pct": round(occupancy_pct, 1),
+            "layout": layout_grid,
         }
 
     async def _fetch_seat_layout_api(self, showtime_id: str, merchant: str) -> dict | None:

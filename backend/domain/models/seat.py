@@ -76,6 +76,7 @@ class SeatOccupancy:
     available_seats: int = 0
     occupancy_pct: float = 0.0
     seat_grades: dict[str, SeatGradeStats] = field(default_factory=dict)
+    layout: list[Any] = field(default_factory=list)
 
     # Thresholds for occupancy categories
     NEARLY_FULL_THRESHOLD = 70.0
@@ -131,6 +132,7 @@ class SeatOccupancy:
                 name: {"total": g.total, "available": g.available, "sold": g.sold}
                 for name, g in self.seat_grades.items()
             },
+            "layout": self.layout,
         }
 
     @classmethod
@@ -161,4 +163,5 @@ class SeatOccupancy:
             available_seats=data.get("available_seats", 0),
             occupancy_pct=data.get("occupancy_pct", 0.0),
             seat_grades=seat_grades,
+            layout=data.get("layout", []),
         )

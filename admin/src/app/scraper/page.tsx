@@ -6,7 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/PageHeader';
 import { formatWIBShort, formatWIBWithRelative } from '@/lib/timeUtils';
-import { Database, RefreshCw, AlertTriangle, CheckCircle2, XCircle, Calendar, FolderOpen, ChevronDown, ChevronRight } from 'lucide-react';
+import { Database, RefreshCw, AlertTriangle, CheckCircle2, XCircle, Calendar, FolderOpen, ChevronDown, ChevronRight, Activity } from 'lucide-react';
+import { JITGranularMonitor } from '@/components/scraper/JITGranularMonitor';
 
 interface ScraperRun {
     id?: string;
@@ -269,6 +270,10 @@ export default function ScraperPage() {
                         )}
                     </CardContent>
                 </Card>
+            </div>
+
+            <div className="mb-6">
+                <JITGranularMonitor />
             </div>
 
             {/* Database Explorer Section */}

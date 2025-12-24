@@ -139,6 +139,7 @@ class GranularScraper:
             "total_seats": occupancy.total_seats,
             "sold_seats": occupancy.sold_seats,
             "occupancy_pct": occupancy.occupancy_pct,
+            "layout": occupancy.layout,
         }
 
         with open(filepath, "a") as f:

@@ -77,9 +77,10 @@ class TixSeatScraper(BaseScraper, ISeatScraper):
                 date=result.get("date"),
                 scraped_at=result.get("scraped_at"),
                 total_seats=result.get("total_seats", 0),
-                sold_seats=result.get("sold_seats", 0),
+                sold_seats=result.get("unavailable_seats", 0),
                 available_seats=result.get("available_seats", 0),
                 occupancy_pct=result.get("occupancy_pct", 0.0),
+                layout=result.get("layout", []),
             )
             occupancies.append(occ)
 
