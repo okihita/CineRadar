@@ -60,34 +60,51 @@ export default function ScraperPage() {
     const [morningScrape, setMorningScrape] = useState<MorningScrape | null>(null);
     const [jitSummary, setJitSummary] = useState<JITSummary | null>(null);
     const [loading, setLoading] = useState(true);
+    const [statsLoading, setStatsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [expandedCollection, setExpandedCollection] = useState<string | null>(null);
 
-    const fetchData = async () => {
+    const fetchCoreData = async () => {
         try {
             const response = await fetch('/api/scraper');
             if (response.ok) {
                 const data = await response.json();
                 setRuns(data.runs || []);
-                setCollections(data.collections || []);
                 setMorningScrape(data.todayMorningScrape || null);
                 setJitSummary(data.todayJITSummary || null);
             }
         } catch (error) {
-            console.error('Error fetching scraper data:', error);
+            console.error('Error fetching core scraper data:', error);
         } finally {
             setLoading(false);
             setRefreshing(false);
         }
     };
 
+    const fetchStatsData = async () => {
+        setStatsLoading(true);
+        try {
+            const response = await fetch('/api/scraper/stats');
+            if (response.ok) {
+                const data = await response.json();
+                setCollections(data.collections || []);
+            }
+        } catch (error) {
+            console.error('Error fetching database stats:', error);
+        } finally {
+            setStatsLoading(false);
+        }
+    };
+
     useEffect(() => {
-        fetchData();
+        fetchCoreData();
+        fetchStatsData();
     }, []);
 
     const handleRefresh = () => {
         setRefreshing(true);
-        fetchData();
+        fetchCoreData();
+        fetchStatsData();
     };
 
     // Calculate stats
@@ -272,109 +289,8 @@ export default function ScraperPage() {
                 </Card>
             </div>
 
-            {/* JIT Monitor temporarily disabled - causes performance issues in production
-            <div className="mb-6">
-                <JITGranularMonitor />
-            </div>
-            */}
-
-            {/* Database Explorer Section */}
-            <Card className="mb-6">
-                <CardHeader className="py-3">
-                    <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <FolderOpen className="w-4 h-4" />
-                        Database Explorer
-                        <Badge variant="secondary" className="ml-2">
-                            {totalDocuments.toLocaleString()} documents
-                        </Badge>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-2">
-                        {collections.map((col) => (
-                            <div key={col.name} className="border rounded-lg overflow-hidden">
-                                <button
-                                    onClick={() => toggleCollection(col.name)}
-                                    className="w-full flex items-center justify-between p-3 bg-muted/30 hover:bg-muted/50 transition-colors"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        {expandedCollection === col.name ? (
-                                            <ChevronDown className="w-4 h-4" />
-                                        ) : (
-                                            <ChevronRight className="w-4 h-4" />
-                                        )}
-                                        <Database className="w-4 h-4 text-muted-foreground" />
-                                        <span className="font-mono text-sm font-medium">{col.name}</span>
-                                    </div>
-                                    <div className="flex items-center gap-4">
-                                        <Badge variant="outline">
-                                            {col.count.toLocaleString()} docs
-                                        </Badge>
-                                        <span className="text-xs text-muted-foreground">
-                                            {col.fields.length} fields
-                                        </span>
-                                    </div>
-                                </button>
-
-                                {expandedCollection === col.name && (
-                                    <div className="p-4 border-t bg-background">
-                                        {/* Fields */}
-                                        <div className="mb-4">
-                                            <div className="text-xs font-medium text-muted-foreground mb-2">Fields:</div>
-                                            <div className="flex flex-wrap gap-1">
-                                                {col.fields.map((field) => (
-                                                    <Badge key={field} variant="secondary" className="text-xs font-mono">
-                                                        {field}
-                                                    </Badge>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        {/* Sample Document */}
-                                        {col.sample && (
-                                            <div>
-                                                <div className="text-xs font-medium text-muted-foreground mb-2">Sample Document:</div>
-                                                <pre className="p-3 bg-muted rounded-lg text-xs font-mono overflow-x-auto whitespace-pre-wrap">
-                                                    {JSON.stringify(col.sample, null, 2)}
-                                                </pre>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* Schedule Info */}
-            <Card className="mb-6">
-                <CardHeader className="py-3">
-                    <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <Calendar className="w-4 h-4" />
-                        Scraper Schedule (WIB)
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                        <div className="p-3 bg-muted/50 rounded-lg">
-                            <div className="font-medium">Token Refresh</div>
-                            <div className="text-muted-foreground">Daily at 5:50 AM</div>
-                        </div>
-                        <div className="p-3 bg-muted/50 rounded-lg">
-                            <div className="font-medium">Movie + Theatre Scrape</div>
-                            <div className="text-muted-foreground">Daily at 6:00 AM</div>
-                        </div>
-                        <div className="p-3 bg-muted/50 rounded-lg">
-                            <div className="font-medium">JIT Seat Scrape</div>
-                            <div className="text-muted-foreground">Every 15 min (9 AM - 11 PM)</div>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
             {/* Scrape History Table */}
-            <Card>
+            <Card className="mb-6">
                 <CardHeader className="py-3">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <RefreshCw className="w-4 h-4" />
@@ -456,6 +372,116 @@ export default function ScraperPage() {
                             )}
                         </TableBody>
                     </Table>
+                </CardContent>
+            </Card>
+
+            {/* JIT Monitor re-enabled */}
+            <div className="mb-6">
+                <JITGranularMonitor />
+            </div>
+
+            {/* Database Explorer Section */}
+            <Card className="mb-6">
+                <CardHeader className="py-3">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <FolderOpen className="w-4 h-4" />
+                        Database Explorer
+                        {!statsLoading && (
+                            <Badge variant="secondary" className="ml-2">
+                                {collections.reduce((sum, c) => sum + c.count, 0).toLocaleString()} documents
+                            </Badge>
+                        )}
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {statsLoading ? (
+                        <div className="space-y-4">
+                            <div className="h-10 bg-muted animate-pulse rounded-lg" />
+                            <div className="h-10 bg-muted animate-pulse rounded-lg" />
+                            <div className="h-10 bg-muted animate-pulse rounded-lg" />
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            {collections.map((col) => (
+                                <div key={col.name} className="border rounded-lg overflow-hidden">
+                                    <button
+                                        onClick={() => toggleCollection(col.name)}
+                                        className="w-full flex items-center justify-between p-3 bg-muted/30 hover:bg-muted/50 transition-colors"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            {expandedCollection === col.name ? (
+                                                <ChevronDown className="w-4 h-4" />
+                                            ) : (
+                                                <ChevronRight className="w-4 h-4" />
+                                            )}
+                                            <Database className="w-4 h-4 text-muted-foreground" />
+                                            <span className="font-mono text-sm font-medium">{col.name}</span>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <Badge variant="outline">
+                                                {col.count.toLocaleString()} docs
+                                            </Badge>
+                                            <span className="text-xs text-muted-foreground">
+                                                {col.fields.length} fields
+                                            </span>
+                                        </div>
+                                    </button>
+
+                                    {expandedCollection === col.name && (
+                                        <div className="p-4 border-t bg-background">
+                                            {/* Fields */}
+                                            <div className="mb-4">
+                                                <div className="text-xs font-medium text-muted-foreground mb-2">Fields:</div>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {col.fields.map((field) => (
+                                                        <Badge key={field} variant="secondary" className="text-xs font-mono">
+                                                            {field}
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Sample Document */}
+                                            {col.sample && (
+                                                <div>
+                                                    <div className="text-xs font-medium text-muted-foreground mb-2">Sample Document:</div>
+                                                    <pre className="p-3 bg-muted rounded-lg text-xs font-mono overflow-x-auto whitespace-pre-wrap">
+                                                        {JSON.stringify(col.sample, null, 2)}
+                                                    </pre>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* Schedule Info */}
+            <Card className="mb-6">
+                <CardHeader className="py-3">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        Scraper Schedule (WIB)
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div className="p-3 bg-muted/50 rounded-lg">
+                            <div className="font-medium">Token Refresh</div>
+                            <div className="text-muted-foreground">Daily at 5:50 AM</div>
+                        </div>
+                        <div className="p-3 bg-muted/50 rounded-lg">
+                            <div className="font-medium">Movie + Theatre Scrape</div>
+                            <div className="text-muted-foreground">Daily at 6:00 AM</div>
+                        </div>
+                        <div className="p-3 bg-muted/50 rounded-lg">
+                            <div className="font-medium">JIT Seat Scrape</div>
+                            <div className="text-muted-foreground">Every 15 min (9 AM - 11 PM)</div>
+                        </div>
+                    </div>
                 </CardContent>
             </Card>
         </div>
