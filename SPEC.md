@@ -835,4 +835,94 @@ npx tsc --noEmit                       # Type check
 npm run build                          # Production build
 ```
 
+---
+
+## Database Schema
+
+> Consolidated from `docs/DATABASE_SCHEMA.md`
+
+### Entity Relationship Diagram
+
+```mermaid
+erDiagram
+    MOVIE ||--o{ THEATRE_SCHEDULE : "shows in"
+    THEATRE_SCHEDULE ||--o{ ROOM : contains
+    ROOM ||--o{ SHOWTIME : has
+    THEATRE ||--o{ THEATRE_SCHEDULE : hosts
+    SHOWTIME ||--o| SEAT_OCCUPANCY : "has seats"
+    
+    MOVIE {
+        string id PK
+        string title
+        array genres
+        string poster
+        boolean is_presale
+        array cities
+    }
+    
+    THEATRE {
+        string theatre_id PK
+        string name
+        string merchant
+        string city
+        float lat
+        float lng
+        string place_id
+    }
+    
+    SHOWTIME {
+        string showtime_id PK
+        string time
+        boolean is_available
+    }
+    
+    SEAT_OCCUPANCY {
+        string showtime_id PK
+        int total_seats
+        int sold_seats
+        float occupancy_pct
+    }
+```
+
+### Firestore Collections
+
+| Collection | Document ID | Purpose |
+|------------|-------------|---------|
+| `theatres` | `{theatre_id}` | Master list of cinema locations |
+| `snapshots` | `latest` or `{YYYY-MM-DD}` | Daily movie data (slim) |
+| `schedules/{date}/movies` | `{movie_id}` | Full showtime data by date |
+| `seat_snapshots` | `{showtime_id}_{type}_{time}` | Seat occupancy data |
+| `scraper_runs` | `{timestamp}_{type}` | Scraper run logs |
+| `auth_tokens` | `tix_jwt` | JWT token storage |
+
+---
+
+## Seat Scraper Reference
+
+> Consolidated from `docs/SEAT_SCRAPER.md`
+
+### Merchant API Paths
+
+| Merchant | API Path |
+|----------|----------|
+| XXI | `xxi` |
+| CGV | `cgv` |
+| Cinépolis | `cinepolis` |
+
+### API Parameters
+
+```
+GET https://api-b2b.tix.id/v1/movies/{merchant}/layout
+    ?show_time_id={id}
+    &tz=7
+```
+
+> ⚠️ Use `tz=7`, NOT `Asia/Jakarta`!
+
+### Response Formats
+
+**Type A (XXI, CGV):** Nested structure with `seat_rows[]`
+**Type B (Cinépolis):** Flat list with `seat_status` field
+
+The scraper handles both formats automatically.
 
