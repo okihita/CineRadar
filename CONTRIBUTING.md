@@ -26,11 +26,29 @@ pip install -r requirements.txt
 
 # Install test dependencies
 pip install pytest ruff mypy
-
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your credentials
 ```
+
+### Environment Variables
+
+Create a `.env` file in the project root with the following variables:
+
+```bash
+# TIX.id Authentication (required for scraping)
+TIX_PHONE_NUMBER=+628123456789
+TIX_PASSWORD=your_password
+
+# Firebase/Firestore (required for data storage)
+FIREBASE_SERVICE_ACCOUNT='{"type": "service_account", ...}'  # Single-line escaped JSON
+
+# Google Maps (required for admin theatre map)
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_key
+
+# Firebase Project ID (required for REST API calls)
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=cineradar-481014
+```
+
+> **Tip:** For `FIREBASE_SERVICE_ACCOUNT`, download the JSON from Firebase Console → Project Settings → Service Accounts, then minify it to a single line.
+
 
 ### Running Tests
 
