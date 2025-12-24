@@ -85,8 +85,41 @@ jobs:
           path: data/movies_*.json
           retention-days: 7
 
-  seat-morning-scrape:
+  # Ensure valid token before parallel seat scrape jobs
+  token-refresh-pre-seat:
     needs: merge
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Refresh token via API
+        run: |
+          python -c "
+          import asyncio
+          from backend.infrastructure.token_refresher import TokenRefresher
+
+          async def refresh():
+              refresher = TokenRefresher()
+              token = await refresher.ensure_valid_token()
+              print(f'✅ Token valid: {token.minutes_until_expiry} min remaining')
+
+          asyncio.run(refresh())
+          "
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+  seat-morning-scrape:
+    needs: token-refresh-pre-seat
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -116,10 +149,7 @@ jobs:
           git pull origin ${{ github.ref_name }}
           ls -la data/
 
-      - name: Verify token TTL before seat scrape
-        run: python -m backend.cli.refresh_token --check-min-ttl 25
-        env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      # Token already refreshed by token-refresh-pre-seat job
 
       - name: Run morning seat scraper batch ${{ matrix.batch }}
         run: python -m backend.cli.cli seats --mode morning --batch ${{ matrix.batch }} --total-batches 9
