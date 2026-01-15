@@ -17,14 +17,21 @@ async function getAccessToken(): Promise<string> {
         return cachedToken.token;
     }
 
-    const base64Key = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
+    // Read from split environment variables (cleaner than Base64)
+    const projectId = process.env.FIREBASE_PROJECT_ID;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
-    if (!base64Key) {
-        console.error('FIREBASE_SERVICE_ACCOUNT_BASE64 not set');
+    if (!projectId || !clientEmail || !privateKey) {
+        console.error('Missing Firebase credentials');
         throw new Error('Missing Firebase service account credentials');
     }
 
-    const serviceAccount = JSON.parse(Buffer.from(base64Key, 'base64').toString());
+    const serviceAccount = {
+        project_id: projectId,
+        client_email: clientEmail,
+        private_key: privateKey,
+    };
 
     // Create JWT for Google OAuth2
     const now = Math.floor(Date.now() / 1000);

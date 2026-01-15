@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getScraperRuns } from '@/services/theatreService';
+import { firestoreRestClient } from '@/lib/firestore-rest';
+import { ScraperRun } from '@/types';
 
 // Helper to get date string in WIB timezone
 function getWIBDateString(date: Date): string {
@@ -13,8 +14,9 @@ function getWIBHour(date: Date): number {
 
 export async function GET() {
     try {
-        // Fetch scraper runs
-        const runs = await getScraperRuns(30);
+        // Fetch scraper runs directly from Firestore (server-side)
+        const docs = await firestoreRestClient.getCollectionWithQuery('scraper_runs', 'timestamp', 30);
+        const runs = docs as unknown as ScraperRun[];
 
         // Get today's date in WIB timezone
         const todayWIB = getWIBDateString(new Date());

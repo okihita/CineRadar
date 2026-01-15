@@ -18,13 +18,20 @@ async function getAccessToken(): Promise<string> {
         return cachedToken.token;
     }
 
-    const base64Key = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
+    // Read from split environment variables (cleaner than Base64)
+    const projectId = process.env.FIREBASE_PROJECT_ID;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
-    if (!base64Key) {
-        throw new Error('FIREBASE_SERVICE_ACCOUNT_BASE64 not set');
+    if (!projectId || !clientEmail || !privateKey) {
+        throw new Error('Missing Firebase credentials: FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, or FIREBASE_PRIVATE_KEY');
     }
 
-    const serviceAccount = JSON.parse(Buffer.from(base64Key, 'base64').toString());
+    const serviceAccount = {
+        project_id: projectId,
+        client_email: clientEmail,
+        private_key: privateKey,
+    };
 
     // Create JWT for Google OAuth2
     const now = Math.floor(Date.now() / 1000);
@@ -111,23 +118,41 @@ function parseDocument(doc: { name: string; fields?: Record<string, FirestoreVal
 
 export class FirestoreRestClient {
     /**
-     * Get all documents from a collection
+     * Get all documents from a collection (with pagination to get ALL docs)
      */
     async getCollection(collectionName: string): Promise<Record<string, unknown>[]> {
         try {
             const token = await getAccessToken();
+            const allDocuments: Record<string, unknown>[] = [];
+            let pageToken: string | undefined;
 
-            const response = await fetch(`${FIRESTORE_BASE_URL}/${collectionName}`, {
-                headers: { 'Authorization': `Bearer ${token}` },
-            });
+            // Firestore REST API has a default page size of ~100
+            // We need to paginate to get all documents
+            do {
+                const url = new URL(`${FIRESTORE_BASE_URL}/${collectionName}`);
+                url.searchParams.set('pageSize', '500'); // Max allowed
+                if (pageToken) {
+                    url.searchParams.set('pageToken', pageToken);
+                }
 
-            if (!response.ok) {
-                console.error(`Failed to get ${collectionName}: ${response.status}`);
-                return [];
-            }
+                const response = await fetch(url.toString(), {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                });
 
-            const data = await response.json();
-            return (data.documents || []).map(parseDocument);
+                if (!response.ok) {
+                    console.error(`Failed to get ${collectionName}: ${response.status}`);
+                    break;
+                }
+
+                const data = await response.json();
+                const documents = (data.documents || []).map(parseDocument);
+                allDocuments.push(...documents);
+
+                // Get next page token
+                pageToken = data.nextPageToken;
+            } while (pageToken);
+
+            return allDocuments;
         } catch (error) {
             console.error(`Error getting ${collectionName}:`, error);
             return [];
