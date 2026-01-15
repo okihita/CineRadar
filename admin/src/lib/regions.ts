@@ -4,22 +4,22 @@
  */
 export const REGION_CITIES: Record<string, string[]> = {
     'Jawa': [
-        'JAKARTA', 'BANDUNG', 'SURABAYA', 'SEMARANG', 'YOGYAKARTA', 'MALANG', 'BEKASI', 
-        'TANGERANG', 'DEPOK', 'BOGOR', 'CIREBON', 'SOLO', 'SERANG', 'CILEGON', 
-        'TASIKMALAYA', 'KARAWANG', 'PURWAKARTA', 'GARUT', 'INDRAMAYU', 'SUMEDANG', 
-        'GRESIK', 'SIDOARJO', 'MOJOKERTO', 'KEDIRI', 'MADIUN', 'PONOROGO', 'PROBOLINGGO', 
+        'JAKARTA', 'BANDUNG', 'SURABAYA', 'SEMARANG', 'YOGYAKARTA', 'MALANG', 'BEKASI',
+        'TANGERANG', 'DEPOK', 'BOGOR', 'CIREBON', 'SOLO', 'SERANG', 'CILEGON',
+        'TASIKMALAYA', 'KARAWANG', 'PURWAKARTA', 'GARUT', 'INDRAMAYU', 'SUMEDANG',
+        'GRESIK', 'SIDOARJO', 'MOJOKERTO', 'KEDIRI', 'MADIUN', 'PONOROGO', 'PROBOLINGGO',
         'TEGAL', 'PEKALONGAN', 'PURWOKERTO', 'KLATEN', 'JEMBER', 'BLITAR', 'BONDOWOSO',
         'CIANJUR', 'CIKARANG'
     ],
     'Sumatera': [
-        'MEDAN', 'PALEMBANG', 'PEKANBARU', 'PADANG', 'JAMBI', 'LAMPUNG', 'BATAM', 
-        'DUMAI', 'DURI', 'LUBUKLINGGAU', 'PRABUMULIH', 'PANGKAL PINANG', 
+        'MEDAN', 'PALEMBANG', 'PEKANBARU', 'PADANG', 'JAMBI', 'LAMPUNG', 'BATAM',
+        'DUMAI', 'DURI', 'LUBUKLINGGAU', 'PRABUMULIH', 'PANGKAL PINANG',
         'PEMATANG SIANTAR', 'RANTAU PRAPAT', 'ROKAN HILIR', 'KISARAN', 'TANJUNG PINANG',
         'BENGKULU', 'BINJAI'
     ],
     'Kalimantan': [
-        'BALIKPAPAN', 'BANJARMASIN', 'PONTIANAK', 'SAMARINDA', 'TARAKAN', 
-        'PALANGKARAYA', 'SINGKAWANG', 'SAMPIT', 'BANJARBARU', 'KETAPANG', 
+        'BALIKPAPAN', 'BANJARMASIN', 'PONTIANAK', 'SAMARINDA', 'TARAKAN',
+        'PALANGKARAYA', 'SINGKAWANG', 'SAMPIT', 'BANJARBARU', 'KETAPANG',
         'KUALA KAPUAS', 'BONTANG'
     ],
     'Sulawesi': [
@@ -55,3 +55,15 @@ export const MERCHANT_COLORS = {
 export function getMerchantColor(merchant: string) {
     return MERCHANT_COLORS[merchant as keyof typeof MERCHANT_COLORS] ?? MERCHANT_COLORS['Cinépolis'];
 }
+
+// Region center coordinates for map panning
+export const REGION_CENTERS: Record<string, { lat: number; lng: number; zoom: number }> = {
+    'Jawa': { lat: -7.0, lng: 110.4, zoom: 7 },
+    'Sumatera': { lat: -0.5, lng: 101.5, zoom: 6 },
+    'Kalimantan': { lat: 0.5, lng: 116.5, zoom: 6 },
+    'Sulawesi': { lat: -2.0, lng: 121.0, zoom: 6.5 },
+    'Bali & NT': { lat: -8.5, lng: 118.0, zoom: 7 },
+    'Papua & Maluku': { lat: -3.5, lng: 135.0, zoom: 6 },
+    'all': { lat: -2.5, lng: 118, zoom: 5.5 },
+};
+

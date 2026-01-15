@@ -51,7 +51,7 @@ class RefreshTokenUseCase:
         self.scraper = scraper
         self.token_repo = token_repo
 
-    async def execute(self, phone: str = None) -> RefreshTokenResult:
+    async def execute(self, phone: str | None = None) -> RefreshTokenResult:
         """Execute token refresh.
 
         Args:

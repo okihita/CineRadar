@@ -50,7 +50,7 @@ class FileMovieRepository(IMovieRepository):
             data = result.to_dict()
 
             # Add city_stats
-            city_stats = {}
+            city_stats: dict[str, int] = {}
             for movie in result.movies:
                 for city in movie.cities:
                     city_stats[city] = city_stats.get(city, 0) + 1

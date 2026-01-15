@@ -7,13 +7,14 @@ Implements ITokenRepository using Firebase Firestore.
 import json
 import os
 import tempfile
+from typing import Any
 
 from backend.application.ports.storage import ITokenRepository
 from backend.domain.errors import FirestoreError
 from backend.domain.models import Token
 
 
-def _get_firestore_client():
+def _get_firestore_client() -> Any:
     """Get Firestore client with proper credentials.
 
     Supports:
@@ -57,12 +58,12 @@ class FirestoreTokenRepository(ITokenRepository):
     DOC_ID = "tix_jwt"
     DEFAULT_TTL_HOURS = 20
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize repository."""
         self._db = None
 
     @property
-    def db(self):
+    def db(self) -> Any:
         """Lazy-load Firestore client."""
         if self._db is None:
             self._db = _get_firestore_client()
@@ -144,7 +145,7 @@ class FirestoreTokenRepository(ITokenRepository):
             print(f"⚠️ Error deleting token: {e}")
             return False
 
-    def get_token_info(self) -> dict | None:
+    def get_token_info(self) -> dict[str, str | int | None] | None:
         """Get token info without loading full Token object.
 
         Returns:
@@ -168,7 +169,7 @@ def get_storage() -> FirestoreTokenRepository:
     return FirestoreTokenRepository()
 
 
-def store_token(token: str, phone: str = None, refresh_token: str = None) -> bool:
+def store_token(token: str, phone: str | None = None, refresh_token: str | None = None) -> bool:
     """Store a token string (legacy compat).
 
     Args:

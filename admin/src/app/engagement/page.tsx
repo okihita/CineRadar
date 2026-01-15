@@ -27,20 +27,39 @@ const TIER_COLORS: Record<string, string> = {
 export default function EngagementPage() {
     const [data, setData] = useState<EngagementData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
     const fetchData = async () => {
         setLoading(true);
+        setError(null);
         try {
             const res = await fetch('/api/engagement');
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
             setData(json);
             setLastUpdated(new Date());
-        } catch (e) { }
-        finally { setLoading(false); }
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : 'Failed to load engagement data';
+            setError(msg);
+            console.error('Engagement fetch error:', e);
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => { fetchData(); }, []);
+
+    if (error) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <p className="text-red-500 mb-2">⚠️ {error}</p>
+                    <button onClick={fetchData} className="text-sm text-primary hover:underline">Retry</button>
+                </div>
+            </div>
+        );
+    }
 
     if (loading || !data) {
         return (

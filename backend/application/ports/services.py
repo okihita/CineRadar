@@ -68,7 +68,7 @@ class INotificationService(ABC):
         movies: int,
         cities: int,
         success: bool,
-        error: str = None,
+        error: str | None = None,
     ) -> bool:
         """Send a scrape completion report.
 

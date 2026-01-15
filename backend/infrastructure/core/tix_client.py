@@ -4,58 +4,16 @@ Core scraping logic for movie availability and showtimes.
 """
 
 import asyncio
-import json
-import os
 import re
 import time
 from datetime import datetime
 
-import aiohttp
 from playwright.async_api import async_playwright
 
 from backend.config import CITIES, LOCALE, TIMEZONE, USER_AGENT, VIEWPORT
 from backend.infrastructure.core.base_scraper import BaseScraper
+from backend.infrastructure.core.geocoder import Geocoder
 
-# Geocoding cache file (relative to project root)
-GEOCODE_CACHE_FILE = os.path.join(
-    os.path.dirname(__file__), "..", "..", "data", "geocode_cache.json"
-)
-
-
-async def geocode_address(
-    address: str, city: str, session: aiohttp.ClientSession, cache: dict
-) -> dict | None:
-    """
-    Geocode an address using OpenStreetMap Nominatim.
-    Returns {lat, lng} or None if not found.
-    """
-    cache_key = f"{address}|{city}"
-
-    # Check cache first
-    if cache_key in cache:
-        return cache[cache_key]
-
-    # Build search query
-    search_query = f"{address}, {city}, Indonesia"
-
-    try:
-        url = "https://nominatim.openstreetmap.org/search"
-        params = {"q": search_query, "format": "json", "limit": 1, "countrycodes": "id"}
-        headers = {"User-Agent": "CineRadar/1.0 (cinema data aggregator)"}
-
-        async with session.get(url, params=params, headers=headers) as response:
-            if response.status == 200:
-                data = await response.json()
-                if data and len(data) > 0:
-                    result = {"lat": float(data[0]["lat"]), "lng": float(data[0]["lon"])}
-                    cache[cache_key] = result
-                    return result
-
-        # If not found, try with just city name (fallback to city center)
-        return None
-
-    except Exception:
-        return None
 
 
 class CineRadarScraper(BaseScraper):
@@ -203,86 +161,11 @@ class CineRadarScraper(BaseScraper):
         """
         Geocode all theatre addresses in the movie data.
         Uses caching to avoid repeated API calls.
+
+        Delegates to Geocoder class for actual geocoding.
         """
-        self.log("📍 Starting theatre geocoding...")
-
-        # Load cache
-        geocode_cache = {}
-        try:
-            if os.path.exists(GEOCODE_CACHE_FILE):
-                with open(GEOCODE_CACHE_FILE) as f:
-                    geocode_cache = json.load(f)
-                self.log(f"   Loaded {len(geocode_cache)} cached locations")
-        except Exception:
-            pass
-
-        # Collect all unique theatre addresses
-        theatres_to_geocode = []
-        for _movie_id, movie in movie_map.items():
-            if "schedules" in movie:
-                for city_name, theatres in movie["schedules"].items():
-                    for theatre in theatres:
-                        if theatre.get("address"):
-                            cache_key = f"{theatre['address']}|{city_name}"
-                            if cache_key not in geocode_cache:
-                                theatres_to_geocode.append(
-                                    {
-                                        "address": theatre["address"],
-                                        "city": city_name,
-                                        "theatre": theatre,
-                                    }
-                                )
-
-        self.log(f"   {len(theatres_to_geocode)} theatres need geocoding")
-
-        # Geocode with rate limiting (1 request per second for Nominatim)
-        geocoded = 0
-        failed = 0
-
-        async with aiohttp.ClientSession() as session:
-            for i, item in enumerate(theatres_to_geocode):
-                coords = await geocode_address(
-                    item["address"], item["city"], session, geocode_cache
-                )
-
-                if coords:
-                    item["theatre"]["lat"] = coords["lat"]
-                    item["theatre"]["lng"] = coords["lng"]
-                    geocoded += 1
-                else:
-                    failed += 1
-
-                # Progress every 10
-                if (i + 1) % 10 == 0:
-                    self.log(
-                        f"   Geocoded {i + 1}/{len(theatres_to_geocode)} ({geocoded} ok, {failed} failed)"
-                    )
-
-                # Rate limit: 1 request per second for Nominatim
-                await asyncio.sleep(1.1)
-
-        # Also update theatres that were in cache
-        for _movie_id, movie in movie_map.items():
-            if "schedules" in movie:
-                for city_name, theatres in movie["schedules"].items():
-                    for theatre in theatres:
-                        if theatre.get("address") and "lat" not in theatre:
-                            cache_key = f"{theatre['address']}|{city_name}"
-                            if cache_key in geocode_cache:
-                                theatre["lat"] = geocode_cache[cache_key]["lat"]
-                                theatre["lng"] = geocode_cache[cache_key]["lng"]
-
-        # Save cache
-        try:
-            os.makedirs(os.path.dirname(GEOCODE_CACHE_FILE), exist_ok=True)
-            with open(GEOCODE_CACHE_FILE, "w") as f:
-                json.dump(geocode_cache, f, indent=2)
-            self.log(f"   Saved {len(geocode_cache)} locations to cache")
-        except Exception as e:
-            self.log(f"   ⚠️ Failed to save cache: {e}")
-
-        self.log(f"📍 Geocoding complete: {geocoded} new, {failed} failed")
-        return movie_map
+        geocoder = Geocoder(logger=self.log)
+        return await geocoder.geocode_theatres_in_movie_data(movie_map)
 
     async def scrape(
         self,

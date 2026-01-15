@@ -5,6 +5,7 @@ Implements ITheatreRepository using Firebase Firestore.
 """
 
 from datetime import datetime
+from typing import Any
 
 from backend.application.ports.storage import ITheatreRepository
 from backend.domain.models import Theatre
@@ -31,11 +32,11 @@ class FirestoreTheatreRepository(ITheatreRepository):
 
     COLLECTION = "theatres"
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._db = None
 
     @property
-    def db(self):
+    def db(self) -> Any:
         if self._db is None:
             self._db = _get_firestore_client()
         return self._db
@@ -160,7 +161,7 @@ class FirestoreTheatreRepository(ITheatreRepository):
             return [t for t in all_theatres if not t.has_location]
 
     def update_location(
-        self, theatre_id: str, lat: float, lng: float, place_id: str = None
+        self, theatre_id: str, lat: float, lng: float, place_id: str | None = None
     ) -> bool:
         """Update theatre location."""
         try:

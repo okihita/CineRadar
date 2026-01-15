@@ -42,6 +42,7 @@ function getHeatmapColor(value: number) {
 export default function AnalyticsPage() {
     const [data, setData] = useState<AnalyticsData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [dateRange, setDateRange] = useState(getDefaultDateRange());
     const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
     const [selectedScenario, setSelectedScenario] = useState(2); // Current
@@ -50,16 +51,34 @@ export default function AnalyticsPage() {
 
     const fetchData = async () => {
         setLoading(true);
+        setError(null);
         try {
             const res = await fetch('/api/analytics');
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
             setData(json);
             setLastUpdated(new Date());
-        } catch (e) { }
-        finally { setLoading(false); }
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : 'Failed to load analytics';
+            setError(msg);
+            console.error('Analytics fetch error:', e);
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => { fetchData(); }, []);
+
+    if (error) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <p className="text-red-500 mb-2">⚠️ {error}</p>
+                    <button onClick={fetchData} className="text-sm text-primary hover:underline">Retry</button>
+                </div>
+            </div>
+        );
+    }
 
     if (loading || !data) {
         return (

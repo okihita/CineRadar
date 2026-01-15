@@ -4,6 +4,8 @@ Firestore Movie Repository
 Implements IMovieRepository using Firebase Firestore.
 """
 
+from typing import Any
+
 from backend.application.ports.storage import IMovieRepository
 from backend.domain.models import Movie, ScrapeResult
 from backend.infrastructure.repositories.firestore_token import _get_firestore_client
@@ -28,11 +30,11 @@ class FirestoreMovieRepository(IMovieRepository):
     COLLECTION = "snapshots"
     LATEST_DOC = "latest"
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._db = None
 
     @property
-    def db(self):
+    def db(self) -> Any:
         if self._db is None:
             self._db = _get_firestore_client()
         return self._db
@@ -52,7 +54,7 @@ class FirestoreMovieRepository(IMovieRepository):
             data = result.to_dict()
 
             # Add city_stats
-            city_stats = {}
+            city_stats: dict[str, int] = {}
             for movie in result.movies:
                 for city in movie.cities:
                     city_stats[city] = city_stats.get(city, 0) + 1

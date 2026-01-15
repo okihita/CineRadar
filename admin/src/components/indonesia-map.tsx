@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { APIProvider, Map, InfoWindow, useMap, useMapsLibrary } from '@vis.gl/react-google-maps';
-import { MarkerClusterer, type Cluster, SuperClusterAlgorithm } from '@googlemaps/markerclusterer';
+import { MarkerClusterer, SuperClusterAlgorithm } from '@googlemaps/markerclusterer';
 import { Theatre } from '@/types';
 import { ExternalLink, Navigation } from 'lucide-react';
 
@@ -100,15 +100,22 @@ function ClusteredMarkers({ theatres, selectedTheatre, onTheatreSelect }: {
     const map = useMap();
     // Wait for marker library to load before creating markers
     const markerLib = useMapsLibrary('marker');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const markerLibRef = useRef<any>(null);
     const [clusterer, setClusterer] = useState<MarkerClusterer | null>(null);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [markerRefs, setMarkerRefs] = useState<Record<string, any>>({});
 
     const selectedId = selectedTheatre?.theatre_id ?? null;
 
-    // Create clusterer once
+    // Keep markerLib in ref so renderer callback can access it
     useEffect(() => {
-        if (!map) return;
+        markerLibRef.current = markerLib;
+    }, [markerLib]);
+
+    // Create clusterer once (after markerLib is ready)
+    useEffect(() => {
+        if (!map || !markerLib) return;
 
         const newClusterer = new MarkerClusterer({
             map,
@@ -119,6 +126,7 @@ function ClusteredMarkers({ theatres, selectedTheatre, onTheatreSelect }: {
                     // Count by chain
                     let xxi = 0, cgv = 0, cine = 0;
                     clusterMarkers?.forEach(m => {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const theatre = (m as any)._theatre as Theatre;
                         if (theatre?.merchant === 'XXI') xxi++;
                         else if (theatre?.merchant === 'CGV') cgv++;
@@ -130,7 +138,9 @@ function ClusteredMarkers({ theatres, selectedTheatre, onTheatreSelect }: {
                     const tooltipText = `${count} theatres\nXXI: ${xxi} (${Math.round(xxi / count * 100)}%)\nCGV: ${cgv} (${Math.round(cgv / count * 100)}%)\nCinépolis: ${cine} (${Math.round(cine / count * 100)}%)`;
                     const content = createMarkerContent(svg, tooltipText);
 
-                    const marker = new google.maps.marker.AdvancedMarkerElement({
+                    // Use markerLib from ref (guaranteed available since we check in useEffect deps)
+                    const lib = markerLibRef.current!;
+                    const marker = new lib.AdvancedMarkerElement({
                         position,
                         content,
                         zIndex: 1000,
@@ -142,8 +152,12 @@ function ClusteredMarkers({ theatres, selectedTheatre, onTheatreSelect }: {
         });
 
         setClusterer(newClusterer);
-        return () => newClusterer.setMap(null);
-    }, [map]);
+        return () => {
+            newClusterer.clearMarkers();
+            // MarkerClusterer cleanup - setMap is available but not in types
+            (newClusterer as unknown as { setMap: (map: null) => void }).setMap(null);
+        };
+    }, [map, markerLib]);
 
     // Update markers when theatres change
     useEffect(() => {
@@ -165,10 +179,11 @@ function ClusteredMarkers({ theatres, selectedTheatre, onTheatreSelect }: {
             const marker = new markerLib.AdvancedMarkerElement({
                 position: { lat: theatre.lat, lng: theatre.lng },
                 title: theatre.name,
-                content: createPinContent(color, isSelected),
+                content: createPinContent(color, isSelected, markerLib),
             });
 
             // Store theatre data on marker
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (marker as any)._theatre = theatre;
 
             marker.addListener('click', () => onTheatreSelect(theatre));
@@ -236,7 +251,8 @@ function createMarkerContent(svg: string, tooltipText?: string): HTMLDivElement 
 }
 
 // Create pin with Google Maps PinElement (native teardrop shape) + Clapperboard glyph
-function createPinContent(color: string, isSelected: boolean): HTMLElement {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function createPinContent(color: string, isSelected: boolean, markerLib: any): HTMLElement {
     // Create clapperboard glyph SVG
     const glyphSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     glyphSvg.setAttribute('width', '16');
@@ -255,8 +271,8 @@ function createPinContent(color: string, isSelected: boolean): HTMLElement {
         <path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>
     `;
 
-    // Use Google Maps PinElement for native teardrop shape
-    const pin = new google.maps.marker.PinElement({
+    // Use markerLib.PinElement for native teardrop shape
+    const pin = new markerLib.PinElement({
         background: color,
         borderColor: '#ffffff',
         glyphColor: 'white',
@@ -329,6 +345,18 @@ export function IndonesiaMap({ theatres, selectedTheatre, onTheatreSelect, apiKe
             '_blank'
         );
     };
+
+    if (!apiKey) {
+        return (
+            <div className="w-full aspect-[2/1] bg-muted/30 flex items-center justify-center border border-dashed border-red-300 rounded-lg">
+                <div className="text-center p-6 bg-background/80 backdrop-blur rounded-lg shadow-sm">
+                    <div className="text-red-500 font-bold mb-2">Configuration Error</div>
+                    <p className="text-sm text-gray-600 mb-2">Google Maps API Key is missing.</p>
+                    <p className="text-xs text-gray-400 font-mono bg-gray-100 p-1.5 rounded">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="relative w-full aspect-[2/1] bg-muted/30 overflow-hidden">

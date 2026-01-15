@@ -125,7 +125,7 @@ class ITheatreRepository(ABC):
 
     @abstractmethod
     def update_location(
-        self, theatre_id: str, lat: float, lng: float, place_id: str = None
+        self, theatre_id: str, lat: float, lng: float, place_id: str | None = None
     ) -> bool:
         """Update theatre location.
 
@@ -203,7 +203,7 @@ class IScraperRunRepository(ABC):
         movies: int,
         theatres: int,
         cities: int,
-        error: str = None,
+        error: str | None = None,
     ) -> bool:
         """Log a scraper run.
 
@@ -220,7 +220,7 @@ class IScraperRunRepository(ABC):
         pass
 
     @abstractmethod
-    def get_recent_runs(self, limit: int = 10) -> list[dict]:
+    def get_recent_runs(self, limit: int = 10) -> list[dict[str, str | int | None]]:
         """Get recent scraper runs.
 
         Args:
