@@ -17,14 +17,14 @@ async function getAccessToken(): Promise<string> {
         return cachedToken.token;
     }
 
-    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    const base64Key = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
 
-    if (!serviceAccountJson) {
-        console.error('FIREBASE_SERVICE_ACCOUNT_KEY not set');
+    if (!base64Key) {
+        console.error('FIREBASE_SERVICE_ACCOUNT_BASE64 not set');
         throw new Error('Missing Firebase service account credentials');
     }
 
-    const serviceAccount = JSON.parse(serviceAccountJson);
+    const serviceAccount = JSON.parse(Buffer.from(base64Key, 'base64').toString());
 
     // Create JWT for Google OAuth2
     const now = Math.floor(Date.now() / 1000);
