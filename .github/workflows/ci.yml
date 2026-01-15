@@ -10,6 +10,7 @@ on:
       - 'tests/**'
       - 'requirements.txt'
       - 'admin/**'
+      - 'web/**'
   pull_request:
     branches: [main]
 
@@ -50,9 +51,9 @@ jobs:
         with:
           fail_ci_if_error: false
 
-  # Frontend: Type Check and Build
-  frontend:
-    name: Frontend
+  # Admin Frontend
+  admin-frontend:
+    name: Admin Frontend
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -85,3 +86,35 @@ jobs:
           NEXT_PUBLIC_FIREBASE_API_KEY: dummy
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: dummy
           NEXT_PUBLIC_FIREBASE_PROJECT_ID: dummy
+
+  # Web Frontend (Consumer App)
+  web-frontend:
+    name: Web Frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: pnpm exec tsc --noEmit
+
+      - name: Build check
+        run: pnpm build
