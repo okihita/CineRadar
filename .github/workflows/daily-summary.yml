@@ -1,0 +1,27 @@
+# Daily Summary Report - Midnight WIB
+name: Daily Summary
+
+on:
+  schedule:
+    - cron: '0 17 * * *'  # 00:00 WIB (midnight) = 17:00 UTC
+  workflow_dispatch:
+
+jobs:
+  generate-summary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install google-cloud-firestore google-auth
+
+      - name: Generate daily summary
+        run: python -m backend.cli.daily_summary
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}

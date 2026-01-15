@@ -37,7 +37,8 @@ def merge_seat_batches(data_dir: str = "data") -> list:
         for batch_file in sorted(batch_files):
             with open(batch_file, encoding="utf-8") as f:
                 batch_data = json.load(f)
-                seats = batch_data.get("seats", [])
+                # Support both 'results' (new) and 'seats' (legacy) keys
+                seats = batch_data.get("results", batch_data.get("seats", []))
                 all_seats.extend(seats)
                 print(f"   + {batch_file.name}: {len(seats)} seats")
     else:
@@ -47,7 +48,8 @@ def merge_seat_batches(data_dir: str = "data") -> list:
             if "batch" not in seat_file.name:
                 with open(seat_file, encoding="utf-8") as f:
                     data = json.load(f)
-                    seats = data.get("seats", [])
+                    # Support both 'results' (new) and 'seats' (legacy) keys
+                    seats = data.get("results", data.get("seats", []))
                     all_seats.extend(seats)
                     print(f"   + {seat_file.name}: {len(seats)} seats")
 
