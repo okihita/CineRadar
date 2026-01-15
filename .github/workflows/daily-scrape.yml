@@ -14,23 +14,24 @@ jobs:
       fail-fast: false
       matrix:
         batch: [0, 1, 2, 3, 4, 5, 6, 7, 8]
-    
+
     steps:
       - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
-          playwright install chromium
-          playwright install-deps chromium
+          uv sync
+          uv run playwright install chromium
+          uv run playwright install-deps chromium
 
       - name: Run scraper batch ${{ matrix.batch }}
-        run: python -m backend.cli --schedules --batch ${{ matrix.batch }} --total-batches 9
+        run: uv run python -m backend.cli --schedules --batch ${{ matrix.batch }} --total-batches 9
 
       - name: Upload batch artifact
         uses: actions/upload-artifact@v4
@@ -43,16 +44,18 @@ jobs:
     needs: scrape
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    
+
     steps:
       - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install google-cloud-firestore pydantic>=2.5.0
+        run: uv sync
 
       - name: Download all batch artifacts
         uses: actions/download-artifact@v4
@@ -62,18 +65,18 @@ jobs:
           merge-multiple: true
 
       - name: Merge batches
-        run: python -m backend.cli.merge_batches
+        run: uv run python -m backend.cli.merge_batches
 
       - name: Validate merged data
-        run: python -m backend.cli.validate
+        run: uv run python -m backend.cli.validate
 
       - name: Upload to Firestore
-        run: python -m backend.cli.populate_firestore
+        run: uv run python -m backend.cli.populate_firestore
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
       - name: Upload per-movie schedules
-        run: python -m backend.cli.upload_schedules
+        run: uv run python -m backend.cli.upload_schedules
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
@@ -90,21 +93,22 @@ jobs:
     needs: merge
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    
+
     steps:
       - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: uv sync
 
       - name: Refresh token via API
         run: |
-          python -c "
+          uv run python -c "
           import asyncio
           from backend.infrastructure.token_refresher import TokenRefresher
 
@@ -126,23 +130,24 @@ jobs:
       fail-fast: false
       matrix:
         batch: [0, 1, 2, 3, 4, 5, 6, 7, 8]
-    
+
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref }}
           fetch-depth: 0
 
+      - uses: astral-sh/setup-uv@v5
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
-          playwright install chromium
-          playwright install-deps chromium
+          uv sync
+          uv run playwright install chromium
+          uv run playwright install-deps chromium
 
       - name: Pull latest movie data
         run: |
@@ -152,7 +157,7 @@ jobs:
       # Token already refreshed by token-refresh-pre-seat job
 
       - name: Run morning seat scraper batch ${{ matrix.batch }}
-        run: python -m backend.cli.cli seats --mode morning --batch ${{ matrix.batch }} --total-batches 9
+        run: uv run python -m backend.cli.cli seats --mode morning --batch ${{ matrix.batch }} --total-batches 9
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
@@ -167,16 +172,18 @@ jobs:
     needs: seat-morning-scrape
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    
+
     steps:
       - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install google-cloud-firestore
+        run: uv sync
 
       - name: Download all seat batch artifacts
         uses: actions/download-artifact@v4
@@ -186,7 +193,7 @@ jobs:
           merge-multiple: true
 
       - name: Merge and upload seat data
-        run: python -m backend.cli.upload_seats
+        run: uv run python -m backend.cli.upload_seats
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 

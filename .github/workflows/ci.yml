@@ -24,24 +24,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: astral-sh/setup-uv@v5
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install ruff mypy pytest pytest-cov pytest-asyncio
+        run: uv sync --all-extras
 
       - name: Lint
-        run: ruff check backend/ --output-format=github
+        run: uv run ruff check backend/ --output-format=github
 
       - name: Type check domain layer
-        run: mypy backend/domain/ --ignore-missing-imports
+        run: uv run mypy backend/domain/ --ignore-missing-imports
 
       - name: Run tests
-        run: pytest tests/ -v --tb=short --cov=backend --cov-report=term-missing
+        run: uv run pytest tests/ -v --tb=short --cov=backend --cov-report=term-missing
         env:
           PYTHONPATH: ${{ github.workspace }}
 

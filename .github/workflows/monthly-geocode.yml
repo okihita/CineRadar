@@ -18,21 +18,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - uses: astral-sh/setup-uv@v5
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: uv sync
 
       - name: Run geocoder
-        run: python -m backend.cli.monthly_geocode
+        run: uv run python -m backend.cli.monthly_geocode
         env:
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
 
       - name: Upload to Firestore
-        run: python -m backend.cli.populate_firestore
+        run: uv run python -m backend.cli.populate_firestore
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}

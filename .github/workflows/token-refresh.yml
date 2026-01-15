@@ -13,27 +13,28 @@ jobs:
   refresh:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    
+
     steps:
       - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
-          playwright install chromium
-          playwright install-deps chromium
+          uv sync
+          uv run playwright install chromium
+          uv run playwright install-deps chromium
           sudo apt-get install -y xvfb
 
       - name: Refresh TIX.id token (with xvfb)
         id: refresh
         run: |
           xvfb-run --auto-servernum --server-args="-screen 0 1280x720x24" \
-            python -m backend.cli.refresh_token
+            uv run python -m backend.cli.refresh_token
         env:
           TIX_PHONE_NUMBER: ${{ secrets.TIX_PHONE_NUMBER }}
           TIX_PASSWORD: ${{ secrets.TIX_PASSWORD }}
@@ -41,7 +42,7 @@ jobs:
 
       - name: Verify token stored
         if: success()
-        run: python -m backend.cli.refresh_token --check
+        run: uv run python -m backend.cli.refresh_token --check
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
