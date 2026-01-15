@@ -15,7 +15,6 @@ from backend.infrastructure.core.base_scraper import BaseScraper
 from backend.infrastructure.core.geocoder import Geocoder
 
 
-
 class CineRadarScraper(BaseScraper):
     """Movie availability scraper for TIX.id"""
 

@@ -12,7 +12,6 @@ from typing import Any
 
 import aiohttp
 
-
 # Default cache file location
 DEFAULT_CACHE_PATH = os.path.join(
     os.path.dirname(__file__), "..", "..", "data", "geocode_cache.json"

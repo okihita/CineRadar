@@ -65,7 +65,7 @@ class SeatScraper(BaseScraper):
         - 1: Available (can purchase)
         - 5: Unavailable (sold or blocked - cannot distinguish)
         - 6: Unavailable (sold or blocked - cannot distinguish)
-        
+
         Returns:
             1 if available, 0 if unavailable, -1 if other
         """
@@ -111,7 +111,7 @@ class SeatScraper(BaseScraper):
                 # But Cinépolis often sends it in a way that we might just want to store as is
                 status = item.get("seat_status", item.get("status", 0))
                 status_code = self._count_seat(status, counters)
-                # For flat, we might just have a list of all seats. 
+                # For flat, we might just have a list of all seats.
                 # To keep it consistent, we wrap in a single "ALL" row if nested list not found
                 if status_code != -1:
                     if not layout_grid:
