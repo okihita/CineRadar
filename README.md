@@ -51,7 +51,6 @@ CineRadar/
 │   ├── daily-scrape.yml     # 6am WIB daily
 │   └── monthly-geocode.yml  # 1st of month
 ├── populate_firestore.py    # Upload to Firebase
-└── requirements.txt
 ```
 
 ## Quick Start
@@ -64,10 +63,10 @@ git clone https://github.com/okihita/CineRadar.git
 cd CineRadar
 
 # Install Python dependencies
-pip install -r requirements.txt
+uv sync
 
 # Install Playwright browsers
-playwright install chromium
+uv run playwright install chromium
 ```
 
 ### Run Scraper
