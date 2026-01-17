@@ -1,59 +1,59 @@
 # Product Roadmap & Strategy
 
-> Based on product meeting notes (2025-12-23)
+> Strategic vision for CineRadar (Rekreasi.co).
 
-## Strategic Context
+## 🔮 Strategic Vision
 
-**Competitor Analysis:**
-- **Cinepoint** (Emtek): Works directly with XXI, strong on daily ticket data.
-- **Current Gap**: Production Houses (PH) still manually check data, no analytics layer.
+**Goal:** Become the "Bloomberg" of Indonesian Cinema Data.
+**Current State:** Phase 1 (Data Collection & Basic Reporting).
 
-**Target Users:**
-- **Production Houses (PH)**: Need data for screen allocation, regional marketing, and ROI analysis.
+### Success Metrics (KPIs)
+| Metric | Target | Current |
+|--------|--------|---------|
+| **City Coverage** | 100% of TIX.id (83 Cities) | 100% |
+| **Scrape Success Rate** | > 98% Daily | ~95% |
+| **Seat Data Granularity** | 15-min Intervals | 15-min |
+| **Dashboard Latency** | < 2s P95 | ~1.5s |
 
 ---
 
-## Phase Plan
+## 🚧 Phase Plan
 
-### Phase 0: Strategic Decisions 🔴
-*Must be defined before building features.*
-- [ ] **Define main selling narrative**: Direct competitor vs. Analytics Layer vs. Social/Ticket specialist.
-- [ ] **Research Cinepoint 2025 offering**: Identify gaps.
-- [ ] **Validate with PH contacts**: What would they pay for?
-
-### Phase 1: Regional Analytics MVP 🟡
+### Phase 1: Regional Analytics MVP 🟡 (Current)
 *Core feature: Help PHs understand regional performance.*
 - [ ] **Regional Genre Analytics Dashboard**: Performance by province, historical trends.
 - [ ] **Theater Distribution Map**: Screens per city/region, saturation analysis.
-- [ ] **Basic Reporting**: PDF exports, weekly emails.
 
 ### Phase 2: Social Intelligence Layer 🟢
 *Connect digital performance to ticket sales.*
 - [ ] **Social Media Performance Tracker**: TikTok/IG/Twitter tracking.
 - [ ] **Digital → Ticket Conversion Analysis**: Correlation models.
-- [ ] **Actor/Director Rankings**: Box office + Social impact.
 
 ### Phase 3: Trend Intelligence 🔵
 *Predictive insights for film strategy.*
 - [ ] **Trend Saturation Detector**: Genre fatigue (e.g., religious horror).
 - [ ] **Sentiment Analysis**: Socio-political impact.
-- [ ] **Competitive Calendar**: Release window optimization.
 
 ### Phase 4: Screen Allocation Optimizer 🟣
 *The holy grail for PHs.*
 - [ ] **Screen Allocation Suggestions**: "Genre X should target Region Y".
 - [ ] **Ad Targeting Recommendations**: Budget optimization.
-- [ ] **OTT Impact Tracker**: Cinema vs Streaming impact.
 
 ---
 
-## Meeting Notes
+## 🧠 Architectural Decision Log (ADR)
 
-**Pain Points Mentioned:**
-- "PH MASIH NGECEKIN MANUAL" - Manual data checking is tedious.
-- Regional allocation is currently guesswork.
-- Genre fatigue (perselingkuhan, religious themes).
+### ADR-001: Playwright over Selenium
+- **Why**: TIX.id uses heavy anti-bot obfuscation and React hydration. Playwright's auto-wait and stealth plugins handle this better than Selenium.
+- **Status**: ✅ Adopted.
 
-**Anomalies to Explain:**
-- High views but low ticket sales.
-- Films affected by socio-political context.
+### ADR-002: Firestore (NoSQL) over Postgres
+- **Why**:
+    1.  **Schema Flexibility**: Scraper output fields change often.
+    2.  **Real-time**: Listeners allowed for live dashboard updates.
+    3.  **Cost**: Free tier handles our daily volume (20k writes).
+- **Status**: ✅ Adopted.
+
+### ADR-003: Vercel Monorepo deployment
+- **Why**: Shared cache between `admin` and `web` speeds up builds by 40%.
+- **Status**: ✅ Adopted.

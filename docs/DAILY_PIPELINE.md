@@ -1,24 +1,33 @@
-# CineRadar Daily Pipeline Documentation
+# Daily pipeline documentation
 
 > Complete guide to how data flows through the system from morning to midnight.
 
-## Timeline Overview
+## ⏳ Execution Timeline
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        DAILY PIPELINE SCHEDULE                          │
-├─────────────┬───────────────────────────────────────────────────────────┤
-│  5:50 AM    │  Token Refresh (ensure fresh JWT before scraping)         │
-│  6:00 AM    │  Movie + Theatre Scrape (9 parallel jobs)                 │
-│  ~6:30 AM   │  Merge & Upload Movies → Firestore                        │
-│  ~6:35 AM   │  Token Refresh (pre-seat scrape)                          │
-│  ~6:40 AM   │  Seat Scrape (9 parallel jobs)                            │
-│  ~7:30 AM   │  Merge & Upload Seats → Firestore                         │
-│  12:00 AM   │  Daily Summary (aggregate yesterday's data)               │
-└─────────────┴───────────────────────────────────────────────────────────┘
+```mermaid
+gantt
+    title Daily scraper build pipeline (WIB)
+    dateFormat YYYY-MM-DD HH:mm
+    axisFormat %H:%M
+    
+    section Auth
+    Token Refresh             :crit, t1, 2024-01-01 05:50, 5m
+    Token Pre-Seat Check      :active, t2, 2024-01-01 06:35, 2m
+
+    section Movie Data
+    Movie Scrape (9 Jobs)     :active, m1, 2024-01-01 06:00, 30m
+    Merge Batches             :active, m2, after m1, 5m
+    Upload Schedules          :active, m3, after m2, 5m
+
+    section Seat Data
+    Seat Scrape (9 Jobs)      :active, s1, after t2, 45m
+    Merge Seats               :active, s2, after s1, 10m
+    
+    section Reporting
+    Daily Summary (Midnight)  :done, r1, 2024-01-01 23:55, 10m
 ```
 
-All times are **WIB (UTC+7)**. Cron expressions use UTC.
+All times are **WIB (UTC+7)**. GitHub Action schedules use UTC.
 
 ---
 
@@ -28,7 +37,7 @@ All times are **WIB (UTC+7)**. Cron expressions use UTC.
 Capture a fresh JWT token from TIX.id for authenticated API calls.
 
 ### Workflow File
-[`.github/workflows/token-refresh.yml`](file:///Users/okihita/ArcaneSanctum/CineRadar/.github/workflows/token-refresh.yml)
+[`.github/workflows/token-refresh.yml`](../.github/workflows/token-refresh.yml)
 
 ### How It Works
 
@@ -49,20 +58,25 @@ sequenceDiagram
     Note over FS: {token, refresh_token, stored_at}
 ```
 
-### Key Files
+### 🧑‍💻 Code References
 
-| File | Purpose |
-|------|---------|
-| [`backend/cli/refresh_token.py`](file:///Users/okihita/ArcaneSanctum/CineRadar/backend/cli/refresh_token.py) | Main token refresh script |
-| [`backend/infrastructure/token_refresher.py`](file:///Users/okihita/ArcaneSanctum/CineRadar/backend/infrastructure/token_refresher.py) | Programmatic token refresh via API |
-| [`backend/infrastructure/repositories/firestore_token.py`](file:///Users/okihita/ArcaneSanctum/CineRadar/backend/infrastructure/repositories/firestore_token.py) | Token storage/retrieval |
+| Component | Source File | Purpose |
+|-----------|-------------|---------|
+| **Entry Point** | [`backend/cli/refresh_token.py`](../backend/cli/refresh_token.py) | Main CLI command for Playwright flow |
+| **Logic** | [`backend/infrastructure/token_refresher.py`](../backend/infrastructure/token_refresher.py) | API-based refresh logic |
+| **Storage** | [`backend/infrastructure/repositories/firestore_token.py`](../backend/infrastructure/repositories/firestore_token.py) | Firestore read/write operations |
 
-### Token Lifecycle
+### 🚨 Failure Runbook
 
-| Token Type | Stored At | TTL | Usage |
-|------------|-----------|-----|-------|
-| Access Token | `auth_tokens/tix_jwt.token` | 30 minutes | Bearer auth for API calls |
-| Refresh Token | `auth_tokens/tix_jwt.refresh_token` | ~91 days | Programmatic refresh via `/v1/users/refresh` |
+**Trigger:** Workflow fails with `TimeoutError` or `Login Failed`.
+
+1.  **Check Screenshots**: Download the `debug-screenshots` artifact from the failed GitHub Action run.
+2.  **Manual Refresh**:
+    ```bash
+    # Run locally with visible browser to debug
+    uv run python -m backend.cli.refresh_token --visible
+    ```
+3.  **Force Push**: If local refresh works, the new token is already in Firestore. You can re-run dependent jobs manually.
 
 ---
 
@@ -72,7 +86,7 @@ sequenceDiagram
 Scrape all movies, showtimes, and theatre information for the day.
 
 ### Workflow File
-[`.github/workflows/daily-scrape.yml`](file:///Users/okihita/ArcaneSanctum/CineRadar/.github/workflows/daily-scrape.yml) (jobs: `scrape`, `merge`)
+[`.github/workflows/daily-scrape.yml`](../.github/workflows/daily-scrape.yml) (jobs: `scrape`, `merge`)
 
 ### How It Works
 
@@ -92,34 +106,29 @@ flowchart LR
     V --> FS[(Firestore)]
 ```
 
-### Key Files
+### 🧑‍💻 Code References
 
-| File | Purpose |
-|------|---------|
-| [`backend/cli/cli.py`](file:///Users/okihita/ArcaneSanctum/CineRadar/backend/cli/cli.py) | Main CLI entry point (`movies` subcommand) |
-| [`backend/infrastructure/core/tix_client.py`](file:///Users/okihita/ArcaneSanctum/CineRadar/backend/infrastructure/core/tix_client.py) | TIX.id page scraper using Playwright |
-| [`backend/cli/merge_batches.py`](file:///Users/okihita/ArcaneSanctum/CineRadar/backend/cli/merge_batches.py) | Combines batch JSON files |
-| [`backend/cli/validate.py`](file:///Users/okihita/ArcaneSanctum/CineRadar/backend/cli/validate.py) | Validates merged data against Pydantic schemas |
-| [`backend/cli/populate_firestore.py`](file:///Users/okihita/ArcaneSanctum/CineRadar/backend/cli/populate_firestore.py) | Uploads snapshot to Firestore |
-| [`backend/cli/upload_schedules.py`](file:///Users/okihita/ArcaneSanctum/CineRadar/backend/cli/upload_schedules.py) | Uploads per-movie schedules |
+| Component | Source File | Purpose |
+|-----------|-------------|---------|
+| **Scraper** | [`backend/infrastructure/core/tix_client.py`](../backend/infrastructure/core/tix_client.py) | Deep scraper logic |
+| **Merger** | [`backend/cli/merge_batches.py`](../backend/cli/merge_batches.py) | JSON combination logic |
+| **Validator** | [`backend/cli/validate.py`](../backend/cli/validate.py) | Schema integrity checks |
+| **Uploader** | [`backend/cli/populate_firestore.py`](../backend/cli/populate_firestore.py) | Batch write to Firestore |
 
-### Data Flow
+### 🚨 Failure Runbook
 
-```
-TIX.id Website
-     │
-     ▼ (Playwright intercepts API responses)
-data/batch_0_{date}.json ... data/batch_8_{date}.json
-     │
-     ▼ (merge_batches.py)
-data/movies_{date}.json
-     │
-     ▼ (populate_firestore.py)
-Firestore: snapshots/latest, snapshots/{date}
-     │
-     ▼ (upload_schedules.py)
-Firestore: schedules/{date}/movies/{movie_id}
-```
+**Trigger:** `Merge` job fails due to `ValidationError`.
+
+1.  **Identify Bad Batch**: Check logs to see which batch produced invalid JSON.
+2.  **Partial Upload**:
+    ```bash
+    # Upload whatever valid data we have
+    uv run python -m backend.cli.populate_firestore --force
+    ```
+3.  **Retry Specific City**:
+    ```bash
+    uv run python -m scraper --city BANDUNG --schedules
+    ```
 
 ---
 
@@ -129,7 +138,7 @@ Firestore: schedules/{date}/movies/{movie_id}
 Scrape seat availability for ALL showtimes collected in Phase 2.
 
 ### Workflow File
-[`.github/workflows/daily-scrape.yml`](file:///Users/okihita/ArcaneSanctum/CineRadar/.github/workflows/daily-scrape.yml) (jobs: `token-refresh-pre-seat`, `seat-morning-scrape`, `seat-merge-upload`)
+[`.github/workflows/daily-scrape.yml`](../.github/workflows/daily-scrape.yml) (jobs: `token-refresh-pre-seat`, `seat-morning-scrape`, `seat-merge-upload`)
 
 ### How It Works
 
@@ -150,51 +159,28 @@ sequenceDiagram
     CLI->>FS: Upload to seat_snapshots
 ```
 
-### Key Files
+### 🧑‍💻 Code References
 
-| File | Purpose |
-|------|---------|
-| [`backend/cli/cli.py`](file:///Users/okihita/ArcaneSanctum/CineRadar/backend/cli/cli.py) | CLI entry point (`seats` subcommand) |
-| [`backend/infrastructure/core/seat_scraper.py`](file:///Users/okihita/ArcaneSanctum/CineRadar/backend/infrastructure/core/seat_scraper.py) | API-based seat layout fetcher |
-| [`backend/cli/upload_seats.py`](file:///Users/okihita/ArcaneSanctum/CineRadar/backend/cli/upload_seats.py) | Uploads seat data to Firestore |
+| Component | Source File | Purpose |
+|-----------|-------------|---------|
+| **Entry Point** | [`backend/cli/cli.py`](../backend/cli/cli.py) | `seats` subcommand handler |
+| **Worker** | [`backend/infrastructure/core/seat_scraper.py`](../backend/infrastructure/core/seat_scraper.py) | Async API fetcher |
+| **Uploader** | [`backend/cli/upload_seats.py`](../backend/cli/upload_seats.py) | Firestore partitioning |
+| **Validator** | [`backend/schemas/scraper_run.py`](../backend/schemas/scraper_run.py) | Run metadata schema |
 
-### Seat Layout API
+### 🚨 Failure Runbook
 
-```http
-GET https://api-b2b.tix.id/v1/movies/{merchant}/layout
-    ?show_time_id={showtime_id}
-    &tz=7
-Authorization: Bearer {JWT_TOKEN}
-```
+**Trigger:** `401 Unauthorized` errors in logs.
 
-**Response:** Seat map with status codes:
-- `1` = Available
-- `5` or `6` = Unavailable (sold or blocked)
-
-### Output Data Structure
-
-Each seat snapshot document in Firestore:
-
-```json
-{
-  "showtime_id": "2000039256042586112",
-  "movie_id": "1961889705591132160",
-  "movie_title": "AVATAR: FIRE AND ASH",
-  "theatre_id": "986744938815295488",
-  "theatre_name": "ARAYA XXI",
-  "city": "MALANG",
-  "merchant": "XXI",
-  "room_category": "2D",
-  "showtime": "19:35",
-  "date": "2026-01-15",
-  "scraped_at": "2026-01-15T06:45:00",
-  "total_seats": 200,
-  "sold_seats": 45,
-  "available_seats": 155,
-  "occupancy_pct": 22.5,
-  "layout": [["A", [1,1,0,0,1,1]], ["B", [1,0,0,0,0,1]]]
-}
-```
+1.  **Check Token**:
+    ```bash
+    uv run python -m backend.cli.refresh_token --check
+    ```
+2.  **Emergency Rescrape** (if > 1 hour passed, data might be stale):
+    ```bash
+    # Run a high-concurrency rescrape
+    uv run python -m backend.cli.cli seats --mode morning --concurrency 20
+    ```
 
 ---
 
@@ -204,27 +190,13 @@ Each seat snapshot document in Firestore:
 Aggregate all seat data from the previous day and generate a summary report.
 
 ### Workflow File
-[`.github/workflows/daily-summary.yml`](file:///Users/okihita/ArcaneSanctum/CineRadar/.github/workflows/daily-summary.yml)
+[`.github/workflows/daily-summary.yml`](../.github/workflows/daily-summary.yml)
 
-### How It Works
+### 🧑‍💻 Code References
 
-```mermaid
-flowchart TD
-    A[Read all seat_snapshots] --> B{Filter by date}
-    B --> C[Sum total_seats]
-    B --> D[Sum sold_seats]
-    B --> E[Count unique movies/theatres/cities]
-    C --> F[Calculate occupancy %]
-    D --> F
-    F --> G[Print to GitHub Actions summary]
-    F --> H[Save to daily_summaries/{date}]
-```
-
-### Key Files
-
-| File | Purpose |
-|------|---------|
-| [`backend/cli/daily_summary.py`](file:///Users/okihita/ArcaneSanctum/CineRadar/backend/cli/daily_summary.py) | Aggregation and reporting script |
+| Component | Source File | Purpose |
+|-----------|-------------|---------|
+| **Aggregator** | [`backend/cli/daily_summary.py`](../backend/cli/daily_summary.py) | Math & Formatting logic |
 
 ### Output
 

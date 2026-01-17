@@ -1,81 +1,89 @@
 # Frontend Guidelines
 
-This document outlines the standards, configurations, and best practices for the `admin` and `web` Next.js applications.
+> Standards for user interface, Next.js architecture, and regional data.
 
-## Next.js Best Practices
+## 🎨 Design System
 
-### Hydration Rules
+We enforce a **Premium/Corporate** aesthetic suitable for dashboard clients.
 
-> [!WARNING]
-> **Prevent hydration mismatch errors** by following these rules:
+### Approved Tech Stack
+-   **Framework**: Next.js 16 (App Router)
+-   **Styling**: Tailwind CSS
+-   **Components**: Shadcn UI (Radix Primitives)
+-   **Base Font**: `Inter` (Sans), `JetBrains Mono` (Code)
 
-1.  **Never access `document` or `window` during render** - only in `useEffect` or event handlers.
-2.  **Use `suppressHydrationWarning`** on `<html>` and `<body>` tags (already applied in `layout.tsx`).
-3.  **Defer theme initialization** to client-side `useEffect`.
-4.  **Don't use `Date.now()` or `Math.random()`** in component render.
+### Do's and Don'ts
 
-### Runtime API Availability (Google Maps)
-
-> [!CAUTION]
-> **TypeScript passing ≠ Runtime working**. External APIs load asynchronously.
-
-**Incorrect:**
+#### ❌ Don't: Manual Color Values
 ```tsx
-// ❌ google.maps.marker may not be loaded yet
-const marker = new google.maps.marker.AdvancedMarkerElement({...});
+// Bad: Hardcoded colors inconsistent with theme
+<div className="bg-[#123456] text-white">...</div>
 ```
 
-**Correct:**
+#### ✅ Do: Design Tokens
 ```tsx
-// ✅ Use library hook to wait for API
-const markerLib = useMapsLibrary('marker');
-useEffect(() => {
-  if (!markerLib) return; // Wait for API
-  const marker = new markerLib.AdvancedMarkerElement({...});
-}, [markerLib]);
+// Good: Semantic tokens
+<div className="bg-primary text-primary-foreground">...</div>
 ```
 
 ---
 
-## Configuration
+## 📂 Project Structure
 
-### Time Display Convention
+All new features should follow this App Router structure:
 
-| Layer | Timezone | Example |
-|-------|----------|---------|
-| Firestore | UTC | `2025-12-18T00:15:08.000Z` |
-| Backend/Scraper | UTC | `datetime.utcnow()` |
-| **Admin/Web** | **WIB (UTC+7)** | `Dec 18, 7:15 AM WIB` |
+```mermaid
+graph TD
+    App[app/] --> Layout[layout.tsx]
+    App --> Page[page.tsx]
+    App --> Dash[dashboard/]
+    
+    Dash --> D_Layout[layout.tsx]
+    Dash --> D_Page[page.tsx]
+    Dash --> Comp[_components/]
+    
+    Comp --> Widget[RevenueWidget.tsx]
+    Comp --> Chart[OccupancyChart.tsx]
+```
 
-**Implementation:**
-- Admin: Use `formatWIB()` from `@/lib/timeUtils.ts`
-- Web: Use `formatWIB()` function with `timeZone: 'Asia/Jakarta'`
+### Key Directories
+-   `app/`: Routes and Pages.
+-   `lib/`: Utility functions (time, numbers).
+-   `components/ui/`: Shadcn primitives (Button, Card).
+-   `components/shared/`: Cross-page business components.
 
-### Brand Colors
+---
 
-| Chain | Color | Hex |
-|-------|-------|-----|
-| **XXI** | Tan/Gold | `#CFAB7A` |
-| **CGV** | CG Red | `#E03C31` |
-| **Cinépolis** | Midnight Blue | `#002069` |
+## 🌎 Geographic Configuration
 
-### Geographic Regions
+### Region Mapping (Strict)
 
-All 83 Indonesian cities are mapped to exactly 6 regions. **No "Others" category allowed.**
+All 83 cities must map to one of these 6 regions.
 
-| Region | Color | Hex | Center (Lat, Lng) |
-|--------|-------|-----|-------------------|
-| **Jawa** | Teal | `#0d9488` | -7.0, 110.4 |
-| **Sumatera** | Purple | `#7c3aed` | -0.5, 101.5 |
-| **Kalimantan** | Pink | `#db2777` | 0.5, 116.5 |
-| **Sulawesi** | Orange | `#ea580c` | -2.0, 121.0 |
-| **Bali & NT** | Cyan | `#0891b2` | -8.5, 118.0 |
-| **Papua & Maluku** | Lime | `#65a30d` | -3.5, 135.0 |
+| Region | Color Token | Hex | Center (Lat, Lng) |
+|--------|-------------|-----|-------------------|
+| **Jawa** | `teal-600` | `#0d9488` | -7.0, 110.4 |
+| **Sumatera** | `purple-600` | `#7c3aed` | -0.5, 101.5 |
+| **Kalimantan** | `pink-600` | `#db2777` | 0.5, 116.5 |
+| **Sulawesi** | `orange-600` | `#ea580c` | -2.0, 121.0 |
+| **Bali & NT** | `cyan-600` | `#0891b2` | -8.5, 118.0 |
+| **Papua & Maluku** | `lime-600` | `#65a30d` | -3.5, 135.0 |
 
-### Map Configuration
+---
 
-| Setting | Value | Reason |
-|---------|-------|--------|
-| **Default zoom** | 5.5 | Shows all of Indonesia |
-| **Clustering radius** | 80px | Groups nearby theatres |
-| **Clustering max zoom** | 14 | At zoom 15+, show individual markers |
+## ⚠️ Next.js Best Practices
+
+### Hydration Safety
+1.  **Strict Mode**: Don't use `window` in render body.
+2.  **Date Consistency**: Use `formatWIB()` from `@/lib/timeUtils` instead of `new Date()`.
+
+```tsx
+// ❌ Hydration Mismatch
+<span>{new Date().toLocaleTimeString()}</span>
+
+// ✅ Hydration Safe
+const [time, setTime] = useState<string | null>(null)
+useEffect(() => setTime(formatWIB(new Date())), [])
+if (!time) return null
+return <span>{time}</span>
+```

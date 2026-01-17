@@ -1,26 +1,25 @@
 # API & Scraper Reference
 
-This document covers the CLI usage, scraper pipelines, and API endpoints used by CineRadar.
+> Technical reference for CLI commands, API endpoints, and Data Contracts.
 
-## Scraper Pipelines
+## 🛠 Scraper Pipelines
 
-CineRadar uses a 3-scraper pipeline for TIX.id data collection.
+| Pipeline | Schedule | Login Required | Output |
+|----------|----------|----------------|--------|
+| **Token Refresh** | Daily 5:50 AM | Yes (Headless) | `auth_token` in Firestore |
+| **Movie + Theatre** | Daily 6:00 AM | No | `snapshots/latest`, `schedules/*` |
+| **JIT Seats** | Every 15 min | No* | `seat_snapshots/*` |
 
-| Scraper | Schedule | Login | Purpose |
-|---------|----------|-------|---------|
-| **Token Refresh** | Daily 5:50 AM WIB | Yes | Capture JWT for API auth |
-| **Movie + Theatre** | Daily 6:00 AM WIB | No | Movies, showtimes, theatres |
-| **JIT Seats** | Every 15 min | No* | Seat occupancy via API |
-
-*Uses token from Token Refresh pipeline.
+*Uses valid token stored by Token Refresh pipeline.
 
 ---
 
-## Command Line Interface (CLI)
+## 💻 Command Line Interface (CLI)
 
 The backend is managed via a unified CLI.
 
 ### Movie Scraper
+**Entry Point:** [`backend/cli/cli.py`](../backend/cli/cli.py)
 
 ```bash
 # Basic scrape (all 83 cities, no showtimes)
@@ -34,86 +33,57 @@ python -m scraper --city JAKARTA --schedules
 
 # Show browser window (for debugging)
 python -m scraper --visible
-
-# Limit to first N cities (for testing)
-python -m scraper --limit 5
 ```
 
 ### Token Refresh
+**Entry Point:** [`backend/cli/refresh_token.py`](../backend/cli/refresh_token.py)
 
 ```bash
 # Refresh token (headless)
 python -m backend.cli.refresh_token
 
-# Refresh token (visible browser)
-python -m backend.cli.refresh_token --visible
-
 # Check token status
 python -m backend.cli.refresh_token --check
 ```
 
-### Seat Scraper (JIT)
-
-```bash
-# JIT mode (uses stored token)
-python -m backend.cli.cli seats --mode jit --use-stored-token
-
-# Manual mode (with login)
-python -m backend.cli.cli seats --mode morning
-```
-
-### Validation Tools
-
-```bash
-# Validate today's movie data
-python -m backend.cli.validate
-
-# Validate specific file
-python -m backend.cli.validate --file data/movies_2025-12-18.json
-
-# Check token TTL (exit 1 if < 25 min remaining)
-python -m backend.cli.refresh_token --check-min-ttl 25
-```
-
-### CLI Options Reference
-
-| Option | Description |
-|--------|-------------|
-| `--schedules` | Fetch detailed theatre showtimes (~45-75 min for all cities) |
-| `--city NAME` | Scrape specific city only (e.g., `JAKARTA`) |
-| `--limit N` | Limit to first N cities (for testing) |
-| `--visible` | Show browser window (default: headless) |
-| `--output DIR` | Output directory (default: `data/`) |
-
 ---
 
-## Environment Variables
-
-| Variable | Description | Example |
-|--------|-------------|---------|
-| `TIX_PHONE_NUMBER` | TIX.id login phone | `+62XXXXXXXXXX` |
-| `TIX_PASSWORD` | TIX.id login password | `<your_password>` |
-| `FIREBASE_SERVICE_ACCOUNT` | Firebase credentials JSON | `{...}` |
-| `GOOGLE_MAPS_API_KEY` | Google Maps API key | `AIza...` |
-| `NEXT_PUBLIC_FIREBASE_API_KEY` | Firebase Client API Key | `AIza...` |
-
----
-
-## Seat Scraper Reference
+## 💺 Seat Scraper Reference
 
 ### API Endpoint
 
-```
+```http
 GET https://api-b2b.tix.id/v1/movies/{merchant}/layout
     ?show_time_id={id}
     &tz=7
+Authorization: Bearer {JWT_TOKEN}
 ```
-> ⚠️ Use `tz=7`, NOT `Asia/Jakarta`!
 
-**Merchant Paths:**
-- XXI: `xxi`
-- CGV: `cgv`
-- Cinépolis: `cinepolis`
+### Response Example
+
+```json
+{
+  "code": 1000,
+  "data": {
+    "site_codes": [
+      {
+        "row": "A",
+        "column": "1",
+        "status": {
+          "code": "1" // Available
+        }
+      },
+      {
+        "row": "E",
+        "column": "5",
+        "status": {
+          "code": "5" // Sold/Reserved
+        }
+      }
+    ]
+  }
+}
+```
 
 ### Data Codes
 
@@ -124,22 +94,28 @@ GET https://api-b2b.tix.id/v1/movies/{merchant}/layout
 | `6` | **Unavailable** | Sold or Blocked (cannot distinguish) |
 
 > [!IMPORTANT]
-> The API does not distinguish between "sold" and "under maintenance/blocked". Occupancy estimates should be treated as upper bounds.
+> The API does not distinguish between "sold" and "under maintenance/blocked". Occupancy estimates should be treated as **maximum upper bounds**.
 
 ---
 
-## Data Contracts (Pydantic Schemas)
+## 📜 Data Contracts (Pydantic Schemas)
 
 All data passing through the pipeline is validated using Pydantic V2 schemas.
 
-| Schema | File | Purpose |
-|--------|------|---------|
-| `MovieSchema` | `backend/schemas/movie.py` | Complete movie with schedules |
-| `DailySnapshotSchema` | `backend/schemas/movie.py` | Full daily scrape output |
-| `TheatreSchema` | `backend/schemas/theatre.py` | Theatre for Firestore storage |
-| `TokenSchema` | `backend/schemas/token.py` | JWT with TTL validation |
-| `ScraperRunSchema` | `backend/schemas/scraper_run.py` | Scraper run logging |
+| Schema | Source File | Purpose |
+|--------|-------------|---------|
+| **MovieSchema** | [`backend/schemas/movie.py`](../backend/schemas/movie.py) | Complete movie object with optional schedules |
+| **TheatreSchema** | [`backend/schemas/theatre.py`](../backend/schemas/theatre.py) | Geocoded theatre location data |
+| **TokenSchema** | [`backend/schemas/token.py`](../backend/schemas/token.py) | JWT payload structure and TTL validation |
+| **ScraperRunSchema** | [`backend/schemas/scraper_run.py`](../backend/schemas/scraper_run.py) | Metadata for each scraper execution |
 
-**Integrity Assertions:**
-- At least 10 movies expected per scrape.
-- At least 50 cities expected (normally ~83).
+### Quick Import Snippet
+For testing in `ipython` or scripts:
+
+```python
+from backend.schemas.movie import MovieSchema
+from backend.schemas.token import TokenSchema
+
+# Validate a raw dictionary
+movie = MovieSchema.model_validate(raw_data)
+```

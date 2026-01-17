@@ -1,70 +1,101 @@
 # Manual Setup & Verification
 
-This guide covers the manual setup steps for developers who prefer running components individually, as well as verification and diagnostic steps.
+> Guide for setting up the simplified CineRadar development environment.
 
-## Quick Start (Manual)
+## 🛠 Dependency Tree
+
+```mermaid
+graph TD
+    User[Developer Machine] --> P[Python 3.11+]
+    P --> U[uv Package Manager]
+    U --> V[Venv]
+    V --> PL[Playwright]
+    
+    User --> N[Node.js 20+]
+    N --> A[Admin App]
+    N --> W[Web App]
+    
+    subgraph "External"
+        TIX[TIX.id]
+        FS[Firestore]
+    end
+    
+    PL --> TIX
+    A --> FS
+    W --> FS
+```
+
+## ⚡️ Quick Start (Manual)
 
 ### 1. Installation
 
 ```bash
-# Clone and install
+# Clone
 git clone https://github.com/okihita/CineRadar.git
 cd CineRadar
 
-# Install Python dependencies
+# Python Setup
 uv sync
-
-# Install Playwright browsers
 uv run playwright install chromium
+
+# Javascript Setup
+(cd admin && npm install)
+(cd web && npm install)
 ```
 
-### 2. Run Admin Dashboard
+### 2. Run Applications
 
-```bash
-cd admin
-npm install
-npm run dev
-# Open http://localhost:3000
-```
+| App | Command | URL |
+|-----|---------|-----|
+| **Backend** | `uv run python -m scraper` | N/A |
+| **Admin** | `cd admin && npm run dev` | `localhost:3000` |
+| **Web** | `cd web && npm run dev` | `localhost:3001`* |
 
-### 3. Run Frontend (Web)
-
-```bash
-cd web
-npm install
-npm run dev
-# Open http://localhost:3000 (or 3001 if admin is running)
-```
-
-**Note on Package Locks:**
-If you modify `package.json` in either `admin/` or `web/`, always run `npm install` immediately to update `package-lock.json`. CI will fail if they are out of sync.
+*Note: If Admin is running on 3000, Web usually defaults to 3001.*
 
 ---
 
-## Local Server Health Check
+## 🩺 System Health Check
 
-> [!IMPORTANT]
-> Before testing on localhost, verify the dev server is running.
+Save this as `health_check.sh` and run it to verify your environment:
 
 ```bash
-# Check if admin dev server is running (port 3000)
-curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 || echo "NOT RUNNING"
+#!/bin/bash
 
-# Check if web dev server is running (port 3001)
-curl -s -o /dev/null -w "%{http_code}" http://localhost:3001 || echo "NOT RUNNING"
+echo "🏥 CineRadar Health Check"
+echo "------------------------"
+
+# 1. Check Python
+python3 --version || echo "❌ Python missing"
+
+# 2. Check Node
+node -v || echo "❌ Node missing"
+
+# 3. Check Admin Server
+if curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 | grep -q "200"; then
+    echo "✅ Admin Dashboard: UP"
+else
+    echo "⚠️  Admin Dashboard: DOWN"
+fi
+
+# 4. Check Web Server
+if curl -s -o /dev/null -w "%{http_code}" http://localhost:3001 | grep -q "200"; then
+    echo "✅ Consumer Web: UP"
+else
+    echo "⚠️  Consumer Web: DOWN"
+fi
 ```
 
----
+## 🌐 Network Diagnostics
 
-## Network Diagnostics
-
-> [!TIP]
-> Before debugging production issues, check local network connectivity first.
+If production deployment fails, run this to check connectivity to Vercel and APIs:
 
 ```bash
 # Quick connectivity check with timing
 curl -s -o /dev/null -w "DNS: %{time_namelookup}s | Connect: %{time_connect}s | Total: %{time_total}s | HTTP: %{http_code}\n" https://cineradar-admin.vercel.app/api/dashboard
-
-# Expected: HTTP 200, Total < 3s
-# If DNS > 1s or Connect > 2s, network issue likely
 ```
+
+**Thresholds:**
+-   **DNS**: < 0.5s
+-   **Connect**: < 1.0s
+-   **Total**: < 3.0s

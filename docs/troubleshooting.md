@@ -1,50 +1,47 @@
-# Troubleshooting & Known Issues
+# 🔧 Operational Playbook & Troubleshooting
 
-This guide details common errors, known bugs, and how to resolve them.
+> 🚨 **Primary Principle**: If the scraper dies, data is lost forever. Speed of recovery is critical.
 
-## Troubleshooting Guide
+## 🔴 Critical Incidents (P0)
 
-| Error | Cause | Solution |
-|-------|-------|----------|
-| `401 INVALID_TOKEN` | Token has quotes | Re-run `refresh_token.py` (bug is fixed) |
-| `401 EXPIRED_EVENT_DETAIL` | Showtime already started | Use fresh movie data |
-| `401` after fresh login | Token not stripped | Check first/last char of token |
-| Login hangs | Flutter rendering issue | Use `xvfb-run` |
-| Refresh API returns 401 | Refresh token expired (~91 days) | Re-login via Playwright |
-| `403 Cloud Firestore API...` | Wrong Project ID | Set `FIREBASE_SERVICE_ACCOUNT` env var |
+### Scenario: TIX.id Changes Login Flow
+**Symptoms**: `token-refresh.yml` fails with "Element not found" or "Timeout".
+**Response**:
+1.  **Immediate**: Run `uv run python -m backend.cli.refresh_token --visible` locally to observe the new flow.
+2.  **Fix**: Update selector in [`backend/infrastructure/core/tix_client.py`](../backend/infrastructure/core/tix_client.py).
+3.  **Deploy**: Push to `main` instantly.
+
+### Scenario: API Returns 403 Forbidden
+**Symptoms**: All seat scrapers failing.
+**Response**:
+1.  **Rotate IP**: The GitHub Action IP might be blacklisted. Re-trigger the workflow to pick up a new runner.
+2.  **Check Headers**: TIX.id might have updated their required `User-Agent` or encryption.
 
 ---
 
-## Known Bugs & Fixes
+## 🟡 Warning Incidents (P1)
 
-### Bug 1: Token Stored With Quotes (Fixed Dec 23, 2025)
-**Symptom:** All API calls return 401 even with fresh token.
-**Cause:** `localStorage.getItem()` returns tokens wrapped in quotes: `"eyJ..."` instead of `eyJ...`.
-**Fix:** `refresh_token.py` now strips quotes before storing.
-
-### Bug 2: Two Login Buttons
-**Symptom:** Playwright clicks wrong button, page goes to `about:blank`.
-**Cause:** TIX.id has a header login button (navs to home) and a form login button.
-**Fix:** Use `.last` selector or index 5.
-
-### Bug 3: Flutter Rendering in Headless Mode
-**Symptom:** Page appears blank, elements not found.
-**Fix:** Use `xvfb-run` on Linux:
-```bash
-xvfb-run --auto-servernum python -m backend.cli.refresh_token
+### Issue: "Token Stored With Quotes" (Historic)
+**Symptom**: 401 Unauthorized despite "success" login.
+**Cause**: `localStorage` JSON serialization.
+**Check**: Look at Firestore `auth_tokens/tix_jwt`.
+**Fix**:
+```python
+# refresh_token.py
+token = raw_token.replace('"', '') # Strip quotes
 ```
 
-### Issue: Showtime ID Extraction
-**Problem:** CLI was reading `showtimes` array which lacks IDs.
-**Fix:** Changed CLI to read from `all_showtimes` which contains the necessary `showtime_id` for seat scraping.
+### Issue: Flutter Rendering Hangs
+**Symptom**: Browser opens but stays white/blank.
+**Fix**: Increase `waiting_time` or use `xvfb-run` on Linux systems.
 
 ---
 
-## Failure Modes
+## 🧩 Common Error Lookup
 
-| Failure | GitHub Action Behavior |
-|---------|----------------------|
-| Schema validation fails | Exit with code 1, no Firestore write |
-| Token expired | Seat scrape skipped, error in logs |
-| Integrity assertion fails | Exit with code 1, data not uploaded |
-| Token TTL < 25 min | Seat scrape job fails fast |
+| Error Code | Likely Cause | Solution |
+|------------|--------------|----------|
+| `401 INVALID_TOKEN` | Token malformed/quoted | Run `refresh_token --check` |
+| `401 EXPIRED` | Token old | Manually trigger `token-refresh.yml` |
+| `TIMEOUT` | Slow network/TIX down | Retry with higher timeout |
+| `VALIDATION_ERR` | API Schema changed | Update Pydantic models in `schemas/` |

@@ -103,10 +103,10 @@ erDiagram
     MOVIE {
         string id PK
         string title
-        array genres
+        string genres
         string poster
         boolean is_presale
-        array cities
+        string cities
     }
     
     THEATRE {
