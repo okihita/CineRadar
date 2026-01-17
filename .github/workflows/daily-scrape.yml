@@ -149,10 +149,15 @@ jobs:
           uv run playwright install chromium
           uv run playwright install-deps chromium
 
-      - name: Pull latest movie data
-        run: |
-          git pull origin ${{ github.ref_name }}
-          ls -la data/
+      - name: Download movie data artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: scrape-data-${{ github.run_id }}
+          path: data/
+          merge-multiple: true
+
+      - name: Debug data directory
+        run: ls -la data/
 
       # Token already refreshed by token-refresh-pre-seat job
 

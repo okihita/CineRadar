@@ -107,16 +107,37 @@ class SeatScraper(BaseScraper):
                 if row_statuses:
                     layout_grid.append([row_name, row_statuses])
             else:
-                # Flat structure (Cinépolis) - Group by seat name prefix if possible
-                # But Cinépolis often sends it in a way that we might just want to store as is
+                # Flat structure (Cinépolis/CGV B2B)
+                row_name = item.get("row_name", "ALL")
                 status = item.get("seat_status", item.get("status", 0))
-                status_code = self._count_seat(status, counters)
-                # For flat, we might just have a list of all seats.
-                # To keep it consistent, we wrap in a single "ALL" row if nested list not found
+                seat_yn = item.get("seat_yn", "1") # Default to "1" if missing (assume is seat)
+                
+                # Logic for CGV B2B format which uses seat_yn="0" for aisles
+                if seat_yn == "0":
+                   # This is an aisle/gap, ignore or track as space?
+                   # For occupancy calcs, we ignore.
+                   continue
+
+                # Custom status mapping for this format
+                # If seat_yn="1" and status=0 -> Sold
+                if seat_yn == "1" and status == 0:
+                    counters["unavailable"] += 1
+                    counters["total"] += 1
+                    status_code = 0 
+                else:
+                    # Use standard counter for other cases (1, 5, 6)
+                    status_code = self._count_seat(status, counters)
+
                 if status_code != -1:
-                    if not layout_grid:
-                        layout_grid.append(["ALL", []])
-                    layout_grid[0][1].append(status_code)
+                    # Find or create row in layout_grid
+                    # layout_grid is list of [row_name, [statuses]]
+                    # We need to preserve order if possible, or just append.
+                    # Since data usually comes sorted by row, we can check last element.
+                    
+                    if not layout_grid or layout_grid[-1][0] != row_name:
+                         layout_grid.append([row_name, []])
+                    
+                    layout_grid[-1][1].append(status_code)
 
         total_seats = counters["total"]
         occupancy_pct = (counters["unavailable"] / total_seats * 100) if total_seats > 0 else 0

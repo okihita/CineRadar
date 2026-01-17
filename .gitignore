@@ -38,3 +38,9 @@ data/live_seat_snapshot.json
 apk_analysis/
 
 *.log
+firestore_dump_*
+
+# Tool Caches
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/

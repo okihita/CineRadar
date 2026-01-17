@@ -54,7 +54,7 @@ class TixSeatScraper(BaseScraper, ISeatScraper):
         legacy_scraper.auth_token = self.auth_token
 
         # Convert showtime_ids to the format expected by legacy scraper
-        showtimes = [{"showtime_id": sid} for sid in showtime_ids]
+        showtimes = [{"showtime_id": sid, "merchant": merchant} for sid in showtime_ids]
 
         results = await legacy_scraper.scrape_all_showtimes_api_only(showtimes)
 
