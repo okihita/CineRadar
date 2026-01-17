@@ -164,3 +164,46 @@ erDiagram
 ### Quality Gates (Required for Merge)
 
 The `PR Checks` workflow serves as a single required status check for branch protection. It enforces `ruff` linting, `mypy` type checking, `pytest` coverage (min 70%), and Frontend Type Check + Build.
+
+---
+
+## Deployment Strategy (Monorepo)
+
+CineRadar uses a **Monorepo structure** (pnpm workspaces) for code organization, but deploys primarily via **Git Integration** on Vercel.
+
+### Vercel Deployment Model
+
+Although `web` and `admin` live in the same repository, they are deployed as separate Vercel projects (isolated environments) that benefit from a shared build cache.
+
+| Project | Root Directory | Hosting | URL |
+|---------|----------------|---------|-----|
+| **cineradar-web** | `web` | Vercel | `cineradar-id.vercel.app` |
+| **cineradar-admin** | `admin` | Vercel | `cineradar-admin.vercel.app` |
+
+### Shared Cache Efficiency
+
+Vercel automatically detects the root `pnpm-lock.yaml` and optimizes the build pipeline:
+
+```
+┌───────────────────────────────────────────────────────────────────┐
+│ SHARED CACHE LAYER (pnpm store)                                   │
+│ [React] [Next.js] [Tailwind] (Downloaded ONCE)                    │
+└─────────────────────────────────┬─────────────────────────────────┘
+                                  │
+                  ┌───────────────┴───────────────┐
+                  ▼                               ▼
+┌─────────────────────────────────┐   ┌─────────────────────────────────┐
+│ DEPLOYMENT: WEB                 │   │ DEPLOYMENT: ADMIN               │
+├─────────────────────────────────┤   ├─────────────────────────────────┤
+│ 1. Triggered by push to root    │   │ 1. Triggered by push to root    │
+│ 2. Vercel detects pnpm lock     │   │ 2. Vercel detects pnpm lock     │
+│ 3. ⚡️ RESTORES Shared Cache     │   │ 3. ⚡️ RESTORES Shared Cache     │
+│ 4. "pnpm install" (fast link)   │   │ 4. "pnpm install" (fast link)   │
+│ 5. Builds /web                  │   │ 5. Builds /admin                │
+└─────────────────────────────────┘   └─────────────────────────────────┘
+```
+
+### Key Benefits
+1.  **Faster Builds**: Dependencies are downloaded once per commit, not twice.
+2.  **Versioning**: Guarantees `web` and `admin` use the exact same library versions defined in the root lockfile.
+3.  **Isolation**: Users on `cineradar-web` never load admin code bundles.
