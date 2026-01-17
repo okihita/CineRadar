@@ -36,7 +36,7 @@ This project uses a high-performance scraping engine feeding a modern analytics 
 -   **Database**: Google Cloud Firestore (NoSQL)
 -   **Frontend**: Next.js 16 / React 19 (Admin Dashboard & Consumer Web)
 -   **Infrastructure**: GitHub Actions (CI/CD & Cron Jobs), Vercel (Hosting)
--   **More Info**: [Architecture & Data Flow](./docs/architecture.md)
+-   **More Info**: [Architecture & Data Flow](./docs/01_architecture_and_design.md)
 
 [![CI](https://github.com/okihita/CineRadar/actions/workflows/ci.yml/badge.svg)](https://github.com/okihita/CineRadar/actions/workflows/ci.yml)
 
@@ -63,15 +63,16 @@ uv run playwright install chromium
 -   **Admin Dashboard**: `cd admin && npm install && npm run dev`
 -   **Consumer Web**: `cd web && npm install && npm run dev`
 
-See [Manual Setup Guide](./docs/manual_setup.md) for detailed instructions.
+See [Manual Setup Guide](./docs/02_manual_setup.md) for detailed instructions.
 
 ---
 
 ## 📚 Documentation Index
 
--   **[Architecture & Data Flow](./docs/architecture.md)**: System design & token auth.
--   **[Daily Pipeline](./docs/daily_pipeline.md)**: How data flows from 6 AM to Midnight.
--   **[API & Scraper Reference](./docs/api_reference.md)**: CLI usage & contracts.
--   **[Product Roadmap](./docs/product_roadmap.md)**: Strategic vision & future phases.
--   **[Frontend Guidelines](./docs/frontend_guidelines.md)**: UI/UX standards & regions.
--   **[Troubleshooting](./docs/troubleshooting.md)**: Fixes for common issues.
+-   **[Architecture & Data Flow](./docs/01_architecture_and_design.md)**: System design & token auth.
+-   **[Manual Setup Guide](./docs/02_manual_setup.md)**: Detailed installation & verification.
+-   **[Daily Pipeline](./docs/03_daily_pipeline.md)**: How data flows from 6 AM to Midnight.
+-   **[API & Scraper Reference](./docs/04_api_reference.md)**: CLI usage & contracts.
+-   **[Frontend Guidelines](./docs/05_frontend_guidelines.md)**: UI/UX standards & regions.
+-   **[Troubleshooting](./docs/06_troubleshooting.md)**: Fixes for common issues.
+-   **[Product Roadmap](./docs/07_product_roadmap.md)**: Strategic vision & future phases.
