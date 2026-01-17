@@ -44,3 +44,6 @@ firestore_dump_*
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
+
+# Archive
+_archive/
