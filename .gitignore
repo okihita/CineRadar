@@ -46,4 +46,5 @@ firestore_dump_*
 .ruff_cache/
 
 # Archive
-_archive/
+_archive/.env.local
+.vercel/
