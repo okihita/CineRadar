@@ -30,7 +30,7 @@ import {
 type Tab = 'showtimes' | 'performance';
 
 export default function MoviesPage() {
-    const [activeTab, setActiveTab] = useState<Tab>('showtimes');
+    const [activeTab, setActiveTab] = useState<Tab>('performance');
 
     // Server state (SWR)
     const { showtimes, date, isLoading, isError, error } = useMoviesData();
@@ -107,18 +107,6 @@ export default function MoviesPage() {
             {/* Tab Navigation */}
             <div className="flex gap-2 mb-6">
                 <button
-                    onClick={() => setActiveTab('showtimes')}
-                    className={cn(
-                        'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                        activeTab === 'showtimes'
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted text-muted-foreground hover:text-foreground'
-                    )}
-                >
-                    <LayoutList className="w-4 h-4" />
-                    Showtimes
-                </button>
-                <button
                     onClick={() => setActiveTab('performance')}
                     className={cn(
                         'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
@@ -129,6 +117,18 @@ export default function MoviesPage() {
                 >
                     <Target className="w-4 h-4" />
                     Performance
+                </button>
+                <button
+                    onClick={() => setActiveTab('showtimes')}
+                    className={cn(
+                        'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                        activeTab === 'showtimes'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-muted-foreground hover:text-foreground'
+                    )}
+                >
+                    <LayoutList className="w-4 h-4" />
+                    Showtimes
                 </button>
             </div>
 
