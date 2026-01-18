@@ -9,7 +9,6 @@ import json
 import logging
 import os
 import tempfile
-from datetime import datetime
 from typing import Any
 
 from backend.domain.models import MoviePerformance, ShowtimeSnapshot

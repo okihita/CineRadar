@@ -56,7 +56,7 @@ class ShowtimeSnapshot:
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for Firestore storage.
-        
+
         Note: layout is serialized to JSON string to avoid Firestore's
         nested array limitation.
         """

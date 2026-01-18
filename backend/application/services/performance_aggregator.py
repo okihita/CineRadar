@@ -112,7 +112,7 @@ class PerformanceAggregator:
             )
 
         # Extract unique cities
-        cities = sorted(set(st.city for st in showtimes if st.city))
+        cities = sorted({st.city for st in showtimes if st.city})
 
         # Calculate totals
         total_seats = sum(st.total_seats for st in showtimes)

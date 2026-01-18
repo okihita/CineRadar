@@ -12,9 +12,7 @@ Usage:
 
 import argparse
 import asyncio
-import json
 import logging
-from pathlib import Path
 
 from backend.application.services import PerformanceAggregator
 from backend.domain.models import ShowtimeSnapshot
@@ -120,7 +118,7 @@ def scrape_movie_performance(movie_id: str, aggregator: PerformanceAggregator) -
             snapshot, movie_title=movie_data.title, movie_poster=movie_data.poster
         )
 
-    logger.info(f"\n🎉 Performance data saved to Firestore")
+    logger.info("\n🎉 Performance data saved to Firestore")
     logger.info(f"   Collection: movie_performance/{movie_id}")
 
 

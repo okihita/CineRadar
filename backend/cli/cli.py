@@ -124,17 +124,17 @@ def run_movie_scrape(
 
 def load_movie_data(data_dir: str = "data", use_firestore: bool = False) -> dict | None:
     """Load today's movie data from local files or Firestore.
-    
+
     Args:
         data_dir: Directory for local JSON files
         use_firestore: If True, load from Firestore instead of local files
     """
     date_str = datetime.now().strftime("%Y-%m-%d")
-    
+
     # For JIT mode, always use Firestore
     if use_firestore:
         return load_movie_data_from_firestore(date_str)
-    
+
     data_path = Path(data_dir)
 
     # Try today's merged file first, then batch files
@@ -149,7 +149,7 @@ def load_movie_data(data_dir: str = "data", use_firestore: bool = False) -> dict
                 return json.load(f)
 
     logger.warning(f"⚠️ No movie data found for {date_str}")
-    
+
     # Fall back to Firestore
     logger.info("📥 Attempting to load from Firestore...")
     return load_movie_data_from_firestore(date_str)
@@ -157,13 +157,14 @@ def load_movie_data(data_dir: str = "data", use_firestore: bool = False) -> dict
 
 def load_movie_data_from_firestore(date_str: str) -> dict | None:
     """Load movie data from Firestore schedules collection.
-    
+
     Loads from schedules/{date}/movies/{movie_id} collection.
     """
     import os
+
     from google.cloud import firestore
     from google.oauth2 import service_account
-    
+
     # Initialize Firestore
     sa_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
     if sa_json:
@@ -173,24 +174,24 @@ def load_movie_data_from_firestore(date_str: str) -> dict | None:
         db = firestore.Client(credentials=credentials, project=sa_info["project_id"])
     else:
         db = firestore.Client()
-    
+
     # Load all movies from schedules/{date}/movies
     logger.info(f"📥 Loading movies from Firestore: schedules/{date_str}/movies")
     movies_ref = db.collection("schedules").document(date_str).collection("movies")
-    
+
     docs = movies_ref.stream()
     movies = []
     for doc in docs:
         movie_data = doc.to_dict()
         if movie_data:
             movies.append(movie_data)
-    
+
     if not movies:
         logger.warning(f"⚠️ No movies found in Firestore for {date_str}")
         return None
-    
+
     logger.info(f"✅ Loaded {len(movies)} movies from Firestore")
-    
+
     return {
         "date": date_str,
         "movies": movies,
@@ -263,7 +264,7 @@ def extract_showtimes_from_data(
 def filter_jit_showtimes(showtimes: list[dict], window_minutes: int = 8) -> list[dict]:
     """
     Filter showtimes to capture at T-8 minutes before start.
-    
+
     Default window: showtimes starting in 5-13 minutes from now.
     For hourly JIT runs, use window_minutes=60 to get showtimes in 5-65 minutes.
 
@@ -277,7 +278,7 @@ def filter_jit_showtimes(showtimes: list[dict], window_minutes: int = 8) -> list
     """
     now = datetime.now()
     cutoff_minutes = 5  # TIX.id closes booking 5 minutes before showtime
-    
+
     # Calculate the scraping window: [cutoff + window, cutoff]
     # e.g., window_minutes=8 → scrape showtimes starting in 5-13 minutes
     window_start = now + timedelta(minutes=cutoff_minutes)
