@@ -108,8 +108,7 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10
+        # Version is optional since it's pinned in root package.json
 
       - name: Report success
         if: success()
