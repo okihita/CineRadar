@@ -150,7 +150,7 @@ export default function AnalyticsPage() {
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
                                 <YAxis dataKey="stage" type="category" width={100} tick={{ fontSize: 11 }} />
-                                <Tooltip formatter={(v: number) => [`${v}%`, 'Conversion']} />
+                                <Tooltip formatter={(v: number | undefined) => v !== undefined ? [`${v}%`, 'Conversion'] : ['', '']} />
                                 <Bar dataKey="percentage" radius={[0, 4, 4, 0]}>
                                     {data.funnel.map((_, i) => (
                                         <Cell key={i} fill={`hsl(${220 - i * 30}, 70%, ${50 + i * 5}%)`} />
@@ -182,7 +182,7 @@ export default function AnalyticsPage() {
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="day" tick={{ fontSize: 10 }} />
                                 <YAxis tickFormatter={(v) => `${(v / 1000000).toFixed(0)}M`} />
-                                <Tooltip formatter={(v: number) => [`Rp${(v / 1000000).toFixed(1)}M`, 'Revenue']} />
+                                <Tooltip formatter={(v: number | undefined) => v !== undefined ? [`Rp${(v / 1000000).toFixed(1)}M`, 'Revenue'] : ['', '']} />
                                 <Line type="monotone" dataKey="predicted_revenue" stroke="#22c55e" strokeWidth={2} dot={{ r: 3 }} />
                             </LineChart>
                         </ResponsiveContainer>
@@ -250,8 +250,8 @@ export default function AnalyticsPage() {
                                     key={scenario.name}
                                     onClick={() => setSelectedScenario(i)}
                                     className={`w-full p-3 rounded-lg border text-left transition-colors ${selectedScenario === i
-                                            ? 'border-primary bg-primary/10'
-                                            : 'border-muted hover:border-muted-foreground/30'
+                                        ? 'border-primary bg-primary/10'
+                                        : 'border-muted hover:border-muted-foreground/30'
                                         }`}
                                 >
                                     <div className="flex justify-between items-center">
@@ -276,7 +276,7 @@ export default function AnalyticsPage() {
                                 Rp{(data.whatIf.scenarios[selectedScenario].predicted_revenue / 1000000000).toFixed(2)}B
                             </p>
                             <p className={`text-lg font-medium ${data.whatIf.scenarios[selectedScenario].delta.startsWith('+') ? 'text-green-600' :
-                                    data.whatIf.scenarios[selectedScenario].delta === '0%' ? 'text-muted-foreground' : 'text-red-600'
+                                data.whatIf.scenarios[selectedScenario].delta === '0%' ? 'text-muted-foreground' : 'text-red-600'
                                 }`}>
                                 {data.whatIf.scenarios[selectedScenario].delta} vs current
                             </p>
@@ -321,8 +321,8 @@ export default function AnalyticsPage() {
                                         return (
                                             <TableCell key={m} className="text-center">
                                                 <span className={`px-2 py-1 rounded text-xs ${numValue > 70 ? 'bg-green-500/20 text-green-600' :
-                                                        numValue > 50 ? 'bg-amber-500/20 text-amber-600' :
-                                                            'bg-red-500/20 text-red-600'
+                                                    numValue > 50 ? 'bg-amber-500/20 text-amber-600' :
+                                                        'bg-red-500/20 text-red-600'
                                                     }`}>
                                                     {value}%
                                                 </span>

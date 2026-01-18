@@ -89,7 +89,7 @@ export default function LocationPage() {
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis type="number" />
                                 <YAxis dataKey="city" type="category" tick={{ fontSize: 12 }} width={80} />
-                                <Tooltip formatter={(value: number) => [value.toFixed(2), 'per 100K']} />
+                                <Tooltip formatter={(value: number | undefined) => value !== undefined ? [value.toFixed(2), 'per 100K'] : ['', '']} />
                                 <Bar dataKey="per_100k" fill="#10b981" radius={[0, 4, 4, 0]}>
                                     {data.theatreDensity.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={entry.per_100k > 1 ? '#10b981' : entry.per_100k > 0.5 ? '#f59e0b' : '#ef4444'} />

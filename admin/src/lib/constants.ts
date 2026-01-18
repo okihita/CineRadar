@@ -43,3 +43,19 @@ export function getChainColor(chain: string): string {
 export function getChainColorLight(chain: string): string {
   return CHAIN_COLORS_LIGHT[chain as ChainName] || 'rgba(102, 102, 102, 0.2)';
 }
+
+// Refresh intervals (milliseconds)
+export const REFRESH_INTERVALS = {
+  FAST: 30000,        // 30 seconds - for real-time monitoring
+  MODERATE: 60000,    // 1 minute - for live data feeds
+  SLOW: 300000,       // 5 minutes - for cached data
+} as const;
+
+// Time constants (milliseconds)
+export const TIME_CONSTANTS = {
+  ONE_SECOND: 1000,
+  ONE_MINUTE: 60000,
+  FIVE_MINUTES: 300000,
+  ONE_HOUR: 3600000,
+  TOKEN_BUFFER: 300000,  // 5 min buffer for token expiry checks
+} as const;

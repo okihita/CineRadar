@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronRight, Activity, Clock, Layers } from 'lucide-react';
 import { SeatLayoutVisualizer } from './SeatLayoutVisualizer';
+import { REFRESH_INTERVALS } from '@/lib/constants';
 
 interface JITItem {
     showtime_id: string;
@@ -43,7 +44,7 @@ export const JITGranularMonitor: React.FC = () => {
         };
 
         fetchData();
-        const interval = setInterval(fetchData, 30000); // Refresh every 30s
+        const interval = setInterval(fetchData, REFRESH_INTERVALS.FAST); // Refresh every 30s
         return () => clearInterval(interval);
     }, []);
 

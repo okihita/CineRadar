@@ -164,7 +164,7 @@ export default function EngagementPage() {
                                     <CartesianGrid strokeDasharray="3 3" />
                                     <XAxis type="number" tickFormatter={(v) => `Rp${(v / 1000000).toFixed(0)}M`} />
                                     <YAxis dataKey="segment" type="category" tick={{ fontSize: 11 }} width={100} />
-                                    <Tooltip formatter={(v: number) => [`Rp${(v / 1000000).toFixed(1)}M`, 'CLV']} />
+                                    <Tooltip formatter={(v: number | undefined) => v !== undefined ? [`Rp${(v / 1000000).toFixed(1)}M`, 'CLV'] : ['', '']} />
                                     <Bar dataKey="avg_clv" fill="#8b5cf6" radius={[0, 4, 4, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>

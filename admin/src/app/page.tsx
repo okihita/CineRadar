@@ -170,8 +170,8 @@ export default function ExecutiveDashboard() {
                     <div className="space-y-2">
                         {data.alerts.map((alert, i) => (
                             <div key={i} className={`flex items-center justify-between p-3 rounded-lg border ${alert.type === 'warning' ? 'bg-amber-500/10 border-amber-500/30' :
-                                    alert.type === 'success' ? 'bg-green-500/10 border-green-500/30' :
-                                        'bg-red-500/10 border-red-500/30'
+                                alert.type === 'success' ? 'bg-green-500/10 border-green-500/30' :
+                                    'bg-red-500/10 border-red-500/30'
                                 }`}>
                                 <div className="flex items-center gap-3">
                                     {alert.type === 'warning' && <AlertTriangle className="w-5 h-5 text-amber-500" />}
@@ -208,7 +208,7 @@ export default function ExecutiveDashboard() {
                                 <div key={t.hour} className={`flex items-center gap-3 p-2 rounded ${t.current ? 'bg-primary/10 border border-primary/30' : ''}`}>
                                     <span className="text-xs font-mono w-12">{t.hour}</span>
                                     <div className={`w-3 h-3 rounded-full ${t.status === 'peak' ? 'bg-green-500' :
-                                            t.status === 'slow' ? 'bg-red-500' : 'bg-amber-500'
+                                        t.status === 'slow' ? 'bg-red-500' : 'bg-amber-500'
                                         }`} />
                                     <div className="flex-1">
                                         <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -282,7 +282,7 @@ export default function ExecutiveDashboard() {
                                         tick={{ fontSize: 10 }}
                                         tickFormatter={(v) => v.length > 15 ? v.slice(0, 15) + '...' : v}
                                     />
-                                    <Tooltip formatter={(v: number) => [formatRupiah(v), 'Revenue']} />
+                                    <Tooltip formatter={(v: number | undefined) => v !== undefined ? [formatRupiah(v), 'Revenue'] : ['', '']} />
                                     <Bar dataKey="revenue" radius={[0, 4, 4, 0]}>
                                         {data.topTheatres.map((t, i) => (
                                             <Cell key={i} fill={['#10b981', '#22c55e', '#84cc16', '#eab308', '#f59e0b'][i]} />

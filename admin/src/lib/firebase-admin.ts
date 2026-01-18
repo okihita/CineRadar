@@ -4,8 +4,12 @@
  */
 
 import jwt from 'jsonwebtoken';
+import { TIME_CONSTANTS } from './constants';
 
-const PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'cineradar-481014';
+const PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+if (!PROJECT_ID) {
+    throw new Error('Missing NEXT_PUBLIC_FIREBASE_PROJECT_ID environment variable');
+}
 const FIRESTORE_BASE_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
 
 // Token cache
@@ -13,7 +17,7 @@ let cachedToken: { token: string; expiry: number } | null = null;
 
 async function getAccessToken(): Promise<string> {
     // Return cached token if still valid (with 5 min buffer)
-    if (cachedToken && Date.now() < cachedToken.expiry - 300000) {
+    if (cachedToken && Date.now() < cachedToken.expiry - TIME_CONSTANTS.TOKEN_BUFFER) {
         return cachedToken.token;
     }
 

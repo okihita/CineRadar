@@ -3,6 +3,7 @@
  */
 import useSWR from 'swr';
 import type { Showtime, SortField, SortDirection } from '../types';
+import { REFRESH_INTERVALS } from '@/lib/constants';
 
 interface MoviesAPIResponse {
     showtimes: Showtime[];
@@ -24,7 +25,7 @@ export function useMoviesData() {
         fetcher,
         {
             revalidateOnFocus: false,
-            dedupingInterval: 60000,
+            dedupingInterval: REFRESH_INTERVALS.MODERATE,
         }
     );
 

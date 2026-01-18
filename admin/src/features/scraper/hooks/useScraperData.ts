@@ -4,6 +4,7 @@
 import useSWR from 'swr';
 import type { ScraperRun, CollectionStats, MorningScrape, JITSummary, ScraperStats } from '../types';
 import { formatWIBShort } from '@/lib/timeUtils';
+import { REFRESH_INTERVALS } from '@/lib/constants';
 
 interface ScraperCoreResponse {
     runs: ScraperRun[];
@@ -31,13 +32,13 @@ export function useScraperData() {
     const { data: coreData, error: coreError, isLoading: coreLoading, mutate: refreshCore } = useSWR<ScraperCoreResponse>(
         '/api/scraper',
         coreFetcher,
-        { revalidateOnFocus: false, dedupingInterval: 30000 }
+        { revalidateOnFocus: false, dedupingInterval: REFRESH_INTERVALS.FAST }
     );
 
     const { data: statsData, error: statsError, isLoading: statsLoading, mutate: refreshStats } = useSWR<ScraperStatsResponse>(
         '/api/scraper/stats',
         statsFetcher,
-        { revalidateOnFocus: false, dedupingInterval: 60000 }
+        { revalidateOnFocus: false, dedupingInterval: REFRESH_INTERVALS.MODERATE }
     );
 
     const runs = coreData?.runs ?? [];

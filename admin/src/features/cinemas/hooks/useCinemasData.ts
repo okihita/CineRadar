@@ -4,6 +4,7 @@
  */
 import useSWR from 'swr';
 import type { Theatre, ScraperRun } from '../types';
+import { REFRESH_INTERVALS } from '@/lib/constants';
 
 interface CinemasAPIResponse {
     theatres: Theatre[];
@@ -37,7 +38,7 @@ export function useCinemasData() {
         {
             revalidateOnFocus: false,
             revalidateOnReconnect: true,
-            dedupingInterval: 60000, // 1 minute
+            dedupingInterval: REFRESH_INTERVALS.MODERATE, // 1 minute
         }
     );
 
