@@ -1,6 +1,6 @@
 # Smoke tests for production admin dashboard
 # Runs after each deploy to verify all API endpoints work
-name: Smoke Tests
+name: API Smoke Tests
 
 on:
   # Run after successful Vercel deploy (triggered by push to main)
@@ -106,9 +106,7 @@ jobs:
           echo ""
           echo "✅ All JSON validations passed!"
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        # Version is optional since it's pinned in root package.json
+
 
       - name: Report success
         if: success()

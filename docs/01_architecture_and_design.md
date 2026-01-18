@@ -257,7 +257,7 @@ erDiagram
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
 | `ci.yml` | Push/PR to `backend/**` | Lint, test, type-check Python |
-| `smoke-tests.yml` | Push to `admin/**` + daily | Test production APIs |
+| `api-smoke-tests.yml` | Push to `admin/**` + daily | Test production APIs |
 | `security-scan.yml` | Push/PR + weekly | CodeQL security analysis |
 | `failure-reporter.yml` | Workflow failures | Auto-create GitHub issues |
 | `daily-scrape.yml` | Daily 6 AM WIB | Movie + seat scraping |
