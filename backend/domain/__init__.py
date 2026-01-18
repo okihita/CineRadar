@@ -32,22 +32,20 @@ from backend.domain.models import (
 )
 
 __all__ = [
-    # Models
+    "CineRadarError",
+    "DataNotFoundError",
+    "FirestoreError",
+    "LoginFailedError",
     "Movie",
-    "Theatre",
-    "Showtime",
     "Room",
+    "ScrapeResult",
+    "ScrapingError",
+    "SeatOccupancy",
+    "Showtime",
+    "StorageError",
+    "Theatre",
     "TheatreSchedule",
     "Token",
-    "ScrapeResult",
-    "SeatOccupancy",
-    # Errors
-    "CineRadarError",
-    "ScrapingError",
-    "LoginFailedError",
     "TokenExpiredError",
     "ValidationError",
-    "DataNotFoundError",
-    "StorageError",
-    "FirestoreError",
 ]

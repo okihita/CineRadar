@@ -111,7 +111,7 @@ class SeatScraper(BaseScraper):
                 row_name = item.get("row_name", "ALL")
                 status = item.get("seat_status", item.get("status", 0))
                 seat_yn = item.get("seat_yn", "1") # Default to "1" if missing (assume is seat)
-                
+
                 # Logic for CGV B2B format which uses seat_yn="0" for aisles
                 if seat_yn == "0":
                    # This is an aisle/gap, ignore or track as space?
@@ -123,7 +123,7 @@ class SeatScraper(BaseScraper):
                 if seat_yn == "1" and status == 0:
                     counters["unavailable"] += 1
                     counters["total"] += 1
-                    status_code = 0 
+                    status_code = 0
                 else:
                     # Use standard counter for other cases (1, 5, 6)
                     status_code = self._count_seat(status, counters)
@@ -133,10 +133,10 @@ class SeatScraper(BaseScraper):
                     # layout_grid is list of [row_name, [statuses]]
                     # We need to preserve order if possible, or just append.
                     # Since data usually comes sorted by row, we can check last element.
-                    
+
                     if not layout_grid or layout_grid[-1][0] != row_name:
                          layout_grid.append([row_name, []])
-                    
+
                     layout_grid[-1][1].append(status_code)
 
         total_seats = counters["total"]
@@ -183,8 +183,10 @@ class SeatScraper(BaseScraper):
         }
 
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url, headers=headers, params=params) as response:
+            async with (
+                aiohttp.ClientSession() as session,
+                session.get(url, headers=headers, params=params) as response,
+            ):
                     if response.status == 200:
                         data = await response.json()
                         if data.get("success"):

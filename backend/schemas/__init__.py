@@ -15,16 +15,12 @@ from backend.schemas.theatre import TheatreSchema
 from backend.schemas.token import TokenSchema
 
 __all__ = [
-    # Movie schemas
-    "ShowtimeSchema",
-    "RoomSchema",
-    "TheatreScheduleSchema",
-    "MovieSchema",
     "DailySnapshotSchema",
-    # Theatre
-    "TheatreSchema",
-    # Token
-    "TokenSchema",
-    # Scraper run
+    "MovieSchema",
+    "RoomSchema",
     "ScraperRunSchema",
+    "ShowtimeSchema",
+    "TheatreScheduleSchema",
+    "TheatreSchema",
+    "TokenSchema",
 ]

@@ -10,10 +10,10 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-logger = logging.getLogger(__name__)
-
 from google.cloud import firestore
 from google.oauth2 import service_account
+
+logger = logging.getLogger(__name__)
 
 
 def get_firestore_client():

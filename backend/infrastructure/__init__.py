@@ -21,8 +21,8 @@ from backend.infrastructure.repositories import (
 
 __all__ = [
     # Repositories
+    "FileMovieRepository",
     "FirestoreMovieRepository",
     "FirestoreTheatreRepository",
     "FirestoreTokenRepository",
-    "FileMovieRepository",
 ]

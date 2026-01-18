@@ -4,6 +4,7 @@ Core scraping logic for movie availability and showtimes.
 """
 
 import asyncio
+import contextlib
 import re
 import time
 from datetime import datetime
@@ -149,10 +150,8 @@ class CineRadarScraper(BaseScraper):
 
         except Exception as e:
             self.log(f"⚠️ Schedule fetch failed: {movie['title']} in {city_name}: {e}")
-            try:
+            with contextlib.suppress(Exception):
                 await page.unroute("**/v1/schedules/movies/**")
-            except Exception:
-                pass
 
         return theatres
 

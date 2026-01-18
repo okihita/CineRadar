@@ -82,7 +82,7 @@ def merge_batches(data_dir: str = "data", validate: bool = True) -> bool:
             from pydantic import ValidationError
 
             from backend.schemas.movie import DailySnapshotSchema
- 
+
             logger.info("🔍 Validating merged data...")
             validated = DailySnapshotSchema.model_validate(output_data)
             logger.info(

@@ -4,11 +4,10 @@ Common functionality for all TIX.id scrapers.
 """
 
 import asyncio
+import logging
 import os
-import time
 
 from playwright.async_api import Page, async_playwright
-
 
 from backend.config import API_BASE, APP_BASE, LOCALE, TIMEZONE, USER_AGENT, VIEWPORT
 

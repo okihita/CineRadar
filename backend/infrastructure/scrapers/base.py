@@ -8,7 +8,6 @@ Provides browser initialization, login, and logging.
 import asyncio
 import logging
 import os
-import time
 
 from playwright.async_api import Browser, BrowserContext, Page, Playwright, async_playwright
 

@@ -16,4 +16,4 @@ def test_imports():
         from backend.config import API_BASE
         assert API_BASE is not None
     except ImportError as e:
-        assert False, f"Failed to import backend config: {e}"
+        raise AssertionError(f"Failed to import backend config: {e}") from e

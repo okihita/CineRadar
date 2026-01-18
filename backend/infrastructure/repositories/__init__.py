@@ -10,8 +10,8 @@ from backend.infrastructure.repositories.firestore_theatre import FirestoreTheat
 from backend.infrastructure.repositories.firestore_token import FirestoreTokenRepository
 
 __all__ = [
+    "FileMovieRepository",
     "FirestoreMovieRepository",
     "FirestoreTheatreRepository",
     "FirestoreTokenRepository",
-    "FileMovieRepository",
 ]

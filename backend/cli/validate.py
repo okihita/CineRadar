@@ -18,12 +18,9 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-logger = logging.getLogger(__name__)
-
-# Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
 from pydantic import ValidationError
+
+logger = logging.getLogger(__name__)
 
 
 def validate_daily_scrape(data_dir: str = "data", file_path: str | None = None) -> bool:

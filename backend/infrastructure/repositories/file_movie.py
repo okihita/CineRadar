@@ -9,10 +9,10 @@ import json
 import logging
 from pathlib import Path
 
-logger = logging.getLogger(__name__)
-
 from backend.application.ports.storage import IMovieRepository
 from backend.domain.models import Movie, ScrapeResult
+
+logger = logging.getLogger(__name__)
 
 
 class FileMovieRepository(IMovieRepository):

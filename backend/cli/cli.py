@@ -14,11 +14,11 @@ import logging
 from datetime import datetime, timedelta
 from pathlib import Path
 
-logger = logging.getLogger(__name__)
-
 from backend.config import CITIES
 from backend.infrastructure.core.seat_scraper import SeatScraper
 from backend.infrastructure.core.tix_client import CineRadarScraper
+
+logger = logging.getLogger(__name__)
 
 # ============================================================================
 # MOVIE SCRAPER COMMANDS

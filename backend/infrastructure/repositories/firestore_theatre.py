@@ -8,13 +8,13 @@ import logging
 from datetime import datetime
 from typing import Any
 
-logger = logging.getLogger(__name__)
-
 from backend.application.ports.storage import ITheatreRepository
 from backend.domain.models import Theatre
 
 # Reuse firestore client helper
 from backend.infrastructure.repositories.firestore_token import _get_firestore_client
+
+logger = logging.getLogger(__name__)
 
 
 class FirestoreTheatreRepository(ITheatreRepository):

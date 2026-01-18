@@ -5,13 +5,6 @@ Returns place_id for accurate Google Maps links.
 """
 
 import json
-import os
-import time
-from pathlib import Path
-
-import requests
-
-import json
 import logging
 import os
 import time

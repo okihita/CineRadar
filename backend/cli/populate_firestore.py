@@ -7,8 +7,6 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-logger = logging.getLogger(__name__)
-
 sys.path.insert(0, str(Path(__file__).parent))
 
 from backend.infrastructure.repositories.firestore_utils import (
@@ -16,6 +14,8 @@ from backend.infrastructure.repositories.firestore_utils import (
     save_daily_snapshot,
     sync_theatres_from_scrape,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def main():

@@ -7,11 +7,11 @@ Implements IMovieRepository using Firebase Firestore.
 import logging
 from typing import Any
 
-logger = logging.getLogger(__name__)
-
 from backend.application.ports.storage import IMovieRepository
 from backend.domain.models import Movie, ScrapeResult
 from backend.infrastructure.repositories.firestore_token import _get_firestore_client
+
+logger = logging.getLogger(__name__)
 
 
 class FirestoreMovieRepository(IMovieRepository):

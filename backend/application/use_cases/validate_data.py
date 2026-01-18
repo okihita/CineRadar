@@ -50,8 +50,8 @@ class ValidateDataUseCase:
 
     def __init__(
         self,
-        min_movies: int = None,
-        min_cities: int = None,
+        min_movies: int | None = None,
+        min_cities: int | None = None,
     ):
         """Initialize with optional custom thresholds.
 
