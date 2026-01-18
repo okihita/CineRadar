@@ -94,22 +94,22 @@ def aggregate_daily_audience(date_str: str | None = None) -> dict:
 def format_summary_message(stats: dict) -> str:
     """Format stats as a readable message."""
     return f"""
-🎬 CineRadar Daily Summary - {stats['date']}
+🎬 CineRadar Daily Summary - {stats["date"]}
 
 📊 AUDIENCE STATISTICS
 ━━━━━━━━━━━━━━━━━━━━━━
-🎟️ Total Audience: {stats['total_audience']:,} seats sold
-🪑 Total Capacity: {stats['total_seats']:,} seats
-📈 Occupancy Rate: {stats['occupancy_pct']}%
+🎟️ Total Audience: {stats["total_audience"]:,} seats sold
+🪑 Total Capacity: {stats["total_seats"]:,} seats
+📈 Occupancy Rate: {stats["occupancy_pct"]}%
 
 📋 COVERAGE
 ━━━━━━━━━━━━━━━━━━━━━━
-🎬 Movies: {stats['movie_count']}
-🏢 Theatres: {stats['theatre_count']}
-🏙️ Cities: {stats['city_count']}
-⏰ Showtimes: {stats['showtime_count']:,}
+🎬 Movies: {stats["movie_count"]}
+🏢 Theatres: {stats["theatre_count"]}
+🏙️ Cities: {stats["city_count"]}
+⏰ Showtimes: {stats["showtime_count"]:,}
 
-Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} WIB
+Generated at: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")} WIB
 """
 
 
@@ -149,10 +149,12 @@ def main():
     # Store summary in Firestore for historical tracking
     try:
         db = get_firestore_client()
-        db.collection("daily_summaries").document(yesterday).set({
-            **stats,
-            "generated_at": datetime.now().isoformat(),
-        })
+        db.collection("daily_summaries").document(yesterday).set(
+            {
+                **stats,
+                "generated_at": datetime.now().isoformat(),
+            }
+        )
         logger.info(f"💾 Saved summary to Firestore: daily_summaries/{yesterday}")
     except Exception as e:
         logger.error(f"⚠️ Failed to save summary: {e}")

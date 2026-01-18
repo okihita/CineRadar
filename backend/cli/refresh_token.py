@@ -208,7 +208,9 @@ def main():
             logger.info(f"   Required minimum: {args.check_min_ttl}")
 
             if minutes_remaining >= args.check_min_ttl:
-                logger.info(f"✅ Token has sufficient TTL ({minutes_remaining} >= {args.check_min_ttl})")
+                logger.info(
+                    f"✅ Token has sufficient TTL ({minutes_remaining} >= {args.check_min_ttl})"
+                )
                 sys.exit(0)
             else:
                 logger.error(f"❌ Token TTL too low ({minutes_remaining} < {args.check_min_ttl})")

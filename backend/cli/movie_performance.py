@@ -32,9 +32,9 @@ def scrape_movie_performance(movie_id: str, aggregator: PerformanceAggregator) -
         movie_id: Movie identifier
         aggregator: PerformanceAggregator instance
     """
-    logger.info(f"\n{'='*60}")
+    logger.info(f"\n{'=' * 60}")
     logger.info(f"🎬 Scraping performance for movie {movie_id}")
-    logger.info(f"{'='*60}\n")
+    logger.info(f"{'=' * 60}\n")
 
     # Get movie data from Firestore
     movie_repo = FirestoreMovieRepository()
@@ -65,18 +65,20 @@ def scrape_movie_performance(movie_id: str, aggregator: PerformanceAggregator) -
             for room in schedule.rooms:
                 for st in room.showtimes:
                     if st.showtime_id and st.is_available:
-                        showtimes.append({
-                            "showtime_id": st.showtime_id,
-                            "movie_id": movie_id,
-                            "movie_title": movie_data.title,
-                            "theatre_id": schedule.theatre_id,
-                            "theatre_name": schedule.theatre_name,
-                            "city": city,
-                            "merchant": schedule.merchant,
-                            "room_category": room.room_category,
-                            "showtime": st.showtime,
-                            "date": snapshot.date,
-                        })
+                        showtimes.append(
+                            {
+                                "showtime_id": st.showtime_id,
+                                "movie_id": movie_id,
+                                "movie_title": movie_data.title,
+                                "theatre_id": schedule.theatre_id,
+                                "theatre_name": schedule.theatre_name,
+                                "city": city,
+                                "merchant": schedule.merchant,
+                                "room_category": room.room_category,
+                                "showtime": st.showtime,
+                                "date": snapshot.date,
+                            }
+                        )
 
     if not showtimes:
         logger.warning("⚠️ No showtimes with IDs found for this movie")
@@ -90,7 +92,9 @@ def scrape_movie_performance(movie_id: str, aggregator: PerformanceAggregator) -
         logger.error("❌ Failed to load auth token - run token-refresh workflow first")
         return
 
-    results = asyncio.run(scraper.scrape_all_showtimes_api_only(showtimes[:10]))  # Limit for testing
+    results = asyncio.run(
+        scraper.scrape_all_showtimes_api_only(showtimes[:10])
+    )  # Limit for testing
 
     logger.info(f"\n✅ Scraped {len(results)} showtimes")
 
@@ -160,7 +164,9 @@ def main():
     parser = argparse.ArgumentParser(description="Movie Performance Aggregation CLI")
     parser.add_argument("--movie-id", help="Scrape specific movie by ID")
     parser.add_argument("--all", action="store_true", help="Scrape all movies")
-    parser.add_argument("--limit", type=int, default=10, help="Limit number of movies (default: 10)")
+    parser.add_argument(
+        "--limit", type=int, default=10, help="Limit number of movies (default: 10)"
+    )
     parser.add_argument(
         "--recalculate", action="store_true", help="Recalculate summaries from existing data"
     )

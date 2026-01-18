@@ -58,7 +58,9 @@ def upsert_theatre(theatre_data: dict, validate: bool = True) -> bool:
             TheatreSchema.model_validate(theatre_data)
             TheatreSchema.model_validate(theatre_data)
         except ValidationError as e:
-            logger.error(f"⚠️ Validation failed for theatre {theatre_data.get('theatre_id')}: {e.errors()}")
+            logger.error(
+                f"⚠️ Validation failed for theatre {theatre_data.get('theatre_id')}: {e.errors()}"
+            )
             return False
         except ImportError:
             pass  # Pydantic not available, skip validation

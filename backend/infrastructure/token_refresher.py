@@ -244,10 +244,10 @@ class TokenRefresher:
         run_id = self.trigger_gha_workflow()
 
         if run_id and self.wait_for_gha_completion(run_id):
-                # Reload token from storage
-                new_token = self.get_current_token()
-                if new_token and not self.needs_refresh(new_token):
-                    return new_token
+            # Reload token from storage
+            new_token = self.get_current_token()
+            if new_token and not self.needs_refresh(new_token):
+                return new_token
 
         # All methods failed
         raise TokenRefreshError(

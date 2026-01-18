@@ -25,12 +25,14 @@ class SeatScraper(BaseScraper):
     """Seat occupancy scraper for TIX.id using direct API calls."""
 
     # Merchant to API path mapping (immutable)
-    MERCHANT_PATHS: ClassVar[MappingProxyType] = MappingProxyType({
-        "CGV": "cgv",
-        "XXI": "xxi",
-        "Cinépolis": "cinepolis",
-        "CINEPOLIS": "cinepolis",
-    })
+    MERCHANT_PATHS: ClassVar[MappingProxyType] = MappingProxyType(
+        {
+            "CGV": "cgv",
+            "XXI": "xxi",
+            "Cinépolis": "cinepolis",
+            "CINEPOLIS": "cinepolis",
+        }
+    )
 
     def __init__(self):
         super().__init__()
@@ -112,13 +114,13 @@ class SeatScraper(BaseScraper):
                 # Flat structure (Cinépolis/CGV B2B)
                 row_name = item.get("row_name", "ALL")
                 status = item.get("seat_status", item.get("status", 0))
-                seat_yn = item.get("seat_yn", "1") # Default to "1" if missing (assume is seat)
+                seat_yn = item.get("seat_yn", "1")  # Default to "1" if missing (assume is seat)
 
                 # Logic for CGV B2B format which uses seat_yn="0" for aisles
                 if seat_yn == "0":
-                   # This is an aisle/gap, ignore or track as space?
-                   # For occupancy calcs, we ignore.
-                   continue
+                    # This is an aisle/gap, ignore or track as space?
+                    # For occupancy calcs, we ignore.
+                    continue
 
                 # Custom status mapping for this format
                 # If seat_yn="1" and status=0 -> Sold
@@ -137,7 +139,7 @@ class SeatScraper(BaseScraper):
                     # Since data usually comes sorted by row, we can check last element.
 
                     if not layout_grid or layout_grid[-1][0] != row_name:
-                         layout_grid.append([row_name, []])
+                        layout_grid.append([row_name, []])
 
                     layout_grid[-1][1].append(status_code)
 
@@ -189,19 +191,19 @@ class SeatScraper(BaseScraper):
                 aiohttp.ClientSession() as session,
                 session.get(url, headers=headers, params=params) as response,
             ):
-                    if response.status == 200:
-                        data = await response.json()
-                        if data.get("success"):
-                            return data
-                        else:
-                            self.log(
-                                f"   ⚠️ API error: {data.get('error', {}).get('message', 'Unknown')}"
-                            )
-                    elif response.status == 401:
-                        self.log("   ⚠️ Auth token expired - need to re-login")
+                if response.status == 200:
+                    data = await response.json()
+                    if data.get("success"):
+                        return data
                     else:
-                        body = await response.text()
-                        self.log(f"   ⚠️ API returned {response.status}: {body[:200]}")
+                        self.log(
+                            f"   ⚠️ API error: {data.get('error', {}).get('message', 'Unknown')}"
+                        )
+                elif response.status == 401:
+                    self.log("   ⚠️ Auth token expired - need to re-login")
+                else:
+                    body = await response.text()
+                    self.log(f"   ⚠️ API returned {response.status}: {body[:200]}")
         except Exception as e:
             self.log(f"   ⚠️ API call failed: {e}")
 
@@ -244,7 +246,6 @@ class SeatScraper(BaseScraper):
             "scraped_at": datetime.now().isoformat(),
             **occupancy,
         }
-
 
     async def scrape_all_showtimes_api_only(
         self, showtimes: list[dict], delay_between_requests: float = 1.0
@@ -299,4 +300,3 @@ class SeatScraper(BaseScraper):
         elapsed = time.time() - start_time
         self.log(f"🏁 API scrape complete: {len(results)}/{len(showtimes)} in {elapsed:.1f}s")
         return results
-

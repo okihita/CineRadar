@@ -129,9 +129,7 @@ class Geocoder:
         self.cache = load_geocode_cache(cache_path)
         self.log = logger or logging.getLogger(__name__).info
 
-    def _collect_theatres_to_geocode(
-        self, movie_map: dict[str, Any]
-    ) -> list[dict[str, Any]]:
+    def _collect_theatres_to_geocode(self, movie_map: dict[str, Any]) -> list[dict[str, Any]]:
         """Collect theatres that need geocoding from movie data."""
         theatres_to_geocode = []
 
@@ -190,9 +188,7 @@ class Geocoder:
 
         async with aiohttp.ClientSession() as session:
             for i, item in enumerate(theatres_to_geocode):
-                coords = await geocode_address(
-                    item["address"], item["city"], session, self.cache
-                )
+                coords = await geocode_address(item["address"], item["city"], session, self.cache)
 
                 if coords:
                     item["theatre"]["lat"] = coords["lat"]

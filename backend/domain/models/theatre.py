@@ -64,7 +64,9 @@ class Theatre:
     VALID_MERCHANTS: ClassVar[frozenset[str]] = frozenset({"XXI", "CGV", "Cinépolis", "CINEPOLIS"})
 
     # Premium room types
-    PREMIUM_ROOMS: ClassVar[frozenset[str]] = frozenset({"IMAX", "GOLD CLASS", "VELVET", "PREMIERE", "4DX", "SCREENX"})
+    PREMIUM_ROOMS: ClassVar[frozenset[str]] = frozenset(
+        {"IMAX", "GOLD CLASS", "VELVET", "PREMIERE", "4DX", "SCREENX"}
+    )
 
     @property
     def has_location(self) -> bool:

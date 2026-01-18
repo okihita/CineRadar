@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 """
 Final Snap Worker - Captures the final seating layout 5 minutes before showtime.
@@ -22,6 +21,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("FinalSnap")
 
+
 class FinalSnapWorker:
     def __init__(self):
         self.scraper = TixSeatScraper()
@@ -35,13 +35,14 @@ class FinalSnapWorker:
     async def capture_final(self, task: dict):
         """Scrape and save the final snap for a showtime."""
         showtime_id = task["id"]
-        logger.info(f"📸 Capturing FINAL SNAP for {task['movie']} at {task['theatre']} ({task['start_time']})")
+        logger.info(
+            f"📸 Capturing FINAL SNAP for {task['movie']} at {task['theatre']} ({task['start_time']})"
+        )
 
         try:
             await self._ensure_token()
             results = await self.scraper.scrape_seats(
-                showtime_ids=[showtime_id],
-                merchant=task.get("merchant", "XXI")
+                showtime_ids=[showtime_id], merchant=task.get("merchant", "XXI")
             )
 
             if results:
@@ -88,7 +89,7 @@ class FinalSnapWorker:
                 start_dt = now.replace(hour=sh, minute=sm, second=0, microsecond=0)
 
                 # If crossover to next day (rare for this worker which runs daily)
-                if now.hour > sh + 12: # Very late night/early morning check
+                if now.hour > sh + 12:  # Very late night/early morning check
                     continue
 
                 # Trigger exactly 5 minutes before (or within 4-6 minutes window)
@@ -112,9 +113,10 @@ class FinalSnapWorker:
 
             await asyncio.sleep(30)
 
+
 async def main():
     # Load today's movie data
-    data_path = Path("data/movies_2025-12-23.json") # Example for now, should be dynamic
+    data_path = Path("data/movies_2025-12-23.json")  # Example for now, should be dynamic
     if not data_path.exists():
         logger.error(f"❌ Data file {data_path} not found")
         return
@@ -138,17 +140,20 @@ async def main():
                             st_dt = now.replace(hour=sh, minute=sm, second=0, microsecond=0)
 
                             if st_dt > now:
-                                tasks.append({
-                                    "id": st["showtime_id"],
-                                    "movie": movie["title"],
-                                    "theatre": theatre["theatre_name"],
-                                    "merchant": theatre["merchant"],
-                                    "start_time": st_time,
-                                    "date": date_str
-                                })
+                                tasks.append(
+                                    {
+                                        "id": st["showtime_id"],
+                                        "movie": movie["title"],
+                                        "theatre": theatre["theatre_name"],
+                                        "merchant": theatre["merchant"],
+                                        "start_time": st_time,
+                                        "date": date_str,
+                                    }
+                                )
 
     worker = FinalSnapWorker()
     await worker.run(tasks)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

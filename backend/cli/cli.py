@@ -169,6 +169,7 @@ def load_movie_data_from_firestore(date_str: str) -> dict | None:
     sa_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
     if sa_json:
         import json as json_lib
+
         sa_info = json_lib.loads(sa_json)
         credentials = service_account.Credentials.from_service_account_info(sa_info)
         db = firestore.Client(credentials=credentials, project=sa_info["project_id"])
@@ -192,11 +193,7 @@ def load_movie_data_from_firestore(date_str: str) -> dict | None:
 
     logger.info(f"✅ Loaded {len(movies)} movies from Firestore")
 
-    return {
-        "date": date_str,
-        "movies": movies,
-        "scraped_at": datetime.now().isoformat()
-    }
+    return {"date": date_str, "movies": movies, "scraped_at": datetime.now().isoformat()}
 
 
 def extract_showtimes_from_data(
@@ -298,7 +295,9 @@ def filter_jit_showtimes(showtimes: list[dict], window_minutes: int = 8) -> list
                 # Check if within target window
                 if window_start <= show_time <= window_end:
                     minutes_until = (show_time - now).total_seconds() / 60
-                    logger.debug(f"   Found: {st.get('theatre_name', '?')[:30]} @ {time_str} (T-{minutes_until:.0f}m)")
+                    logger.debug(
+                        f"   Found: {st.get('theatre_name', '?')[:30]} @ {time_str} (T-{minutes_until:.0f}m)"
+                    )
                     filtered.append(st)
         except (ValueError, IndexError):
             continue
@@ -433,7 +432,9 @@ Examples:
     seats_parser.add_argument("--output", default="data", help="Output directory")
     seats_parser.add_argument("--batch", type=int, help="Batch number")
     seats_parser.add_argument("--total-batches", type=int, default=9)
-    seats_parser.add_argument("--jit-window", type=int, default=8, help="JIT window in minutes (default: 8 for T-8)")
+    seats_parser.add_argument(
+        "--jit-window", type=int, default=8, help="JIT window in minutes (default: 8 for T-8)"
+    )
     seats_parser.add_argument(
         "--use-stored-token",
         action="store_true",

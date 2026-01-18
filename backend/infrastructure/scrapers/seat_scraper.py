@@ -63,9 +63,7 @@ class TixSeatScraper(BaseScraper, ISeatScraper):
             if not legacy_scraper.auth_token:
                 raise TokenExpiredError("Token was invalidated during scrape")
             # Otherwise it could be a transient failure or no data
-            raise ScrapingError(
-                f"API scrape returned no results for {len(showtime_ids)} showtimes"
-            )
+            raise ScrapingError(f"API scrape returned no results for {len(showtime_ids)} showtimes")
 
         # Convert to domain objects
         occupancies = []
