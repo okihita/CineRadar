@@ -4,9 +4,12 @@ Manages theatre collection with geocoding data.
 """
 
 import json
+import logging
 import os
 import tempfile
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 
 def get_firestore_client():
@@ -53,8 +56,9 @@ def upsert_theatre(theatre_data: dict, validate: bool = True) -> bool:
             from backend.schemas.theatre import TheatreSchema
 
             TheatreSchema.model_validate(theatre_data)
+            TheatreSchema.model_validate(theatre_data)
         except ValidationError as e:
-            print(f"⚠️ Validation failed for theatre {theatre_data.get('theatre_id')}: {e.errors()}")
+            logger.error(f"⚠️ Validation failed for theatre {theatre_data.get('theatre_id')}: {e.errors()}")
             return False
         except ImportError:
             pass  # Pydantic not available, skip validation
@@ -118,7 +122,7 @@ def upsert_theatre(theatre_data: dict, validate: bool = True) -> bool:
 
         return True
     except Exception as e:
-        print(f"Error upserting theatre {theatre_data.get('theatre_id')}: {e}")
+        logger.error(f"Error upserting theatre {theatre_data.get('theatre_id')}: {e}")
         return False
 
 
@@ -131,7 +135,7 @@ def get_theatre(theatre_id: str) -> dict | None:
             return doc.to_dict()
         return None
     except Exception as e:
-        print(f"Error getting theatre {theatre_id}: {e}")
+        logger.error(f"Error getting theatre {theatre_id}: {e}")
         return None
 
 
@@ -142,7 +146,7 @@ def get_all_theatres() -> list[dict]:
         docs = db.collection("theatres").stream()
         return [doc.to_dict() for doc in docs]
     except Exception as e:
-        print(f"Error getting all theatres: {e}")
+        logger.error(f"Error getting all theatres: {e}")
         return []
 
 
@@ -153,7 +157,7 @@ def get_theatres_by_city(city: str) -> list[dict]:
         docs = db.collection("theatres").where("city", "==", city.upper()).stream()
         return [doc.to_dict() for doc in docs]
     except Exception as e:
-        print(f"Error getting theatres for {city}: {e}")
+        logger.error(f"Error getting theatres for {city}: {e}")
         return []
 
 
@@ -236,7 +240,7 @@ def log_scraper_run(run_data: dict, run_type: str = "movies") -> bool:
         )
         return True
     except Exception as e:
-        print(f"Error logging scraper run: {e}")
+        logger.error(f"Error logging scraper run: {e}")
         return False
 
 
@@ -279,13 +283,13 @@ def save_daily_snapshot(data: dict) -> bool:
 
         # Save to 'latest' (overwrites previous)
         db.collection("snapshots").document("latest").set(snapshot_data)
-        print("   Saved snapshot to 'latest'")
+        logger.info("   Saved snapshot to 'latest'")
 
         # Also save to dated document (archive)
         db.collection("snapshots").document(date).set(snapshot_data)
-        print(f"   Archived snapshot to '{date}'")
+        logger.info(f"   Archived snapshot to '{date}'")
 
         return True
     except Exception as e:
-        print(f"Error saving snapshot: {e}")
+        logger.error(f"Error saving snapshot: {e}")
         return False

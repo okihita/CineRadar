@@ -6,6 +6,7 @@ Provides browser initialization, login, and logging.
 """
 
 import asyncio
+import logging
 import os
 import time
 
@@ -13,6 +14,8 @@ from playwright.async_api import Browser, BrowserContext, Page, Playwright, asyn
 
 from backend.config import API_BASE, APP_BASE, LOCALE, TIMEZONE, USER_AGENT, VIEWPORT
 from backend.domain.errors import LoginFailedError, PageLoadError
+
+logger = logging.getLogger(__name__)
 
 
 class BaseScraper:
@@ -50,7 +53,7 @@ class BaseScraper:
         Args:
             message: Message to log
         """
-        print(f"[{time.strftime('%H:%M:%S')}] {message}")
+        logger.info(message)
 
     async def _init_browser(
         self, headless: bool = True
