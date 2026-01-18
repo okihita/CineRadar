@@ -80,7 +80,7 @@ The scraping pipeline operates continuously on **GitHub Actions**, utilizing par
 
 | Workflow | Schedule | Python Entry Point | Description |
 |----------|----------|--------------------|-------------|
-| **`daily-scrape.yml`** | Daily 06:00 WIB | `.jit_granular_scraper` | **Main Pipeline**. Scrapes movies & seats in parallel batches (0-8). |
+| **`daily-scrape.yml`** | Daily 06:00 WIB | `.cli`, `.movie_performance` | **Main Pipeline**. Scrapes movies, seats, and aggregates performance data. |
 | **`token-refresh.yml`** | Bi-monthly | `.refresh_token` | **Headless Login**. Runs full Playwright with `xvfb` to regenerate valid refresh tokens (~90 day TTL). |
 | **`monthly-geocode.yml`** | Monthly 1st | `.monthly_geocode` | **Metadata Sync**. Updates theatre coordinates via Google Maps API. |
 | **`daily-summary.yml`** | Daily 00:00 WIB | `.daily_summary` | **Reporting**. Generates T+0 summary stats. |
@@ -101,10 +101,8 @@ Data is not persisted immediately. Instead, it flows through **GitHub Artifacts*
 Final persistence is handled by dedicated Python CLI tools at the end of the workflows:
 *   `populate_firestore`: Syncs merged movie/theatre data.
 *   `upload_seats`: Syncs seat occupancy snapshots.
+*   `movie_performance`: Aggregates seat data into per-movie performance summaries.
 *   `refresh_token`: Updates auth tokens in `auth_tokens/tix_jwt`.
-
-#### Future Roadmap
-*   **[Planned] Seating Layouts**: We intend to capture and store the individual seat map layout (valid/invalid/sold seats) for every showtime to enable visual replay. *Currently not implemented.*
 
 ---
 
@@ -183,6 +181,8 @@ erDiagram
     ROOM ||--o{ SHOWTIME : has
     THEATRE ||--o{ THEATRE_SCHEDULE : hosts
     SHOWTIME ||--o| SEAT_OCCUPANCY : "has seats"
+    MOVIE ||--o| MOVIE_PERFORMANCE : "aggregated in"
+    MOVIE_PERFORMANCE ||--o{ SHOWTIME_SNAPSHOT : "contains"
     
     MOVIE {
         string id PK
@@ -215,6 +215,24 @@ erDiagram
         int sold_seats
         float occupancy_pct
     }
+    
+    MOVIE_PERFORMANCE {
+        string movie_id PK
+        string title
+        int total_showtimes
+        float avg_occupancy_pct
+        int total_seats
+        int total_sold
+        string[] cities
+    }
+    
+    SHOWTIME_SNAPSHOT {
+        string showtime_id PK
+        string theatre_name
+        string city
+        float occupancy_pct
+        string layout_json
+    }
 ```
 
 ### Firestore Collections
@@ -225,6 +243,8 @@ erDiagram
 | `snapshots` | `latest` or `{YYYY-MM-DD}` | Daily movie data (slim) |
 | `schedules/{date}/movies` | `{movie_id}` | Full showtime data by date |
 | `seat_snapshots` | `{showtime_id}_{type}_{time}` | Seat occupancy data |
+| `movie_performance` | `{movie_id}` | **[NEW]** Per-movie aggregated stats |
+| `movie_performance/{movie_id}/showtimes` | `{showtime_id}` | **[NEW]** Individual showtime snapshots with full seat layout |
 | `scraper_runs` | `{timestamp}_{type}` | Scraper run logs |
 | `auth_tokens` | `tix_jwt` | JWT token storage |
 

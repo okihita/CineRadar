@@ -15,3 +15,5 @@ export { useMoviesData, useFilteredShowtimes } from './hooks/useMoviesData';
 export { MovieStats } from './components/MovieStats';
 export { MovieFilters } from './components/MovieFilters';
 export { ShowtimeTable } from './components/ShowtimeTable';
+export { PerformanceTab } from './components/PerformanceTab';
+

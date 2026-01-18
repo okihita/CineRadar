@@ -2,17 +2,19 @@
  * Movie Intelligence Page
  * Showtimes and schedules across all theatres
  *
- * Refactored: 496 lines → ~100 lines
+ * Refactored: 496 lines → ~150 lines
  * - Feature-based folder structure (/features/movies/)
  * - Zustand for UI state (useMoviesStore) - replaces 13 useState hooks
  * - SWR for server state (useMoviesData)
  * - Extracted components: MovieStats, MovieFilters, ShowtimeTable
+ * - Added Performance tab for movie performance tracking
  */
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Film } from 'lucide-react';
+import { Film, LayoutList, Target } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 // Feature imports
 import {
@@ -22,9 +24,14 @@ import {
     MovieStats,
     MovieFilters,
     ShowtimeTable,
+    PerformanceTab,
 } from '@/features/movies';
 
+type Tab = 'showtimes' | 'performance';
+
 export default function MoviesPage() {
+    const [activeTab, setActiveTab] = useState<Tab>('showtimes');
+
     // Server state (SWR)
     const { showtimes, date, isLoading, isError, error } = useMoviesData();
 
@@ -72,7 +79,7 @@ export default function MoviesPage() {
     );
 
     // Loading state
-    if (isLoading) {
+    if (isLoading && activeTab === 'showtimes') {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
@@ -97,46 +104,83 @@ export default function MoviesPage() {
                 </p>
             </div>
 
-            {/* KPI Cards */}
-            <MovieStats stats={stats} />
+            {/* Tab Navigation */}
+            <div className="flex gap-2 mb-6">
+                <button
+                    onClick={() => setActiveTab('showtimes')}
+                    className={cn(
+                        'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                        activeTab === 'showtimes'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-muted-foreground hover:text-foreground'
+                    )}
+                >
+                    <LayoutList className="w-4 h-4" />
+                    Showtimes
+                </button>
+                <button
+                    onClick={() => setActiveTab('performance')}
+                    className={cn(
+                        'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                        activeTab === 'performance'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-muted-foreground hover:text-foreground'
+                    )}
+                >
+                    <Target className="w-4 h-4" />
+                    Performance
+                </button>
+            </div>
 
-            {/* Error display */}
-            {isError && (
-                <Card className="mb-6 border-destructive">
-                    <CardContent className="pt-4">
-                        <p className="text-destructive">{error}</p>
-                    </CardContent>
-                </Card>
+            {/* Showtimes Tab */}
+            {activeTab === 'showtimes' && (
+                <>
+                    {/* KPI Cards */}
+                    <MovieStats stats={stats} />
+
+                    {/* Error display */}
+                    {isError && (
+                        <Card className="mb-6 border-destructive">
+                            <CardContent className="pt-4">
+                                <p className="text-destructive">{error}</p>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* Filters */}
+                    <MovieFilters
+                        searchTerm={store.searchTerm}
+                        filterCity={store.filterCity}
+                        filterChain={store.filterChain}
+                        filterRoom={store.filterRoom}
+                        showAvailableOnly={store.showAvailableOnly}
+                        cities={cities}
+                        chains={chains}
+                        roomTypes={roomTypes}
+                        onSearchChange={store.setSearchTerm}
+                        onCityChange={store.setFilterCity}
+                        onChainChange={store.setFilterChain}
+                        onRoomChange={store.setFilterRoom}
+                        onAvailableOnlyChange={store.setShowAvailableOnly}
+                        onClearFilters={store.clearFilters}
+                    />
+
+                    {/* Showtime Table */}
+                    <ShowtimeTable
+                        showtimes={filteredShowtimes}
+                        currentPage={store.currentPage}
+                        sortField={store.sortField}
+                        sortDirection={store.sortDirection}
+                        onPageChange={store.setCurrentPage}
+                        onToggleSort={store.toggleSort}
+                        onClearFilters={store.clearFilters}
+                    />
+                </>
             )}
 
-            {/* Filters */}
-            <MovieFilters
-                searchTerm={store.searchTerm}
-                filterCity={store.filterCity}
-                filterChain={store.filterChain}
-                filterRoom={store.filterRoom}
-                showAvailableOnly={store.showAvailableOnly}
-                cities={cities}
-                chains={chains}
-                roomTypes={roomTypes}
-                onSearchChange={store.setSearchTerm}
-                onCityChange={store.setFilterCity}
-                onChainChange={store.setFilterChain}
-                onRoomChange={store.setFilterRoom}
-                onAvailableOnlyChange={store.setShowAvailableOnly}
-                onClearFilters={store.clearFilters}
-            />
-
-            {/* Showtime Table */}
-            <ShowtimeTable
-                showtimes={filteredShowtimes}
-                currentPage={store.currentPage}
-                sortField={store.sortField}
-                sortDirection={store.sortDirection}
-                onPageChange={store.setCurrentPage}
-                onToggleSort={store.toggleSort}
-                onClearFilters={store.clearFilters}
-            />
+            {/* Performance Tab */}
+            {activeTab === 'performance' && <PerformanceTab />}
         </div>
     );
 }
+

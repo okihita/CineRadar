@@ -82,7 +82,8 @@ The **Entry Points**. These files are the "main" scripts called by GitHub Action
 
 | File | Associated Workflow | Responsibility |
 |------|---------------------|----------------|
-| **`jit_granular_scraper.py`** | `daily-scrape.yml` | **The Master Scraper.** Orchestrates the scraping loop, applies anti-bot jitter, handles rate limiting, and saves raw JSONL artifacts. |
+| **`cli.py`** | `daily-scrape.yml` | **Main CLI.** Entry point for `movies` and `seats` subcommands. |
+| **`movie_performance.py`** | `daily-scrape.yml` | **[NEW] Performance Aggregator.** Aggregates seat data into per-movie summaries. |
 | **`refresh_token.py`** | `token-refresh.yml` | **The Login Bot.** Launches a headless browser to perform a real login flow and capture the JWT from localStorage. |
 | **`daily_summary.py`** | `daily-summary.yml` | **The Reporter.** Aggregates Firestore data at midnight to calculate total audience stats. |
 | **`monthly_geocode.py`** | `monthly-geocode.yml` | **The Mapper.** Queries Google Maps API to fix missing coordinates for new theatres. |
@@ -99,11 +100,13 @@ The technical implementations. This is where the dirty work happens.
 | **`scrapers/`** | **The Scraper Implementations.** |
 | ↳ `seat_scraper.py` | `TixSeatScraper`: The clean wrapper that mimics the `ISeatScraper` interface. |
 | ↳ `base.py` | `BaseScraper`: Shared logic for browser initialization and user-agent rotation. |
-| **`core/`** | **Legacy Logic (To be refactored).** |
-| ↳ `seat_scraper.py` | `SeatScraper`: The *actual* complex logic that calls the TIX.id API. Currently wrapped by `infrastructure.scrapers`. |
+| **`core/`** | **Core Scraping Logic.** |
+| ↳ `seat_scraper.py` | `SeatScraper`: The *actual* complex logic that calls the TIX.id API. |
+| ↳ `tix_client.py` | `CineRadarScraper`: Main movie/schedule scraper. |
 | **`repositories/`** | **Database Adapters.** |
 | ↳ `firestore_repo.py` | Handles all reads/writes to Google Cloud Firestore. |
 | ↳ `firestore_token.py` | Specialized logic for reading/writing the JWT auth token document. |
+| ↳ `firestore_movie_performance.py` | **[NEW]** Persistence for `movie_performance` collection. |
 | `token_refresher.py` | **Hybrid Auth Logic.** Checks if the token is alive. If dying (<5m TTL), it calls the TIX API to refresh it. |
 
 ### 3. `backend/domain/` (The "What")
@@ -111,8 +114,15 @@ Pure business logic and data structures. Zero external dependencies (no Firestor
 
 | File | Responsibility |
 |------|----------------|
-| `models/` | Contains Pydantic models (e.g. `Movie`, `Showtime`, `SeatOccupancy`) that define our data shape. |
+| `models/` | Contains dataclasses (e.g. `Movie`, `Showtime`, `SeatOccupancy`, `MoviePerformance`). |
+| `models/movie_performance.py` | **[NEW]** `ShowtimeSnapshot` and `MoviePerformance` dataclasses. |
 | `errors.py` | Custom exception classes (e.g. `TokenExpiredError`, `ScrapeError`) for clean error handling. |
 
 ### 4. `backend/application/` (The "Orchestrator")
-*Currently evolving.* This layer is intended to hold "Use Cases" that connect Scrapers to Repositories, keeping the CLI thinner.
+This layer holds "Use Cases" and "Services" that connect Scrapers to Repositories.
+
+| Directory/File | Responsibility |
+|----------------|----------------|
+| `use_cases/` | Scripts that orchestrate multi-step operations (e.g., scraping flow). |
+| `services/` | **[NEW]** Business logic services. |
+| ↳ `performance_aggregator.py` | `PerformanceAggregator`: Aggregates showtime snapshots into movie summaries. |

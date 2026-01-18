@@ -319,7 +319,7 @@ class SeatScraper(BaseScraper):
         return results
 
     async def scrape_all_showtimes_api_only(
-        self, showtimes: list[dict], delay_between_requests: float = 0.3
+        self, showtimes: list[dict], delay_between_requests: float = 1.0
     ) -> list[dict]:
         """
         Scrape seat occupancy using API calls only (no browser).
@@ -328,11 +328,13 @@ class SeatScraper(BaseScraper):
 
         Args:
             showtimes: List of showtime info dicts
-            delay_between_requests: Rate limiting delay
+            delay_between_requests: Base rate limiting delay (with jitter applied)
 
         Returns:
             List of occupancy data dicts
         """
+        import random
+
         if not self.auth_token:
             self.log("⚠️ No auth token - call load_token_from_storage() first")
             return []
@@ -342,6 +344,7 @@ class SeatScraper(BaseScraper):
             return []
 
         self.log(f"⚡ Starting API-only seat scrape for {len(showtimes)} showtimes...")
+        self.log(f"   Rate limit: {delay_between_requests}s (±20% jitter)")
 
         results = []
         start_time = time.time()
@@ -361,8 +364,11 @@ class SeatScraper(BaseScraper):
                     f"{showtime_info.get('showtime', '')} - ❌ Failed"
                 )
 
-            await asyncio.sleep(delay_between_requests)
+            # Anti-DDoS: rate limiting with jitter (±20%)
+            jitter = delay_between_requests * random.uniform(0.8, 1.2)
+            await asyncio.sleep(jitter)
 
         elapsed = time.time() - start_time
         self.log(f"🏁 API scrape complete: {len(results)}/{len(showtimes)} in {elapsed:.1f}s")
         return results
+

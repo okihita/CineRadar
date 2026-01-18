@@ -122,9 +122,19 @@ def run_movie_scrape(
 # ============================================================================
 
 
-def load_movie_data(data_dir: str = "data") -> dict | None:
-    """Load today's movie data from the daily scrape."""
+def load_movie_data(data_dir: str = "data", use_firestore: bool = False) -> dict | None:
+    """Load today's movie data from local files or Firestore.
+    
+    Args:
+        data_dir: Directory for local JSON files
+        use_firestore: If True, load from Firestore instead of local files
+    """
     date_str = datetime.now().strftime("%Y-%m-%d")
+    
+    # For JIT mode, always use Firestore
+    if use_firestore:
+        return load_movie_data_from_firestore(date_str)
+    
     data_path = Path(data_dir)
 
     # Try today's merged file first, then batch files
@@ -139,7 +149,53 @@ def load_movie_data(data_dir: str = "data") -> dict | None:
                 return json.load(f)
 
     logger.warning(f"⚠️ No movie data found for {date_str}")
-    return None
+    
+    # Fall back to Firestore
+    logger.info("📥 Attempting to load from Firestore...")
+    return load_movie_data_from_firestore(date_str)
+
+
+def load_movie_data_from_firestore(date_str: str) -> dict | None:
+    """Load movie data from Firestore schedules collection.
+    
+    Loads from schedules/{date}/movies/{movie_id} collection.
+    """
+    import os
+    from google.cloud import firestore
+    from google.oauth2 import service_account
+    
+    # Initialize Firestore
+    sa_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
+    if sa_json:
+        import json as json_lib
+        sa_info = json_lib.loads(sa_json)
+        credentials = service_account.Credentials.from_service_account_info(sa_info)
+        db = firestore.Client(credentials=credentials, project=sa_info["project_id"])
+    else:
+        db = firestore.Client()
+    
+    # Load all movies from schedules/{date}/movies
+    logger.info(f"📥 Loading movies from Firestore: schedules/{date_str}/movies")
+    movies_ref = db.collection("schedules").document(date_str).collection("movies")
+    
+    docs = movies_ref.stream()
+    movies = []
+    for doc in docs:
+        movie_data = doc.to_dict()
+        if movie_data:
+            movies.append(movie_data)
+    
+    if not movies:
+        logger.warning(f"⚠️ No movies found in Firestore for {date_str}")
+        return None
+    
+    logger.info(f"✅ Loaded {len(movies)} movies from Firestore")
+    
+    return {
+        "date": date_str,
+        "movies": movies,
+        "scraped_at": datetime.now().isoformat()
+    }
 
 
 def extract_showtimes_from_data(
@@ -204,20 +260,28 @@ def extract_showtimes_from_data(
     return showtimes
 
 
-def filter_jit_showtimes(showtimes: list[dict], window_minutes: int = 20) -> list[dict]:
+def filter_jit_showtimes(showtimes: list[dict], window_minutes: int = 8) -> list[dict]:
     """
-    Filter showtimes to only those starting within the next N minutes.
+    Filter showtimes to capture at T-8 minutes before start.
+    
+    Default window: showtimes starting in 5-13 minutes from now.
+    For hourly JIT runs, use window_minutes=60 to get showtimes in 5-65 minutes.
 
     Args:
         showtimes: List of showtime dicts with 'showtime' (HH:MM format)
-        window_minutes: Time window in minutes
+        window_minutes: Window size in minutes (default: 8 for T-8, use 60 for hourly)
+                       Creates a window of [5, 5+window_minutes] minutes from now
 
     Returns:
-        Filtered list of showtimes
+        Filtered list of showtimes in the target window
     """
     now = datetime.now()
-    window_start = now
-    window_end = now + timedelta(minutes=window_minutes)
+    cutoff_minutes = 5  # TIX.id closes booking 5 minutes before showtime
+    
+    # Calculate the scraping window: [cutoff + window, cutoff]
+    # e.g., window_minutes=8 → scrape showtimes starting in 5-13 minutes
+    window_start = now + timedelta(minutes=cutoff_minutes)
+    window_end = now + timedelta(minutes=cutoff_minutes + window_minutes)
 
     filtered = []
     for st in showtimes:
@@ -230,8 +294,10 @@ def filter_jit_showtimes(showtimes: list[dict], window_minutes: int = 20) -> lis
                     hour=int(parts[0]), minute=int(parts[1]), second=0, microsecond=0
                 )
 
-                # Check if within window
+                # Check if within target window
                 if window_start <= show_time <= window_end:
+                    minutes_until = (show_time - now).total_seconds() / 60
+                    logger.debug(f"   Found: {st.get('theatre_name', '?')[:30]} @ {time_str} (T-{minutes_until:.0f}m)")
                     filtered.append(st)
         except (ValueError, IndexError):
             continue
@@ -247,7 +313,7 @@ def run_seat_scrape(
     batch: int | None = None,
     total_batches: int = 9,
     output_dir: str = "data",
-    jit_window: int = 20,
+    jit_window: int = 8,  # Changed to 8 minutes for T-8 window
     use_stored_token: bool = False,
 ):
     """Run seat scraping based on mode."""
@@ -365,7 +431,7 @@ Examples:
     seats_parser.add_argument("--output", default="data", help="Output directory")
     seats_parser.add_argument("--batch", type=int, help="Batch number")
     seats_parser.add_argument("--total-batches", type=int, default=9)
-    seats_parser.add_argument("--jit-window", type=int, default=20, help="JIT window in minutes")
+    seats_parser.add_argument("--jit-window", type=int, default=8, help="JIT window in minutes (default: 8 for T-8)")
     seats_parser.add_argument(
         "--use-stored-token",
         action="store_true",
