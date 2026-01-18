@@ -6,6 +6,7 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ def merge_batches(data_dir: str = "data", validate: bool = True) -> bool:
         True if merge (and validation) successful
     """
     data_path = Path(data_dir)
-    date_str = datetime.now().strftime("%Y-%m-%d")
+    date_str = datetime.now(ZoneInfo("Asia/Jakarta")).strftime("%Y-%m-%d")
 
     # Find all batch files
     batch_files = sorted(data_path.glob("batch_*_*.json"))

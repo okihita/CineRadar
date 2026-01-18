@@ -13,6 +13,7 @@ import json
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from backend.config import CITIES
 from backend.infrastructure.core.seat_scraper import SeatScraper
@@ -42,8 +43,9 @@ def run_movie_scrape(
         output_path = Path(output_dir)
         output_path.mkdir(exist_ok=True)
 
-        date_str = datetime.now().strftime("%Y-%m-%d")
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        current_time = datetime.now(ZoneInfo("Asia/Jakarta"))
+        date_str = current_time.strftime("%Y-%m-%d")
+        timestamp = current_time.strftime("%Y-%m-%d %H:%M:%S")
 
         # Determine cities to scrape
         if batch is not None:

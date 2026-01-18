@@ -6,6 +6,7 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -24,7 +25,8 @@ def main():
     data_dir = project_root / "data"
 
     # Use today's date to find the correct file
-    today = datetime.now().strftime("%Y-%m-%d")
+    # Use today's date in Jakarta time
+    today = datetime.now(ZoneInfo("Asia/Jakarta")).strftime("%Y-%m-%d")
     input_file = data_dir / f"movies_{today}.json"
 
     # Fall back to latest file if today's doesn't exist
