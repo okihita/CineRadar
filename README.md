@@ -1,7 +1,6 @@
 # CineRadar 🎬
 
-> **Corporate Intelligence Platform**
-> *Strictly confidential. Internal operational use only.*
+
 
 ---
 

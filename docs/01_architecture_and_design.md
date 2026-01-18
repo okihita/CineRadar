@@ -8,6 +8,20 @@ CineRadar is a 3-scraper pipeline for TIX.id movie data collection, feeding into
 
 ---
 
+## Software Architecture (Backend)
+
+We follow a loose **Clean Architecture** pattern to separate concerns between the "Runner" (CLI), the "Business Logic" (Domain), and the "Tools" (Infrastructure).
+
+| Layer | Directory | Responsibility |
+|-------|-----------|----------------|
+| **1. Controllers** | `cli/` | **Entry Points.** Every file here corresponds to a `run` or `workflow` command. Contains *no business logic*, only orchestration. |
+| **2. Use Cases** | `application/` | **Orchestrator.** Connects Scrapers -> Repositories. Pure Python, no framework dependencies. |
+| **3. Domain** | `domain/` | **Entities.** Pydantic models & Error definitions. pure business rules. |
+| **4. Contracts** | `schemas/` | **DTOs.** Data Transfer Objects for validation (e.g., TIX.id JSON responses). |
+| **5. Infrastructure** | `infrastructure/` | **The "Dirty" Work.** Playwright scripts, Token Logic, and Firestore Adapters. |
+
+---
+
 ## Core Philosophy: Stability First
 
 To ensure long-term maintainability and prevent "bit-rot," CineRadar adheres to a strict **Stability DNA**:
@@ -52,6 +66,45 @@ flowchart LR
 - **Admin**: Next.js 16 (React 19) dashboard.
 - **Web**: Next.js 16 (React 19) consumer app.
 - **CI/CD**: GitHub Actions for daily scraping, testing, and deployment.
+
+### Live Scraper Environment
+
+The scraping pipeline operates continuously on **GitHub Actions**, utilizing parallel jobs and artifacts to manage data flow before final persistence.
+
+#### Executors & Limits
+*   **Runner**: `ubuntu-latest` (Standard GitHub Actions runner).
+*   **Limits**: Subject to standard GitHub Actions concurrency and storage quotas.
+*   **Strategy**: Matrix strategies are used to parallelize scraping batches, reducing total runtime.
+
+#### Workflow Ecosystem
+
+| Workflow | Schedule | Python Entry Point | Description |
+|----------|----------|--------------------|-------------|
+| **`daily-scrape.yml`** | Daily 06:00 WIB | `.jit_granular_scraper` | **Main Pipeline**. Scrapes movies & seats in parallel batches (0-8). |
+| **`token-refresh.yml`** | Bi-monthly | `.refresh_token` | **Headless Login**. Runs full Playwright with `xvfb` to regenerate valid refresh tokens (~90 day TTL). |
+| **`monthly-geocode.yml`** | Monthly 1st | `.monthly_geocode` | **Metadata Sync**. Updates theatre coordinates via Google Maps API. |
+| **`daily-summary.yml`** | Daily 00:00 WIB | `.daily_summary` | **Reporting**. Generates T+0 summary stats. |
+
+#### Artifact Data Handover
+
+Data is not persisted immediately. Instead, it flows through **GitHub Artifacts** to ensure atomic operations and easier debugging.
+
+1.  **Intermediate Artifacts** (1-day retention):
+    *   `batch-{N}`: Raw movie data from each parallel shard.
+    *   `seat-batch-{N}`: Raw seat occupancy data from each parallel shard.
+
+2.  **Final Artifacts** (7-day retention):
+    *   `scrape-data-{RUN_ID}`: Merged, validated movie dataset.
+    *   `seats-morning-{RUN_ID}`: Merged seat occupancy dataset.
+
+#### Persistence Layer
+Final persistence is handled by dedicated Python CLI tools at the end of the workflows:
+*   `populate_firestore`: Syncs merged movie/theatre data.
+*   `upload_seats`: Syncs seat occupancy snapshots.
+*   `refresh_token`: Updates auth tokens in `auth_tokens/tix_jwt`.
+
+#### Future Roadmap
+*   **[Planned] Seating Layouts**: We intend to capture and store the individual seat map layout (valid/invalid/sold seats) for every showtime to enable visual replay. *Currently not implemented.*
 
 ---
 

@@ -27,27 +27,92 @@ uv run python -m backend.cli.refresh_token --check
 
 ---
 
-## 📚 Documentation Index
+## 🗺️ Visual Call Graphs
 
-- **[API & commands Reference](../docs/04_api_reference.md)**: Full list of CLI arguments and flags.
-- **[Architecture](../docs/01_architecture_and_design.md)**: Understanding the data flow.
-- **[Troubleshooting](../docs/06_troubleshooting.md)**: What to do if TIX.id blocks us.
+### 1. Daily Scrape Pipeline (`daily-scrape.yml`)
+This workflow runs parallel batches to scrape movies and seats.
 
-## 🛠 Development
-
-### Linting & Typing
-Strict typing is enforced.
-
-```bash
-# Type check
-uv run mypy backend
-
-# Linter
-uv run ruff check .
+```mermaid
+flowchart TD
+    GH[GitHub Actions: daily-scrape.yml] -->|Matrix Batch 0-8| CLI[cli.jit_granular_scraper]
+    
+    subgraph "Worker Node"
+        CLI -->|Checks Token| TR[token_refresher.TokenRefresher]
+        CLI -->|Orchestrates| TS[infrastructure.TixSeatScraper]
+        
+        TS -->|Calls| LS[infrastructure.core.seat_scraper]
+        LS -->|API Req| TIX[TIX.id API]
+        
+        TIX -->|JSON| LS
+        LS -->|SeatOccupancy| TS
+        TS -->|SeatOccupancy| CLI
+        
+        CLI -->|Writes| JSONL[Artifact: batch_*.jsonl]
+    end
+    
+    JSONL -->|Upload| GA[GitHub Artifacts]
 ```
 
-### Folder Structure
-- `cli/`: Entry points for all commands.
-- `infrastructure/`: Core logic (Scraper, Firestore adapter).
-- `schemas/`: Pydantic models (Data Contracts).
-- `domain/`: Business logic.
+### 2. Auth Refresh Pipeline (`token-refresh.yml`)
+This workflow performs a full "Headless Browser" login to regenerate the long-lived refresh token.
+
+```mermaid
+flowchart TD
+    GH[GitHub Actions: token-refresh.yml] -->|Scheduled| CLI[cli.refresh_token]
+    
+    subgraph "Headless Auth"
+        CLI -->|Launches| PW[Playwright + XVFB]
+        PW -->|Types Phone/Pass| LOGIN[TIX.id Login Page]
+        LOGIN -->|Success| HOME[TIX.id Home]
+        
+        HOME -->|localStorage| EXTRACT[Extract Tokens]
+        EXTRACT -->|Save| FREPO[infrastructure.FirestoreTokenRepository]
+    end
+    
+    FREPO -->|Write| FS[(Firestore DB)]
+    FS -->|auth_tokens/tix_jwt| TOKEN[Valid Token]
+```
+
+---
+
+## 📂 Directory & File Glossary
+
+### 1. `backend/cli/` (Controllers)
+The **Entry Points**. These files are the "main" scripts called by GitHub Actions. They handle arguments, logging, and coordinating the domain logic.
+
+| File | Associated Workflow | Responsibility |
+|------|---------------------|----------------|
+| **`jit_granular_scraper.py`** | `daily-scrape.yml` | **The Master Scraper.** Orchestrates the scraping loop, applies anti-bot jitter, handles rate limiting, and saves raw JSONL artifacts. |
+| **`refresh_token.py`** | `token-refresh.yml` | **The Login Bot.** Launches a headless browser to perform a real login flow and capture the JWT from localStorage. |
+| **`daily_summary.py`** | `daily-summary.yml` | **The Reporter.** Aggregates Firestore data at midnight to calculate total audience stats. |
+| **`monthly_geocode.py`** | `monthly-geocode.yml` | **The Mapper.** Queries Google Maps API to fix missing coordinates for new theatres. |
+| `merge_batches.py` | `daily-scrape.yml` | Merges the 9 parallel request artifacts into one single valid JSON file. |
+| `populate_firestore.py` | `daily-scrape.yml` | Reads the merged movie JSON and upserts it to Firestore (`snapshots` collection). |
+| `upload_seats.py` | `daily-scrape.yml` | Reads the merged seat JSON and upserts to Firestore (`seat_snapshots` collection). |
+| `validate.py` | `daily-scrape.yml` | Runs sanity checks on the scraped data (e.g. "Are there 0 movies?") before we upload. |
+
+### 2. `backend/infrastructure/` (The "How")
+The technical implementations. This is where the dirty work happens.
+
+| Directory/File | Responsibility |
+|----------------|----------------|
+| **`scrapers/`** | **The Scraper Implementations.** |
+| ↳ `seat_scraper.py` | `TixSeatScraper`: The clean wrapper that mimics the `ISeatScraper` interface. |
+| ↳ `base.py` | `BaseScraper`: Shared logic for browser initialization and user-agent rotation. |
+| **`core/`** | **Legacy Logic (To be refactored).** |
+| ↳ `seat_scraper.py` | `SeatScraper`: The *actual* complex logic that calls the TIX.id API. Currently wrapped by `infrastructure.scrapers`. |
+| **`repositories/`** | **Database Adapters.** |
+| ↳ `firestore_repo.py` | Handles all reads/writes to Google Cloud Firestore. |
+| ↳ `firestore_token.py` | Specialized logic for reading/writing the JWT auth token document. |
+| `token_refresher.py` | **Hybrid Auth Logic.** Checks if the token is alive. If dying (<5m TTL), it calls the TIX API to refresh it. |
+
+### 3. `backend/domain/` (The "What")
+Pure business logic and data structures. Zero external dependencies (no Firestore lib, no Playwright lib).
+
+| File | Responsibility |
+|------|----------------|
+| `models/` | Contains Pydantic models (e.g. `Movie`, `Showtime`, `SeatOccupancy`) that define our data shape. |
+| `errors.py` | Custom exception classes (e.g. `TokenExpiredError`, `ScrapeError`) for clean error handling. |
+
+### 4. `backend/application/` (The "Orchestrator")
+*Currently evolving.* This layer is intended to hold "Use Cases" that connect Scrapers to Repositories, keeping the CLI thinner.
