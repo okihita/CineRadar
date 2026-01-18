@@ -7,8 +7,11 @@ with total audience counts for the day.
 """
 
 import json
+import logging
 import os
 from datetime import datetime, timedelta
+
+logger = logging.getLogger(__name__)
 
 from google.cloud import firestore
 from google.oauth2 import service_account
@@ -119,13 +122,13 @@ def send_github_summary(message: str):
             f.write(message)
             f.write("```\n")
     else:
-        print(message)
+        logger.info(message)
 
 
 def main():
-    print("\n" + "=" * 60)
-    print("📊 CineRadar Daily Summary Report")
-    print("=" * 60 + "\n")
+    logger.info("\n" + "=" * 60)
+    logger.info("📊 CineRadar Daily Summary Report")
+    logger.info("=" * 60 + "\n")
 
     # Get yesterday's date (for midnight report)
     yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
@@ -133,12 +136,12 @@ def main():
     stats = aggregate_daily_audience(yesterday)
 
     if stats["showtime_count"] == 0:
-        print(f"⚠️ No seat data found for {yesterday}")
-        print("   This may be normal if seat scraping hasn't run yet.")
+        logger.warning(f"⚠️ No seat data found for {yesterday}")
+        logger.info("   This may be normal if seat scraping hasn't run yet.")
         return
 
     message = format_summary_message(stats)
-    print(message)
+    logger.info(message)
 
     # Output to GitHub Actions summary if available
     send_github_summary(message)
@@ -150,10 +153,11 @@ def main():
             **stats,
             "generated_at": datetime.now().isoformat(),
         })
-        print(f"💾 Saved summary to Firestore: daily_summaries/{yesterday}")
+        logger.info(f"💾 Saved summary to Firestore: daily_summaries/{yesterday}")
     except Exception as e:
-        print(f"⚠️ Failed to save summary: {e}")
+        logger.error(f"⚠️ Failed to save summary: {e}")
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     main()

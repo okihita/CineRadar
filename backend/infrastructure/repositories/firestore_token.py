@@ -5,6 +5,7 @@ Implements ITokenRepository using Firebase Firestore.
 """
 
 import json
+import logging
 import os
 import tempfile
 from typing import Any
@@ -12,6 +13,8 @@ from typing import Any
 from backend.application.ports.storage import ITokenRepository
 from backend.domain.errors import FirestoreError
 from backend.domain.models import Token
+
+logger = logging.getLogger(__name__)
 
 
 def _get_firestore_client() -> Any:
@@ -105,7 +108,7 @@ class FirestoreTokenRepository(ITokenRepository):
             return Token.from_dict(data)
 
         except Exception as e:
-            print(f"⚠️ Error getting token: {e}")
+            logger.error(f"⚠️ Error getting token: {e}")
             return None
 
     def is_valid(self) -> bool:
@@ -142,7 +145,7 @@ class FirestoreTokenRepository(ITokenRepository):
             doc_ref.delete()
             return True
         except Exception as e:
-            print(f"⚠️ Error deleting token: {e}")
+            logger.error(f"⚠️ Error deleting token: {e}")
             return False
 
     def get_token_info(self) -> dict[str, str | int | None] | None:

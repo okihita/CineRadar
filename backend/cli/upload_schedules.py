@@ -5,9 +5,12 @@ Creates per-movie documents in schedules/{date}/movies/{movie_id} collection.
 """
 
 import json
+import logging
 import os
 from datetime import datetime
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 from google.cloud import firestore
 from google.oauth2 import service_account
@@ -79,11 +82,11 @@ def upload_schedules_to_firestore(movies: list, date: str):
         date: Date string (YYYY-MM-DD).
     """
     if not movies:
-        print("⚠️ No movies to upload")
+        logger.warning("⚠️ No movies to upload")
         return
 
     db = get_firestore_client()
-    print(f"📤 Uploading {len(movies)} movie schedules for {date}...")
+    logger.info(f"📤 Uploading {len(movies)} movie schedules for {date}...")
 
     uploaded = 0
     for movie in movies:
@@ -96,30 +99,32 @@ def upload_schedules_to_firestore(movies: list, date: str):
         # Write to schedules/{date}/movies/{movie_id}
         doc_ref = db.collection("schedules").document(date).collection("movies").document(movie_id)
         doc_ref.set(schedule_doc)
+        doc_ref.set(schedule_doc)
         uploaded += 1
-        print(f"   ✓ {movie.get('title', movie_id)[:40]}")
+        logger.info(f"   ✓ {movie.get('title', movie_id)[:40]}")
 
-    print(f"\n✅ Uploaded {uploaded} movie schedules to schedules/{date}/movies/")
+    logger.info(f"\n✅ Uploaded {uploaded} movie schedules to schedules/{date}/movies/")
 
 
 def main():
-    print("\n" + "=" * 60)
-    print("🎬 CineRadar Schedule Upload")
-    print("=" * 60 + "\n")
+    logger.info("\n" + "=" * 60)
+    logger.info("🎬 CineRadar Schedule Upload")
+    logger.info("=" * 60 + "\n")
 
     data = load_movie_data()
     if not data:
-        print("❌ No movie files found in data/")
+        logger.error("❌ No movie files found in data/")
         return
 
     movies = data.get("movies", [])
     date = data.get("date", datetime.now().strftime("%Y-%m-%d"))
 
-    print(f"📂 Loaded {len(movies)} movies for {date}")
+    logger.info(f"📂 Loaded {len(movies)} movies for {date}")
     upload_schedules_to_firestore(movies, date)
 
-    print("\n🏁 Done")
+    logger.info("\n🏁 Done")
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     main()

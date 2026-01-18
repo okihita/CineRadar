@@ -5,9 +5,12 @@ Merges batch files if present and uploads to seat_snapshots collection.
 """
 
 import json
+import logging
 import os
 from datetime import datetime
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 from google.cloud import firestore
 from google.oauth2 import service_account
@@ -33,14 +36,14 @@ def merge_seat_batches(data_dir: str = "data") -> list:
     # Find all seat batch files
     batch_files = list(data_path.glob("seats_*_batch*.json"))
     if batch_files:
-        print(f"📂 Found {len(batch_files)} batch files to merge")
+        logger.info(f"📂 Found {len(batch_files)} batch files to merge")
         for batch_file in sorted(batch_files):
             with open(batch_file, encoding="utf-8") as f:
                 batch_data = json.load(f)
                 # Support both 'results' (new) and 'seats' (legacy) keys
                 seats = batch_data.get("results", batch_data.get("seats", []))
                 all_seats.extend(seats)
-                print(f"   + {batch_file.name}: {len(seats)} seats")
+                logger.info(f"   + {batch_file.name}: {len(seats)} seats")
     else:
         # Try single file
         seat_files = list(data_path.glob("seats_*.json"))
@@ -51,7 +54,7 @@ def merge_seat_batches(data_dir: str = "data") -> list:
                     # Support both 'results' (new) and 'seats' (legacy) keys
                     seats = data.get("results", data.get("seats", []))
                     all_seats.extend(seats)
-                    print(f"   + {seat_file.name}: {len(seats)} seats")
+                    logger.info(f"   + {seat_file.name}: {len(seats)} seats")
 
     return all_seats
 
@@ -59,13 +62,13 @@ def merge_seat_batches(data_dir: str = "data") -> list:
 def upload_seats_to_firestore(seats: list, batch_size: int = 500):
     """Upload seat snapshots to Firestore in batches."""
     if not seats:
-        print("ℹ️ No seats to upload")
+        logger.info("ℹ️ No seats to upload")
         return
 
     db = get_firestore_client()
     collection = db.collection("seat_snapshots")
 
-    print(f"📤 Uploading {len(seats)} seat snapshots to Firestore...")
+    logger.info(f"📤 Uploading {len(seats)} seat snapshots to Firestore...")
 
     uploaded = 0
     for i in range(0, len(seats), batch_size):
@@ -80,30 +83,31 @@ def upload_seats_to_firestore(seats: list, batch_size: int = 500):
 
         batch.commit()
         uploaded += len(chunk)
-        print(f"   Uploaded {uploaded}/{len(seats)}")
+        logger.info(f"   Uploaded {uploaded}/{len(seats)}")
 
-    print(f"✅ Successfully uploaded {len(seats)} seat snapshots")
+    logger.info(f"✅ Successfully uploaded {len(seats)} seat snapshots")
 
 
 def main():
-    print("\n" + "=" * 60)
-    print("🪑 CineRadar Seat Data Upload")
-    print("=" * 60 + "\n")
+    logger.info("\n" + "=" * 60)
+    logger.info("🪑 CineRadar Seat Data Upload")
+    logger.info("=" * 60 + "\n")
 
     # Merge batch files
     seats = merge_seat_batches()
 
     if not seats:
-        print("⚠️ No seat data found to upload")
+        logger.warning("⚠️ No seat data found to upload")
         return
 
-    print(f"\n📊 Total seats to upload: {len(seats)}")
+    logger.info(f"\n📊 Total seats to upload: {len(seats)}")
 
     # Upload to Firestore
     upload_seats_to_firestore(seats)
 
-    print("\n🏁 Done")
+    logger.info("\n🏁 Done")
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     main()

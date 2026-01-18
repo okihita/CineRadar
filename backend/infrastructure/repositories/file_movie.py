@@ -6,7 +6,10 @@ Useful for development and batch processing.
 """
 
 import json
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 from backend.application.ports.storage import IMovieRepository
 from backend.domain.models import Movie, ScrapeResult
@@ -64,7 +67,7 @@ class FileMovieRepository(IMovieRepository):
             return True
 
         except Exception as e:
-            print(f"⚠️ Error saving snapshot: {e}")
+            logger.error(f"⚠️ Error saving snapshot: {e}")
             return False
 
     def get_latest_snapshot(self) -> ScrapeResult | None:
@@ -84,7 +87,7 @@ class FileMovieRepository(IMovieRepository):
             return self._load_file(movie_files[0])
 
         except Exception as e:
-            print(f"⚠️ Error getting latest snapshot: {e}")
+            logger.error(f"⚠️ Error getting latest snapshot: {e}")
             return None
 
     def get_snapshot_by_date(self, date: str) -> ScrapeResult | None:
@@ -120,7 +123,7 @@ class FileMovieRepository(IMovieRepository):
             )
 
         except Exception as e:
-            print(f"⚠️ Error loading {file_path}: {e}")
+            logger.error(f"⚠️ Error loading {file_path}: {e}")
             return None
 
     def list_snapshots(self) -> list[str]:

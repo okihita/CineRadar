@@ -4,7 +4,10 @@ Firestore Movie Repository
 Implements IMovieRepository using Firebase Firestore.
 """
 
+import logging
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from backend.application.ports.storage import IMovieRepository
 from backend.domain.models import Movie, ScrapeResult
@@ -79,7 +82,7 @@ class FirestoreMovieRepository(IMovieRepository):
             return True
 
         except Exception as e:
-            print(f"⚠️ Error saving snapshot: {e}")
+            logger.error(f"⚠️ Error saving snapshot: {e}")
             return False
 
     def get_latest_snapshot(self) -> ScrapeResult | None:
@@ -99,7 +102,7 @@ class FirestoreMovieRepository(IMovieRepository):
             return self._dict_to_result(data)
 
         except Exception as e:
-            print(f"⚠️ Error getting latest snapshot: {e}")
+            logger.error(f"⚠️ Error getting latest snapshot: {e}")
             return None
 
     def get_snapshot_by_date(self, date: str) -> ScrapeResult | None:
@@ -122,7 +125,7 @@ class FirestoreMovieRepository(IMovieRepository):
             return self._dict_to_result(data)
 
         except Exception as e:
-            print(f"⚠️ Error getting snapshot for {date}: {e}")
+            logger.error(f"⚠️ Error getting snapshot for {date}: {e}")
             return None
 
     def _dict_to_result(self, data: dict) -> ScrapeResult:

@@ -2,9 +2,12 @@
 """Populate Firestore with scraped data."""
 
 import json
+import logging
 import sys
 from datetime import datetime
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -30,27 +33,27 @@ def main():
         if movie_files:
             input_file = movie_files[0]
         else:
-            print("❌ No movie data files found")
+            logger.error("❌ No movie data files found")
             log_scraper_run(
                 {"status": "failed", "error": "No data files found", "movies": 0, "theatres": 0}
             )
             return
 
-    print(f"📂 Loading: {input_file}")
+    logger.info(f"📂 Loading: {input_file}")
 
     with open(input_file, encoding="utf-8") as f:
         data = json.load(f)
 
     movies = data.get("movies", [])
     summary = data.get("summary", {})
-    print(f"🎬 Movies: {len(movies)}")
+    logger.info(f"🎬 Movies: {len(movies)}")
 
     # Save daily snapshot for web app
-    print("🔥 Saving daily snapshot...")
+    logger.info("🔥 Saving daily snapshot...")
     save_daily_snapshot(data)
 
     # Sync theatres
-    print("🔥 Syncing theatres...")
+    logger.info("🔥 Syncing theatres...")
     result = sync_theatres_from_scrape(movies)
 
     # Log scraper run
@@ -67,8 +70,9 @@ def main():
         }
     )
 
-    print(f"✅ Done! Theatres: {result['success']}/{result['total']}")
+    logger.info(f"✅ Done! Theatres: {result['success']}/{result['total']}")
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     main()

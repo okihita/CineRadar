@@ -9,10 +9,13 @@ Usage:
 
 import argparse
 import asyncio
+import logging
 import sys
 
 from backend.infrastructure.core.base_scraper import BaseScraper
 from backend.infrastructure.repositories.firestore_token import get_storage, store_token
+
+logger = logging.getLogger(__name__)
 
 
 class TokenRefresher(BaseScraper):
@@ -176,15 +179,15 @@ def main():
         storage = get_storage()
         token = storage.get_current()
         if token:
-            print("📋 Token Info:")
-            print(f"   Stored at: {token.stored_at}")
-            print(f"   Age: {token.age_minutes} minutes")
-            print(f"   TTL: {token.minutes_until_expiry} minutes remaining")
-            print(f"   Phone: {token.phone}")
-            print(f"   Valid: {storage.is_valid()}")
-            print(f"   Has refresh token: {bool(token.refresh_token)}")
+            logger.info("📋 Token Info:")
+            logger.info(f"   Stored at: {token.stored_at}")
+            logger.info(f"   Age: {token.age_minutes} minutes")
+            logger.info(f"   TTL: {token.minutes_until_expiry} minutes remaining")
+            logger.info(f"   Phone: {token.phone}")
+            logger.info(f"   Valid: {storage.is_valid()}")
+            logger.info(f"   Has refresh token: {bool(token.refresh_token)}")
         else:
-            print("❌ No token found")
+            logger.error("❌ No token found")
         return
 
     if args.check_min_ttl is not None:
@@ -192,26 +195,26 @@ def main():
         storage = get_storage()
         info = storage.get_token_info()
         if not info:
-            print("❌ No token found in storage")
+            logger.error("❌ No token found in storage")
             sys.exit(1)
 
         try:
             token = storage.get_current()
             minutes_remaining = token.minutes_until_expiry
 
-            print("📋 Token TTL Check:")
-            print(f"   Stored at: {token.stored_at}")
-            print(f"   Minutes remaining: {minutes_remaining}")
-            print(f"   Required minimum: {args.check_min_ttl}")
+            logger.info("📋 Token TTL Check:")
+            logger.info(f"   Stored at: {token.stored_at}")
+            logger.info(f"   Minutes remaining: {minutes_remaining}")
+            logger.info(f"   Required minimum: {args.check_min_ttl}")
 
             if minutes_remaining >= args.check_min_ttl:
-                print(f"✅ Token has sufficient TTL ({minutes_remaining} >= {args.check_min_ttl})")
+                logger.info(f"✅ Token has sufficient TTL ({minutes_remaining} >= {args.check_min_ttl})")
                 sys.exit(0)
             else:
-                print(f"❌ Token TTL too low ({minutes_remaining} < {args.check_min_ttl})")
+                logger.error(f"❌ Token TTL too low ({minutes_remaining} < {args.check_min_ttl})")
                 sys.exit(1)
         except Exception as e:
-            print(f"❌ Error checking token TTL: {e}")
+            logger.error(f"❌ Error checking token TTL: {e}")
             sys.exit(1)
 
     async def _run():
@@ -223,4 +226,5 @@ def main():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     main()

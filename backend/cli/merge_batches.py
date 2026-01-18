@@ -2,9 +2,12 @@
 """Merge batch scrape results into single output file with validation."""
 
 import json
+import logging
 import sys
 from datetime import datetime
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 # Add project root to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -25,10 +28,10 @@ def merge_batches(data_dir: str = "data", validate: bool = True) -> bool:
 
     # Find all batch files
     batch_files = sorted(data_path.glob("batch_*_*.json"))
-    print(f"📦 Found {len(batch_files)} batch files")
+    logger.info(f"📦 Found {len(batch_files)} batch files")
 
     if not batch_files:
-        print("❌ No batch files found")
+        logger.warning("❌ No batch files found")
         return False
 
     # Merge movies
@@ -36,7 +39,7 @@ def merge_batches(data_dir: str = "data", validate: bool = True) -> bool:
     city_stats = {}
 
     for batch_file in batch_files:
-        print(f"   Loading {batch_file.name}")
+        logger.info(f"   Loading {batch_file.name}")
         with open(batch_file, encoding="utf-8") as f:
             data = json.load(f)
 
@@ -79,31 +82,32 @@ def merge_batches(data_dir: str = "data", validate: bool = True) -> bool:
             from pydantic import ValidationError
 
             from backend.schemas.movie import DailySnapshotSchema
-
-            print("🔍 Validating merged data...")
+ 
+            logger.info("🔍 Validating merged data...")
             validated = DailySnapshotSchema.model_validate(output_data)
-            print(
+            logger.info(
                 f"✅ Validation passed: {len(validated.movies)} movies, {len(validated.city_stats)} cities"
             )
         except ValidationError as e:
-            print("❌ Validation FAILED - data quality issue detected:")
+            logger.error("❌ Validation FAILED - data quality issue detected:")
             for error in e.errors():
                 loc = " → ".join(str(x) for x in error["loc"])
-                print(f"   {loc}: {error['msg']}")
+                logger.error(f"   {loc}: {error['msg']}")
             return False
         except ImportError:
-            print("⚠️ Pydantic not available, skipping validation")
+            logger.warning("⚠️ Pydantic not available, skipping validation")
 
     # Save merged result
     output_file = data_path / f"movies_{date_str}.json"
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(output_data, f, indent=2, ensure_ascii=False)
 
-    print(f"✅ Merged {len(movies)} movies from {len(city_stats)} cities")
-    print(f"💾 Saved to: {output_file}")
+    logger.info(f"✅ Merged {len(movies)} movies from {len(city_stats)} cities")
+    logger.info(f"💾 Saved to: {output_file}")
     return True
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     success = merge_batches()
     sys.exit(0 if success else 1)

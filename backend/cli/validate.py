@@ -13,9 +13,12 @@ Exit codes:
 """
 
 import json
+import logging
 import sys
 from datetime import datetime
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -51,39 +54,39 @@ def validate_daily_scrape(data_dir: str = "data", file_path: str | None = None) 
                 input_file = movie_files[0]
 
     if not input_file.exists():
-        print(f"❌ File not found: {input_file}")
+        logger.error(f"❌ File not found: {input_file}")
         return False
 
-    print(f"📂 Validating: {input_file}")
+    logger.info(f"📂 Validating: {input_file}")
 
     try:
         with open(input_file, encoding="utf-8") as f:
             data = json.load(f)
     except json.JSONDecodeError as e:
-        print(f"❌ Invalid JSON: {e}")
+        logger.error(f"❌ Invalid JSON: {e}")
         return False
 
     # Schema validation
     try:
         validated = DailySnapshotSchema.model_validate(data)
-        print("✅ Schema validation PASSED")
-        print(f"   📅 Date: {validated.date}")
-        print(f"   🎬 Movies: {len(validated.movies)}")
-        print(f"   🏙️ Cities: {len(validated.city_stats)}")
-        print(f"   🎟️ Pre-sales: {validated.summary.presale_count}")
+        logger.info("✅ Schema validation PASSED")
+        logger.info(f"   📅 Date: {validated.date}")
+        logger.info(f"   🎬 Movies: {len(validated.movies)}")
+        logger.info(f"   🏙️ Cities: {len(validated.city_stats)}")
+        logger.info(f"   🎟️ Pre-sales: {validated.summary.presale_count}")
     except ValidationError as e:
-        print("❌ Schema validation FAILED:")
+        logger.error("❌ Schema validation FAILED:")
         for error in e.errors():
             loc = " → ".join(str(x) for x in error["loc"])
-            print(f"   {loc}: {error['msg']}")
+            logger.error(f"   {loc}: {error['msg']}")
         return False
 
     # Integrity assertions
     try:
         validated.integrity_check(min_movies=10, min_cities=50)
-        print("✅ Integrity check PASSED")
+        logger.info("✅ Integrity check PASSED")
     except AssertionError as e:
-        print(f"❌ Integrity check FAILED: {e}")
+        logger.error(f"❌ Integrity check FAILED: {e}")
         return False
 
     # Additional quality checks
@@ -92,11 +95,11 @@ def validate_daily_scrape(data_dir: str = "data", file_path: str | None = None) 
     for m in validated.movies:
         merchants.update(m.merchants)
 
-    print(f"   📊 Movies with schedules: {movies_with_schedules}")
-    print(f"   🏢 Merchants: {', '.join(sorted(merchants))}")
+    logger.info(f"   📊 Movies with schedules: {movies_with_schedules}")
+    logger.info(f"   🏢 Merchants: {', '.join(sorted(merchants))}")
 
     if movies_with_schedules < 5:
-        print(f"⚠️ Warning: Only {movies_with_schedules} movies have schedules")
+        logger.warning(f"⚠️ Warning: Only {movies_with_schedules} movies have schedules")
 
     return True
 
@@ -114,12 +117,13 @@ def main():
     success = validate_daily_scrape(data_dir=args.data_dir, file_path=args.file)
 
     if success:
-        print("\n🎉 All validations passed!")
+        logger.info("\n🎉 All validations passed!")
         sys.exit(0)
     else:
-        print("\n💥 Validation failed - data will NOT be uploaded")
+        logger.error("\n💥 Validation failed - data will NOT be uploaded")
         sys.exit(1)
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     main()

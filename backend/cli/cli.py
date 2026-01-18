@@ -10,8 +10,11 @@ Usage:
 import argparse
 import asyncio
 import json
+import logging
 from datetime import datetime, timedelta
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 from backend.config import CITIES
 from backend.infrastructure.core.seat_scraper import SeatScraper
@@ -47,18 +50,19 @@ def run_movie_scrape(
             cities_per_batch = len(CITIES) // total_batches + 1
             start_idx = batch * cities_per_batch
             end_idx = min(start_idx + cities_per_batch, len(CITIES))
+            end_idx = min(start_idx + cities_per_batch, len(CITIES))
             city_names = [c["name"] for c in CITIES[start_idx:end_idx]]
-            print(
+            logger.info(
                 f"🔢 Batch {batch}/{total_batches - 1}: cities {start_idx}-{end_idx - 1} ({len(city_names)} cities)"
             )
         else:
             city_names = None
 
         # Header
-        print("\n" + "=" * 60)
-        print("🎬 CineRadar - Movie Availability Scraper")
-        print(f"📅 Date: {date_str}")
-        print("=" * 60 + "\n")
+        logger.info("\n" + "=" * 60)
+        logger.info("🎬 CineRadar - Movie Availability Scraper")
+        logger.info(f"📅 Date: {date_str}")
+        logger.info("=" * 60 + "\n")
 
         # Scrape with retry
         result = None
@@ -74,18 +78,18 @@ def run_movie_scrape(
                 if result and result.get("movies"):
                     break
             except Exception as e:
-                print(f"⚠️ Attempt {attempt + 1}/{max_retries} failed: {e}")
+                logger.error(f"⚠️ Attempt {attempt + 1}/{max_retries} failed: {e}")
                 if attempt < max_retries - 1:
                     wait = 2**attempt * 5
-                    print(f"   Retrying in {wait}s...")
+                    logger.info(f"   Retrying in {wait}s...")
                     await asyncio.sleep(wait)
 
         if not result or not result.get("movies"):
-            print("❌ No data collected after retries.")
+            logger.error("❌ No data collected after retries.")
             return None
 
         # Summary
-        print(f"\n📊 Cities: {result['total_cities']}, Movies: {result['total_movies']}")
+        logger.info(f"\n📊 Cities: {result['total_cities']}, Movies: {result['total_movies']}")
 
         # Save results
         if batch is not None:
@@ -107,7 +111,7 @@ def run_movie_scrape(
                 ensure_ascii=False,
             )
 
-        print(f"💾 Saved to: {output_file}")
+        logger.info(f"💾 Saved to: {output_file}")
         return result
 
     return asyncio.run(_run())
@@ -134,7 +138,7 @@ def load_movie_data(data_dir: str = "data") -> dict | None:
             with open(path) as f:
                 return json.load(f)
 
-    print(f"⚠️ No movie data found for {date_str}")
+    logger.warning(f"⚠️ No movie data found for {date_str}")
     return None
 
 
@@ -258,7 +262,7 @@ def run_seat_scrape(
         showtimes = extract_showtimes_from_data(movie_data, city_filter=city, limit=limit)
 
         if not showtimes:
-            print("⚠️ No showtimes with IDs found")
+            logger.warning("⚠️ No showtimes with IDs found")
             return None
 
         # Apply batching if specified
@@ -266,17 +270,18 @@ def run_seat_scrape(
             per_batch = len(showtimes) // total_batches + 1
             start = batch * per_batch
             end = min(start + per_batch, len(showtimes))
+            end = min(start + per_batch, len(showtimes))
             showtimes = showtimes[start:end]
-            print(f"🔢 Batch {batch}: {len(showtimes)} showtimes")
+            logger.info(f"🔢 Batch {batch}: {len(showtimes)} showtimes")
 
         # JIT mode: filter to upcoming showtimes only
         if mode == "jit":
             showtimes = filter_jit_showtimes(showtimes, jit_window)
             if not showtimes:
-                print(f"📋 No showtimes in next {jit_window} minutes")
+                logger.info(f"📋 No showtimes in next {jit_window} minutes")
                 return None
 
-        print(f"📋 Found {len(showtimes)} showtimes to scrape")
+        logger.info(f"📋 Found {len(showtimes)} showtimes to scrape")
 
         # Run scraper
         scraper = SeatScraper()
@@ -284,7 +289,7 @@ def run_seat_scrape(
         # Use stored token (from Firestore) or login fresh
         if use_stored_token:
             if not scraper.load_token_from_storage():
-                print("❌ No valid token in storage - cannot proceed")
+                logger.error("❌ No valid token in storage - cannot proceed")
                 return None
             results = await scraper.scrape_all_showtimes_api_only(showtimes)
         else:
@@ -314,7 +319,7 @@ def run_seat_scrape(
                     indent=2,
                 )
 
-            print(f"💾 Saved {len(results)} results to {filename}")
+            logger.info(f"💾 Saved {len(results)} results to {filename}")
 
         return results
 
@@ -396,4 +401,5 @@ Examples:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     main()

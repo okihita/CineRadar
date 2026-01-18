@@ -9,7 +9,10 @@ import time
 
 from playwright.async_api import Page, async_playwright
 
+
 from backend.config import API_BASE, APP_BASE, LOCALE, TIMEZONE, USER_AGENT, VIEWPORT
+
+logger = logging.getLogger(__name__)
 
 
 class BaseScraper:
@@ -24,7 +27,7 @@ class BaseScraper:
 
     def log(self, message: str) -> None:
         """Print timestamped log message."""
-        print(f"[{time.strftime('%H:%M:%S')}] {message}")
+        logger.info(message)
 
     async def _init_browser(self, headless: bool = True) -> tuple:
         """

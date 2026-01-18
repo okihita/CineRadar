@@ -7,6 +7,7 @@ Includes caching to avoid repeated API calls.
 
 import asyncio
 import json
+import logging
 import os
 from typing import Any
 
@@ -126,7 +127,7 @@ class Geocoder:
         """
         self.cache_path = cache_path
         self.cache = load_geocode_cache(cache_path)
-        self.log = logger or (lambda msg: print(msg))
+        self.log = logger or logging.getLogger(__name__).info
 
     def _collect_theatres_to_geocode(
         self, movie_map: dict[str, Any]

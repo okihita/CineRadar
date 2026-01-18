@@ -4,8 +4,11 @@ Firestore Theatre Repository
 Implements ITheatreRepository using Firebase Firestore.
 """
 
+import logging
 from datetime import datetime
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from backend.application.ports.storage import ITheatreRepository
 from backend.domain.models import Theatre
@@ -107,7 +110,7 @@ class FirestoreTheatreRepository(ITheatreRepository):
             return True
 
         except Exception as e:
-            print(f"⚠️ Error upserting theatre {theatre.theatre_id}: {e}")
+            logger.error(f"⚠️ Error upserting theatre {theatre.theatre_id}: {e}")
             return False
 
     def get_by_id(self, theatre_id: str) -> Theatre | None:
@@ -129,7 +132,7 @@ class FirestoreTheatreRepository(ITheatreRepository):
             docs = self.db.collection(self.COLLECTION).stream()
             return [Theatre.from_dict(doc.to_dict()) for doc in docs]
         except Exception as e:
-            print(f"⚠️ Error getting theatres: {e}")
+            logger.error(f"⚠️ Error getting theatres: {e}")
             return []
 
     def get_by_city(self, city: str) -> list[Theatre]:
@@ -138,7 +141,7 @@ class FirestoreTheatreRepository(ITheatreRepository):
             docs = self.db.collection(self.COLLECTION).where("city", "==", city.upper()).stream()
             return [Theatre.from_dict(doc.to_dict()) for doc in docs]
         except Exception as e:
-            print(f"⚠️ Error getting theatres for {city}: {e}")
+            logger.error(f"⚠️ Error getting theatres for {city}: {e}")
             return []
 
     def get_by_merchant(self, merchant: str) -> list[Theatre]:
@@ -147,7 +150,7 @@ class FirestoreTheatreRepository(ITheatreRepository):
             docs = self.db.collection(self.COLLECTION).where("merchant", "==", merchant).stream()
             return [Theatre.from_dict(doc.to_dict()) for doc in docs]
         except Exception as e:
-            print(f"⚠️ Error getting theatres for {merchant}: {e}")
+            logger.error(f"⚠️ Error getting theatres for {merchant}: {e}")
             return []
 
     def get_without_location(self) -> list[Theatre]:
@@ -178,7 +181,7 @@ class FirestoreTheatreRepository(ITheatreRepository):
             doc_ref.update(update_data)
             return True
         except Exception as e:
-            print(f"⚠️ Error updating location for {theatre_id}: {e}")
+            logger.error(f"⚠️ Error updating location for {theatre_id}: {e}")
             return False
 
     def count(self) -> int:

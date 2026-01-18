@@ -11,7 +11,15 @@ from pathlib import Path
 
 import requests
 
-# Configuration
+import json
+import logging
+import os
+import time
+from pathlib import Path
+
+import requests
+
+logger = logging.getLogger(__name__)
 GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY")
 if not GOOGLE_MAPS_API_KEY:
     raise ValueError("GOOGLE_MAPS_API_KEY environment variable not set")
@@ -69,7 +77,7 @@ def search_place(theatre_name: str, city: str) -> dict | None:
                 "query_used": query,
             }
     except Exception as e:
-        print(f"    Error: {str(e)[:80]}")
+        logger.error(f"    Error: {str(e)[:80]}")
 
     return None
 
@@ -95,23 +103,23 @@ def main():
     movie_files = sorted(data_dir.glob("movies_*.json"), reverse=True)
 
     if not movie_files:
-        print("❌ No movie data files found in data/")
+        logger.error("❌ No movie data files found in data/")
         return
 
     input_file = movie_files[0]
-    print("\n📍 CineRadar Theatre Geocoder (Google Places API New)")
-    print("=" * 60)
-    print(f"Input: {input_file}")
+    logger.info("\n📍 CineRadar Theatre Geocoder (Google Places API New)")
+    logger.info("=" * 60)
+    logger.info(f"Input: {input_file}")
 
     with open(input_file, encoding="utf-8") as f:
         data = json.load(f)
 
     movies = data.get("movies", [])
-    print(f"Movies: {len(movies)}")
+    logger.info(f"Movies: {len(movies)}")
 
     # Load cache
     cache = load_cache()
-    print(f"Cache: {len(cache)} entries loaded")
+    logger.info(f"Cache: {len(cache)} entries loaded")
 
     # Collect unique theatres
     theatres = {}
@@ -127,18 +135,18 @@ def main():
                         "theatre_ref": theatre,
                     }
 
-    print(f"Unique theatres: {len(theatres)}")
+    logger.info(f"Unique theatres: {len(theatres)}")
 
     # Count how many need geocoding
     need_geocoding = sum(1 for t in theatres.values() if f"{t['name']}|{t['city']}" not in cache)
     from_cache = len(theatres) - need_geocoding
 
-    print(f"From cache: {from_cache}")
-    print(f"Need geocoding: {need_geocoding}")
+    logger.info(f"From cache: {from_cache}")
+    logger.info(f"Need geocoding: {need_geocoding}")
 
     if need_geocoding > 0:
-        print(f"\n⏱️ Estimated time: ~{need_geocoding * 0.3:.0f} seconds")
-        print("Starting geocoding...\n")
+        logger.info(f"\n⏱️ Estimated time: ~{need_geocoding * 0.3:.0f} seconds")
+        logger.info("Starting geocoding...\n")
 
     # Geocode theatres
     success = 0
@@ -156,14 +164,14 @@ def main():
                 success += 1
             else:
                 failed += 1
-                print(f"    ❌ Failed: {t['name']} in {t['city']}")
+                logger.error(f"    ❌ Failed: {t['name']} in {t['city']}")
 
             # Rate limiting
             time.sleep(0.2)
 
             # Progress update
             if processed % 20 == 0:
-                print(f"   [{processed}/{need_geocoding}] ✓{success} ✗{failed}")
+                logger.info(f"   [{processed}/{need_geocoding}] ✓{success} ✗{failed}")
                 save_cache(cache)  # Save periodically
 
         # Apply geocode data to theatre
@@ -175,24 +183,25 @@ def main():
 
     # Final progress
     if need_geocoding > 0:
-        print(f"   [{processed}/{need_geocoding}] ✓{success} ✗{failed}")
+        logger.info(f"   [{processed}/{need_geocoding}] ✓{success} ✗{failed}")
 
     # Save cache
     save_cache(cache)
-    print(f"\n📊 Results: {success} geocoded, {failed} failed")
-    print(f"💾 Cache saved: {len(cache)} entries")
+    logger.info(f"\n📊 Results: {success} geocoded, {failed} failed")
+    logger.info(f"💾 Cache saved: {len(cache)} entries")
 
     # Save updated data
     with open(input_file, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
-    print(f"💾 Data saved: {input_file}")
+    logger.info(f"💾 Data saved: {input_file}")
 
     # Count theatres with place_id
     with_place_id = sum(1 for t in theatres.values() if t["theatre_ref"].get("place_id"))
     without_place_id = len(theatres) - with_place_id
 
-    print(f"\n✅ Done! {with_place_id} theatres with place_id, {without_place_id} without")
+    logger.info(f"\n✅ Done! {with_place_id} theatres with place_id, {without_place_id} without")
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     main()
