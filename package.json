@@ -6,7 +6,7 @@
     "node": ">=24.0.0",
     "pnpm": "^10.0.0"
   },
-  "license": "MIT",
+  "packageManager": "pnpm@10.28.0",
   "scripts": {
     "dev": "concurrently \"npm run dev:admin\" \"npm run dev:web\"",
     "dev:admin": "pnpm run dev --filter=admin -- --port 3000",
