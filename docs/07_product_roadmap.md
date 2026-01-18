@@ -27,7 +27,7 @@
 ## 🧠 Engineering Retrospective: The "Why"
 
 > **A Note to My Successor:**
-> You might wonder why we chose this specific stack. Here is the narrative behind the decisions.
+> You might wonder why we chose this specific stack. We prioritize **Stability DNA**—boring, proven, LTS technology—over the "new and shiny".
 
 ### Why Playwright over Selenium/Puppeteer?
 We started with Selenium, but TIX.id's React hydration caused endless `ElementNotInteractable` errors. We needed a browser that "waits" like a human. **Playwright**'s auto-waiting mechanism reduced our flake rate from 40% to <2%. It also handles the "Stealth" requirements much better out of the box.
@@ -44,7 +44,7 @@ We have two apps (`admin` and `web`) that share 90% of their DNA: UI components,
 
 | Technology | Status | Context |
 |------------|--------|---------|
-| **Next.js App Router** | **ADOPT** | The standard. Server Components reduced our client bundle by 40%. |
+| **Next.js App Router** | **ADOPT** | The standard (v16). We treat strict LTS conformance as a goal. |
 | **Tailwind CSS** | **ADOPT** | Velocity is unmatched. Custom design tokens enforce consistency. |
 | **Python 3.12** | **ADOPT** | Strict typing (`mypy`) is non-negotiable for the scraper backend. |
 | **Vercel** | **HOLD** | Great for now, but if costs scale, consider moving Docker containers to Cloud Run. |

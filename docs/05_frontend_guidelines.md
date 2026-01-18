@@ -12,6 +12,11 @@ We enforce a **Premium/Corporate** aesthetic suitable for dashboard clients.
 -   **Components**: Shadcn UI (Radix Primitives)
 -   **Base Font**: `Inter` (Sans), `JetBrains Mono` (Code)
 
+### Package Management (Stability DNA)
+-   **Lockfiles**: We trust `pnpm-lock.yaml` as the source of truth. Never manually edit it.
+-   **Versioning**: We use `^` (caret) versioning for dependencies to allow non-breaking security patches.
+-   **Upgrades**: Run `pnpm update` explicitly; do not rely on fresh installs to bump versions.
+
 ### Do's and Don'ts
 
 #### ❌ Don't: Manual Color Values

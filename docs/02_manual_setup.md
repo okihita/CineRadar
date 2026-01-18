@@ -10,8 +10,8 @@ Unlock the repository only if you meet these exact requirements:
 | Dependency | Required Version | Reason |
 |------------|------------------|--------|
 | **OS** | macOS (ARM64) or Linux | Playwright binary compatibility |
-| **Node.js** | `v20.10.0` (LTS Iron) | Next.js 14+ App Router stability |
-| **pnpm** | `v8.15.0+` | Monorepo workspace protocol |
+| **Node.js** | `v24.0.0+` (LTS) | Next.js 16+ & Stability DNA |
+| **pnpm** | `v10.0.0+` | Monorepo workspace protocol |
 | **Python** | `3.12.0+` | Type hinting features used in Scraper |
 | **uv** | `latest` | Python package resolution speed |
 

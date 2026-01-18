@@ -1,6 +1,6 @@
 # CineRadar 🎬
 
-> **Corporate Intelligence Platform (Rekreasi.co)**
+> **Corporate Intelligence Platform**
 > *Strictly confidential. Internal operational use only.*
 
 ---
@@ -25,7 +25,7 @@ It solves the "Box Office Black Box" problem by deploying a Just-In-Time (JIT) s
 
 Start here to understand the system.
 
-- **[01 Architecture & Design](./docs/01_architecture_and_design.md)**: System design & token auth logic.
+- **[01 Architecture & Design](./docs/01_architecture_and_design.md)**: System design, Stability DNA, & token auth logic.
 - **[02 Manual Setup (Production)](./docs/02_manual_setup.md)**: Strict replication guide for new engineers.
 - **[03 Daily Pipeline](./docs/03_daily_pipeline.md)**: How data flows from 6 AM to Midnight (T+0).
 - **[04 API Reference](./docs/04_api_reference.md)**: CLI commands & data contracts.

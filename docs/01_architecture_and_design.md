@@ -6,6 +6,32 @@ This document details the system design, data flow, token management, and infras
 
 CineRadar is a 3-scraper pipeline for TIX.id movie data collection, feeding into a Firestore database that powers both an Admin Dashboard and a Public Consumer Web App.
 
+---
+
+## Core Philosophy: Stability First
+
+To ensure long-term maintainability and prevent "bit-rot," CineRadar adheres to a strict **Stability DNA**:
+
+### 1. LTS Preference
+We prioritize **Long Term Support (LTS)** versions for all core runtimes and frameworks.
+*   **Node.js**: Use Active LTS (even numbered releases) where possible.
+*   **Python**: Use stable releases supported by major cloud providers.
+*   **Next.js**: While we use the latest major version (e.g., 16), we treat it as our stable base and do not chase experimental flags.
+
+### 2. SemVer Strategy (`^` Range)
+We strictly follow Semantic Versioning:
+*   **Major Updates**: Manual intervention required.
+*   **Minor/Patch Updates**: Allowed via Caret (`^`) versioning to automatically consume security patches and non-breaking features.
+*   **Lockfiles**: `pnpm-lock.yaml` and `uv.lock` are the sources of truth. We trust them to pin exact versions for reproducibility.
+
+### 3. Boring Technology
+We choose "boring" (proven) technology for critical infrastructure.
+*   **Database**: Firestore (Serverless, Managed) over self-hosted SQL.
+*   **Auth**: TIX.id's native tokens over complex custom auth flows.
+*   **Hosting**: Vercel Managed Infrastructure over custom VPS/Docker Swarm.
+
+---
+
 ### Data Flow
 
 ```mermaid

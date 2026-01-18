@@ -11,19 +11,19 @@ gantt
     axisFormat %H:%M
     
     section Auth
-    Token Refresh (T+05:50)      :crit, t1, 05:50, 5m
-    Token Check (T+06:35)        :active, t2, 06:35, 2m
+    Token Refresh      :crit, t1, 05:50, 5m
+    Token Check        :active, t2, 06:35, 2m
 
     section Movie Data
-    Movie Scrape (T+06:00)       :active, m1, 06:00, 30m
-    Merge & Upload               :active, m2, after m1, 10m
+    Movie Scrape       :active, m1, 06:00, 30m
+    Merge and Upload   :active, m2, after m1, 10m
 
     section Seat Data
-    Seat Scrape (T+06:40)        :active, s1, after t2, 45m
-    Merge & Loading              :active, s2, after s1, 10m
+    Seat Scrape        :active, s1, after t2, 45m
+    Merge and Loading  :active, s2, after s1, 10m
     
     section Reporting
-    Daily Summary (T+23:55)      :done, r1, 23:55, 10m
+    Daily Summary      :done, r1, 23:55, 10m
 ```
 
 All times are **WIB (UTC+7)**. GitHub Action schedules use UTC.
