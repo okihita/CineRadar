@@ -18,11 +18,11 @@ from backend.application.ports import (
 )
 
 __all__ = [
+    "IGeocodingService",
+    "IMovieRepository",
     # Ports (interfaces)
     "IMovieScraper",
     "ISeatScraper",
-    "IMovieRepository",
     "ITheatreRepository",
     "ITokenRepository",
-    "IGeocodingService",
 ]
