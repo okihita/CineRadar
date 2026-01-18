@@ -23,13 +23,13 @@ The professional intelligence and monitoring dashboard for CineRadar. Designed f
 First, install dependencies:
 
 ```bash
-npm install
+pnpm install
 ```
 
 Then, run the development server:
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
@@ -40,7 +40,8 @@ Ensure you have the following in `admin/.env.local`:
 
 ```bash
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=cineradar-481014
-FIREBASE_SERVICE_ACCOUNT_KEY='{"type": "service_account", ...}' # Single-line escaped JSON
+# Paste the full SERVICE ACCOUNT JSON string (minified) here:
+FIREBASE_SERVICE_ACCOUNT_KEY='{"type":"service_account","project_id":"..."}'
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_key
 ```
 

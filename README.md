@@ -5,6 +5,12 @@
 
 ---
 
+![CI](https://github.com/okihita/CineRadar/actions/workflows/ci.yml/badge.svg)
+![Daily Scrape](https://github.com/okihita/CineRadar/actions/workflows/daily-scrape.yml/badge.svg)
+![Smoke Tests](https://github.com/okihita/CineRadar/actions/workflows/smoke-tests.yml/badge.svg)
+
+
+
 ## ⚡ Executive Summary
 
 **CineRadar** is the "Bloomberg Terminal" for the Indonesian Film Industry.
@@ -15,6 +21,7 @@ It solves the "Box Office Black Box" problem by deploying a Just-In-Time (JIT) s
 
 | Component | Service | Tier | Est. Cost |
 |-----------|---------|------|-----------|
+| *Updated: Jan 2026* | | | |
 | **Hosting** | Vercel (Pro) | Business | $20/mo |
 | **Database** | Firestore | Blaze (Pay-as-you-go) | ~$5/mo |
 | **Proxies** | Residential IPs | Metered | ~$50/mo |

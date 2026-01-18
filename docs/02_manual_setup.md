@@ -26,23 +26,23 @@ Create these files in the root directory:
 
 - `.env` (Global public config)
 - `.env.local` (Secrets - DO NOT COMMIT)
-- `service-account.json` (Google Cloud Credentials)
+
 
 ### 2. Required Variables (`.env.local`)
 
 | Variable | Type | Description |
 |----------|------|-------------|
-| `FIRESTORE_CREDENTIALS` | **Path** | Absolute path to `service-account.json` |
+| `FIREBASE_SERVICE_ACCOUNT_KEY` | **JSON String** | Minified Service Account JSON (Single Line) |
 | `TIX_JWT` | **String** | Initial TIX.id Bearer token (from browser) |
 | `TIX_REFRESH_TOKEN` | **String** | 90-day refresh token for rotation |
 | `NEXT_PUBLIC_API_URL` | **URL** | `http://localhost:3000/api` (Dev) |
 | `NEXT_PUBLIC_MAPBOX_TOKEN` | **String** | For rendering Heatmaps |
 
 ### 3. Google Cloud Credentials
-Download the Service Account key from GCP IAM console (`cineradar-prod`) and save it as:
-`./service-account.json`
+Download the Service Account key from GCP IAM console (`cineradar-prod`).
+**Do NOT save this as a file.** Instead, minify the JSON and paste it into the `FIREBASE_SERVICE_ACCOUNT_KEY` variable in `.env.local`.
 
-> **Security Note**: This file is strictly git-ignored. Never force-add it.
+> **Security Note**: This avoids "accidental commit" risk entirely.
 
 ---
 

@@ -3,6 +3,18 @@
 > **CTO-Level Incident Response**
 > This document outlines systemic threats to the CineRadar architecture and the strategic responses required to maintain business continuity.
 
+## 🚌 Bus Factor / Emergency Access
+
+> **Critical**: If the Lead Maintainer is hit by a bus, use this keyset to regain control.
+
+| Asset | Access Method | Recovery Strategy |
+|-------|---------------|-------------------|
+| **DNS (`cineradar.id`)** | Vercel | Contact Vercel Support with invoice proof. |
+| **Database (Firestore)** | GCP Console | Use `organization-admin` service account (stored in 1Password Vault "CineRadar Ops"). |
+| **TIX Account** | Phone Login | SIM card is physically located in the "Bandung Server" rack (Slot 1). |
+
+---
+
 ## 🚨 Threat Model: TIX.id Anti-Bot Escalation
 
 **Risk Level:** Critical (P0)
