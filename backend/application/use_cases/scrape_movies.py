@@ -10,7 +10,7 @@ Orchestrates the movie scraping workflow:
 """
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 
 from backend.application.ports.scraper import IMovieScraper
 from backend.application.ports.storage import IMovieRepository, ITheatreRepository
@@ -120,7 +120,7 @@ class ScrapeMoviesUseCase:
             if save_to_storage:
                 result = ScrapeResult(
                     movies=movies,
-                    scraped_at=datetime.utcnow().isoformat(),
+                    scraped_at=datetime.now(UTC).isoformat(),
                     date=datetime.now().strftime("%Y-%m-%d"),
                     cities_scraped=len(all_cities),
                     success=True,

@@ -7,7 +7,7 @@ Creates per-movie documents in schedules/{date}/movies/{movie_id} collection.
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 from google.cloud import firestore
@@ -69,7 +69,7 @@ def transform_for_firestore(movie: dict, date: str) -> dict:
         "merchants": movie.get("merchants", []),
         "is_presale": movie.get("is_presale", False),
         "date": date,
-        "uploaded_at": datetime.utcnow().isoformat(),
+        "uploaded_at": datetime.now(UTC).isoformat(),
         "cities": movie.get("schedules", {}),
     }
 

@@ -5,7 +5,7 @@ Represents a JWT authentication token.
 """
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 
@@ -52,12 +52,12 @@ class Token:
     @property
     def is_expired(self) -> bool:
         """Check if token has expired."""
-        return datetime.utcnow() > self.expiry_datetime
+        return datetime.now(UTC) > self.expiry_datetime
 
     @property
     def minutes_until_expiry(self) -> int:
         """Minutes until token expires. Negative if already expired."""
-        delta = self.expiry_datetime - datetime.utcnow()
+        delta = self.expiry_datetime - datetime.now(UTC)
         return int(delta.total_seconds() / 60)
 
     @property
@@ -69,7 +69,7 @@ class Token:
     @property
     def age_minutes(self) -> int:
         """How many minutes since token was stored."""
-        delta = datetime.utcnow() - self.stored_datetime
+        delta = datetime.now(UTC) - self.stored_datetime
         return int(delta.total_seconds() / 60)
 
     def get_status_message(self) -> str:
@@ -119,7 +119,7 @@ class Token:
         Returns:
             Token instance
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         return cls(
             token=token,

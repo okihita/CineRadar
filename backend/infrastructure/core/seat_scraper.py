@@ -17,8 +17,8 @@ from typing import ClassVar
 import aiohttp
 
 from backend.config import USER_AGENT
-from backend.infrastructure.core.base_scraper import BaseScraper
 from backend.infrastructure.repositories import FirestoreTokenRepository
+from backend.infrastructure.scrapers.base import BaseScraper
 
 
 class SeatScraper(BaseScraper):
@@ -245,78 +245,6 @@ class SeatScraper(BaseScraper):
             **occupancy,
         }
 
-    async def _init_browser_and_auth(self, headless: bool = True) -> tuple:
-        """
-        Initialize browser and login to TIX.id using base class methods.
-
-        Returns:
-            Tuple of (playwright, browser, context, page)
-        """
-        playwright, browser, context, page = await self._init_browser(headless)
-        await self._login(page)
-        return playwright, browser, context, page
-
-    async def scrape_all_showtimes(
-        self,
-        showtimes: list[dict],
-        headless: bool = True,
-        batch_size: int = 10,
-        delay_between_requests: float = 0.5,
-    ) -> list[dict]:
-        """
-        Scrape seat occupancy for a list of showtimes.
-
-        Args:
-            showtimes: List of showtime info dicts
-            headless: Run browser in headless mode
-            batch_size: Number of requests before pausing
-            delay_between_requests: Seconds to wait between requests
-
-        Returns:
-            List of occupancy data dicts
-        """
-        if not showtimes:
-            self.log("No showtimes to scrape")
-            return []
-
-        self.log(f"🎬 Starting seat scrape for {len(showtimes)} showtimes...")
-
-        playwright, browser, context, page = await self._init_browser_and_auth(headless)
-
-        results = []
-        start_time = time.time()
-
-        try:
-            for i, showtime_info in enumerate(showtimes, 1):
-                result = await self.scrape_showtime_occupancy(showtime_info)
-
-                if result:
-                    results.append(result)
-                    self.log(
-                        f"   {i}/{len(showtimes)}: {showtime_info.get('theatre_name', 'Unknown')} "
-                        f"{showtime_info.get('showtime', '')} - {result['occupancy_pct']}% sold"
-                    )
-                else:
-                    self.log(
-                        f"   {i}/{len(showtimes)}: {showtime_info.get('theatre_name', 'Unknown')} "
-                        f"{showtime_info.get('showtime', '')} - ❌ Failed"
-                    )
-
-                # Rate limiting
-                await asyncio.sleep(delay_between_requests)
-
-                # Progress update every batch_size
-                if i % batch_size == 0:
-                    elapsed = time.time() - start_time
-                    avg_time = elapsed / i
-                    remaining = (len(showtimes) - i) * avg_time
-                    self.log(f"   Progress: {i}/{len(showtimes)} | ETA: {remaining / 60:.1f}m")
-
-        finally:
-            await self._close_browser(playwright, browser, context, page)
-
-        self.log(f"🏁 Seat scrape complete: {len(results)}/{len(showtimes)} successful")
-        return results
 
     async def scrape_all_showtimes_api_only(
         self, showtimes: list[dict], delay_between_requests: float = 1.0

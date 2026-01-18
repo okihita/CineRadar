@@ -3,7 +3,7 @@ Scraper Run Schema
 Validates scraper run log entries for Firestore.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -39,7 +39,7 @@ class ScraperRunSchema(BaseModel):
     presales: int = Field(ge=0, default=0)
     error: str | None = Field(None, description="Error message if status is 'failed'")
     timestamp: str = Field(
-        default_factory=lambda: datetime.utcnow().isoformat(),
+        default_factory=lambda: datetime.now(UTC).isoformat(),
         description="ISO timestamp of when this run was logged",
     )
 

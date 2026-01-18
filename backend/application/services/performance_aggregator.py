@@ -6,7 +6,7 @@ Runs in real-time after each showtime is scraped.
 """
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 
 from backend.domain.models import MoviePerformance, ShowtimeSnapshot
 from backend.infrastructure.repositories import FirestoreMoviePerformanceRepository
@@ -136,7 +136,7 @@ class PerformanceAggregator:
             avg_occupancy_pct=round(avg_occupancy, 1),
             total_seats=total_seats,
             total_sold=total_sold,
-            last_updated=datetime.utcnow().isoformat(),
+            last_updated=datetime.now(UTC).isoformat(),
         )
 
     def recalculate_all(self, movie_ids: list[str] | None = None) -> list[MoviePerformance]:

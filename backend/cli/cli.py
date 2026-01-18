@@ -353,16 +353,17 @@ def run_seat_scrape(
         # Run scraper
         scraper = SeatScraper()
 
-        # Use stored token (from Firestore) or login fresh
+        # Use stored token (from Firestore) - browser login deprecated
         if use_stored_token:
             if not scraper.load_token_from_storage():
                 logger.error("❌ No valid token in storage - cannot proceed")
                 return None
             results = await scraper.scrape_all_showtimes_api_only(showtimes)
         else:
-            results = await scraper.scrape_all_showtimes(
-                showtimes, headless=headless, batch_size=10
-            )
+            # Browser-based login removed - require stored token
+            logger.error("❌ --use-stored-token is required for seat scraping")
+            logger.error("   Run 'python -m backend.cli.refresh_token' first to store a token")
+            return None
 
         # Save results
         if results:

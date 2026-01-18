@@ -7,7 +7,7 @@ import json
 import logging
 import os
 import tempfile
-from datetime import datetime
+from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ def upsert_theatre(theatre_data: dict, validate: bool = True) -> bool:
 
         # Check if exists
         doc = doc_ref.get()
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(UTC).isoformat()
 
         if doc.exists:
             # Update existing
@@ -230,7 +230,7 @@ def log_scraper_run(run_data: dict, run_type: str = "movies") -> bool:
     """
     try:
         db = get_firestore_client()
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(UTC)
 
         # Create human-readable document ID
         doc_id = timestamp.strftime("%Y-%m-%dT%H-%M-%S") + f"_{run_type}"
@@ -251,7 +251,7 @@ def save_daily_snapshot(data: dict) -> bool:
     """
     try:
         db = get_firestore_client()
-        date = data.get("date", datetime.utcnow().strftime("%Y-%m-%d"))
+        date = data.get("date", datetime.now(UTC).strftime("%Y-%m-%d"))
 
         # Slim down movies - remove full schedules, keep only counts
         slim_movies = []

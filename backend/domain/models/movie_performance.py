@@ -7,7 +7,7 @@ Used for tracking occupancy across all cities/theatres for a specific movie.
 
 import json
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 
@@ -47,7 +47,7 @@ class ShowtimeSnapshot:
     sold_seats: int
     occupancy_pct: float
     layout: list[list[dict[str, Any]]] = field(default_factory=list)
-    scraped_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    scraped_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
     @property
     def available_seats(self) -> int:
@@ -135,7 +135,7 @@ class MoviePerformance:
     avg_occupancy_pct: float = 0.0
     total_seats: int = 0
     total_sold: int = 0
-    last_updated: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    last_updated: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
     @property
     def cities_count(self) -> int:

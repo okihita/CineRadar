@@ -5,7 +5,7 @@ Implements ISeatScraper interface for scraping seat occupancy data.
 """
 
 from backend.application.ports.scraper import ISeatScraper
-from backend.domain.errors import TokenExpiredError
+from backend.domain.errors import ScrapingError, TokenExpiredError
 from backend.domain.models import SeatOccupancy
 from backend.infrastructure.scrapers.base import BaseScraper
 
@@ -59,7 +59,13 @@ class TixSeatScraper(BaseScraper, ISeatScraper):
         results = await legacy_scraper.scrape_all_showtimes_api_only(showtimes)
 
         if not results:
-            return []
+            # Check if this was a token issue (401) by verifying token is still set
+            if not legacy_scraper.auth_token:
+                raise TokenExpiredError("Token was invalidated during scrape")
+            # Otherwise it could be a transient failure or no data
+            raise ScrapingError(
+                f"API scrape returned no results for {len(showtime_ids)} showtimes"
+            )
 
         # Convert to domain objects
         occupancies = []
@@ -72,7 +78,7 @@ class TixSeatScraper(BaseScraper, ISeatScraper):
                 theatre_name=result.get("theatre_name"),
                 city=result.get("city"),
                 merchant=result.get("merchant", merchant),
-                room_category=result.get("room_name"),
+                room_category=result.get("room_category"),  # Fixed: was "room_name"
                 showtime=result.get("showtime"),
                 date=result.get("date"),
                 scraped_at=result.get("scraped_at"),
@@ -108,5 +114,6 @@ class TixSeatScraper(BaseScraper, ISeatScraper):
         if not token or token.is_expired:
             return False
 
-        self.auth_token = token.token
+        # Strip quotes that may have been captured from localStorage
+        self.auth_token = token.token.strip('"')
         return True

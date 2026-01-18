@@ -12,8 +12,8 @@ import asyncio
 import logging
 import sys
 
-from backend.infrastructure.core.base_scraper import BaseScraper
 from backend.infrastructure.repositories.firestore_token import get_storage, store_token
+from backend.infrastructure.scrapers.base import BaseScraper
 
 logger = logging.getLogger(__name__)
 

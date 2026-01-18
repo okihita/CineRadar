@@ -83,3 +83,38 @@ jobs:
         run: uv run python -m backend.cli.movie_performance --recalculate
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+  alert:
+    needs: jit-scrape
+    if: failure()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Alert on failure
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const title = '🚨 JIT Seat Scrape Failed';
+            const body = `## JIT Seat Scrape Workflow Failed
+            
+            **Run ID:** ${{ github.run_id }}
+            **Time:** ${new Date().toISOString()}
+            
+            The hourly seat scrape failed. Possible causes:
+            - Token expired or refresh failed
+            - TIX.id API rate limiting
+            - Firestore write failed
+            
+            **Action Required:**
+            1. Check the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            2. Verify token is valid: \`python -m backend.cli.refresh_token --check\`
+            
+            cc @${{ github.repository_owner }}`;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['bug', 'scraper']
+            });

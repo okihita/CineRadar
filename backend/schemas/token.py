@@ -3,7 +3,7 @@ Token Schema
 Validates JWT tokens with TTL checking for TIX.id API authentication.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -44,12 +44,12 @@ class TokenSchema(BaseModel):
     def minutes_until_expiry(self) -> int:
         """Returns minutes until token expires. Negative if already expired."""
         expires = self.get_expiry_datetime()
-        delta = expires - datetime.utcnow()
+        delta = expires - datetime.now(UTC)
         return int(delta.total_seconds() / 60)
 
     def is_expired(self) -> bool:
         """Check if token has expired."""
-        return datetime.utcnow() > self.get_expiry_datetime()
+        return datetime.now(UTC) > self.get_expiry_datetime()
 
     def is_valid_for_scrape(self, min_minutes: int = 30) -> bool:
         """Check if token has enough TTL for a scrape run.

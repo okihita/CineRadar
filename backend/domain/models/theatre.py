@@ -7,7 +7,7 @@ Represents a cinema theatre location.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, ClassVar
 
 if TYPE_CHECKING:
@@ -93,7 +93,7 @@ class Theatre:
         self.lng = lng
         if place_id:
             self.place_id = place_id
-        self.updated_at = datetime.utcnow().isoformat()
+        self.updated_at = datetime.now(UTC).isoformat()
 
     def add_room_type(self, room_type: str) -> None:
         """Add a room type if not already present."""
@@ -148,5 +148,5 @@ class Theatre:
             city=city.upper(),
             address=schedule.address,
             room_types=room_types,
-            last_seen=datetime.utcnow().isoformat(),
+            last_seen=datetime.now(UTC).isoformat(),
         )

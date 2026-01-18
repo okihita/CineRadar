@@ -5,7 +5,7 @@ Implements ITheatreRepository using Firebase Firestore.
 """
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from backend.application.ports.storage import ITheatreRepository
@@ -58,7 +58,7 @@ class FirestoreTheatreRepository(ITheatreRepository):
         try:
             doc_ref = self.db.collection(self.COLLECTION).document(str(theatre.theatre_id))
             doc = doc_ref.get()
-            now = datetime.utcnow().isoformat()
+            now = datetime.now(UTC).isoformat()
 
             if doc.exists:
                 # Update existing
@@ -173,7 +173,7 @@ class FirestoreTheatreRepository(ITheatreRepository):
             update_data = {
                 "lat": lat,
                 "lng": lng,
-                "updated_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.now(UTC).isoformat(),
             }
             if place_id:
                 update_data["place_id"] = place_id

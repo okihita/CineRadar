@@ -11,7 +11,7 @@ import logging
 import random
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -88,7 +88,6 @@ class GranularScraper:
         """Perform a single scrape task with anti-bot delays."""
         showtime_id = task["id"]
         movie_title = task["movie"]
-        task["theatre"]
 
         # 1. Anti-bot: Rate Limiting
         await self.rate_limiter.acquire()
@@ -100,8 +99,10 @@ class GranularScraper:
 
         # 3. Perform Scrape
         try:
-            # Token check before every request
-            await self._check_and_refresh_token()
+            # Token check before every request - abort if refresh fails
+            if not await self._check_and_refresh_token():
+                logger.error(f"❌ Token refresh failed, skipping {movie_title}")
+                return False
 
             # TODO: Add UA rotation to the underlying scraper if possible
             # For now, we rely on the header rotation if implemented in base,
@@ -131,7 +132,7 @@ class GranularScraper:
         filepath = self.data_dir / filename
 
         record = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "showtime_id": occupancy.showtime_id,
             "movie": occupancy.movie_title,
             "theatre": occupancy.theatre_name,

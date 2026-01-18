@@ -90,4 +90,37 @@ jobs:
 
   # Note: Seat scraping moved to jit-seat-scrape.yml (runs hourly)
 
+  alert:
+    needs: merge
+    if: failure()
+    runs-on: ubuntu-latest
 
+    steps:
+      - name: Alert on failure
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const title = '🚨 Daily Scrape Failed';
+            const body = `## Daily Scrape Workflow Failed
+            
+            **Run ID:** ${{ github.run_id }}
+            **Time:** ${new Date().toISOString()}
+            
+            The daily movie scrape failed. Possible causes:
+            - TIX.id website changed
+            - Network timeout
+            - Firestore write failed
+            
+            **Action Required:**
+            1. Check the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            2. Re-run the workflow manually if transient failure
+            
+            cc @${{ github.repository_owner }}`;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['bug', 'scraper']
+            });

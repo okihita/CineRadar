@@ -12,8 +12,8 @@ from datetime import datetime
 from playwright.async_api import async_playwright
 
 from backend.config import CITIES, LOCALE, TIMEZONE, USER_AGENT, VIEWPORT
-from backend.infrastructure.core.base_scraper import BaseScraper
 from backend.infrastructure.core.geocoder import Geocoder
+from backend.infrastructure.scrapers.base import BaseScraper
 
 
 class CineRadarScraper(BaseScraper):
