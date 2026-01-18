@@ -23,16 +23,16 @@ The backend is managed via a unified CLI.
 
 ```bash
 # Basic scrape (all 83 cities, no showtimes)
-python -m scraper
+uv run python -m backend.cli
 
 # Include detailed showtimes (slower, ~45-75 min)
-python -m scraper --schedules
+uv run python -m backend.cli --schedules
 
 # Scrape single city with showtimes
-python -m scraper --city JAKARTA --schedules
+uv run python -m backend.cli --city JAKARTA --schedules
 
 # Show browser window (for debugging)
-python -m scraper --visible
+uv run python -m backend.cli --visible
 ```
 
 ### Token Refresh
@@ -40,10 +40,10 @@ python -m scraper --visible
 
 ```bash
 # Refresh token (headless)
-python -m backend.cli.refresh_token
+uv run python -m backend.cli.refresh_token
 
 # Check token status
-python -m backend.cli.refresh_token --check
+uv run python -m backend.cli.refresh_token --check
 ```
 
 ---
@@ -93,7 +93,7 @@ Authorization: Bearer {JWT_TOKEN}
 | `5` | **Unavailable** | Sold or Blocked (cannot distinguish) |
 | `6` | **Unavailable** | Sold or Blocked (cannot distinguish) |
 
-> [!IMPORTANT]
+> 🚨 **Important**
 > The API does not distinguish between "sold" and "under maintenance/blocked". Occupancy estimates should be treated as **maximum upper bounds**.
 
 ---

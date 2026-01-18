@@ -1,7 +1,7 @@
 """
 Backend Services Module (Core Scrapers)
 
-> [!NOTE]
+> ℹ️ **Note**
 > This module contains the core scraping implementations using Playwright.
 > They are wrapped by the Clean Architecture infrastructure layer.
 

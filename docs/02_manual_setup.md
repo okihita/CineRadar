@@ -1,101 +1,111 @@
-# Manual Setup & Verification
+# Production-Grade Manual Setup
 
-> Guide for setting up the simplified CineRadar development environment.
+> **Strict Environment Replication Guide**
+> This document details the exact steps to replicate the `CineRadar` production environment locally. Deviations from these versions may result in "works on my machine" issues.
 
-## 🛠 Dependency Tree
+## 📋 Strict Prerequisites
 
-```mermaid
-graph TD
-    User[Developer Machine] --> P[Python 3.11+]
-    P --> U[uv Package Manager]
-    U --> V[Venv]
-    V --> PL[Playwright]
-    
-    User --> N[Node.js 20+]
-    N --> A[Admin App]
-    N --> W[Web App]
-    
-    subgraph "External"
-        TIX[TIX.id]
-        FS[Firestore]
-    end
-    
-    PL --> TIX
-    A --> FS
-    W --> FS
-```
+Unlock the repository only if you meet these exact requirements:
 
-## ⚡️ Quick Start (Manual)
+| Dependency | Required Version | Reason |
+|------------|------------------|--------|
+| **OS** | macOS (ARM64) or Linux | Playwright binary compatibility |
+| **Node.js** | `v20.10.0` (LTS Iron) | Next.js 14+ App Router stability |
+| **pnpm** | `v8.15.0+` | Monorepo workspace protocol |
+| **Python** | `3.12.0+` | Type hinting features used in Scraper |
+| **uv** | `latest` | Python package resolution speed |
 
-### 1. Installation
+---
 
+## 🔐 Secrets & Environment Variables
+
+The application **will not start** without these configurations. We do not mock authentication.
+
+### 1. File Structure
+Create these files in the root directory:
+
+- `.env` (Global public config)
+- `.env.local` (Secrets - DO NOT COMMIT)
+- `service-account.json` (Google Cloud Credentials)
+
+### 2. Required Variables (`.env.local`)
+
+| Variable | Type | Description |
+|----------|------|-------------|
+| `FIRESTORE_CREDENTIALS` | **Path** | Absolute path to `service-account.json` |
+| `TIX_JWT` | **String** | Initial TIX.id Bearer token (from browser) |
+| `TIX_REFRESH_TOKEN` | **String** | 90-day refresh token for rotation |
+| `NEXT_PUBLIC_API_URL` | **URL** | `http://localhost:3000/api` (Dev) |
+| `NEXT_PUBLIC_MAPBOX_TOKEN` | **String** | For rendering Heatmaps |
+
+### 3. Google Cloud Credentials
+Download the Service Account key from GCP IAM console (`cineradar-prod`) and save it as:
+`./service-account.json`
+
+> **Security Note**: This file is strictly git-ignored. Never force-add it.
+
+---
+
+## 🛠️ Installation (Monorepo)
+
+We use `pnpm` workspace to manage dependencies across `admin`, `web`, and `backend`.
+
+### 1. Bootstrap Repository
 ```bash
 # Clone
 git clone https://github.com/okihita/CineRadar.git
 cd CineRadar
 
-# Python Setup
-uv sync
-uv run playwright install chromium
+# Install Node dependencies (Root + Workspaces)
+pnpm install
 
-# Javascript Setup
-(cd admin && npm install)
-(cd web && npm install)
+# Install Python environment
+uv sync
 ```
 
-### 2. Run Applications
-
-| App | Command | URL |
-|-----|---------|-----|
-| **Backend** | `uv run python -m scraper` | N/A |
-| **Admin** | `cd admin && npm run dev` | `localhost:3000` |
-| **Web** | `cd web && npm run dev` | `localhost:3001`* |
-
-*Note: If Admin is running on 3000, Web usually defaults to 3001.*
+### 2. Install Playwright Browsers
+The scraper requires specific browser binaries:
+```bash
+uv run playwright install chromium
+```
 
 ---
 
-## 🩺 System Health Check
+## 🚀 Execution
 
-Save this as `health_check.sh` and run it to verify your environment:
-
+### Backend (Scraper & API)
+Run the scraper manually to verify read/write access to Firestore:
 ```bash
-#!/bin/bash
+# Verify Auth
+uv run python -m backend.cli.refresh_token --check
 
-echo "🏥 CineRadar Health Check"
-echo "------------------------"
-
-# 1. Check Python
-python3 --version || echo "❌ Python missing"
-
-# 2. Check Node
-node -v || echo "❌ Node missing"
-
-# 3. Check Admin Server
-if curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 | grep -q "200"; then
-    echo "✅ Admin Dashboard: UP"
-else
-    echo "⚠️  Admin Dashboard: DOWN"
-fi
-
-# 4. Check Web Server
-if curl -s -o /dev/null -w "%{http_code}" http://localhost:3001 | grep -q "200"; then
-    echo "✅ Consumer Web: UP"
-else
-    echo "⚠️  Consumer Web: DOWN"
-fi
+# Test Scrape (1 City)
+uv run python -m backend.cli --city BANDUNG
 ```
 
-## 🌐 Network Diagnostics
-
-If production deployment fails, run this to check connectivity to Vercel and APIs:
-
+### Frontend (Admin & Web)
+Start the concurrent development server:
 ```bash
-# Quick connectivity check with timing
-curl -s -o /dev/null -w "DNS: %{time_namelookup}s | Connect: %{time_connect}s | Total: %{time_total}s | HTTP: %{http_code}\n" https://cineradar-admin.vercel.app/api/dashboard
+# Starts both Admin (3000) and Web (3001)
+pnpm dev
 ```
 
-**Thresholds:**
--   **DNS**: < 0.5s
--   **Connect**: < 1.0s
--   **Total**: < 3.0s
+---
+
+## 🩺 Verification Protocol
+
+Before pushing any code, run this strictly typed verification:
+
+```bash
+# 1. Type Check (Frontend)
+pnpm type-check
+
+# 2. Type Check (Backend)
+uv run mypy backend
+
+# 3. Linting
+pnpm lint
+uv run ruff check .
+```
+
+> **Definition of Done**: If `pnpm type-check` fails, the feature is not complete.

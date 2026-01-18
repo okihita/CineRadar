@@ -6,25 +6,24 @@
 
 ```mermaid
 gantt
-    title Daily scraper build pipeline (WIB)
-    dateFormat YYYY-MM-DD HH:mm
+    title Standard Daily Cycle (T+0 = Midnight WIB)
+    dateFormat HH:mm
     axisFormat %H:%M
     
     section Auth
-    Token Refresh             :crit, t1, 2024-01-01 05:50, 5m
-    Token Pre-Seat Check      :active, t2, 2024-01-01 06:35, 2m
+    Token Refresh (T+05:50)      :crit, t1, 05:50, 5m
+    Token Check (T+06:35)        :active, t2, 06:35, 2m
 
     section Movie Data
-    Movie Scrape (9 Jobs)     :active, m1, 2024-01-01 06:00, 30m
-    Merge Batches             :active, m2, after m1, 5m
-    Upload Schedules          :active, m3, after m2, 5m
+    Movie Scrape (T+06:00)       :active, m1, 06:00, 30m
+    Merge & Upload               :active, m2, after m1, 10m
 
     section Seat Data
-    Seat Scrape (9 Jobs)      :active, s1, after t2, 45m
-    Merge Seats               :active, s2, after s1, 10m
+    Seat Scrape (T+06:40)        :active, s1, after t2, 45m
+    Merge & Loading              :active, s2, after s1, 10m
     
     section Reporting
-    Daily Summary (Midnight)  :done, r1, 2024-01-01 23:55, 10m
+    Daily Summary (T+23:55)      :done, r1, 23:55, 10m
 ```
 
 All times are **WIB (UTC+7)**. GitHub Action schedules use UTC.
@@ -127,7 +126,7 @@ flowchart LR
     ```
 3.  **Retry Specific City**:
     ```bash
-    uv run python -m scraper --city BANDUNG --schedules
+    uv run python -m backend.cli --city BANDUNG --schedules
     ```
 
 ---
@@ -239,6 +238,27 @@ Saved to `daily_summaries/{date}`:
 
 ---
 
+## Phase 5: Monthly Maintenance (1st of Month)
+
+### Purpose
+Geocode new theatre locations using Google Maps API to ensure map visualization covers all 480+ cinemas.
+
+### Workflow File
+[`.github/workflows/monthly-geocode.yml`](../.github/workflows/monthly-geocode.yml) (Schedule: 07:00 AM WIB on the 1st)
+
+### How It Works
+1.  **Fetcher**: Loads all theatres from Firestore `theatres` collection.
+2.  **Filter**: Identifies theatres with missing `lat`/`lng` or `place_id`.
+3.  **Geocode**: Calls Google Places API for missing data.
+4.  **Update**: Writes back to Firestore.
+
+### 🧑‍💻 Code References
+| Component | Source File | Purpose |
+|-----------|-------------|---------|
+| **Entry Point** | [`backend/cli/monthly_geocode.py`](../backend/cli/monthly_geocode.py) | Main logic for geocoding |
+
+---
+
 ## Firestore Collections Summary
 
 | Collection | Document ID | Updated By | Frequency |
@@ -257,26 +277,26 @@ Saved to `daily_summaries/{date}`:
 
 ### Run Movie Scrape Locally
 ```bash
-python -m backend.cli movies --city JAKARTA --schedules
+uv run python -m backend.cli movies --city JAKARTA --schedules
 ```
 
 ### Run Seat Scrape Locally
 ```bash
 # First ensure token is valid
-python -m backend.cli.refresh_token --check
+uv run python -m backend.cli.refresh_token --check
 
 # Then scrape seats
-python -m backend.cli.cli seats --mode morning --use-stored-token --limit 10
+uv run python -m backend.cli.cli seats --mode morning --use-stored-token --limit 10
 ```
 
 ### Generate Daily Summary Locally
 ```bash
-python -m backend.cli.daily_summary
+uv run python -m backend.cli.daily_summary
 ```
 
 ### Check Token Status
 ```bash
-python -m backend.cli.refresh_token --check
+uv run python -m backend.cli.refresh_token --check
 ```
 
 ---

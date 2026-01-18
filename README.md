@@ -1,78 +1,51 @@
 # CineRadar 🎬
 
-> **Private Corporate Intelligence Platform** (Rekreasi.co)
-> *Strictly confidential. For internal use only.*
-
-## 🎯 Project Goals
-
-**CineRadar** is a specialized cinema intelligence platform designed for **Rekreasi.co**. Our primary mission is to decode the Indonesian film market by bridging the gap between digital buzz and actual ticket sales.
-
-### Core Objectives
-1.  **Granular Data Collection**: Scrape real-time seat availability from `app.tix.id` for every single showtime across 83 cities.
-2.  **Cross-Dimensional Analysis**: Correlate box office performance with external marketing signals:
-    -   **Google Trends**: Search volume spikes vs. ticket sales.
-    -   **TikTok/Social Trends**: Viral momentum vs. theatre occupancy.
-    -   **Regional Nuances**: City-level performance disparities.
-3.  **Data-Driven Decisions**: Empower production houses and marketers to optimize screen allocation and ad spend based on hard occupancy data, not just "buzz".
-
-## 🌟 Key Features
-
-### 🕷️ Per-Showtime Seat Scraping
-Unlike generic scrapers that only track movie availability, CineRadar performs a **JIT (Just-In-Time) Deep Scrape**:
--   **Granularity**: Tracks every individual seat (Available vs. Sold/Blocked).
--   **Coverage**: 83 Cities, 480+ Theatres (XXI, CGV, Cinepolis).
--   **Frequency**: 15-minute intervals for high-velocity releases.
-
-### 📊 Corporate Intelligence Dashboard
--   **Live Occupancy Heatmaps**: Visualize hot/cold regions in real-time.
--   **Competitor Analysis**: Track rival film performance side-by-side.
--   **Trend Correlation**: Overlay marketing campaign timestamps on sales graphs.
-
-## 🏗 Architecture & Tech Stack
-
-This project uses a high-performance scraping engine feeding a modern analytics dashboard.
-
--   **Backend**: Python 3.11+ (Playwright, Pydantic)
--   **Database**: Google Cloud Firestore (NoSQL)
--   **Frontend**: Next.js 16 / React 19 (Admin Dashboard & Consumer Web)
--   **Infrastructure**: GitHub Actions (CI/CD & Cron Jobs), Vercel (Hosting)
--   **More Info**: [Architecture & Data Flow](./docs/01_architecture_and_design.md)
-
-[![CI](https://github.com/okihita/CineRadar/actions/workflows/ci.yml/badge.svg)](https://github.com/okihita/CineRadar/actions/workflows/ci.yml)
+> **Corporate Intelligence Platform (Rekreasi.co)**
+> *Strictly confidential. Internal operational use only.*
 
 ---
 
-## ⚡️ Quick Start (Dev)
+## ⚡ Executive Summary
 
-**Prerequisites**: Node.js 20+, Python 3.11+, `uv`
+**CineRadar** is the "Bloomberg Terminal" for the Indonesian Film Industry.
 
-### 1. Installation
-```bash
-git clone https://github.com/okihita/CineRadar.git
-cd CineRadar
+It solves the "Box Office Black Box" problem by deploying a Just-In-Time (JIT) scraping engine to monitor **real-time seat occupancy** across 480+ theaters (XXI, CGV, Cinepolis) in 83 cities. This data empowers Production Houses to make data-driven decisions on marketing spend and screen allocation, moving beyond "gut feeling" and social buzz.
 
-# Install Python dependencies
-uv sync
+## 💰 Operational Profile
 
-# Install Playwright browsers
-uv run playwright install chromium
-```
+| Component | Service | Tier | Est. Cost |
+|-----------|---------|------|-----------|
+| **Hosting** | Vercel (Pro) | Business | $20/mo |
+| **Database** | Firestore | Blaze (Pay-as-you-go) | ~$5/mo |
+| **Proxies** | Residential IPs | Metered | ~$50/mo |
+| **CI/CD** | GitHub Actions | Free Tier | $0 |
+| **Total** | | | **~$75/mo** |
 
-### 2. Run Applications
--   **Backend Scraper**: `uv run python -m scraper`
--   **Admin Dashboard**: `cd admin && npm install && npm run dev`
--   **Consumer Web**: `cd web && npm install && npm run dev`
+## 📚 Technical Manuals
 
-See [Manual Setup Guide](./docs/02_manual_setup.md) for detailed instructions.
+Start here to understand the system.
+
+- **[01 Architecture & Design](./docs/01_architecture_and_design.md)**: System design & token auth logic.
+- **[02 Manual Setup (Production)](./docs/02_manual_setup.md)**: Strict replication guide for new engineers.
+- **[03 Daily Pipeline](./docs/03_daily_pipeline.md)**: How data flows from 6 AM to Midnight (T+0).
+- **[04 API Reference](./docs/04_api_reference.md)**: CLI commands & data contracts.
+- **[05 Frontend Guidelines](./docs/05_frontend_guidelines.md)**: Design system & regional config.
+- **[06 Troubleshooting (Strategic)](./docs/06_troubleshooting.md)**: Architecture failure modes & recovery.
+- **[07 Product Roadmap](./docs/07_product_roadmap.md)**: Future vision & engineering "Why".
+
+### 📦 Component Guides
+
+- **[Admin Documentation](./admin/README.md)**: Dashboard modules, Google Maps setup, & Auth.
+- **[Web Documentation](./web/README.md)**: Consumer app features & Leaflet integration.
+
+## 🔗 Quick Access
+
+| Environment | Application | URL |
+|-------------|-------------|-----|
+| **Production** | Admin Dashboard | [cineradar-admin.vercel.app](https://cineradar-admin.vercel.app) |
+| **Production** | Public Web | [cineradar-id.vercel.app](https://cineradar-id.vercel.app) |
+| **Staging** | *Preview Deployments* | *Check Vercel PR comments* |
 
 ---
 
-## 📚 Documentation Index
-
--   **[Architecture & Data Flow](./docs/01_architecture_and_design.md)**: System design & token auth.
--   **[Manual Setup Guide](./docs/02_manual_setup.md)**: Detailed installation & verification.
--   **[Daily Pipeline](./docs/03_daily_pipeline.md)**: How data flows from 6 AM to Midnight.
--   **[API & Scraper Reference](./docs/04_api_reference.md)**: CLI usage & contracts.
--   **[Frontend Guidelines](./docs/05_frontend_guidelines.md)**: UI/UX standards & regions.
--   **[Troubleshooting](./docs/06_troubleshooting.md)**: Fixes for common issues.
--   **[Product Roadmap](./docs/07_product_roadmap.md)**: Strategic vision & future phases.
+> **Maintainer Contact**: Use the [`06_troubleshooting.md`](./docs/06_troubleshooting.md) guide for emergency protocols.

@@ -8,15 +8,20 @@ CineRadar is a 3-scraper pipeline for TIX.id movie data collection, feeding into
 
 ### Data Flow
 
-```
-TIX.id Website → Scraper (GitHub Actions) → Firestore → 
-  ├── Admin Dashboard (admin.cineradar-id.vercel.app)
-  └── Public Website (cineradar-id.vercel.app)
+```mermaid
+flowchart LR
+    TIX[TIX.id Website] --> S["Scraper (GitHub Actions)"]
+    S --> FS[(Firestore)]
+    FS --> AD[Admin Dashboard]
+    FS --> PW[Public Website]
+    
+    click AD "https://cineradar-admin.vercel.app"
+    click PW "https://cineradar-id.vercel.app"
 ```
 
 ### Infrastructure Components
 
-- **Backend**: Python 3.11+ using Playwright for scraping and interactions.
+- **Backend**: Python 3.12+ using Playwright for scraping and interactions.
 - **Database**: Google Cloud Firestore (NoSQL).
 - **Admin**: Next.js 16 (React 19) dashboard.
 - **Web**: Next.js 16 (React 19) consumer app.
@@ -26,7 +31,7 @@ TIX.id Website → Scraper (GitHub Actions) → Firestore →
 
 ## Token Architecture (Single Source of Truth)
 
-> [!NOTE]
+> ℹ️ **Note**
 > This is the authoritative documentation for TIX.id authentication. All other docs reference this section.
 
 ### Token Types
@@ -58,7 +63,7 @@ flowchart TD
 
 ### Programmatic Token Refresh
 
-> [!IMPORTANT]
+> 🚨 **Important**
 > **No browser needed!** We can refresh tokens via API using the refresh token.
 
 **Endpoint:**
@@ -153,8 +158,6 @@ erDiagram
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
 | `ci.yml` | Push/PR to `backend/**` | Lint, test, type-check Python |
-| `admin-ci.yml` | Push/PR to `admin/**` | Lint, type-check, build Next.js |
-| `pr-checks.yml` | Pull requests | Unified quality gate |
 | `smoke-tests.yml` | Push to `admin/**` + daily | Test production APIs |
 | `security-scan.yml` | Push/PR + weekly | CodeQL security analysis |
 | `failure-reporter.yml` | Workflow failures | Auto-create GitHub issues |
@@ -184,23 +187,39 @@ Although `web` and `admin` live in the same repository, they are deployed as sep
 
 Vercel automatically detects the root `pnpm-lock.yaml` and optimizes the build pipeline:
 
-```
-┌───────────────────────────────────────────────────────────────────┐
-│ SHARED CACHE LAYER (pnpm store)                                   │
-│ [React] [Next.js] [Tailwind] (Downloaded ONCE)                    │
-└─────────────────────────────────┬─────────────────────────────────┘
-                                  │
-                  ┌───────────────┴───────────────┐
-                  ▼                               ▼
-┌─────────────────────────────────┐   ┌─────────────────────────────────┐
-│ DEPLOYMENT: WEB                 │   │ DEPLOYMENT: ADMIN               │
-├─────────────────────────────────┤   ├─────────────────────────────────┤
-│ 1. Triggered by push to root    │   │ 1. Triggered by push to root    │
-│ 2. Vercel detects pnpm lock     │   │ 2. Vercel detects pnpm lock     │
-│ 3. ⚡️ RESTORES Shared Cache     │   │ 3. ⚡️ RESTORES Shared Cache     │
-│ 4. "pnpm install" (fast link)   │   │ 4. "pnpm install" (fast link)   │
-│ 5. Builds /web                  │   │ 5. Builds /admin                │
-└─────────────────────────────────┘   └─────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph CACHE ["SHARED CACHE LAYER (pnpm store)"]
+        Deps["[React] [Next.js] [Tailwind]"]
+    end
+
+    %% Link Cache to both, but structure them vertically to save width
+    Deps -- "Reusable Cache" --> WEB_DEPLOY
+    Deps -- "Reusable Cache" --> ADMIN_DEPLOY
+
+    subgraph WEB_DEPLOY ["DEPLOYMENT: WEB"]
+        direction TB
+        W1[1. Push to root]
+        W2[2. Detect lockfile]
+        W3["3. ⚡️ RESTORE Cache"]
+        W4["4. Fast Link"]
+        W5["5. Build /web"]
+        
+        W1 --> W2 --> W3 --> W4 --> W5
+    end
+
+
+
+    subgraph ADMIN_DEPLOY ["DEPLOYMENT: ADMIN"]
+        direction TB
+        A1[1. Push to root]
+        A2[2. Detect lockfile]
+        A3["3. ⚡️ RESTORE Cache"]
+        A4["4. Fast Link"]
+        A5["5. Build /admin"]
+        
+        A1 --> A2 --> A3 --> A4 --> A5
+    end
 ```
 
 ### Key Benefits
