@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 if TYPE_CHECKING:
     from backend.domain.models.movie import TheatreSchedule
@@ -61,10 +61,10 @@ class Theatre:
     updated_at: str | None = None
 
     # Valid merchants (for validation)
-    VALID_MERCHANTS = {"XXI", "CGV", "Cinépolis", "CINEPOLIS"}
+    VALID_MERCHANTS: ClassVar[frozenset[str]] = frozenset({"XXI", "CGV", "Cinépolis", "CINEPOLIS"})
 
     # Premium room types
-    PREMIUM_ROOMS = {"IMAX", "GOLD CLASS", "VELVET", "PREMIERE", "4DX", "SCREENX"}
+    PREMIUM_ROOMS: ClassVar[frozenset[str]] = frozenset({"IMAX", "GOLD CLASS", "VELVET", "PREMIERE", "4DX", "SCREENX"})
 
     @property
     def has_location(self) -> bool:

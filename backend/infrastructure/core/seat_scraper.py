@@ -11,6 +11,8 @@ Approach:
 import asyncio
 import time
 from datetime import datetime
+from types import MappingProxyType
+from typing import ClassVar
 
 import aiohttp
 
@@ -22,13 +24,13 @@ from backend.infrastructure.repositories import FirestoreTokenRepository
 class SeatScraper(BaseScraper):
     """Seat occupancy scraper for TIX.id using direct API calls."""
 
-    # Merchant to API path mapping
-    MERCHANT_PATHS = {
+    # Merchant to API path mapping (immutable)
+    MERCHANT_PATHS: ClassVar[MappingProxyType] = MappingProxyType({
         "CGV": "cgv",
         "XXI": "xxi",
         "Cinépolis": "cinepolis",
         "CINEPOLIS": "cinepolis",
-    }
+    })
 
     def __init__(self):
         super().__init__()

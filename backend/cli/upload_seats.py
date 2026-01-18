@@ -62,7 +62,7 @@ def merge_seat_batches(data_dir: str = "data") -> list:
 def upload_seats_to_firestore(seats: list, batch_size: int = 500):
     """Upload seat snapshots to Firestore in batches."""
     if not seats:
-        logger.info("ℹ️ No seats to upload")
+        logger.info("No seats to upload")
         return
 
     db = get_firestore_client()
