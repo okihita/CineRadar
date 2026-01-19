@@ -4,6 +4,21 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import ShowtimeView from './ShowtimeView';
 
+interface TheatreRoom {
+    category: string;
+    price: string;
+    showtimes?: string[];
+    past_showtimes?: string[];
+}
+
+interface TheatreSchedule {
+    theatre_id: string;
+    theatre_name: string;
+    merchant: string;
+    address: string;
+    rooms: TheatreRoom[];
+}
+
 interface Movie {
     id: string;
     title: string;

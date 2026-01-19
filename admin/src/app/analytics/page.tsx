@@ -8,7 +8,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { CollapsibleCard } from '@/components/CollapsibleCard';
 import { DateRangePicker, getDefaultDateRange } from '@/components/DateRangePicker';
 import { exportTableAsCSV } from '@/lib/export';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, FunnelChart, Funnel, LabelList, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Cell } from 'recharts';
 import { Brain, TrendingUp, Filter, AlertTriangle, Lightbulb, Grid3X3 } from 'lucide-react';
 
 interface AnalyticsData {
@@ -160,7 +160,7 @@ export default function AnalyticsPage() {
                         </ResponsiveContainer>
                     </div>
                     <p className="text-xs text-muted-foreground mt-2">
-                        💡 <strong>Drop-off:</strong> 47% lose interest at "Select Showtime". Consider better showtime filtering.
+                        💡 <strong>Drop-off:</strong> 47% lose interest at &quot;Select Showtime&quot;. Consider better showtime filtering.
                     </p>
                 </CollapsibleCard>
 

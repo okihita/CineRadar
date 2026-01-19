@@ -2,6 +2,25 @@
 import { NextResponse } from 'next/server';
 import { firestoreAdminClient } from '@/lib/firebase-admin';
 
+interface SeatSnapshot {
+    showtime_id: string;
+    showtime?: string;
+    movie_title?: string;
+    theatre_name?: string;
+    occupancy_pct?: number;
+    layout?: unknown;
+}
+
+interface GroupedItem {
+    showtime_id: string;
+    time: string;
+    movie: string | undefined;
+    theatre: string | undefined;
+    status: string;
+    occupancy: number | undefined;
+    layout: unknown;
+}
+
 export async function GET() {
     try {
         const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
@@ -9,12 +28,12 @@ export async function GET() {
         // 1. Fetch seat snapshots for today
         // Note: In a real scenario, we might want to query by date
         // For now, we fetch recent snapshots and filter
-        const snapshots = await firestoreAdminClient.getCollectionWithQuery('seat_snapshots', 'scraped_at', 500);
+        const snapshots = await firestoreAdminClient.getCollectionWithQuery('seat_snapshots', 'scraped_at', 500) as unknown as SeatSnapshot[];
 
         // 2. Group by hour (e.g., "12:00", "13:00")
-        const grouped: Record<string, any[]> = {};
+        const grouped: Record<string, GroupedItem[]> = {};
 
-        snapshots.forEach((snap: any) => {
+        snapshots.forEach((snap) => {
             const time = snap.showtime || 'Unknown';
             // Extract hour from HH:MM format
             const hour = time !== 'Unknown' ? time.split(':')[0] + ':00' : 'Unknown';

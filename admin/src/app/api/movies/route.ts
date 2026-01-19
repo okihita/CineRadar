@@ -17,6 +17,17 @@ interface Showtime {
     date: string;
 }
 
+interface TheatreData {
+    theatre_id: string;
+    theatre_name: string;
+    merchant: string;
+    rooms?: Array<{
+        category: string;
+        price: string;
+        all_showtimes?: Array<{ time: string; showtime_id: string; is_available: boolean }>;
+    }>;
+}
+
 function getMockData() {
     const today = new Date().toISOString().split('T')[0];
     const movies = [
@@ -84,7 +95,7 @@ export async function GET() {
         const showtimes: Showtime[] = [];
         for (const movie of movieData.movies || []) {
             for (const [city, theatres] of Object.entries(movie.schedules || {})) {
-                for (const theatre of theatres as any[]) {
+                for (const theatre of theatres as TheatreData[]) {
                     for (const room of theatre.rooms || []) {
                         for (const st of room.all_showtimes || []) {
                             showtimes.push({

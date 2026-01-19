@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/PageHeader';
 import {
     LayoutDashboard, TrendingUp, TrendingDown, AlertTriangle, CheckCircle,
-    XCircle, Film, Building2, MapPin, Lightbulb, ArrowRight, Clock
+    XCircle, Film, Building2, Lightbulb, ArrowRight, Clock
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
@@ -199,7 +199,7 @@ export default function ExecutiveDashboard() {
                     <CardHeader className="py-3">
                         <CardTitle className="text-sm flex items-center gap-2">
                             <Clock className="w-4 h-4 text-blue-500" />
-                            Today's Timeline
+                            Today&apos;s Timeline
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="pt-0">
@@ -231,7 +231,7 @@ export default function ExecutiveDashboard() {
                     <CardHeader className="py-3">
                         <CardTitle className="text-sm flex items-center gap-2">
                             <Film className="w-4 h-4 text-purple-500" />
-                            What's Hot Today
+                            What&apos;s Hot Today
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="pt-0">

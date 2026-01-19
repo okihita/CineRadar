@@ -81,7 +81,7 @@ export default function AudiencePage() {
                 } else {
                     setData(json);
                 }
-            } catch (err) {
+            } catch {
                 setError('Failed to load BI data');
             } finally {
                 setLoading(false);
@@ -299,8 +299,8 @@ export default function AudiencePage() {
                                         </TableCell>
                                         <TableCell>
                                             <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${theatre.chain === 'XXI' ? 'bg-amber-500/20 text-amber-600' :
-                                                    theatre.chain === 'CGV' ? 'bg-red-500/20 text-red-600' :
-                                                        'bg-blue-500/20 text-blue-600'
+                                                theatre.chain === 'CGV' ? 'bg-red-500/20 text-red-600' :
+                                                    'bg-blue-500/20 text-blue-600'
                                                 }`}>
                                                 {theatre.chain}
                                             </span>
@@ -336,7 +336,7 @@ export default function AudiencePage() {
                                         <div className="w-full h-4 bg-muted rounded-full overflow-hidden">
                                             <div
                                                 className={`h-full ${slot.avg_occupancy >= 60 ? 'bg-green-500' :
-                                                        slot.avg_occupancy >= 50 ? 'bg-amber-500' : 'bg-red-500'
+                                                    slot.avg_occupancy >= 50 ? 'bg-amber-500' : 'bg-red-500'
                                                     }`}
                                                 style={{ width: `${slot.avg_occupancy}%` }}
                                             />
@@ -347,7 +347,7 @@ export default function AudiencePage() {
                             ))}
                         </div>
                         <p className="text-xs text-muted-foreground mt-4">
-                            💡 <strong>Insight:</strong> Morning shows underperform. Consider "Early Bird" discounts.
+                            💡 <strong>Insight:</strong> Morning shows underperform. Consider &quot;Early Bird&quot; discounts.
                         </p>
                     </CardContent>
                 </Card>
@@ -375,8 +375,8 @@ export default function AudiencePage() {
                                     <TableRow key={chain.chain} className="text-sm">
                                         <TableCell>
                                             <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${chain.chain === 'XXI' ? 'bg-amber-500 text-white' :
-                                                    chain.chain === 'CGV' ? 'bg-red-600 text-white' :
-                                                        'bg-blue-600 text-white'
+                                                chain.chain === 'CGV' ? 'bg-red-600 text-white' :
+                                                    'bg-blue-600 text-white'
                                                 }`}>
                                                 {chain.chain}
                                             </span>

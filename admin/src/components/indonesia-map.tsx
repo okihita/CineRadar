@@ -166,6 +166,7 @@ function ClusteredMarkers({ theatres, selectedTheatre, onTheatreSelect }: {
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const newMarkers: any[] = [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const markerRecord: Record<string, any> = {};
 
         theatres.forEach(theatre => {

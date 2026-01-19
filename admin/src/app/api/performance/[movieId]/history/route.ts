@@ -1,11 +1,10 @@
-/**
- * Movie Performance History API
- * 
- * GET /api/performance/[movieId]/history
- *   → Get daily performance stats for a movie
- */
 import { NextResponse } from 'next/server';
 import { firestoreAdminClient } from '@/lib/firebase-admin';
+
+interface DayRecord {
+    date: string;
+    [key: string]: unknown;
+}
 
 export async function GET(
     request: Request,
@@ -19,11 +18,11 @@ export async function GET(
         // We order by 'date' descending
         const days = await firestoreAdminClient.getSubCollection(
             `movie_performance/${movieId}/days`
-        );
+        ) as DayRecord[];
 
         // Sort locally if API doesn't support generic subcollection query with sort
         // Assuming getSubCollection returns all docs
-        days.sort((a: any, b: any) => b.date.localeCompare(a.date));
+        days.sort((a, b) => b.date.localeCompare(a.date));
 
         return NextResponse.json({
             success: true,
