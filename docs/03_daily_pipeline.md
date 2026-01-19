@@ -204,38 +204,78 @@ Aggregate seat occupancy data into per-movie performance summaries for the Admin
 ### Workflow File
 [`.github/workflows/daily-morning-scrape.yml`](../.github/workflows/daily-morning-scrape.yml) (job: `movie-performance`)
 
-### How It Works
+### Complete Data Flow
 
-```mermaid
-flowchart LR
-    subgraph Seat Upload
-        S[seat_snapshots]
-    end
-    
-    S --> A[PerformanceAggregator]
-    A --> MP[(movie_performance)]
-    A --> ST[(showtimes subcollection)]
-    
-    MP --> AD[Admin Dashboard]
 ```
-
-### Data Flow
-
-1. **Reads**: All `ShowtimeSnapshot` data from the current scrape
-2. **Aggregates**: Calculates per-movie stats (avg occupancy, total seats, cities)
-3. **Writes**: 
-   - `movie_performance/{movie_id}` — Summary document
-   - `movie_performance/{movie_id}/showtimes/{showtime_id}` — Individual snapshots with seat layout
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              PERFORMANCE DATA FLOW                              │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  ┌─────────────┐     ┌──────────────────────┐     ┌─────────────────────────┐  │
+│  │  TIX.id API │ ──▶ │  SeatScraper         │ ──▶ │  PerformanceAggregator  │  │
+│  │  (seats)    │     │  seat_scraper.py     │     │  performance_aggregator │  │
+│  └─────────────┘     └──────────────────────┘     └───────────┬─────────────┘  │
+│                                                               │                 │
+│                                                               ▼                 │
+│                      ┌──────────────────────────────────────────────────────┐  │
+│                      │  FirestoreMoviePerformanceRepository                 │  │
+│                      │  firestore_movie_performance.py                      │  │
+│                      └───────────┬──────────────────────────────────────────┘  │
+│                                  │                                              │
+│                                  ▼                                              │
+│  ┌──────────────────────────────────────────────────────────────────────────┐  │
+│  │                         FIRESTORE SCHEMA                                 │  │
+│  │  movie_performance/{movie_id}              ← MovieMetadata (root doc)    │  │
+│  │  movie_performance/{movie_id}/days/{date}  ← DailyPerformance            │  │
+│  │  .../days/{date}/showtimes/{showtime_id}   ← ShowtimeSnapshot            │  │
+│  └───────────┬──────────────────────────────────────────────────────────────┘  │
+│              │                                                                  │
+│              ▼                                                                  │
+│  ┌──────────────────────────────────────────────────────────────────────────┐  │
+│  │                         NEXT.JS API ROUTES                               │  │
+│  │  GET /api/performance                    → list all movies               │  │
+│  │  GET /api/performance/[movieId]/history  → list daily stats              │  │
+│  │  GET /api/performance/[movieId]/days/[date] → get showtimes              │  │
+│  └───────────┬──────────────────────────────────────────────────────────────┘  │
+│              │                                                                  │
+│              ▼                                                                  │
+│  ┌──────────────────────────────────────────────────────────────────────────┐  │
+│  │  PerformanceTab.tsx (admin/src/features/movies/components)               │  │
+│  │  - Movie dropdown → GET /api/performance                                 │  │
+│  │  - Date badges → GET /api/performance/{id}/history                       │  │
+│  │  - KPIs + table → GET /api/performance/{id}/days/{date}                  │  │
+│  └──────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
 
 ### 🧑‍💻 Code References
 
-| Component | Source File | Purpose |
-|-----------|-------------|---------|
-| **Entry Point** | [`backend/cli/movie_performance.py`](../backend/cli/movie_performance.py) | CLI command for aggregation |
-| **Aggregator** | [`backend/application/services/performance_aggregator.py`](../backend/application/services/performance_aggregator.py) | Real-time aggregation logic |
-| **Repository** | [`backend/infrastructure/repositories/firestore_movie_performance.py`](../backend/infrastructure/repositories/firestore_movie_performance.py) | Firestore persistence |
+| Layer | File | Purpose |
+|-------|------|---------|
+| **Scraper** | [`backend/infrastructure/core/seat_scraper.py`](../backend/infrastructure/core/seat_scraper.py) | Fetches seat layouts from TIX.id B2B API |
+| **Service** | [`backend/application/services/performance_aggregator.py`](../backend/application/services/performance_aggregator.py) | Aggregates snapshots → daily stats |
+| **Repository** | [`backend/infrastructure/repositories/firestore_movie_performance.py`](../backend/infrastructure/repositories/firestore_movie_performance.py) | Firestore CRUD |
+| **Models** | [`backend/domain/models/movie_performance.py`](../backend/domain/models/movie_performance.py) | `ShowtimeSnapshot`, `DailyPerformance`, `MovieMetadata` |
+| **CLI** | [`backend/cli/movie_performance.py`](../backend/cli/movie_performance.py) | Manual trigger for scraping |
+| **API** | `admin/src/app/api/performance/**/route.ts` | 3 endpoints for frontend |
+| **UI** | [`admin/src/features/movies/components/PerformanceTab.tsx`](../admin/src/features/movies/components/PerformanceTab.tsx) | React component |
 
-### Output
+### Domain Models
+
+| Model | Firestore Path | Key Fields |
+|-------|----------------|------------|
+| `MovieMetadata` | `movie_performance/{movie_id}` | `title`, `poster`, `age_category`, `last_updated` |
+| `DailyPerformance` | `.../days/{YYYY-MM-DD}` | `total_showtimes`, `avg_occupancy_pct`, `total_seats`, `total_sold`, `cities` |
+| `ShowtimeSnapshot` | `.../showtimes/{id}` | `theatre_name`, `city`, `showtime`, `occupancy_pct`, `sold_seats`, `layout_json` |
+
+### UI Flow (PerformanceTab.tsx)
+
+1. **On mount** → `GET /api/performance` → populate movie dropdown
+2. **On movie select** → `GET /api/performance/{id}/history` → show date badges
+3. **On date select** → `GET /api/performance/{id}/days/{date}` → show KPIs + showtimes table
+
+### Sample Output
 
 Stored in `movie_performance/{movie_id}`:
 
@@ -243,6 +283,15 @@ Stored in `movie_performance/{movie_id}`:
 {
   "movie_id": "1961889705591132160",
   "title": "SIKSA NERAKA",
+  "poster": "https://...",
+  "last_updated": "2026-01-19T08:15:00Z"
+}
+```
+
+Stored in `movie_performance/{movie_id}/days/{date}`:
+
+```json
+{
   "date": "2026-01-19",
   "cities": ["BANDUNG", "JAKARTA", "SURABAYA"],
   "total_showtimes": 45,

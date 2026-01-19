@@ -42,7 +42,11 @@ class Token:
     @property
     def stored_datetime(self) -> datetime:
         """Parse stored_at as datetime."""
-        return datetime.fromisoformat(self.stored_at)
+        dt = datetime.fromisoformat(self.stored_at)
+        # Ensure timezone-aware (assume UTC if naive)
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=UTC)
+        return dt
 
     @property
     def expiry_datetime(self) -> datetime:

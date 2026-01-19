@@ -4,6 +4,16 @@ const nextConfig: NextConfig = {
   devIndicators: false,
   // Exclude native modules from serverless bundling - they don't work on Vercel
   serverExternalPackages: ['better-sqlite3', 'firebase-admin'],
+  // Allow movie poster images from TIX.id CDN
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'asset.tix.id',
+        pathname: '/**',
+      },
+    ],
+  },
 };
 
 export default nextConfig;

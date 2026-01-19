@@ -211,7 +211,8 @@ def extract_showtimes_from_data(
         movie_id = movie.get("movie_id")
         movie_title = movie.get("title", "")
 
-        schedules = movie.get("schedules", {})
+        # Handle schema difference: Firestore uses 'cities', local files use 'schedules'
+        schedules = movie.get("schedules") or movie.get("cities", {})
 
         for city_name, theatres in schedules.items():
             if city_filter and city_name.upper() != city_filter.upper():
