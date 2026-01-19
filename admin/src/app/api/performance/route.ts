@@ -21,6 +21,7 @@ interface MovieWithStats {
     today?: {
         date: string;
         total_showtimes: number;
+        total_showtimes_scraped: number;
         avg_occupancy_pct: number;
         total_seats: number;
         total_sold: number;
@@ -53,6 +54,7 @@ export async function GET() {
                         today: todayStats ? {
                             date: todayStats.date as string,
                             total_showtimes: (todayStats.total_showtimes as number) || 0,
+                            total_showtimes_scraped: (todayStats.total_showtimes_scraped as number) || 0,
                             avg_occupancy_pct: (todayStats.avg_occupancy_pct as number) || 0,
                             total_seats: (todayStats.total_seats as number) || 0,
                             total_sold: (todayStats.total_sold as number) || 0,

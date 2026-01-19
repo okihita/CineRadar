@@ -16,6 +16,7 @@ import Image from 'next/image';
 interface TodayStats {
     date: string;
     total_showtimes: number;
+    total_showtimes_scraped: number;
     avg_occupancy_pct: number;
     total_seats: number;
     total_sold: number;
@@ -383,42 +384,59 @@ export function PerformanceTab() {
                         {leaders.map((movie, idx) => (
                             <div
                                 key={movie.id}
-                                className="group relative cursor-pointer overflow-hidden rounded-md bg-muted aspect-[2/3] ring-1 ring-amber-500/20 hover:ring-2 hover:ring-amber-500 transition-all"
+                                className="group relative cursor-pointer"
                                 onClick={() => setSelectedMovie(movie)}
                             >
-                                {/* Rank Badge */}
-                                <div className="absolute top-0 left-0 bg-amber-500 text-white text-sm font-bold px-2.5 py-1 rounded-br shadow-sm z-10">
-                                    #{idx + 1}
+                                {/* Aspect Ratio Container */}
+                                <div className="aspect-[2/3] relative overflow-hidden rounded-md bg-muted ring-1 ring-amber-500/20 hover:ring-2 hover:ring-amber-500 transition-all mb-2">
+                                    {/* Rank Badge */}
+                                    <div className="absolute top-0 left-0 bg-amber-500 text-white text-sm font-bold px-2.5 py-1 rounded-br shadow-sm z-10">
+                                        #{idx + 1}
+                                    </div>
+
+                                    {/* Poster Image with Scale Effect */}
+                                    {movie.poster ? (
+                                        <Image
+                                            src={movie.poster}
+                                            alt={movie.title}
+                                            fill
+                                            className="object-cover transition-transform duration-500 group-hover:scale-110"
+                                            sizes="200px"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                                            <Target className="w-8 h-8" />
+                                        </div>
+                                    )}
                                 </div>
 
-                                {/* Poster Image with Scale Effect */}
-                                {movie.poster ? (
-                                    <Image
-                                        src={movie.poster}
-                                        alt={movie.title}
-                                        fill
-                                        className="object-cover transition-transform duration-500 group-hover:scale-110"
-                                        sizes="200px"
-                                    />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                                        <Target className="w-8 h-8" />
-                                    </div>
-                                )}
-
-                                {/* Hover Overlay Sheet */}
-                                <div className="absolute inset-x-0 bottom-0 bg-black/80 backdrop-blur-sm text-white p-3 translate-y-full transition-transform duration-300 group-hover:translate-y-0">
-                                    <h3 className="font-semibold text-sm leading-tight mb-2 line-clamp-2" title={movie.title}>
+                                {/* Title & Metrics (Below Image) */}
+                                <div>
+                                    <h3 className="font-semibold text-sm leading-tight mb-2 line-clamp-1 group-hover:text-amber-500 transition-colors" title={movie.title}>
                                         {movie.title}
                                     </h3>
-                                    <div className="grid grid-cols-2 gap-2 text-xs text-white/80">
-                                        <div>
-                                            <div className="text-[10px] uppercase tracking-wider text-white/50">Shows</div>
-                                            <div className="font-mono font-medium">{movie.today?.total_showtimes}</div>
+
+                                    <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
+                                        {/* Row 1: Scheduled vs Scraped */}
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] uppercase text-muted-foreground tracking-wider">Scheduled</span>
+                                            <span className="font-mono font-medium">{movie.today?.total_showtimes}</span>
                                         </div>
-                                        <div className="text-right">
-                                            <div className="text-[10px] uppercase tracking-wider text-white/50">Sold</div>
-                                            <div className="font-mono font-medium">{movie.today?.total_sold.toLocaleString()}</div>
+                                        <div className="flex flex-col text-right">
+                                            <span className="text-[10px] uppercase text-muted-foreground tracking-wider">Scraped</span>
+                                            <span className={cn("font-mono font-medium",
+                                                (movie.today?.total_showtimes_scraped || 0) < (movie.today?.total_showtimes || 0) ? "text-amber-600" : "text-green-600"
+                                            )}>
+                                                {movie.today?.total_showtimes_scraped}
+                                            </span>
+                                        </div>
+
+                                        {/* Row 2: Tickets Sold (Full Width) */}
+                                        <div className="col-span-2 flex flex-col pt-1 border-t border-border/50 mt-1">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-[10px] uppercase text-muted-foreground tracking-wider">Tickets Sold</span>
+                                                <span className="font-mono font-bold">{movie.today?.total_sold.toLocaleString()}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

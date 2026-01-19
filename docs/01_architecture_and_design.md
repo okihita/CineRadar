@@ -176,13 +176,9 @@ Tokens are stored at `auth_tokens/tix_jwt`:
 
 ```mermaid
 erDiagram
-    MOVIE ||--o{ THEATRE_SCHEDULE : "shows in"
-    THEATRE_SCHEDULE ||--o{ ROOM : contains
-    ROOM ||--o{ SHOWTIME : has
-    THEATRE ||--o{ THEATRE_SCHEDULE : hosts
-    SHOWTIME ||--o| SEAT_OCCUPANCY : "has seats"
-    MOVIE ||--o| MOVIE_PERFORMANCE : "aggregated in"
-    MOVIE_PERFORMANCE ||--o{ SHOWTIME_SNAPSHOT : "contains"
+    MOVIE ||--o| MOVIE_PERFORMANCE : "associated with"
+    MOVIE_PERFORMANCE ||--o{ DAILY_PERFORMANCE : "sharded by date"
+    DAILY_PERFORMANCE ||--o{ SHOWTIME_SNAPSHOT : "contains"
     
     MOVIE {
         string id PK
@@ -219,7 +215,15 @@ erDiagram
     MOVIE_PERFORMANCE {
         string movie_id PK
         string title
+        string poster
+        string age_category
+        string last_updated
+    }
+
+    DAILY_PERFORMANCE {
+        string date PK
         int total_showtimes
+        int total_showtimes_scraped
         float avg_occupancy_pct
         int total_seats
         int total_sold
@@ -245,8 +249,9 @@ erDiagram
 | `seat_snapshots` | `{showtime_id}_{type}_{time}` | Seat occupancy data |
 | `movies` | `{movie_id}` | **[NEW]** Detailed movie info (cast, synopsis, ratings) |
 | `movies/{movie_id}/rating_history` | `{YYYY-MM-DD}` | **[NEW]** Daily rating score snapshots |
-| `movie_performance` | `{movie_id}` | Per-movie aggregated stats |
-| `movie_performance/{movie_id}/showtimes` | `{showtime_id}` | Individual showtime snapshots with compressed seat layout (gzip) |
+| `movie_performance` | `{movie_id}` | Movie metadata (title, poster, age_category) |
+| `movie_performance/{movie_id}/days` | `{YYYY-MM-DD}` | Daily aggregated stats (Total Showtimes, Scraped, Sold) |
+| `movie_performance/{movie_id}/days/{date}/showtimes` | `{showtime_id}` | Individual showtime snapshots with compressed seat layout (gzip) |
 | `scraper_runs` | `{timestamp}_{type}` | Scraper run logs |
 | `auth_tokens` | `tix_jwt` | JWT token storage |
 

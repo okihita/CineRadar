@@ -117,6 +117,7 @@ class PerformanceAggregator:
         return DailyPerformance(
             date=date,
             total_showtimes=len(showtimes),
+            total_showtimes_scraped=sum(1 for st in showtimes if st.total_seats > 0),
             avg_occupancy_pct=round(avg_occupancy, 1),
             total_seats=total_seats,
             total_sold=total_sold,

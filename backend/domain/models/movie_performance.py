@@ -169,6 +169,7 @@ class DailyPerformance:
 
     date: str
     total_showtimes: int = 0
+    total_showtimes_scraped: int = 0
     total_seats: int = 0
     total_sold: int = 0
     avg_occupancy_pct: float = 0.0
@@ -179,6 +180,7 @@ class DailyPerformance:
         return {
             "date": self.date,
             "total_showtimes": self.total_showtimes,
+            "total_showtimes_scraped": self.total_showtimes_scraped,
             "total_seats": self.total_seats,
             "total_sold": self.total_sold,
             "avg_occupancy_pct": self.avg_occupancy_pct,
@@ -191,6 +193,7 @@ class DailyPerformance:
         return cls(
             date=data.get("date", ""),
             total_showtimes=data.get("total_showtimes", 0),
+            total_showtimes_scraped=data.get("total_showtimes_scraped", 0),
             total_seats=data.get("total_seats", 0),
             total_sold=data.get("total_sold", 0),
             avg_occupancy_pct=data.get("avg_occupancy_pct", 0.0),
