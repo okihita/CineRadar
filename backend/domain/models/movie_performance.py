@@ -5,6 +5,7 @@ Represents aggregated movie performance data and individual showtime snapshots.
 Used for tracking occupancy across all cities/theatres for a specific movie.
 """
 
+import gzip
 import json
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -57,9 +58,13 @@ class ShowtimeSnapshot:
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for Firestore storage.
 
-        Note: layout is serialized to JSON string to avoid Firestore's
-        nested array limitation.
+        Note: layout is gzip-compressed to reduce storage by ~70%.
+        Uses 'layout_compressed' field (bytes) instead of 'layout_json' (string).
         """
+        # Compress layout to bytes (reduces ~10.8KB to ~3.2KB)
+        layout_json_str = json.dumps(self.layout)
+        layout_compressed = gzip.compress(layout_json_str.encode("utf-8"))
+
         return {
             "showtime_id": self.showtime_id,
             "movie_id": self.movie_id,
@@ -74,18 +79,31 @@ class ShowtimeSnapshot:
             "total_seats": self.total_seats,
             "sold_seats": self.sold_seats,
             "occupancy_pct": self.occupancy_pct,
-            "layout_json": json.dumps(self.layout),  # Serialize to avoid nested arrays
+            "layout_compressed": layout_compressed,  # gzip bytes (~3.2KB)
             "scraped_at": self.scraped_at,
         }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ShowtimeSnapshot":
-        """Create from Firestore document."""
-        # Deserialize layout from JSON string
+        """Create from Firestore document.
+
+        Supports both new compressed format and legacy layout_json.
+        """
+        # Try compressed format first (new), fall back to legacy JSON string
+        layout_compressed = data.get("layout_compressed")
         layout_json = data.get("layout_json", "[]")
+
         try:
-            layout = json.loads(layout_json) if isinstance(layout_json, str) else []
-        except json.JSONDecodeError:
+            if layout_compressed:
+                # Decompress gzip bytes
+                layout_json_str = gzip.decompress(layout_compressed).decode("utf-8")
+                layout = json.loads(layout_json_str)
+            elif isinstance(layout_json, str):
+                # Legacy format: JSON string
+                layout = json.loads(layout_json)
+            else:
+                layout = []
+        except (json.JSONDecodeError, gzip.BadGzipFile, OSError):
             layout = []
 
         return cls(
