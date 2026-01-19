@@ -12,10 +12,11 @@ import { firestoreAdminClient } from '@/lib/firebase-admin';
 
 export async function GET() {
     try {
-        // Get all movie performance summaries using REST API
+        // Get all movie metadata (Root Collection)
+        // Note: avg_occupancy_pct is no longer in root, so we sort by last_updated
         const movies = await firestoreAdminClient.getCollectionWithQuery(
             'movie_performance',
-            'avg_occupancy_pct',
+            'last_updated',
             100
         );
 

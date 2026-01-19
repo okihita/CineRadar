@@ -29,12 +29,12 @@ uv run python -m backend.cli.refresh_token --check
 
 ## 🗺️ Visual Call Graphs
 
-### 1. Daily Scrape Pipeline (`daily-scrape.yml`)
+### 1. Daily Scrape Pipeline (`daily-morning-scrape.yml`)
 This workflow runs parallel batches to scrape movies and seats.
 
 ```mermaid
 flowchart TD
-    GH[GitHub Actions: daily-scrape.yml] -->|Matrix Batch 0-8| CLI[cli.jit_granular_scraper]
+    GH[GitHub Actions: daily-morning-scrape.yml] -->|Matrix Batch 0-8| CLI[cli.jit_granular_scraper]
     
     subgraph "Worker Node"
         CLI -->|Checks Token| TR[token_refresher.TokenRefresher]
@@ -82,15 +82,15 @@ The **Entry Points**. These files are the "main" scripts called by GitHub Action
 
 | File | Associated Workflow | Responsibility |
 |------|---------------------|----------------|
-| **`cli.py`** | `daily-scrape.yml` | **Main CLI.** Entry point for `movies` and `seats` subcommands. |
-| **`movie_performance.py`** | `daily-scrape.yml` | **[NEW] Performance Aggregator.** Aggregates seat data into per-movie summaries. |
+| **`cli.py`** | `daily-morning-scrape.yml` | **Main CLI.** Entry point for `movies` and `seats` subcommands. |
+| **`movie_performance.py`** | `daily-morning-scrape.yml` | **[NEW] Performance Aggregator.** Aggregates seat data into per-movie summaries. |
 | **`refresh_token.py`** | `token-refresh.yml` | **The Login Bot.** Launches a headless browser to perform a real login flow and capture the JWT from localStorage. |
 | **`daily_summary.py`** | `daily-summary.yml` | **The Reporter.** Aggregates Firestore data at midnight to calculate total audience stats. |
 | **`monthly_geocode.py`** | `monthly-geocode.yml` | **The Mapper.** Queries Google Maps API to fix missing coordinates for new theatres. |
-| `merge_batches.py` | `daily-scrape.yml` | Merges the 9 parallel request artifacts into one single valid JSON file. |
-| `populate_firestore.py` | `daily-scrape.yml` | Reads the merged movie JSON and upserts it to Firestore (`snapshots` collection). |
-| `upload_seats.py` | `daily-scrape.yml` | Reads the merged seat JSON and upserts to Firestore (`seat_snapshots` collection). |
-| `validate.py` | `daily-scrape.yml` | Runs sanity checks on the scraped data (e.g. "Are there 0 movies?") before we upload. |
+| `merge_batches.py` | `daily-morning-scrape.yml` | Merges the 9 parallel request artifacts into one single valid JSON file. |
+| `populate_firestore.py` | `daily-morning-scrape.yml` | Reads the merged movie JSON and upserts it to Firestore (`snapshots` collection). |
+| `upload_seats.py` | `daily-morning-scrape.yml` | Reads the merged seat JSON and upserts to Firestore (`seat_snapshots` collection). |
+| `validate.py` | `daily-morning-scrape.yml` | Runs sanity checks on the scraped data (e.g. "Are there 0 movies?") before we upload. |
 
 ### 2. `backend/infrastructure/` (The "How")
 The technical implementations. This is where the dirty work happens.

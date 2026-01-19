@@ -1,30 +1,34 @@
 /**
  * Performance Tab Component
  * 
- * Shows movie performance data:
- * - Movie selector dropdown
- * - Scrape progress bar
- * - Occupancy summary KPIs
- * - Showtimes breakdown table
+ * Shows movie performance data with historical drill-down:
+ * 1. Select Movie (Root)
+ * 2. Select Date (History)
+ * 3. View Stats & Showtimes (Daily Details)
  */
 'use client';
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Target, Users, Armchair, MapPin, Clock, Loader2 } from 'lucide-react';
+import { Target, Users, Armchair, MapPin, Clock, Loader2, Calendar } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
-interface MovieSummary {
+interface MovieMetadata {
     id: string;
     movie_id: string;
     title: string;
     poster: string;
+    last_updated: string;
+}
+
+interface DailyPerformance {
     date: string;
-    cities: string[];
     total_showtimes: number;
     avg_occupancy_pct: number;
     total_seats: number;
     total_sold: number;
-    last_updated: string;
+    cities: string[];
 }
 
 interface ShowtimeSnapshot {
@@ -42,15 +46,18 @@ interface ShowtimeSnapshot {
 }
 
 export function PerformanceTab() {
-    const [movies, setMovies] = useState<MovieSummary[]>([]);
+    const [movies, setMovies] = useState<MovieMetadata[]>([]);
     const [selectedMovieId, setSelectedMovieId] = useState<string | null>(null);
-    const [selectedMovie, setSelectedMovie] = useState<MovieSummary | null>(null);
+    const [history, setHistory] = useState<DailyPerformance[]>([]);
+    const [selectedDate, setSelectedDate] = useState<string | null>(null);
     const [showtimes, setShowtimes] = useState<ShowtimeSnapshot[]>([]);
-    const [loading, setLoading] = useState(true);
+
+    const [loadingMovies, setLoadingMovies] = useState(true);
+    const [loadingHistory, setLoadingHistory] = useState(false);
     const [loadingDetails, setLoadingDetails] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Fetch movies list
+    // 1. Fetch Movies List
     useEffect(() => {
         async function fetchMovies() {
             try {
@@ -67,23 +74,54 @@ export function PerformanceTab() {
             } catch (e) {
                 setError(String(e));
             } finally {
-                setLoading(false);
+                setLoadingMovies(false);
             }
         }
         fetchMovies();
     }, []);
 
-    // Fetch selected movie details
+    // 2. Fetch History when Movie changes
     useEffect(() => {
         if (!selectedMovieId) return;
 
-        async function fetchDetails() {
-            setLoadingDetails(true);
+        async function fetchHistory() {
+            setLoadingHistory(true);
             try {
-                const res = await fetch(`/api/performance/${selectedMovieId}`);
+                const res = await fetch(`/api/performance/${selectedMovieId}/history`);
                 const data = await res.json();
                 if (data.success) {
-                    setSelectedMovie(data.summary);
+                    setHistory(data.history);
+                    if (data.history.length > 0) {
+                        // Auto-select most recent date
+                        setSelectedDate(data.history[0].date);
+                    } else {
+                        setSelectedDate(null);
+                        setHistory([]);
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoadingHistory(false);
+            }
+        }
+        fetchHistory();
+    }, [selectedMovieId]);
+
+    // 3. Fetch Showtimes when Date changes
+    useEffect(() => {
+        if (!selectedMovieId || !selectedDate) {
+            setShowtimes([]);
+            return;
+        }
+
+        async function fetchShowtimes() {
+            setLoadingDetails(true);
+            try {
+                // Encode date if needed, though YYYY-MM-DD is safe
+                const res = await fetch(`/api/performance/${selectedMovieId}/days/${selectedDate}`);
+                const data = await res.json();
+                if (data.success) {
                     setShowtimes(data.showtimes);
                 }
             } catch (e) {
@@ -92,25 +130,21 @@ export function PerformanceTab() {
                 setLoadingDetails(false);
             }
         }
-        fetchDetails();
-    }, [selectedMovieId]);
+        fetchShowtimes();
+    }, [selectedMovieId, selectedDate]);
 
-    if (loading) {
+    // Derived state
+    const selectedStats = history.find(d => d.date === selectedDate);
+    const scrapedPct = selectedStats
+        ? Math.min(100, Math.round((selectedStats.total_showtimes / 50) * 100))
+        : 0; // Simple heuristic
+
+    if (loadingMovies) {
         return (
             <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                <span className="ml-2 text-muted-foreground">Loading performance data...</span>
+                <span className="ml-2 text-muted-foreground">Loading movies...</span>
             </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <Card className="border-destructive">
-                <CardContent className="pt-4">
-                    <p className="text-destructive">{error}</p>
-                </CardContent>
-            </Card>
         );
     }
 
@@ -119,71 +153,78 @@ export function PerformanceTab() {
             <Card>
                 <CardContent className="pt-6 text-center">
                     <Target className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">No performance data available yet.</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                        Run the movie performance scraper to collect data.
-                    </p>
+                    <p className="text-muted-foreground">No movies initialized yet.</p>
                 </CardContent>
             </Card>
         );
     }
 
-    const scrapedPct = selectedMovie
-        ? Math.min(100, Math.round((selectedMovie.total_showtimes / 50) * 100))
-        : 0;
-
     return (
         <div className="space-y-6">
-            {/* Movie Selector */}
-            <Card>
-                <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center gap-2">
-                        <Target className="w-4 h-4" />
-                        Select Movie
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <select
-                        value={selectedMovieId || ''}
-                        onChange={(e) => setSelectedMovieId(e.target.value)}
-                        className="w-full p-2 rounded-md border bg-background text-foreground"
-                    >
-                        {movies.map((movie) => (
-                            <option key={movie.id} value={movie.id}>
-                                {movie.title} ({movie.total_showtimes} showtimes, {movie.avg_occupancy_pct}% avg)
-                            </option>
-                        ))}
-                    </select>
-                </CardContent>
-            </Card>
+            <div className="flex flex-col md:flex-row gap-4">
+                {/* Movie Selector */}
+                <Card className="flex-1">
+                    <CardHeader className="pb-3 px-4 pt-4">
+                        <CardTitle className="text-sm flex items-center gap-2 text-muted-foreground">
+                            <Target className="w-4 h-4" />
+                            Select Movie
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="px-4 pb-4">
+                        <select
+                            value={selectedMovieId || ''}
+                            onChange={(e) => setSelectedMovieId(e.target.value)}
+                            className="w-full p-2 rounded-md border bg-background text-foreground text-sm"
+                        >
+                            {movies.map((movie) => (
+                                <option key={movie.id} value={movie.id}>
+                                    {movie.title}
+                                </option>
+                            ))}
+                        </select>
+                    </CardContent>
+                </Card>
+
+                {/* Date Selector */}
+                <Card className="flex-1">
+                    <CardHeader className="pb-3 px-4 pt-4">
+                        <CardTitle className="text-sm flex items-center gap-2 text-muted-foreground">
+                            <Calendar className="w-4 h-4" />
+                            Select Date
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="px-4 pb-4">
+                        {loadingHistory ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : history.length === 0 ? (
+                            <span className="text-sm text-muted-foreground">No history available</span>
+                        ) : (
+                            <div className="flex gap-2 overflow-x-auto pb-1">
+                                {history.map((day) => (
+                                    <Badge
+                                        key={day.date}
+                                        variant={selectedDate === day.date ? "default" : "outline"}
+                                        className={cn(
+                                            "cursor-pointer hover:bg-primary/90 whitespace-nowrap",
+                                            selectedDate === day.date ? "" : "hover:text-primary-foreground"
+                                        )}
+                                        onClick={() => setSelectedDate(day.date)}
+                                    >
+                                        {day.date}
+                                    </Badge>
+                                ))}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
 
             {loadingDetails ? (
                 <div className="flex items-center justify-center py-8">
                     <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                 </div>
-            ) : selectedMovie && (
+            ) : selectedStats ? (
                 <>
-                    {/* Scrape Progress */}
-                    <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-base">Today&apos;s Scrape Progress</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-2">
-                                <div className="flex justify-between text-sm">
-                                    <span>Scraped: {selectedMovie.total_showtimes} showtimes</span>
-                                    <span>{scrapedPct}%</span>
-                                </div>
-                                <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-primary transition-all"
-                                        style={{ width: `${scrapedPct}%` }}
-                                    />
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
                     {/* KPI Cards */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <Card>
@@ -193,7 +234,7 @@ export function PerformanceTab() {
                                     AVG OCCUPANCY
                                 </div>
                                 <p className="text-2xl font-bold">
-                                    {selectedMovie.avg_occupancy_pct.toFixed(1)}%
+                                    {selectedStats.avg_occupancy_pct.toFixed(1)}%
                                 </p>
                             </CardContent>
                         </Card>
@@ -205,7 +246,7 @@ export function PerformanceTab() {
                                     TOTAL SEATS
                                 </div>
                                 <p className="text-2xl font-bold">
-                                    {selectedMovie.total_seats.toLocaleString()}
+                                    {selectedStats.total_seats.toLocaleString()}
                                 </p>
                             </CardContent>
                         </Card>
@@ -217,7 +258,7 @@ export function PerformanceTab() {
                                     SEATS SOLD
                                 </div>
                                 <p className="text-2xl font-bold">
-                                    {selectedMovie.total_sold.toLocaleString()}
+                                    {selectedStats.total_sold.toLocaleString()}
                                 </p>
                             </CardContent>
                         </Card>
@@ -229,7 +270,7 @@ export function PerformanceTab() {
                                     CITIES
                                 </div>
                                 <p className="text-2xl font-bold">
-                                    {selectedMovie.cities?.length || 0}
+                                    {selectedStats.cities?.length || 0}
                                 </p>
                             </CardContent>
                         </Card>
@@ -238,12 +279,17 @@ export function PerformanceTab() {
                     {/* Showtimes Table */}
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-base">Showtimes Breakdown</CardTitle>
+                            <CardTitle className="text-base flex justify-between">
+                                <span>Showtimes Breakdown</span>
+                                <span className="text-sm font-normal text-muted-foreground">
+                                    {showtimes.length} showtimes found
+                                </span>
+                            </CardTitle>
                         </CardHeader>
                         <CardContent>
                             {showtimes.length === 0 ? (
                                 <p className="text-muted-foreground text-sm py-4 text-center">
-                                    No showtime data available
+                                    No showtime data available for this date
                                 </p>
                             ) : (
                                 <div className="overflow-x-auto">
@@ -262,7 +308,7 @@ export function PerformanceTab() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {showtimes.slice(0, 20).map((st) => (
+                                            {showtimes.slice(0, 50).map((st) => (
                                                 <tr key={st.id} className="border-b border-border/50 hover:bg-muted/30">
                                                     <td className="py-2 px-2 font-mono">{st.showtime}</td>
                                                     <td className="py-2 px-2">{st.theatre_name}</td>
@@ -286,9 +332,9 @@ export function PerformanceTab() {
                                             ))}
                                         </tbody>
                                     </table>
-                                    {showtimes.length > 20 && (
+                                    {showtimes.length > 50 && (
                                         <p className="text-center text-muted-foreground text-xs py-2">
-                                            Showing 20 of {showtimes.length} showtimes
+                                            Showing 50 of {showtimes.length} showtimes
                                         </p>
                                     )}
                                 </div>
@@ -296,6 +342,12 @@ export function PerformanceTab() {
                         </CardContent>
                     </Card>
                 </>
+            ) : (
+                <Card>
+                    <CardContent className="py-8 text-center text-muted-foreground">
+                        Select a movie and date to view performance details.
+                    </CardContent>
+                </Card>
             )}
         </div>
     );

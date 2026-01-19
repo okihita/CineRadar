@@ -8,7 +8,7 @@ Runs in real-time after each showtime is scraped.
 import logging
 from datetime import UTC, datetime
 
-from backend.domain.models import MoviePerformance, ShowtimeSnapshot
+from backend.domain.models import MovieMetadata, DailyPerformance, ShowtimeSnapshot
 from backend.infrastructure.repositories import FirestoreMoviePerformanceRepository
 
 logger = logging.getLogger(__name__)
@@ -18,15 +18,6 @@ class PerformanceAggregator:
     """Real-time aggregator for movie performance data.
 
     Updates movie summary whenever a new showtime snapshot is saved.
-
-    Example:
-        repo = FirestoreMoviePerformanceRepository()
-        aggregator = PerformanceAggregator(repo)
-
-        # After scraping a showtime
-        snapshot = ShowtimeSnapshot(...)
-        aggregator.on_showtime_scraped(snapshot)
-        # → Saves snapshot + recalculates movie summary
     """
 
     def __init__(self, repo: FirestoreMoviePerformanceRepository):
@@ -42,7 +33,7 @@ class PerformanceAggregator:
         snapshot: ShowtimeSnapshot,
         movie_title: str | None = None,
         movie_poster: str | None = None,
-    ) -> MoviePerformance:
+    ) -> DailyPerformance:
         """Handle a newly scraped showtime.
 
         Saves the snapshot, then recalculates and updates the movie summary.
@@ -53,9 +44,10 @@ class PerformanceAggregator:
             movie_poster: Movie poster URL (optional)
 
         Returns:
-            Updated MoviePerformance summary
+            Updated DailyPerformance summary
         """
         movie_id = snapshot.movie_id
+        date = snapshot.date
 
         # 1. Save the showtime snapshot
         logger.info(
@@ -64,52 +56,51 @@ class PerformanceAggregator:
         )
         self.repo.save_showtime(snapshot)
 
-        # 2. Get all showtimes for this movie
-        all_showtimes = self.repo.get_all_showtimes(movie_id)
+        # 2. Get all showtimes for this movie ON THIS DATE
+        daily_showtimes = self.repo.get_daily_showtimes(movie_id, date)
 
-        # 3. Aggregate into summary
-        summary = self._aggregate(
-            movie_id=movie_id,
-            showtimes=all_showtimes,
-            movie_title=movie_title or snapshot.movie_title,
-            movie_poster=movie_poster or "",
+        # 3. Aggregate into DailyPerformance
+        daily_summary = self._aggregate_daily(
+            date=date,
+            showtimes=daily_showtimes,
         )
 
-        # 4. Update summary in Firestore
+        # 4. Update Daily Stats in Firestore
         logger.info(
-            f"Updated summary for {movie_id}: {summary.total_showtimes} showtimes, "
-            f"{summary.avg_occupancy_pct}% avg occupancy"
+            f"Updated daily stats for {movie_id} on {date}: {daily_summary.total_showtimes} showtimes, "
+            f"{daily_summary.avg_occupancy_pct}% avg occupancy"
         )
-        self.repo.update_summary(summary)
+        self.repo.update_daily_stats(daily_summary, movie_id)
 
-        return summary
+        # 5. Update Metadata (in case title/poster changed or just last_updated)
+        # We only update this if we have title/poster info, valid metadata
+        if movie_title or movie_poster: 
+            metadata = MovieMetadata(
+                movie_id=movie_id,
+                title=movie_title or snapshot.movie_title,
+                poster=movie_poster or "",
+                last_updated=datetime.now(UTC).isoformat()
+            )
+            self.repo.update_metadata(metadata)
 
-    def _aggregate(
+        return daily_summary
+
+    def _aggregate_daily(
         self,
-        movie_id: str,
+        date: str,
         showtimes: list[ShowtimeSnapshot],
-        movie_title: str,
-        movie_poster: str,
-    ) -> MoviePerformance:
-        """Aggregate showtime snapshots into movie summary.
+    ) -> DailyPerformance:
+        """Aggregate showtime snapshots into daily summary.
 
         Args:
-            movie_id: Movie identifier
-            showtimes: List of all showtime snapshots for this movie
-            movie_title: Movie title
-            movie_poster: Poster URL
+            date: Date string
+            showtimes: List of showtime snapshots for this date
 
         Returns:
-            MoviePerformance summary
+            DailyPerformance summary
         """
         if not showtimes:
-            # No data yet, return empty summary
-            return MoviePerformance(
-                movie_id=movie_id,
-                title=movie_title,
-                poster=movie_poster,
-                date=datetime.now().strftime("%Y-%m-%d"),
-            )
+            return DailyPerformance(date=date)
 
         # Extract unique cities
         cities = sorted({st.city for st in showtimes if st.city})
@@ -123,53 +114,22 @@ class PerformanceAggregator:
             sum(st.occupancy_pct for st in showtimes) / len(showtimes) if showtimes else 0.0
         )
 
-        # Use date from first showtime
-        date = showtimes[0].date if showtimes else datetime.now().strftime("%Y-%m-%d")
-
-        return MoviePerformance(
-            movie_id=movie_id,
-            title=movie_title,
-            poster=movie_poster,
+        return DailyPerformance(
             date=date,
-            cities=cities,
             total_showtimes=len(showtimes),
             avg_occupancy_pct=round(avg_occupancy, 1),
             total_seats=total_seats,
             total_sold=total_sold,
+            cities=cities,
             last_updated=datetime.now(UTC).isoformat(),
         )
 
-    def recalculate_all(self, movie_ids: list[str] | None = None) -> list[MoviePerformance]:
+    def recalculate_all(self, movie_ids: list[str] | None = None) -> None:
         """Recalculate summaries for all or specific movies.
-
-        Useful for backfilling or fixing data.
-
-        Args:
-            movie_ids: List of movie IDs to recalculate, or None for all
-
-        Returns:
-            List of updated MoviePerformance summaries
+        
+        Note: Recalculating across ALL dates is expensive and complex with this schema.
+        For now, this might just log a warning or be removed, as 'get_all_showtimes' is gone.
+        
+        To implement correctly, we'd need to list all 'days' subcollections for each movie.
         """
-        if movie_ids is None:
-            # Get all movies
-            summaries = self.repo.list_movies(limit=1000)
-            movie_ids = [s.movie_id for s in summaries]
-
-        results = []
-        for movie_id in movie_ids:
-            # Get existing summary for title/poster
-            existing = self.repo.get_summary(movie_id)
-            title = existing.title if existing else "Unknown"
-            poster = existing.poster if existing else ""
-
-            # Get all showtimes
-            showtimes = self.repo.get_all_showtimes(movie_id)
-
-            # Recalculate
-            summary = self._aggregate(movie_id, showtimes, title, poster)
-            self.repo.update_summary(summary)
-            results.append(summary)
-
-            logger.info(f"Recalculated {movie_id}: {summary.total_showtimes} showtimes")
-
-        return results
+        logger.warning("recalculate_all is not fully implemented for date-sharded schema yet.")

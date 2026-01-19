@@ -1,5 +1,5 @@
-# Daily Movie Scraper - Parallel Edition
-name: Daily Scrape
+# Daily Morning Scraper - Parallel Edition
+name: Daily Morning Scrape
 
 on:
   schedule:
@@ -77,6 +77,11 @@ jobs:
 
       - name: Upload per-movie schedules
         run: uv run python -m backend.cli.upload_schedules
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Initialize Performance Data
+        run: uv run python -m backend.cli.movie_performance --init-only
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 

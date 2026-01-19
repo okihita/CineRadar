@@ -100,7 +100,7 @@ sequenceDiagram
 Scrape all movies, showtimes, and theatre information for the day.
 
 ### Workflow File
-[`.github/workflows/daily-scrape.yml`](../.github/workflows/daily-scrape.yml) (jobs: `scrape`, `merge`)
+[`.github/workflows/daily-morning-scrape.yml`](../.github/workflows/daily-morning-scrape.yml) (jobs: `scrape`, `merge`)
 
 ### How It Works
 
@@ -152,7 +152,7 @@ flowchart LR
 Scrape seat availability for ALL showtimes collected in Phase 2.
 
 ### Workflow File
-[`.github/workflows/daily-scrape.yml`](../.github/workflows/daily-scrape.yml) (jobs: `token-refresh-pre-seat`, `seat-morning-scrape`, `seat-merge-upload`)
+[`.github/workflows/daily-morning-scrape.yml`](../.github/workflows/daily-morning-scrape.yml) (jobs: `token-refresh-pre-seat`, `seat-morning-scrape`, `seat-merge-upload`)
 
 ### How It Works
 
@@ -202,7 +202,7 @@ sequenceDiagram
 Aggregate seat occupancy data into per-movie performance summaries for the Admin Dashboard.
 
 ### Workflow File
-[`.github/workflows/daily-scrape.yml`](../.github/workflows/daily-scrape.yml) (job: `movie-performance`)
+[`.github/workflows/daily-morning-scrape.yml`](../.github/workflows/daily-morning-scrape.yml) (job: `movie-performance`)
 
 ### How It Works
 

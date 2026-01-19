@@ -11,7 +11,7 @@ import os
 import tempfile
 from typing import Any
 
-from backend.domain.models import MoviePerformance, ShowtimeSnapshot
+from backend.domain.models import MovieMetadata, DailyPerformance, ShowtimeSnapshot
 
 logger = logging.getLogger(__name__)
 
@@ -42,22 +42,13 @@ class FirestoreMoviePerformanceRepository:
     """Firestore repository for movie performance data.
 
     Schema:
-        movie_performance/{movie_id}           <- MoviePerformance summary doc
-        movie_performance/{movie_id}/showtimes/{showtime_id}  <- ShowtimeSnapshot
-
-    Example:
-        repo = FirestoreMoviePerformanceRepository()
-
-        # Save a showtime snapshot
-        snapshot = ShowtimeSnapshot(...)
-        repo.save_showtime(snapshot)
-
-        # Get movie summary
-        perf = repo.get_summary("1961889705591132160")
-        print(f"{perf.title}: {perf.avg_occupancy_pct}%")
+        movie_performance/{movie_id}                                <- MovieMetadata
+        movie_performance/{movie_id}/days/{date}                    <- DailyPerformance
+        movie_performance/{movie_id}/days/{date}/showtimes/{id}     <- ShowtimeSnapshot
     """
 
     COLLECTION = "movie_performance"
+    DAYS_SUBCOLLECTION = "days"
     SHOWTIMES_SUBCOLLECTION = "showtimes"
 
     def __init__(self) -> None:
@@ -74,57 +65,53 @@ class FirestoreMoviePerformanceRepository:
     def save_showtime(self, snapshot: ShowtimeSnapshot) -> bool:
         """Save a showtime snapshot.
 
-        Stores in: movie_performance/{movie_id}/showtimes/{showtime_id}
-
-        Args:
-            snapshot: ShowtimeSnapshot with all occupancy data including layout
-
-        Returns:
-            True if saved successfully
+        Stores in: movie_performance/{movie_id}/days/{date}/showtimes/{showtime_id}
         """
         try:
             doc_ref = (
                 self.db.collection(self.COLLECTION)
                 .document(snapshot.movie_id)
+                .collection(self.DAYS_SUBCOLLECTION)
+                .document(snapshot.date)
                 .collection(self.SHOWTIMES_SUBCOLLECTION)
                 .document(snapshot.showtime_id)
             )
             doc_ref.set(snapshot.to_dict())
-            logger.debug(f"Saved showtime {snapshot.showtime_id} for movie {snapshot.movie_id}")
+            logger.debug(f"Saved showtime {snapshot.showtime_id} for movie {snapshot.movie_id} on {snapshot.date}")
             return True
         except Exception as e:
             logger.error(f"Failed to save showtime: {e}")
             return False
 
-    def update_summary(self, perf: MoviePerformance) -> bool:
-        """Update a movie's performance summary.
-
-        Stores in: movie_performance/{movie_id}
-
-        Args:
-            perf: MoviePerformance aggregated data
-
-        Returns:
-            True if saved successfully
-        """
+    def update_metadata(self, metadata: MovieMetadata) -> bool:
+        """Update a movie's static metadata (Root Collection)."""
         try:
-            doc_ref = self.db.collection(self.COLLECTION).document(perf.movie_id)
-            doc_ref.set(perf.to_dict())
-            logger.debug(f"Updated summary for movie {perf.movie_id}: {perf.avg_occupancy_pct}%")
+            doc_ref = self.db.collection(self.COLLECTION).document(metadata.movie_id)
+            doc_ref.set(metadata.to_dict(), merge=True)
+            logger.debug(f"Updated metadata for movie {metadata.movie_id}")
             return True
         except Exception as e:
-            logger.error(f"Failed to update summary: {e}")
+            logger.error(f"Failed to update metadata: {e}")
             return False
 
-    def get_summary(self, movie_id: str) -> MoviePerformance | None:
-        """Get a movie's performance summary.
+    def update_daily_stats(self, daily: DailyPerformance, movie_id: str) -> bool:
+        """Update a movie's daily performance stats (Days Subcollection)."""
+        try:
+            doc_ref = (
+                self.db.collection(self.COLLECTION)
+                .document(movie_id)
+                .collection(self.DAYS_SUBCOLLECTION)
+                .document(daily.date)
+            )
+            doc_ref.set(daily.to_dict(), merge=True)
+            logger.debug(f"Updated daily stats for movie {movie_id} on {daily.date}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to update daily stats: {e}")
+            return False
 
-        Args:
-            movie_id: Movie identifier
-
-        Returns:
-            MoviePerformance or None if not found
-        """
+    def get_metadata(self, movie_id: str) -> MovieMetadata | None:
+        """Get a movie's metadata."""
         try:
             doc_ref = self.db.collection(self.COLLECTION).document(movie_id)
             doc = doc_ref.get()
@@ -132,16 +119,58 @@ class FirestoreMoviePerformanceRepository:
             if not doc.exists:
                 return None
 
-            return MoviePerformance.from_dict(doc.to_dict())
+            return MovieMetadata.from_dict(doc.to_dict())
         except Exception as e:
-            logger.error(f"Failed to get summary for {movie_id}: {e}")
+            logger.error(f"Failed to get metadata for {movie_id}: {e}")
             return None
 
-    def get_all_showtimes(self, movie_id: str) -> list[ShowtimeSnapshot]:
-        """Get all showtime snapshots for a movie.
+    def get_daily_stats(self, movie_id: str, date: str) -> DailyPerformance | None:
+        """Get daily performance stats."""
+        try:
+            doc_ref = (
+                self.db.collection(self.COLLECTION)
+                .document(movie_id)
+                .collection(self.DAYS_SUBCOLLECTION)
+                .document(date)
+            )
+            doc = doc_ref.get()
+
+            if not doc.exists:
+                return None
+
+            return DailyPerformance.from_dict(doc.to_dict())
+        except Exception as e:
+            logger.error(f"Failed to get daily stats for {movie_id} on {date}: {e}")
+            return None
+
+    def list_movies(self, limit: int = 100) -> list[MovieMetadata]:
+        """List all movies (metadata only)."""
+        try:
+            # Order by last_updated desc
+            collection_ref = (
+                self.db.collection(self.COLLECTION)
+                .order_by("last_updated", direction="DESCENDING")
+                .limit(limit)
+            )
+            docs = collection_ref.stream()
+
+            movies = []
+            for doc in docs:
+                try:
+                    movies.append(MovieMetadata.from_dict(doc.to_dict()))
+                except Exception as e:
+                    logger.warning(f"Failed to parse movie {doc.id}: {e}")
+
+            return movies
+        except Exception as e:
+            logger.error(f"Failed to list movies: {e}")
+            return []
+    def get_daily_showtimes(self, movie_id: str, date: str) -> list[ShowtimeSnapshot]:
+        """Get all showtime snapshots for a movie on a specific date.
 
         Args:
             movie_id: Movie identifier
+            date: Date string
 
         Returns:
             List of ShowtimeSnapshot objects
@@ -150,6 +179,8 @@ class FirestoreMoviePerformanceRepository:
             collection_ref = (
                 self.db.collection(self.COLLECTION)
                 .document(movie_id)
+                .collection(self.DAYS_SUBCOLLECTION)
+                .document(date)
                 .collection(self.SHOWTIMES_SUBCOLLECTION)
             )
             docs = collection_ref.stream()
@@ -163,86 +194,5 @@ class FirestoreMoviePerformanceRepository:
 
             return snapshots
         except Exception as e:
-            logger.error(f"Failed to get showtimes for {movie_id}: {e}")
+            logger.error(f"Failed to get showtimes for {movie_id} on {date}: {e}")
             return []
-
-    def get_showtime(self, movie_id: str, showtime_id: str) -> ShowtimeSnapshot | None:
-        """Get a specific showtime snapshot.
-
-        Args:
-            movie_id: Movie identifier
-            showtime_id: Showtime identifier
-
-        Returns:
-            ShowtimeSnapshot or None if not found
-        """
-        try:
-            doc_ref = (
-                self.db.collection(self.COLLECTION)
-                .document(movie_id)
-                .collection(self.SHOWTIMES_SUBCOLLECTION)
-                .document(showtime_id)
-            )
-            doc = doc_ref.get()
-
-            if not doc.exists:
-                return None
-
-            return ShowtimeSnapshot.from_dict(doc.to_dict())
-        except Exception as e:
-            logger.error(f"Failed to get showtime {showtime_id}: {e}")
-            return None
-
-    def list_movies(self, limit: int = 100) -> list[MoviePerformance]:
-        """List all movie performance summaries.
-
-        Args:
-            limit: Maximum movies to return
-
-        Returns:
-            List of MoviePerformance objects, sorted by avg occupancy descending
-        """
-        try:
-            collection_ref = self.db.collection(self.COLLECTION).limit(limit)
-            docs = collection_ref.stream()
-
-            movies = []
-            for doc in docs:
-                try:
-                    movies.append(MoviePerformance.from_dict(doc.to_dict()))
-                except Exception as e:
-                    logger.warning(f"Failed to parse movie {doc.id}: {e}")
-
-            # Sort by occupancy descending
-            movies.sort(key=lambda m: m.avg_occupancy_pct, reverse=True)
-            return movies
-        except Exception as e:
-            logger.error(f"Failed to list movies: {e}")
-            return []
-
-    def delete_movie(self, movie_id: str) -> bool:
-        """Delete a movie and all its showtimes.
-
-        Args:
-            movie_id: Movie identifier
-
-        Returns:
-            True if deleted successfully
-        """
-        try:
-            # Delete all showtimes first
-            showtimes_ref = (
-                self.db.collection(self.COLLECTION)
-                .document(movie_id)
-                .collection(self.SHOWTIMES_SUBCOLLECTION)
-            )
-            for doc in showtimes_ref.stream():
-                doc.reference.delete()
-
-            # Delete movie summary
-            self.db.collection(self.COLLECTION).document(movie_id).delete()
-            logger.info(f"Deleted movie {movie_id} and all showtimes")
-            return True
-        except Exception as e:
-            logger.error(f"Failed to delete movie {movie_id}: {e}")
-            return False

@@ -160,6 +160,51 @@ export class FirestoreAdminClient {
         }
     }
 
+    async getSubCollection(fullPath: string): Promise<Record<string, unknown>[]> {
+        try {
+            const token = await getAccessToken();
+
+            // fullPath: "movie_performance/123/days"
+            const parts = fullPath.split('/');
+            const collectionId = parts.pop();
+            const parentPath = parts.join('/'); // "movie_performance/123"
+
+            // Target the parent document for the runQuery
+            const url = `${FIRESTORE_BASE_URL}/${parentPath}:runQuery`;
+
+            const query = {
+                structuredQuery: {
+                    from: [{ collectionId: collectionId }],
+                    // No default order, return all
+                },
+            };
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(query),
+            });
+
+            if (!response.ok) {
+                console.error(`Firestore subcollection query failed: ${response.status}`);
+                return [];
+            }
+
+            const results = await response.json();
+            return results
+                .filter((r: { document?: unknown }) => r.document)
+                .map((r: { document: { name: string; fields: Record<string, FirestoreValue> } }) =>
+                    parseDocument(r.document)
+                );
+        } catch (error) {
+            console.error(`Error querying subcollection ${fullPath}:`, error);
+            return [];
+        }
+    }
+
     async getCollectionCount(collectionName: string): Promise<number> {
         try {
             const token = await getAccessToken();

@@ -108,67 +108,72 @@ class ShowtimeSnapshot:
 
 
 @dataclass
-class MoviePerformance:
-    """Aggregated performance data for a single movie across all showtimes.
-
-    Updated in real-time after each showtime snapshot is captured.
-
-    Attributes:
-        movie_id: Movie identifier
-        title: Movie title
-        poster: Poster URL
-        date: Date string (YYYY-MM-DD)
-        cities: List of cities where movie is showing
-        total_showtimes: Number of showtimes scraped
-        avg_occupancy_pct: Average occupancy across all showtimes
-        total_seats: Sum of all seats across showtimes
-        total_sold: Sum of all sold seats
-        last_updated: ISO timestamp of last update
+class MovieMetadata:
+    """Static movie details for the root collection.
+    
+    Collection: movie_performance
+    Document ID: movie_id
     """
-
     movie_id: str
     title: str
     poster: str
-    date: str
-    cities: list[str] = field(default_factory=list)
-    total_showtimes: int = 0
-    avg_occupancy_pct: float = 0.0
-    total_seats: int = 0
-    total_sold: int = 0
+    age_category: str | None = None
     last_updated: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
-    @property
-    def cities_count(self) -> int:
-        """Number of unique cities."""
-        return len(self.cities)
-
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for Firestore storage."""
         return {
             "movie_id": self.movie_id,
             "title": self.title,
             "poster": self.poster,
-            "date": self.date,
-            "cities": self.cities,
-            "total_showtimes": self.total_showtimes,
-            "avg_occupancy_pct": self.avg_occupancy_pct,
-            "total_seats": self.total_seats,
-            "total_sold": self.total_sold,
+            "age_category": self.age_category,
             "last_updated": self.last_updated,
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "MoviePerformance":
-        """Create from Firestore document."""
+    def from_dict(cls, data: dict[str, Any]) -> "MovieMetadata":
         return cls(
             movie_id=data.get("movie_id", ""),
             title=data.get("title", ""),
             poster=data.get("poster", ""),
+            age_category=data.get("age_category"),
+            last_updated=data.get("last_updated", ""),
+        )
+
+
+@dataclass
+class DailyPerformance:
+    """Daily performance stats for a movie.
+    
+    Collection: movie_performance/{movie_id}/days
+    Document ID: YYYY-MM-DD
+    """
+    date: str
+    total_showtimes: int = 0
+    total_seats: int = 0
+    total_sold: int = 0
+    avg_occupancy_pct: float = 0.0
+    cities: list[str] = field(default_factory=list)
+    last_updated: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "date": self.date,
+            "total_showtimes": self.total_showtimes,
+            "total_seats": self.total_seats,
+            "total_sold": self.total_sold,
+            "avg_occupancy_pct": self.avg_occupancy_pct,
+            "cities": self.cities,
+            "last_updated": self.last_updated,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "DailyPerformance":
+        return cls(
             date=data.get("date", ""),
-            cities=data.get("cities", []),
             total_showtimes=data.get("total_showtimes", 0),
-            avg_occupancy_pct=data.get("avg_occupancy_pct", 0.0),
             total_seats=data.get("total_seats", 0),
             total_sold=data.get("total_sold", 0),
+            avg_occupancy_pct=data.get("avg_occupancy_pct", 0.0),
+            cities=data.get("cities", []),
             last_updated=data.get("last_updated", ""),
         )

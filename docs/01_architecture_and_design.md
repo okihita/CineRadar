@@ -80,7 +80,7 @@ The scraping pipeline operates continuously on **GitHub Actions**, utilizing par
 
 | Workflow | Schedule | Python Entry Point | Description |
 |----------|----------|--------------------|-------------|
-| **`daily-scrape.yml`** | Daily 06:00 WIB | `.cli`, `.movie_performance` | **Main Pipeline**. Scrapes movies, seats, and aggregates performance data. |
+| **`daily-morning-scrape.yml`** | Daily 06:00 WIB | `.cli`, `.movie_performance` | **Main Pipeline**. Scrapes movies, seats, and aggregates performance data. |
 | **`token-refresh.yml`** | Bi-monthly | `.refresh_token` | **Headless Login**. Runs full Playwright with `xvfb` to regenerate valid refresh tokens (~90 day TTL). |
 | **`monthly-geocode.yml`** | Monthly 1st | `.monthly_geocode` | **Metadata Sync**. Updates theatre coordinates via Google Maps API. |
 | **`daily-summary.yml`** | Daily 00:00 WIB | `.daily_summary` | **Reporting**. Generates T+0 summary stats. |
@@ -260,7 +260,7 @@ erDiagram
 | `api-smoke-tests.yml` | Push to `admin/**` + daily | Test production APIs |
 | `security-scan.yml` | Push/PR + weekly | CodeQL security analysis |
 | `failure-reporter.yml` | Workflow failures | Auto-create GitHub issues |
-| `daily-scrape.yml` | Daily 6 AM WIB | Movie + seat scraping |
+| `daily-morning-scrape.yml` | Daily 6 AM WIB | Movie + seat scraping |
 | `token-refresh.yml` | Daily 5:50 AM WIB | JWT token refresh |
 
 ### Quality Gates (Required for Merge)

@@ -12,14 +12,19 @@ from backend.domain.models.movie import (
     Showtime,
     TheatreSchedule,
 )
-from backend.domain.models.movie_performance import MoviePerformance, ShowtimeSnapshot
+from backend.domain.models.movie_performance import (
+    DailyPerformance,
+    MovieMetadata,
+    ShowtimeSnapshot,
+)
 from backend.domain.models.seat import SeatGradeStats, SeatOccupancy
 from backend.domain.models.theatre import Theatre
 from backend.domain.models.token import Token
 
 __all__ = [
+    "DailyPerformance",
     "Movie",
-    "MoviePerformance",
+    "MovieMetadata",
     "Room",
     "ScrapeResult",
     "SeatGradeStats",
