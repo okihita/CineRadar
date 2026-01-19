@@ -61,11 +61,8 @@ def scrape_movie_performance(movie_id: str, aggregator: PerformanceAggregator) -
     # Fetch full details from schedules collection to get showtime_ids
     from google.cloud import firestore
 
-    try:
-        db = firestore.Client(project="cineradar-481014")
-    except Exception:
-        # Fallback if env vars set (though above is safer for this project)
-        db = firestore.Client()
+    # Use the existing authenticated client from repository
+    db = aggregator.repo.db
 
     # Use today's date (Jakarta) instead of snapshot date (which might be stale/UTC-1)
     from datetime import datetime
@@ -226,10 +223,8 @@ def initialize_performance_data(aggregator: PerformanceAggregator) -> None:
 
     from backend.domain.models import DailyPerformance, MovieMetadata
 
-    try:
-        db = firestore.Client(project="cineradar-481014")
-    except Exception:
-        db = firestore.Client()
+    # Use the existing authenticated client from repository
+    db = aggregator.repo.db
 
     date_str = datetime.now(ZoneInfo("Asia/Jakarta")).strftime("%Y-%m-%d")
     logger.info(f"📅 Date: {date_str}")
