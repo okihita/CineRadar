@@ -33,11 +33,11 @@ export async function GET() {
         const today = getTodayJakarta();
 
         // Get all movie metadata (Root Collection)
-        const movies = await firestoreAdminClient.getCollectionWithQuery(
+        const movies = (await firestoreAdminClient.getCollectionWithQuery(
             'movie_performance',
             'last_updated',
             100
-        ) as MovieWithStats[];
+        )) as unknown as MovieWithStats[];
 
         // Fetch today's stats for each movie in parallel
         const moviesWithStats = await Promise.all(

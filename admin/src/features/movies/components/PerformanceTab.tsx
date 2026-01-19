@@ -93,7 +93,7 @@ export function PerformanceTab() {
         async function fetchHistory() {
             setLoadingHistory(true);
             try {
-                const res = await fetch(`/api/performance/${selectedMovie.id}/history`);
+                const res = await fetch(`/api/performance/${selectedMovie!.id}/history`);
                 const data = await res.json();
                 if (data.success) {
                     setHistory(data.history);
