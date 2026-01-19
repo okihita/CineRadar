@@ -48,4 +48,4 @@ We have two apps (`admin` and `web`) that share 90% of their DNA: UI components,
 | **Tailwind CSS** | **ADOPT** | Velocity is unmatched. Custom design tokens enforce consistency. |
 | **Python 3.12** | **ADOPT** | Strict typing (`mypy`) is non-negotiable for the scraper backend. |
 | **Vercel** | **HOLD** | Great for now, but if costs scale, consider moving Docker containers to Cloud Run. |
-| **Google Cloud Functions** | **AVOID** | Cold starts are too slow for our API needs. Stick to Next.js API routes. |
+| **Google Cloud Functions** | **ADOPT** | Used for JIT Scraper. Perfect for event-driven, high-concurrency bursts (T-8 precision). |

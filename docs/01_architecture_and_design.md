@@ -231,7 +231,7 @@ erDiagram
         string theatre_name
         string city
         float occupancy_pct
-        string layout_json
+        bytes layout_compressed
     }
 ```
 
@@ -244,7 +244,7 @@ erDiagram
 | `schedules/{date}/movies` | `{movie_id}` | Full showtime data by date |
 | `seat_snapshots` | `{showtime_id}_{type}_{time}` | Seat occupancy data |
 | `movie_performance` | `{movie_id}` | **[NEW]** Per-movie aggregated stats |
-| `movie_performance/{movie_id}/showtimes` | `{showtime_id}` | **[NEW]** Individual showtime snapshots with full seat layout |
+| `movie_performance/{movie_id}/showtimes` | `{showtime_id}` | **[NEW]** Individual showtime snapshots with compressed seat layout (gzip) |
 | `scraper_runs` | `{timestamp}_{type}` | Scraper run logs |
 | `auth_tokens` | `tix_jwt` | JWT token storage |
 

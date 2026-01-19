@@ -448,60 +448,49 @@ uv run python -m backend.cli.movie_performance --all --limit 10
 
 ---
 
-## Future: JIT Scraping (Every 15 Minutes)
+## Phase 5: JIT Seat Scraping (Live)
 
-> [!IMPORTANT]
-> **Not yet implemented.** This section describes a planned enhancement.
+### Purpose
+Scrape seat availability for each showtime exactly **8-13 minutes before** it starts (Just-In-Time) to capture near-final occupancy.
 
-### The Problem
-
-Current morning-only scraping captures seat occupancy at 6:40 AM, but showtimes run until 11 PM. Occupancy data is **4-16 hours stale** by the time people actually watch the movie.
-
-### The Solution: T-8 Minute Scraping
-
-Scrape each showtime's seat layout **8 minutes before it starts** — capturing near-final occupancy after the 5-minute booking cutoff.
-
-### Proposed Workflow
+### Architecture
+This phase runs on **Google Cloud Functions** (Serverless) to handle the high concurrency and frequent scheduling required for T-8 precision.
 
 ```mermaid
-gantt
-    title JIT Scraping (Every 15 min, 10 AM - 11 PM)
-    dateFormat HH:mm
-    axisFormat %H:%M
+graph TD
+    Scheduler[Cloud Scheduler] -- "Every 5 min (HTTP POST)" --> Dispatcher[Dispatcher Function]
     
-    section JIT Window
-    10:07  :crit, j1, 10:07, 3m
-    10:22  :crit, j2, 10:22, 3m
-    10:37  :crit, j3, 10:37, 3m
-    10:52  :crit, j4, 10:52, 3m
-    11:07  :crit, j5, 11:07, 3m
+    subgraph "Dispatcher Logic"
+        Dispatcher -- "Query schedules (T+8 to T+13 min)" --> Firestore[(Firestore)]
+        Dispatcher -- "Publish unique showtimes" --> PubSub{Pub/Sub Topic}
+    end
+    
+    PubSub -- "Fan-out (1 msg = 1 showtime)" --> Scraper[Scraper Function]
+    
+    subgraph "Scraper Logic"
+        Scraper -- "1. Load Auth Token" --> Firestore
+        Scraper -- "2. GET /layout (with token)" --> TixAPI[TIX.id API]
+        Scraper -- "3. Save Snapshot (Compressed)" --> Firestore
+    end
 ```
 
-**Schedule:** `'7,22,37,52 3-15 * * *'` (52 runs/day)
+### Components (`backend/functions/`)
 
-### Volume Estimates
+1.  **Dispatcher (`dispatch-jit-jobs`)**:
+    *   **Trigger**: Cloud Scheduler (Every 5 mins, 6 AM - 11 PM).
+    *   **Task**: Queries Firestore for showtimes starting in the next 8-13 minutes.
+    *   **Output**: Publishes `showtime_id` messages to Pub/Sub.
 
-| Metric | Value |
-|--------|-------|
-| Total showtimes/day | ~12,000 |
-| Showtimes per 15-min window | ~100-200 |
-| GitHub min/run | ~3 min |
-| GitHub min/day | ~156 min |
-| GitHub min/month | ~78 hours |
-| Free tier limit | 2,000 min ✓ |
+2.  **Scraper (`scrape-seat-jit`)**:
+    *   **Trigger**: Pub/Sub Message (`scrape-seat-jit`).
+    *   **Task**: Fetches seat layout from TIX.id, compresses it (gzip), and saves to Firestore.
+    *   **Scale**: Auto-scales up to 5 concurrent instances to respect rate limits.
 
-### Implementation Checklist
+### Self-Healing Token Reuse
+The Cloud Function is autonomous. It reuses the stored `tix_jwt` from Firestore. If the token is near expiration (< 5 min TTL), the Scraper function proactively calls the TIX.id refresh endpoint and updates Firestore, ensuring zero downtime.
 
-- [ ] Create `jit-seat-scrape.yml` workflow
-- [ ] Runs every 15 min during cinema hours (10 AM - 11 PM WIB)
-- [ ] Uses `--mode jit` flag (already built in `cli.py`)
-- [ ] Calls `filter_jit_showtimes()` for T-8 window filtering
-- [ ] Integrates with `PerformanceAggregator` for real-time updates
-
-### Why Not Now?
-
-- Morning-only flow is sufficient for MVP analytics
-- JIT adds complexity (failure handling, token refresh mid-day)
-- Can be implemented when near-real-time insights are needed
-
+### Cost & Limits
+*   **Cost**: ~$0.81/month (mainly Firestore writes + minimal Compute).
+*   **Precision**: T-8 minutes.
+*   **Safety**: Rate-limited to 5 concurrent scrapers (~1-2 req/sec).
 
