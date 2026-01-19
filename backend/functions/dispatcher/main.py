@@ -170,6 +170,12 @@ def dispatch_jobs(request):
         showtimes = find_upcoming_showtimes(db, window_start, window_end)
         logger.info(f"Found {len(showtimes)} showtimes in window")
         
+        # Log sample showtimes for debugging
+        if showtimes:
+            sample = showtimes[:3]
+            for s in sample:
+                logger.info(f"  Sample: {s.get('theatre_name', '')[:20]} @ {s.get('showtime')} - {s.get('merchant')}")
+        
         if showtimes:
             # Publish to Pub/Sub
             count = publish_to_pubsub(publisher, showtimes)
