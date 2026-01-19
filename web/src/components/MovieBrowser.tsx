@@ -184,13 +184,14 @@ export default function MovieBrowser({ movies }: MovieBrowserProps) {
     // Fetch schedules when movie is selected
     useEffect(() => {
         if (!selectedMovie) {
-            setMovieWithSchedules(null);
             return;
         }
 
         // Get today's date in YYYY-MM-DD format
         const today = new Date().toLocaleDateString('en-CA'); // Returns YYYY-MM-DD
 
+        let cancelled = false;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLoadingSchedule(true);
 
         Promise.all([
@@ -198,13 +199,24 @@ export default function MovieBrowser({ movies }: MovieBrowserProps) {
             fetchMovieAdmissions(selectedMovie.id, today)
         ])
             .then(([schedules, admissionStats]) => {
-                setMovieWithSchedules({
-                    ...selectedMovie,
-                    schedules: schedules || undefined,
-                    admissionStats: admissionStats || undefined
-                });
+                if (!cancelled) {
+                    setMovieWithSchedules({
+                        ...selectedMovie,
+                        schedules: schedules || undefined,
+                        admissionStats: admissionStats || undefined
+                    });
+                }
             })
-            .finally(() => setLoadingSchedule(false));
+            .finally(() => {
+                if (!cancelled) {
+                    setLoadingSchedule(false);
+                }
+            });
+
+        return () => {
+            cancelled = true;
+            setMovieWithSchedules(null);
+        };
     }, [selectedMovie]);
 
     return (

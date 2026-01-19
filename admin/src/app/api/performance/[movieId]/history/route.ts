@@ -9,9 +9,9 @@ import { firestoreAdminClient } from '@/lib/firebase-admin';
 
 export async function GET(
     request: Request,
-    { params }: { params: Promise<{ movieId: string }> }
+    { params }: { params: unknown }
 ) {
-    const { movieId } = await params;
+    const { movieId } = await (params as Promise<{ movieId: string }>);
 
     try {
         // Get 'days' subcollection

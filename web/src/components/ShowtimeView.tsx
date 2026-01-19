@@ -1,9 +1,22 @@
-import { useState } from 'react';
+interface TheatreRoom {
+    category: string;
+    price: string;
+    showtimes?: string[];
+    past_showtimes?: string[];
+}
+
+interface TheatreSchedule {
+    theatre_id: string;
+    theatre_name: string;
+    merchant: string;
+    address: string;
+    rooms: TheatreRoom[];
+}
 
 interface ShowtimeViewProps {
     movieTitle: string;
     city: string;
-    schedules: any[]; // Using any for now to match flexible JSON structure
+    schedules: TheatreSchedule[];
     onClose: () => void;
 }
 
@@ -39,15 +52,15 @@ export default function ShowtimeView({ movieTitle, city, schedules, onClose }: S
 
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                    {schedules.map((theatre: any) => (
+                    {schedules.map((theatre) => (
                         <div key={theatre.theatre_id} className="bg-white/5 rounded-xl p-4 border border-white/5 hover:border-purple-500/30 transition-colors">
                             <div className="flex justify-between items-start mb-4">
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
                                         <h3 className="font-bold text-lg text-white">{theatre.theatre_name}</h3>
                                         <span className={`px-2 py-0.5 text-xs font-bold rounded ${theatre.merchant === 'XXI' ? 'bg-amber-600/80' :
-                                                theatre.merchant === 'CGV' ? 'bg-red-600/80' :
-                                                    'bg-blue-600/80'
+                                            theatre.merchant === 'CGV' ? 'bg-red-600/80' :
+                                                'bg-blue-600/80'
                                             }`}>
                                             {theatre.merchant}
                                         </span>
@@ -57,7 +70,7 @@ export default function ShowtimeView({ movieTitle, city, schedules, onClose }: S
                             </div>
 
                             <div className="space-y-3">
-                                {theatre.rooms.map((room: any, idx: number) => (
+                                {theatre.rooms.map((room, idx) => (
                                     <div key={idx} className="bg-black/20 rounded-lg p-3">
                                         <div className="flex justify-between items-center mb-2">
                                             <span className="text-sm font-medium text-gray-300">{room.category}</span>

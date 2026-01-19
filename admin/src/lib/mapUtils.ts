@@ -3,6 +3,8 @@
  * Used for SVG generation, coordinate conversion, and formatting
  */
 
+import React from 'react';
+
 /**
  * Describe a donut arc path for SVG
  * Used for region breakdown pie charts
@@ -143,9 +145,6 @@ export function highlightText(text: string, searchTerm: string): React.ReactNode
         'gi'
     );
     const parts = text.split(regex);
-
-    // Import React for JSX
-    const React = require('react');
 
     return parts.map((part, i) =>
         regex.test(part)

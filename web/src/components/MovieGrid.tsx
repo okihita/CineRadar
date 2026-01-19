@@ -13,7 +13,7 @@ interface Movie {
     country: string;
     merchants: string[];
     cities: string[];
-    schedules?: Record<string, any[]>; // Map of City -> Theatres
+    schedules?: Record<string, TheatreSchedule[]>; // Map of City -> Theatres
 }
 
 interface MovieGridProps {

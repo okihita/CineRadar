@@ -13,6 +13,47 @@ import type { Showtime, SortField, SortDirection } from '../types';
 
 const ITEMS_PER_PAGE = 20;
 
+interface SortIconProps {
+    field: SortField;
+    sortField: SortField;
+    sortDirection: SortDirection;
+}
+
+const SortIcon = ({ field, sortField, sortDirection }: SortIconProps) => {
+    if (sortField !== field) return null;
+    return sortDirection === 'asc' ? (
+        <ArrowUp className="w-3 h-3" />
+    ) : sortDirection === 'desc' ? (
+        <ArrowDown className="w-3 h-3" />
+    ) : null;
+};
+
+interface SortableHeaderProps {
+    field: SortField;
+    sortField: SortField;
+    sortDirection: SortDirection;
+    onToggleSort: (field: SortField) => void;
+    children: React.ReactNode;
+}
+
+const SortableHeader = ({
+    field,
+    sortField,
+    sortDirection,
+    onToggleSort,
+    children,
+}: SortableHeaderProps) => (
+    <TableHead
+        className="cursor-pointer hover:bg-muted/50 select-none"
+        onClick={() => onToggleSort(field)}
+    >
+        <span className="inline-flex items-center gap-1">
+            {children}
+            <SortIcon field={field} sortField={sortField} sortDirection={sortDirection} />
+        </span>
+    </TableHead>
+);
+
 interface ShowtimeTableProps {
     showtimes: Showtime[];
     currentPage: number;
@@ -39,33 +80,6 @@ export function ShowtimeTable({
         safePage * ITEMS_PER_PAGE
     );
 
-    const SortIcon = ({ field }: { field: SortField }) => {
-        if (sortField !== field) return null;
-        return sortDirection === 'asc' ? (
-            <ArrowUp className="w-3 h-3" />
-        ) : sortDirection === 'desc' ? (
-            <ArrowDown className="w-3 h-3" />
-        ) : null;
-    };
-
-    const SortableHeader = ({
-        field,
-        children,
-    }: {
-        field: SortField;
-        children: React.ReactNode;
-    }) => (
-        <TableHead
-            className="cursor-pointer hover:bg-muted/50 select-none"
-            onClick={() => onToggleSort(field)}
-        >
-            <span className="inline-flex items-center gap-1">
-                {children}
-                <SortIcon field={field} />
-            </span>
-        </TableHead>
-    );
-
     return (
         <Card>
             <CardHeader className="py-3 px-4">
@@ -82,12 +96,12 @@ export function ShowtimeTable({
                     <Table>
                         <TableHeader className="sticky top-0 bg-background z-10">
                             <TableRow className="text-xs">
-                                <SortableHeader field="showtime">Showtime</SortableHeader>
-                                <SortableHeader field="movie_title">Movie</SortableHeader>
-                                <SortableHeader field="city">City</SortableHeader>
-                                <SortableHeader field="theatre_name">Theatre</SortableHeader>
-                                <SortableHeader field="chain">Chain</SortableHeader>
-                                <SortableHeader field="room_type">Room</SortableHeader>
+                                <SortableHeader field="showtime" sortField={sortField} sortDirection={sortDirection} onToggleSort={onToggleSort}>Showtime</SortableHeader>
+                                <SortableHeader field="movie_title" sortField={sortField} sortDirection={sortDirection} onToggleSort={onToggleSort}>Movie</SortableHeader>
+                                <SortableHeader field="city" sortField={sortField} sortDirection={sortDirection} onToggleSort={onToggleSort}>City</SortableHeader>
+                                <SortableHeader field="theatre_name" sortField={sortField} sortDirection={sortDirection} onToggleSort={onToggleSort}>Theatre</SortableHeader>
+                                <SortableHeader field="chain" sortField={sortField} sortDirection={sortDirection} onToggleSort={onToggleSort}>Chain</SortableHeader>
+                                <SortableHeader field="room_type" sortField={sortField} sortDirection={sortDirection} onToggleSort={onToggleSort}>Room</SortableHeader>
                                 <TableHead>Price</TableHead>
                                 <TableHead>Status</TableHead>
                             </TableRow>

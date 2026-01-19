@@ -9,9 +9,9 @@ import { firestoreAdminClient } from '@/lib/firebase-admin';
 
 export async function GET(
     request: Request,
-    { params }: { params: Promise<{ movieId: string; date: string }> }
+    { params }: { params: unknown }
 ) {
-    const { movieId, date } = await params;
+    const { movieId, date } = await (params as Promise<{ movieId: string; date: string }>);
 
     try {
         // 1. Get Daily Stats Doc
