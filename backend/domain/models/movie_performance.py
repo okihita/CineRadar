@@ -110,10 +110,11 @@ class ShowtimeSnapshot:
 @dataclass
 class MovieMetadata:
     """Static movie details for the root collection.
-    
+
     Collection: movie_performance
     Document ID: movie_id
     """
+
     movie_id: str
     title: str
     poster: str
@@ -143,10 +144,11 @@ class MovieMetadata:
 @dataclass
 class DailyPerformance:
     """Daily performance stats for a movie.
-    
+
     Collection: movie_performance/{movie_id}/days
     Document ID: YYYY-MM-DD
     """
+
     date: str
     total_showtimes: int = 0
     total_seats: int = 0

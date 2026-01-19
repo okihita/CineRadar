@@ -11,7 +11,7 @@ import os
 import tempfile
 from typing import Any
 
-from backend.domain.models import MovieMetadata, DailyPerformance, ShowtimeSnapshot
+from backend.domain.models import DailyPerformance, MovieMetadata, ShowtimeSnapshot
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +77,9 @@ class FirestoreMoviePerformanceRepository:
                 .document(snapshot.showtime_id)
             )
             doc_ref.set(snapshot.to_dict())
-            logger.debug(f"Saved showtime {snapshot.showtime_id} for movie {snapshot.movie_id} on {snapshot.date}")
+            logger.debug(
+                f"Saved showtime {snapshot.showtime_id} for movie {snapshot.movie_id} on {snapshot.date}"
+            )
             return True
         except Exception as e:
             logger.error(f"Failed to save showtime: {e}")
@@ -165,6 +167,7 @@ class FirestoreMoviePerformanceRepository:
         except Exception as e:
             logger.error(f"Failed to list movies: {e}")
             return []
+
     def get_daily_showtimes(self, movie_id: str, date: str) -> list[ShowtimeSnapshot]:
         """Get all showtime snapshots for a movie on a specific date.
 

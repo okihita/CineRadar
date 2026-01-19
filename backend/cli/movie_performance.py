@@ -60,23 +60,24 @@ def scrape_movie_performance(movie_id: str, aggregator: PerformanceAggregator) -
 
     # Fetch full details from schedules collection to get showtime_ids
     from google.cloud import firestore
+
     try:
         db = firestore.Client(project="cineradar-481014")
     except Exception:
         # Fallback if env vars set (though above is safer for this project)
         db = firestore.Client()
-    
-    
+
     # Use today's date (Jakarta) instead of snapshot date (which might be stale/UTC-1)
     from datetime import datetime
     from zoneinfo import ZoneInfo
+
     date_str = datetime.now(ZoneInfo("Asia/Jakarta")).strftime("%Y-%m-%d")
-    
+
     logger.info(f"📥 Fetching detailed schedule from schedules/{date_str}/movies/{movie_id}")
-    
+
     doc_ref = db.collection("schedules").document(date_str).collection("movies").document(movie_id)
     doc = doc_ref.get()
-    
+
     if not doc.exists:
         logger.error(f"❌ Detailed schedule not found for {movie_id} on {date_str}")
         return
@@ -85,7 +86,7 @@ def scrape_movie_performance(movie_id: str, aggregator: PerformanceAggregator) -
     # Use the detailed data which contains showtime_ids
     detailed_data = doc.to_dict()
 
-    # FIX SCHEMA MISMATCH: 
+    # FIX SCHEMA MISMATCH:
     # Firestore stores schedules in 'cities' key as a dict {City: [Theatres]}
     # Movie.from_dict expects 'schedules' key for that map
     if "cities" in detailed_data and isinstance(detailed_data["cities"], dict):
@@ -93,9 +94,10 @@ def scrape_movie_performance(movie_id: str, aggregator: PerformanceAggregator) -
         detailed_data["schedules"] = detailed_data["cities"]
         # Optional: Derive cities list from keys for correctness
         detailed_data["cities"] = list(detailed_data["cities"].keys())
-    
+
     # EASIEST FIX: Parse detailed_data into a Movie object
     from backend.domain.models import Movie
+
     try:
         movie_data = Movie.from_dict(detailed_data)
         logger.info("✅ Parsed detailed movie data")
@@ -106,7 +108,7 @@ def scrape_movie_performance(movie_id: str, aggregator: PerformanceAggregator) -
     # Extract showtimes to scrape
     showtimes = []
     logger.info(f"🔍 Scanning schedules for {len(movie_data.schedules)} cities...")
-    
+
     for city, schedules in movie_data.schedules.items():
         for schedule in schedules:
             for room in schedule.rooms:
@@ -114,7 +116,7 @@ def scrape_movie_performance(movie_id: str, aggregator: PerformanceAggregator) -
                 for st in room.showtimes:
                     # Debug log first 2 showtimes
                     # logger.info(f"      Check: id={st.showtime_id} avail={st.is_available} time={st.time}")
-                    
+
                     if st.showtime_id and st.is_available:
                         showtimes.append(
                             {
@@ -131,13 +133,13 @@ def scrape_movie_performance(movie_id: str, aggregator: PerformanceAggregator) -
                             }
                         )
                     elif not st.showtime_id:
-                         pass # logger.warning(f"      ❌ Missing ID: {st.time}")
+                        pass  # logger.warning(f"      ❌ Missing ID: {st.time}")
 
     if not showtimes:
         logger.warning("⚠️ No showtimes with IDs found for this movie")
         # Dump one room's showtimes to see what's wrong
         if movie_data.schedules:
-            first_city = list(movie_data.schedules.keys())[0]
+            first_city = next(iter(movie_data.schedules.keys()))
             first_sched = movie_data.schedules[first_city][0]
             if first_sched.rooms:
                 logger.info(f"DEBUG: First room showtimes: {first_sched.rooms[0].showtimes}")
@@ -207,71 +209,72 @@ def scrape_all_movies(limit: int, aggregator: PerformanceAggregator) -> None:
         scrape_movie_performance(movie.id, aggregator)
 
 
-
 def initialize_performance_data(aggregator: PerformanceAggregator) -> None:
     """Initialize performance data for all movies today without scraping seats.
-    
+
     Populates movie_performance collection with:
     - Movie metadata (title, poster, etc.)
     - Total showtime counts
     - 0% occupancy (placeholder)
     """
     logger.info("🚀 Initializing performance data for today...")
-    
-    from google.cloud import firestore
+
     from datetime import datetime
     from zoneinfo import ZoneInfo
-    from backend.domain.models import MovieMetadata, DailyPerformance
-    
+
+    from google.cloud import firestore
+
+    from backend.domain.models import DailyPerformance, MovieMetadata
+
     try:
         db = firestore.Client(project="cineradar-481014")
     except Exception:
         db = firestore.Client()
-        
+
     date_str = datetime.now(ZoneInfo("Asia/Jakarta")).strftime("%Y-%m-%d")
     logger.info(f"📅 Date: {date_str}")
-    
+
     # Get all movies from schedules collection
     movies_ref = db.collection("schedules").document(date_str).collection("movies")
     docs = list(movies_ref.stream())
-    
+
     if not docs:
         logger.warning(f"⚠️ No movies found in schedules/{date_str}/movies")
         return
-        
+
     logger.info(f"📊 Found {len(docs)} movies in schedule")
-    
+
     count = 0
     for doc in docs:
         data = doc.to_dict()
         movie_id = data.get("movie_id") or data.get("id")
-        
+
         if not movie_id:
             continue
-            
+
         # Count showtimes
         total_showtimes = 0
-        cities_data = data.get("cities", {}) # Original schema was dict
-        
+        cities_data = data.get("cities", {})  # Original schema was dict
+
         # Handle schema specific to upload_schedules.py
         if isinstance(cities_data, dict):
-             for city, theatres in cities_data.items():
-                 for theatre in theatres:
-                     for room in theatre.get("rooms", []):
-                         # Handle both all_showtimes and showtimes keys
-                         sts = room.get("all_showtimes") or room.get("showtimes") or []
-                         total_showtimes += len(sts)
-        
+            for _city, theatres in cities_data.items():
+                for theatre in theatres:
+                    for room in theatre.get("rooms", []):
+                        # Handle both all_showtimes and showtimes keys
+                        sts = room.get("all_showtimes") or room.get("showtimes") or []
+                        total_showtimes += len(sts)
+
         # Create and save metadata (Root)
         metadata = MovieMetadata(
             movie_id=movie_id,
             title=data.get("title", "Unknown"),
             poster=data.get("poster"),
             age_category=data.get("age_category"),
-            last_updated=datetime.now(ZoneInfo("Asia/Jakarta")).isoformat()
+            last_updated=datetime.now(ZoneInfo("Asia/Jakarta")).isoformat(),
         )
         aggregator.repo.update_metadata(metadata)
-        
+
         # Create and save daily stats (Subcollection)
         daily = DailyPerformance(
             date=date_str,
@@ -280,13 +283,15 @@ def initialize_performance_data(aggregator: PerformanceAggregator) -> None:
             total_sold=0,
             avg_occupancy_pct=0.0,
             cities=list(cities_data.keys()) if isinstance(cities_data, dict) else [],
-            last_updated=datetime.now(ZoneInfo("Asia/Jakarta")).isoformat()
+            last_updated=datetime.now(ZoneInfo("Asia/Jakarta")).isoformat(),
         )
-        
+
         if aggregator.repo.update_daily_stats(daily, movie_id):
-            logger.info(f"   ✓ Initialized {metadata.title} ({total_showtimes} showtimes) for {date_str}")
+            logger.info(
+                f"   ✓ Initialized {metadata.title} ({total_showtimes} showtimes) for {date_str}"
+            )
             count += 1
-            
+
     logger.info(f"\n✅ Successfully initialized {count} movies")
 
 
@@ -302,7 +307,9 @@ def main():
         "--recalculate", action="store_true", help="Recalculate summaries from existing data"
     )
     parser.add_argument(
-        "--init-only", action="store_true", help="Initialize performance data from schedules (no scraping)"
+        "--init-only",
+        action="store_true",
+        help="Initialize performance data from schedules (no scraping)",
     )
 
     args = parser.parse_args()
@@ -316,7 +323,7 @@ def main():
     if args.init_only:
         initialize_performance_data(aggregator)
     elif args.recalculate:
-        recalculate_all(aggregator)
+        aggregator.recalculate_all()
     elif args.movie_id:
         scrape_movie_performance(args.movie_id, aggregator)
     elif args.all:

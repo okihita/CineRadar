@@ -8,7 +8,7 @@ Runs in real-time after each showtime is scraped.
 import logging
 from datetime import UTC, datetime
 
-from backend.domain.models import MovieMetadata, DailyPerformance, ShowtimeSnapshot
+from backend.domain.models import DailyPerformance, MovieMetadata, ShowtimeSnapshot
 from backend.infrastructure.repositories import FirestoreMoviePerformanceRepository
 
 logger = logging.getLogger(__name__)
@@ -74,12 +74,12 @@ class PerformanceAggregator:
 
         # 5. Update Metadata (in case title/poster changed or just last_updated)
         # We only update this if we have title/poster info, valid metadata
-        if movie_title or movie_poster: 
+        if movie_title or movie_poster:
             metadata = MovieMetadata(
                 movie_id=movie_id,
                 title=movie_title or snapshot.movie_title,
                 poster=movie_poster or "",
-                last_updated=datetime.now(UTC).isoformat()
+                last_updated=datetime.now(UTC).isoformat(),
             )
             self.repo.update_metadata(metadata)
 
@@ -126,10 +126,10 @@ class PerformanceAggregator:
 
     def recalculate_all(self, movie_ids: list[str] | None = None) -> None:
         """Recalculate summaries for all or specific movies.
-        
+
         Note: Recalculating across ALL dates is expensive and complex with this schema.
         For now, this might just log a warning or be removed, as 'get_all_showtimes' is gone.
-        
+
         To implement correctly, we'd need to list all 'days' subcollections for each movie.
         """
         logger.warning("recalculate_all is not fully implemented for date-sharded schema yet.")
