@@ -8,7 +8,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Target, Users, Armchair, MapPin, Clock, Loader2, Calendar, ChevronLeft } from 'lucide-react';
+import { Target, Users, Armchair, MapPin, Clock, Loader2, Calendar, ChevronLeft, Trophy, Clapperboard, ChevronDown, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -65,6 +65,7 @@ export function PerformanceTab() {
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [loadingDetails, setLoadingDetails] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isArchiveOpen, setIsArchiveOpen] = useState(false);
 
     // 1. Fetch Movies List with today's stats
     useEffect(() => {
@@ -348,66 +349,202 @@ export function PerformanceTab() {
         );
     }
 
-    // Grid View (default - all movies)
+    // -------------------------------------------------------------------------
+    // Tiered Logic
+    // -------------------------------------------------------------------------
+    const hasTodayStats = (m: MovieWithStats) => !!m.today && m.today.total_showtimes > 0;
+
+    // Sort all by total_sold (desc) then occupancy (desc)
+    const sortedMovies = [...movies].sort((a, b) => {
+        const soldA = a.today?.total_sold || 0;
+        const soldB = b.today?.total_sold || 0;
+        if (soldA !== soldB) return soldB - soldA;
+        return (b.today?.avg_occupancy_pct || 0) - (a.today?.avg_occupancy_pct || 0);
+    });
+
+    // 1. Box Office Leaders (Top 3 active)
+    const activeMovies = sortedMovies.filter(hasTodayStats);
+    const leaders = activeMovies.slice(0, 3);
+    const othersActive = activeMovies.slice(3);
+
+    // 2. Archive (No shows today)
+    const archiveMovies = sortedMovies.filter(m => !hasTodayStats(m));
+
     return (
-        <div className="space-y-4">
-            <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Movie Performance</h2>
-                <span className="text-sm text-muted-foreground">{movies.length} movies</span>
-            </div>
+        <div className="space-y-12">
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {movies.map((movie) => (
-                    <Card
-                        key={movie.id}
-                        className="cursor-pointer hover:ring-2 hover:ring-primary/50 transition overflow-hidden"
-                        onClick={() => setSelectedMovie(movie)}
-                    >
-                        <div className="flex">
-                            {/* Poster */}
-                            <div className="w-20 h-28 relative flex-shrink-0 bg-muted">
-                                {movie.poster ? (
-                                    <Image
-                                        src={movie.poster}
-                                        alt={movie.title}
-                                        fill
-                                        className="object-cover"
-                                        sizes="80px"
-                                    />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                                        <Target className="w-6 h-6" />
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Info */}
-                            <CardContent className="p-3 flex-1 min-w-0">
-                                <h3 className="font-medium text-sm truncate mb-2">{movie.title}</h3>
-
-                                {movie.today ? (
-                                    <div className="space-y-1 text-xs">
-                                        <div className="flex justify-between">
-                                            <span className="text-muted-foreground">Occupancy</span>
-                                            <span className="font-medium">{movie.today.avg_occupancy_pct.toFixed(1)}%</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-muted-foreground">Showtimes</span>
-                                            <span className="font-medium">{movie.today.total_showtimes}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-muted-foreground">Sold</span>
-                                            <span className="font-medium">{movie.today.total_sold.toLocaleString()}</span>
+            {/* SECTION 1: BOX OFFICE LEADERS (Hero Cards) */}
+            {leaders.length > 0 && (
+                <section>
+                    <div className="flex items-center gap-2 mb-4">
+                        <Trophy className="w-5 h-5 text-amber-500" />
+                        <h2 className="text-xl font-bold tracking-tight">Box Office Leaders</h2>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {leaders.map((movie, idx) => (
+                            <Card
+                                key={movie.id}
+                                className="cursor-pointer hover:bg-muted/50 transition-all border-l-4 border-l-amber-500 overflow-hidden group"
+                                onClick={() => setSelectedMovie(movie)}
+                            >
+                                <CardContent className="p-4 flex gap-4">
+                                    {/* Thumbnail Rank & Poster */}
+                                    <div className="relative w-16 h-24 shrink-0 rounded-md overflow-hidden bg-muted shadow-sm">
+                                        {movie.poster ? (
+                                            <Image
+                                                src={movie.poster}
+                                                alt={movie.title}
+                                                fill
+                                                className="object-cover"
+                                                sizes="64px"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                                                <Target className="w-6 h-6" />
+                                            </div>
+                                        )}
+                                        <div className="absolute top-0 left-0 bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-br">
+                                            #{idx + 1}
                                         </div>
                                     </div>
-                                ) : (
-                                    <p className="text-xs text-muted-foreground">No data today</p>
-                                )}
-                            </CardContent>
+
+                                    {/* Data & Content */}
+                                    <div className="flex-1 min-w-0 flex flex-col justify-between">
+                                        <h3 className="font-semibold text-base leading-tight truncate mb-2" title={movie.title}>
+                                            {movie.title}
+                                        </h3>
+
+                                        <div className="grid grid-cols-3 gap-2 text-xs">
+                                            <div className="bg-muted/50 p-1.5 rounded text-center">
+                                                <div className="text-muted-foreground mb-0.5 text-[10px] uppercase tracking-wider">Seats</div>
+                                                <div className="font-bold text-foreground">
+                                                    {(movie.today?.total_seats || 0).toLocaleString()}
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-muted/50 p-1.5 rounded text-center">
+                                                <div className="text-muted-foreground mb-0.5 text-[10px] uppercase tracking-wider">Sold</div>
+                                                <div className="font-bold text-foreground">
+                                                    {(movie.today?.total_sold || 0).toLocaleString()}
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-amber-500/10 p-1.5 rounded text-center border border-amber-500/20">
+                                                <div className="text-amber-700 dark:text-amber-400 mb-0.5 text-[10px] uppercase tracking-wider">Occ</div>
+                                                <div className="font-bold text-amber-700 dark:text-amber-400">
+                                                    {movie.today?.avg_occupancy_pct.toFixed(0)}%
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            {/* SECTION 2: NOW SHOWING (Standard Grid) */}
+            {othersActive.length > 0 && (
+                <section>
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                            <Clapperboard className="w-5 h-5 text-primary" />
+                            <h2 className="text-lg font-semibold">Now Showing</h2>
                         </div>
-                    </Card>
-                ))}
-            </div>
+                        <span className="text-sm text-muted-foreground">{othersActive.length} movies</span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        {othersActive.map((movie) => (
+                            <Card
+                                key={movie.id}
+                                className="cursor-pointer hover:ring-2 hover:ring-primary/50 transition overflow-hidden border-border/60"
+                                onClick={() => setSelectedMovie(movie)}
+                            >
+                                <div className="flex flex-col h-full">
+                                    <div className="aspect-[2/3] w-full relative bg-muted">
+                                        {movie.poster ? (
+                                            <Image
+                                                src={movie.poster}
+                                                alt={movie.title}
+                                                fill
+                                                className="object-cover"
+                                                sizes="200px"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                                                <Target className="w-6 h-6" />
+                                            </div>
+                                        )}
+                                        <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded backdrop-blur-sm">
+                                            {movie.today?.avg_occupancy_pct.toFixed(0)}%
+                                        </div>
+                                    </div>
+                                    <CardContent className="p-3">
+                                        <h3 className="font-medium text-sm truncate mb-2" title={movie.title}>{movie.title}</h3>
+                                        <div className="text-xs text-muted-foreground space-y-0.5">
+                                            <div className="flex justify-between">
+                                                <span>Sold</span>
+                                                <span className="font-medium text-foreground">{movie.today?.total_sold.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>Shows</span>
+                                                <span className="font-medium">{movie.today?.total_showtimes}</span>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </div>
+                            </Card>
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            {/* SECTION 3: ARCHIVE (Hidden by default) */}
+            {archiveMovies.length > 0 && (
+                <section className="pt-4 border-t">
+                    <button
+                        onClick={() => setIsArchiveOpen(!isArchiveOpen)}
+                        className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors w-full group"
+                    >
+                        <div className="p-1 rounded bg-muted group-hover:bg-muted/80">
+                            {isArchiveOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                        </div>
+                        <span className="font-medium text-sm">Past Movies / No Data Today</span>
+                        <Badge variant="outline" className="ml-auto font-normal">{archiveMovies.length}</Badge>
+                    </button>
+
+                    {isArchiveOpen && (
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mt-4 animate-in slide-in-from-top-2 duration-200">
+                            {archiveMovies.map((movie) => (
+                                <div
+                                    key={movie.id}
+                                    className="cursor-pointer group relative opacity-70 hover:opacity-100 transition"
+                                    onClick={() => setSelectedMovie(movie)}
+                                >
+                                    <div className="aspect-[2/3] w-full relative rounded-md overflow-hidden bg-muted">
+                                        {movie.poster ? (
+                                            <Image
+                                                src={movie.poster}
+                                                alt={movie.title}
+                                                fill
+                                                className="object-cover grayscale group-hover:grayscale-0 transition-all"
+                                                sizes="150px"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                                                <Target className="w-4 h-4" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <p className="text-xs font-medium truncate mt-1.5">{movie.title}</p>
+                                    <p className="text-[10px] text-muted-foreground">Last updated: {new Date(movie.last_updated).toLocaleDateString()}</p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </section>
+            )}
         </div>
     );
 }
