@@ -388,6 +388,8 @@ Geocode new theatre locations using Google Maps API to ensure map visualization 
 | `theatres` | `{theatre_id}` | populate_firestore.py | Daily 6:30 AM |
 | `snapshots` | `latest`, `{date}` | populate_firestore.py | Daily 6:30 AM |
 | `schedules/{date}/movies` | `{movie_id}` | upload_schedules.py | Daily 6:30 AM |
+| `movies` | `{movie_id}` | movie-details CLI | Daily ~6:35 AM |
+| `movies/{id}/rating_history` | `{YYYY-MM-DD}` | movie-details CLI | Daily |
 | `seat_snapshots` | `{showtime_id}_{type}_{time}` | upload_seats.py | Daily 7:30 AM |
 | `movie_performance` | `{movie_id}` | movie_performance.py | Daily 8:00 AM |
 | `movie_performance/{id}/showtimes` | `{showtime_id}` | movie_performance.py | Daily 8:00 AM |
@@ -410,6 +412,18 @@ uv run python -m backend.cli.refresh_token --check
 
 # Then scrape seats
 uv run python -m backend.cli.cli seats --mode morning --use-stored-token --limit 10
+```
+
+### Scrape Movie Details
+```bash
+# Scrape details for all movies in latest snapshot
+uv run python -m backend.cli movie-details --all
+
+# Scrape specific movie
+uv run python -m backend.cli movie-details --movie-id 1961889705591132160
+
+# Backfill from movie_performance collection
+uv run python -m backend.cli movie-details --from-performance
 ```
 
 ### Generate Daily Summary Locally

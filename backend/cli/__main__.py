@@ -15,7 +15,7 @@ from backend.cli.cli import run_movie_scrape
 # If called directly as package, default to movie scraping for backward compatibility
 if __name__ == "__main__":
     # Check if using new subcommand style or old style
-    if len(sys.argv) > 1 and sys.argv[1] in ["movies", "seats"]:
+    if len(sys.argv) > 1 and sys.argv[1] in ["movies", "seats", "movie-details"]:
         # New style: redirect to CLI
         cli_main()
     else:

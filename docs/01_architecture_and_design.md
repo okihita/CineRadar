@@ -243,8 +243,10 @@ erDiagram
 | `snapshots` | `latest` or `{YYYY-MM-DD}` | Daily movie data (slim) |
 | `schedules/{date}/movies` | `{movie_id}` | Full showtime data by date |
 | `seat_snapshots` | `{showtime_id}_{type}_{time}` | Seat occupancy data |
-| `movie_performance` | `{movie_id}` | **[NEW]** Per-movie aggregated stats |
-| `movie_performance/{movie_id}/showtimes` | `{showtime_id}` | **[NEW]** Individual showtime snapshots with compressed seat layout (gzip) |
+| `movies` | `{movie_id}` | **[NEW]** Detailed movie info (cast, synopsis, ratings) |
+| `movies/{movie_id}/rating_history` | `{YYYY-MM-DD}` | **[NEW]** Daily rating score snapshots |
+| `movie_performance` | `{movie_id}` | Per-movie aggregated stats |
+| `movie_performance/{movie_id}/showtimes` | `{showtime_id}` | Individual showtime snapshots with compressed seat layout (gzip) |
 | `scraper_runs` | `{timestamp}_{type}` | Scraper run logs |
 | `auth_tokens` | `tix_jwt` | JWT token storage |
 
