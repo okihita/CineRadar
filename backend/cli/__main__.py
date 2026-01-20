@@ -10,7 +10,7 @@ import argparse
 import sys
 
 from backend.cli.cli import main as cli_main
-from backend.cli.cli import run_movie_scrape
+from backend.cli.commands.movies import run_movie_scrape
 
 # If called directly as package, default to movie scraping for backward compatibility
 if __name__ == "__main__":
@@ -20,6 +20,7 @@ if __name__ == "__main__":
         cli_main()
     else:
         # Old style: run movie scrape directly (backward compatible)
+        # Import directly from command module to ensure it works even if cli.py structure changes further
         parser = argparse.ArgumentParser(description="CineRadar - TIX.id Movie Scraper")
         parser.add_argument("--visible", action="store_true")
         parser.add_argument("--limit", type=int)
