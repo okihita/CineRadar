@@ -59,7 +59,6 @@ def scrape_movie_performance(movie_id: str, aggregator: PerformanceAggregator) -
     logger.info(f"✅ Found movie in snapshot: {movie_data.title}")
 
     # Fetch full details from schedules collection to get showtime_ids
-    from google.cloud import firestore
 
     # Use the existing authenticated client from repository
     db = aggregator.repo.db
@@ -218,8 +217,6 @@ def initialize_performance_data(aggregator: PerformanceAggregator) -> None:
 
     from datetime import datetime
     from zoneinfo import ZoneInfo
-
-    from google.cloud import firestore
 
     from backend.domain.models import DailyPerformance, MovieMetadata
 
