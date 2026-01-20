@@ -156,7 +156,6 @@ class TokenRefresher(BaseScraper):
                 self.log(f"⚠️ Could not read localStorage: {e}")
 
             self.log("❌ Login failed - could not capture token")
-            await self._save_screenshot(page, "06_failed_no_token")
             return False
 
         finally:
