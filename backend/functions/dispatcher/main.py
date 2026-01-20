@@ -191,7 +191,7 @@ def log_jit_dispatch_to_firestore(
         logger.info(f"Created scraper_logs/{today_str} with JIT dispatch ({time_slot})")
 
 
-@functions_framework.http
+@functions_framework.http  # type: ignore[untyped-decorator]
 def dispatch_jobs(request: Any) -> Any:
     """HTTP Cloud Function entry point.
 
