@@ -29,7 +29,7 @@ class CineRadarScraper(BaseScraper):
         Handles pagination by capturing auth headers and making direct API calls.
         """
         movie_id = movie.get("movie_id") or movie.get("id")
-        city_id = city.get("id")
+        city_id = str(city.get("id", ""))
         city_name = city.get("name")
         date_str = datetime.now().strftime("%Y-%m-%d")
 
