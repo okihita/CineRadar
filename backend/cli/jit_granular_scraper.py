@@ -72,7 +72,7 @@ class GranularScraper:
         self.token_refresher = TokenRefresher()
         self.data_dir = Path("data/jit_granular")
         self.data_dir.mkdir(parents=True, exist_ok=True)
-        self.active_monitors = []
+        self.active_monitors: list[Any] = []
 
     async def _check_and_refresh_token(self) -> bool:
         """Ensure valid token exists using hybrid refresh strategy."""

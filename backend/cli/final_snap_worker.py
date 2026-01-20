@@ -26,7 +26,7 @@ class FinalSnapWorker:
     def __init__(self) -> None:
         self.scraper = TixSeatScraper()
         self.token_refresher = TokenRefresher()
-        self.processed_ids = set()
+        self.processed_ids: set[str] = set()
 
     async def _ensure_token(self) -> None:
         token = await self.token_refresher.ensure_valid_token()
