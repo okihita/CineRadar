@@ -14,10 +14,6 @@
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "setup": "pnpm install && uv sync",
-    "scrape": "uv run python -m scraper",
     "type-check": "pnpm -r type-check"
-  },
-  "devDependencies": {
-    "concurrently": "^8.2.2"
   }
 }
