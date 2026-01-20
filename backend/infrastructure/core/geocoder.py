@@ -48,7 +48,12 @@ async def geocode_address(
 
     try:
         url = "https://nominatim.openstreetmap.org/search"
-        params = {"q": search_query, "format": "json", "limit": 1, "countrycodes": "id"}
+        params: dict[str, str | int] = {
+            "q": search_query,
+            "format": "json",
+            "limit": 1,
+            "countrycodes": "id",
+        }
         headers = {"User-Agent": "CineRadar/1.0 (cinema data aggregator)"}
 
         async with session.get(url, params=params, headers=headers) as response:

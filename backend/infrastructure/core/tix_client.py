@@ -210,8 +210,10 @@ class CineRadarScraper(BaseScraper):
             args=["--disable-blink-features=AutomationControlled", "--no-sandbox"],
         )
 
+        from typing import Any, cast
+
         context = await browser.new_context(
-            viewport=VIEWPORT,
+            viewport=cast(Any, VIEWPORT),
             user_agent=USER_AGENT,
             locale=LOCALE,
             timezone_id=TIMEZONE,

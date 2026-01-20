@@ -9,6 +9,8 @@ import asyncio
 import logging
 import os
 
+from typing import Any, cast
+
 from playwright.async_api import Browser, BrowserContext, Page, Playwright, async_playwright
 
 from backend.config import API_BASE, APP_BASE, LOCALE, TIMEZONE, USER_AGENT, VIEWPORT
@@ -76,7 +78,7 @@ class BaseScraper:
             )
 
             context = await browser.new_context(
-                viewport=VIEWPORT,
+                viewport=cast(Any, VIEWPORT),
                 user_agent=USER_AGENT,
                 locale=LOCALE,
                 timezone_id=TIMEZONE,
