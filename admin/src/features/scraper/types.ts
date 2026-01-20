@@ -32,7 +32,7 @@ export interface ScraperStats {
 }
 
 export interface MorningScrape {
-    status: 'success' | 'partial' | 'failed';
+    status: 'running' | 'success' | 'partial' | 'failed';
     timestamp: string;
     movies: number;
     cities: number;
@@ -55,7 +55,7 @@ export interface JITSummary {
  * Morning scrape run status within ScraperLog
  */
 export interface MorningRunLog {
-    status: 'running' | 'success' | 'failed';
+    status: 'running' | 'success' | 'partial' | 'failed';
     start_time?: string;
     end_time?: string;
     duration_seconds?: number;

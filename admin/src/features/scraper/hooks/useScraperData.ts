@@ -1,24 +1,25 @@
-/**
- * SWR hooks for scraper data
- */
 import useSWR from 'swr';
-import type { ScraperRun, CollectionStats, MorningScrape, JITSummary, ScraperStats } from '../types';
+import type { CollectionStats, MorningScrape, JITSummary, ScraperStats, ScraperLog } from '../types';
 import { formatWIBShort } from '@/lib/timeUtils';
 import { REFRESH_INTERVALS } from '@/lib/constants';
 
-interface ScraperCoreResponse {
-    runs: ScraperRun[];
-    todayMorningScrape: MorningScrape | null;
-    todayJITSummary: JITSummary | null;
+interface HistoryResponse {
+    logs: ScraperLog[];
 }
 
 interface ScraperStatsResponse {
     collections: CollectionStats[];
 }
 
-const coreFetcher = async (url: string): Promise<ScraperCoreResponse> => {
+interface TodayResponse {
+    log: ScraperLog;
+    jitSummary: JITSummary | null;
+    date: string;
+}
+
+const historyFetcher = async (url: string): Promise<HistoryResponse> => {
     const res = await fetch(url);
-    if (!res.ok) throw new Error('Failed to fetch scraper data');
+    if (!res.ok) throw new Error('Failed to fetch scraper logs');
     return res.json();
 };
 
@@ -28,50 +29,76 @@ const statsFetcher = async (url: string): Promise<ScraperStatsResponse> => {
     return res.json();
 };
 
+const todayFetcher = async (url: string): Promise<TodayResponse | null> => {
+    const res = await fetch(url);
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error('Failed to fetch today log');
+    return res.json();
+};
+
 export function useScraperData() {
-    const { data: coreData, error: coreError, isLoading: coreLoading, mutate: refreshCore } = useSWR<ScraperCoreResponse>(
+    // 1. History API (New scraper_logs)
+    const { data: historyData, error: historyError, isLoading: historyLoading, mutate: refreshHistory } = useSWR<HistoryResponse>(
         '/api/scraper',
-        coreFetcher,
+        historyFetcher,
         { revalidateOnFocus: false, dedupingInterval: REFRESH_INTERVALS.FAST }
     );
 
+    // 2. New API for today's status
+    const { data: todayData, error: todayError, isLoading: todayLoading, mutate: refreshToday } = useSWR<TodayResponse | null>(
+        '/api/scraper/today',
+        todayFetcher,
+        { revalidateOnFocus: true, dedupingInterval: REFRESH_INTERVALS.FAST }
+    );
+
+    // 3. Stats API (Legacy collection stats - strictly database counts)
     const { data: statsData, error: statsError, isLoading: statsLoading, mutate: refreshStats } = useSWR<ScraperStatsResponse>(
         '/api/scraper/stats',
         statsFetcher,
         { revalidateOnFocus: false, dedupingInterval: REFRESH_INTERVALS.MODERATE }
     );
 
-    const runs = coreData?.runs ?? [];
+    const logs = historyData?.logs ?? [];
 
-    // Calculate derived stats
+    // Calculate derived stats from logs
     const stats: ScraperStats = {
-        totalRuns: runs.length,
-        successRate: runs.length > 0
-            ? Math.round((runs.filter(r => r.status === 'success').length / runs.length) * 100)
+        totalRuns: logs.length,
+        successRate: logs.length > 0
+            ? Math.round((logs.filter(l => l.morning_run?.status === 'success').length / logs.length) * 100)
             : 0,
-        avgMovies: runs.length > 0
-            ? Math.round(runs.reduce((sum, r) => sum + r.movies, 0) / runs.length)
+        avgMovies: logs.length > 0
+            ? Math.round(logs.reduce((sum, l) => sum + (l.morning_run?.movies_found || 0), 0) / logs.length)
             : 0,
-        avgTheatres: runs.length > 0
-            ? Math.round(runs.reduce((sum, r) => sum + r.theatres_total, 0) / runs.length)
+        avgTheatres: logs.length > 0
+            ? Math.round(logs.reduce((sum, l) => sum + (l.morning_run?.theatres_total || 0), 0) / logs.length)
             : 0,
-        lastRunTime: runs[0]?.timestamp ? formatWIBShort(runs[0].timestamp) : 'Never',
+        lastRunTime: logs[0]?.created_at ? formatWIBShort(logs[0].created_at) : 'Never',
     };
 
+    // Transform new ScraperLog to MorningScrape for UI
+    const morningScrape: MorningScrape | null = todayData?.log.morning_run ? {
+        status: todayData.log.morning_run.status,
+        timestamp: todayData.log.morning_run.end_time || todayData.log.morning_run.start_time || todayData.log.created_at,
+        movies: todayData.log.morning_run.movies_found,
+        cities: todayData.log.morning_run.cities_covered,
+        theatres: todayData.log.morning_run.theatres_total,
+    } : null;
+
     const refresh = () => {
-        refreshCore();
+        refreshHistory();
+        refreshToday();
         refreshStats();
     };
 
     return {
-        runs,
-        morningScrape: coreData?.todayMorningScrape ?? null,
-        jitSummary: coreData?.todayJITSummary ?? null,
+        logs, // Expose logs directly instead of runs
+        morningScrape,
+        jitSummary: todayData?.jitSummary ?? null,
         collections: statsData?.collections ?? [],
         stats,
-        isLoading: coreLoading,
+        isLoading: historyLoading || todayLoading,
         isStatsLoading: statsLoading,
-        isError: !!coreError || !!statsError,
+        isError: !!historyError || !!statsError || !!todayError,
         refresh,
     };
 }

@@ -5,7 +5,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle2, AlertTriangle, XCircle, Calendar, RefreshCw } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, XCircle, Calendar, RefreshCw, Loader2 } from 'lucide-react';
 import { formatWIBShort, formatWIBWithRelative } from '@/lib/timeUtils';
 import type { MorningScrape, JITSummary } from '../types';
 
@@ -33,6 +33,8 @@ export function TodayScrapeCards({ morningScrape, jitSummary }: TodayScrapeCards
                                     <CheckCircle2 className="w-8 h-8 text-green-500" />
                                 ) : morningScrape.status === 'partial' ? (
                                     <AlertTriangle className="w-8 h-8 text-yellow-500" />
+                                ) : morningScrape.status === 'running' ? (
+                                    <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
                                 ) : (
                                     <XCircle className="w-8 h-8 text-red-500" />
                                 )}

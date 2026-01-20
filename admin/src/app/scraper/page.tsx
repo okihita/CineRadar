@@ -30,7 +30,7 @@ export default function ScraperPage() {
 
     // Server state (SWR)
     const {
-        runs,
+        logs,
         morningScrape,
         jitSummary,
         collections,
@@ -73,7 +73,7 @@ export default function ScraperPage() {
             <TodayScrapeCards morningScrape={morningScrape} jitSummary={jitSummary} />
 
             {/* Scrape History Table */}
-            <ScrapeHistoryTable runs={runs} />
+            <ScrapeHistoryTable logs={logs} />
 
             {/* JIT Monitor */}
             <div className="mb-6">

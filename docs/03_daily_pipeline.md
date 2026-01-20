@@ -341,21 +341,55 @@ The summary appears in the GitHub Actions job summary:
 
 ### Firestore Output
 
-Saved to `daily_summaries/{date}`:
+Daily summary is written to `scraper_logs/{date}` (merged with morning scrape and JIT data):
 
 ```json
 {
   "date": "2026-01-15",
-  "total_audience": 42350,
-  "total_seats": 125000,
-  "occupancy_pct": 33.9,
-  "movie_count": 28,
-  "theatre_count": 487,
-  "city_count": 83,
-  "showtime_count": 12450,
-  "generated_at": "2026-01-16T00:00:15"
+  "created_at": "2026-01-15T06:30:00Z",
+  "morning_run": {
+    "status": "success",
+    "end_time": "2026-01-15T06:30:00Z",
+    "movies_found": 28,
+    "theatres_total": 487,
+    "cities_covered": 83
+  },
+  "jit_runs": {
+    "10:00": { "showtimes_found": 45, "jobs_published": 45, "status": "ok" },
+    "10:05": { "showtimes_found": 52, "jobs_published": 52, "status": "ok" }
+  },
+  "daily_summary": {
+    "generated_at": "2026-01-16T00:00:15Z",
+    "total_audience": 42350,
+    "total_seats": 125000,
+    "occupancy_pct": 33.9,
+    "showtime_count": 12450,
+    "movie_count": 28,
+    "theatre_count": 487,
+    "city_count": 83
+  }
 }
 ```
+
+---
+
+## Admin Dashboard: Scraper Monitor
+
+The Admin Dashboard `/scraper` page consumes `scraper_logs` via Next.js API routes:
+
+| API Route | Source | Purpose |
+|-----------|--------|---------|
+| `GET /api/scraper` | `scraper_logs` (30 days) | History table |
+| `GET /api/scraper/today` | `scraper_logs/{today}` | Today's status cards |
+| `GET /api/scraper/stats` | DB collection counts | Database explorer |
+
+### Frontend Components
+
+| Component | File | Data Source |
+|-----------|------|-------------|
+| `TodayScrapeCards` | [`admin/src/features/scraper/components/TodayScrapeCards.tsx`](../admin/src/features/scraper/components/TodayScrapeCards.tsx) | `/api/scraper/today` |
+| `ScrapeHistoryTable` | [`admin/src/features/scraper/components/ScrapeHistoryTable.tsx`](../admin/src/features/scraper/components/ScrapeHistoryTable.tsx) | `/api/scraper` |
+| `JITGranularMonitor` | [`admin/src/components/scraper/JITGranularMonitor.tsx`](../admin/src/components/scraper/JITGranularMonitor.tsx) | `/api/scraper/jit` |
 
 ---
 
@@ -393,8 +427,7 @@ Geocode new theatre locations using Google Maps API to ensure map visualization 
 | `seat_snapshots` | `{showtime_id}_{type}_{time}` | upload_seats.py | Daily 7:30 AM |
 | `movie_performance` | `{movie_id}` | movie_performance.py | Daily 8:00 AM |
 | `movie_performance/{id}/showtimes` | `{showtime_id}` | movie_performance.py | Daily 8:00 AM |
-| `daily_summaries` | `{date}` | daily_summary.py | Daily 12:00 AM |
-| `scraper_runs` | `{timestamp}_{type}` | Various | Each run |
+| `scraper_logs` | `{YYYY-MM-DD}` | Various | Consolidated daily log |
 
 ---
 

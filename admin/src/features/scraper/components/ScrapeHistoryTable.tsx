@@ -1,17 +1,14 @@
-/**
- * Scrape History Table component
- */
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Database, RefreshCw, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
+import { Database, RefreshCw, CheckCircle2, AlertTriangle, XCircle, Info } from 'lucide-react';
 import { formatWIBShort } from '@/lib/timeUtils';
-import type { ScraperRun } from '../types';
+import type { ScraperLog } from '../types';
 
 interface ScrapeHistoryTableProps {
-    runs: ScraperRun[];
+    logs: ScraperLog[];
 }
 
 function StatusIcon({ status }: { status: string }) {
@@ -23,11 +20,11 @@ function StatusIcon({ status }: { status: string }) {
         case 'failed':
             return <XCircle className="w-4 h-4 text-red-500" />;
         default:
-            return null;
+            return <AlertTriangle className="w-4 h-4 text-gray-400" />;
     }
 }
 
-export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
+export function ScrapeHistoryTable({ logs }: ScrapeHistoryTableProps) {
     return (
         <Card className="mb-6">
             <CardHeader className="py-3">
@@ -40,17 +37,17 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-40">Timestamp</TableHead>
+                            <TableHead className="w-40">Date (WIB)</TableHead>
                             <TableHead className="w-24">Status</TableHead>
                             <TableHead className="text-right">Movies</TableHead>
                             <TableHead className="text-right">Cities</TableHead>
                             <TableHead className="text-right">Theatres</TableHead>
-                            <TableHead className="text-right">Pre-sales</TableHead>
+                            <TableHead className="text-right">JIT Runs</TableHead>
                             <TableHead>Changes</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {runs.length === 0 ? (
+                        {logs.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                                     <Database className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -58,46 +55,52 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            runs.map((run, idx) => {
-                                const prevRun = runs[idx + 1];
-                                const movieDiff = prevRun ? run.movies - prevRun.movies : 0;
-                                const theatreDiff = prevRun ? run.theatres_total - prevRun.theatres_total : 0;
+                            logs.map((log, idx) => {
+                                const prevLog = logs[idx + 1];
+                                const currentMovies = log.morning_run?.movies_found || 0;
+                                const prevMovies = prevLog?.morning_run?.movies_found || 0;
+                                const currentTheatres = log.morning_run?.theatres_total || 0;
+                                const prevTheatres = prevLog?.morning_run?.theatres_total || 0;
+
+                                const movieDiff = prevLog ? currentMovies - prevMovies : 0;
+                                const theatreDiff = prevLog ? currentTheatres - prevTheatres : 0;
+                                const status = log.morning_run?.status || 'unknown';
+                                const jitCount = log.jit_runs ? Object.keys(log.jit_runs).length : 0;
 
                                 return (
-                                    <TableRow key={run.id || run.timestamp}>
+                                    <TableRow key={log.date}>
                                         <TableCell className="font-mono text-xs">
-                                            {formatWIBShort(run.timestamp)}
+                                            {formatWIBShort(log.created_at)}
+                                            <div className="text-[10px] text-muted-foreground">{log.date}</div>
                                         </TableCell>
                                         <TableCell>
-                                            <Badge
-                                                variant={
-                                                    run.status === 'success'
-                                                        ? 'default'
-                                                        : run.status === 'partial'
-                                                            ? 'secondary'
-                                                            : 'destructive'
-                                                }
-                                                className="text-xs flex items-center gap-1 w-fit"
-                                            >
-                                                <StatusIcon status={run.status} />
-                                                {run.status}
-                                            </Badge>
+                                            <div className="flex items-center gap-1">
+                                                <Badge
+                                                    variant={status === 'success' ? 'default' : status === 'partial' ? 'secondary' : 'destructive'}
+                                                    className="text-xs flex items-center gap-1 w-fit"
+                                                >
+                                                    <StatusIcon status={status} />
+                                                    {status}
+                                                </Badge>
+                                                {log.morning_run?.error && (
+                                                    <span title={log.morning_run.error} className="cursor-help inline-flex">
+                                                        <Info className="w-3 h-3 text-red-400" />
+                                                    </span>
+                                                )}
+                                            </div>
                                         </TableCell>
-                                        <TableCell className="text-right font-mono">{run.movies}</TableCell>
-                                        <TableCell className="text-right font-mono">{run.cities}</TableCell>
+                                        <TableCell className="text-right font-mono">{currentMovies}</TableCell>
+                                        <TableCell className="text-right font-mono">{log.morning_run?.cities_covered || 0}</TableCell>
                                         <TableCell className="text-right font-mono">
-                                            {run.theatres_success}/{run.theatres_total}
-                                            {run.theatres_failed > 0 && (
-                                                <span className="text-red-500 ml-1 text-xs">
-                                                    ({run.theatres_failed} failed)
-                                                </span>
-                                            )}
+                                            {currentTheatres}
                                         </TableCell>
                                         <TableCell className="text-right font-mono">
-                                            {run.presales || '-'}
+                                            {jitCount > 0 ? (
+                                                <Badge variant="outline" className="text-xs">{jitCount}</Badge>
+                                            ) : '-'}
                                         </TableCell>
                                         <TableCell className="text-xs text-muted-foreground">
-                                            {prevRun && (
+                                            {prevLog && (
                                                 <span>
                                                     {movieDiff !== 0 && (
                                                         <span className={movieDiff > 0 ? 'text-green-600' : 'text-red-500'}>
@@ -114,7 +117,6 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
                                                     {movieDiff === 0 && theatreDiff === 0 && <span>No change</span>}
                                                 </span>
                                             )}
-                                            {!prevRun && idx === runs.length - 1 && <span>First run</span>}
                                         </TableCell>
                                     </TableRow>
                                 );
