@@ -8,8 +8,9 @@ Used for tracking occupancy across all cities/theatres for a specific movie.
 import gzip
 import json
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
 from typing import Any
+
+from backend.domain.utils import get_now_iso
 
 
 @dataclass
@@ -48,7 +49,7 @@ class ShowtimeSnapshot:
     sold_seats: int
     occupancy_pct: float
     layout: list[list[dict[str, Any]]] = field(default_factory=list)
-    scraped_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    scraped_at: str = field(default_factory=lambda: get_now_iso())
 
     @property
     def available_seats(self) -> int:
@@ -137,7 +138,7 @@ class MovieMetadata:
     title: str
     poster: str
     age_category: str | None = None
-    last_updated: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    last_updated: str = field(default_factory=lambda: get_now_iso())
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -174,7 +175,7 @@ class DailyPerformance:
     total_sold: int = 0
     avg_occupancy_pct: float = 0.0
     cities: list[str] = field(default_factory=list)
-    last_updated: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    last_updated: str = field(default_factory=lambda: get_now_iso())
 
     def to_dict(self) -> dict[str, Any]:
         return {

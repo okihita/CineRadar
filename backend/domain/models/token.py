@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+from backend.domain.utils import get_now_iso
+
 
 @dataclass
 class Token:
@@ -123,11 +125,10 @@ class Token:
         Returns:
             Token instance
         """
-        now = datetime.now(UTC)
 
         return cls(
             token=token,
             phone=phone,
-            stored_at=now.isoformat(),
+            stored_at=get_now_iso(),
             refresh_token=refresh_token,
         )

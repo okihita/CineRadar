@@ -1,6 +1,6 @@
 """
 City data for TIX.id scraper.
-contains all 83 Indonesian cities with their TIX.id IDs.
+Contains all 83 Indonesian cities with their TIX.id IDs.
 """
 
 CITIES = [

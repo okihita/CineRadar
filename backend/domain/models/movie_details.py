@@ -9,6 +9,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
+from backend.domain.utils import get_now_iso
+
 
 @dataclass
 class Trailer:
@@ -283,6 +285,6 @@ class MovieDetails:
         return cls.from_dict(
             {
                 **data,
-                "scraped_at": datetime.now(UTC).isoformat(),
+                "scraped_at": get_now_iso(),
             }
         )
