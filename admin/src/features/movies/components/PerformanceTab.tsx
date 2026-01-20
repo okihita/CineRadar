@@ -75,6 +75,7 @@ export function PerformanceTab() {
                 const data = await res.json();
                 if (data.success) {
                     setMovies(data.movies);
+                } else {
                     console.error(data.error || 'Failed to load movies');
                 }
             } catch (e) {
