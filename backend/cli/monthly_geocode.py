@@ -28,7 +28,7 @@ def load_cache() -> dict:
     return {}
 
 
-def save_cache(cache: dict):
+def save_cache(cache: dict) -> None:
     """Save cache to file."""
     with open(CACHE_FILE, "w", encoding="utf-8") as f:
         json.dump(cache, f, indent=2, ensure_ascii=False)
@@ -90,7 +90,7 @@ def geocode_theatre(theatre_name: str, city: str, cache: dict) -> dict | None:
     return result
 
 
-def main():
+def main() -> None:
     # Find the latest movie file
     data_dir = Path(__file__).parent.parent.parent / "data"
     movie_files = sorted(data_dir.glob("movies_*.json"), reverse=True)

@@ -8,11 +8,12 @@ import logging
 import os
 import tempfile
 from datetime import UTC, datetime
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
-def get_firestore_client():
+def get_firestore_client() -> Any:
     """Get Firestore client with proper credentials.
 
     Supports:

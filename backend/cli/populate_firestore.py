@@ -19,7 +19,7 @@ from backend.infrastructure.repositories.firestore_utils import (
 logger = logging.getLogger(__name__)
 
 
-def main():
+def main() -> None:
     # Use project root data/ directory (same as merge_batches.py)
     project_root = Path(__file__).parent.parent.parent
     data_dir = project_root / "data"

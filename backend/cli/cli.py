@@ -14,6 +14,7 @@ import logging
 from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
+from typing import Any
 
 from backend.config import CITIES
 from backend.infrastructure.core.seat_scraper import SeatScraper
@@ -35,10 +36,10 @@ def run_movie_scrape(
     batch: int | None = None,
     total_batches: int = 9,
     max_retries: int = 3,
-):
+) -> dict | None:
     """Run the movie availability scraper with retry logic."""
 
-    async def _run():
+    async def _run() -> dict | None:
         scraper = CineRadarScraper()
         output_path = Path(output_dir)
         output_path.mkdir(exist_ok=True)
@@ -318,10 +319,10 @@ def run_seat_scrape(
     output_dir: str = "data",
     jit_window: int = 8,  # Changed to 8 minutes for T-8 window
     use_stored_token: bool = False,
-):
+) -> list[dict] | None:
     """Run seat scraping based on mode."""
 
-    async def _run():
+    async def _run() -> list[dict] | None:
         # Load movie data
         movie_data = load_movie_data(output_dir)
         if not movie_data:
@@ -407,7 +408,7 @@ def run_movie_details_scrape(
     from_performance: bool = False,
     skip_existing: bool = True,
     update_ratings: bool = False,
-):
+) -> Any:
     """Scrape detailed movie information from TIX.id API.
 
     Args:
@@ -423,7 +424,7 @@ def run_movie_details_scrape(
         FirestoreMoviePerformanceRepository,
     )
 
-    async def _run():
+    async def _run() -> Any:
         logger.info("\n" + "=" * 60)
         logger.info("🎬 CineRadar - Movie Details Scraper")
         logger.info("=" * 60 + "\n")
@@ -488,7 +489,7 @@ def run_movie_details_scrape(
 # ============================================================================
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="CineRadar - TIX.id Movie & Seat Scraper",
         formatter_class=argparse.RawDescriptionHelpFormatter,

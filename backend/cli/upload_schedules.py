@@ -16,7 +16,7 @@ from google.oauth2 import service_account
 logger = logging.getLogger(__name__)
 
 
-def get_firestore_client():
+def get_firestore_client() -> firestore.Client:
     """Initialize Firestore client from service account."""
     sa_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
     if sa_json:
@@ -74,7 +74,7 @@ def transform_for_firestore(movie: dict, date: str) -> dict:
     }
 
 
-def upload_schedules_to_firestore(movies: list, date: str):
+def upload_schedules_to_firestore(movies: list, date: str) -> None:
     """Upload per-movie schedule documents to Firestore.
 
     Args:
@@ -106,7 +106,7 @@ def upload_schedules_to_firestore(movies: list, date: str):
     logger.info(f"\n✅ Uploaded {uploaded} movie schedules to schedules/{date}/movies/")
 
 
-def main():
+def main() -> None:
     logger.info("\n" + "=" * 60)
     logger.info("🎬 CineRadar Schedule Upload")
     logger.info("=" * 60 + "\n")

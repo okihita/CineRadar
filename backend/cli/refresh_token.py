@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class TokenRefresher(BaseScraper):
     """Dedicated scraper for token refresh only."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     async def refresh_token(self, headless: bool = True) -> bool:
@@ -162,7 +162,7 @@ class TokenRefresher(BaseScraper):
             await self._close_browser(playwright, browser, context, page)
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Refresh TIX.id JWT Token")
     parser.add_argument("--visible", action="store_true", help="Show browser window")
     parser.add_argument("--check", action="store_true", help="Check current token status")
@@ -222,7 +222,7 @@ def main():
             logger.error(f"❌ Error checking token TTL: {e}")
             sys.exit(1)
 
-    async def _run():
+    async def _run() -> bool:
         refresher = TokenRefresher()
         return await refresher.refresh_token(headless=not args.visible)
 

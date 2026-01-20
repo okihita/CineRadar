@@ -23,16 +23,16 @@ logger = logging.getLogger("FinalSnap")
 
 
 class FinalSnapWorker:
-    def __init__(self):
+    def __init__(self) -> None:
         self.scraper = TixSeatScraper()
         self.token_refresher = TokenRefresher()
         self.processed_ids = set()
 
-    async def _ensure_token(self):
+    async def _ensure_token(self) -> None:
         token = await self.token_refresher.ensure_valid_token()
         self.scraper.set_token(token.token)
 
-    async def capture_final(self, task: dict):
+    async def capture_final(self, task: dict) -> bool:
         """Scrape and save the final snap for a showtime."""
         showtime_id = task["id"]
         logger.info(
@@ -63,7 +63,7 @@ class FinalSnapWorker:
             logger.error(f"❌ Failed to capture final snap for {showtime_id}: {e}")
             return False
 
-    def _save_local(self, data: dict, task: dict):
+    def _save_local(self, data: dict, task: dict) -> None:
         output_dir = Path("data/final_snaps")
         output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -73,7 +73,7 @@ class FinalSnapWorker:
         with open(output_dir / filename, "w") as f:
             json.dump(data, f, indent=2)
 
-    async def run(self, tasks: list[dict]):
+    async def run(self, tasks: list[dict]) -> None:
         logger.info(f"🚀 Final Snap Worker started for {len(tasks)} showtimes")
 
         while True:
@@ -114,7 +114,7 @@ class FinalSnapWorker:
             await asyncio.sleep(30)
 
 
-async def main():
+async def main() -> None:
     # Load today's movie data
     data_path = Path("data/movies_2025-12-23.json")  # Example for now, should be dynamic
     if not data_path.exists():

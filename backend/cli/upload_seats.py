@@ -16,7 +16,7 @@ from google.oauth2 import service_account
 logger = logging.getLogger(__name__)
 
 
-def get_firestore_client():
+def get_firestore_client() -> firestore.Client:
     """Initialize Firestore client from service account."""
     sa_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
     if sa_json:
@@ -59,7 +59,7 @@ def merge_seat_batches(data_dir: str = "data") -> list:
     return all_seats
 
 
-def upload_seats_to_firestore(seats: list, batch_size: int = 500):
+def upload_seats_to_firestore(seats: list, batch_size: int = 500) -> None:
     """Upload seat snapshots to Firestore in batches."""
     if not seats:
         logger.info("No seats to upload")
@@ -88,7 +88,7 @@ def upload_seats_to_firestore(seats: list, batch_size: int = 500):
     logger.info(f"✅ Successfully uploaded {len(seats)} seat snapshots")
 
 
-def main():
+def main() -> None:
     logger.info("\n" + "=" * 60)
     logger.info("🪑 CineRadar Seat Data Upload")
     logger.info("=" * 60 + "\n")

@@ -9,7 +9,7 @@ import re
 import time
 from datetime import datetime
 
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright, Page, BrowserContext, Route, Request
 
 from backend.config import CITIES, LOCALE, TIMEZONE, USER_AGENT, VIEWPORT
 from backend.infrastructure.core.geocoder import Geocoder
@@ -19,11 +19,11 @@ from backend.infrastructure.scrapers.base import BaseScraper
 class CineRadarScraper(BaseScraper):
     """Movie availability scraper for TIX.id"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.cities = CITIES
 
-    async def _fetch_movie_schedule(self, page, context, movie: dict, city: dict) -> list[dict]:
+    async def _fetch_movie_schedule(self, page: Page, context: BrowserContext, movie: dict, city: dict) -> list[dict]:
         """
         Fetch theatre schedule for a movie in a specific city.
         Handles pagination by capturing auth headers and making direct API calls.
@@ -44,7 +44,7 @@ class CineRadarScraper(BaseScraper):
 
         try:
             # Capture headers from the first request
-            async def capture_request(route, request):
+            async def capture_request(route: Route, request: Request) -> None:
                 nonlocal captured_headers, captured_movie_id
                 if "/v1/schedules/movies" in request.url and not captured_headers:
                     captured_headers = await request.all_headers()

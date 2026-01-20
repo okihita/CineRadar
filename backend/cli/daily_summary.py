@@ -18,7 +18,7 @@ from google.oauth2 import service_account
 logger = logging.getLogger(__name__)
 
 
-def get_firestore_client():
+def get_firestore_client() -> firestore.Client:
     """Initialize Firestore client from service account."""
     sa_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
     if sa_json:
@@ -114,7 +114,7 @@ Generated at: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")} WIB
 """
 
 
-def send_github_summary(message: str):
+def send_github_summary(message: str) -> None:
     """Output summary to GitHub Actions step summary."""
     summary_file = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary_file:
@@ -126,7 +126,7 @@ def send_github_summary(message: str):
         logger.info(message)
 
 
-def main():
+def main() -> None:
     logger.info("\n" + "=" * 60)
     logger.info("📊 CineRadar Daily Summary Report")
     logger.info("=" * 60 + "\n")

@@ -29,7 +29,7 @@ class TokenSchema(BaseModel):
 
     @field_validator("stored_at", "expires_at")
     @classmethod
-    def validate_iso_timestamp(cls, v):
+    def validate_iso_timestamp(cls, v: str) -> str:
         """Ensure timestamps are valid ISO format."""
         try:
             datetime.fromisoformat(v)

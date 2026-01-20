@@ -287,7 +287,7 @@ def initialize_performance_data(aggregator: PerformanceAggregator) -> None:
     logger.info(f"\n✅ Successfully initialized {count} movies")
 
 
-def main():
+def main() -> None:
     """CLI entry point."""
     parser = argparse.ArgumentParser(description="Movie Performance Aggregation CLI")
     parser.add_argument("--movie-id", help="Scrape specific movie by ID")

@@ -17,6 +17,7 @@ import logging
 import os
 from datetime import datetime
 from zoneinfo import ZoneInfo
+from typing import Any
 
 import functions_framework
 import requests
@@ -335,7 +336,7 @@ def save_snapshot(
 
 
 @functions_framework.cloud_event
-def scrape_seat(cloud_event):
+def scrape_seat(cloud_event: Any) -> None:
     """Pub/Sub Cloud Function entry point.
 
     Triggered by messages on scrape-seat-jit topic.

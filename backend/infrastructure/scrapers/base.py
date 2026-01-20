@@ -39,7 +39,7 @@ class BaseScraper:
                     await self._close_browser(playwright, browser, context, page)
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize with configuration from environment."""
         self.api_base = API_BASE
         self.app_base = APP_BASE

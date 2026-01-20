@@ -3,6 +3,7 @@ Movie and Showtime Schemas
 Validates movie data from TIX.id scraper output.
 """
 
+from typing import Any
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -39,7 +40,7 @@ class RoomSchema(BaseModel):
 
     @field_validator("all_showtimes", mode="before")
     @classmethod
-    def ensure_list(cls, v):
+    def ensure_list(cls, v: Any) -> list:
         """Handle None or missing all_showtimes."""
         return v if v else []
 
@@ -59,7 +60,7 @@ class TheatreScheduleSchema(BaseModel):
 
     @field_validator("merchant")
     @classmethod
-    def validate_merchant(cls, v):
+    def validate_merchant(cls, v: str) -> str:
         """Validate merchant is a known cinema chain."""
         valid = {"XXI", "CGV", "Cinépolis", "CINEPOLIS"}
         if v not in valid:
@@ -86,7 +87,7 @@ class MovieSchema(BaseModel):
 
     @field_validator("id")
     @classmethod
-    def id_not_empty(cls, v):
+    def id_not_empty(cls, v: str) -> str:
         if not v or not v.strip():
             raise ValueError("Movie ID cannot be empty")
         return v

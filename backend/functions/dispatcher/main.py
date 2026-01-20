@@ -13,6 +13,7 @@ import logging
 import os
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
+from typing import Any
 
 import functions_framework
 from google.cloud import firestore, pubsub_v1
@@ -191,7 +192,7 @@ def log_jit_dispatch_to_firestore(
 
 
 @functions_framework.http
-def dispatch_jobs(request):
+def dispatch_jobs(request: Any) -> Any:
     """HTTP Cloud Function entry point.
 
     Triggered by Cloud Scheduler every 5 minutes.

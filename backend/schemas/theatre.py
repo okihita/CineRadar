@@ -34,7 +34,7 @@ class TheatreSchema(BaseModel):
 
     @field_validator("merchant")
     @classmethod
-    def validate_merchant(cls, v):
+    def validate_merchant(cls, v: str) -> str:
         """Validate merchant is a known cinema chain."""
         valid = {"XXI", "CGV", "Cinépolis", "CINEPOLIS"}
         if v not in valid:
@@ -43,6 +43,6 @@ class TheatreSchema(BaseModel):
 
     @field_validator("city")
     @classmethod
-    def uppercase_city(cls, v):
+    def uppercase_city(cls, v: str) -> str:
         """Ensure city is uppercase for consistency."""
         return v.upper() if v else v

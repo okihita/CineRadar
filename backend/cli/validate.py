@@ -102,7 +102,7 @@ def validate_daily_scrape(data_dir: str = "data", file_path: str | None = None) 
     return True
 
 
-def main():
+def main() -> None:
     """CLI entry point."""
     import argparse
 

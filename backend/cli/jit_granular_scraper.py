@@ -50,7 +50,7 @@ class RateLimiter:
         self.time_window = time_window
         self.timestamps: list[float] = []
 
-    async def acquire(self):
+    async def acquire(self) -> None:
         """Wait until a request slot is available."""
         while True:
             now = time.time()
@@ -66,7 +66,7 @@ class RateLimiter:
 
 
 class GranularScraper:
-    def __init__(self):
+    def __init__(self) -> None:
         self.scraper = TixSeatScraper()
         self.rate_limiter = RateLimiter(MAX_REQUESTS_PER_MINUTE)
         self.token_refresher = TokenRefresher()
@@ -84,7 +84,7 @@ class GranularScraper:
             logger.error(f"❌ Token refresh failed: {e}")
             return False
 
-    async def _scrape_single(self, task: dict[str, Any]):
+    async def _scrape_single(self, task: dict[str, Any]) -> bool:
         """Perform a single scrape task with anti-bot delays."""
         showtime_id = task["id"]
         movie_title = task["movie"]
@@ -126,7 +126,7 @@ class GranularScraper:
             logger.error(f"❌ Error scraping {showtime_id}: {e}")
             return False
 
-    def _save_result(self, occupancy: SeatOccupancy, task: dict[str, Any]):
+    def _save_result(self, occupancy: SeatOccupancy, task: dict[str, Any]) -> None:
         """Save observation to JSON line file."""
         filename = f"jit_{task['date']}_{task['movie'].replace(' ', '_')}_{task['start_time'].replace(':', '')}.jsonl"
         filepath = self.data_dir / filename
@@ -146,7 +146,7 @@ class GranularScraper:
         with open(filepath, "a") as f:
             f.write(json.dumps(record) + "\n")
 
-    async def monitor(self, showtime_tasks: list[dict[str, Any]]):
+    async def monitor(self, showtime_tasks: list[dict[str, Any]]) -> None:
         """Main monitoring loop."""
         logger.info(f"🚀 Starting monitoring for {len(showtime_tasks)} showtimes")
 
@@ -189,7 +189,7 @@ class GranularScraper:
                 )
 
 
-async def main():
+async def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="JIT Granular Seat Scraper")
