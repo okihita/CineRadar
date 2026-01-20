@@ -9,6 +9,7 @@ import logging
 import os
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any, cast
 
 from google.cloud import firestore
 from google.oauth2 import service_account
@@ -28,7 +29,7 @@ def get_firestore_client() -> firestore.Client:
         return firestore.Client()
 
 
-def load_movie_data(data_dir: str = "data") -> dict | None:
+def load_movie_data(data_dir: str = "data") -> dict[str, Any] | None:
     """Load the most recent movies JSON file.
 
     Args:
@@ -47,10 +48,10 @@ def load_movie_data(data_dir: str = "data") -> dict | None:
     latest_file = movie_files[0]
 
     with open(latest_file, encoding="utf-8") as f:
-        return json.load(f)
+        return cast(dict[str, Any], json.load(f))
 
 
-def transform_for_firestore(movie: dict, date: str) -> dict:
+def transform_for_firestore(movie: dict[str, Any], date: str) -> dict[str, Any]:
     """Transform a movie dict into Firestore document format.
 
     Args:
@@ -74,7 +75,7 @@ def transform_for_firestore(movie: dict, date: str) -> dict:
     }
 
 
-def upload_schedules_to_firestore(movies: list, date: str) -> None:
+def upload_schedules_to_firestore(movies: list[dict[str, Any]], date: str) -> None:
     """Upload per-movie schedule documents to Firestore.
 
     Args:

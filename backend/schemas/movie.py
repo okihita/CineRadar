@@ -41,7 +41,7 @@ class RoomSchema(BaseModel):
 
     @field_validator("all_showtimes", mode="before")
     @classmethod
-    def ensure_list(cls, v: Any) -> list:
+    def ensure_list(cls, v: Any) -> list[Any]:
         """Handle None or missing all_showtimes."""
         return v if v else []
 

@@ -10,6 +10,7 @@ import json
 import logging
 import os
 from datetime import datetime, timedelta
+from typing import Any
 from zoneinfo import ZoneInfo
 
 from google.cloud import firestore
@@ -29,7 +30,7 @@ def get_firestore_client() -> firestore.Client:
         return firestore.Client()
 
 
-def aggregate_daily_audience(date_str: str | None = None) -> dict:
+def aggregate_daily_audience(date_str: str | None = None) -> dict[str, Any]:
     """
     Aggregate seat occupancy data for a given date.
 
@@ -92,7 +93,7 @@ def aggregate_daily_audience(date_str: str | None = None) -> dict:
     }
 
 
-def format_summary_message(stats: dict) -> str:
+def format_summary_message(stats: dict[str, Any]) -> str:
     """Format stats as a readable message."""
     return f"""
 🎬 CineRadar Daily Summary - {stats["date"]}

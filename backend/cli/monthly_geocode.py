@@ -9,6 +9,7 @@ import logging
 import os
 import time
 from pathlib import Path
+from typing import Any, cast
 
 import requests
 
@@ -20,21 +21,21 @@ PLACES_SEARCH_URL = "https://places.googleapis.com/v1/places:searchText"
 CACHE_FILE = Path(__file__).parent.parent.parent / "data" / "places_cache.json"
 
 
-def load_cache() -> dict:
+def load_cache() -> dict[str, Any]:
     """Load cached place data."""
     if CACHE_FILE.exists():
         with open(CACHE_FILE, encoding="utf-8") as f:
-            return json.load(f)
+            return cast(dict[str, Any], json.load(f))
     return {}
 
 
-def save_cache(cache: dict) -> None:
+def save_cache(cache: dict[str, Any]) -> None:
     """Save cache to file."""
     with open(CACHE_FILE, "w", encoding="utf-8") as f:
         json.dump(cache, f, indent=2, ensure_ascii=False)
 
 
-def search_place(theatre_name: str, city: str) -> dict | None:
+def search_place(theatre_name: str, city: str) -> dict[str, Any] | None:
     """
     Search for a theatre using Google Places API (New) Text Search.
     Returns place_id, lat, lng, and name.
@@ -75,12 +76,12 @@ def search_place(theatre_name: str, city: str) -> dict | None:
     return None
 
 
-def geocode_theatre(theatre_name: str, city: str, cache: dict) -> dict | None:
+def geocode_theatre(theatre_name: str, city: str, cache: dict[str, Any]) -> dict[str, Any] | None:
     """Geocode a theatre, using cache if available."""
     cache_key = f"{theatre_name}|{city}"
 
     if cache_key in cache:
-        return cache[cache_key]
+        return cast(dict[str, Any], cache[cache_key])
 
     result = search_place(theatre_name, city)
 

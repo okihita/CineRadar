@@ -9,6 +9,7 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from google.cloud import firestore
 from google.oauth2 import service_account
@@ -28,7 +29,7 @@ def get_firestore_client() -> firestore.Client:
         return firestore.Client()
 
 
-def merge_seat_batches(data_dir: str = "data") -> list:
+def merge_seat_batches(data_dir: str = "data") -> list[dict[str, Any]]:
     """Merge all seat batch files into a single list."""
     data_path = Path(data_dir)
     all_seats = []
@@ -59,7 +60,7 @@ def merge_seat_batches(data_dir: str = "data") -> list:
     return all_seats
 
 
-def upload_seats_to_firestore(seats: list, batch_size: int = 500) -> None:
+def upload_seats_to_firestore(seats: list[dict[str, Any]], batch_size: int = 500) -> None:
     """Upload seat snapshots to Firestore in batches."""
     if not seats:
         logger.info("No seats to upload")

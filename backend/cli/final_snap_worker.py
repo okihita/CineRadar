@@ -9,6 +9,7 @@ import logging
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 from backend.infrastructure.scrapers.seat_scraper import TixSeatScraper
 from backend.infrastructure.token_refresher import TokenRefresher
@@ -32,7 +33,7 @@ class FinalSnapWorker:
         token = await self.token_refresher.ensure_valid_token()
         self.scraper.set_token(token.token)
 
-    async def capture_final(self, task: dict) -> bool:
+    async def capture_final(self, task: dict[str, Any]) -> bool:
         """Scrape and save the final snap for a showtime."""
         showtime_id = task["id"]
         logger.info(
@@ -66,7 +67,7 @@ class FinalSnapWorker:
             logger.error(f"❌ Failed to capture final snap for {showtime_id}: {e}")
             return False
 
-    def _save_local(self, data: dict, task: dict) -> None:
+    def _save_local(self, data: dict[str, Any], task: dict[str, Any]) -> None:
         output_dir = Path("data/final_snaps")
         output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -76,7 +77,7 @@ class FinalSnapWorker:
         with open(output_dir / filename, "w") as f:
             json.dump(data, f, indent=2)
 
-    async def run(self, tasks: list[dict]) -> None:
+    async def run(self, tasks: list[dict[str, Any]]) -> None:
         logger.info(f"🚀 Final Snap Worker started for {len(tasks)} showtimes")
 
         while True:

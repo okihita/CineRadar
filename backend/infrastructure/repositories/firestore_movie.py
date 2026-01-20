@@ -128,7 +128,7 @@ class FirestoreMovieRepository(IMovieRepository):
             logger.error(f"⚠️ Error getting snapshot for {date}: {e}")
             return None
 
-    def _dict_to_result(self, data: dict) -> ScrapeResult:
+    def _dict_to_result(self, data: dict[str, Any]) -> ScrapeResult:
         """Convert Firestore dict to ScrapeResult."""
         movies = [Movie.from_dict(m) for m in data.get("movies", [])]
 

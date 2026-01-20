@@ -10,7 +10,7 @@ Schema:
 
 import logging
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
 
 from backend.domain.models import MovieDetails, RatingScore
 from backend.infrastructure.repositories.firestore_token import _get_firestore_client
@@ -136,7 +136,7 @@ class FirestoreMovieDetailsRepository:
         try:
             doc_ref = self.db.collection(self.COLLECTION).document(movie_id)
             doc = doc_ref.get()
-            return doc.exists
+            return cast(bool, doc.exists)
         except Exception:
             return False
 

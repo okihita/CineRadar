@@ -12,7 +12,7 @@ import asyncio
 import time
 from datetime import datetime
 from types import MappingProxyType
-from typing import ClassVar
+from typing import Any, ClassVar, cast
 
 import aiohttp
 
@@ -25,7 +25,7 @@ class SeatScraper(BaseScraper):
     """Seat occupancy scraper for TIX.id using direct API calls."""
 
     # Merchant to API path mapping (immutable)
-    MERCHANT_PATHS: ClassVar[MappingProxyType] = MappingProxyType(
+    MERCHANT_PATHS: ClassVar[MappingProxyType[str, str]] = MappingProxyType(
         {
             "CGV": "cgv",
             "XXI": "xxi",
@@ -61,7 +61,7 @@ class SeatScraper(BaseScraper):
         """Convert merchant name to API path."""
         return self.MERCHANT_PATHS.get(merchant, merchant.lower())
 
-    def _count_seat(self, status: int, counters: dict) -> int:
+    def _count_seat(self, status: int, counters: dict[str, int]) -> int:
         """
         Helper to increment counters based on status.
 
@@ -84,7 +84,7 @@ class SeatScraper(BaseScraper):
         # Other statuses (aisles, etc) are ignored in counts
         return -1
 
-    def calculate_occupancy(self, layout_data: dict) -> dict:
+    def calculate_occupancy(self, layout_data: dict[str, Any]) -> dict[str, Any]:
         """
         Parse seat layout response and calculate occupancy.
         Handles both nested (XXI/CGV) and flat (Cinépolis) structures.
@@ -154,7 +154,9 @@ class SeatScraper(BaseScraper):
             "layout": layout_grid,
         }
 
-    async def _fetch_seat_layout_api(self, showtime_id: str, merchant: str) -> dict | None:
+    async def _fetch_seat_layout_api(
+        self, showtime_id: str, merchant: str
+    ) -> dict[str, Any] | None:
         """
         Fetch seat layout via direct API call using JWT token.
 
@@ -194,7 +196,7 @@ class SeatScraper(BaseScraper):
                 if response.status == 200:
                     data = await response.json()
                     if data.get("success"):
-                        return data
+                        return cast(dict[str, Any], data)
                     else:
                         self.log(
                             f"   ⚠️ API error: {data.get('error', {}).get('message', 'Unknown')}"
@@ -209,7 +211,9 @@ class SeatScraper(BaseScraper):
 
         return None
 
-    async def scrape_showtime_occupancy(self, showtime_info: dict) -> dict | None:
+    async def scrape_showtime_occupancy(
+        self, showtime_info: dict[str, Any]
+    ) -> dict[str, Any] | None:
         """
         Scrape seat occupancy for a single showtime via direct API call.
 
@@ -248,8 +252,8 @@ class SeatScraper(BaseScraper):
         }
 
     async def scrape_all_showtimes_api_only(
-        self, showtimes: list[dict], delay_between_requests: float = 1.0
-    ) -> list[dict]:
+        self, showtimes: list[dict[str, Any]], delay_between_requests: float = 1.0
+    ) -> list[dict[str, Any]]:
         """
         Scrape seat occupancy using API calls only (no browser).
 

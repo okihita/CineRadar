@@ -7,9 +7,10 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 from zoneinfo import ZoneInfo
 
-from backend.config import CITIES
+from backend.city_data import CITIES
 from backend.infrastructure.core.tix_client import CineRadarScraper
 
 logger = logging.getLogger(__name__)
@@ -24,10 +25,10 @@ def run_movie_scrape(
     batch: int | None = None,
     total_batches: int = 9,
     max_retries: int = 3,
-) -> dict | None:
+) -> dict[str, Any] | None:
     """Run the movie availability scraper with retry logic."""
 
-    async def _run() -> dict | None:
+    async def _run() -> dict[str, Any] | None:
         scraper = CineRadarScraper()
         output_path = Path(output_dir)
         output_path.mkdir(exist_ok=True)

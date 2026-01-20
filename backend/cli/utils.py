@@ -7,6 +7,7 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
+from typing import Any, cast
 
 from google.cloud import firestore
 from google.oauth2 import service_account
@@ -14,7 +15,7 @@ from google.oauth2 import service_account
 logger = logging.getLogger(__name__)
 
 
-def load_movie_data(data_dir: str = "data", use_firestore: bool = False) -> dict | None:
+def load_movie_data(data_dir: str = "data", use_firestore: bool = False) -> dict[str, Any] | None:
     """Load today's movie data from local files or Firestore.
 
     Args:
@@ -38,7 +39,7 @@ def load_movie_data(data_dir: str = "data", use_firestore: bool = False) -> dict
     for path in candidates:
         if path.exists():
             with open(path) as f:
-                return json.load(f)
+                return cast(dict[str, Any], json.load(f))
 
     logger.warning(f"⚠️ No movie data found for {date_str}")
 
@@ -47,7 +48,7 @@ def load_movie_data(data_dir: str = "data", use_firestore: bool = False) -> dict
     return load_movie_data_from_firestore(date_str)
 
 
-def load_movie_data_from_firestore(date_str: str) -> dict | None:
+def load_movie_data_from_firestore(date_str: str) -> dict[str, Any] | None:
     """Load movie data from Firestore schedules collection.
 
     Loads from schedules/{date}/movies/{movie_id} collection.

@@ -8,7 +8,7 @@ import logging
 import os
 import tempfile
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ def get_firestore_client() -> Any:
     return firestore.Client(project=os.environ.get("FIREBASE_PROJECT_ID", "cineradar-481014"))
 
 
-def upsert_theatre(theatre_data: dict, validate: bool = True) -> bool:
+def upsert_theatre(theatre_data: dict[str, Any], validate: bool = True) -> bool:
     """
     Insert or update a theatre in Firestore.
 
@@ -129,20 +129,20 @@ def upsert_theatre(theatre_data: dict, validate: bool = True) -> bool:
         return False
 
 
-def get_theatre(theatre_id: str) -> dict | None:
+def get_theatre(theatre_id: str) -> dict[str, Any] | None:
     """Get a theatre by ID."""
     try:
         db = get_firestore_client()
         doc = db.collection("theatres").document(str(theatre_id)).get()
         if doc.exists:
-            return doc.to_dict()
+            return cast(dict[str, Any], doc.to_dict())
         return None
     except Exception as e:
         logger.error(f"Error getting theatre {theatre_id}: {e}")
         return None
 
 
-def get_all_theatres() -> list[dict]:
+def get_all_theatres() -> list[dict[str, Any]]:
     """Get all theatres."""
     try:
         db = get_firestore_client()
@@ -153,7 +153,7 @@ def get_all_theatres() -> list[dict]:
         return []
 
 
-def get_theatres_by_city(city: str) -> list[dict]:
+def get_theatres_by_city(city: str) -> list[dict[str, Any]]:
     """Get all theatres in a city."""
     try:
         db = get_firestore_client()
@@ -164,7 +164,7 @@ def get_theatres_by_city(city: str) -> list[dict]:
         return []
 
 
-def sync_theatres_from_scrape(movies: list[dict]) -> dict:
+def sync_theatres_from_scrape(movies: list[dict[str, Any]]) -> dict[str, Any]:
     """
     Sync theatres from scraped movie data to Firestore.
 
@@ -174,8 +174,6 @@ def sync_theatres_from_scrape(movies: list[dict]) -> dict:
     Returns:
         Summary dict with counts
     """
-    from typing import Any
-
     seen_theatres: dict[str, dict[str, Any]] = {}
 
     for movie in movies:
@@ -220,7 +218,7 @@ def sync_theatres_from_scrape(movies: list[dict]) -> dict:
     return {"total": len(seen_theatres), "success": success, "failed": failed}
 
 
-def log_scraper_run(run_data: dict, run_type: str = "movies") -> bool:
+def log_scraper_run(run_data: dict[str, Any], run_type: str = "movies") -> bool:
     """Log a scraper run to Firestore with datetime-based ID.
 
     Args:
@@ -288,7 +286,7 @@ def log_morning_scrape(
         jakarta_now = datetime.now(ZoneInfo("Asia/Jakarta"))
         today_str = jakarta_now.strftime("%Y-%m-%d")
 
-        morning_run: dict = {"status": status}
+        morning_run: dict[str, Any] = {"status": status}
 
         if start_time:
             morning_run["start_time"] = start_time
@@ -443,7 +441,7 @@ def log_daily_summary(
         return False
 
 
-def save_daily_snapshot(data: dict) -> bool:
+def save_daily_snapshot(data: dict[str, Any]) -> bool:
     """Save daily movie snapshot to Firestore for web app.
 
     Saves to both 'latest' (for current access) and dated document (for history).

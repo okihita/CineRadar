@@ -16,7 +16,7 @@ import json
 import logging
 import os
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 from zoneinfo import ZoneInfo
 
 import functions_framework
@@ -51,7 +51,7 @@ def get_firestore_client() -> firestore.Client:
     return firestore.Client(project=PROJECT_ID)
 
 
-def load_token_data(db: firestore.Client) -> dict | None:
+def load_token_data(db: firestore.Client) -> dict[str, Any] | None:
     """Load TIX.id auth token data from Firestore.
 
     Returns dict with keys: token, refresh_token, stored_at
@@ -108,7 +108,7 @@ def refresh_access_token(db: firestore.Client, refresh_token: str) -> str | None
                 )
 
                 logger.info("✅ Inline refresh successful & saved to Firestore")
-                return new_token
+                return cast(str, new_token)
             else:
                 logger.error("❌ Refresh response missing token")
         else:
@@ -166,10 +166,10 @@ def get_valid_token(db: firestore.Client) -> str | None:
         # If refresh fails, fall back to current token (better than nothing)
         logger.warning("Refresh failed, using existing token as fallback")
 
-    return current_token
+    return cast(str, current_token)
 
 
-def fetch_seat_layout(showtime_id: str, merchant: str, token: str) -> dict | None:
+def fetch_seat_layout(showtime_id: str, merchant: str, token: str) -> dict[str, Any] | None:
     """Fetch seat layout from TIX.id API.
 
     Args:
@@ -200,7 +200,7 @@ def fetch_seat_layout(showtime_id: str, merchant: str, token: str) -> dict | Non
         if response.status_code == 200:
             data = response.json()
             if data.get("success"):
-                return data
+                return cast(dict[str, Any], data)
             else:
                 logger.error(f"API error: {data.get('error', {}).get('message', 'Unknown')}")
                 return None
@@ -217,7 +217,9 @@ def fetch_seat_layout(showtime_id: str, merchant: str, token: str) -> dict | Non
         return None
 
 
-def calculate_occupancy(seat_map: list) -> tuple[int, int, float, list]:
+def calculate_occupancy(
+    seat_map: list[dict[str, Any]],
+) -> tuple[int, int, float, list[Any]]:
     """Calculate occupancy from seat map.
 
     Status codes:
@@ -282,8 +284,8 @@ def calculate_occupancy(seat_map: list) -> tuple[int, int, float, list]:
 
 def save_snapshot(
     db: firestore.Client,
-    showtime_data: dict,
-    layout: list,
+    showtime_data: dict[str, Any],
+    layout: list[dict[str, Any]],
     total_seats: int,
     sold_seats: int,
     occupancy_pct: float,

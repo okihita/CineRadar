@@ -8,7 +8,7 @@ import json
 import logging
 import os
 import tempfile
-from typing import Any
+from typing import Any, cast
 
 from backend.application.ports.storage import ITokenRepository
 from backend.domain.errors import FirestoreError
@@ -161,7 +161,7 @@ class FirestoreTokenRepository(ITokenRepository):
             if not doc.exists:
                 return None
 
-            return doc.to_dict()
+            return cast(dict[str, str | int | None], doc.to_dict())
         except Exception:
             return None
 

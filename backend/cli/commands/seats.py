@@ -7,6 +7,7 @@ import json
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 from backend.cli.utils import load_movie_data
 from backend.infrastructure.core.seat_scraper import SeatScraper
@@ -15,11 +16,11 @@ logger = logging.getLogger(__name__)
 
 
 def extract_showtimes_from_data(
-    movie_data: dict,
+    movie_data: dict[str, Any],
     city_filter: str | None = None,
     limit: int | None = None,
     jit_window_minutes: int = 20,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Extract showtime info from movie data for seat scraping."""
     showtimes = []
 
@@ -77,7 +78,9 @@ def extract_showtimes_from_data(
     return showtimes
 
 
-def filter_jit_showtimes(showtimes: list[dict], window_minutes: int = 8) -> list[dict]:
+def filter_jit_showtimes(
+    showtimes: list[dict[str, Any]], window_minutes: int = 8
+) -> list[dict[str, Any]]:
     """
     Filter showtimes to capture at T-8 minutes before start.
 
@@ -134,10 +137,10 @@ def run_seat_scrape(
     output_dir: str = "data",
     jit_window: int = 8,
     use_stored_token: bool = False,
-) -> list[dict] | None:
+) -> list[dict[str, Any]] | None:
     """Run seat scraping based on mode."""
 
-    async def _run() -> list[dict] | None:
+    async def _run() -> list[dict[str, Any]] | None:
         # Load movie data
         movie_data = load_movie_data(output_dir)
         if not movie_data:

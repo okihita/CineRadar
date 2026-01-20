@@ -55,7 +55,7 @@ def parse_showtime(time_str: str, date: datetime) -> datetime | None:
 
 def find_upcoming_showtimes(
     db: firestore.Client, window_start: datetime, window_end: datetime
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Find showtimes starting within the specified time window.
 
     Args:
@@ -122,7 +122,7 @@ def find_upcoming_showtimes(
     return showtimes_to_scrape
 
 
-def publish_to_pubsub(publisher: pubsub_v1.PublisherClient, showtimes: list[dict]) -> int:
+def publish_to_pubsub(publisher: pubsub_v1.PublisherClient, showtimes: list[dict[str, Any]]) -> int:
     """Publish showtimes to Pub/Sub topic for scraping.
 
     Args:

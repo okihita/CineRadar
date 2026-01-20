@@ -8,10 +8,12 @@ import contextlib
 import re
 import time
 from datetime import datetime
+from typing import Any, cast
 
 from playwright.async_api import BrowserContext, Page, Request, Route, async_playwright
 
-from backend.config import CITIES, LOCALE, TIMEZONE, USER_AGENT, VIEWPORT
+from backend.city_data import CITIES
+from backend.config import LOCALE, TIMEZONE, USER_AGENT, VIEWPORT
 from backend.infrastructure.core.geocoder import Geocoder
 from backend.infrastructure.scrapers.base import BaseScraper
 
@@ -24,8 +26,8 @@ class CineRadarScraper(BaseScraper):
         self.cities = CITIES
 
     async def _fetch_movie_schedule(
-        self, page: Page, context: BrowserContext, movie: dict, city: dict
-    ) -> list[dict]:
+        self, page: Page, context: BrowserContext, movie: dict[str, Any], city: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """
         Fetch theatre schedule for a movie in a specific city.
         Handles pagination by capturing auth headers and making direct API calls.
@@ -157,7 +159,7 @@ class CineRadarScraper(BaseScraper):
 
         return theatres
 
-    async def geocode_all_theatres(self, movie_map: dict) -> dict:
+    async def geocode_all_theatres(self, movie_map: dict[str, Any]) -> dict[str, Any]:
         """
         Geocode all theatre addresses in the movie data.
         Uses caching to avoid repeated API calls.
@@ -174,7 +176,7 @@ class CineRadarScraper(BaseScraper):
         specific_city: str | None = None,
         city_names: list[str] | None = None,
         fetch_schedules: bool = False,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """
         Scrape movie availability for all cities.
 
@@ -212,10 +214,8 @@ class CineRadarScraper(BaseScraper):
             args=["--disable-blink-features=AutomationControlled", "--no-sandbox"],
         )
 
-        from typing import Any, cast
-
         context = await browser.new_context(
-            viewport=cast("Any", VIEWPORT),
+            viewport=VIEWPORT,
             user_agent=USER_AGENT,
             locale=LOCALE,
             timezone_id=TIMEZONE,
