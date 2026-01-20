@@ -69,7 +69,7 @@ class FirestoreTheatreRepository(ITheatreRepository):
                 new_rooms = set(theatre.room_types)
                 merged_rooms = list(existing_rooms | new_rooms)
 
-                update_data = {
+                update_data: dict[str, Any] = {
                     "name": theatre.name,
                     "merchant": theatre.merchant,
                     "city": theatre.city,
@@ -80,9 +80,11 @@ class FirestoreTheatreRepository(ITheatreRepository):
                 }
 
                 # Only update location if provided and not already set
-                if theatre.lat is not None and existing.get("lat") is None:
+                existing_lat = existing.get("lat")
+                existing_lng = existing.get("lng")
+                if theatre.lat is not None and existing_lat is None:
                     update_data["lat"] = theatre.lat
-                if theatre.lng is not None and existing.get("lng") is None:
+                if theatre.lng is not None and existing_lng is None:
                     update_data["lng"] = theatre.lng
                 if theatre.place_id and not existing.get("place_id"):
                     update_data["place_id"] = theatre.place_id

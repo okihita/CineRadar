@@ -157,7 +157,7 @@ def scrape_movie_performance(movie_id: str, aggregator: PerformanceAggregator) -
 
     # Convert to ShowtimeSnapshot and aggregate
     for result in results:
-        snapshot = ShowtimeSnapshot(
+        showtime_snap = ShowtimeSnapshot(
             showtime_id=result["showtime_id"],
             movie_id=result["movie_id"],
             movie_title=result["movie_title"],
@@ -176,7 +176,7 @@ def scrape_movie_performance(movie_id: str, aggregator: PerformanceAggregator) -
         )
 
         aggregator.on_showtime_scraped(
-            snapshot, movie_title=movie_data.title, movie_poster=movie_data.poster
+            showtime_snap, movie_title=movie_data.title, movie_poster=movie_data.poster
         )
 
     logger.info("\n🎉 Performance data saved to Firestore")
