@@ -8,9 +8,9 @@ Requires authentication token from Firestore.
 import logging
 from typing import Any
 
-import httpx
+import aiohttp
 
-from backend.config import API_BASE
+from backend.config import API_BASE, USER_AGENT
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +31,8 @@ class MovieDetailsClient:
             print(data["name"])
     """
 
-    def __init__(self, timeout: float = 30.0):
-        self.timeout = timeout
+    def __init__(self, timeout: float = 30.0) -> None:
+        self.timeout = aiohttp.ClientTimeout(total=timeout)
         self._token: str | None = None
 
     def set_token(self, token: str) -> None:
@@ -45,14 +45,16 @@ class MovieDetailsClient:
         Returns:
             True if token loaded successfully
         """
-        from backend.infrastructure.repositories.firestore_token import FirestoreTokenRepository
+        from backend.infrastructure.repositories.firestore_token import (
+            FirestoreTokenRepository,
+        )
 
         try:
             repo = FirestoreTokenRepository()
             token_info = repo.get_token_info()
 
             if token_info and token_info.get("token"):
-                self._token = token_info["token"]
+                self._token = str(token_info["token"])
                 logger.info("✅ Loaded auth token from Firestore")
                 return True
 
@@ -65,7 +67,10 @@ class MovieDetailsClient:
 
     def _get_headers(self) -> dict[str, str]:
         """Get request headers with auth token."""
-        headers = {"Content-Type": "application/json"}
+        headers = {
+            "Accept": "application/json",
+            "User-Agent": USER_AGENT,
+        }
         if self._token:
             headers["Authorization"] = f"Bearer {self._token}"
         return headers
@@ -86,22 +91,24 @@ class MovieDetailsClient:
         url = f"{MOVIE_DETAILS_ENDPOINT}/{movie_id}"
 
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.get(url, headers=self._get_headers())
-                response.raise_for_status()
+            async with (
+                aiohttp.ClientSession(timeout=self.timeout) as session,
+                session.get(url, headers=self._get_headers()) as response,
+            ):
+                if response.status != 200:
+                    logger.error(f"HTTP error fetching movie {movie_id}: {response.status}")
+                    return None
 
-                json_data = response.json()
+                json_data = await response.json()
 
                 if not json_data.get("success"):
                     logger.warning(f"API returned success=false for movie {movie_id}")
                     return None
 
-                return json_data.get("data")
+                data: dict[str, Any] | None = json_data.get("data")
+                return data
 
-        except httpx.HTTPStatusError as e:
-            logger.error(f"HTTP error fetching movie {movie_id}: {e.response.status_code}")
-            return None
-        except httpx.RequestError as e:
+        except aiohttp.ClientError as e:
             logger.error(f"Request error fetching movie {movie_id}: {e}")
             return None
         except Exception as e:
@@ -120,7 +127,7 @@ class MovieDetailsClient:
         Returns:
             List of movie data dicts (only successful fetches)
         """
-        results = []
+        results: list[dict[str, Any]] = []
         skip = skip_existing or set()
 
         for movie_id in movie_ids:
@@ -133,4 +140,3 @@ class MovieDetailsClient:
                 results.append(data)
 
         return results
-
