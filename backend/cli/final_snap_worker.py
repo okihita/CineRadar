@@ -59,6 +59,9 @@ class FinalSnapWorker:
 
                 logger.info(f"✅ Final snap captured for {showtime_id}")
                 return True
+            else:
+                logger.warning(f"⚠️ No seat data returned for {showtime_id}")
+                return False
         except Exception as e:
             logger.error(f"❌ Failed to capture final snap for {showtime_id}: {e}")
             return False
