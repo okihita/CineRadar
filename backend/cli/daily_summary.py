@@ -10,6 +10,7 @@ import json
 import logging
 import os
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from google.cloud import firestore
 from google.oauth2 import service_account
@@ -130,8 +131,13 @@ def main():
     logger.info("📊 CineRadar Daily Summary Report")
     logger.info("=" * 60 + "\n")
 
-    # Get yesterday's date (for midnight report)
-    yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+    # Get yesterday's date in JAKARTA timezone (critical: cron runs at 17:00 UTC = 00:00 WIB)
+    # At 00:00 WIB Jan 21, we want to summarize Jan 20
+    jakarta_tz = ZoneInfo("Asia/Jakarta")
+    jakarta_now = datetime.now(jakarta_tz)
+    yesterday = (jakarta_now - timedelta(days=1)).strftime("%Y-%m-%d")
+    
+    logger.info(f"📅 Summarizing date: {yesterday} (calculated from Jakarta time: {jakarta_now.strftime('%Y-%m-%d %H:%M:%S %Z')})")
 
     stats = aggregate_daily_audience(yesterday)
 
@@ -146,16 +152,24 @@ def main():
     # Output to GitHub Actions summary if available
     send_github_summary(message)
 
-    # Store summary in Firestore for historical tracking
+    # Store summary in Firestore for historical tracking (new location: scraper_logs)
     try:
         db = get_firestore_client()
-        db.collection("daily_summaries").document(yesterday).set(
-            {
-                **stats,
-                "generated_at": datetime.now().isoformat(),
-            }
+        daily_summary_data = {
+            "generated_at": datetime.now().isoformat(),
+            "total_audience": stats["total_audience"],
+            "total_seats": stats["total_seats"],
+            "occupancy_pct": stats["occupancy_pct"],
+            "showtime_count": stats["showtime_count"],
+            "movie_count": stats["movie_count"],
+            "theatre_count": stats["theatre_count"],
+            "city_count": stats["city_count"],
+        }
+        db.collection("scraper_logs").document(yesterday).set(
+            {"daily_summary": daily_summary_data},
+            merge=True,
         )
-        logger.info(f"💾 Saved summary to Firestore: daily_summaries/{yesterday}")
+        logger.info(f"💾 Saved summary to Firestore: scraper_logs/{yesterday}")
     except Exception as e:
         logger.error(f"⚠️ Failed to save summary: {e}")
 

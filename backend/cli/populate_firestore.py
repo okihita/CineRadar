@@ -11,7 +11,7 @@ from zoneinfo import ZoneInfo
 sys.path.insert(0, str(Path(__file__).parent))
 
 from backend.infrastructure.repositories.firestore_utils import (
-    log_scraper_run,
+    log_morning_scrape,
     save_daily_snapshot,
     sync_theatres_from_scrape,
 )
@@ -36,8 +36,11 @@ def main():
             input_file = movie_files[0]
         else:
             logger.error("❌ No movie data files found")
-            log_scraper_run(
-                {"status": "failed", "error": "No data files found", "movies": 0, "theatres": 0}
+            log_morning_scrape(
+                status="failed",
+                error="No data files found",
+                movies_found=0,
+                theatres_total=0,
             )
             return
 
@@ -58,18 +61,12 @@ def main():
     logger.info("🔥 Syncing theatres...")
     result = sync_theatres_from_scrape(movies)
 
-    # Log scraper run
-    log_scraper_run(
-        {
-            "status": "success" if result["failed"] == 0 else "partial",
-            "date": data.get("date"),
-            "movies": len(movies),
-            "theatres_total": result["total"],
-            "theatres_success": result["success"],
-            "theatres_failed": result["failed"],
-            "cities": summary.get("total_cities", 0),
-            "presales": summary.get("presale_count", 0),
-        }
+    # Log morning scrape to new consolidated scraper_logs
+    log_morning_scrape(
+        status="success" if result["failed"] == 0 else "partial",
+        movies_found=len(movies),
+        theatres_total=result["total"],
+        cities_covered=summary.get("total_cities", 0),
     )
 
     logger.info(f"✅ Done! Theatres: {result['success']}/{result['total']}")

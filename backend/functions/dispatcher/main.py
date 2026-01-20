@@ -27,8 +27,8 @@ PUBSUB_TOPIC = os.environ.get("PUBSUB_TOPIC", "scrape-seat-jit")
 JAKARTA_TZ = ZoneInfo("Asia/Jakarta")
 
 # Window configuration (minutes from now)
-WINDOW_START_MINUTES = 8  # Start scraping showtimes 8 min before start
-WINDOW_END_MINUTES = 13  # End window at 13 min before start (5 min buffer)
+WINDOW_START_MINUTES = 8   # Start scraping showtimes 8 min before start
+WINDOW_END_MINUTES = 15    # End window at 15 min (overlap with 5-min intervals, safe for duplicates)
 
 
 def get_firestore_client() -> firestore.Client:
@@ -146,6 +146,50 @@ def publish_to_pubsub(publisher: pubsub_v1.PublisherClient, showtimes: list[dict
     return len(futures)
 
 
+def log_jit_dispatch_to_firestore(
+    db: firestore.Client,
+    time_slot: str,
+    showtimes_found: int,
+    jobs_published: int,
+    window_start_str: str,
+    window_end_str: str,
+    status: str = "ok",
+    error: str | None = None,
+) -> None:
+    """Log JIT dispatcher run to scraper_logs/{today}/jit_runs.{time_slot}."""
+    from google.api_core.exceptions import NotFound
+
+    now = datetime.now(JAKARTA_TZ)
+    today_str = now.strftime("%Y-%m-%d")
+
+    jit_entry = {
+        "dispatched_at": datetime.utcnow().isoformat() + "Z",
+        "showtimes_found": showtimes_found,
+        "jobs_published": jobs_published,
+        "window_start": window_start_str,
+        "window_end": window_end_str,
+        "status": status,
+    }
+    if error:
+        jit_entry["error"] = error
+
+    doc_ref = db.collection("scraper_logs").document(today_str)
+
+    try:
+        doc_ref.update({f"jit_runs.{time_slot}": jit_entry})
+        logger.info(f"Logged JIT dispatch ({time_slot}) to scraper_logs/{today_str}")
+    except NotFound:
+        # Create doc if missing (morning scrape hasn't run yet)
+        doc_ref.set(
+            {
+                "date": today_str,
+                "created_at": datetime.utcnow().isoformat() + "Z",
+                "jit_runs": {time_slot: jit_entry},
+            }
+        )
+        logger.info(f"Created scraper_logs/{today_str} with JIT dispatch ({time_slot})")
+
+
 @functions_framework.http
 def dispatch_jobs(request):
     """HTTP Cloud Function entry point.
@@ -180,10 +224,49 @@ def dispatch_jobs(request):
             # Publish to Pub/Sub
             count = publish_to_pubsub(publisher, showtimes)
             logger.info(f"Published {count} messages to {PUBSUB_TOPIC}")
+
+            # Log to scraper_logs
+            time_slot = now.strftime("%H:%M")
+            log_jit_dispatch_to_firestore(
+                db=db,
+                time_slot=time_slot,
+                showtimes_found=len(showtimes),
+                jobs_published=count,
+                window_start_str=window_start.strftime("%H:%M"),
+                window_end_str=window_end.strftime("%H:%M"),
+                status="ok",
+            )
+
             return {"status": "ok", "published": count}, 200
         else:
+            # Log empty dispatch too
+            time_slot = now.strftime("%H:%M")
+            log_jit_dispatch_to_firestore(
+                db=db,
+                time_slot=time_slot,
+                showtimes_found=0,
+                jobs_published=0,
+                window_start_str=window_start.strftime("%H:%M"),
+                window_end_str=window_end.strftime("%H:%M"),
+                status="ok",
+            )
             return {"status": "ok", "published": 0, "message": "No showtimes in window"}, 200
 
     except Exception as e:
         logger.error(f"Error in dispatcher: {e}", exc_info=True)
+        # Log error to scraper_logs
+        try:
+            time_slot = now.strftime("%H:%M")
+            log_jit_dispatch_to_firestore(
+                db=db,
+                time_slot=time_slot,
+                showtimes_found=0,
+                jobs_published=0,
+                window_start_str=window_start.strftime("%H:%M"),
+                window_end_str=window_end.strftime("%H:%M"),
+                status="error",
+                error=str(e),
+            )
+        except Exception:
+            pass  # Don't fail if logging fails
         return {"status": "error", "error": str(e)}, 500

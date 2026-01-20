@@ -246,6 +246,200 @@ def log_scraper_run(run_data: dict, run_type: str = "movies") -> bool:
         return False
 
 
+# ============================================================================
+# NEW: Consolidated scraper_logs functions (daily document model)
+# ============================================================================
+
+
+def log_morning_scrape(
+    status: str,
+    start_time: str | None = None,
+    end_time: str | None = None,
+    duration_seconds: float | None = None,
+    movies_found: int = 0,
+    theatres_total: int = 0,
+    cities_covered: int = 0,
+    error: str | None = None,
+) -> bool:
+    """Log morning scrape status to consolidated daily scraper_logs document.
+
+    Args:
+        status: 'running', 'success', or 'failed'
+        start_time: ISO timestamp when scrape started
+        end_time: ISO timestamp when scrape completed
+        duration_seconds: Total duration in seconds
+        movies_found: Number of movies found
+        theatres_total: Total theatres scraped
+        cities_covered: Number of cities covered
+        error: Error message if status is 'failed'
+
+    Returns:
+        True if successful
+    """
+    from zoneinfo import ZoneInfo
+
+    try:
+        db = get_firestore_client()
+
+        # Use Jakarta timezone for document ID
+        jakarta_now = datetime.now(ZoneInfo("Asia/Jakarta"))
+        today_str = jakarta_now.strftime("%Y-%m-%d")
+
+        morning_run: dict = {"status": status}
+
+        if start_time:
+            morning_run["start_time"] = start_time
+        if end_time:
+            morning_run["end_time"] = end_time
+        if duration_seconds is not None:
+            morning_run["duration_seconds"] = duration_seconds
+        if status in ("success", "failed"):
+            morning_run["movies_found"] = movies_found
+            morning_run["theatres_total"] = theatres_total
+            morning_run["cities_covered"] = cities_covered
+        if error:
+            morning_run["error"] = error
+
+        db.collection("scraper_logs").document(today_str).set(
+            {
+                "date": today_str,
+                "created_at": datetime.now(UTC).isoformat(),
+                "morning_run": morning_run,
+            },
+            merge=True,
+        )
+
+        logger.info(f"   Logged morning scrape ({status}) to scraper_logs/{today_str}")
+        return True
+
+    except Exception as e:
+        logger.error(f"Error logging morning scrape: {e}")
+        return False
+
+
+def log_jit_dispatch(
+    time_slot: str,
+    showtimes_found: int,
+    jobs_published: int,
+    window_start: str | None = None,
+    window_end: str | None = None,
+    status: str = "ok",
+    error: str | None = None,
+) -> bool:
+    """Log JIT dispatcher run to consolidated daily scraper_logs document.
+
+    Args:
+        time_slot: Dispatch time in HH:MM format (e.g., "09:05")
+        showtimes_found: Number of showtime docs found in window
+        jobs_published: Number of Pub/Sub messages sent
+        window_start: Target window start time (HH:MM)
+        window_end: Target window end time (HH:MM)
+        status: 'ok' or 'error'
+        error: Error message if status is 'error'
+
+    Returns:
+        True if successful
+    """
+    from zoneinfo import ZoneInfo
+
+    from google.api_core.exceptions import NotFound
+
+    try:
+        db = get_firestore_client()
+
+        # Use Jakarta timezone for document ID
+        jakarta_now = datetime.now(ZoneInfo("Asia/Jakarta"))
+        today_str = jakarta_now.strftime("%Y-%m-%d")
+
+        jit_entry = {
+            "dispatched_at": datetime.now(UTC).isoformat(),
+            "showtimes_found": showtimes_found,
+            "jobs_published": jobs_published,
+            "status": status,
+        }
+
+        if window_start:
+            jit_entry["window_start"] = window_start
+        if window_end:
+            jit_entry["window_end"] = window_end
+        if error:
+            jit_entry["error"] = error
+
+        doc_ref = db.collection("scraper_logs").document(today_str)
+
+        # Use update with field path to avoid overwriting other slots
+        try:
+            doc_ref.update({f"jit_runs.{time_slot}": jit_entry})
+        except NotFound:
+            # Create doc if missing (e.g., morning scrape failed or hasn't run)
+            doc_ref.set(
+                {
+                    "date": today_str,
+                    "created_at": datetime.now(UTC).isoformat(),
+                    "jit_runs": {time_slot: jit_entry},
+                }
+            )
+
+        logger.info(f"   Logged JIT dispatch ({time_slot}) to scraper_logs/{today_str}")
+        return True
+
+    except Exception as e:
+        logger.error(f"Error logging JIT dispatch: {e}")
+        return False
+
+
+def log_daily_summary(
+    date_str: str,
+    total_audience: int,
+    total_seats: int,
+    occupancy_pct: float,
+    showtime_count: int,
+    movie_count: int,
+    theatre_count: int,
+    city_count: int,
+) -> bool:
+    """Log daily summary to consolidated scraper_logs document.
+
+    Args:
+        date_str: Date in YYYY-MM-DD format
+        total_audience: Total seats sold
+        total_seats: Total seat capacity
+        occupancy_pct: Occupancy percentage
+        showtime_count: Number of showtimes tracked
+        movie_count: Number of unique movies
+        theatre_count: Number of unique theatres
+        city_count: Number of cities covered
+
+    Returns:
+        True if successful
+    """
+    try:
+        db = get_firestore_client()
+
+        daily_summary = {
+            "generated_at": datetime.now(UTC).isoformat(),
+            "total_audience": total_audience,
+            "total_seats": total_seats,
+            "occupancy_pct": occupancy_pct,
+            "showtime_count": showtime_count,
+            "movie_count": movie_count,
+            "theatre_count": theatre_count,
+            "city_count": city_count,
+        }
+
+        db.collection("scraper_logs").document(date_str).set(
+            {"daily_summary": daily_summary},
+            merge=True,
+        )
+
+        logger.info(f"   Logged daily summary to scraper_logs/{date_str}")
+        return True
+
+    except Exception as e:
+        logger.error(f"Error logging daily summary: {e}")
+        return False
+
+
 def save_daily_snapshot(data: dict) -> bool:
     """Save daily movie snapshot to Firestore for web app.
 

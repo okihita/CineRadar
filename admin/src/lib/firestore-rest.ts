@@ -248,6 +248,33 @@ export class FirestoreRestClient {
     }
 
     /**
+     * Get a single document by ID
+     */
+    async getDocument(collectionName: string, documentId: string): Promise<Record<string, unknown> | null> {
+        try {
+            const token = await getAccessToken();
+            const response = await fetch(`${FIRESTORE_BASE_URL}/${collectionName}/${documentId}`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+
+            if (response.status === 404) {
+                return null;
+            }
+
+            if (!response.ok) {
+                console.error(`Failed to get ${collectionName}/${documentId}: ${response.status}`);
+                return null;
+            }
+
+            const doc = await response.json();
+            return parseDocument(doc);
+        } catch (error) {
+            console.error(`Error getting ${collectionName}/${documentId}:`, error);
+            return null;
+        }
+    }
+
+    /**
      * Get a single sample document from a collection
      */
     async getSampleDocument(collectionName: string): Promise<Record<string, unknown> | null> {
