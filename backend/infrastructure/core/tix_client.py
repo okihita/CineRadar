@@ -39,7 +39,7 @@ class CineRadarScraper(BaseScraper):
         url = f"{self.app_base}/movies/{slug}-{movie_id}/{date_str}"
 
         all_theatres = []
-        captured_headers = {}
+        captured_headers: dict[str, str] = {}
         captured_movie_id = None
 
         try:
@@ -213,7 +213,7 @@ class CineRadarScraper(BaseScraper):
         from typing import Any, cast
 
         context = await browser.new_context(
-            viewport=cast(Any, VIEWPORT),
+            viewport=cast("Any", VIEWPORT),
             user_agent=USER_AGENT,
             locale=LOCALE,
             timezone_id=TIMEZONE,

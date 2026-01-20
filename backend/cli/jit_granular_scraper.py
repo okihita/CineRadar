@@ -48,7 +48,7 @@ class RateLimiter:
     def __init__(self, max_rate: int, time_window: int = 60):
         self.max_rate = max_rate
         self.time_window = time_window
-        self.timestamps = []
+        self.timestamps: list[float] = []
 
     async def acquire(self):
         """Wait until a request slot is available."""

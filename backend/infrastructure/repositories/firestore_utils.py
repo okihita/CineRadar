@@ -173,7 +173,9 @@ def sync_theatres_from_scrape(movies: list[dict]) -> dict:
     Returns:
         Summary dict with counts
     """
-    seen_theatres = {}
+    from typing import Any
+
+    seen_theatres: dict[str, dict[str, Any]] = {}
 
     for movie in movies:
         schedules = movie.get("schedules", {})

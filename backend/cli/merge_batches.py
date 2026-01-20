@@ -35,9 +35,11 @@ def merge_batches(data_dir: str = "data", validate: bool = True) -> bool:
         logger.warning("❌ No batch files found")
         return False
 
+    from typing import Any
+
     # Merge movies
-    movie_map = {}
-    city_stats = {}
+    movie_map: dict[str, dict[str, Any]] = {}
+    city_stats: dict[str, int] = {}
 
     for batch_file in batch_files:
         logger.info(f"   Loading {batch_file.name}")
