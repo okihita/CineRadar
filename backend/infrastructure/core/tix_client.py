@@ -81,8 +81,8 @@ class CineRadarScraper(BaseScraper):
                 )
 
                 try:
-                    response = await context.request.get(api_url, headers=captured_headers)
-                    data = await response.json()
+                    api_response = await context.request.get(api_url, headers=captured_headers)
+                    data = await api_response.json()
 
                     if not data.get("success", True):
                         break
