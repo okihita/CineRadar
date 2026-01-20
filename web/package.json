@@ -6,7 +6,7 @@
     "node": ">=24.0.0",
     "pnpm": "^10.0.0"
   },
-  "packageManager": "pnpm@10.28.0",
+  "packageManager": "pnpm@10.28.1",
   "scripts": {
     "dev": "lsof -ti:3000 | xargs kill -9 2>/dev/null || true && next dev",
     "build": "next build",
@@ -23,13 +23,13 @@
     "react-leaflet": "^5.0.0"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
+    "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^25.0.9",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/react": "^19.2.9",
+    "@types/react-dom": "^19.2.3",
     "eslint": "^9.39.2",
     "eslint-config-next": "16.0.8",
     "tailwindcss": "^4.1.18",
-    "typescript": "^5"
+    "typescript": "^5.9.3"
   }
 }
