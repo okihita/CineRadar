@@ -5,14 +5,14 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
-def test_project_structure():
+def test_project_structure() -> None:
     """Verify critical directories exist."""
     assert os.path.exists("backend"), "Backend directory missing"
     assert os.path.exists("admin"), "Admin directory missing"
     assert os.path.exists("web"), "Web directory missing"
 
 
-def test_imports():
+def test_imports() -> None:
     """Verify backend modules can be imported."""
     try:
         from backend.config import API_BASE
