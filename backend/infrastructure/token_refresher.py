@@ -237,7 +237,10 @@ class TokenRefresher:
             if new_access_token:
                 # Store new token, preserve refresh token
                 store_token(new_access_token, token.phone, refresh_token=token.refresh_token)
-                return self.get_current_token()
+                refreshed_token = self.get_current_token()
+                if not refreshed_token:
+                    raise TokenRefreshError("Token storage succeeded but token not found in storage")
+                return refreshed_token
 
         # Fallback to GHA Full Login
         logger.warning("⚠️ API refresh failed, falling back to GHA Full Login...")
