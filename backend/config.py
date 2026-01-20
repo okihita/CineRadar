@@ -3,8 +3,6 @@ City configuration for TIX.id scraper.
 Contains all 83 Indonesian cities with their TIX.id IDs.
 """
 
-from backend.city_data import CITIES
-
 # API Configuration
 API_BASE = "https://api-b2b.tix.id"
 APP_BASE = "https://app.tix.id"

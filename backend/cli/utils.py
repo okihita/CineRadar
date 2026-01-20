@@ -7,7 +7,6 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 from google.cloud import firestore
 from google.oauth2 import service_account

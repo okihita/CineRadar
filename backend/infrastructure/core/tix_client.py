@@ -23,7 +23,9 @@ class CineRadarScraper(BaseScraper):
         super().__init__()
         self.cities = CITIES
 
-    async def _fetch_movie_schedule(self, page: Page, context: BrowserContext, movie: dict, city: dict) -> list[dict]:
+    async def _fetch_movie_schedule(
+        self, page: Page, context: BrowserContext, movie: dict, city: dict
+    ) -> list[dict]:
         """
         Fetch theatre schedule for a movie in a specific city.
         Handles pagination by capturing auth headers and making direct API calls.

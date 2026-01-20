@@ -78,9 +78,7 @@ Examples:
     details_parser.add_argument(
         "--from-performance", action="store_true", help="Backfill from movie_performance collection"
     )
-    details_parser.add_argument(
-        "--no-skip", action="store_true", help="Don't skip existing movies"
-    )
+    details_parser.add_argument("--no-skip", action="store_true", help="Don't skip existing movies")
 
     args = parser.parse_args()
 
