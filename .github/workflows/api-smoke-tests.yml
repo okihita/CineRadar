@@ -94,12 +94,12 @@ jobs:
             exit 1
           fi
           
-          # Scraper - check for runs array
-          echo -n "  /api/scraper has runs... "
-          if curl -sf "${ADMIN_URL}/api/scraper" | jq -e '.runs' > /dev/null 2>&1; then
+          # Scraper - check for logs array
+          echo -n "  /api/scraper has logs... "
+          if curl -sf "${ADMIN_URL}/api/scraper" | jq -e '.logs' > /dev/null 2>&1; then
             echo "✅ OK"
           else
-            echo "❌ FAILED - missing runs"
+            echo "❌ FAILED - missing logs"
             exit 1
           fi
           
