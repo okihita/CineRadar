@@ -35,8 +35,8 @@ jobs:
       - name: Lint
         run: uv run ruff check backend/ --output-format=github
 
-      - name: Type check domain layer
-        run: uv run mypy backend/domain/ --ignore-missing-imports
+      - name: Type check
+        run: uv run mypy backend/
 
       - name: Run tests
         run: uv run pytest tests/ -v --tb=short --cov=backend --cov-report=term-missing

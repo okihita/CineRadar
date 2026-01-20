@@ -135,7 +135,7 @@ def get_theatre(theatre_id: str) -> dict[str, Any] | None:
         db = get_firestore_client()
         doc = db.collection("theatres").document(str(theatre_id)).get()
         if doc.exists:
-            return cast(dict[str, Any], doc.to_dict())
+            return cast("dict[str, Any]", doc.to_dict())
         return None
     except Exception as e:
         logger.error(f"Error getting theatre {theatre_id}: {e}")

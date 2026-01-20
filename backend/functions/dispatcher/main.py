@@ -218,7 +218,8 @@ def dispatch_jobs(request: Any) -> Any:
             sample = showtimes[:3]
             for s in sample:
                 logger.info(
-                    f"  Sample: {s.get('theatre_name', '')[:20]} @ {s.get('showtime')} - {s.get('merchant')}"
+                    f"  Sample: {s.get('theatre_name', '')[:20]} @ {s.get('showtime')} "
+                    f"- {s.get('merchant')}"
                 )
 
         if showtimes:

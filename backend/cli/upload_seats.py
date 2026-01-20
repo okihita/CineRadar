@@ -22,7 +22,7 @@ def get_firestore_client() -> firestore.Client:
     sa_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
     if sa_json:
         sa_info = json.loads(sa_json)
-        credentials = service_account.Credentials.from_service_account_info(sa_info)
+        credentials = service_account.Credentials.from_service_account_info(sa_info)  # type: ignore[no-untyped-call]
         return firestore.Client(credentials=credentials, project=sa_info["project_id"])
     else:
         # Local development - use default credentials
@@ -78,7 +78,11 @@ def upload_seats_to_firestore(seats: list[dict[str, Any]], batch_size: int = 500
 
         for seat in chunk:
             # Create document ID from showtime_id + snapshot_type + timestamp
-            doc_id = f"{seat.get('showtime_id')}_{seat.get('snapshot_type', 'unknown')}_{datetime.now().strftime('%H%M')}"
+            doc_id = (
+                f"{seat.get('showtime_id')}_"
+                f"{seat.get('snapshot_type', 'unknown')}_"
+                f"{datetime.now().strftime('%H%M')}"
+            )
             doc_ref = collection.document(doc_id)
             batch.set(doc_ref, seat)
 

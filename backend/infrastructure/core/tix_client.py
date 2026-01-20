@@ -8,7 +8,7 @@ import contextlib
 import re
 import time
 from datetime import datetime
-from typing import Any, cast
+from typing import Any
 
 from playwright.async_api import BrowserContext, Page, Request, Route, async_playwright
 
@@ -215,7 +215,7 @@ class CineRadarScraper(BaseScraper):
         )
 
         context = await browser.new_context(
-            viewport=VIEWPORT,
+            viewport=VIEWPORT,  # type: ignore[arg-type]
             user_agent=USER_AGENT,
             locale=LOCALE,
             timezone_id=TIMEZONE,
@@ -307,7 +307,8 @@ class CineRadarScraper(BaseScraper):
                 avg_time = elapsed / i if i > 0 else 0
                 remaining = (len(cities) - i) * avg_time
                 self.log(
-                    f"   {i}/{len(cities)}: {city_name} ({len(city_movies)} movies) | ETA: {remaining / 60:.1f}m"
+                    f"   {i}/{len(cities)}: {city_name} ({len(city_movies)} movies) | "
+                    f"ETA: {remaining / 60:.1f}m"
                 )
 
         finally:

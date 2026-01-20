@@ -83,7 +83,7 @@ def load_geocode_cache(cache_path: str = DEFAULT_CACHE_PATH) -> dict[str, dict[s
     try:
         if os.path.exists(cache_path):
             with open(cache_path, encoding="utf-8") as f:
-                return cast(dict[str, dict[str, float]], json.load(f))
+                return cast("dict[str, dict[str, float]]", json.load(f))
     except Exception:
         pass
     return {}

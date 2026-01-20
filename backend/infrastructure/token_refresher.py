@@ -95,7 +95,7 @@ class TokenRefresher:
                 new_token = data.get("data", {}).get("token")
                 if new_token:
                     logger.info("✅ API refresh successful!")
-                    return cast(str, new_token)
+                    return cast("str", new_token)
                 else:
                     logger.error("❌ API refresh response missing token")
             elif response.status_code == 401:

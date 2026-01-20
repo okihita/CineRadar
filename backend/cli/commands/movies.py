@@ -44,7 +44,8 @@ def run_movie_scrape(
             end_idx = min(start_idx + cities_per_batch, len(CITIES))
             city_names = [c["name"] for c in CITIES[start_idx:end_idx]]
             logger.info(
-                f"🔢 Batch {batch}/{total_batches - 1}: cities {start_idx}-{end_idx - 1} ({len(city_names)} cities)"
+                f"🔢 Batch {batch}/{total_batches - 1}: cities {start_idx}-{end_idx - 1} "
+                f"({len(city_names)} cities)"
             )
         else:
             city_names = None

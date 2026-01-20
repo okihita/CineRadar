@@ -22,7 +22,7 @@ def get_firestore_client() -> firestore.Client:
     sa_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
     if sa_json:
         sa_info = json.loads(sa_json)
-        credentials = service_account.Credentials.from_service_account_info(sa_info)
+        credentials = service_account.Credentials.from_service_account_info(sa_info)  # type: ignore[no-untyped-call]
         return firestore.Client(credentials=credentials, project=sa_info["project_id"])
     else:
         # Local development - use default credentials
@@ -48,7 +48,7 @@ def load_movie_data(data_dir: str = "data") -> dict[str, Any] | None:
     latest_file = movie_files[0]
 
     with open(latest_file, encoding="utf-8") as f:
-        return cast(dict[str, Any], json.load(f))
+        return cast("dict[str, Any]", json.load(f))
 
 
 def transform_for_firestore(movie: dict[str, Any], date: str) -> dict[str, Any]:

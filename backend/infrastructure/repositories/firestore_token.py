@@ -161,7 +161,7 @@ class FirestoreTokenRepository(ITokenRepository):
             if not doc.exists:
                 return None
 
-            return cast(dict[str, str | int | None], doc.to_dict())
+            return cast("dict[str, str | int | None]", doc.to_dict())
         except Exception:
             return None
 

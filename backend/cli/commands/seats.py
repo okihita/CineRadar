@@ -118,7 +118,8 @@ def filter_jit_showtimes(
                 if window_start <= show_time <= window_end:
                     minutes_until = (show_time - now).total_seconds() / 60
                     logger.debug(
-                        f"   Found: {st.get('theatre_name', '?')[:30]} @ {time_str} (T-{minutes_until:.0f}m)"
+                        f"   Found: {st.get('theatre_name', '?')[:30]} @ {time_str} "
+                        f"(T-{minutes_until:.0f}m)"
                     )
                     filtered.append(st)
         except (ValueError, IndexError):

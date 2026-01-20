@@ -39,7 +39,7 @@ def load_movie_data(data_dir: str = "data", use_firestore: bool = False) -> dict
     for path in candidates:
         if path.exists():
             with open(path) as f:
-                return cast(dict[str, Any], json.load(f))
+                return cast("dict[str, Any]", json.load(f))
 
     logger.warning(f"⚠️ No movie data found for {date_str}")
 
@@ -57,7 +57,7 @@ def load_movie_data_from_firestore(date_str: str) -> dict[str, Any] | None:
     sa_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
     if sa_json:
         sa_info = json.loads(sa_json)
-        credentials = service_account.Credentials.from_service_account_info(sa_info)
+        credentials = service_account.Credentials.from_service_account_info(sa_info)  # type: ignore[no-untyped-call]
         db = firestore.Client(credentials=credentials, project=sa_info["project_id"])
     else:
         db = firestore.Client()

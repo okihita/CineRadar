@@ -108,7 +108,7 @@ def refresh_access_token(db: firestore.Client, refresh_token: str) -> str | None
                 )
 
                 logger.info("✅ Inline refresh successful & saved to Firestore")
-                return cast(str, new_token)
+                return cast("str", new_token)
             else:
                 logger.error("❌ Refresh response missing token")
         else:
@@ -139,7 +139,8 @@ def get_valid_token(db: firestore.Client) -> str | None:
             # Handle potentially naive or aware inputs
             stored_at = datetime.fromisoformat(stored_at_str)
             if stored_at.tzinfo is None:
-                # distinct lack of timezone info in stored string -> assume local/server time matches
+                # distinct lack of timezone info in stored string
+                # assume local/server time matches
                 age = datetime.now() - stored_at
             else:
                 # stored time has timezone -> use timezone aware now
@@ -166,7 +167,7 @@ def get_valid_token(db: firestore.Client) -> str | None:
         # If refresh fails, fall back to current token (better than nothing)
         logger.warning("Refresh failed, using existing token as fallback")
 
-    return cast(str, current_token)
+    return cast("str", current_token)
 
 
 def fetch_seat_layout(showtime_id: str, merchant: str, token: str) -> dict[str, Any] | None:
@@ -200,7 +201,7 @@ def fetch_seat_layout(showtime_id: str, merchant: str, token: str) -> dict[str, 
         if response.status_code == 200:
             data = response.json()
             if data.get("success"):
-                return cast(dict[str, Any], data)
+                return cast("dict[str, Any]", data)
             else:
                 logger.error(f"API error: {data.get('error', {}).get('message', 'Unknown')}")
                 return None

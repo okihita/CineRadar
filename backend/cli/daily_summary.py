@@ -24,7 +24,7 @@ def get_firestore_client() -> firestore.Client:
     sa_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
     if sa_json:
         sa_info = json.loads(sa_json)
-        credentials = service_account.Credentials.from_service_account_info(sa_info)
+        credentials = service_account.Credentials.from_service_account_info(sa_info)  # type: ignore[no-untyped-call]
         return firestore.Client(credentials=credentials, project=sa_info["project_id"])
     else:
         return firestore.Client()

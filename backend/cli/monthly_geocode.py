@@ -25,7 +25,7 @@ def load_cache() -> dict[str, Any]:
     """Load cached place data."""
     if CACHE_FILE.exists():
         with open(CACHE_FILE, encoding="utf-8") as f:
-            return cast(dict[str, Any], json.load(f))
+            return cast("dict[str, Any]", json.load(f))
     return {}
 
 
@@ -49,7 +49,9 @@ def search_place(theatre_name: str, city: str) -> dict[str, Any] | None:
             headers={
                 "Content-Type": "application/json",
                 "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
-                "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location",
+                "X-Goog-FieldMask": (
+                    "places.id,places.displayName,places.formattedAddress,places.location"
+                ),
             },
             json={"textQuery": query},
             timeout=15,
@@ -81,7 +83,7 @@ def geocode_theatre(theatre_name: str, city: str, cache: dict[str, Any]) -> dict
     cache_key = f"{theatre_name}|{city}"
 
     if cache_key in cache:
-        return cast(dict[str, Any], cache[cache_key])
+        return cast("dict[str, Any]", cache[cache_key])
 
     result = search_place(theatre_name, city)
 

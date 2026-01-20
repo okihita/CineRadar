@@ -196,7 +196,7 @@ class SeatScraper(BaseScraper):
                 if response.status == 200:
                     data = await response.json()
                     if data.get("success"):
-                        return cast(dict[str, Any], data)
+                        return cast("dict[str, Any]", data)
                     else:
                         self.log(
                             f"   ⚠️ API error: {data.get('error', {}).get('message', 'Unknown')}"

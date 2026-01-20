@@ -50,7 +50,12 @@ class TheatreScheduleSchema(BaseModel):
     """Theatre with available rooms/times for a specific movie.
 
     Example:
-        {"theatre_id": "986744938815295488", "theatre_name": "ARAYA XXI", "merchant": "XXI", "rooms": [...]}
+        {
+            "theatre_id": "986744938815295488",
+            "theatre_name": "ARAYA XXI",
+            "merchant": "XXI",
+            "rooms": [...]
+        }
     """
 
     theatre_id: str = Field(..., min_length=1)

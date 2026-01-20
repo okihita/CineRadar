@@ -136,7 +136,7 @@ class FirestoreMovieDetailsRepository:
         try:
             doc_ref = self.db.collection(self.COLLECTION).document(movie_id)
             doc = doc_ref.get()
-            return cast(bool, doc.exists)
+            return cast("bool", doc.exists)
         except Exception:
             return False
 

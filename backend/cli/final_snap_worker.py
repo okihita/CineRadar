@@ -37,7 +37,8 @@ class FinalSnapWorker:
         """Scrape and save the final snap for a showtime."""
         showtime_id = task["id"]
         logger.info(
-            f"📸 Capturing FINAL SNAP for {task['movie']} at {task['theatre']} ({task['start_time']})"
+            f"📸 Capturing FINAL SNAP for {task['movie']} at {task['theatre']} "
+            f"({task['start_time']})"
         )
 
         try:
