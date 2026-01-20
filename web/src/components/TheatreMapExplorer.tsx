@@ -1,32 +1,15 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-
-interface TheaterSchedule {
-    theatre_id: string;
-    theatre_name: string;
-    merchant: string;
-    address: string;
-    lat?: number;
-    lng?: number;
-    rooms: {
-        category: string;
-        price: string;
-        showtimes: string[];
-    }[];
-}
+import { TheaterSchedule } from '@/types';
+import { CHAIN_COLORS, getChainColor } from '@/lib/constants';
+import { formatRupiah } from '@/lib/utils';
+import { extractPricesFromTheaters } from '@/lib/showtime-utils';
 
 interface TheatreMapExplorerProps {
     cityData: { city: string; theatres: number }[];
     schedulesByCity?: Record<string, TheaterSchedule[]>;
 }
-
-// Chain colors
-const CHAIN_COLORS: Record<string, string> = {
-    'XXI': '#3B82F6',
-    'CGV': '#EF4444',
-    'Cinépolis': '#EAB308',
-};
 
 export default function TheatreMapExplorer({ cityData, schedulesByCity }: TheatreMapExplorerProps) {
     const [selectedCity, setSelectedCity] = useState<string | null>(null);
@@ -40,17 +23,17 @@ export default function TheatreMapExplorer({ cityData, schedulesByCity }: Theatr
 
         const chainCounts: Record<string, number> = {};
         let totalShowtimes = 0;
-        const prices: number[] = [];
+
+        // Use shared helper for price extraction
+        const allPrices = extractPricesFromTheaters(theatres);
+        // Filter outliers if needed, or just use as is. Keeping consistent with previous logic roughly
+        // but trusting the util's parsing.
+        const prices = allPrices.filter(p => p > 0 && p < 500000);
 
         theatres.forEach(t => {
             chainCounts[t.merchant] = (chainCounts[t.merchant] || 0) + 1;
             t.rooms.forEach(r => {
                 totalShowtimes += r.showtimes.length;
-                const match = r.price.match(/\d+[.,]?\d*/);
-                if (match) {
-                    const price = parseInt(match[0].replace(/[.,]/g, ''), 10);
-                    if (price > 0 && price < 500000) prices.push(price);
-                }
             });
         });
 
@@ -91,11 +74,10 @@ export default function TheatreMapExplorer({ cityData, schedulesByCity }: Theatr
                                 <button
                                     key={city.city}
                                     onClick={() => setSelectedCity(city.city)}
-                                    className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-200 ${
-                                        isSelected
-                                            ? 'bg-blue-600 text-white shadow-md'
-                                            : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200'
-                                    }`}
+                                    className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-200 ${isSelected
+                                        ? 'bg-blue-600 text-white shadow-md'
+                                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200'
+                                        }`}
                                 >
                                     <div className="flex items-center justify-between">
                                         <div className="flex-1">
@@ -134,7 +116,7 @@ export default function TheatreMapExplorer({ cityData, schedulesByCity }: Theatr
                                                 <div className="flex items-center gap-2">
                                                     <div
                                                         className="w-3 h-3 rounded-full"
-                                                        style={{ backgroundColor: CHAIN_COLORS[theatre.merchant] || '#6B7280' }}
+                                                        style={{ backgroundColor: getChainColor(theatre.merchant) }}
                                                     />
                                                     <h5 className="font-semibold text-gray-900">{theatre.theatre_name}</h5>
                                                 </div>
@@ -201,7 +183,7 @@ export default function TheatreMapExplorer({ cityData, schedulesByCity }: Theatr
                                         <div className="flex items-center gap-2">
                                             <div
                                                 className="w-2 h-2 rounded-full"
-                                                style={{ backgroundColor: CHAIN_COLORS[chain] || '#6B7280' }}
+                                                style={{ backgroundColor: getChainColor(chain) }}
                                             />
                                             <span className="text-sm text-gray-700">{chain}</span>
                                         </div>
@@ -222,11 +204,11 @@ export default function TheatreMapExplorer({ cityData, schedulesByCity }: Theatr
                             {cityStats.minPrice > 0 ? (
                                 <>
                                     <div className="text-lg font-bold text-emerald-600">
-                                        Rp{(cityStats.minPrice / 1000).toFixed(0)}k - {(cityStats.maxPrice / 1000).toFixed(0)}k
+                                        {formatRupiah(cityStats.minPrice)} - {formatRupiah(cityStats.maxPrice)}
                                     </div>
                                     <div className="text-sm text-gray-600">Price Range</div>
                                     <div className="text-xs text-gray-400 mt-1">
-                                        Avg: Rp{(cityStats.avgPrice / 1000).toFixed(0)}k
+                                        Avg: {formatRupiah(cityStats.avgPrice)}
                                     </div>
                                 </>
                             ) : (

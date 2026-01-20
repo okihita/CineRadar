@@ -6,7 +6,8 @@ import MovieInsights from './MovieInsights';
 import ShowtimeSparkline from './showtimes/ShowtimeSparkline';
 import TheaterCard from './showtimes/TheaterCard';
 import CityShowtimesFilters from './showtimes/CityShowtimesFilters';
-import { TheaterSchedule, extractPriceRange, formatPrice, getAllShowtimes } from '@/lib/showtime-utils';
+import { extractPriceRange, formatPrice, getAllShowtimes } from '@/lib/showtime-utils';
+import { TheaterSchedule } from '@/types';
 
 interface Movie {
     id: string;

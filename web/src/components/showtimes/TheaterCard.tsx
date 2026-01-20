@@ -1,6 +1,7 @@
 // Theater card component for displaying theatre details and showtimes
 
-import { getTimeStyle, getTimeIcon, getTimeOfDay, TheaterSchedule } from '@/lib/showtime-utils';
+import { getTimeStyle, getTimeIcon, getTimeOfDay } from '@/lib/showtime-utils';
+import { TheaterSchedule } from '@/types';
 
 interface TheaterCardProps {
     theater: TheaterSchedule;
