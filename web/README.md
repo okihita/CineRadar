@@ -4,19 +4,17 @@ The consumer-facing web application for CineRadar. A beautiful, interactive movi
 
 ## Features
 
-- 🍿 **Browse Now Playing** - See all movies currently showing in 83+ Indonesian cities.
-- 🕒 **Real-time Showtimes** - Detailed schedules grouped by city and theatre chain (XXI, CGV, Cinépolis).
-- 🗺️ **Interactive Maps** - Find theatres near you with fully integrated Leaflet maps.
-- 💺 **Live Seat Occupancy** - Check how full a theatre is before you go.
-- 📱 **Mobile Optimized** - Premium responsive design for moviegoers on the move.
+ - 🍿 **Browse Now Playing** - See all movies currently showing in 83+ Indonesian cities.
+ - 🕒 **Real-time Showtimes** - Detailed schedules grouped by city and theatre chain (XXI, CGV, Cinépolis).
+ - 💺 **Live Seat Occupancy** - Check how full a theatre is before you go.
+ - 📱 **Mobile Optimized** - Premium responsive design for moviegoers on the move.
 
 ## Tech Stack
 
-- **Foundation**: [Next.js](https://nextjs.org) (App Router)
-- **Styling**: Tailwind CSS 4.0
-- **Maps**: Leaflet + React Leaflet
-- **Data**: Firestore (via REST API)
-- **Deployment**: Vercel
+ - **Foundation**: [Next.js](https://nextjs.org) (App Router)
+ - **Styling**: Tailwind CSS 4.0
+ - **Data**: Firestore (via REST API)
+ - **Deployment**: Vercel
 
 ## Getting Started
 
