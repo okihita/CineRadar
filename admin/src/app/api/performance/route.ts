@@ -40,32 +40,38 @@ export async function GET() {
             100
         )) as unknown as MovieWithStats[];
 
-        // Fetch today's stats for each movie in parallel
-        const moviesWithStats = await Promise.all(
-            movies.map(async (movie) => {
-                try {
-                    const days = await firestoreAdminClient.getSubCollection(
-                        `movie_performance/${movie.id}/days`
-                    );
-                    // Find today's stats
-                    const todayStats = days.find((d) => d.date === today);
-                    return {
-                        ...movie,
-                        today: todayStats ? {
-                            date: todayStats.date as string,
-                            total_showtimes: (todayStats.total_showtimes as number) || 0,
-                            total_showtimes_scraped: (todayStats.total_showtimes_scraped as number) || 0,
-                            avg_occupancy_pct: (todayStats.avg_occupancy_pct as number) || 0,
-                            total_seats: (todayStats.total_seats as number) || 0,
-                            total_sold: (todayStats.total_sold as number) || 0,
-                            cities: (todayStats.cities as string[]) || [],
-                        } : undefined,
-                    };
-                } catch {
-                    return movie; // Return without today's stats on error
-                }
-            })
-        );
+        // Fetch today's stats for each movie in batches to avoid overwhelming Firestore
+        const BATCH_SIZE = 5;
+        const moviesWithStats: MovieWithStats[] = [];
+
+        for (let i = 0; i < movies.length; i += BATCH_SIZE) {
+            const batch = movies.slice(i, i + BATCH_SIZE);
+            const results = await Promise.all(
+                batch.map(async (movie) => {
+                    try {
+                        const days = await firestoreAdminClient.getSubCollection(
+                            `movie_performance/${movie.id}/days`
+                        );
+                        const todayStats = days.find((d) => d.date === today);
+                        return {
+                            ...movie,
+                            today: todayStats ? {
+                                date: todayStats.date as string,
+                                total_showtimes: (todayStats.total_showtimes as number) || 0,
+                                total_showtimes_scraped: (todayStats.total_showtimes_scraped as number) || 0,
+                                avg_occupancy_pct: (todayStats.avg_occupancy_pct as number) || 0,
+                                total_seats: (todayStats.total_seats as number) || 0,
+                                total_sold: (todayStats.total_sold as number) || 0,
+                                cities: (todayStats.cities as string[]) || [],
+                            } : undefined,
+                        };
+                    } catch {
+                        return movie;
+                    }
+                })
+            );
+            moviesWithStats.push(...results);
+        }
 
         return NextResponse.json({
             success: true,

@@ -58,4 +58,7 @@ export const TIME_CONSTANTS = {
   FIVE_MINUTES: 300000,
   ONE_HOUR: 3600000,
   TOKEN_BUFFER: 300000,  // 5 min buffer for token expiry checks
+  FIREBASE_REQUEST_TIMEOUT: 30000,  // 30 seconds
+  MAX_RETRIES: 3,
+  RETRY_DELAY_BASE: 1000,  // 1 second base delay
 } as const;

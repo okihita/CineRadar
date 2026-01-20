@@ -50,15 +50,19 @@ async function getAccessToken(): Promise<string> {
 
     const signedJwt = jwt.sign(payload, serviceAccount.private_key, { algorithm: 'RS256' });
 
-    // Exchange JWT for access token
-    const response = await fetch('https://oauth2.googleapis.com/token', {
+    // Exchange JWT for access token (30 second timeout)
+    const response = await fetchWithTimeout('https://oauth2.googleapis.com/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
             grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
             assertion: signedJwt,
         }),
-    });
+    }, 30000);
+
+    if (!response) {
+        throw new Error('Token exchange failed: Request timeout');
+    }
 
     if (!response.ok) {
         const error = await response.text();
@@ -117,6 +121,44 @@ function parseDocument(doc: { name: string; fields: Record<string, FirestoreValu
     return data;
 }
 
+async function fetchWithTimeout(url: string, options: RequestInit, timeout: number): Promise<Response> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+    try {
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(timeoutId);
+        return response;
+    } catch (error) {
+        clearTimeout(timeoutId);
+        if (error instanceof Error && error.name === 'AbortError') {
+            throw new Error(`Request timeout after ${timeout}ms`);
+        }
+        throw error;
+    }
+}
+
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries: number = TIME_CONSTANTS.MAX_RETRIES): Promise<Response | null> {
+    const { RETRY_DELAY_BASE } = TIME_CONSTANTS;
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+            return await fetchWithTimeout(url, options, TIME_CONSTANTS.FIREBASE_REQUEST_TIMEOUT);
+        } catch (error) {
+            if (attempt === maxRetries - 1) {
+                console.error(`Fetch failed after ${maxRetries} attempts for ${url}:`, error);
+                return null;
+            }
+
+            const delay = RETRY_DELAY_BASE * Math.pow(2, attempt) * (0.9 + 0.1 * Math.random());
+            console.warn(`Fetch attempt ${attempt + 1} failed for ${url}, retrying in ${Math.round(delay)}ms...`, error);
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+
+    return null;
+}
+
 export class FirestoreAdminClient {
     async getCollectionWithQuery(
         collectionName: string,
@@ -134,7 +176,7 @@ export class FirestoreAdminClient {
                 },
             };
 
-            const response = await fetch(`${FIRESTORE_BASE_URL}:runQuery`, {
+            const response = await fetchWithRetry(`${FIRESTORE_BASE_URL}:runQuery`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -142,6 +184,11 @@ export class FirestoreAdminClient {
                 },
                 body: JSON.stringify(query),
             });
+
+            if (!response) {
+                console.error(`Firestore query failed for ${collectionName}: All retries exhausted`);
+                return [];
+            }
 
             if (!response.ok) {
                 console.error(`Firestore query failed: ${response.status}`);
@@ -179,7 +226,7 @@ export class FirestoreAdminClient {
                 },
             };
 
-            const response = await fetch(url, {
+            const response = await fetchWithRetry(url, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -187,6 +234,11 @@ export class FirestoreAdminClient {
                 },
                 body: JSON.stringify(query),
             });
+
+            if (!response) {
+                console.error(`Firestore subcollection query failed for ${fullPath}: All retries exhausted`);
+                return [];
+            }
 
             if (!response.ok) {
                 console.error(`Firestore subcollection query failed: ${response.status}`);
@@ -216,7 +268,7 @@ export class FirestoreAdminClient {
                 },
             };
 
-            const response = await fetch(`${FIRESTORE_BASE_URL}:runQuery`, {
+            const response = await fetchWithRetry(`${FIRESTORE_BASE_URL}:runQuery`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -224,6 +276,11 @@ export class FirestoreAdminClient {
                 },
                 body: JSON.stringify(query),
             });
+
+            if (!response) {
+                console.error(`Firestore count query failed for ${collectionName}: All retries exhausted`);
+                return 0;
+            }
 
             if (!response.ok) return 0;
 
