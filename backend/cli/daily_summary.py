@@ -137,7 +137,9 @@ def main():
     jakarta_now = datetime.now(jakarta_tz)
     yesterday = (jakarta_now - timedelta(days=1)).strftime("%Y-%m-%d")
 
-    logger.info(f"📅 Summarizing date: {yesterday} (calculated from Jakarta time: {jakarta_now.strftime('%Y-%m-%d %H:%M:%S %Z')})")
+    logger.info(
+        f"📅 Summarizing date: {yesterday} (calculated from Jakarta time: {jakarta_now.strftime('%Y-%m-%d %H:%M:%S %Z')})"
+    )
 
     stats = aggregate_daily_audience(yesterday)
 

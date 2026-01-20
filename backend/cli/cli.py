@@ -537,7 +537,10 @@ Examples:
     details_parser = subparsers.add_parser("movie-details", help="Scrape detailed movie info")
     details_parser.add_argument("--movie-id", type=str, help="Specific movie ID to scrape")
     details_parser.add_argument(
-        "--all", action="store_true", dest="all_movies", help="Scrape all movies from latest snapshot"
+        "--all",
+        action="store_true",
+        dest="all_movies",
+        help="Scrape all movies from latest snapshot",
     )
     details_parser.add_argument(
         "--update-ratings", action="store_true", help="Update ratings for existing movies"
@@ -545,9 +548,7 @@ Examples:
     details_parser.add_argument(
         "--from-performance", action="store_true", help="Backfill from movie_performance collection"
     )
-    details_parser.add_argument(
-        "--no-skip", action="store_true", help="Don't skip existing movies"
-    )
+    details_parser.add_argument("--no-skip", action="store_true", help="Don't skip existing movies")
 
     args = parser.parse_args()
 
@@ -588,4 +589,3 @@ Examples:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     main()
-

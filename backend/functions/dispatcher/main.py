@@ -27,8 +27,8 @@ PUBSUB_TOPIC = os.environ.get("PUBSUB_TOPIC", "scrape-seat-jit")
 JAKARTA_TZ = ZoneInfo("Asia/Jakarta")
 
 # Window configuration (minutes from now)
-WINDOW_START_MINUTES = 8   # Start scraping showtimes 8 min before start
-WINDOW_END_MINUTES = 15    # End window at 15 min (overlap with 5-min intervals, safe for duplicates)
+WINDOW_START_MINUTES = 8  # Start scraping showtimes 8 min before start
+WINDOW_END_MINUTES = 15  # End window at 15 min (overlap with 5-min intervals, safe for duplicates)
 
 
 def get_firestore_client() -> firestore.Client:

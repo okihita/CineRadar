@@ -131,9 +131,7 @@ class ScrapeMovieDetailsUseCase:
                 error=str(e),
             )
 
-    async def execute_for_new_movies(
-        self, latest_movie_ids: list[str]
-    ) -> ScrapeMovieDetailsResult:
+    async def execute_for_new_movies(self, latest_movie_ids: list[str]) -> ScrapeMovieDetailsResult:
         """Execute for new movies only (designed for daily scrape integration).
 
         Automatically skips movies that already have details saved.

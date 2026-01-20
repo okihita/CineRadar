@@ -8,7 +8,6 @@ Provides browser initialization, login, and logging.
 import asyncio
 import logging
 import os
-
 from typing import Any, cast
 
 from playwright.async_api import Browser, BrowserContext, Page, Playwright, async_playwright
@@ -78,7 +77,7 @@ class BaseScraper:
             )
 
             context = await browser.new_context(
-                viewport=cast(Any, VIEWPORT),
+                viewport=cast("Any", VIEWPORT),
                 user_agent=USER_AGENT,
                 locale=LOCALE,
                 timezone_id=TIMEZONE,
