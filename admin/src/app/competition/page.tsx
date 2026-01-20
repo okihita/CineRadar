@@ -128,7 +128,6 @@ export default function CompetitionPage() {
                         <div className="space-y-3 max-h-[300px] overflow-y-auto">
                             {data.expansionEvents.map((event, idx) => {
                                 const colors = CHAIN_COLORS[event.chain as keyof typeof CHAIN_COLORS] || { bg: 'bg-gray-500', light: 'bg-gray-200' };
-                                const isPast = new Date(event.event_date) < new Date();
                                 return (
                                     <div key={idx} className={`p-3 rounded-lg ${colors.light} border`}>
                                         <div className="flex items-center justify-between mb-1">

@@ -117,7 +117,7 @@ export async function GET() {
             anomalies: generateAnomalies(),
             forecast: generateForecast(),
         });
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: 'Failed to generate analytics data' }, { status: 500 });
     }
 }

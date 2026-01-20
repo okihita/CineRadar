@@ -17,7 +17,7 @@ import { ChevronUp, MapPin } from 'lucide-react';
 import { IndonesiaMap } from '@/components/indonesia-map';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { PageHeader } from '@/components/PageHeader';
-import { REGION_CITIES, getRegion, REGION_CENTERS } from '@/lib/regions';
+import { REGION_CITIES, getRegion } from '@/lib/regions';
 import { formatWIBShort } from '@/lib/timeUtils';
 import { useTheatres } from '@/hooks/useTheatres';
 

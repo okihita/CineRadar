@@ -12,8 +12,8 @@ import json
 import logging
 import os
 from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
 from typing import Any
+from zoneinfo import ZoneInfo
 
 import functions_framework
 from google.cloud import firestore, pubsub_v1

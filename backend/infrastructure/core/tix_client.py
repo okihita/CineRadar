@@ -9,7 +9,7 @@ import re
 import time
 from datetime import datetime
 
-from playwright.async_api import async_playwright, Page, BrowserContext, Route, Request
+from playwright.async_api import BrowserContext, Page, Request, Route, async_playwright
 
 from backend.config import CITIES, LOCALE, TIMEZONE, USER_AGENT, VIEWPORT
 from backend.infrastructure.core.geocoder import Geocoder

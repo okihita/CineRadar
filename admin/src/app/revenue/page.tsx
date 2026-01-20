@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { DollarSign, TrendingUp, TrendingDown, Building2, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { DollarSign, TrendingUp, Building2, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { useCachedFetch } from '@/hooks/useCachedFetch';
 import { SkeletonPage } from '@/components/Skeleton';
 

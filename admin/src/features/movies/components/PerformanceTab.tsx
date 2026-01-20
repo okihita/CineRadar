@@ -65,7 +65,6 @@ export function PerformanceTab() {
     const [loadingMovies, setLoadingMovies] = useState(true);
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [loadingDetails, setLoadingDetails] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const [isArchiveOpen, setIsArchiveOpen] = useState(false);
 
     // 1. Fetch Movies List with today's stats
@@ -76,11 +75,10 @@ export function PerformanceTab() {
                 const data = await res.json();
                 if (data.success) {
                     setMovies(data.movies);
-                } else {
-                    setError(data.error || 'Failed to load movies');
+                    console.error(data.error || 'Failed to load movies');
                 }
             } catch (e) {
-                setError(String(e));
+                console.error(String(e));
             } finally {
                 setLoadingMovies(false);
             }

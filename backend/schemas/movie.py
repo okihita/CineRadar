@@ -4,6 +4,7 @@ Validates movie data from TIX.id scraper output.
 """
 
 from typing import Any
+
 from pydantic import BaseModel, Field, field_validator
 
 

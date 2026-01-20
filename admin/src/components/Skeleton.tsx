@@ -73,7 +73,7 @@ export function SkeletonKPI({ className }: SkeletonProps) {
     );
 }
 
-export function SkeletonPage({ title }: { title?: string }) {
+export function SkeletonPage() {
     return (
         <div className="min-h-screen bg-background text-foreground p-4 md:p-6">
             {/* Header */}

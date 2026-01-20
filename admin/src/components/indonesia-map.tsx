@@ -20,7 +20,6 @@ function createPieChartSvg(xxi: number, cgv: number, cine: number, total: number
     const radius = size / 2;
     const center = radius;
     const innerRadius = radius * 0.5;
-    const ringWidth = radius - innerRadius - 2;
 
     // Determine if single chain
     const chains = [xxi > 0, cgv > 0, cine > 0].filter(Boolean).length;
@@ -75,21 +74,6 @@ function polarToCartesian(cx: number, cy: number, r: number, angle: number) {
     return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
 }
 
-// Format last_seen timestamp as relative time
-function formatLastSeen(timestamp: string): string {
-    const now = new Date();
-    const then = new Date(timestamp);
-    const diffMs = now.getTime() - then.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return then.toLocaleDateString();
-}
 
 // Inner component that uses the map
 function ClusteredMarkers({ theatres, selectedTheatre, onTheatreSelect }: {
@@ -103,8 +87,6 @@ function ClusteredMarkers({ theatres, selectedTheatre, onTheatreSelect }: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const markerLibRef = useRef<any>(null);
     const [clusterer, setClusterer] = useState<MarkerClusterer | null>(null);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [markerRefs, setMarkerRefs] = useState<Record<string, any>>({});
 
     const selectedId = selectedTheatre?.theatre_id ?? null;
 
@@ -195,7 +177,6 @@ function ClusteredMarkers({ theatres, selectedTheatre, onTheatreSelect }: {
 
         clusterer.clearMarkers();
         clusterer.addMarkers(newMarkers);
-        setMarkerRefs(markerRecord);
 
     }, [clusterer, theatres, selectedId, onTheatreSelect, map, markerLib]);
 

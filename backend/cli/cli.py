@@ -13,8 +13,8 @@ import json
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
-from zoneinfo import ZoneInfo
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from backend.config import CITIES
 from backend.infrastructure.core.seat_scraper import SeatScraper

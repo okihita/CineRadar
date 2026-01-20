@@ -11,7 +11,7 @@ interface CinemasAPIResponse {
     runs: ScraperRun[];
 }
 
-const fetcher = async (url: string): Promise<CinemasAPIResponse> => {
+const fetcher = async (): Promise<CinemasAPIResponse> => {
     // Fetch theatres and runs in parallel
     const [theatresRes, runsRes] = await Promise.all([
         fetch('/api/scraper'),
