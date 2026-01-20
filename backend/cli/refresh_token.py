@@ -199,6 +199,10 @@ def main():
 
         try:
             token = storage.get_current()
+            if not token:
+                logger.error("❌ No current token found")
+                sys.exit(1)
+
             minutes_remaining = token.minutes_until_expiry
 
             logger.info("📋 Token TTL Check:")

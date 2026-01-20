@@ -70,7 +70,8 @@ def validate_daily_scrape(data_dir: str = "data", file_path: str | None = None) 
         logger.info(f"   📅 Date: {validated.date}")
         logger.info(f"   🎬 Movies: {len(validated.movies)}")
         logger.info(f"   🏙️ Cities: {len(validated.city_stats)}")
-        logger.info(f"   🎟️ Pre-sales: {validated.summary.presale_count}")
+        if validated.summary:
+            logger.info(f"   🎟️ Pre-sales: {validated.summary.presale_count}")
     except ValidationError as e:
         logger.error("❌ Schema validation FAILED:")
         for error in e.errors():
