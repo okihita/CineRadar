@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { firestoreClient } from '@/lib/firebase';
+import { firestoreAdminClient } from '@/lib/firebase-admin';
 
 interface RawShowtimeResponse {
     showtimeId: string;
@@ -19,9 +19,9 @@ interface RawShowtimeResponse {
 
 export async function GET(
     request: Request,
-    { params }: { params: { showtimeId: string } }
+    { params }: { params: Promise<{ showtimeId: string }> }
 ) {
-    const { showtimeId } = params;
+    const { showtimeId } = await params;
     const { searchParams } = new URL(request.url);
 
     const movieId = searchParams.get('movieId');
@@ -35,38 +35,33 @@ export async function GET(
     }
 
     try {
-        const doc = await firestore
-            .collection('movie_performance')
-            .doc(movieId)
-            .collection('days')
-            .doc(date)
-            .collection('showtimes')
-            .doc(showtimeId)
-            .get();
+        const doc = await firestoreAdminClient.getDocument(
+            `movie_performance/${movieId}/days/${date}/showtimes/${showtimeId}`
+        );
 
-        if (!doc.exists) {
+        if (!doc) {
             return NextResponse.json(
                 { error: 'Showtime not found' },
                 { status: 404 }
             );
         }
 
-        const data = doc.data() as any;
+        const data = doc as Record<string, unknown>;
 
         const response: RawShowtimeResponse = {
-            showtimeId: data.showtime_id,
-            movieTitle: data.movie_title,
-            theatreName: data.theatre_name,
-            city: data.city,
-            roomCategory: data.room_category,
-            merchant: data.merchant,
-            showtime: data.showtime,
-            date: data.date,
-            occupancyPct: data.occupancy_pct,
-            totalSeats: data.total_seats,
-            soldSeats: data.sold_seats,
-            scrapedAt: data.scraped_at,
-            rawApiResponse: data.raw_api_response || null,
+            showtimeId: String(data.showtime_id),
+            movieTitle: String(data.movie_title),
+            theatreName: String(data.theatre_name),
+            city: String(data.city),
+            roomCategory: String(data.room_category),
+            merchant: String(data.merchant),
+            showtime: String(data.showtime),
+            date: String(data.date),
+            occupancyPct: Number(data.occupancy_pct),
+            totalSeats: Number(data.total_seats),
+            soldSeats: Number(data.sold_seats),
+            scrapedAt: String(data.scraped_at),
+            rawApiResponse: (data.raw_api_response as object | null) || null,
         };
 
         return NextResponse.json(response);

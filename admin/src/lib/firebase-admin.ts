@@ -207,6 +207,43 @@ export class FirestoreAdminClient {
         }
     }
 
+    async getDocument(fullPath: string): Promise<Record<string, unknown> | null> {
+        try {
+            const token = await getAccessToken();
+
+            // fullPath: "movie_performance/123/days/2024-01-15"
+            const url = `${FIRESTORE_BASE_URL}/${fullPath}`;
+
+            const response = await fetchWithRetry(url, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response) {
+                console.error(`Firestore getDocument failed for ${fullPath}: All retries exhausted`);
+                return null;
+            }
+
+            if (response.status === 404) {
+                return null;
+            }
+
+            if (!response.ok) {
+                console.error(`Firestore getDocument failed: ${response.status}`);
+                return null;
+            }
+
+            const doc = await response.json();
+            return parseDocument(doc);
+        } catch (error) {
+            console.error(`Error getting document ${fullPath}:`, error);
+            return null;
+        }
+    }
+
     async getSubCollection(fullPath: string): Promise<Record<string, unknown>[]> {
         try {
             const token = await getAccessToken();
