@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 PROJECT_ID = os.environ.get("GOOGLE_CLOUD_PROJECT", "cineradar-481014")
 JAKARTA_TZ = ZoneInfo("Asia/Jakarta")
 REFRESH_API_URL = "https://api-b2b.tix.id/v1/users/refresh"
+ENABLE_SCHEMA_VALIDATION = os.environ.get("ENABLE_SCHEMA_VALIDATION", "true").lower() == "true"
 
 # Merchant to API path mapping
 MERCHANT_PATHS = {
@@ -49,6 +50,21 @@ def get_merchant_path(merchant: str) -> str:
 def get_firestore_client() -> firestore.Client:
     """Get Firestore client."""
     return firestore.Client(project=PROJECT_ID)
+
+
+def log_critical(message: str, context: dict[str, Any]) -> None:
+    """Log critical error with context for alerting."""
+    logger.critical(f"🚨 CRITICAL: {message} | Context: {context}")
+
+
+def log_warning(message: str, context: dict[str, Any]) -> None:
+    """Log warning with context for alerting."""
+    logger.warning(f"⚠️ WARNING: {message} | Context: {context}")
+
+
+def log_info(message: str) -> None:
+    """Log info message."""
+    logger.info(f"ℹ️ INFO: {message}")
 
 
 def load_token_data(db: firestore.Client) -> dict[str, Any] | None:
@@ -218,6 +234,48 @@ def fetch_seat_layout(showtime_id: str, merchant: str, token: str) -> dict[str, 
         return None
 
 
+def validate_api_response(raw_response: dict[str, Any]) -> tuple[bool, str, str]:
+    """
+    Validate raw API response structure and detect schema changes.
+
+    Returns:
+        (is_valid, severity, error_message)
+
+    Severity levels:
+    - CRITICAL: Schema change that will break all scrapes
+    - WARNING: Potential issue but might recover
+    - INFO: Minor anomaly
+    """
+    if not isinstance(raw_response, dict):
+        return False, "CRITICAL", "API response is not a dict"
+
+    if not raw_response.get("success"):
+        error = raw_response.get("error", {}).get("message", "Unknown")
+        return False, "CRITICAL", f"API success=false: {error}"
+
+    data = raw_response.get("data", {})
+    seat_map = data.get("seat_map")
+
+    if not isinstance(seat_map, list):
+        return False, "CRITICAL", "seat_map is not a list - schema changed!"
+
+    if not seat_map:
+        return False, "WARNING", "Empty seat_map returned by API"
+
+    # Check seat types detection
+    seat_types = set()
+    for item in seat_map:
+        if "seat_rows" in item:
+            for seat in item.get("seat_rows", []):
+                if "seat_type" in seat:
+                    seat_types.add(seat["seat_type"])
+
+    if seat_types:
+        log_info(f"Detected seat types: {', '.join(sorted(seat_types))}")
+
+    return True, "INFO", "Schema validation passed"
+
+
 def calculate_occupancy(
     seat_map: list[dict[str, Any]],
 ) -> tuple[int, int, float, list[Any]]:
@@ -290,8 +348,9 @@ def save_snapshot(
     total_seats: int,
     sold_seats: int,
     occupancy_pct: float,
+    raw_api_response: dict[str, Any] | None = None,
 ) -> bool:
-    """Save showtime snapshot to Firestore with compressed layout.
+    """Save showtime snapshot to Firestore with compressed layout and raw API response.
 
     Path: movie_performance/{movie_id}/days/{date}/showtimes/{showtime_id}
     """
@@ -318,6 +377,7 @@ def save_snapshot(
         "sold_seats": sold_seats,
         "occupancy_pct": occupancy_pct,
         "layout_compressed": layout_compressed,
+        "raw_api_response": raw_api_response,
         "scraped_at": datetime.now(JAKARTA_TZ).isoformat(),
     }
 
@@ -360,25 +420,68 @@ def scrape_seat(cloud_event: Any) -> None:
     # Load token (with auto-refresh)
     token = get_valid_token(db)
     if not token:
-        logger.error("No valid token available")
+        log_critical(
+            "No valid token available - authentication failure",
+            {
+                "showtime_id": showtime_id,
+                "theatre": theatre_name,
+                "time": showtime_time,
+            },
+        )
         return  # Pub/Sub will retry
 
     # Fetch seat layout - need merchant for API path
     merchant = showtime_data.get("merchant", "XXI")
-    layout_data = fetch_seat_layout(showtime_id, merchant, token)
-    if not layout_data:
-        logger.error("Failed to fetch seat layout")
+    raw_api_response = fetch_seat_layout(showtime_id, merchant, token)
+
+    if not raw_api_response:
+        log_critical(
+            "Failed to fetch seat layout from TIX.id API",
+            {
+                "showtime_id": showtime_id,
+                "theatre": theatre_name,
+                "time": showtime_time,
+                "merchant": merchant,
+                "error": "fetch_layout_failed",
+            },
+        )
         return  # Pub/Sub will retry
 
+    # Validate schema if enabled
+    if ENABLE_SCHEMA_VALIDATION:
+        is_valid, severity, validation_msg = validate_api_response(raw_api_response)
+
+        if not is_valid:
+            if severity == "CRITICAL":
+                log_critical(
+                    f"Schema validation failed: {validation_msg}",
+                    {
+                        "showtime_id": showtime_id,
+                        "theatre": theatre_name,
+                        "severity": "CRITICAL",
+                        "impact": "all_scrapes_affected",
+                    },
+                )
+                # Store anyway for debugging
+            else:
+                log_warning(
+                    f"Schema validation issue: {validation_msg}",
+                    {"showtime_id": showtime_id, "theatre": theatre_name, "severity": severity},
+                )
+        else:
+            log_info(f"Schema validation passed for {showtime_id}")
+
     # Extract seat map from response
-    data = layout_data.get("data", {})
+    data = raw_api_response.get("data", {})
     seat_map = data.get("seat_map", [])
 
     # Calculate occupancy
     total_seats, sold_seats, occupancy_pct, layout = calculate_occupancy(seat_map)
 
-    # Save to Firestore
-    save_snapshot(db, showtime_data, layout, total_seats, sold_seats, occupancy_pct)
+    # Save to Firestore with raw API response
+    save_snapshot(
+        db, showtime_data, layout, total_seats, sold_seats, occupancy_pct, raw_api_response
+    )
 
     logger.info(
         f"✓ {theatre_name} @ {showtime_time}: {occupancy_pct}% ({sold_seats}/{total_seats})"

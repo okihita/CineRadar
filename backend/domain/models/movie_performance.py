@@ -32,6 +32,7 @@ class ShowtimeSnapshot:
         sold_seats: Number of sold/unavailable seats
         occupancy_pct: Percentage of seats sold (0-100)
         layout: Full seat map as nested list
+        raw_api_response: Full raw API response from TIX.id for debugging/audit
         scraped_at: ISO timestamp when captured
     """
 
@@ -49,6 +50,7 @@ class ShowtimeSnapshot:
     sold_seats: int
     occupancy_pct: float
     layout: list[list[dict[str, Any]]] = field(default_factory=list)
+    raw_api_response: dict[str, Any] | None = None
     scraped_at: str = field(default_factory=lambda: get_now_iso())
 
     @property
@@ -61,6 +63,7 @@ class ShowtimeSnapshot:
 
         Note: layout is gzip-compressed to reduce storage by ~70%.
         Uses 'layout_compressed' field (bytes) instead of 'layout_json' (string).
+        raw_api_response stores full API response for debugging/audit trail.
         """
         # Compress layout to bytes (reduces ~10.8KB to ~3.2KB)
         layout_json_str = json.dumps(self.layout)
@@ -70,8 +73,8 @@ class ShowtimeSnapshot:
             "showtime_id": self.showtime_id,
             "movie_id": self.movie_id,
             "movie_title": self.movie_title,
-            "theatre_id": self.theatre_id,
             "theatre_name": self.theatre_name,
+            "theatre_id": self.theatre_id,
             "city": self.city,
             "room_category": self.room_category,
             "merchant": self.merchant,
@@ -81,6 +84,7 @@ class ShowtimeSnapshot:
             "sold_seats": self.sold_seats,
             "occupancy_pct": self.occupancy_pct,
             "layout_compressed": layout_compressed,  # gzip bytes (~3.2KB)
+            "raw_api_response": self.raw_api_response,  # Full raw API response for debugging
             "scraped_at": self.scraped_at,
         }
 
@@ -122,6 +126,7 @@ class ShowtimeSnapshot:
             sold_seats=data.get("sold_seats", 0),
             occupancy_pct=data.get("occupancy_pct", 0.0),
             layout=layout,
+            raw_api_response=data.get("raw_api_response"),
             scraped_at=data.get("scraped_at", ""),
         )
 

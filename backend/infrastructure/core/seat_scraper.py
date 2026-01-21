@@ -248,6 +248,7 @@ class SeatScraper(BaseScraper):
             "room_category": showtime_info.get("room_category"),
             "showtime": showtime_info.get("showtime"),
             "scraped_at": datetime.now().isoformat(),
+            "raw_api_response": layout_data,
             **occupancy,
         }
 
