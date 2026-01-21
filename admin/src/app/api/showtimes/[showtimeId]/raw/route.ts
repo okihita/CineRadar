@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { firestore } from '@/lib/firebase';
+import { firestoreClient } from '@/lib/firebase';
 
 interface RawShowtimeResponse {
     showtimeId: string;
