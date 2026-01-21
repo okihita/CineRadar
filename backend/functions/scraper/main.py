@@ -64,7 +64,7 @@ def log_warning(message: str, context: dict[str, Any]) -> None:
 
 def log_info(message: str) -> None:
     """Log info message."""
-    logger.info(f"ℹ️ INFO: {message}")
+    logger.info(f"i INFO: {message}")
 
 
 def load_token_data(db: firestore.Client) -> dict[str, Any] | None:

@@ -2,11 +2,11 @@
 
 import argparse
 import json
+
 from google.cloud import firestore
-import gzip
 
 
-def inspect_showtime(showtime_id: str, movie_id: str, date: str, verbose: bool = False):
+def inspect_showtime(showtime_id: str, movie_id: str, date: str, verbose: bool = False) -> None:
     """Retrieve and display raw API response for debugging.
 
     Args:
@@ -35,9 +35,9 @@ def inspect_showtime(showtime_id: str, movie_id: str, date: str, verbose: bool =
     raw = data.get("raw_api_response")
 
     if not raw:
-        print(f"⚠️  No raw_api_response stored")
-        print(f"   This might be legacy data before raw response capture was implemented")
-        print(f"\n📋 Available Data:")
+        print("⚠️  No raw_api_response stored")
+        print("   This might be legacy data before raw response capture was implemented")
+        print("\n📋 Available Data:")
         print(f"  Movie: {data.get('movie_title')}")
         print(f"  Theatre: {data.get('theatre_name')} ({data.get('city')})")
         print(f"  Time: {data.get('showtime')} on {data.get('date')}")
@@ -46,29 +46,29 @@ def inspect_showtime(showtime_id: str, movie_id: str, date: str, verbose: bool =
         )
         return
 
-    print(f"\n{'=' * 60}")
+    print("\n" + "=" * 60)
     print(f"SHOWTIME INSPECTION: {showtime_id}")
-    print(f"{'=' * 60}")
+    print("=" * 60)
 
-    print(f"\n📋 Metadata:")
+    print("\n📋 Metadata:")
     print(f"  Movie: {data.get('movie_title')}")
     print(f"  Theatre: {data.get('theatre_name')} ({data.get('city')})")
     print(f"  Time: {data.get('showtime')} on {data.get('date')}")
     print(f"  Room: {data.get('room_category')} ({data.get('merchant')})")
     print(f"  Scraped: {data.get('scraped_at')}")
 
-    print(f"\n📊 Calculated Occupancy:")
+    print("\n📊 Calculated Occupancy:")
     print(
         f"  {data.get('occupancy_pct')}% ({data.get('sold_seats')}/{data.get('total_seats')} seats)"
     )
 
-    print(f"\n🔍 Raw API Response Structure:")
+    print("\n🔍 Raw API Response Structure:")
     print(f"  Success: {raw.get('success')}")
     print(f"  Code: {raw.get('code')}")
     print(f"  Has seat_map: {'seat_map' in raw.get('data', {})}")
 
     if verbose:
-        print(f"\n📄 Full Raw API Response:")
+        print("\n📄 Full Raw API Response:")
         print(json.dumps(raw, indent=2))
 
     # Analyze seat types if present
@@ -89,32 +89,32 @@ def inspect_showtime(showtime_id: str, movie_id: str, date: str, verbose: bool =
                 status_codes.add(item.get("seat_status", item.get("status")))
 
     if seat_types:
-        print(f"\n🪑 Seat Types Detected:")
+        print("\n🪑 Seat Types Detected:")
         for seat_type in sorted(seat_types):
             print(f"  - {seat_type}")
 
     if status_codes:
-        print(f"\n🔢 Status Codes Found:")
+        print("\n🔢 Status Codes Found:")
         for code in sorted(str(c) for c in status_codes):
             print(f"  - Code: {code}")
 
     # Check for anomalies
     total_calculated = data.get("total_seats", 0)
     if total_calculated == 0 and seat_map:
-        print(f"\n⚠️  WARNING: Total seats calculated as 0, but seat_map has data!")
-        print(f"   This suggests a calculation bug - check seat status interpretation")
-        print(f"   Possible causes: Unknown status codes, seat_type mismatch")
+        print("\n⚠️  WARNING: Total seats calculated as 0, but seat_map has data!")
+        print("   This suggests a calculation bug - check seat status interpretation")
+        print("   Possible causes: Unknown status codes, seat_type mismatch")
 
     # Check for multiple seat types (potential issue from yesterday)
     if len(seat_types) > 1:
         print(f"\n🎯 DETECTED MULTIPLE SEAT TYPES: {len(seat_types)} types")
-        print(f"   This could cause calculation issues if status codes vary by seat type")
-        print(f"   Review status code interpretation for each type:")
+        print("   This could cause calculation issues if status codes vary by seat type")
+        print("   Review status code interpretation for each type:")
         for seat_type in sorted(seat_types):
             print(f"   - {seat_type}")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Inspect raw API response for showtime debugging")
     parser.add_argument("--showtime-id", required=True, help="Showtime ID")
     parser.add_argument("--movie-id", required=True, help="Movie ID")
