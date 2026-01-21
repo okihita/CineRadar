@@ -35,6 +35,24 @@ uv run python -m backend.cli --city JAKARTA --schedules
 uv run python -m backend.cli --visible
 ```
 
+### Inspect Showtime (Raw API Response)
+**Entry Point:** [`backend/cli/inspect_showtime.py`](../backend/cli/inspect_showtime.py)
+
+```bash
+# Inspect a specific showtime's raw API response
+python backend/cli/inspect_showtime.py \
+  --showtime-id <SHOWTIME_ID> \
+  --movie-id <MOVIE_ID> \
+  --date YYYY-MM-DD
+
+# Show full JSON output
+python backend/cli/inspect_showtime.py \
+  --showtime-id <SHOWTIME_ID> \
+  --movie-id <MOVIE_ID> \
+  --date YYYY-MM-DD \
+  --verbose
+```
+
 ### Token Refresh
 **Entry Point:** [`backend/cli/refresh_token.py`](../backend/cli/refresh_token.py)
 
@@ -95,6 +113,58 @@ Authorization: Bearer {JWT_TOKEN}
 
 > 🚨 **Important**
 > The API does not distinguish between "sold" and "under maintenance/blocked". Occupancy estimates should be treated as **maximum upper bounds**.
+
+---
+
+## 🌐 Admin API Reference
+
+### Raw Showtime Data
+
+**Entry Point:** `admin/src/app/api/showtimes/[showtimeId]/raw/route.ts`
+
+**Purpose:** Retrieve raw TIX.id API response for debugging and audit.
+
+**Endpoint:**
+```http
+GET /api/showtimes/{showtimeId}/raw?movieId={movieId}&date={YYYY-MM-DD}
+```
+
+**Response Example:**
+```json
+{
+  "showtimeId": "2014057575301070848",
+  "movieTitle": "PRIMATE",
+  "theatreName": "AGORA MALL XXI",
+  "city": "JAKARTA",
+  "roomCategory": "2D",
+  "merchant": "XXI",
+  "showtime": "20:30",
+  "date": "2026-01-22",
+  "occupancyPct": 16.3,
+  "totalSeats": 135,
+  "soldSeats": 22,
+  "scrapedAt": "2026-01-22T20:23:45+07:00",
+  "rawApiResponse": {
+    "success": true,
+    "data": {
+      "user_seat_purchased": 0,
+      "user_seat_daily_limit": 10,
+      "max_horizontal_seat": 15,
+      "max_vertical_seat": 9,
+      "seat_rule_config": { ... },
+      "seat_rules": { ... },
+      "price": 45000,
+      "seat_map": [ ... ]
+    }
+  }
+}
+```
+
+**Error Responses:**
+| Status | Error |
+|--------|--------|
+| 400 | `movieId` and `date` query parameters required |
+| 404 | Showtime not found in Firestore |
 
 ---
 

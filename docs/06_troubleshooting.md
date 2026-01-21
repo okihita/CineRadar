@@ -79,3 +79,108 @@ Monorepo builds share `node_modules` cache. Occasionally, a dependency update br
 | **Vercel** | Hosting/DNS | Team Owner |
 | **GCP** | Database/Auth | Admin |
 | **TIX Support** | *Do not contact* | **N/A** (Stealth Ops) |
+
+---
+
+## 🐛 Debugging Seat Calculation Issues
+
+### Problem: Occupancy shows 0% or incorrect values
+
+**Symptoms:**
+- Showtime displays 0% occupancy despite seats being sold
+- Total seats calculated as 0
+- Occupancy percentage seems wrong
+
+**Root Causes:**
+1. **Status code interpretation errors** (code 1 = available, 5/6 = sold)
+2. **Seat type mismatches** (different seat types may have different status codes)
+3. **API schema changes** (new fields or structure)
+4. **Calculation logic bugs** in scraper code
+
+**Debug Steps:**
+
+#### 1. Inspect Raw API Response
+
+Use the CLI tool to view the full TIX.id API response:
+
+```bash
+python backend/cli/inspect_showtime.py \
+  --showtime-id <SHOWTIME_ID> \
+  --movie-id <MOVIE_ID> \
+  --date YYYY-MM-DD \
+  --verbose
+```
+
+This shows:
+- Whether `raw_api_response` exists (may be missing for legacy data)
+- Seat status codes found
+- Seat types detected
+- Full API structure
+
+#### 2. Access via Admin API
+
+```http
+GET /api/showtimes/[showtimeId]/raw?movieId=X&date=Y
+```
+
+Returns the complete raw response stored in Firestore.
+
+#### 3. Check Firestore Directly
+
+Navigate to:
+```
+movie_performance/{movie_id}/days/{date}/showtimes/{showtime_id}
+```
+
+Look for:
+- `raw_api_response` field present?
+- Status codes in the response match expected values (1, 5, 6)?
+- Any unexpected seat types?
+
+#### 4. Compare with UI
+
+Open TIX.id website and the same showtime to visually verify:
+- Does the seat layout match?
+- Are sold seats marked correctly?
+- Are there any maintenance/blocked seats?
+
+#### 5. Check Cloud Logs
+
+Filter logs for errors:
+```
+resource.labels.function_name="scrape-seat-jit"
+severity>=WARNING
+```
+
+Look for:
+- "Schema validation failed"
+- "Seat type mismatch"
+- "Unknown status code"
+
+### Schema Change Detection
+
+If the API structure changes, the schema validation will log:
+
+```json
+{
+  "severity": "CRITICAL",
+  "message": "seat_map is not a list - schema changed!",
+  "showtime_id": "...",
+  "impact": "all_scrapes_affected"
+}
+```
+
+**Action Required:**
+1. Update scraper logic in `backend/functions/scraper/main.py`
+2. Update data models in `backend/domain/models/movie_performance.py`
+3. Test with `inspect_showtime.py --verbose`
+4. Deploy updated Cloud Function
+
+### Common Issues
+
+| Issue | Diagnosis | Fix |
+|--------|------------|------|
+| Total seats = 0 | Seat status codes not recognized | Check status code interpretation in `calculate_occupancy()` |
+| Occupancy > 100% | Sold seats counted twice | Check status code filter logic |
+| Random 0% occupancy | Some showtimes missing raw_api_response | Legacy data - re-scrape or backfill |
+| All seats available | API token expired | Token refresh failed - check `auth_tokens` collection |

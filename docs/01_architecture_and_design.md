@@ -236,6 +236,7 @@ erDiagram
         string city
         float occupancy_pct
         bytes layout_compressed
+        object raw_api_response  // Full TIX.id API response for debugging/audit
     }
 ```
 
@@ -251,7 +252,7 @@ erDiagram
 | `movies/{movie_id}/rating_history` | `{YYYY-MM-DD}` | **[NEW]** Daily rating score snapshots |
 | `movie_performance` | `{movie_id}` | Movie metadata (title, poster, age_category) |
 | `movie_performance/{movie_id}/days` | `{YYYY-MM-DD}` | Daily aggregated stats (Total Showtimes, Scraped, Sold) |
-| `movie_performance/{movie_id}/days/{date}/showtimes` | `{showtime_id}` | Individual showtime snapshots with compressed seat layout (gzip) |
+| `movie_performance/{movie_id}/days/{date}/showtimes` | `{showtime_id}` | Individual showtime snapshots with compressed seat layout (gzip) + full raw API response for debugging |
 | `scraper_runs` | `{timestamp}_{type}` | Scraper run logs |
 | `auth_tokens` | `tix_jwt` | JWT token storage |
 

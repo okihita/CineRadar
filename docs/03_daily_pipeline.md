@@ -267,7 +267,7 @@ Aggregate seat occupancy data into per-movie performance summaries for the Admin
 |-------|----------------|------------|
 | `MovieMetadata` | `movie_performance/{movie_id}` | `title`, `poster`, `age_category`, `last_updated` |
 | `DailyPerformance` | `.../days/{YYYY-MM-DD}` | `total_showtimes`, `avg_occupancy_pct`, `total_seats`, `total_sold`, `cities` |
-| `ShowtimeSnapshot` | `.../showtimes/{id}` | `theatre_name`, `city`, `showtime`, `occupancy_pct`, `sold_seats`, `layout_json` |
+| `ShowtimeSnapshot` | `.../showtimes/{id}` | `theatre_name`, `city`, `showtime`, `occupancy_pct`, `sold_seats`, `layout_json`, `raw_api_response` |
 
 ### UI Flow (PerformanceTab.tsx)
 
@@ -517,7 +517,8 @@ graph TD
     subgraph "Scraper Logic"
         Scraper -- "1. Load Auth Token" --> Firestore
         Scraper -- "2. GET /layout (with token)" --> TixAPI[TIX.id API]
-        Scraper -- "3. Save Snapshot (Compressed)" --> Firestore
+        Scraper -- "3. Validate Schema" --> Validate["Schema Validation"]
+        Scraper -- "4. Save Snapshot (Compressed + Raw API)" --> Firestore
     end
 ```
 
@@ -528,9 +529,9 @@ graph TD
     *   **Task**: Queries Firestore for showtimes starting in the next 8-13 minutes.
     *   **Output**: Publishes `showtime_id` messages to Pub/Sub.
 
-2.  **Scraper (`scrape-seat-jit`)**:
+ 2.  **Scraper (`scrape-seat-jit`)**:
     *   **Trigger**: Pub/Sub Message (`scrape-seat-jit`).
-    *   **Task**: Fetches seat layout from TIX.id, compresses it (gzip), and saves to Firestore.
+    *   **Task**: Fetches seat layout from TIX.id, validates schema, compresses layout (gzip), and saves to Firestore with **full raw API response** for debugging/audit.
     *   **Scale**: Auto-scales up to 5 concurrent instances to respect rate limits.
 
 ### Self-Healing Token Reuse
@@ -540,4 +541,46 @@ The Cloud Function is autonomous. It reuses the stored `tix_jwt` from Firestore.
 *   **Cost**: ~$0.81/month (mainly Firestore writes + minimal Compute).
 *   **Precision**: T-8 minutes.
 *   **Safety**: Rate-limited to 5 concurrent scrapers (~1-2 req/sec).
+
+### Raw API Response Storage
+Each JIT scrape stores the **full TIX.id API response** in the `raw_api_response` field for debugging and audit purposes.
+
+**What's Stored:**
+- Complete API response including seat map, pricing, rules, and metadata
+- Seat status codes (1 = available, 5/6 = sold/blocked)
+- Seat layout structure (rows, sections, seat codes)
+
+**Storage Location:**
+```
+movie_performance/{movie_id}/days/{date}/showtimes/{showtime_id}
+  ├─ raw_api_response (object)  ← Full TIX.id API response
+  ├─ layout_compressed (bytes)  ← Gzip-computed seat grid
+  ├─ total_seats (int)
+  ├─ sold_seats (int)
+  └─ occupancy_pct (float)
+```
+
+**Access Methods:**
+1. **CLI Tool** (Recommended for debugging):
+   ```bash
+   python backend/cli/inspect_showtime.py \
+     --showtime-id <ID> \
+     --movie-id <MOVIE_ID> \
+     --date YYYY-MM-DD \
+     --verbose
+   ```
+
+2. **Admin API:**
+   ```
+   GET /api/showtimes/[showtimeId]/raw?movieId=X&date=Y
+   ```
+
+3. **Firestore Console:** Navigate directly to document path
+
+**Use Cases:**
+- Debug seat calculation discrepancies (why occupancy shows 0%?)
+- Detect API schema changes (new seat types, status codes)
+- Audit historical seat availability
+- Verify seat status code interpretation
+- Analyze pricing/rule changes over time
 
