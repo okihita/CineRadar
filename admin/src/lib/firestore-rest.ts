@@ -281,6 +281,46 @@ export class FirestoreRestClient {
         const docs = await this.getCollectionWithQuery(collectionName, '__name__', 1);
         return docs.length > 0 ? docs[0] : null;
     }
+
+    /**
+     * Get all documents from a sub-collection
+     */
+    async getSubCollection(collectionPath: string): Promise<Record<string, unknown>[]> {
+        try {
+            const token = await getAccessToken();
+            const allDocuments: Record<string, unknown>[] = [];
+            let pageToken: string | undefined;
+
+            do {
+                const url = new URL(`${FIRESTORE_BASE_URL}/${collectionPath}`);
+                url.searchParams.set('pageSize', '500'); // Max allowed
+                if (pageToken) {
+                    url.searchParams.set('pageToken', pageToken);
+                }
+
+                const response = await fetch(url.toString(), {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                });
+
+                if (!response.ok) {
+                    console.error(`Failed to get sub-collection ${collectionPath}: ${response.status}`);
+                    break;
+                }
+
+                const data = await response.json();
+                const documents = (data.documents || []).map(parseDocument);
+                allDocuments.push(...documents);
+
+                // Get next page token
+                pageToken = data.nextPageToken;
+            } while (pageToken);
+
+            return allDocuments;
+        } catch (error) {
+            console.error(`Error getting sub-collection ${collectionPath}:`, error);
+            return [];
+        }
+    }
 }
 
 export const firestoreRestClient = new FirestoreRestClient();

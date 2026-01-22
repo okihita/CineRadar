@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/PageHeader';
 import {
     LayoutDashboard, TrendingUp, TrendingDown, AlertTriangle, CheckCircle,
-    XCircle, Film, Building2, Lightbulb, ArrowRight, Clock
+    XCircle, Film, Building2, Lightbulb, ArrowRight, Clock, Database
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
@@ -15,6 +15,8 @@ interface DashboardData {
     greeting: string;
     date: string;
     timestamp: string;
+    dataDate: string;
+    usingFallback: boolean;
     kpis: {
         revenue: { value: number; delta: string };
         tickets: { value: number; delta: string };
@@ -27,6 +29,14 @@ interface DashboardData {
     topTheatres: Array<{ name: string; chain: string; revenue: number; occupancy: number }>;
     cityPerformance: Array<{ name: string; region: string; occupancy: number; revenue: number }>;
     aiInsight: { type: string; text: string };
+    systemHealth: {
+        morningScrapeStatus: string;
+        jitTotalRuns: number;
+        jitLastRun: string | null;
+        theatreCount: number;
+        cityCount: number;
+        movieCount: number;
+    };
 }
 
 function formatRupiah(value: number): string {
@@ -59,7 +69,7 @@ export default function ExecutiveDashboard() {
         setLoading(true);
         setError(null);
         try {
-            const res = await fetch('/api/dashboard');
+            const res = await fetch('/api/executive-dashboard');
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
             setData(json);
@@ -110,9 +120,46 @@ export default function ExecutiveDashboard() {
                     lastUpdated={lastUpdated.toLocaleTimeString()}
                     onRefresh={fetchData}
                     isRefreshing={loading}
-                    showMockBadge={true}
+                    showMockBadge={false}
                 />
             </div>
+
+            {/* System Health */}
+            <Card className={`mb-6 ${data.usingFallback ? 'border-amber-500/50 bg-amber-500/5' : ''}`}>
+                <CardHeader className="py-3">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                        <Database className="w-4 h-4 text-blue-500" />
+                        System Health & Data Freshness
+                        {data.usingFallback && (
+                            <Badge variant="outline" className="ml-2 border-amber-500 text-amber-700">
+                                Using Yesterday's Data
+                            </Badge>
+                        )}
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div className="p-3 bg-muted/50 rounded-lg">
+                            <div className="font-medium">Morning Scrape</div>
+                            <div className={`text-xs ${data.systemHealth.morningScrapeStatus === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+                                {data.systemHealth.morningScrapeStatus === 'success' ? '✓ Success' : '✗ Failed or Not Run'}
+                            </div>
+                        </div>
+                        <div className="p-3 bg-muted/50 rounded-lg">
+                            <div className="font-medium">JIT Runs Today</div>
+                            <div className="text-xs text-muted-foreground">{data.systemHealth.jitTotalRuns} runs completed</div>
+                        </div>
+                        <div className="p-3 bg-muted/50 rounded-lg">
+                            <div className="font-medium">Theatres Tracked</div>
+                            <div className="text-xs text-muted-foreground">{data.systemHealth.theatreCount} locations</div>
+                        </div>
+                        <div className="p-3 bg-muted/50 rounded-lg">
+                            <div className="font-medium">Data Freshness</div>
+                            <div className="text-xs text-muted-foreground">{data.dataDate}</div>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
 
             {/* KPI Scoreboard */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
