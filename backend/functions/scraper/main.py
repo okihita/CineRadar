@@ -91,9 +91,81 @@ def load_token_data(db: firestore.Client) -> dict[str, Any] | None:
     return None
 
 
+class TokenRefreshLock:
+    """Distributed lock for token refresh using Firestore."""
+
+    def __init__(self, db: firestore.Client):
+        self.db = db
+        self.lock_ref = db.collection("auth_tokens").document("refresh_lock")
+        self.timeout = 30  # seconds
+
+    def acquire(self, instance_id: str) -> bool:
+        """Attempt to acquire the lock."""
+        now = datetime.utcnow().isoformat()
+        try:
+            # Try to create lock doc
+            self.lock_ref.create({
+                "locked_at": now,
+                "instance_id": instance_id
+            })
+            return True
+        except Exception:
+            # Already exists, check if stale
+            doc = self.lock_ref.get()
+            if not doc.exists:
+                return self.acquire(instance_id)  # Race condition handled
+
+            data = doc.to_dict()
+            locked_at_str = data.get("locked_at", "")
+            try:
+                locked_at = datetime.fromisoformat(locked_at_str)
+                age = (datetime.utcnow() - locked_at).total_seconds()
+                if age > self.timeout:
+                    logger.warning(f"Taking over stale lock (age={age:.1f}s)")
+                    self.lock_ref.set({
+                        "locked_at": now,
+                        "instance_id": instance_id,
+                        "took_over": True
+                    })
+                    return True
+            except Exception:
+                # Invalid timestamp, force take
+                self.lock_ref.set({
+                    "locked_at": now,
+                    "instance_id": instance_id,
+                    "took_over": True
+                })
+                return True
+            
+            return False
+
+    def release(self) -> None:
+        """Release the lock."""
+        try:
+            self.lock_ref.delete()
+        except Exception:
+            pass
+
+
 def refresh_access_token(db: firestore.Client, refresh_token: str) -> str | None:
-    """Refresh access token using the validation API."""
-    logger.info("🔄 Attempting inline token refresh...")
+    """Refresh access token using the validation API with distributed locking."""
+    import time
+    import uuid
+
+    instance_id = f"scraper-{uuid.uuid4().hex[:8]}"
+    lock = TokenRefreshLock(db)
+
+    # Try to acquire lock
+    if not lock.acquire(instance_id):
+        logger.info("Another instance is refreshing, waiting...")
+        time.sleep(1) # Simple backoff
+        # Try to read the new token that should be there soon
+        token_data = load_token_data(db)
+        if token_data and token_data.get("token"):
+            return token_data["token"]
+        return None
+
+    logger.info("🔄 Acquired lock, attempting token refresh...")
 
     try:
         response = requests.post(
@@ -118,7 +190,7 @@ def refresh_access_token(db: firestore.Client, refresh_token: str) -> str | None
                         "token": new_token,
                         "refresh_token": refresh_token,
                         "stored_at": now_iso,
-                        "updated_by": "scraper-cloud-function",
+                        "updated_by": instance_id,
                     },
                     merge=True,
                 )
@@ -132,11 +204,13 @@ def refresh_access_token(db: firestore.Client, refresh_token: str) -> str | None
 
     except requests.RequestException as e:
         logger.error(f"❌ Refresh request exception: {e}")
+    finally:
+        lock.release()
 
     return None
 
 
-def get_valid_token(db: firestore.Client) -> str | None:
+def get_valid_token(db: firestore.Client, force_refresh: bool = False) -> str | None:
     """Get a valid token, refreshing if necessary."""
     token_data = load_token_data(db)
     if not token_data or not token_data.get("token"):
@@ -146,11 +220,9 @@ def get_valid_token(db: firestore.Client) -> str | None:
     refresh_token = token_data.get("refresh_token")
     stored_at_str = token_data.get("stored_at")
 
-    # Check expiry
-    # TIX.id tokens last 30 mins. We refresh if age > 25 mins (5 min buffer).
-    should_refresh = False
+    should_refresh = force_refresh
 
-    if stored_at_str:
+    if not should_refresh and stored_at_str:
         try:
             # Handle potentially naive or aware inputs
             stored_at = datetime.fromisoformat(stored_at_str)
@@ -164,8 +236,10 @@ def get_valid_token(db: firestore.Client) -> str | None:
 
             age_minutes = age.total_seconds() / 60
 
+            # Dispatcher refreshes at 20 mins. We only force refresh at 25 mins (emergency).
+            # Reduced from 28 to 25 to allow more buffer before expiration.
             if age_minutes >= 25:
-                logger.info(f"⚠️ Token is {age_minutes:.1f} min old. Refreshing...")
+                logger.info(f"⚠️ Token is {age_minutes:.1f} min old. Refreshing (emergency fallback)...")
                 should_refresh = True
             else:
                 logger.info(f"Token is {age_minutes:.1f} min old (valid).")
@@ -173,7 +247,7 @@ def get_valid_token(db: firestore.Client) -> str | None:
         except ValueError:
             logger.warning("Could not parse stored_at time, forcing refresh check if possible")
             should_refresh = True
-    else:
+    elif not stored_at_str:
         should_refresh = True
 
     if should_refresh and refresh_token:
@@ -222,8 +296,8 @@ def fetch_seat_layout(showtime_id: str, merchant: str, token: str) -> dict[str, 
                 logger.error(f"API error: {data.get('error', {}).get('message', 'Unknown')}")
                 return None
         elif response.status_code == 401:
-            logger.error("Auth token expired")
-            return None
+            logger.warning("Auth token expired (401)")
+            return None # Caller should handle retry
         else:
             body = response.text[:200] if response.text else "No body"
             logger.error(f"API error {response.status_code}: {body}")
@@ -232,6 +306,78 @@ def fetch_seat_layout(showtime_id: str, merchant: str, token: str) -> dict[str, 
     except requests.RequestException as e:
         logger.error(f"Request failed: {e}")
         return None
+
+def fetch_seat_layout_with_retry(
+    showtime_id: str, merchant: str, token: str, db: firestore.Client
+) -> dict[str, Any] | None:
+    """Fetch seat layout with 401 retry logic."""
+    import time
+    
+    # First attempt
+    result = fetch_seat_layout(showtime_id, merchant, token)
+    if result:
+        return result
+        
+    # Check if we should retry (did we get a 401?)
+    # NOTE: fetch_seat_layout returns None on error, so we can't distinguish 401 easily
+    # unless we modify it or infer. To keep it clean, let's modify fetch_seat_layout to return a status code or exception?
+    # Or simply: if result is None, check token validity?
+    
+    # Actually, simpler to inline the logic or modify fetch_seat_layout to raise exception on 401.
+    # But since we want to preserve existing signature for compatibility...
+    
+    # Let's re-implement the retry loop here using explicit requests to be safe and cleaner
+    merchant_path = get_merchant_path(merchant)
+    url = f"https://api-b2b.tix.id/v1/movies/{merchant_path}/layout"
+    
+    current_token = token
+    
+    for attempt in range(2):
+        headers = {
+            "Authorization": f"Bearer {current_token}",
+            "Accept": "application/json",
+            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15",
+        }
+        params = {"show_time_id": showtime_id, "tz": "7"}
+        
+        try:
+            response = requests.get(url, headers=headers, params=params, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("success"):
+                    return cast("dict[str, Any]", data)
+                else:
+                    logger.error(f"API error: {data.get('error', {}).get('message', 'Unknown')}")
+                    return None
+            
+            elif response.status_code == 401:
+                if attempt == 0:
+                    logger.warning("Token 401 expired. Refreshing and retrying...")
+                    new_token = get_valid_token(db, force_refresh=True)
+                    if new_token:
+                        current_token = new_token
+                        time.sleep(0.5)
+                        continue # Retry with new token
+                    else:
+                        logger.error("Failed to refresh token after 401.")
+                        return None
+                else:
+                    logger.error("Still 401 after refresh.")
+                    return None
+            else:
+                body = response.text[:200] if response.text else "No body"
+                logger.error(f"API error {response.status_code}: {body}")
+                return None
+                
+        except requests.RequestException as e:
+            logger.error(f"Request failed: {e}")
+            if attempt == 0:
+                time.sleep(1)
+                continue
+            return None
+            
+    return None
 
 
 def validate_api_response(raw_response: dict[str, Any]) -> tuple[bool, str, str]:
@@ -432,7 +578,7 @@ def scrape_seat(cloud_event: Any) -> None:
 
     # Fetch seat layout - need merchant for API path
     merchant = showtime_data.get("merchant", "XXI")
-    raw_api_response = fetch_seat_layout(showtime_id, merchant, token)
+    raw_api_response = fetch_seat_layout_with_retry(showtime_id, merchant, token, db)
 
     if not raw_api_response:
         log_critical(
