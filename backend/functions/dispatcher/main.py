@@ -8,6 +8,7 @@ HTTP-triggered Cloud Function that:
 Triggered by Cloud Scheduler every 5 minutes.
 """
 
+import contextlib
 import json
 import logging
 import os
@@ -89,25 +90,23 @@ class TokenRefreshLock:
                     "took_over": True
                 })
                 return True
-            
+
             return False
 
     def release(self) -> None:
         """Release the lock."""
-        try:
+        with contextlib.suppress(Exception):
             self.lock_ref.delete()
-        except Exception:
-            pass
 
 
 def refresh_access_token(db: firestore.Client, refresh_token: str) -> bool:
     """Refresh access token using the validation API with distributed locking."""
     import time
     import uuid
-    
+
     instance_id = f"dispatcher-{uuid.uuid4().hex[:8]}"
     lock = TokenRefreshLock(db)
-    
+
     # Try to acquire lock
     if not lock.acquire(instance_id):
         logger.info("Another instance is refreshing, waiting...")
@@ -161,7 +160,7 @@ def refresh_access_token(db: firestore.Client, refresh_token: str) -> bool:
 
 def ensure_token_freshness(db: firestore.Client) -> None:
     """Ensure token is fresh before dispatching jobs.
-    
+
     Refreshes if token is > 20 minutes old.
     """
     try:

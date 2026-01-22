@@ -8,7 +8,6 @@ Reports:
 """
 
 import argparse
-import sys
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -299,10 +298,7 @@ def main():
     args = parser.parse_args()
 
     # Determine date to check
-    if args.date:
-        date_str = args.date
-    else:
-        date_str = datetime.now(JAKARTA_TZ).strftime("%Y-%m-%d")
+    date_str = args.date or datetime.now(JAKARTA_TZ).strftime("%Y-%m-%d")
 
     print("\n" + "=" * 70)
     print(f"🎬 CineRadar Seating Layout Scraping Status - {date_str}")
@@ -324,7 +320,7 @@ def main():
     print("📋 SUMMARY")
     print("=" * 70)
 
-    print(f"\n🪑 Seat Snapshots (older collection):")
+    print("\n🪑 Seat Snapshots (older collection):")
     print(f"  Total snapshots: {seat_snapshot_stats['total_snapshots']}")
     if seat_snapshot_stats["total_snapshots"] > 0:
         print(
@@ -334,7 +330,7 @@ def main():
             f"  Without raw_api_response: {seat_snapshot_stats['without_raw_response']} ({(seat_snapshot_stats['without_raw_response'] / seat_snapshot_stats['total_snapshots'] * 100):.1f}%)"
         )
 
-    print(f"\n🪑 Showtime Coverage (movie_performance collection):")
+    print("\n🪑 Showtime Coverage (movie_performance collection):")
     print(f"  Movies with data: {showtime_stats['movie_count']}")
     print(f"  Total showtimes: {showtime_stats['total_showtimes']}")
     print(
@@ -345,7 +341,7 @@ def main():
     )
     print(f"  Zero seats (potential issues): {showtime_stats['zero_seats']}")
 
-    print(f"\n🔄 JIT Scraper Activity:")
+    print("\n🔄 JIT Scraper Activity:")
     print(f"  Total runs: {jit_stats['total_runs']}")
     print(f"  Successful: {jit_stats['successful_runs']}")
     print(f"  Failed: {jit_stats['failed_runs']}")
@@ -367,7 +363,7 @@ def main():
         print(f"  Duration: {format_duration(duration)}")
 
     # Health assessment
-    print(f"\n🩺 Health Assessment:")
+    print("\n🩺 Health Assessment:")
 
     # Determine which collection to use for assessment
     total_showtimes_for_coverage = max(
@@ -377,7 +373,6 @@ def main():
         showtime_stats["with_raw_response"] + seat_snapshot_stats["with_raw_response"]
     )
     raw_coverage_pct = (with_raw_for_coverage / total_showtimes_for_coverage) * 100
-    jit_success_pct = (jit_stats["successful_runs"] / max(jit_stats["total_runs"], 1)) * 100
 
     if raw_coverage_pct > 90:
         print(f"  ✅ Raw API response coverage: Excellent ({raw_coverage_pct:.1f}%)")
@@ -395,7 +390,7 @@ def main():
             f"  ❌ JIT scraper: {jit_stats['failed_runs']} failed runs out of {jit_stats['total_runs']}"
         )
     else:
-        print(f"  ⚠️  JIT scraper: No runs recorded")
+        print("  ⚠️  JIT scraper: No runs recorded")
 
     if showtime_stats["zero_seats"] > 0:
         zero_pct = (showtime_stats["zero_seats"] / max(showtime_stats["total_showtimes"], 1)) * 100
@@ -405,11 +400,11 @@ def main():
 
     # Verbose output
     if args.verbose:
-        print(f"\n📄 Detailed Movie Breakdown:")
-        for movie_id, movie_title, count in showtime_stats["movies_with_data"]:
+        print("\n📄 Detailed Movie Breakdown:")
+        for _movie_id, movie_title, count in showtime_stats["movies_with_data"]:
             print(f"  - {movie_title}: {count} showtimes")
 
-        print(f"\n📄 Detailed JIT Run Breakdown:")
+        print("\n📄 Detailed JIT Run Breakdown:")
         for run in jit_stats["runs_detail"]:
             print(
                 f"  - {run['time_slot']}: status={run['status']}, found={run['showtimes_found']}, published={run['jobs_published']}"

@@ -11,6 +11,7 @@ Configure max_instances=5 to limit concurrency and avoid rate limiting.
 """
 
 import base64
+import contextlib
 import gzip
 import json
 import logging
@@ -136,15 +137,13 @@ class TokenRefreshLock:
                     "took_over": True
                 })
                 return True
-            
+
             return False
 
     def release(self) -> None:
         """Release the lock."""
-        try:
+        with contextlib.suppress(Exception):
             self.lock_ref.delete()
-        except Exception:
-            pass
 
 
 def refresh_access_token(db: firestore.Client, refresh_token: str) -> str | None:
@@ -312,26 +311,26 @@ def fetch_seat_layout_with_retry(
 ) -> dict[str, Any] | None:
     """Fetch seat layout with 401 retry logic."""
     import time
-    
+
     # First attempt
     result = fetch_seat_layout(showtime_id, merchant, token)
     if result:
         return result
-        
+
     # Check if we should retry (did we get a 401?)
     # NOTE: fetch_seat_layout returns None on error, so we can't distinguish 401 easily
     # unless we modify it or infer. To keep it clean, let's modify fetch_seat_layout to return a status code or exception?
     # Or simply: if result is None, check token validity?
-    
+
     # Actually, simpler to inline the logic or modify fetch_seat_layout to raise exception on 401.
     # But since we want to preserve existing signature for compatibility...
-    
+
     # Let's re-implement the retry loop here using explicit requests to be safe and cleaner
     merchant_path = get_merchant_path(merchant)
     url = f"https://api-b2b.tix.id/v1/movies/{merchant_path}/layout"
-    
+
     current_token = token
-    
+
     for attempt in range(2):
         headers = {
             "Authorization": f"Bearer {current_token}",
@@ -339,10 +338,10 @@ def fetch_seat_layout_with_retry(
             "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15",
         }
         params = {"show_time_id": showtime_id, "tz": "7"}
-        
+
         try:
             response = requests.get(url, headers=headers, params=params, timeout=10)
-            
+
             if response.status_code == 200:
                 data = response.json()
                 if data.get("success"):
@@ -350,7 +349,7 @@ def fetch_seat_layout_with_retry(
                 else:
                     logger.error(f"API error: {data.get('error', {}).get('message', 'Unknown')}")
                     return None
-            
+
             elif response.status_code == 401:
                 if attempt == 0:
                     logger.warning("Token 401 expired. Refreshing and retrying...")
@@ -369,14 +368,14 @@ def fetch_seat_layout_with_retry(
                 body = response.text[:200] if response.text else "No body"
                 logger.error(f"API error {response.status_code}: {body}")
                 return None
-                
+
         except requests.RequestException as e:
             logger.error(f"Request failed: {e}")
             if attempt == 0:
                 time.sleep(1)
                 continue
             return None
-            
+
     return None
 
 
