@@ -48,13 +48,6 @@ interface ScraperLog {
     };
 }
 
-interface MoviePerformance {
-    movie_id: string;
-    title: string;
-    poster: string;
-    last_updated: string;
-}
-
 interface MovieDailyStats {
     date: string;
     total_showtimes: number;
@@ -63,21 +56,6 @@ interface MovieDailyStats {
     total_seats: number;
     total_sold: number;
     cities: string[];
-}
-
-interface Theatre {
-    theatre_id: string;
-    name: string;
-    merchant: string;
-    city: string;
-    lat?: number;
-    lng?: number;
-}
-
-interface Movie {
-    movie_id: string;
-    title: string;
-    today?: DayData;
 }
 
 export async function GET(request: NextRequest) {
@@ -109,22 +87,22 @@ export async function GET(request: NextRequest) {
         }
 
         // Get today's stats for movies
-        const moviesWithStats: Array<MoviePerformance & { today?: MovieDailyStats }> = [];
+        const moviesWithStats: Array<Record<string, unknown> & { today?: MovieDailyStats }> = [];
         const BATCH_SIZE = 10;
 
         for (let i = 0; i < movies.length; i += BATCH_SIZE) {
             const batch = movies.slice(i, i + BATCH_SIZE);
             const results = await Promise.all(
-                batch.map(async (movie: Movie) => {
+                batch.map(async (movie: Record<string, unknown>) => {
                     try {
                         const days = await firestoreRestClient.getSubCollection(
                             `movie_performance/${movie.movie_id}/days`
                         );
 
                         // Sort by date and get the most recent day that has actual data
-                        const sortedDays = (days as DayData[])
+                        const sortedDays = (days as unknown as MovieDailyStats[])
                             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-                        const mostRecentDay = sortedDays.find((d: DayData) => d.total_showtimes_scraped > 0);
+                        const mostRecentDay = sortedDays.find((d) => d.total_showtimes_scraped > 0);
 
                         return {
                             ...movie,
@@ -169,18 +147,18 @@ export async function GET(request: NextRequest) {
 
         // Get top movies by occupancy (use latest available date if no today data)
         const topMovies = moviesWithStats
-            .filter(m => m.today && m.today.total_showtimes_scraped > 0)
-            .sort((a, b) => b.today!.avg_occupancy_pct - a.today!.avg_occupancy_pct)
+            .filter(m => m.today && (m.today as MovieDailyStats).total_showtimes_scraped > 0)
+            .sort((a, b) => (b.today as MovieDailyStats).avg_occupancy_pct - (a.today as MovieDailyStats).avg_occupancy_pct)
             .slice(0, 5)
             .map(m => ({
-                title: m.title,
+                title: m.title as string,
                 genre: 'N/A', // Not available in current schema
-                occupancy: Math.round(m.today!.avg_occupancy_pct),
-                revenue: m.today!.total_sold * 40000, // Avg ticket price estimate
+                occupancy: Math.round((m.today as MovieDailyStats).avg_occupancy_pct),
+                revenue: (m.today as MovieDailyStats).total_sold * 40000, // Avg ticket price estimate
             }));
 
         // Get cities list for theatre count
-        const citiesList = [...new Set(theatres.map((t: Theatre) => t.city))].sort();
+        const citiesList = [...new Set(theatres.map((t: Record<string, unknown>) => t.city as string))].sort();
 
         // Get top theatres (mock for now, would need to aggregate from movie_performance)
         const topTheatres: Array<{ name: string; chain: string; revenue: number; occupancy: number }> = [

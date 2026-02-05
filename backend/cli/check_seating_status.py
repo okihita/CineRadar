@@ -9,6 +9,7 @@ Reports:
 
 import argparse
 from datetime import datetime, timedelta
+from typing import Any
 from zoneinfo import ZoneInfo
 
 from google.cloud import firestore
@@ -21,7 +22,7 @@ def get_firestore_client() -> firestore.Client:
     return firestore.Client()
 
 
-def check_seat_snapshots(db: firestore.Client, date_str: str) -> dict[str, any]:
+def check_seat_snapshots(db: firestore.Client, date_str: str) -> dict[str, Any]:
     """
     Count seat snapshots for a given date from seat_snapshots collection.
 
@@ -158,7 +159,7 @@ def check_showtime_raw_responses(db: firestore.Client, date_str: str) -> dict[st
             )
             movie_ids_with_data.append((movie_id, movie_title, movie_showtime_count))
 
-    return {
+    result: dict[str, Any] = {
         "total_showtimes": total_showtimes,
         "with_raw_response": with_raw_response,
         "without_raw_response": without_raw_response,
@@ -166,9 +167,10 @@ def check_showtime_raw_responses(db: firestore.Client, date_str: str) -> dict[st
         "movie_count": movie_count,
         "movies_with_data": movie_ids_with_data,
     }
+    return result
 
 
-def check_jit_runs(db: firestore.Client, date_str: str) -> dict[str, any]:
+def check_jit_runs(db: firestore.Client, date_str: str) -> dict[str, Any]:
     """
     Query scraper_logs/{date} to get JIT run information.
 
@@ -291,7 +293,7 @@ def format_duration(delta: timedelta) -> str:
     return f"{minutes}m"
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Check seating layout scraping status")
     parser.add_argument("--date", help="Date to check (YYYY-MM-DD). Defaults to today in WIB")
     parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed output")
@@ -401,11 +403,15 @@ def main():
     # Verbose output
     if args.verbose:
         print("\n📄 Detailed Movie Breakdown:")
-        for _movie_id, movie_title, count in showtime_stats["movies_with_data"]:
+        movies_data = showtime_stats["movies_with_data"]
+        assert isinstance(movies_data, list)
+        for _movie_id, movie_title, count in movies_data:
             print(f"  - {movie_title}: {count} showtimes")
 
         print("\n📄 Detailed JIT Run Breakdown:")
-        for run in jit_stats["runs_detail"]:
+        runs_detail = jit_stats["runs_detail"]
+        assert isinstance(runs_detail, list)
+        for run in runs_detail:
             print(
                 f"  - {run['time_slot']}: status={run['status']}, found={run['showtimes_found']}, published={run['jobs_published']}"
             )

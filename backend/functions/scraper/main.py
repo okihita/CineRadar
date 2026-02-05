@@ -161,7 +161,8 @@ def refresh_access_token(db: firestore.Client, refresh_token: str) -> str | None
         # Try to read the new token that should be there soon
         token_data = load_token_data(db)
         if token_data and token_data.get("token"):
-            return token_data["token"]
+            token = token_data["token"]
+            return str(token) if token else None
         return None
 
     logger.info("🔄 Acquired lock, attempting token refresh...")
