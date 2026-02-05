@@ -176,7 +176,7 @@ async function fetchMovieAdmissions(movieId: string, date: string): Promise<Admi
 }
 
 export default function MovieBrowser({ movies }: MovieBrowserProps) {
-    const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+    const [selectedMovie, setSelectedMovie] = useState<Movie | null>(movies[0] || null);
     const [movieWithSchedules, setMovieWithSchedules] = useState<Movie | null>(null);
     const [loadingSchedule, setLoadingSchedule] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>('browser');
