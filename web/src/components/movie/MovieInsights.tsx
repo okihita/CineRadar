@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { TrendingUp, BarChart3, Target, Ticket, Lightbulb, AlertTriangle } from 'lucide-react';
 
 interface TheaterSchedule {
     theatre_id: string;
@@ -230,15 +231,15 @@ function generateInsights(movie: Movie, allMovies: Movie[]): {
     // Generate prediction
     let prediction = '';
     if (movie.is_presale) {
-        prediction = `📈 Expect high opening weekend demand. Current pre-sale availability in ${movie.cities.length} cities suggests distributor anticipates strong performance. Secure tickets early for preferred showtimes.`;
+        prediction = `Expect high opening weekend demand. Current pre-sale availability in ${movie.cities.length} cities suggests distributor anticipates strong performance. Secure tickets early for preferred showtimes.`;
     } else if (perf.tier === 'blockbuster') {
-        prediction = `🔥 Trending as a top performer. With ${perf.percentile}th percentile coverage, likely to maintain strong box office through next 2-3 weeks. Consider off-peak hours to avoid crowds.`;
+        prediction = `Trending as a top performer. With ${perf.percentile}th percentile coverage, likely to maintain strong box office through next 2-3 weeks. Consider off-peak hours to avoid crowds.`;
     } else if (perf.tier === 'strong') {
-        prediction = `📊 Solid theatrical run expected. Currently outperforming ${perf.percentile}% of releases. Should maintain screens for 2+ weeks in major cities.`;
+        prediction = `Solid theatrical run expected. Currently outperforming ${perf.percentile}% of releases. Should maintain screens for 2+ weeks in major cities.`;
     } else if (perf.tier === 'moderate') {
-        prediction = `📉 Standard release trajectory. May see reduced showtimes after opening week. Book soon if interested to ensure availability.`;
+        prediction = `Standard release trajectory. May see reduced showtimes after opening week. Book soon if interested to ensure availability.`;
     } else {
-        prediction = `⚠️ Limited release window likely. With focused distribution, this title may leave theatres sooner. Watch within the next 1-2 weeks if interested.`;
+        prediction = `Limited release window likely. With focused distribution, this title may leave theatres sooner. Watch within the next 1-2 weeks if interested.`;
     }
 
     // Add recommendations
@@ -270,19 +271,30 @@ export default function MovieInsights({ movie, allMovies }: MovieInsightsProps) 
         presale: 'from-purple-500 to-pink-600'
     };
 
-    const tierLabels = {
-        blockbuster: '🔥 Blockbuster',
-        strong: '📈 Strong Performer',
-        moderate: '📊 Moderate Release',
-        limited: '🎯 Limited Release',
-        presale: '🎟️ Pre-Sale'
+    const tierIcons = {
+        blockbuster: TrendingUp,
+        strong: BarChart3,
+        moderate: BarChart3,
+        limited: Target,
+        presale: Ticket
     };
+
+    const tierLabels = {
+        blockbuster: 'Blockbuster',
+        strong: 'Strong Performer',
+        moderate: 'Moderate Release',
+        limited: 'Limited Release',
+        presale: 'Pre-Sale'
+    };
+
+    const TierIcon = tierIcons[performance.tier];
 
     return (
         <div className="mt-4">
             {/* Performance Badge */}
             <div className="flex items-center gap-3 mb-3">
-                <div className={`px-4 py-2 rounded-lg bg-gradient-to-r ${tierColors[performance.tier]} text-white font-semibold text-sm shadow-lg`}>
+                <div className={`px-4 py-2 rounded-lg bg-gradient-to-r ${tierColors[performance.tier]} text-white font-semibold text-sm shadow-lg flex items-center gap-2`}>
+                    <TierIcon className="w-4 h-4" />
                     {tierLabels[performance.tier]}
                 </div>
                 {performance.tier !== 'presale' && (
@@ -296,7 +308,7 @@ export default function MovieInsights({ movie, allMovies }: MovieInsightsProps) 
                 {/* AI Description */}
                 <div className="p-3 bg-white/5 rounded-lg border border-white/10">
                     <div className="flex items-center gap-2 mb-1">
-                        <span>🤖</span>
+                        <BarChart3 className="w-4 h-4 text-purple-400" />
                         <h4 className="font-semibold text-white text-sm">AI Analysis</h4>
                     </div>
                     <p className="text-gray-300 text-xs leading-relaxed">{insights.description}</p>
@@ -305,7 +317,7 @@ export default function MovieInsights({ movie, allMovies }: MovieInsightsProps) 
                 {/* Prediction */}
                 <div className="p-3 bg-gradient-to-r from-purple-900/30 to-pink-900/30 rounded-lg border border-purple-500/20">
                     <div className="flex items-center gap-2 mb-1">
-                        <span>🔮</span>
+                        <TierIcon className="w-4 h-4 text-white" />
                         <h4 className="font-semibold text-white text-sm">Prediction</h4>
                     </div>
                     <p className="text-gray-200 text-xs leading-relaxed">{insights.prediction}</p>
@@ -314,7 +326,7 @@ export default function MovieInsights({ movie, allMovies }: MovieInsightsProps) 
                 {/* Contributing Factors */}
                 <div className="p-3 bg-white/5 rounded-lg border border-white/10">
                     <div className="flex items-center gap-2 mb-2">
-                        <span>📊</span>
+                        <BarChart3 className="w-4 h-4 text-blue-400" />
                         <h4 className="font-semibold text-white text-sm">Key Factors</h4>
                     </div>
                     <div className="space-y-1">
@@ -337,7 +349,7 @@ export default function MovieInsights({ movie, allMovies }: MovieInsightsProps) 
                 {insights.recommendations.length > 0 && (
                     <div className="p-3 bg-gradient-to-r from-blue-900/30 to-cyan-900/30 rounded-lg border border-blue-500/20">
                         <div className="flex items-center gap-2 mb-1">
-                            <span>💡</span>
+                            <Lightbulb className="w-4 h-4 text-yellow-400" />
                             <h4 className="font-semibold text-white text-sm">Tips</h4>
                         </div>
                         <ul className="space-y-1">

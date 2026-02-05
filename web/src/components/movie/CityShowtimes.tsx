@@ -1,6 +1,7 @@
 
 import { useState, useMemo, useRef } from 'react';
 import Image from 'next/image';
+import { MapPin, Building2, Film, DollarSign, Ticket } from 'lucide-react';
 import { AdmissionStats } from './MovieBrowser';
 import MovieInsights from './MovieInsights';
 import ShowtimeSparkline from '../showtimes/ShowtimeSparkline';
@@ -184,7 +185,7 @@ export default function CityShowtimes({ movie, allMovies = [] }: CityShowtimesPr
                             {hasSchedules && stats && (
                                 <div className="flex flex-wrap gap-4 items-center p-3 bg-white/5 rounded-lg border border-white/10 backdrop-blur-sm">
                                     <div className="flex items-center gap-2">
-                                        <span className="text-2xl">🏙️</span>
+                                        <MapPin className="w-6 h-6 text-blue-400" />
                                         <div>
                                             <div className="text-lg font-bold text-white">{movie.cities.length}</div>
                                             <div className="text-xs text-gray-500">cities</div>
@@ -192,7 +193,7 @@ export default function CityShowtimes({ movie, allMovies = [] }: CityShowtimesPr
                                     </div>
                                     <div className="w-px h-8 bg-white/20" />
                                     <div className="flex items-center gap-2">
-                                        <span className="text-2xl">🎭</span>
+                                        <Building2 className="w-6 h-6 text-purple-400" />
                                         <div>
                                             <div className="text-lg font-bold text-white">{stats.totalTheatres}</div>
                                             <div className="text-xs text-gray-500">theatres</div>
@@ -200,7 +201,7 @@ export default function CityShowtimes({ movie, allMovies = [] }: CityShowtimesPr
                                     </div>
                                     <div className="w-px h-8 bg-white/20" />
                                     <div className="flex items-center gap-2">
-                                        <span className="text-2xl">🎬</span>
+                                        <Film className="w-6 h-6 text-pink-400" />
                                         <div>
                                             <div className="text-lg font-bold text-white">{stats.allShowtimes.length}</div>
                                             <div className="text-xs text-gray-500">showtimes</div>
@@ -210,7 +211,7 @@ export default function CityShowtimes({ movie, allMovies = [] }: CityShowtimesPr
                                         <>
                                             <div className="w-px h-8 bg-white/20" />
                                             <div className="flex items-center gap-2">
-                                                <span className="text-2xl">💰</span>
+                                                <DollarSign className="w-6 h-6 text-emerald-400" />
                                                 <div>
                                                     <div className="text-lg font-bold text-emerald-400">
                                                         {formatPrice(stats.priceRange.min)} - {formatPrice(stats.priceRange.max)}
@@ -232,29 +233,30 @@ export default function CityShowtimes({ movie, allMovies = [] }: CityShowtimesPr
                             )}
                         </div>
                     </div>
+                </div>
 
-                    {/* Filter Bar */}
-                    {hasSchedules && (
-                        <CityShowtimesFilters
-                            cities={cities}
-                            selectedCity={selectedCity}
-                            onCityJump={handleCityJump}
-                            availableChains={availableChains}
-                            isChainEnabled={isChainEnabled}
-                            toggleChain={toggleChain}
-                        />
-                    )}
+                {/* Filter Bar */}
+                {hasSchedules && (
+                    <CityShowtimesFilters
+                        cities={cities}
+                        selectedCity={selectedCity}
+                        onCityJump={handleCityJump}
+                        availableChains={availableChains}
+                        isChainEnabled={isChainEnabled}
+                        toggleChain={toggleChain}
+                    />
+                )}
 
-                    {/* AI Insights Section */}
-                    {allMovies.length > 0 && (
-                        <MovieInsights movie={movie} allMovies={allMovies} />
-                    )}
+                {/* AI Insights Section */}
+                {allMovies.length > 0 && (
+                    <MovieInsights movie={movie} allMovies={allMovies} />
+                )}
 
-                    {/* Cities & Showtimes */}
-                    {hasSchedules ? (
+                {/* Cities & Showtimes */}
+                {hasSchedules ? (
                         <div className="space-y-4 mt-6">
                             <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                                <span className="text-2xl">🎪</span> Showtimes by City
+                                <Ticket className="w-6 h-6 text-purple-400" /> Showtimes by City
                             </h2>
                             {cities.map((city) => {
                                 const theaters = filterTheaters(movie.schedules![city]);
@@ -296,7 +298,7 @@ export default function CityShowtimes({ movie, allMovies = [] }: CityShowtimesPr
                                             className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
                                         >
                                             <div className="flex items-center gap-3">
-                                                <span className="text-2xl">🏙️</span>
+                                                <MapPin className="w-5 h-5 text-blue-400" />
                                                 <div className="text-left">
                                                     <h3 className="text-lg font-semibold text-white">{city}</h3>
                                                     <p className="text-sm text-gray-400">{theaters.length} theatre{theaters.length > 1 ? 's' : ''}</p>
@@ -326,7 +328,7 @@ export default function CityShowtimes({ movie, allMovies = [] }: CityShowtimesPr
                         </div>
                     ) : (
                         <div className="bg-white/5 rounded-xl p-8 text-center border border-white/10 backdrop-blur-sm mt-6">
-                            <span className="text-4xl block mb-4">📍</span>
+                            <MapPin className="w-12 h-12 text-blue-400 mx-auto mb-4" />
                             <h3 className="text-lg font-medium text-white mb-2">Available in {movie.cities.length} cities</h3>
                             <div className="flex flex-wrap justify-center gap-2 mt-4">
                                 {movie.cities.slice(0, 20).map((city) => (
@@ -345,7 +347,6 @@ export default function CityShowtimes({ movie, allMovies = [] }: CityShowtimesPr
                             </p>
                         </div>
                     )}
-                </div>
             </div>
         </div>
     );
