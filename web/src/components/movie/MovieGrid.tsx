@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import ShowtimeView from './ShowtimeView';
+import ShowtimeView from '../showtimes/ShowtimeView';
 
 interface TheatreRoom {
     category: string;

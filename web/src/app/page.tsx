@@ -1,4 +1,4 @@
-import MovieBrowser from '@/components/MovieBrowser';
+import MovieBrowser from '@/components/movie/MovieBrowser';
 
 interface TheaterSchedule {
   theatre_id: string;

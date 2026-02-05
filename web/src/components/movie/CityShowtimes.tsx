@@ -3,9 +3,9 @@ import { useState, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import { AdmissionStats } from './MovieBrowser';
 import MovieInsights from './MovieInsights';
-import ShowtimeSparkline from './showtimes/ShowtimeSparkline';
-import TheaterCard from './showtimes/TheaterCard';
-import CityShowtimesFilters from './showtimes/CityShowtimesFilters';
+import ShowtimeSparkline from '../showtimes/ShowtimeSparkline';
+import TheaterCard from '../showtimes/TheaterCard';
+import CityShowtimesFilters from '../showtimes/CityShowtimesFilters';
 import { extractPriceRange, formatPrice, getAllShowtimes } from '@/lib/showtime-utils';
 import { TheaterSchedule } from '@/types';
 

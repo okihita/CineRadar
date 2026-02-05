@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import MovieSidebar from './MovieSidebar';
 import CityShowtimes from './CityShowtimes';
-import Dashboard from './Dashboard';
+import Dashboard from '../dashboard/Dashboard';
 
 interface TheaterSchedule {
     theatre_id: string;

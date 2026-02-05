@@ -14,8 +14,6 @@ interface TheatreMapExplorerProps {
 export default function TheatreMapExplorer({ cityData, schedulesByCity }: TheatreMapExplorerProps) {
     const [selectedCity, setSelectedCity] = useState<string | null>(null);
 
-    const maxTheatres = Math.max(...cityData.map(c => c.theatres), 1);
-
     // Get city stats
     const cityStats = useMemo(() => {
         if (!selectedCity || !schedulesByCity?.[selectedCity]) return null;
