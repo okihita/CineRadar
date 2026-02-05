@@ -74,6 +74,12 @@ interface Theatre {
     lng?: number;
 }
 
+interface Movie {
+    movie_id: string;
+    title: string;
+    today?: DayData;
+}
+
 export async function GET(request: NextRequest) {
     try {
         const today = getTodayJakarta();
@@ -109,16 +115,16 @@ export async function GET(request: NextRequest) {
         for (let i = 0; i < movies.length; i += BATCH_SIZE) {
             const batch = movies.slice(i, i + BATCH_SIZE);
             const results = await Promise.all(
-                batch.map(async (movie: any) => {
+                batch.map(async (movie: Movie) => {
                     try {
                         const days = await firestoreRestClient.getSubCollection(
                             `movie_performance/${movie.movie_id}/days`
                         );
 
                         // Sort by date and get the most recent day that has actual data
-                        const sortedDays = (days as any[])
+                        const sortedDays = (days as DayData[])
                             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-                        const mostRecentDay = sortedDays.find((d: any) => d.total_showtimes_scraped > 0);
+                        const mostRecentDay = sortedDays.find((d: DayData) => d.total_showtimes_scraped > 0);
 
                         return {
                             ...movie,
@@ -174,10 +180,10 @@ export async function GET(request: NextRequest) {
             }));
 
         // Get cities list for theatre count
-        const citiesList = [...new Set(theatres.map((t: any) => t.city))].sort();
+        const citiesList = [...new Set(theatres.map((t: Theatre) => t.city))].sort();
 
         // Get top theatres (mock for now, would need to aggregate from movie_performance)
-        const topTheatres = [
+        const topTheatres: Array<{ name: string; chain: string; revenue: number; occupancy: number }> = [
             { name: 'Grand Indonesia XXI', chain: 'XXI', revenue: 890000000, occupancy: 78 },
             { name: 'Plaza Senayan XXI', chain: 'XXI', revenue: 720000000, occupancy: 72 },
             { name: 'CGV Grand Indonesia', chain: 'CGV', revenue: 680000000, occupancy: 70 },
@@ -213,10 +219,8 @@ export async function GET(request: NextRequest) {
 
         // Calculate KPIs
         const totalAudience = dailySummary?.total_audience || 0;
-        const totalSeats = dailySummary?.total_seats || 0;
         const avgOccupancy = dailySummary?.occupancy_pct || 0;
         const totalTickets = totalAudience;
-        const estimatedRevenue = totalTickets * 40000; // Avg ticket price
 
         // Calculate total audience and avg occupancy from movie performance if daily summary is empty
         let totalTicketsAlt = 0;

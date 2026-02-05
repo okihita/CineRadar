@@ -132,7 +132,7 @@ export default function ExecutiveDashboard() {
                         System Health & Data Freshness
                         {data.usingFallback && (
                             <Badge variant="outline" className="ml-2 border-amber-500 text-amber-700">
-                                Using Yesterday's Data
+                                Using Yesterday&apos;s Data
                             </Badge>
                         )}
                     </CardTitle>
