@@ -49,12 +49,7 @@ const menuItems = [
     href: '/trends',
     icon: TrendingUp,
   },
-  {
-    title: 'Location Intelligence',
-    description: 'Catchment & expansion',
-    href: '/location',
-    icon: Navigation,
-  },
+
 
 
   {

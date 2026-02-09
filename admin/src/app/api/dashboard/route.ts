@@ -21,7 +21,7 @@ function getMockData() {
         alerts: [
             { type: 'warning', title: '12 showtimes below 30% occupancy', action: 'Push Flash Sale', link: '/audience' },
             { type: 'success', title: 'AVATAR premiere tomorrow', subtitle: '85% pre-sold', action: 'View Details', link: '/movies' },
-            { type: 'danger', title: 'Medan underperforming', subtitle: '42% avg occupancy', action: 'View Details', link: '/location' },
+
         ],
         timeline: [
             { hour: '10:00', occupancy: 32, status: 'slow', note: 'Morning slow' },
