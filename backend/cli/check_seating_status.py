@@ -8,6 +8,7 @@ Reports:
 """
 
 import argparse
+import logging
 from datetime import datetime, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -15,6 +16,7 @@ from zoneinfo import ZoneInfo
 from google.cloud import firestore
 
 JAKARTA_TZ = ZoneInfo("Asia/Jakarta")
+logger = logging.getLogger(__name__)
 
 
 def get_firestore_client() -> firestore.Client:
@@ -28,8 +30,8 @@ def check_seat_snapshots(db: firestore.Client, date_str: str) -> dict[str, Any]:
 
     Returns dict with counts.
     """
-    print(f"\n📊 Checking seat_snapshots collection for {date_str}...")
-    print("=" * 70)
+    logger.info(f"\n📊 Checking seat_snapshots collection for {date_str}...")
+    logger.info("=" * 70)
 
     snapshots_ref = db.collection("seat_snapshots")
     # Query documents that have a 'date' field matching date_str
@@ -72,9 +74,9 @@ def check_seat_snapshots(db: firestore.Client, date_str: str) -> dict[str, Any]:
         else:
             without_raw_response += 1
 
-    print(f"  Total snapshots for {date_str}: {total_snapshots}")
-    print(f"  With raw_api_response: {with_raw_response}")
-    print(f"  Without raw_api_response: {without_raw_response}")
+    logger.info(f"  Total snapshots for {date_str}: {total_snapshots}")
+    logger.info(f"  With raw_api_response: {with_raw_response}")
+    logger.info(f"  Without raw_api_response: {without_raw_response}")
 
     return {
         "total_snapshots": total_snapshots,
@@ -101,8 +103,8 @@ def check_showtime_raw_responses(db: firestore.Client, date_str: str) -> dict[st
     movie_count = 0
     movie_ids_with_data = []
 
-    print(f"\n📊 Checking movie_performance collection for {date_str}...")
-    print("=" * 70)
+    logger.info(f"\n📊 Checking movie_performance collection for {date_str}...")
+    logger.info("=" * 70)
 
     # Get all movies that have data for this date
     # Query: movie_performance/{movie_id}/days/{date}/showtimes/*
@@ -124,7 +126,7 @@ def check_showtime_raw_responses(db: firestore.Client, date_str: str) -> dict[st
             continue
 
         movie_count += 1
-        print(f"  🎬 {movie_title} (ID: {movie_id})")
+        logger.info(f"  🎬 {movie_title} (ID: {movie_id})")
 
         # Get all showtimes for this movie/date
         showtimes_ref = date_doc_ref.collection("showtimes")
@@ -154,7 +156,7 @@ def check_showtime_raw_responses(db: firestore.Client, date_str: str) -> dict[st
 
         if movie_showtime_count > 0:
             raw_pct = (movie_with_raw / movie_showtime_count) * 100
-            print(
+            logger.info(
                 f"      Total: {movie_showtime_count}, With raw: {movie_with_raw} ({raw_pct:.1f}%)"
             )
             movie_ids_with_data.append((movie_id, movie_title, movie_showtime_count))
@@ -184,14 +186,14 @@ def check_jit_runs(db: firestore.Client, date_str: str) -> dict[str, Any]:
     - last_run: Latest timestamp
     - runs_detail: List of individual run details
     """
-    print(f"\n🔄 Checking JIT scraper runs for {date_str}...")
-    print("=" * 70)
+    logger.info(f"\n🔄 Checking JIT scraper runs for {date_str}...")
+    logger.info("=" * 70)
 
     doc_ref = db.collection("scraper_logs").document(date_str)
     doc = doc_ref.get()
 
     if not doc.exists:
-        print(f"  ⚠️  No scraper_logs document found for {date_str}")
+        logger.info(f"  ⚠️  No scraper_logs document found for {date_str}")
         return {
             "total_runs": 0,
             "successful_runs": 0,
@@ -207,7 +209,7 @@ def check_jit_runs(db: firestore.Client, date_str: str) -> dict[str, Any]:
     jit_runs = data.get("jit_runs", {})
 
     if not jit_runs:
-        print(f"  ⚠️  No jit_runs data found in scraper_logs/{date_str}")
+        logger.info(f"  ⚠️  No jit_runs data found in scraper_logs/{date_str}")
         return {
             "total_runs": 0,
             "successful_runs": 0,
@@ -264,7 +266,7 @@ def check_jit_runs(db: firestore.Client, date_str: str) -> dict[str, Any]:
         )
 
         status_icon = "✅" if status == "ok" else "❌" if status == "error" else "⚠️"
-        print(
+        logger.info(
             f"  {status_icon} {time_slot}: Found {showtimes_found}, Published {jobs_published} jobs"
         )
 
@@ -302,9 +304,9 @@ def main() -> None:
     # Determine date to check
     date_str = args.date or datetime.now(JAKARTA_TZ).strftime("%Y-%m-%d")
 
-    print("\n" + "=" * 70)
-    print(f"🎬 CineRadar Seating Layout Scraping Status - {date_str}")
-    print("=" * 70)
+    logger.info("=" * 70)
+    logger.info(f"🎬 CineRadar Seating Layout Scraping Status - {date_str}")
+    logger.info("=" * 70)
 
     db = get_firestore_client()
 
@@ -318,37 +320,37 @@ def main() -> None:
     jit_stats = check_jit_runs(db, date_str)
 
     # Summary
-    print("\n" + "=" * 70)
-    print("📋 SUMMARY")
-    print("=" * 70)
+    logger.info("=" * 70)
+    logger.info("📋 SUMMARY")
+    logger.info("=" * 70)
 
-    print("\n🪑 Seat Snapshots (older collection):")
-    print(f"  Total snapshots: {seat_snapshot_stats['total_snapshots']}")
+    logger.info("\n🪑 Seat Snapshots (older collection):")
+    logger.info(f"  Total snapshots: {seat_snapshot_stats['total_snapshots']}")
     if seat_snapshot_stats["total_snapshots"] > 0:
-        print(
+        logger.info(
             f"  With raw_api_response: {seat_snapshot_stats['with_raw_response']} ({(seat_snapshot_stats['with_raw_response'] / seat_snapshot_stats['total_snapshots'] * 100):.1f}%)"
         )
-        print(
+        logger.info(
             f"  Without raw_api_response: {seat_snapshot_stats['without_raw_response']} ({(seat_snapshot_stats['without_raw_response'] / seat_snapshot_stats['total_snapshots'] * 100):.1f}%)"
         )
 
-    print("\n🪑 Showtime Coverage (movie_performance collection):")
-    print(f"  Movies with data: {showtime_stats['movie_count']}")
-    print(f"  Total showtimes: {showtime_stats['total_showtimes']}")
-    print(
+    logger.info("\n🪑 Showtime Coverage (movie_performance collection):")
+    logger.info(f"  Movies with data: {showtime_stats['movie_count']}")
+    logger.info(f"  Total showtimes: {showtime_stats['total_showtimes']}")
+    logger.info(
         f"  With raw_api_response: {showtime_stats['with_raw_response']} ({(showtime_stats['with_raw_response'] / max(showtime_stats['total_showtimes'], 1) * 100):.1f}%)"
     )
-    print(
+    logger.info(
         f"  Without raw_api_response: {showtime_stats['without_raw_response']} ({(showtime_stats['without_raw_response'] / max(showtime_stats['total_showtimes'], 1) * 100):.1f}%)"
     )
-    print(f"  Zero seats (potential issues): {showtime_stats['zero_seats']}")
+    logger.info(f"  Zero seats (potential issues): {showtime_stats['zero_seats']}")
 
-    print("\n🔄 JIT Scraper Activity:")
-    print(f"  Total runs: {jit_stats['total_runs']}")
-    print(f"  Successful: {jit_stats['successful_runs']}")
-    print(f"  Failed: {jit_stats['failed_runs']}")
-    print(f"  Total jobs published: {jit_stats['total_jobs_published']}")
-    print(f"  Total showtimes found: {jit_stats['total_showtimes_found']}")
+    logger.info("\n🔄 JIT Scraper Activity:")
+    logger.info(f"  Total runs: {jit_stats['total_runs']}")
+    logger.info(f"  Successful: {jit_stats['successful_runs']}")
+    logger.info(f"  Failed: {jit_stats['failed_runs']}")
+    logger.info(f"  Total jobs published: {jit_stats['total_jobs_published']}")
+    logger.info(f"  Total showtimes found: {jit_stats['total_showtimes_found']}")
 
     if jit_stats["first_run"]:
         duration = (
@@ -356,16 +358,16 @@ def main() -> None:
             if jit_stats["last_run"]
             else timedelta(0)
         )
-        print(
+        logger.info(
             f"  First run: {jit_stats['first_run'].astimezone(JAKARTA_TZ).strftime('%H:%M:%S WIB')}"
         )
-        print(
+        logger.info(
             f"  Last run: {jit_stats['last_run'].astimezone(JAKARTA_TZ).strftime('%H:%M:%S WIB')}"
         )
-        print(f"  Duration: {format_duration(duration)}")
+        logger.info(f"  Duration: {format_duration(duration)}")
 
     # Health assessment
-    print("\n🩺 Health Assessment:")
+    logger.info("\n🩺 Health Assessment:")
 
     # Determine which collection to use for assessment
     total_showtimes_for_coverage = max(
@@ -377,47 +379,48 @@ def main() -> None:
     raw_coverage_pct = (with_raw_for_coverage / total_showtimes_for_coverage) * 100
 
     if raw_coverage_pct > 90:
-        print(f"  ✅ Raw API response coverage: Excellent ({raw_coverage_pct:.1f}%)")
+        logger.info(f"  ✅ Raw API response coverage: Excellent ({raw_coverage_pct:.1f}%)")
     elif raw_coverage_pct > 70:
-        print(f"  ⚠️  Raw API response coverage: Good ({raw_coverage_pct:.1f}%)")
+        logger.info(f"  ⚠️  Raw API response coverage: Good ({raw_coverage_pct:.1f}%)")
     else:
-        print(
+        logger.info(
             f"  ❌ Raw API response coverage: Poor ({raw_coverage_pct:.1f}%) - many showtimes missing raw data"
         )
 
     if jit_stats["failed_runs"] == 0 and jit_stats["total_runs"] > 0:
-        print(f"  ✅ JIT scraper: All runs successful ({jit_stats['total_runs']} runs)")
+        logger.info(f"  ✅ JIT scraper: All runs successful ({jit_stats['total_runs']} runs)")
     elif jit_stats["failed_runs"] > 0:
-        print(
+        logger.info(
             f"  ❌ JIT scraper: {jit_stats['failed_runs']} failed runs out of {jit_stats['total_runs']}"
         )
     else:
-        print("  ⚠️  JIT scraper: No runs recorded")
+        logger.info("  ⚠️  JIT scraper: No runs recorded")
 
     if showtime_stats["zero_seats"] > 0:
         zero_pct = (showtime_stats["zero_seats"] / max(showtime_stats["total_showtimes"], 1)) * 100
-        print(
+        logger.info(
             f"  ⚠️  Zero-seat showtimes: {showtime_stats['zero_seats']} ({zero_pct:.1f}%) - may indicate scraping issues"
         )
 
     # Verbose output
     if args.verbose:
-        print("\n📄 Detailed Movie Breakdown:")
+        logger.info("\n📄 Detailed Movie Breakdown:")
         movies_data = showtime_stats["movies_with_data"]
         assert isinstance(movies_data, list)
         for _movie_id, movie_title, count in movies_data:
-            print(f"  - {movie_title}: {count} showtimes")
+            logger.info(f"  - {movie_title}: {count} showtimes")
 
-        print("\n📄 Detailed JIT Run Breakdown:")
+        logger.info("\n📄 Detailed JIT Run Breakdown:")
         runs_detail = jit_stats["runs_detail"]
         assert isinstance(runs_detail, list)
         for run in runs_detail:
-            print(
+            logger.info(
                 f"  - {run['time_slot']}: status={run['status']}, found={run['showtimes_found']}, published={run['jobs_published']}"
             )
 
-    print("\n" + "=" * 70)
+    logger.info("=" * 70)
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     main()

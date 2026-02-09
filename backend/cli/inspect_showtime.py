@@ -2,8 +2,11 @@
 
 import argparse
 import json
+import logging
 
 from google.cloud import firestore
+
+logger = logging.getLogger(__name__)
 
 
 def inspect_showtime(showtime_id: str, movie_id: str, date: str, verbose: bool = False) -> None:
@@ -27,49 +30,53 @@ def inspect_showtime(showtime_id: str, movie_id: str, date: str, verbose: bool =
 
     doc = doc_ref.get()
     if not doc.exists:
-        print(f"❌ Showtime {showtime_id} not found")
-        print(f"   Path: movie_performance/{movie_id}/days/{date}/showtimes/{showtime_id}")
+        logger.info(f"❌ Showtime {showtime_id} not found")
+        logger.info(
+            f"   Path: movie_performance/{movie_id}/days/{date}/showtimes/{showtime_id}"
+        )
         return
 
     data = doc.to_dict()
     raw = data.get("raw_api_response")
 
     if not raw:
-        print("⚠️  No raw_api_response stored")
-        print("   This might be legacy data before raw response capture was implemented")
-        print("\n📋 Available Data:")
-        print(f"  Movie: {data.get('movie_title')}")
-        print(f"  Theatre: {data.get('theatre_name')} ({data.get('city')})")
-        print(f"  Time: {data.get('showtime')} on {data.get('date')}")
-        print(
+        logger.info("⚠️  No raw_api_response stored")
+        logger.info(
+            "   This might be legacy data before raw response capture was implemented"
+        )
+        logger.info("\n📋 Available Data:")
+        logger.info(f"  Movie: {data.get('movie_title')}")
+        logger.info(f"  Theatre: {data.get('theatre_name')} ({data.get('city')})")
+        logger.info(f"  Time: {data.get('showtime')} on {data.get('date')}")
+        logger.info(
             f"  Occupancy: {data.get('occupancy_pct')}% ({data.get('sold_seats')}/{data.get('total_seats')})"
         )
         return
 
-    print("\n" + "=" * 60)
-    print(f"SHOWTIME INSPECTION: {showtime_id}")
-    print("=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.info(f"SHOWTIME INSPECTION: {showtime_id}")
+    logger.info("=" * 60)
 
-    print("\n📋 Metadata:")
-    print(f"  Movie: {data.get('movie_title')}")
-    print(f"  Theatre: {data.get('theatre_name')} ({data.get('city')})")
-    print(f"  Time: {data.get('showtime')} on {data.get('date')}")
-    print(f"  Room: {data.get('room_category')} ({data.get('merchant')})")
-    print(f"  Scraped: {data.get('scraped_at')}")
+    logger.info("\n📋 Metadata:")
+    logger.info(f"  Movie: {data.get('movie_title')}")
+    logger.info(f"  Theatre: {data.get('theatre_name')} ({data.get('city')})")
+    logger.info(f"  Time: {data.get('showtime')} on {data.get('date')}")
+    logger.info(f"  Room: {data.get('room_category')} ({data.get('merchant')})")
+    logger.info(f"  Scraped: {data.get('scraped_at')}")
 
-    print("\n📊 Calculated Occupancy:")
-    print(
+    logger.info("\n📊 Calculated Occupancy:")
+    logger.info(
         f"  {data.get('occupancy_pct')}% ({data.get('sold_seats')}/{data.get('total_seats')} seats)"
     )
 
-    print("\n🔍 Raw API Response Structure:")
-    print(f"  Success: {raw.get('success')}")
-    print(f"  Code: {raw.get('code')}")
-    print(f"  Has seat_map: {'seat_map' in raw.get('data', {})}")
+    logger.info("\n🔍 Raw API Response Structure:")
+    logger.info(f"  Success: {raw.get('success')}")
+    logger.info(f"  Code: {raw.get('code')}")
+    logger.info(f"  Has seat_map: {'seat_map' in raw.get('data', {})}")
 
     if verbose:
-        print("\n📄 Full Raw API Response:")
-        print(json.dumps(raw, indent=2))
+        logger.info("\n📄 Full Raw API Response:")
+        logger.info(json.dumps(raw, indent=2))
 
     # Analyze seat types if present
     seat_map = raw.get("data", {}).get("seat_map", [])
@@ -89,33 +96,41 @@ def inspect_showtime(showtime_id: str, movie_id: str, date: str, verbose: bool =
                 status_codes.add(item.get("seat_status", item.get("status")))
 
     if seat_types:
-        print("\n🪑 Seat Types Detected:")
+        logger.info("\n🪑 Seat Types Detected:")
         for seat_type in sorted(seat_types):
-            print(f"  - {seat_type}")
+            logger.info(f"  - {seat_type}")
 
     if status_codes:
-        print("\n🔢 Status Codes Found:")
+        logger.info("\n🔢 Status Codes Found:")
         for code in sorted(str(c) for c in status_codes):
-            print(f"  - Code: {code}")
+            logger.info(f"  - Code: {code}")
 
     # Check for anomalies
     total_calculated = data.get("total_seats", 0)
     if total_calculated == 0 and seat_map:
-        print("\n⚠️  WARNING: Total seats calculated as 0, but seat_map has data!")
-        print("   This suggests a calculation bug - check seat status interpretation")
-        print("   Possible causes: Unknown status codes, seat_type mismatch")
+        logger.info(
+            "\n⚠️  WARNING: Total seats calculated as 0, but seat_map has data!"
+        )
+        logger.info(
+            "   This suggests a calculation bug - check seat status interpretation"
+        )
+        logger.info("   Possible causes: Unknown status codes, seat_type mismatch")
 
     # Check for multiple seat types (potential issue from yesterday)
     if len(seat_types) > 1:
-        print(f"\n🎯 DETECTED MULTIPLE SEAT TYPES: {len(seat_types)} types")
-        print("   This could cause calculation issues if status codes vary by seat type")
-        print("   Review status code interpretation for each type:")
+        logger.info(f"\n🎯 DETECTED MULTIPLE SEAT TYPES: {len(seat_types)} types")
+        logger.info(
+            "   This could cause calculation issues if status codes vary by seat type"
+        )
+        logger.info("   Review status code interpretation for each type:")
         for seat_type in sorted(seat_types):
-            print(f"   - {seat_type}")
+            logger.info(f"   - {seat_type}")
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Inspect raw API response for showtime debugging")
+    parser = argparse.ArgumentParser(
+        description="Inspect raw API response for showtime debugging"
+    )
     parser.add_argument("--showtime-id", required=True, help="Showtime ID")
     parser.add_argument("--movie-id", required=True, help="Movie ID")
     parser.add_argument("--date", required=True, help="Date (YYYY-MM-DD)")
@@ -126,4 +141,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     main()

@@ -52,7 +52,7 @@ ignore = [
 known-first-party = ["backend"]
 
 [tool.ruff.lint.per-file-ignores]
-"backend/cli/*.py" = ["T20"]  # Allow print in CLI scripts
+
 
 [tool.mypy]
 python_version = "3.12"
