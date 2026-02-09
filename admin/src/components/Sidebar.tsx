@@ -55,12 +55,7 @@ const menuItems = [
     href: '/location',
     icon: Navigation,
   },
-  {
-    title: 'Operations Intelligence',
-    description: 'Scheduling & capacity',
-    href: '/operations',
-    icon: Settings,
-  },
+
 
   {
     title: 'Scraper Monitor',
