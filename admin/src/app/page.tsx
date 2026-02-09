@@ -371,7 +371,7 @@ export default function ExecutiveDashboard() {
                     { label: 'Revenue', href: '/revenue' },
                     { label: 'Competition', href: '/competition' },
                     { label: 'Trends', href: '/trends' },
-                    { label: 'Analytics', href: '/analytics' },
+
                 ].map((link) => (
                     <Link key={link.href} href={link.href}>
                         <Badge variant="outline" className="cursor-pointer hover:bg-muted px-3 py-1.5">

@@ -68,12 +68,6 @@ const menuItems = [
     icon: Heart,
   },
   {
-    title: 'Advanced Analytics',
-    description: 'Predictions & scenarios',
-    href: '/analytics',
-    icon: Brain,
-  },
-  {
     title: 'Scraper Monitor',
     description: 'Data collection & runs',
     href: '/scraper',
