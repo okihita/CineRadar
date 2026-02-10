@@ -37,10 +37,8 @@ jobs:
           
           ENDPOINTS=(
             "/api/dashboard"
-            "/api/movies"
+            "/api/performance"
             "/api/scraper"
-
-
           )
           
           FAILED=0
@@ -79,9 +77,9 @@ jobs:
             exit 1
           fi
           
-          # Movies - check for array or total count
-          echo -n "  /api/movies has data... "
-          if curl -sf "${ADMIN_URL}/api/movies" | jq -e '.total or .showtimes' > /dev/null 2>&1; then
+          # Performance - check for movies array
+          echo -n "  /api/performance has data... "
+          if curl -sf "${ADMIN_URL}/api/performance" | jq -e '.movies' > /dev/null 2>&1; then
             echo "✅ OK"
           else
             echo "❌ FAILED - invalid structure"
