@@ -26,12 +26,7 @@ const menuItems = [
     icon: Film,
   },
 
-  {
-    title: 'Revenue Intelligence',
-    description: 'Pricing & forecasting',
-    href: '/revenue',
-    icon: DollarSign,
-  },
+
   {
     title: 'Competition Intelligence',
     description: 'Market share & rivals',

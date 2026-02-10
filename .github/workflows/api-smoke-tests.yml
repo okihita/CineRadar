@@ -40,7 +40,7 @@ jobs:
             "/api/movies"
             "/api/scraper"
             "/api/competition"
-            "/api/revenue"
+
           )
           
           FAILED=0
