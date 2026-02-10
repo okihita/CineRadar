@@ -4,7 +4,7 @@ This document details the system design, data flow, token management, and infras
 
 ## System Overview
 
-CineRadar is a 3-scraper pipeline for TIX.id movie data collection, feeding into a Firestore database that powers both an Admin Dashboard and a Public Consumer Web App.
+CineRadar is a **hybrid scraping pipeline** combining **Morning Batch** (GitHub Actions) and **Real-Time JIT** (Cloud Functions) for TIX.id movie data collection, feeding into a Firestore database.
 
 ---
 
@@ -50,10 +50,20 @@ We choose "boring" (proven) technology for critical infrastructure.
 
 ```mermaid
 flowchart LR
-    TIX[TIX.id Website] --> S["Scraper (GitHub Actions)"]
-    S --> FS[(Firestore)]
+    TIX[TIX.id Website] --> S_MORNING["Morning Scraper (GitHub Actions)"]
+    TIX --> S_JIT["JIT Scraper (Cloud Functions)"]
+    
+    S_MORNING --> FS[(Firestore)]
+    S_JIT --> FS
+    
     FS --> AD[Admin Dashboard]
     FS --> PW[Public Website]
+    
+    subgraph S_JIT_FLOW [T-8 Minute Flow]
+        SCHED((Scheduler)) --> DISP[Dispatcher]
+        DISP --> PUBSUB{Pub/Sub}
+        PUBSUB --> S_JIT
+    end
     
     click AD "https://cineradar-admin.vercel.app"
     click PW "https://cineradar-id.vercel.app"
@@ -67,9 +77,9 @@ flowchart LR
 - **Web**: Next.js 16 (React 19) consumer app.
 - **CI/CD**: GitHub Actions for daily scraping, testing, and deployment.
 
-### Live Scraper Environment
+### Morning Scraper Environment (Batch)
 
-The scraping pipeline operates continuously on **GitHub Actions**, utilizing parallel jobs and artifacts to manage data flow before final persistence.
+The morning pipeline operates on **GitHub Actions**, utilizing parallel jobs to map the entire day's schedule.
 
 #### Executors & Limits
 *   **Runner**: `ubuntu-latest` (Standard GitHub Actions runner).
@@ -80,7 +90,7 @@ The scraping pipeline operates continuously on **GitHub Actions**, utilizing par
 
 | Workflow | Schedule | Python Entry Point | Description |
 |----------|----------|--------------------|-------------|
-| **`daily-morning-scrape.yml`** | Daily 06:00 WIB | `.cli`, `.movie_performance` | **Main Pipeline**. Scrapes movies, seats, and aggregates performance data. |
+| **`daily-morning-scrape.yml`** | Daily 06:00 WIB | `.cli`, `.movie_performance` | **Main Pipeline**. Scrapes movies and aggregates performance data. |
 | **`token-refresh.yml`** | Bi-monthly | `.refresh_token` | **Headless Login**. Runs full Playwright with `xvfb` to regenerate valid refresh tokens (~90 day TTL). |
 | **`monthly-geocode.yml`** | Monthly 1st | `.monthly_geocode` | **Metadata Sync**. Updates theatre coordinates via Google Maps API. |
 | **`daily-summary.yml`** | Daily 00:00 WIB | `.daily_summary` | **Reporting**. Generates T+0 summary stats. |
@@ -91,16 +101,28 @@ Data is not persisted immediately. Instead, it flows through **GitHub Artifacts*
 
 1.  **Intermediate Artifacts** (1-day retention):
     *   `batch-{N}`: Raw movie data from each parallel shard.
-    *   `seat-batch-{N}`: Raw seat occupancy data from each parallel shard.
 
 2.  **Final Artifacts** (7-day retention):
     *   `scrape-data-{RUN_ID}`: Merged, validated movie dataset.
-    *   `seats-morning-{RUN_ID}`: Merged seat occupancy dataset.
+
+### JIT Scraper Environment (Real-Time)
+
+The **Just-In-Time (JIT) Scraper** captures seat occupancy data 8 minutes before a showtime starts (T-8) to get the final "sold" count.
+
+#### Architecture
+*   **Platform**: Google Cloud Functions (Gen 2).
+*   **Trigger**: Event-driven architecture.
+*   **Cost**: Low (<$1/mo) due to "scale-to-zero" nature.
+
+#### Component Flow
+1.  **Cloud Scheduler**: Triggers the Dispatcher every 5 minutes.
+2.  **Dispatcher**: Queries Firestore for showtimes starting between T+8 and T+15 minutes.
+3.  **Pub/Sub**: Distributes individual scraping jobs (`scrape-seat-jit` topic).
+4.  **Scraper Function**: Consumes message, fetches seat layout, and updates Firestore.
 
 #### Persistence Layer
 Final persistence is handled by dedicated Python CLI tools at the end of the workflows:
 *   `populate_firestore`: Syncs merged movie/theatre data.
-*   `upload_seats`: Syncs seat occupancy snapshots.
 *   `movie_performance`: Aggregates seat data into per-movie performance summaries.
 *   `refresh_token`: Updates auth tokens in `auth_tokens/tix_jwt`.
 
@@ -236,7 +258,7 @@ erDiagram
         string city
         float occupancy_pct
         bytes layout_compressed
-        object raw_api_response  // Full TIX.id API response for debugging/audit
+        object raw_api_response
     }
 ```
 
@@ -247,7 +269,6 @@ erDiagram
 | `theatres` | `{theatre_id}` | Master list of cinema locations |
 | `snapshots` | `latest` or `{YYYY-MM-DD}` | Daily movie data (slim) |
 | `schedules/{date}/movies` | `{movie_id}` | Full showtime data by date |
-| `seat_snapshots` | `{showtime_id}_{type}_{time}` | Seat occupancy data |
 | `movies` | `{movie_id}` | **[NEW]** Detailed movie info (cast, synopsis, ratings) |
 | `movies/{movie_id}/rating_history` | `{YYYY-MM-DD}` | **[NEW]** Daily rating score snapshots |
 | `movie_performance` | `{movie_id}` | Movie metadata (title, poster, age_category) |
