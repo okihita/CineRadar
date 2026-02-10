@@ -10,6 +10,8 @@ import { ScheduleResponse, countMovieShowtimes } from "@/features/schedules/type
 import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
+import { AggregatedShowtimeChart } from "@/features/schedules/components/AggregatedShowtimeChart";
+
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function SchedulesPage() {
@@ -88,6 +90,10 @@ export default function SchedulesPage() {
                             totalShowtimes={totalShowtimes}
                             totalTheatres={totalTheatres}
                         />
+
+                        {processedMovies.length > 0 && (
+                            <AggregatedShowtimeChart movies={processedMovies} />
+                        )}
 
                         <MovieScheduleList
                             movies={processedMovies}
