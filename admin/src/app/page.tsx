@@ -370,7 +370,7 @@ export default function ExecutiveDashboard() {
                     { label: 'Audience', href: '/audience' },
                     { label: 'Revenue', href: '/revenue' },
                     { label: 'Competition', href: '/competition' },
-                    { label: 'Trends', href: '/trends' },
+
 
                 ].map((link) => (
                     <Link key={link.href} href={link.href}>

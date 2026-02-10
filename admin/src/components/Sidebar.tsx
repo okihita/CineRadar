@@ -43,12 +43,7 @@ const menuItems = [
     href: '/competition',
     icon: Trophy,
   },
-  {
-    title: 'Trend Intelligence',
-    description: 'Genre & seasonal patterns',
-    href: '/trends',
-    icon: TrendingUp,
-  },
+
 
 
 
