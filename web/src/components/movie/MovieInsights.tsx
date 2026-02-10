@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { TrendingUp, BarChart3, Target, Ticket, Lightbulb, AlertTriangle } from 'lucide-react';
+import { TrendingUp, BarChart3, Target, Ticket, Lightbulb } from 'lucide-react';
 
 interface TheaterSchedule {
     theatre_id: string;
@@ -333,7 +333,7 @@ export default function MovieInsights({ movie, allMovies }: MovieInsightsProps) 
                         {insights.factors.slice(0, 4).map((f, i) => (
                             <div key={i} className="flex items-start gap-2 text-xs">
                                 <span className={`mt-0.5 ${f.impact === 'positive' ? 'text-emerald-400' :
-                                        f.impact === 'negative' ? 'text-red-400' : 'text-amber-400'
+                                    f.impact === 'negative' ? 'text-red-400' : 'text-amber-400'
                                     }`}>
                                     {f.impact === 'positive' ? '▲' : f.impact === 'negative' ? '▼' : '●'}
                                 </span>
