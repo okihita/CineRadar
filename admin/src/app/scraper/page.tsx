@@ -22,7 +22,6 @@ import {
     ScraperStatsCards,
     TodayScrapeCards,
     ScrapeHistoryTable,
-    DatabaseExplorer,
 } from '@/features/scraper';
 
 export default function ScraperPage() {
@@ -33,10 +32,8 @@ export default function ScraperPage() {
         logs,
         morningScrape,
         jitSummary,
-        collections,
         stats,
         isLoading,
-        isStatsLoading,
         refresh,
     } = useScraperData();
 
@@ -80,8 +77,6 @@ export default function ScraperPage() {
                 <JITGranularMonitor />
             </div>
 
-            {/* Database Explorer */}
-            <DatabaseExplorer collections={collections} isLoading={isStatsLoading} />
 
             {/* Schedule Info */}
             <Card className="mb-6">

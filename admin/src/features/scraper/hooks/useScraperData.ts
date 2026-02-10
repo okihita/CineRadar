@@ -1,5 +1,5 @@
 import useSWR from 'swr';
-import type { CollectionStats, MorningScrape, JITSummary, ScraperStats, ScraperLog } from '../types';
+import type { MorningScrape, JITSummary, ScraperStats, ScraperLog } from '../types';
 import { formatWIBShort } from '@/lib/timeUtils';
 import { REFRESH_INTERVALS } from '@/lib/constants';
 
@@ -7,9 +7,6 @@ interface HistoryResponse {
     logs: ScraperLog[];
 }
 
-interface ScraperStatsResponse {
-    collections: CollectionStats[];
-}
 
 interface TodayResponse {
     log: ScraperLog;
@@ -23,11 +20,6 @@ const historyFetcher = async (url: string): Promise<HistoryResponse> => {
     return res.json();
 };
 
-const statsFetcher = async (url: string): Promise<ScraperStatsResponse> => {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('Failed to fetch scraper stats');
-    return res.json();
-};
 
 const todayFetcher = async (url: string): Promise<TodayResponse | null> => {
     const res = await fetch(url);
@@ -51,12 +43,6 @@ export function useScraperData() {
         { revalidateOnFocus: true, dedupingInterval: REFRESH_INTERVALS.FAST }
     );
 
-    // 3. Stats API (Legacy collection stats - strictly database counts)
-    const { data: statsData, error: statsError, isLoading: statsLoading, mutate: refreshStats } = useSWR<ScraperStatsResponse>(
-        '/api/scraper/stats',
-        statsFetcher,
-        { revalidateOnFocus: false, dedupingInterval: REFRESH_INTERVALS.MODERATE }
-    );
 
     const logs = historyData?.logs ?? [];
 
@@ -87,18 +73,15 @@ export function useScraperData() {
     const refresh = () => {
         refreshHistory();
         refreshToday();
-        refreshStats();
     };
 
     return {
         logs, // Expose logs directly instead of runs
         morningScrape,
         jitSummary: todayData?.jitSummary ?? null,
-        collections: statsData?.collections ?? [],
         stats,
         isLoading: historyLoading || todayLoading,
-        isStatsLoading: statsLoading,
-        isError: !!historyError || !!statsError || !!todayError,
+        isError: !!historyError || !!todayError,
         refresh,
     };
 }

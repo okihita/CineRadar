@@ -12,4 +12,3 @@ export { useScraperData } from './hooks/useScraperData';
 export { ScraperStatsCards } from './components/ScraperStatsCards';
 export { TodayScrapeCards } from './components/TodayScrapeCards';
 export { ScrapeHistoryTable } from './components/ScrapeHistoryTable';
-export { DatabaseExplorer } from './components/DatabaseExplorer';
