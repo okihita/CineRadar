@@ -2,16 +2,17 @@
  * Performance Tab Component
  * 
  * Shows all movies with posters and today's performance summary.
- * Click a movie card to drill down into date history and showtimes.
+ * Click a movie card to navigate to the detail page.
  */
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Target, Users, Armchair, MapPin, Clock, Loader2, Calendar, ChevronLeft, Trophy, Clapperboard, ChevronDown, ChevronRight } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Target, Trophy, Clapperboard, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 interface TodayStats {
     date: string;
@@ -32,39 +33,10 @@ interface MovieWithStats {
     today?: TodayStats;
 }
 
-interface DailyPerformance {
-    date: string;
-    total_showtimes: number;
-    avg_occupancy_pct: number;
-    total_seats: number;
-    total_sold: number;
-    cities: string[];
-}
-
-interface ShowtimeSnapshot {
-    id: string;
-    showtime_id: string;
-    movie_title: string;
-    theatre_name: string;
-    city: string;
-    room_category: string;
-    merchant: string;
-    showtime: string;
-    total_seats: number;
-    sold_seats: number;
-    occupancy_pct: number;
-}
-
 export function PerformanceTab() {
+    const router = useRouter();
     const [movies, setMovies] = useState<MovieWithStats[]>([]);
-    const [selectedMovie, setSelectedMovie] = useState<MovieWithStats | null>(null);
-    const [history, setHistory] = useState<DailyPerformance[]>([]);
-    const [selectedDate, setSelectedDate] = useState<string | null>(null);
-    const [showtimes, setShowtimes] = useState<ShowtimeSnapshot[]>([]);
-
     const [loadingMovies, setLoadingMovies] = useState(true);
-    const [loadingHistory, setLoadingHistory] = useState(false);
-    const [loadingDetails, setLoadingDetails] = useState(false);
     const [isArchiveOpen, setIsArchiveOpen] = useState(false);
 
     // 1. Fetch Movies List with today's stats
@@ -87,58 +59,25 @@ export function PerformanceTab() {
         fetchMovies();
     }, []);
 
-    // 2. Fetch History when Movie is selected
-    useEffect(() => {
-        if (!selectedMovie) return;
+    // -------------------------------------------------------------------------
+    // Tiered Logic
+    // -------------------------------------------------------------------------
+    const hasTodayStats = (m: MovieWithStats) => !!m.today && m.today.total_showtimes > 0;
 
-        async function fetchHistory() {
-            setLoadingHistory(true);
-            try {
-                const res = await fetch(`/api/performance/${selectedMovie!.id}/history`);
-                const data = await res.json();
-                if (data.success) {
-                    setHistory(data.history);
-                    if (data.history.length > 0) {
-                        setSelectedDate(data.history[0].date);
-                    } else {
-                        setSelectedDate(null);
-                    }
-                }
-            } catch (e) {
-                console.error(e);
-            } finally {
-                setLoadingHistory(false);
-            }
-        }
-        fetchHistory();
-    }, [selectedMovie]);
+    // Sort all by total_showtimes (desc) for meaningful start-of-day ranking
+    const sortedMovies = [...movies].sort((a, b) => {
+        const showsA = a.today?.total_showtimes || 0;
+        const showsB = b.today?.total_showtimes || 0;
+        return showsB - showsA;
+    });
 
-    // 3. Fetch Showtimes when Date changes
-    useEffect(() => {
-        if (!selectedMovie || !selectedDate) {
-            setShowtimes([]);
-            return;
-        }
+    // 1. Box Office Leaders (Top 5 active)
+    const activeMovies = sortedMovies.filter(hasTodayStats);
+    const leaders = activeMovies.slice(0, 5);
+    const othersActive = activeMovies.slice(5);
 
-        async function fetchShowtimes() {
-            setLoadingDetails(true);
-            try {
-                const res = await fetch(`/api/performance/${selectedMovie!.id}/days/${selectedDate}`);
-                const data = await res.json();
-                if (data.success) {
-                    setShowtimes(data.showtimes);
-                }
-            } catch (e) {
-                console.error(e);
-            } finally {
-                setLoadingDetails(false);
-            }
-        }
-        fetchShowtimes();
-    }, [selectedMovie, selectedDate]);
-
-    // Derived state
-    const selectedStats = history.find(d => d.date === selectedDate);
+    // 2. Archive (No shows today)
+    const archiveMovies = sortedMovies.filter(m => !hasTodayStats(m));
 
     // Loading state
     if (loadingMovies) {
@@ -162,215 +101,12 @@ export function PerformanceTab() {
         );
     }
 
-    // Detail View (when a movie is selected)
-    if (selectedMovie) {
-        return (
-            <div className="space-y-6">
-                {/* Back button + Movie title */}
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => {
-                            setSelectedMovie(null);
-                            setHistory([]);
-                            setSelectedDate(null);
-                            setShowtimes([]);
-                        }}
-                        className="p-2 rounded-md hover:bg-muted transition"
-                    >
-                        <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    <h2 className="text-xl font-semibold">{selectedMovie.title}</h2>
-                </div>
-
-                {/* Date Selector */}
-                <Card>
-                    <CardHeader className="pb-3 px-4 pt-4">
-                        <CardTitle className="text-sm flex items-center gap-2 text-muted-foreground">
-                            <Calendar className="w-4 h-4" />
-                            Select Date
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="px-4 pb-4">
-                        {loadingHistory ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : history.length === 0 ? (
-                            <span className="text-sm text-muted-foreground">No history available</span>
-                        ) : (
-                            <div className="flex gap-2 overflow-x-auto pb-1">
-                                {history.map((day) => (
-                                    <Badge
-                                        key={day.date}
-                                        variant={selectedDate === day.date ? "default" : "outline"}
-                                        className={cn(
-                                            "cursor-pointer hover:bg-primary/90 whitespace-nowrap",
-                                            selectedDate === day.date ? "" : "hover:text-primary-foreground"
-                                        )}
-                                        onClick={() => setSelectedDate(day.date)}
-                                    >
-                                        {day.date}
-                                    </Badge>
-                                ))}
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-
-                {loadingDetails ? (
-                    <div className="flex items-center justify-center py-8">
-                        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-                    </div>
-                ) : selectedStats ? (
-                    <>
-                        {/* KPI Cards */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <Card>
-                                <CardContent className="pt-4">
-                                    <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
-                                        <Target className="w-3 h-3" />
-                                        AVG OCCUPANCY
-                                    </div>
-                                    <p className="text-2xl font-bold">
-                                        {selectedStats.avg_occupancy_pct.toFixed(1)}%
-                                    </p>
-                                </CardContent>
-                            </Card>
-
-                            <Card>
-                                <CardContent className="pt-4">
-                                    <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
-                                        <Armchair className="w-3 h-3" />
-                                        TOTAL SEATS
-                                    </div>
-                                    <p className="text-2xl font-bold">
-                                        {selectedStats.total_seats.toLocaleString()}
-                                    </p>
-                                </CardContent>
-                            </Card>
-
-                            <Card>
-                                <CardContent className="pt-4">
-                                    <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
-                                        <Users className="w-3 h-3" />
-                                        SEATS SOLD
-                                    </div>
-                                    <p className="text-2xl font-bold">
-                                        {selectedStats.total_sold.toLocaleString()}
-                                    </p>
-                                </CardContent>
-                            </Card>
-
-                            <Card>
-                                <CardContent className="pt-4">
-                                    <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
-                                        <MapPin className="w-3 h-3" />
-                                        CITIES
-                                    </div>
-                                    <p className="text-2xl font-bold">
-                                        {selectedStats.cities?.length || 0}
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        </div>
-
-                        {/* Showtimes Table */}
-                        <Card>
-                            <CardHeader className="pb-2">
-                                <CardTitle className="text-base flex justify-between">
-                                    <span>Showtimes Breakdown</span>
-                                    <span className="text-sm font-normal text-muted-foreground">
-                                        {showtimes.length} showtimes found
-                                    </span>
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                {showtimes.length === 0 ? (
-                                    <p className="text-muted-foreground text-sm py-4 text-center">
-                                        No showtime data available for this date
-                                    </p>
-                                ) : (
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-sm">
-                                            <thead>
-                                                <tr className="border-b text-left text-muted-foreground">
-                                                    <th className="py-2 px-2">
-                                                        <Clock className="w-3 h-3 inline mr-1" />
-                                                        Time
-                                                    </th>
-                                                    <th className="py-2 px-2">Theatre</th>
-                                                    <th className="py-2 px-2">City</th>
-                                                    <th className="py-2 px-2">Room</th>
-                                                    <th className="py-2 px-2">Occupancy</th>
-                                                    <th className="py-2 px-2 text-right">Seats</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {showtimes.slice(0, 50).map((st) => (
-                                                    <tr key={st.id} className="border-b border-border/50 hover:bg-muted/30">
-                                                        <td className="py-2 px-2 font-mono">{st.showtime}</td>
-                                                        <td className="py-2 px-2">{st.theatre_name}</td>
-                                                        <td className="py-2 px-2 text-muted-foreground">{st.city}</td>
-                                                        <td className="py-2 px-2 text-muted-foreground">{st.room_category}</td>
-                                                        <td className="py-2 px-2">
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
-                                                                    <div
-                                                                        className="h-full bg-primary"
-                                                                        style={{ width: `${st.occupancy_pct}%` }}
-                                                                    />
-                                                                </div>
-                                                                <span className="text-xs">{st.occupancy_pct}%</span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="py-2 px-2 text-right font-mono">
-                                                            {st.sold_seats}/{st.total_seats}
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                        {showtimes.length > 50 && (
-                                            <p className="text-center text-muted-foreground text-xs py-2">
-                                                Showing 50 of {showtimes.length} showtimes
-                                            </p>
-                                        )}
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </>
-                ) : (
-                    <Card>
-                        <CardContent className="py-8 text-center text-muted-foreground">
-                            Select a date to view performance details.
-                        </CardContent>
-                    </Card>
-                )}
-            </div>
-        );
-    }
-
-    // -------------------------------------------------------------------------
-    // Tiered Logic
-    // -------------------------------------------------------------------------
-    const hasTodayStats = (m: MovieWithStats) => !!m.today && m.today.total_showtimes > 0;
-
-    // Sort all by total_showtimes (desc) for meaningful start-of-day ranking
-    const sortedMovies = [...movies].sort((a, b) => {
-        const showsA = a.today?.total_showtimes || 0;
-        const showsB = b.today?.total_showtimes || 0;
-        return showsB - showsA;
-    });
-
-    // 1. Box Office Leaders (Top 5 active)
-    const activeMovies = sortedMovies.filter(hasTodayStats);
-    const leaders = activeMovies.slice(0, 5);
-    const othersActive = activeMovies.slice(5);
-
-    // 2. Archive (No shows today)
-    const archiveMovies = sortedMovies.filter(m => !hasTodayStats(m));
+    const handleMovieClick = (movieId: string) => {
+        router.push(`/movies/${movieId}`);
+    };
 
     return (
-        <div className="space-y-12">
+        <div className="space-y-12 animate-in fade-in duration-500">
 
             {/* SECTION 1: BOX OFFICE LEADERS (Hero Cards) */}
             {leaders.length > 0 && (
@@ -384,7 +120,7 @@ export function PerformanceTab() {
                             <div
                                 key={movie.id}
                                 className="group relative cursor-pointer"
-                                onClick={() => setSelectedMovie(movie)}
+                                onClick={() => handleMovieClick(movie.id)}
                             >
                                 {/* Aspect Ratio Container */}
                                 <div className="aspect-[2/3] relative overflow-hidden rounded-md bg-muted ring-1 ring-amber-500/20 hover:ring-2 hover:ring-amber-500 transition-all mb-2">
@@ -460,7 +196,7 @@ export function PerformanceTab() {
                             <div
                                 key={movie.id}
                                 className="group relative cursor-pointer overflow-hidden rounded-md bg-muted aspect-[2/3]"
-                                onClick={() => setSelectedMovie(movie)}
+                                onClick={() => handleMovieClick(movie.id)}
                             >
                                 {/* Poster Image with Scale Effect */}
                                 {movie.poster ? (
@@ -519,7 +255,7 @@ export function PerformanceTab() {
                                 <div
                                     key={movie.id}
                                     className="cursor-pointer group relative opacity-70 hover:opacity-100 transition"
-                                    onClick={() => setSelectedMovie(movie)}
+                                    onClick={() => handleMovieClick(movie.id)}
                                 >
                                     <div className="aspect-[2/3] w-full relative rounded-md overflow-hidden bg-muted">
                                         {movie.poster ? (
