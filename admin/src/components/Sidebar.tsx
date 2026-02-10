@@ -27,12 +27,7 @@ const menuItems = [
   },
 
 
-  {
-    title: 'Competition Intelligence',
-    description: 'Market share & rivals',
-    href: '/competition',
-    icon: Trophy,
-  },
+
 
 
 

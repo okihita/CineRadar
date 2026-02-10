@@ -369,7 +369,7 @@ export default function ExecutiveDashboard() {
                     { label: 'Movies', href: '/movies' },
 
 
-                    { label: 'Competition', href: '/competition' },
+
 
 
                 ].map((link) => (

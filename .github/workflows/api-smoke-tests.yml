@@ -39,7 +39,7 @@ jobs:
             "/api/dashboard"
             "/api/movies"
             "/api/scraper"
-            "/api/competition"
+
 
           )
           
