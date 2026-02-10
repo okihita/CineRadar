@@ -25,12 +25,7 @@ const menuItems = [
     href: '/movies',
     icon: Film,
   },
-  {
-    title: 'Audience Intelligence',
-    description: 'Seat occupancy & trends',
-    href: '/audience',
-    icon: Users,
-  },
+
   {
     title: 'Revenue Intelligence',
     description: 'Pricing & forecasting',

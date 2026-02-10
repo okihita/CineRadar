@@ -39,7 +39,6 @@ jobs:
             "/api/dashboard"
             "/api/movies"
             "/api/scraper"
-            "/api/audience"
             "/api/competition"
             "/api/revenue"
           )

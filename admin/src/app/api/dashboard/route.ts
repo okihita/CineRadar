@@ -19,7 +19,7 @@ function getMockData() {
             topTheatre: 'Grand Indonesia XXI',
         },
         alerts: [
-            { type: 'warning', title: '12 showtimes below 30% occupancy', action: 'Push Flash Sale', link: '/audience' },
+
             { type: 'success', title: 'AVATAR premiere tomorrow', subtitle: '85% pre-sold', action: 'View Details', link: '/movies' },
 
         ],

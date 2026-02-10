@@ -367,7 +367,7 @@ export default function ExecutiveDashboard() {
                 {[
                     { label: 'Cinemas', href: '/cinemas' },
                     { label: 'Movies', href: '/movies' },
-                    { label: 'Audience', href: '/audience' },
+
                     { label: 'Revenue', href: '/revenue' },
                     { label: 'Competition', href: '/competition' },
 
