@@ -32,16 +32,16 @@ export function MovieScheduleList({ movies, isLoading }: MovieScheduleListProps)
     };
 
     return (
-        <div className="space-y-3">
+        <div className="space-y-2">
             {movies.map((movie) => {
                 const isExpanded = expandedMovieId === movie.movie_id;
                 const cityCount = movie.cities ? Object.keys(movie.cities).length : 0;
                 const totalShowtimes = movie.cities ? countMovieShowtimes(movie.cities) : 0;
 
                 return (
-                    <Card key={movie.movie_id} className={cn("overflow-hidden transition-all", isExpanded ? "ring-2 ring-primary" : "")}>
+                    <Card key={movie.movie_id} className={cn("overflow-hidden transition-all py-0", isExpanded ? "ring-2 ring-primary" : "")}>
                         <div
-                            className="p-4 flex gap-4 cursor-pointer hover:bg-muted/50 transition-colors"
+                            className="px-2 py-2 flex gap-4 cursor-pointer hover:bg-muted/50 transition-colors"
                             onClick={() => toggleMovie(movie.movie_id)}
                         >
                             {/* Poster */}
