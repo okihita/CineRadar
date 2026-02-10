@@ -26,13 +26,33 @@ export default function SchedulesPage() {
     let totalShowtimes = 0;
     let totalTheatres = 0;
 
-    if (data?.movies) {
-        data.movies.forEach(m => {
+    // Process movies: Deduplicate and Sort
+    let processedMovies = data?.movies ? [...data.movies] : [];
+
+    if (processedMovies.length > 0) {
+        // 1. Calculate stats (on original data is fine, but cleaner to do here)
+        processedMovies.forEach(m => {
             if (!m.cities) return;
             totalShowtimes += countMovieShowtimes(m.cities);
             Object.values(m.cities).forEach(theatres => {
                 totalTheatres += theatres.length;
             });
+        });
+
+        // 2. Deduplicate by movie_id
+        const uniqueMovies = new Map();
+        processedMovies.forEach(m => {
+            if (!uniqueMovies.has(m.movie_id)) {
+                uniqueMovies.set(m.movie_id, m);
+            }
+        });
+        processedMovies = Array.from(uniqueMovies.values());
+
+        // 3. Sort by showtime count (descending)
+        processedMovies.sort((a, b) => {
+            const countA = a.cities ? countMovieShowtimes(a.cities) : 0;
+            const countB = b.cities ? countMovieShowtimes(b.cities) : 0;
+            return countB - countA;
         });
     }
 
@@ -40,7 +60,7 @@ export default function SchedulesPage() {
         <div className="min-h-screen bg-background text-foreground flex flex-col">
             <DateNavigator date={date} setDate={setDate} isLoading={isLoading} />
 
-            <div className="flex-1 p-6 space-y-6 max-w-7xl mx-auto w-full">
+            <div className="flex-1 p-6 space-y-6 w-full">
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">Showtime Intelligence</h1>
@@ -70,7 +90,7 @@ export default function SchedulesPage() {
                         />
 
                         <MovieScheduleList
-                            movies={data?.movies || []}
+                            movies={processedMovies}
                             isLoading={isLoading}
                         />
                     </>

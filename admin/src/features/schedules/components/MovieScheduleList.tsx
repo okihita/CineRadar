@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, MapPin, Clock } from "lucide-react";
 import Image from "next/image";
-import { CityScheduleBreakdown } from "./CityScheduleBreakdown";
+import { ShowtimeDistributionChart } from "./ShowtimeDistributionChart";
+import { CityShowtimesTable } from "./CityShowtimesTable";
 import { cn } from "@/lib/utils";
 
 interface MovieScheduleListProps {
@@ -31,7 +32,7 @@ export function MovieScheduleList({ movies, isLoading }: MovieScheduleListProps)
     };
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-3">
             {movies.map((movie) => {
                 const isExpanded = expandedMovieId === movie.movie_id;
                 const cityCount = movie.cities ? Object.keys(movie.cities).length : 0;
@@ -89,7 +90,10 @@ export function MovieScheduleList({ movies, isLoading }: MovieScheduleListProps)
                         {/* Expanded Content */}
                         {isExpanded && (
                             <div className="border-t bg-muted/10 p-4 animate-in slide-in-from-top-2 duration-200">
-                                <CityScheduleBreakdown cityData={movie.cities} />
+                                <div className="space-y-6">
+                                    <ShowtimeDistributionChart cityData={movie.cities} />
+                                    <CityShowtimesTable cityData={movie.cities} />
+                                </div>
                             </div>
                         )}
                     </Card>
