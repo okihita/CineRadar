@@ -1,7 +1,7 @@
 'use client';
 
 import { Film } from 'lucide-react';
-import { MovieDatabaseList } from '@/features/movie-database';
+import { MovieDatabaseList } from '@/features/movies';
 
 export default function MovieDatabasePage() {
     return (

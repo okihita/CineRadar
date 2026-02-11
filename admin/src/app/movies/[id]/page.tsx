@@ -1,4 +1,4 @@
-import { MovieDatabaseDetail } from '@/features/movie-database';
+import { MovieDatabaseDetail } from '@/features/movies';
 
 export default async function MovieDetailPage({
     params,
