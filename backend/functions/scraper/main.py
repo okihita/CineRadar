@@ -183,14 +183,12 @@ def refresh_access_token(db: firestore.Client, refresh_token: str) -> str | None
     for i in range(max_retries):
         if lock.acquire(instance_id):
             break
-        
+
         logger.info(f"Another instance is refreshing, waiting... ({i+1}/{max_retries})")
         time.sleep(1.0) # Wait 1s between checks
-        
         # Check if the other instance finished successfully
         token_data = load_token_data(db)
         if token_data and token_data.get("token"):
-            stored_at_str = token_data.get("stored_at")
             # If the token was updated very recently (e.g. within last 30s), use it
             # This handles the case where the lock holder finished and released
             # For simplicity, just return the token if valid
@@ -681,7 +679,7 @@ def scrape_seat(cloud_event: Any) -> None:
         try:
             end_time = time.time()
             duration_ms = int((end_time - start_time) * 1000)
-            
+
             # Lightweight stat doc
             stat_doc = {
                 "batch_id": batch_id,
@@ -691,7 +689,7 @@ def scrape_seat(cloud_event: Any) -> None:
                 "status": "success",
                 "occupancy_pct": occupancy_pct
             }
-            
+
             # Fire and forget
             db.collection("jit_stats").add(stat_doc)
         except Exception as e:
