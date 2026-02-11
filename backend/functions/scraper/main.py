@@ -355,7 +355,7 @@ def fetch_seat_layout_with_retry(
     # First attempt (using direct request to capture status)
     merchant_path = get_merchant_path(merchant)
     url = f"https://api-b2b.tix.id/v1/movies/{merchant_path}/layout"
-    
+
     current_token = token
     last_status = 0
 
