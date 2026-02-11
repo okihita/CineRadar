@@ -20,9 +20,9 @@ const menuItems = [
     icon: MapPin,
   },
   {
-    title: 'Movie Intelligence',
-    description: 'Showtimes & schedules',
-    href: '/movies',
+    title: 'Performance Intelligence',
+    description: 'Box office tracking',
+    href: '/performances',
     icon: Film,
   },
 

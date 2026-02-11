@@ -102,7 +102,7 @@ export function PerformanceTab() {
     }
 
     const handleMovieClick = (movieId: string) => {
-        router.push(`/movies/${movieId}`);
+        router.push(`/performances/${movieId}`);
     };
 
     return (

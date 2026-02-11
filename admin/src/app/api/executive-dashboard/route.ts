@@ -245,7 +245,7 @@ export async function GET(request: NextRequest) {
                 title: `${lowOccupancyMovies.length} movies below 40% occupancy`,
                 subtitle: lowOccupancyMovies.map(m => m.title).join(', '),
                 action: 'View Details',
-                link: '/movies',
+                link: '/performances',
             });
         }
 
@@ -267,7 +267,7 @@ export async function GET(request: NextRequest) {
                 title: 'All systems operational',
                 subtitle: `${dailySummary?.movie_count || moviesWithStats.length} movies tracked`,
                 action: 'View Details',
-                link: '/movies',
+                link: '/performances',
             });
         }
 

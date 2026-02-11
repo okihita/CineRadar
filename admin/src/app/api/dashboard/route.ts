@@ -20,7 +20,7 @@ function getMockData() {
         },
         alerts: [
 
-            { type: 'success', title: 'AVATAR premiere tomorrow', subtitle: '85% pre-sold', action: 'View Details', link: '/movies' },
+            { type: 'success', title: 'AVATAR premiere tomorrow', subtitle: '85% pre-sold', action: 'View Details', link: '/performances' },
 
         ],
         timeline: [

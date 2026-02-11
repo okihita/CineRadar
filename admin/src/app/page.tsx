@@ -301,7 +301,7 @@ export default function ExecutiveDashboard() {
                                 </div>
                             ))}
                         </div>
-                        <Link href="/movies" className="block mt-4">
+                        <Link href="/performances" className="block mt-4">
                             <Badge variant="outline" className="w-full justify-center py-1.5 hover:bg-muted cursor-pointer">
                                 View All Movies <ArrowRight className="w-3 h-3 ml-1" />
                             </Badge>
@@ -366,7 +366,7 @@ export default function ExecutiveDashboard() {
             <div className="mt-6 flex flex-wrap gap-2 justify-center">
                 {[
                     { label: 'Cinemas', href: '/cinemas' },
-                    { label: 'Movies', href: '/movies' },
+                    { label: 'Performances', href: '/performances' },
 
 
 

@@ -149,7 +149,7 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
             <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
                 <Target className="w-12 h-12 text-muted-foreground" />
                 <h2 className="text-xl font-semibold">Movie not found</h2>
-                <Button onClick={() => router.push('/movies')}>Back to Movies</Button>
+                <Button onClick={() => router.push('/performances')}>Back to Performances</Button>
             </div>
         );
     }
@@ -161,7 +161,7 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
                 <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => router.push('/movies')}
+                    onClick={() => router.push('/performances')}
                     className="mt-1"
                 >
                     <ChevronLeft className="w-6 h-6" />
