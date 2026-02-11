@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, MapPin, Film, ChevronLeft, ChevronRight, Database, Calendar } from 'lucide-react';
+import { LayoutDashboard, MapPin, Film, ChevronLeft, ChevronRight, Database, Calendar, Clapperboard } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -25,20 +25,18 @@ const menuItems = [
     href: '/performances',
     icon: Film,
   },
-
-
-
-
-
-
-
+  {
+    title: 'Movie Database',
+    description: 'All movies & details',
+    href: '/movies',
+    icon: Clapperboard,
+  },
   {
     title: 'Showtime Intelligence',
     description: 'Daily coverage & analysis',
     href: '/schedules',
     icon: Calendar,
-  },
-  {
+  }, {
     title: 'Scraper Monitor',
     description: 'Data collection & runs',
     href: '/scraper',
