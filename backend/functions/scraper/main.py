@@ -345,30 +345,19 @@ def fetch_seat_layout(showtime_id: str, merchant: str, token: str) -> dict[str, 
         logger.error(f"Request failed: {e}")
         return None
 
+
 def fetch_seat_layout_with_retry(
     showtime_id: str, merchant: str, token: str, db: firestore.Client
-) -> dict[str, Any] | None:
-    """Fetch seat layout with 401 retry logic."""
+) -> tuple[dict[str, Any] | None, int]:
+    """Fetch seat layout with 401 retry logic. Returns (data, status_code)."""
     import time
 
-    # First attempt
-    result = fetch_seat_layout(showtime_id, merchant, token)
-    if result:
-        return result
-
-    # Check if we should retry (did we get a 401?)
-    # NOTE: fetch_seat_layout returns None on error, so we can't distinguish 401 easily
-    # unless we modify it or infer. To keep it clean, let's modify fetch_seat_layout to return a status code or exception?
-    # Or simply: if result is None, check token validity?
-
-    # Actually, simpler to inline the logic or modify fetch_seat_layout to raise exception on 401.
-    # But since we want to preserve existing signature for compatibility...
-
-    # Let's re-implement the retry loop here using explicit requests to be safe and cleaner
+    # First attempt (using direct request to capture status)
     merchant_path = get_merchant_path(merchant)
     url = f"https://api-b2b.tix.id/v1/movies/{merchant_path}/layout"
-
+    
     current_token = token
+    last_status = 0
 
     for attempt in range(2):
         headers = {
@@ -380,14 +369,16 @@ def fetch_seat_layout_with_retry(
 
         try:
             response = requests.get(url, headers=headers, params=params, timeout=10)
+            last_status = response.status_code
 
             if response.status_code == 200:
                 data = response.json()
                 if data.get("success"):
-                    return cast("dict[str, Any]", data)
+                    return cast("dict[str, Any]", data), 200
                 else:
                     logger.error(f"API error: {data.get('error', {}).get('message', 'Unknown')}")
-                    return None
+                    # API returned 200 but logical error
+                    return None, 200
 
             elif response.status_code == 401:
                 if attempt == 0:
@@ -399,23 +390,23 @@ def fetch_seat_layout_with_retry(
                         continue # Retry with new token
                     else:
                         logger.error("Failed to refresh token after 401.")
-                        return None
+                        return None, 401
                 else:
                     logger.error("Still 401 after refresh.")
-                    return None
+                    return None, 401
             else:
                 body = response.text[:200] if response.text else "No body"
                 logger.error(f"API error {response.status_code}: {body}")
-                return None
+                return None, response.status_code
 
         except requests.RequestException as e:
             logger.error(f"Request failed: {e}")
             if attempt == 0:
                 time.sleep(1)
                 continue
-            return None
+            return None, 0
 
-    return None
+    return None, last_status
 
 
 def validate_api_response(raw_response: dict[str, Any]) -> tuple[bool, str, str]:
@@ -618,17 +609,18 @@ def scrape_seat(cloud_event: Any) -> None:
 
     # Fetch seat layout - need merchant for API path
     merchant = showtime_data.get("merchant", "XXI")
-    raw_api_response = fetch_seat_layout_with_retry(showtime_id, merchant, token, db)
+    raw_api_response, status_code = fetch_seat_layout_with_retry(showtime_id, merchant, token, db)
 
     if not raw_api_response:
         log_critical(
-            "Failed to fetch seat layout from TIX.id API",
+            f"Failed to fetch seat layout (HTTP {status_code})",
             {
                 "showtime_id": showtime_id,
                 "theatre": theatre_name,
                 "time": showtime_time,
                 "merchant": merchant,
                 "error_type": "fetch_layout_failed",
+                "http_status": status_code,
             },
         )
         return  # Pub/Sub will retry

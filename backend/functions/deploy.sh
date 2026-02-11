@@ -51,7 +51,7 @@ deploy_scraper() {
         --source=. \
         --entry-point=scrape_seat \
         --trigger-topic=$PUBSUB_TOPIC \
-        --max-instances=10 \
+        --max-instances=1 \
         --memory=512MB \
         --timeout=60s \
         --set-env-vars="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,ENABLE_SCHEMA_VALIDATION=true" \
