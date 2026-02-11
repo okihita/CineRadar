@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from backend.domain.utils import get_now_iso
+from backend.utils import get_now_iso
 
 if TYPE_CHECKING:
     from backend.domain.models.movie import TheatreSchedule

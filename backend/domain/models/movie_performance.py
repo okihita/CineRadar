@@ -10,7 +10,7 @@ import json
 from dataclasses import dataclass, field
 from typing import Any
 
-from backend.domain.utils import get_now_iso
+from backend.utils import get_now_iso
 
 
 @dataclass
