@@ -3,7 +3,7 @@
  * Showtimes and schedules across all theatres
  *
  * Refactored: 496 lines → ~150 lines
- * - Feature-based folder structure (/features/movies/)
+ * - Feature-based folder structure (/features/performances/)
  * - Zustand for UI state (useMoviesStore) - replaces 13 useState hooks
  * - SWR for server state (useMoviesData)
  * - Extracted components: MovieStats, MovieFilters, ShowtimeTable
@@ -16,7 +16,7 @@ import { Film } from 'lucide-react';
 // Feature imports
 import {
     PerformanceTab,
-} from '@/features/movies';
+} from '@/features/performances';
 
 export default function MoviesPage() {
     // SWR for server state (no more client filtering needed here for now)

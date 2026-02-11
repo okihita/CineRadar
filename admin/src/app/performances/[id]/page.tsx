@@ -1,4 +1,4 @@
-import { PerformanceDetail } from '@/features/movies';
+import { PerformanceDetail } from '@/features/performances';
 
 export default async function MovieDetailPage({
     params,
