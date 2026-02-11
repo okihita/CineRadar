@@ -51,13 +51,13 @@ deploy_scraper() {
         --source=. \
         --entry-point=scrape_seat \
         --trigger-topic=$PUBSUB_TOPIC \
-        --max-instances=5 \
-        --memory=256MB \
-        --timeout=15s \
-        --set-env-vars="GOOGLE_CLOUD_PROJECT=$PROJECT_ID" \
+        --max-instances=10 \
+        --memory=512MB \
+        --timeout=60s \
+        --set-env-vars="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,ENABLE_SCHEMA_VALIDATION=true" \
         --project=$PROJECT_ID
     cd ..
-    echo "   ✓ Scraper deployed (max 5 concurrent)"
+    echo "   ✓ Scraper deployed (max 10 concurrent)"
 }
 
 deploy_scheduler() {

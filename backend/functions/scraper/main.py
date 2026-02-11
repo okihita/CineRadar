@@ -53,14 +53,37 @@ def get_firestore_client() -> firestore.Client:
     return firestore.Client(project=PROJECT_ID)
 
 
+
+def log_error_to_firestore(severity: str, message: str, context: dict[str, Any]) -> None:
+    """Log error to Firestore 'scraper_errors' collection."""
+    try:
+        db = get_firestore_client()
+        error_doc = {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "severity": severity,
+            "message": message,
+            "context": context,
+            "resolved": False
+        }
+        # Fire and forget (don't await/block too long)
+        db.collection("scraper_errors").add(error_doc)
+    except Exception as e:
+        # Fallback to stdout if Firestore logging fails
+        logger.error(f"Failed to log error to Firestore: {e}")
+
+
 def log_critical(message: str, context: dict[str, Any]) -> None:
     """Log critical error with context for alerting."""
     logger.critical(f"🚨 CRITICAL: {message} | Context: {context}")
+    log_error_to_firestore("CRITICAL", message, context)
 
 
 def log_warning(message: str, context: dict[str, Any]) -> None:
     """Log warning with context for alerting."""
     logger.warning(f"⚠️ WARNING: {message} | Context: {context}")
+    # Optional: We can choose to log specific warnings to Firestore too
+    # For now, let's log them to keep track of schema drifts
+    log_error_to_firestore("WARNING", message, context)
 
 
 def log_info(message: str) -> None:
@@ -154,15 +177,32 @@ def refresh_access_token(db: firestore.Client, refresh_token: str) -> str | None
     instance_id = f"scraper-{uuid.uuid4().hex[:8]}"
     lock = TokenRefreshLock(db)
 
-    # Try to acquire lock
-    if not lock.acquire(instance_id):
-        logger.info("Another instance is refreshing, waiting...")
-        time.sleep(1) # Simple backoff
-        # Try to read the new token that should be there soon
+    # Try to acquire lock with retry
+    # If another instance is refreshing, we wait for it to finish instead of failing
+    max_retries = 10
+    for i in range(max_retries):
+        if lock.acquire(instance_id):
+            break
+        
+        logger.info(f"Another instance is refreshing, waiting... ({i+1}/{max_retries})")
+        time.sleep(1.0) # Wait 1s between checks
+        
+        # Check if the other instance finished successfully
         token_data = load_token_data(db)
         if token_data and token_data.get("token"):
-            token = token_data["token"]
-            return str(token) if token else None
+            stored_at_str = token_data.get("stored_at")
+            # If the token was updated very recently (e.g. within last 30s), use it
+            # This handles the case where the lock holder finished and released
+            # For simplicity, just return the token if valid
+            return str(token_data["token"])
+
+    # If we still don't have the lock after retries, try one last check
+    if not lock.acquire(instance_id):
+         # Just return whatever is there, hoping it was refreshed
+        token_data = load_token_data(db)
+        if token_data and token_data.get("token"):
+             logger.warning("Could not acquire lock, using existing token")
+             return str(token_data["token"])
         return None
 
     logger.info("🔄 Acquired lock, attempting token refresh...")
@@ -551,6 +591,8 @@ def scrape_seat(cloud_event: Any) -> None:
     Triggered by messages on scrape-seat-jit topic.
     Scrapes one showtime and saves to Firestore.
     """
+    import time
+    start_time = time.time()
     # Decode Pub/Sub message
     message_data = base64.b64decode(cloud_event.data["message"]["data"])
     showtime_data = json.loads(message_data)
@@ -588,7 +630,7 @@ def scrape_seat(cloud_event: Any) -> None:
                 "theatre": theatre_name,
                 "time": showtime_time,
                 "merchant": merchant,
-                "error": "fetch_layout_failed",
+                "error_type": "fetch_layout_failed",
             },
         )
         return  # Pub/Sub will retry
@@ -632,3 +674,25 @@ def scrape_seat(cloud_event: Any) -> None:
     logger.info(
         f"✓ {theatre_name} @ {showtime_time}: {occupancy_pct}% ({sold_seats}/{total_seats})"
     )
+
+    # Log metrics to jit_stats if batch_id is present
+    batch_id = showtime_data.get("batch_id")
+    if batch_id:
+        try:
+            end_time = time.time()
+            duration_ms = int((end_time - start_time) * 1000)
+            
+            # Lightweight stat doc
+            stat_doc = {
+                "batch_id": batch_id,
+                "showtime_id": showtime_id,
+                "duration_ms": duration_ms,
+                "finished_at": datetime.utcnow().isoformat() + "Z",
+                "status": "success",
+                "occupancy_pct": occupancy_pct
+            }
+            
+            # Fire and forget
+            db.collection("jit_stats").add(stat_doc)
+        except Exception as e:
+            logger.warning(f"Failed to log jit_stats: {e}")

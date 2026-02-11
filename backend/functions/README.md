@@ -48,6 +48,20 @@ cd backend/functions
 | `REGION` | asia-southeast1 | Deployment region |
 | `PUBSUB_TOPIC` | scrape-seat-jit | Pub/Sub topic name |
 
+## Architecture & Scaling
+
+The system uses a **Fan-out** pattern to handle variable load:
+
+1. **Scheduler (Timer)**: Triggers the Dispatcher every 5 minutes.
+2. **Dispatcher (Brain)**:
+   - Queries Firestore for showtimes starting in the next 8-15 minutes.
+   - Publishes **one message per showtime** to Pub/Sub.
+   - *Example*: 10:00 AM might have 0 tasks; 7:00 PM might have 200 tasks.
+3. **Scraper (Worker Pool)**:
+   - Triggered by Pub/Sub messages.
+   - **Auto-scales** based on queue depth, up to `max-instances`.
+   - **Current Limit**: 10 concurrent instances.
+
 ## Functions
 
 ### Dispatcher (`dispatch-jit-jobs`)
@@ -57,7 +71,9 @@ cd backend/functions
 
 ### Scraper (`scrape-seat-jit`)
 - **Trigger**: Pub/Sub (`scrape-seat-jit` topic)
-- **Max Instances**: 5 (rate limiting)
+- **Max Instances**: 10 (rate limiting)
+- **Timeout**: 60s
+- **Memory**: 512MB
 - **Purpose**: Scrape one showtime, save compressed layout to Firestore
 
 ## Token Management
@@ -67,17 +83,29 @@ The scraper reads the TIX.id auth token from Firestore:
 tokens/current → { token: "...", stored_at: "..." }
 ```
 
-Token refresh is handled by existing GitHub Actions workflow (`token-refresh.yml`) which runs every 30 minutes.
+Token refresh is handled by existing GitHub Actions workflow (`token-refresh.yml`) which runs every 30 minutes. The scraper also implements a **collaborative locking mechanism** to refresh expired tokens on-demand if the background job fails.
 
-## Cost Estimate
+## Cost Estimate (Updated Feb 2026)
 
 | Resource | Monthly Usage | Cost |
 |----------|---------------|------|
 | Cloud Functions (Invocations) | ~350,000 | $0.00 |
-| Cloud Functions (GHz-seconds) | ~280,000 | $0.19 |
+| Cloud Functions (GHz-seconds) | ~560,000 | $0.38 |
 | Firestore Storage | ~1.1 GB | $0.02 |
-| Firestore Writes | ~350,000 | $0.60 |
-| **Total** | | **~$0.81** |
+| Firestore Writes | ~360,000 | $0.90 |
+| **Total** | | **~$1.30** |
+
+## Performance Analysis
+
+With `max-instances=10` and an estimated processing time of 2s per scrape, the system throughput is ~**300 showtimes/minute**.
+
+| Scenario | Showtimes | Estimated Time | Status |
+|----------|-----------|----------------|--------|
+| **Typical** | 30 | ~6s | ✅ Fast |
+| **Peak** | 100 | ~20s | ✅ Fast |
+| **Extreme** | 400+ | ~80s | ✅ Safe (< 5 min) |
+
+Even under extreme load (e.g., Saturday night blockbuster), the batch completes in roughly 1.5 minutes, leaving ample headroom before the next 5-minute trigger.
 
 ## Local Testing
 

@@ -392,9 +392,16 @@ def dispatch_jobs(request: Any) -> Any:
                 )
 
         if showtimes:
+            # Generate batch ID (timestamp of dispatch)
+            batch_id = now.strftime("%Y%m%d-%H%M%S")
+
+            # Add batch_id to all showtimes
+            for s in showtimes:
+                s["batch_id"] = batch_id
+
             # Publish to Pub/Sub
             count = publish_to_pubsub(publisher, showtimes)
-            logger.info(f"Published {count} messages to {PUBSUB_TOPIC}")
+            logger.info(f"Published {count} messages to {PUBSUB_TOPIC} (Batch: {batch_id})")
 
             # Log to scraper_logs
             time_slot = now.strftime("%H:%M")
@@ -408,7 +415,7 @@ def dispatch_jobs(request: Any) -> Any:
                 status="ok",
             )
 
-            return {"status": "ok", "published": count}, 200
+            return {"status": "ok", "published": count, "batch_id": batch_id}, 200
         else:
             # Log empty dispatch too
             time_slot = now.strftime("%H:%M")
