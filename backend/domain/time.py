@@ -1,4 +1,4 @@
-"""Utility functions for domain models."""
+"""Time utility functions for domain models."""
 
 from datetime import UTC, datetime
 

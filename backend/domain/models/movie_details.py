@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
-from backend.utils import get_now_iso
+from backend.domain.time import get_now_iso
 
 
 @dataclass
