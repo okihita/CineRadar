@@ -57,7 +57,7 @@ deploy_scraper() {
         --set-env-vars="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,ENABLE_SCHEMA_VALIDATION=true" \
         --project=$PROJECT_ID
     cd ..
-    echo "   ✓ Scraper deployed (max 10 concurrent)"
+    echo "   ✓ Scraper deployed"
 }
 
 deploy_scheduler() {
