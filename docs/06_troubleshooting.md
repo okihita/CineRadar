@@ -34,7 +34,6 @@ If TIX.id introduces aggressive WAF (Cloudflare Turnstile):
 - **Mitigation Architecture**:
     - **Short Term**: Implement `stealth-plugin` for Playwright.
     - **Long Term**: Pivot to a **Residential Proxy Network** (e.g., BrightData).
-      - *Estimated Cost*: $50/mo.
       - *Implementation*: Inject proxy config into `tix_client.py`.
 
 ---
@@ -50,7 +49,7 @@ Free tier allows 20,000 writes/day. We operate near this limit (12k seats + 1k s
 - **Strategic Response**:
     1.  **Optimized Batching**: Ensure `populate_firestore.py` uses `batch.commit()` (max 500 writes/batch).
     2.  **Delta Compression**: Only write seat data if `status` has changed (Reducing writes by ~60%).
-    3.  **Upgrade**: Enable Blaze Plan (Budget Cap: $5/mo).
+    3.  **Upgrade**: Enable Blaze Plan.
 
 ### Scenario 4: GitHub Actions IP Ban
 B2B APIs often block data center IP ranges (Azure/AWS/GitHub).

@@ -112,7 +112,6 @@ The **Just-In-Time (JIT) Scraper** captures seat occupancy data 8 minutes before
 #### Architecture
 *   **Platform**: Google Cloud Functions (Gen 2).
 *   **Trigger**: Event-driven architecture.
-*   **Cost**: Low (<$1/mo) due to "scale-to-zero" nature.
 
 #### Component Flow
 1.  **Cloud Scheduler**: Triggers the Dispatcher every 5 minutes.

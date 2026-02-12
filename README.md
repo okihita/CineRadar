@@ -16,17 +16,6 @@
 
 It solves the "Box Office Black Box" problem by deploying a Just-In-Time (JIT) scraping engine to monitor **real-time seat occupancy** across 480+ theaters (XXI, CGV, Cinepolis) in 83 cities. This data empowers Production Houses to make data-driven decisions on marketing spend and screen allocation, moving beyond "gut feeling" and social buzz.
 
-## 💰 Operational Profile
-
-| Component | Service | Tier | Est. Cost |
-|-----------|---------|------|-----------|
-| *Updated: Jan 2026* | | | |
-| **Hosting** | Vercel (Pro) | Business | $20/mo |
-| **Database** | Firestore | Blaze (Pay-as-you-go) | ~$5/mo |
-| **Proxies** | Residential IPs | Metered | ~$50/mo |
-| **CI/CD** | GitHub Actions | Free Tier | $0 |
-| **Total** | | | **~$75/mo** |
-
 ## 📚 Technical Manuals
 
 Start here to understand the system.

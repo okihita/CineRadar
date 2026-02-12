@@ -537,8 +537,7 @@ graph TD
 ### Self-Healing Token Reuse
 The Cloud Function is autonomous. It reuses the stored `tix_jwt` from Firestore. If the token is near expiration (< 5 min TTL), the Scraper function proactively calls the TIX.id refresh endpoint and updates Firestore, ensuring zero downtime.
 
-### Cost & Limits
-*   **Cost**: ~$0.81/month (mainly Firestore writes + minimal Compute).
+### Limits
 *   **Precision**: T-8 minutes.
 *   **Safety**: Rate-limited to 5 concurrent scrapers (~1-2 req/sec).
 

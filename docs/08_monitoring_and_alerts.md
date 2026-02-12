@@ -202,17 +202,6 @@ The GitHub workflows provide robust monitoring:
 
 ---
 
-## 📊 Cost Impact
-
-| Component | Monthly Cost |
-|-----------|--------------|
-| Raw API Storage (2.8 GB) | $0.50 |
-| Firestore Writes | $0.07 |
-| Cloud Functions (compute) | $0 (already running) |
-| **Total Additional** | **$0.57/month** |
-
----
-
 ## 🚀 Everything Else Is Ready!
 
 - ✅ Code deployed
