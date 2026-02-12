@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from backend.city_data import CITIES
+from backend.infrastructure.city_data import CITIES
 from backend.infrastructure.core.tix_client import CineRadarScraper
 
 logger = logging.getLogger(__name__)

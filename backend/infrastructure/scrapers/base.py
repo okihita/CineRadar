@@ -12,8 +12,15 @@ from typing import Any, cast
 
 from playwright.async_api import Browser, BrowserContext, Page, Playwright, async_playwright
 
-from backend.infrastructure.core.config import API_BASE, APP_BASE, LOCALE, TIMEZONE, USER_AGENT, VIEWPORT
 from backend.domain.errors import LoginFailedError, PageLoadError
+from backend.infrastructure.core.config import (
+    API_BASE,
+    APP_BASE,
+    LOCALE,
+    TIMEZONE,
+    USER_AGENT,
+    VIEWPORT,
+)
 
 logger = logging.getLogger(__name__)
 

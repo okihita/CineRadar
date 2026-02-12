@@ -6,8 +6,8 @@ This is the concrete implementation that contains the actual scraping logic.
 """
 
 from backend.application.ports.scraper import IMovieScraper
-from backend.city_data import CITIES
 from backend.domain.models import Movie
+from backend.infrastructure.city_data import CITIES
 from backend.infrastructure.scrapers.base import BaseScraper
 
 
