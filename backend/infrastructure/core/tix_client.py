@@ -13,7 +13,7 @@ from typing import Any
 from playwright.async_api import BrowserContext, Page, Request, Route, async_playwright
 
 from backend.city_data import CITIES
-from backend.config import LOCALE, TIMEZONE, USER_AGENT, VIEWPORT
+from backend.infrastructure.core.config import LOCALE, TIMEZONE, USER_AGENT, VIEWPORT
 from backend.infrastructure.core.geocoder import Geocoder
 from backend.infrastructure.scrapers.base import BaseScraper
 

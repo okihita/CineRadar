@@ -16,7 +16,7 @@ from typing import Any, ClassVar, cast
 
 import aiohttp
 
-from backend.config import USER_AGENT
+from backend.infrastructure.core.config import USER_AGENT
 from backend.infrastructure.repositories import FirestoreTokenRepository
 from backend.infrastructure.scrapers.base import BaseScraper
 

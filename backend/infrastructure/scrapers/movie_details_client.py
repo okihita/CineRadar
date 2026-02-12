@@ -10,7 +10,7 @@ from typing import Any
 
 import aiohttp
 
-from backend.config import API_BASE, USER_AGENT
+from backend.infrastructure.core.config import API_BASE, USER_AGENT
 
 logger = logging.getLogger(__name__)
 

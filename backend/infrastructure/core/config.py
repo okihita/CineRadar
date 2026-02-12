@@ -1,6 +1,6 @@
 """
-City configuration for TIX.id scraper.
-Contains all 83 Indonesian cities with their TIX.id IDs.
+Global configuration for TIX.id scraping engine.
+Defines API endpoints, browser emulation settings, and regional defaults.
 """
 
 # API Configuration
