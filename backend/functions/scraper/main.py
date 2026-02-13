@@ -55,18 +55,43 @@ def get_firestore_client() -> firestore.Client:
 
 
 def log_error_to_firestore(severity: str, message: str, context: dict[str, Any]) -> None:
-    """Log error to Firestore 'scraper_errors' collection."""
+    """Log error to Firestore 'scraper_errors/{batch_id}/errors/{auto-id}'.
+
+    Groups errors by dispatcher batch for easy browsing in Firestore console.
+    Parent batch doc is lazily created via set(merge=True).
+    """
     try:
         db = get_firestore_client()
+        now_iso = datetime.utcnow().isoformat() + "Z"
+
+        # Determine batch doc ID (e.g. "20260213-162200" -> "2026-02-13_16-22")
+        batch_id = context.get("batch_id", "")
+        if batch_id:
+            # Reformat YYYYMMDD-HHMMSS -> YYYY-MM-DD_HH-MM for readability
+            try:
+                dt = datetime.strptime(batch_id, "%Y%m%d-%H%M%S")
+                batch_doc_id = dt.strftime("%Y-%m-%d_%H-%M")
+            except ValueError:
+                batch_doc_id = batch_id  # Use raw if format differs
+        else:
+            batch_doc_id = "_unbatched"
+
+        # Lazily create/update parent batch doc
+        batch_ref = db.collection("scraper_errors").document(batch_doc_id)
+        batch_ref.set(
+            {"batch_id": batch_id, "created_at": now_iso},
+            merge=True,
+        )
+
+        # Write individual error to subcollection
         error_doc = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": now_iso,
             "severity": severity,
             "message": message,
             "context": context,
-            "resolved": False
+            "resolved": False,
         }
-        # Fire and forget (don't await/block too long)
-        db.collection("scraper_errors").add(error_doc)
+        batch_ref.collection("errors").add(error_doc)
     except Exception as e:
         # Fallback to stdout if Firestore logging fails
         logger.error(f"Failed to log error to Firestore: {e}")
@@ -605,6 +630,7 @@ def scrape_seat(cloud_event: Any) -> None:
     showtime_id = showtime_data.get("showtime_id")
     theatre_name = showtime_data.get("theatre_name", "")[:30]
     showtime_time = showtime_data.get("showtime", "")
+    batch_id = showtime_data.get("batch_id", "")
 
     logger.info(f"Scraping {theatre_name} @ {showtime_time}")
 
@@ -616,6 +642,7 @@ def scrape_seat(cloud_event: Any) -> None:
         log_critical(
             "No valid token available - authentication failure",
             {
+                "batch_id": batch_id,
                 "showtime_id": showtime_id,
                 "theatre": theatre_name,
                 "time": showtime_time,
@@ -631,6 +658,7 @@ def scrape_seat(cloud_event: Any) -> None:
         log_critical(
             f"Failed to fetch seat layout (HTTP {status_code})",
             {
+                "batch_id": batch_id,
                 "showtime_id": showtime_id,
                 "theatre": theatre_name,
                 "time": showtime_time,
@@ -651,6 +679,7 @@ def scrape_seat(cloud_event: Any) -> None:
                 log_critical(
                     f"Schema validation failed: {validation_msg}",
                     {
+                        "batch_id": batch_id,
                         "showtime_id": showtime_id,
                         "theatre": theatre_name,
                         "severity": "CRITICAL",
@@ -661,7 +690,7 @@ def scrape_seat(cloud_event: Any) -> None:
             else:
                 log_warning(
                     f"Schema validation issue: {validation_msg}",
-                    {"showtime_id": showtime_id, "theatre": theatre_name, "severity": severity},
+                    {"batch_id": batch_id, "showtime_id": showtime_id, "theatre": theatre_name, "severity": severity},
                 )
         else:
             log_info(f"Schema validation passed for {showtime_id}")
