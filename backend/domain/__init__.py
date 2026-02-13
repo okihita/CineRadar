@@ -1,13 +1,14 @@
 """
-CineRadar Domain Layer
+CineRadar Domain Layer (The Core) 🧠
 
-Pure business objects with no external dependencies.
-This layer contains:
-- Domain models (Movie, Theatre, Token, etc.)
-- Custom exceptions
-- Business rules
+Technical Explanation:
+The **Domain Layer** represents the "Business Logic" and "Entities" of the application.
 
-The domain layer should NEVER import from infrastructure or application layers.
+- **No Dependencies**: This layer MUST NOT import from `application` or `infrastructure`. It stands alone.
+- **Pure Python**: It uses standard libraries (like `dataclasses`) to define what a "Movie" or "Theatre" is.
+- **Business Rules**: It contains logic inherent to the data (e.g., `showtime.is_morning`), but not logic about *how* to get that data.
+
+Think of this as the "Dictionary" of your project. It defines the language that the rest of the application speaks.
 """
 
 from backend.domain.errors import (

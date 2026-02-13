@@ -29,100 +29,185 @@ uv run python -m backend.cli.refresh_token --check
 
 ## 🗺️ Visual Call Graphs
 
-### 1. Daily Scrape Pipeline (`daily-morning-scrape.yml`)
-This workflow runs parallel batches to scrape movies and seats.
+### 1. Daily Movie & Schedule Scrape (`daily-morning-scrape.yml`)
+The "Big Scrape" that runs every morning to refresh the entire catalog.
 
 ```mermaid
 flowchart TD
-    GH[GitHub Actions: daily-morning-scrape.yml] -->|Matrix Batch 0-8| CLI[cli.jit_granular_scraper]
+    GH[GitHub Actions: daily-morning-scrape.yml] -->|Matrix Batch 0-8| CLI[cli.py]
     
-    subgraph "Worker Node"
-        CLI -->|Checks Token| TR[token_refresher.TokenRefresher]
-        CLI -->|Orchestrates| TS[infrastructure.TixSeatScraper]
-        
-        TS -->|Calls| LS[infrastructure.core.seat_scraper]
-        LS -->|API Req| TIX[TIX.id API]
-        
-        TIX -->|JSON| LS
-        LS -->|SeatOccupancy| TS
-        TS -->|SeatOccupancy| CLI
-        
-        CLI -->|Writes| JSONL[Artifact: batch_*.jsonl]
+    subgraph "Application Layer"
+        CLI --> UC[ScrapeMoviesUseCase]
     end
-    
-    JSONL -->|Upload| GA[GitHub Artifacts]
+
+    subgraph "Infrastructure Layer"
+        UC -->|Port| MS[IMovieScraper]
+        UC -->|Port| MR[IMovieRepository]
+        
+        MS -->|Adapter| TMS[TixMovieScraper]
+        MR -->|Adapter| FMR[FirestoreMovieRepository]
+        
+        TMS -->|API| TIX[(TIX.id API)]
+        FMR -->|Write| FS[(Firestore)]
+    end
 ```
 
-### 2. Auth Refresh Pipeline (`token-refresh.yml`)
-This workflow performs a full "Headless Browser" login to regenerate the long-lived refresh token.
+**Narrative**: This workflow is our **Daily Catalog Sync**. Every morning at 6 AM, GitHub Actions launches a set of parallel workers. These workers use our CLI to trigger the "Scrape Movies" Use Case. This Use Case acts as an orchestrator: it doesn't know how to scrape or where to save, it simply asks its "Ports" (Interfaces) to do the work. This allows us to swap the scraper or the database implementation without touching the core business logic.
+
+### 2. Real-time JIT Seat Scraping (Cloud Functions)
+The "Heartbeat" that monitors seat availability for upcoming shows.
 
 ```mermaid
 flowchart TD
-    GH[GitHub Actions: token-refresh.yml] -->|Scheduled| CLI[cli.refresh_token]
+    SCH[Cloud Scheduler] -->|Every 5m| DISP[dispatcher]
+    
+    subgraph "Event-Driven Flow"
+        DISP -->|Pub/Sub| PS[scrape-seat-jit]
+        PS -->|Trigger| SCR[scraper]
+        
+        SCR -->|Scrape| TSS[TixSeatScraper]
+        TSS -->|API| TIX[(TIX.id API)]
+        
+        SCR -->|Save| MPR[FirestoreMoviePerformance]
+        MPR -->|Write| FS[(Firestore)]
+    end
+```
+
+**Narrative**: This is our **High-Frequency Heartbeat** for real-time occupancy. Running 24/7 on Google Cloud, it uses a "Fan-out" architecture. Every 5 minutes, a Dispatcher identifies all movies starting soon and tosses thousands of individual tasks into a queue. A fleet of small, fast Scraper functions then wakes up to fetch seat maps and save compressed snapshots. This allows the system to scale to thousands of simultaneous screenings without getting blocked.
+
+### 3. Hybrid Token Management (The "Anti-Expire" System)
+Ensures we always have valid credentials without performing a heavy browser login every time.
+
+```mermaid
+flowchart TD
+    SCR[Scraper/Dispatcher] -->|Before Scrape| CHECK{Token < 20m old?}
+    CHECK -->|Yes| JOIN[Proceed to Scrape]
+    CHECK -->|No| API[API Refresh: users/refresh]
+    
+    API -->|Success| SAVE[Update Firestore JWT]
+    SAVE --> JOIN
+    
+    API -->|401/Failure| FALL[Fallback: GHA Full Login]
+    FALL -->|Trigger| GHA[token-refresh.yml]
+    GHA -->|Success| SAVE
+```
+
+**Narrative**: This is our **Multi-Tiered Auth Insurance**. 
+- **Tier 1 (Every Scrape)**: The system checks if the current key is "fresh" (>20 mins life).
+- **Tier 2 (Every 30 Mins)**: If the key is aging, the system performs a silent **API Refresh**. This is a fast, backend-to-backend call that takes milliseconds and doesn't involve a browser.
+- **Tier 3 (Every 60 Days)**: If the silent refresh fails (the "master key" expired), it triggers the heavy **Credential Bot** (Diagram #4 below) to do a full browser login.
+
+### 4. Auth Refresh Pipeline (`token-refresh.yml`)
+The "Headless Bot" that performs a full browser login to refresh credentials.
+
+```mermaid
+flowchart TD
+    GH[GitHub Actions: token-refresh.yml] -->|Scheduled| RTC[cli.refresh_token]
     
     subgraph "Headless Auth"
-        CLI -->|Launches| PW[Playwright + XVFB]
-        PW -->|Types Phone/Pass| LOGIN[TIX.id Login Page]
-        LOGIN -->|Success| HOME[TIX.id Home]
+        RTC -->|Playwright| PW[Chromium Browser]
+        PW -->|Login Flow| TIX[(TIX.id Login)]
+        TIX -->|Success| RTC
         
-        HOME -->|localStorage| EXTRACT[Extract Tokens]
-        EXTRACT -->|Save| FREPO[infrastructure.FirestoreTokenRepository]
+        RTC -->|Port| TR[ITokenRepository]
+        TR -->|Adapter| FTR[FirestoreTokenRepository]
+        FTR -->|Write| FS[(Firestore)]
     end
-    
-    FREPO -->|Write| FS[(Firestore DB)]
-    FS -->|auth_tokens/tix_jwt| TOKEN[Valid Token]
 ```
+
+**Narrative**: This is our **Emergency Master-Key Generator**. When the silent API refresh is no longer enough, this bot launches a hidden web browser (Playwright) to mimic a human user logging in. It types the phone number, handles the password, and extracts a brand new 91-day "Master Key" (Refresh Token). This happens automatically every 2 months or as an emergency fallback.
 
 ---
 
 ## 📂 Directory & File Glossary
 
-### 1. `backend/cli/` (Controllers)
-The **Entry Points**. These files are the "main" scripts called by GitHub Actions. They handle arguments, logging, and coordinating the domain logic.
+We follow **Clean Architecture** principles. The dependency rule is strict: inner layers (Domain) deeply know nothing about outer layers (Infrastructure/CLI).
 
-| File | Associated Workflow | Responsibility |
-|------|---------------------|----------------|
-| **`cli.py`** | `daily-morning-scrape.yml` | **Main CLI.** Entry point for `movies` and `seats` subcommands. |
-| **`movie_performance.py`** | `daily-morning-scrape.yml` | **[NEW] Performance Aggregator.** Aggregates seat data into per-movie summaries. |
-| **`refresh_token.py`** | `token-refresh.yml` | **The Login Bot.** Launches a headless browser to perform a real login flow and capture the JWT from localStorage. |
-| **`daily_summary.py`** | `daily-summary.yml` | **The Reporter.** Aggregates Firestore data at midnight to calculate total audience stats. |
-| **`monthly_geocode.py`** | `monthly-geocode.yml` | **The Mapper.** Queries Google Maps API to fix missing coordinates for new theatres. |
-| `merge_batches.py` | `daily-morning-scrape.yml` | Merges the 9 parallel request artifacts into one single valid JSON file. |
-| `populate_firestore.py` | `daily-morning-scrape.yml` | Reads the merged movie JSON and upserts it to Firestore (`snapshots` collection). |
-| `upload_seats.py` | `daily-morning-scrape.yml` | Reads the merged seat JSON and upserts to Firestore (`seat_snapshots` collection). |
-| `validate.py` | `daily-morning-scrape.yml` | Runs sanity checks on the scraped data (e.g. "Are there 0 movies?") before we upload. |
+### 1. `backend/domain/` (The Core / Inner Circle)
+**Pure business logic.** Contains the heart of the application.
+- **Dependencies**: ZERO. No external libraries, no database code, no browser code.
+- **Contents**:
+    - `models/`:
+      - `Movie`: The aggregate root. A movie entity containing metadata and schedules across all cities.
+      - `Showtime`: A single screening slot (time, availability status).
+      - `Room`: A cinema hall (e.g., "IMAX", "Regular") containing showtimes.
+      - `Theatre`: A physical cinema location.
+      - `TheatreSchedule`: A theatre's schedule *specifically for one movie*.
+      - `SeatOccupancy`: The sold/available status of a specific showtime's seating plan.
+      - `Token`: The JWT authentication token for TIX.id.
+      - `ScrapeResult`: A summary object representing the outcome of a scraping job.
+    - `errors.py`:
+      - `CineRadarError`: Base exception for all domain errors.
+      - `TokenExpiredError`: Raised when the TIX.id JWT is invalid or expired.
+      - `LoginFailedError`: Raised when headless browser login fails.
+      - `ScrapingError`: Generic error for when TIX.id data cannot be fetched/parsed.
+      - `StorageError`: Raised when Firestore/File writing fails.
+      - `DataNotFoundError`: Raised when expected data (like a movie) is missing.
+      - `ValidationError`: Raised when data integrity checks fail (e.g., negative prices).
+    - `time.py`: Timezone specifications.
 
-### 2. `backend/infrastructure/` (The "How")
-The technical implementations. This is where the dirty work happens.
+### 2. `backend/application/` (The Application Layer)
+**Orchestration logic.** These are the "Use Cases" of the system.
+- **Dependencies**: Imports from `domain`.
+- **Contents**:
+    - `use_cases/`:
+      - `ScrapeMoviesUseCase`: Orchestrates the daily movie availability scrape.
+      - `ScrapSeatsUseCase`: Orchestrates real-time seat occupancy checks.
+      - `RefreshTokenUseCase`: Handles TIX.id login and token rotation.
+      - `ValidateDataUseCase`: Ensures scraped data meets quality standards before saving.
+    - `ports/`:
+      - `IMovieRepository`: Interface for saving/loading movie snapshots.
+      - `ITheatreRepository`: Interface for managing theatre locations/metadata.
+      - `ITokenRepository`: Interface for securely storing the JWT auth token.
+      - `IScraperRunRepository`: Interface for logging scraper execution history.
+      - `IMovieScraper`: Interface for fetching movie data from an external source.
+      - `ISeatScraper`: Interface for fetching seat layouts.
+      - `IGeocodingService`: Interface for converting addresses to coordinates.
+      - `INotificationService`: Interface for sending alerts (Slack/Email).
 
-| Directory/File | Responsibility |
-|----------------|----------------|
-| **`scrapers/`** | **The Scraper Implementations.** |
-| ↳ `seat_scraper.py` | `TixSeatScraper`: The clean wrapper that mimics the `ISeatScraper` interface. |
-| ↳ `base.py` | `BaseScraper`: Shared logic for browser initialization and user-agent rotation. |
-| **`core/`** | **Core Scraping Logic.** |
-| ↳ `seat_scraper.py` | `SeatScraper`: The *actual* complex logic that calls the TIX.id API. |
-| ↳ `tix_client.py` | `CineRadarScraper`: Main movie/schedule scraper. |
-| **`repositories/`** | **Database Adapters.** |
-| ↳ `firestore_repo.py` | Handles all reads/writes to Google Cloud Firestore. |
-| ↳ `firestore_token.py` | Specialized logic for reading/writing the JWT auth token document. |
-| ↳ `firestore_movie_performance.py` | **[NEW]** Persistence for `movie_performance` collection. |
-| `token_refresher.py` | **Hybrid Auth Logic.** Checks if the token is alive. If dying (<5m TTL), it calls the TIX API to refresh it. |
+### 3. `backend/infrastructure/` (The Adapters)
+**implementations.** The dirty details of how things actually work.
+- **Dependencies**: Imports from `application` (to implement ports) and `domain`.
+- **Contents**:
+    - `repositories/`:
+      - `FirestoreMovieRepository`: Implementation of `IMovieRepository` using Cloud Firestore.
+      - `FirestoreTheatreRepository`: Implementation of `ITheatreRepository` using Cloud Firestore.
+      - `FirestoreTokenRepository`: Implementation of `ITokenRepository` for managing TIX.id tokens.
+      - `FirestoreMoviePerformanceRepository`: specialised repository for storing compressed seat layouts.
+      - `FileMovieRepository`: Local filesystem implementation for testing/debugging.
+    - `scrapers/`:
+      - `TixMovieScraper`: Clean implementation of `IMovieScraper` that wraps the legacy `CineRadarScraper`.
+      - `TixSeatScraper`: Clean implementation of `ISeatScraper` that uses `SeatScraper`.
+    - `core/`:
+      - `CineRadarScraper`: **Legacy** Playwright script for scraping movie schedules (monolithic).
+      - `SeatScraper`: **Legacy** logic for calling TIX.id B2B APIs to get seat layouts.
+      - `Geocoder`: Service for resolving theatre addresses to coordinates using external APIs.
+    - `city_data.py`: Static configuration of supported cities and their IDs.
+    - `token_refresher.py`: Utility class for checking and refreshing tokens (hybrid logic).
 
-### 3. `backend/domain/` (The "What")
-Pure business logic and data structures. Zero external dependencies (no Firestore lib, no Playwright lib).
+### 4. `backend/cli/` & `backend/functions/` (The Entry Points)
+**Controllers.** The outer layer that triggers the application.
 
-| File | Responsibility |
-|------|----------------|
-| `models/` | Contains dataclasses (e.g. `Movie`, `Showtime`, `SeatOccupancy`, `MoviePerformance`). |
-| `models/movie_performance.py` | **[NEW]** `ShowtimeSnapshot` and `MoviePerformance` dataclasses. |
-| `errors.py` | Custom exception classes (e.g. `TokenExpiredError`, `ScrapeError`) for clean error handling. |
+- **`cli/` (GitHub Actions / Local)**:
+  - **Purpose**: Long-running "Batch" jobs (e.g., daily scraping, geocoding).
+  - **Execution**: Run by GitHub Actions `schedule` or manually on your laptop.
+- **`functions/` (Google Cloud Platform)**:
+  - **Purpose**: "Real-Time" or "Event-Driven" jobs (e.g., checking seats every 5 mins).
+  - **Execution**: Triggered by Cloud Scheduler (Pub/Sub) or HTTP requests.
 
-### 4. `backend/application/` (The "Orchestrator")
-This layer holds "Use Cases" and "Services" that connect Scrapers to Repositories.
-
-| Directory/File | Responsibility |
-|----------------|----------------|
-| `use_cases/` | Scripts that orchestrate multi-step operations (e.g., scraping flow). |
-| `services/` | **[NEW]** Business logic services. |
-| ↳ `performance_aggregator.py` | `PerformanceAggregator`: Aggregates showtime snapshots into movie summaries. |
+- **Dependencies**: Imports everything. This is where `UseCases` are instantiated with specific `Infrastructure` implementations.
+- **Contents**:
+    - `cli/`:
+      - `cli.py`: Main entry point for `movies` and `seats` subcommands. Orchestrates local executions.
+      - `refresh_token.py`: Headless browser automation to log in to TIX.id and refresh the JWT.
+      - `movie_performance.py`: Aggregates seat snapshots into movie performance metrics.
+      - `daily_summary.py`: Generates the daily report of total audience numbers.
+      - `monthly_geocode.py`: Batched job to geocode new theatres using Google Maps/OSM.
+      - `merge_batches.py`: Utility to combine partial JSON results from parallel scrapers.
+      - `populate_firestore.py`: Utility to upload scraped JSON data to Firestore.
+      - `upload_seats.py`: Utility to upload seat availability data to Firestore.
+      - `validate.py`: Quality assurance script that runs sanity checks on scraped data.
+    - `functions/`:
+      - `dispatcher/`: Pub/Sub triggered function that fans out scraping jobs to workers.
+      - `scraper/`: The worker function that scrapes a specific batch of movies/theatres.
+      - `sweeper/`: Cleanup function that monitors job status and handles failures/retries.

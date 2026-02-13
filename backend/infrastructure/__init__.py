@@ -1,12 +1,14 @@
 """
-CineRadar Infrastructure Layer
+CineRadar Infrastructure Layer (The Adapters) 🔌
 
-Concrete implementations of application ports.
-This layer connects to external systems:
-- TIX.id (scrapers)
-- Firestore (repositories)
-- OpenStreetMap (geocoding)
-- CLI (entry points)
+Technical Explanation:
+The **Infrastructure Layer** contains the concrete implementations of the interfaces defined in `application/ports`.
+
+- **The "How"**: This is where the actual code lives that talks to the database (Firestore), the web (Playwright), or the filesystem.
+- **Input Adapters**: Things that drive the app (e.g., CLI commands, Cloud Functions triggers).
+- **Output Adapters**: Things the app drives (e.g., Repositories, Scrapers).
+
+This layer depends on everything else. It imports `domain` models to wrap data and `application` ports to implement interfaces.
 """
 
 # Re-export repositories for convenience

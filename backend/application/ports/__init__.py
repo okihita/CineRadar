@@ -1,8 +1,14 @@
 """
-CineRadar Application Ports (Interfaces)
+CineRadar Application Ports (Interfaces) 🔌
 
-Abstract base classes that define contracts for infrastructure implementations.
-Following the Ports & Adapters (Hexagonal) architecture pattern.
+Technical Explanation:
+In Clean Architecture (and Hexagonal Architecture), "Ports" are the **Interfaces** that the Application Layer uses to communicate with the outside world (Infrastructure).
+
+- **Dependency Inversion**: High-level modules (Application) should not depend on low-level modules (Infrastructure). Both should depend on abstractions (Ports).
+- **The Contract**: A Port defines *what* needs to be done (e.g., `save_movie(movie: Movie)`), but not *how*.
+- **The Adapter**: The Infrastructure layer implements these interfaces (e.g., `FirestoreMovieRepository` implements `IMovieRepository`).
+
+This allows us to write and test our business logic without needing a running database or browser. We can simply mock the Port interface.
 """
 
 from backend.application.ports.scraper import IMovieScraper, ISeatScraper
