@@ -348,8 +348,8 @@ def fetch_seat_layout(showtime_id: str, merchant: str, token: str) -> dict[str, 
 
 def fetch_seat_layout_with_retry(
     showtime_id: str, merchant: str, token: str, db: firestore.Client
-) -> tuple[dict[str, Any] | None, int]:
-    """Fetch seat layout with 401 retry logic. Returns (data, status_code)."""
+) -> tuple[dict[str, Any] | None, int, str]:
+    """Fetch seat layout with 401 retry logic. Returns (data, status_code, error_detail)."""
     import time
 
     # First attempt (using direct request to capture status)
@@ -358,6 +358,7 @@ def fetch_seat_layout_with_retry(
 
     current_token = token
     last_status = 0
+    last_error_detail = ""
 
     for attempt in range(2):
         headers = {
@@ -374,13 +375,18 @@ def fetch_seat_layout_with_retry(
             if response.status_code == 200:
                 data = response.json()
                 if data.get("success"):
-                    return cast("dict[str, Any]", data), 200
+                    return cast("dict[str, Any]", data), 200, ""
                 else:
-                    logger.error(f"API error: {data.get('error', {}).get('message', 'Unknown')}")
+                    error_obj = data.get("error", {})
+                    error_code = error_obj.get("code", "UNKNOWN")
+                    error_msg = error_obj.get("message", "Unknown")
+                    last_error_detail = f"{error_code}: {error_msg}"
+                    logger.error(f"API error: {last_error_detail}")
                     # API returned 200 but logical error
-                    return None, 200
+                    return None, 200, last_error_detail
 
             elif response.status_code == 401:
+                last_error_detail = "Token expired (401)"
                 if attempt == 0:
                     logger.warning("Token 401 expired. Refreshing and retrying...")
                     new_token = get_valid_token(db, force_refresh=True)
@@ -390,23 +396,33 @@ def fetch_seat_layout_with_retry(
                         continue # Retry with new token
                     else:
                         logger.error("Failed to refresh token after 401.")
-                        return None, 401
+                        return None, 401, last_error_detail
                 else:
                     logger.error("Still 401 after refresh.")
-                    return None, 401
+                    return None, 401, last_error_detail
             else:
-                body = response.text[:200] if response.text else "No body"
-                logger.error(f"API error {response.status_code}: {body}")
-                return None, response.status_code
+                # Parse error body for details
+                body = response.text[:500] if response.text else "No body"
+                try:
+                    error_json = response.json()
+                    error_obj = error_json.get("error", {})
+                    error_code = error_obj.get("code", "")
+                    error_msg = error_obj.get("message", "")
+                    last_error_detail = f"{error_code}: {error_msg}" if error_code else body[:200]
+                except Exception:
+                    last_error_detail = body[:200]
+                logger.error(f"API error {response.status_code}: {last_error_detail}")
+                return None, response.status_code, last_error_detail
 
         except requests.RequestException as e:
+            last_error_detail = str(e)
             logger.error(f"Request failed: {e}")
             if attempt == 0:
                 time.sleep(1)
                 continue
-            return None, 0
+            return None, 0, last_error_detail
 
-    return None, last_status
+    return None, last_status, last_error_detail
 
 
 def validate_api_response(raw_response: dict[str, Any]) -> tuple[bool, str, str]:
@@ -609,7 +625,7 @@ def scrape_seat(cloud_event: Any) -> None:
 
     # Fetch seat layout - need merchant for API path
     merchant = showtime_data.get("merchant", "XXI")
-    raw_api_response, status_code = fetch_seat_layout_with_retry(showtime_id, merchant, token, db)
+    raw_api_response, status_code, error_detail = fetch_seat_layout_with_retry(showtime_id, merchant, token, db)
 
     if not raw_api_response:
         log_critical(
@@ -621,6 +637,7 @@ def scrape_seat(cloud_event: Any) -> None:
                 "merchant": merchant,
                 "error_type": "fetch_layout_failed",
                 "http_status": status_code,
+                "api_error": error_detail,
             },
         )
         return  # Pub/Sub will retry
