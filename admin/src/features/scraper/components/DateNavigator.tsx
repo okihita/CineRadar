@@ -78,12 +78,6 @@ export const DateNavigator: React.FC<DateNavigatorProps> = ({
         onDateChange(newDateStr);
     };
 
-    // Quick navigation
-    const goToToday = () => onDateChange(today);
-    const goToYesterday = () => {
-        onDateChange(addDays(today, -1));
-    };
-
     // Check if next button should be disabled
     const isNextDisabled = selectedDate >= today;
 
@@ -99,39 +93,19 @@ export const DateNavigator: React.FC<DateNavigatorProps> = ({
                     <ChevronLeft className="w-5 h-5 text-foreground" />
                 </button>
 
-                {/* Date display and quick nav */}
-                <div className="flex items-center gap-4">
-                    <div className="flex flex-col items-center">
-                        <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-lg font-semibold text-foreground">
-                                {formatDisplay(selectedDate)}
-                            </span>
-                        </div>
-                        {isToday && (
-                            <span className="text-xs text-primary font-medium mt-1">
-                                Today
-                            </span>
-                        )}
+                {/* Date display */}
+                <div className="flex flex-col items-center">
+                    <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-lg font-semibold text-foreground">
+                            {formatDisplay(selectedDate)}
+                        </span>
                     </div>
-
-                    {/* Quick nav buttons */}
-                    <div className="flex gap-2">
-                        {!isToday && (
-                            <button
-                                onClick={goToToday}
-                                className="px-3 py-1.5 text-xs font-medium bg-primary/10 text-primary rounded-lg border border-primary/20 hover:bg-primary/20 transition-colors"
-                            >
-                                Today
-                            </button>
-                        )}
-                        <button
-                            onClick={goToYesterday}
-                            className="px-3 py-1.5 text-xs font-medium bg-muted text-muted-foreground rounded-lg border border-border hover:bg-muted/80 transition-colors"
-                        >
-                            Yesterday
-                        </button>
-                    </div>
+                    {isToday && (
+                        <span className="text-xs text-primary font-medium mt-1">
+                            Today
+                        </span>
+                    )}
                 </div>
 
                 {/* Right navigation */}

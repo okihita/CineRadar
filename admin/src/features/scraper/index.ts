@@ -12,7 +12,6 @@ export { useScraperDay } from './hooks/useScraperDay';
 // Components (legacy)
 export { ScraperStatsCards } from './components/ScraperStatsCards';
 export { TodayScrapeCards } from './components/TodayScrapeCards';
-export { ScrapeHistoryTable } from './components/ScrapeHistoryTable';
 
 // Components (new - scraper_logs schema)
 export { DateNavigator } from './components/DateNavigator';
