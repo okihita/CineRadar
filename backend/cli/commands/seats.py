@@ -79,17 +79,17 @@ def extract_showtimes_from_data(
 
 
 def filter_jit_showtimes(
-    showtimes: list[dict[str, Any]], window_minutes: int = 8
+    showtimes: list[dict[str, Any]], window_minutes: int = 15
 ) -> list[dict[str, Any]]:
     """
-    Filter showtimes to capture at T-8 minutes before start.
+    Filter showtimes to capture at T-15 minutes before start.
 
-    Default window: showtimes starting in 5-13 minutes from now.
+    Default window: showtimes starting in 5-20 minutes from now.
     For hourly JIT runs, use window_minutes=60 to get showtimes in 5-65 minutes.
 
     Args:
         showtimes: List of showtime dicts with 'showtime' (HH:MM format)
-        window_minutes: Window size in minutes (default: 8 for T-8, use 60 for hourly)
+        window_minutes: Window size in minutes (default: 15 for T-15, use 60 for hourly)
                        Creates a window of [5, 5+window_minutes] minutes from now
 
     Returns:
@@ -99,7 +99,7 @@ def filter_jit_showtimes(
     cutoff_minutes = 5  # TIX.id closes booking 5 minutes before showtime
 
     # Calculate the scraping window: [cutoff + window, cutoff]
-    # e.g., window_minutes=8 → scrape showtimes starting in 5-13 minutes
+    # e.g., window_minutes=15 → scrape showtimes starting in 5-20 minutes
     window_start = now + timedelta(minutes=cutoff_minutes)
     window_end = now + timedelta(minutes=cutoff_minutes + window_minutes)
 
@@ -114,8 +114,8 @@ def filter_jit_showtimes(
                     hour=int(parts[0]), minute=int(parts[1]), second=0, microsecond=0
                 )
 
-                # Check if within target window
-                if window_start <= show_time <= window_end:
+                # Check if within target window (end-exclusive to avoid overlap)
+                if window_start <= show_time < window_end:
                     minutes_until = (show_time - now).total_seconds() / 60
                     logger.debug(
                         f"   Found: {st.get('theatre_name', '?')[:30]} @ {time_str} "

@@ -15,7 +15,7 @@ from backend.domain.time import get_now_iso
 
 @dataclass
 class ShowtimeSnapshot:
-    """Final seat snapshot for a single showtime, captured at T-8 minutes.
+    """Final seat snapshot for a single showtime, captured at T-15 minutes.
 
     Attributes:
         showtime_id: TIX.id showtime identifier

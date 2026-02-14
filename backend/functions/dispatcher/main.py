@@ -2,8 +2,9 @@
 JIT Seat Scraper - Dispatcher Function
 
 HTTP-triggered Cloud Function that:
-1. Queries Firestore for showtimes starting in T+8 to T+13 minutes
+1. Queries Firestore for showtimes starting in exactly the [T+15, T+20) minute window
 2. Publishes each showtime to Pub/Sub for individual scraping
+3. Each 5-minute dispatch captures exactly one non-overlapping bucket
 
 Triggered by Cloud Scheduler every 5 minutes.
 """
@@ -31,8 +32,10 @@ JAKARTA_TZ = ZoneInfo("Asia/Jakarta")
 REFRESH_API_URL = "https://api-b2b.tix.id/v1/users/refresh"
 
 # Window configuration (minutes from now)
-WINDOW_START_MINUTES = 8  # Start scraping showtimes 8 min before start
-WINDOW_END_MINUTES = 15  # End window at 15 min (overlap with 5-min intervals, safe for duplicates)
+# Exactly one 5-minute bucket so each dispatch captures unique showtimes with no overlap.
+# e.g., dispatch at 12:00 → captures showtimes from 12:15 to 12:19.
+WINDOW_START_MINUTES = 15  # Start of window: showtimes starting 15 min from now
+WINDOW_END_MINUTES = 20  # End of window: showtimes starting up to 20 min from now (exclusive)
 
 
 def get_firestore_client() -> firestore.Client:
@@ -226,8 +229,8 @@ def find_upcoming_showtimes(
 
     Args:
         db: Firestore client
-        window_start: Start of window (showtime must be >= this)
-        window_end: End of window (showtime must be <= this)
+        window_start: Start of window (showtime must be >= this, inclusive)
+        window_end: End of window (showtime must be < this, exclusive)
 
     Returns:
         List of showtime dicts with showtime_id, movie_id, time, etc.
@@ -267,9 +270,9 @@ def find_upcoming_showtimes(
                         if not showtime_id or not is_available:
                             continue
 
-                        # Parse time and check if in window
+                        # Parse time and check if in window (end-exclusive to avoid overlap)
                         showtime_dt = parse_showtime(time_str, window_start)
-                        if showtime_dt and window_start <= showtime_dt <= window_end:
+                        if showtime_dt and window_start <= showtime_dt < window_end:
                             showtimes_to_scrape.append(
                                 {
                                     "showtime_id": showtime_id,
@@ -364,11 +367,21 @@ def dispatch_jobs(request: Any) -> Any:
     Triggered by Cloud Scheduler every 5 minutes.
     Finds upcoming showtimes and publishes them to Pub/Sub.
     """
-    now = datetime.now(JAKARTA_TZ)
+    actual_now = datetime.now(JAKARTA_TZ)
+
+    # Snap to the nearest 5-minute floor so slight scheduler delays (e.g., 12:01
+    # instead of 12:00) still produce the same deterministic window.
+    now = actual_now.replace(
+        minute=(actual_now.minute // 5) * 5, second=0, microsecond=0
+    )
+
     window_start = now + timedelta(minutes=WINDOW_START_MINUTES)
     window_end = now + timedelta(minutes=WINDOW_END_MINUTES)
 
-    logger.info(f"Dispatcher triggered at {now.isoformat()}")
+    logger.info(
+        f"Dispatcher triggered at {actual_now.isoformat()} "
+        f"(snapped to {now.strftime('%H:%M')})"
+    )
     logger.info(f"Window: {window_start.strftime('%H:%M')} - {window_end.strftime('%H:%M')}")
 
     try:
