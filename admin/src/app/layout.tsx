@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { DarkModeProvider } from "@/hooks";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,6 +22,22 @@ export const metadata: Metadata = {
   },
 };
 
+// Blocking script to prevent flash of wrong theme on initial load
+// This runs before React hydrates to immediately apply the correct theme
+const themeScript = `
+(function() {
+    const STORAGE_KEY = 'cineradar-dark-mode';
+    const stored = localStorage.getItem(STORAGE_KEY);
+    let dark;
+    if (stored !== null) {
+        dark = stored === 'true';
+    } else {
+        dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    document.documentElement.classList.toggle('dark', dark);
+})();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,13 +45,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <DashboardLayout>
-          {children}
-        </DashboardLayout>
+        <DarkModeProvider>
+          <DashboardLayout>
+            {children}
+          </DashboardLayout>
+        </DarkModeProvider>
       </body>
     </html>
   );

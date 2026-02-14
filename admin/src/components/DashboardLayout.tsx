@@ -1,18 +1,32 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { Sidebar } from '@/components/Sidebar';
-import { useDarkMode } from '@/hooks';
 
 interface DashboardLayoutProps {
     children: ReactNode;
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-    const { darkMode } = useDarkMode(false);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    // Prevent hydration mismatch by showing placeholder until mounted
+    // The blocking script in layout.tsx handles the initial theme
+    if (!mounted) {
+        return (
+            <div className="flex h-screen">
+                <div className="w-64 flex-shrink-0" /> {/* Sidebar placeholder */}
+                <main className="flex-1 overflow-auto bg-background" />
+            </div>
+        );
+    }
 
     return (
-        <div className={`flex h-screen ${darkMode ? 'dark' : ''}`}>
+        <div className="flex h-screen">
             <Sidebar />
             <main className="flex-1 overflow-auto bg-background">
                 {children}
