@@ -664,8 +664,6 @@ def scrape_seat(cloud_event: Any) -> None:
     Triggered by messages on scrape-seat-jit topic.
     Scrapes one showtime and saves to Firestore.
     """
-    import time
-    start_time = time.time()
     # Decode Pub/Sub message
     message_data = base64.b64decode(cloud_event.data["message"]["data"])
     showtime_data = json.loads(message_data)
