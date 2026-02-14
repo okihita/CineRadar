@@ -7,9 +7,13 @@ HTTP-triggered Cloud Function that:
 3. Each 5-minute dispatch captures exactly one non-overlapping bucket
 
 Triggered by Cloud Scheduler every 5 minutes.
+
+NOTE: Token refresh is handled by the scraper function, not the dispatcher.
+The dispatcher only finds and publishes showtimes; it does not need to access
+the TIX API directly. The scraper handles token refresh on-demand when making
+API calls, with proper retry logic and distributed locking.
 """
 
-import contextlib
 import json
 import logging
 import os
@@ -18,7 +22,6 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 import functions_framework
-import requests
 from google.cloud import firestore, pubsub_v1
 
 # Configure logging
@@ -29,7 +32,6 @@ logger = logging.getLogger(__name__)
 PROJECT_ID = os.environ.get("GOOGLE_CLOUD_PROJECT", "cineradar-481014")
 PUBSUB_TOPIC = os.environ.get("PUBSUB_TOPIC", "scrape-seat-jit")
 JAKARTA_TZ = ZoneInfo("Asia/Jakarta")
-REFRESH_API_URL = "https://api-b2b.tix.id/v1/users/refresh"
 
 # Window configuration (minutes from now)
 # Exactly one 5-minute bucket so each dispatch captures unique showtimes with no overlap.
@@ -46,169 +48,6 @@ def get_firestore_client() -> firestore.Client:
 def get_pubsub_publisher() -> pubsub_v1.PublisherClient:
     """Get Pub/Sub publisher client."""
     return pubsub_v1.PublisherClient()
-
-
-class TokenRefreshLock:
-    """Distributed lock for token refresh using Firestore."""
-
-    def __init__(self, db: firestore.Client):
-        self.db = db
-        self.lock_ref = db.collection("auth_tokens").document("refresh_lock")
-        self.timeout = 30  # seconds
-
-    def acquire(self, instance_id: str) -> bool:
-        """Attempt to acquire the lock."""
-        now = datetime.utcnow().isoformat()
-        try:
-            # Try to create lock doc
-            self.lock_ref.create({
-                "locked_at": now,
-                "instance_id": instance_id
-            })
-            return True
-        except Exception:
-            # Already exists, check if stale
-            doc = self.lock_ref.get()
-            if not doc.exists:
-                return self.acquire(instance_id)
-
-            data = doc.to_dict()
-            locked_at_str = data.get("locked_at", "")
-            try:
-                locked_at = datetime.fromisoformat(locked_at_str)
-                age = (datetime.utcnow() - locked_at).total_seconds()
-                if age > self.timeout:
-                    logger.warning(f"Taking over stale lock (age={age:.1f}s)")
-                    self.lock_ref.set({
-                        "locked_at": now,
-                        "instance_id": instance_id,
-                        "took_over": True
-                    })
-                    return True
-            except Exception:
-                # Invalid timestamp, force take
-                self.lock_ref.set({
-                    "locked_at": now,
-                    "instance_id": instance_id,
-                    "took_over": True
-                })
-                return True
-
-            return False
-
-    def release(self) -> None:
-        """Release the lock."""
-        with contextlib.suppress(Exception):
-            self.lock_ref.delete()
-
-
-def refresh_access_token(db: firestore.Client, refresh_token: str) -> bool:
-    """Refresh access token using the validation API with distributed locking."""
-    import time
-    import uuid
-
-    instance_id = f"dispatcher-{uuid.uuid4().hex[:8]}"
-    lock = TokenRefreshLock(db)
-
-    # Try to acquire lock
-    if not lock.acquire(instance_id):
-        logger.info("Another instance is refreshing, waiting...")
-        time.sleep(1)
-        # We assume other instance succeeded
-        return True
-
-    logger.info("🔄 Acquired lock, attempting token refresh...")
-
-    try:
-        response = requests.post(
-            REFRESH_API_URL,
-            headers={
-                "Authorization": f"Bearer {refresh_token}",
-                "Content-Type": "application/json",
-                "platform": "web",
-            },
-            timeout=10,
-        )
-
-        if response.status_code == 200:
-            data = response.json()
-            new_token = data.get("data", {}).get("token")
-
-            if new_token:
-                # Update Firestore
-                now_iso = datetime.now().isoformat()
-                db.collection("auth_tokens").document("tix_jwt").set(
-                    {
-                        "token": new_token,
-                        "refresh_token": refresh_token,
-                        "stored_at": now_iso,
-                        "updated_by": instance_id,
-                    },
-                    merge=True,
-                )
-                logger.info("✅ Inline refresh successful & saved to Firestore")
-                return True
-            else:
-                logger.error("❌ Refresh response missing token")
-        else:
-            logger.error(f"❌ Refresh failed: {response.status_code} {response.text[:100]}")
-
-    except requests.RequestException as e:
-        logger.error(f"❌ Refresh request exception: {e}")
-    finally:
-        lock.release()
-
-    return False
-
-
-def ensure_token_freshness(db: firestore.Client) -> None:
-    """Ensure token is fresh before dispatching jobs.
-
-    Refreshes if token is > 20 minutes old.
-    """
-    try:
-        doc = db.collection("auth_tokens").document("tix_jwt").get()
-        if not doc.exists:
-            logger.warning("No token document found")
-            return
-
-        data = doc.to_dict()
-        if not data:
-            return
-
-        stored_at_str = data.get("stored_at")
-        refresh_token = data.get("refresh_token", "").strip('"')
-
-        should_refresh = False
-
-        if stored_at_str:
-            try:
-                # Handle potentially naive or aware inputs
-                stored_at = datetime.fromisoformat(stored_at_str)
-                if stored_at.tzinfo is None:
-                    age = datetime.now() - stored_at
-                else:
-                    age = datetime.now(stored_at.tzinfo) - stored_at
-
-                age_minutes = age.total_seconds() / 60
-
-                if age_minutes >= 20:
-                    logger.info(f"⚠️ Token is {age_minutes:.1f} min old. Dispatcher refreshing...")
-                    should_refresh = True
-                else:
-                    logger.info(f"Token is {age_minutes:.1f} min old (fresh).")
-
-            except ValueError:
-                logger.warning("Could not parse stored_at time, forcing refresh check")
-                should_refresh = True
-        else:
-            should_refresh = True
-
-        if should_refresh and refresh_token:
-            refresh_access_token(db, refresh_token)
-
-    except Exception as e:
-        logger.error(f"Failed to ensure token freshness: {e}")
 
 
 def parse_showtime(time_str: str, date: datetime) -> datetime | None:
@@ -397,9 +236,6 @@ def dispatch_jobs(request: Any) -> Any:
     try:
         db = get_firestore_client()
         publisher = get_pubsub_publisher()
-
-        # Ensure token is fresh before dispatching
-        ensure_token_freshness(db)
 
         # Find showtimes in window
         showtimes = find_upcoming_showtimes(db, window_start, window_end)
