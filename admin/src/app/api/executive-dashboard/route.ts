@@ -38,22 +38,6 @@ interface ScraperLog {
         total_errors?: number;
         total_successes?: number;
     }>;
-    daily_summary?: {
-        generated_at?: string;
-        total_audience?: number;
-        total_seats?: number;
-        occupancy_pct?: number;
-        showtime_count?: number;
-        movie_count?: number;
-        theatre_count?: number;
-        city_count?: number;
-    };
-    daily_error_summary?: {
-        total_dispatches?: number;
-        total_errors?: number;
-        total_successes?: number;
-        error_rate_pct?: number;
-    };
 }
 
 interface MovieDailyStats {
@@ -156,7 +140,6 @@ export async function GET(request: NextRequest) {
         }
 
         // Extract data from scraper log
-        const dailySummary = scraperLog?.daily_summary;
         const morningRun = scraperLog?.morning_run;
         const dispatches = scraperLog?.dispatches;
 
@@ -230,30 +213,22 @@ export async function GET(request: NextRequest) {
             .sort((a, b) => b.revenue - a.revenue)
             .slice(0, 5);
 
-        // Calculate KPIs
-        const totalAudience = dailySummary?.total_audience || 0;
-        const avgOccupancy = dailySummary?.occupancy_pct || 0;
-        const totalTickets = totalAudience;
-
-        // Calculate total audience and avg occupancy from movie performance if daily summary is empty
-        let totalTicketsAlt = 0;
+        // Calculate KPIs from movie performance data
+        let totalTickets = 0;
         let totalOccupancySum = 0;
         let moviesWithDataCount = 0;
 
-        if (totalAudience === 0) {
-            moviesWithStats.forEach(m => {
-                if (m.today) {
-                    totalTicketsAlt += m.today.total_sold || 0;
-                    totalOccupancySum += m.today.avg_occupancy_pct || 0;
-                    moviesWithDataCount++;
-                }
-            });
-        }
-        const finalTotalTickets = totalTicketsAlt > 0 ? totalTicketsAlt : totalTickets;
-        const finalRevenue = finalTotalTickets * 40000;
-        const finalAvgOccupancy = totalAudience === 0 && moviesWithDataCount > 0
+        moviesWithStats.forEach(m => {
+            if (m.today) {
+                totalTickets += m.today.total_sold || 0;
+                totalOccupancySum += m.today.avg_occupancy_pct || 0;
+                moviesWithDataCount++;
+            }
+        });
+        const finalRevenue = totalTickets * 40000;
+        const finalAvgOccupancy = moviesWithDataCount > 0
             ? totalOccupancySum / moviesWithDataCount
-            : avgOccupancy;
+            : 0;
 
         // Generate alerts
         const alerts: Array<{ type: string; title: string; subtitle?: string; action: string; link: string }> = [];
@@ -300,7 +275,7 @@ export async function GET(request: NextRequest) {
             alerts.push({
                 type: 'success',
                 title: 'All systems operational',
-                subtitle: `${dailySummary?.movie_count || moviesWithStats.length} movies tracked`,
+                subtitle: `${moviesWithStats.length} movies tracked`,
                 action: 'View Details',
                 link: '/performances',
             });
@@ -339,7 +314,7 @@ export async function GET(request: NextRequest) {
             usingFallback: !!fallbackDate,
             kpis: {
                 revenue: { value: finalRevenue, delta: 'N/A' },
-                tickets: { value: finalTotalTickets, delta: 'N/A' },
+                tickets: { value: totalTickets, delta: 'N/A' },
                 occupancy: { value: Math.round(finalAvgOccupancy), delta: 'N/A' },
                 topTheatre: topTheatres[0]?.name || 'N/A',
             },
@@ -353,9 +328,9 @@ export async function GET(request: NextRequest) {
                 morningScrapeStatus: morningRun?.status || 'not_run',
                 jitTotalRuns: jitSummary.totalRuns,
                 jitLastRun: jitSummary.lastDispatch,
-                theatreCount: dailySummary?.theatre_count || theatres.length,
-                cityCount: dailySummary?.city_count || citiesList.length,
-                movieCount: dailySummary?.movie_count || movies.length,
+                theatreCount: theatres.length,
+                cityCount: citiesList.length,
+                movieCount: movies.length,
             },
         });
     } catch (error) {

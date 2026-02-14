@@ -100,30 +100,6 @@ export interface DispatchEntry {
 }
 
 /**
- * Daily summary stats
- */
-export interface DailySummaryLog {
-    generated_at: string;
-    total_audience: number;
-    total_seats: number;
-    occupancy_pct: number;
-    showtime_count: number;
-    movie_count: number;
-    theatre_count: number;
-    city_count: number;
-}
-
-/**
- * Daily error summary rollup (computed by daily_summary CLI)
- */
-export interface DailyErrorSummary {
-    total_dispatches: number;
-    total_errors: number;
-    total_successes: number;
-    error_rate_pct: number;
-}
-
-/**
  * Consolidated daily log document from scraper_logs/{date}
  */
 export interface ScraperLog {
@@ -131,6 +107,4 @@ export interface ScraperLog {
     created_at: string;
     morning_run?: MorningRunLog;
     dispatches?: Record<string, DispatchEntry>;
-    daily_summary?: DailySummaryLog;
-    daily_error_summary?: DailyErrorSummary;
 }

@@ -16,9 +16,10 @@ interface JITSummary {
 }
 
 interface DayResponse {
-    log: ScraperLog;
+    log: ScraperLog | null;
     jitSummary: JITSummary | null;
     date: string;
+    hasScraperLog?: boolean;
 }
 
 const dayFetcher = async (url: string): Promise<DayResponse | null> => {

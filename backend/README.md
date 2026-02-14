@@ -201,7 +201,6 @@ We follow **Clean Architecture** principles. The dependency rule is strict: inne
       - `cli.py`: Main entry point for `movies` and `seats` subcommands. Orchestrates local executions.
       - `refresh_token.py`: Headless browser automation to log in to TIX.id and refresh the JWT.
       - `movie_performance.py`: Aggregates seat snapshots into movie performance metrics.
-      - `daily_summary.py`: Generates the daily report of total audience numbers.
       - `monthly_geocode.py`: Batched job to geocode new theatres using Google Maps/OSM.
       - `merge_batches.py`: Utility to combine partial JSON results from parallel scrapers.
       - `populate_firestore.py`: Utility to upload scraped JSON data to Firestore.

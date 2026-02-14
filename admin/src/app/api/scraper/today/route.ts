@@ -5,8 +5,9 @@ import type { ScraperLog, DispatchEntry } from '@/features/scraper/types';
 /**
  * GET /api/scraper/today
  * 
- * Fetches the consolidated daily scraper log from scraper_logs/{date},
- * including dispatches subcollection for dispatch-level details.
+ * Fetches schedule counts from schedules/{date}/movies (available after morning scrape ~6:35 AM)
+ * and optionally scraper logs from scraper_logs/{date} (available after JIT dispatcher starts ~10 AM).
+ * 
  * Query params:
  *   - date: Optional date in YYYY-MM-DD format. Defaults to today (Jakarta time).
  */
@@ -20,17 +21,59 @@ export async function GET(request: NextRequest) {
             dateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
         }
 
-        // Fetch root document from scraper_logs/{date}
-        const doc = await firestoreRestClient.getDocument('scraper_logs', dateStr);
-
-        if (!doc) {
-            return NextResponse.json(
-                { error: 'No log found for date', date: dateStr },
-                { status: 404 }
+        // 1. ALWAYS fetch schedules first (available after morning scrape ~6:35 AM)
+        // This ensures "Schedules Today" card shows data even before JIT dispatcher runs
+        let totalSchedules = 0;
+        try {
+            const moviesRaw = await firestoreRestClient.getSubCollection(
+                `schedules/${dateStr}/movies`
             );
+
+            // Count showtimes from each movie's cities -> theatres -> rooms -> all_showtimes
+            for (const movie of moviesRaw) {
+                const cities = movie.cities as Record<string, unknown[]> || {};
+                for (const theatres of Object.values(cities)) {
+                    if (!Array.isArray(theatres)) continue;
+                    for (const theatre of theatres) {
+                        const rooms = (theatre as Record<string, unknown>).rooms as unknown[] || [];
+                        for (const room of rooms) {
+                            const allShowtimes = (room as Record<string, unknown>).all_showtimes as unknown[];
+                            if (Array.isArray(allShowtimes)) {
+                                totalSchedules += allShowtimes.length;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch {
+            // Silently fail - totalSchedules will be 0
         }
 
-        // Fetch dispatches subcollection: scraper_logs/{date}/dispatches
+        // 2. Try to fetch scraper_logs/{date} (may not exist before JIT dispatcher starts)
+        const doc = await firestoreRestClient.getDocument('scraper_logs', dateStr);
+
+        // If no scraper log exists yet, return schedules-only response
+        if (!doc) {
+            return NextResponse.json({
+                log: null,
+                jitSummary: {
+                    totalRuns: 0,
+                    totalShowtimesFound: 0,
+                    totalJobsPublished: 0,
+                    totalErrors: 0,
+                    totalSuccesses: 0,
+                    errorCount: 0,
+                    firstDispatch: null,
+                    lastDispatch: null,
+                    totalSchedules,
+                    coveragePercent: 0,
+                },
+                date: dateStr,
+                hasScraperLog: false,
+            });
+        }
+
+        // 3. Fetch dispatches subcollection: scraper_logs/{date}/dispatches
         const dispatchDocs = await firestoreRestClient.getSubCollection(
             `scraper_logs/${dateStr}/dispatches`
         );
@@ -59,60 +102,35 @@ export async function GET(request: NextRequest) {
             created_at: (doc.created_at as string) || '',
             morning_run: doc.morning_run as ScraperLog['morning_run'],
             dispatches,
-            daily_summary: doc.daily_summary as ScraperLog['daily_summary'],
-            daily_error_summary: doc.daily_error_summary as ScraperLog['daily_error_summary'],
         };
-
-        // Fetch total schedules count for the date from schedules/{date}/movies
-        // Count all showtimes across all movies, theatres, and rooms
-        let totalSchedules = 0;
-        try {
-            const moviesRaw = await firestoreRestClient.getSubCollection(
-                `schedules/${dateStr}/movies`
-            );
-
-            // Count showtimes from each movie's cities -> theatres -> rooms -> all_showtimes
-            for (const movie of moviesRaw) {
-                const cities = movie.cities as Record<string, unknown[]> || {};
-                for (const theatres of Object.values(cities)) {
-                    if (!Array.isArray(theatres)) continue;
-                    for (const theatre of theatres) {
-                        const rooms = (theatre as Record<string, unknown>).rooms as unknown[] || [];
-                        for (const room of rooms) {
-                            const allShowtimes = (room as Record<string, unknown>).all_showtimes as unknown[];
-                            if (Array.isArray(allShowtimes)) {
-                                totalSchedules += allShowtimes.length;
-                            }
-                        }
-                    }
-                }
-            }
-        } catch {
-            // Silently fail - totalSchedules will be 0
-        }
 
         // Compute summary stats for dispatches
         const dispatchEntries = Object.entries(dispatches);
         const totalShowtimesScraped = dispatchEntries.reduce((sum, [, entry]) => sum + (entry.showtimes_found || 0), 0);
 
-        const jitSummary = dispatchEntries.length > 0 ? {
+        const jitSummary = {
             totalRuns: dispatchEntries.length,
             totalShowtimesFound: totalShowtimesScraped,
             totalJobsPublished: dispatchEntries.reduce((sum, [, entry]) => sum + (entry.jobs_published || 0), 0),
             totalErrors: dispatchEntries.reduce((sum, [, entry]) => sum + (entry.total_errors || 0), 0),
             totalSuccesses: dispatchEntries.reduce((sum, [, entry]) => sum + (entry.total_successes || 0), 0),
             errorCount: dispatchEntries.filter(([, entry]) => entry.status === 'error').length,
-            firstDispatch: dispatchEntries.sort(([a], [b]) => a.localeCompare(b))[0]?.[0]?.replace('-', ':'),
-            lastDispatch: dispatchEntries.sort(([a], [b]) => b.localeCompare(a))[0]?.[0]?.replace('-', ':'),
-            // Add schedule coverage metrics
+            firstDispatch: dispatchEntries.length > 0
+                ? dispatchEntries.sort(([a], [b]) => a.localeCompare(b))[0]?.[0]?.replace('-', ':')
+                : null,
+            lastDispatch: dispatchEntries.length > 0
+                ? dispatchEntries.sort(([a], [b]) => b.localeCompare(a))[0]?.[0]?.replace('-', ':')
+                : null,
+            // Schedule coverage metrics
             totalSchedules,
             coveragePercent: totalSchedules > 0 ? Math.round((totalShowtimesScraped / totalSchedules) * 100) : 0,
-        } : null;
+        };
 
         return NextResponse.json({
             log: scraperLog,
             jitSummary,
             date: dateStr,
+            hasScraperLog: true,
         });
 
     } catch (error) {

@@ -8,7 +8,6 @@ The pipeline runs in two phases:
 
 1. **Morning Movie Scrape** (6:00-6:40 AM): Scrapes all movies and showtimes
 2. **JIT Seat Scraping** (10 AM-11 PM): Scrapes seats hourly, 8 min before showtime
-3. **Midnight Summary** (11:55 PM): Aggregates daily stats
 
 > [!NOTE]
 > Seat data is scraped **just-in-time** (JIT) — each showtime is captured ~8 minutes before it starts, giving near-final occupancy.
@@ -36,9 +35,6 @@ gantt
     10:52 JIT Scrape     :active, 10:52, 18m
     ...                  :done, 12:00, 1m
     22:52 JIT Scrape     :active, 22:52, 18m
-    
-    section Reporting
-    Daily Summary        :done, 23:55, 5m
 ```
 
 All times are **WIB (UTC+7)**. GitHub Action schedules use UTC.
@@ -304,75 +300,6 @@ Stored in `movie_performance/{movie_id}/days/{date}`:
 
 ---
 
-## Phase 5: Daily Summary (12:00 AM WIB / Midnight)
-
-### Purpose
-Aggregate all seat data from the previous day and generate a summary report.
-
-### Workflow File
-[`.github/workflows/daily-summary.yml`](../.github/workflows/daily-summary.yml)
-
-### 🧑‍💻 Code References
-
-| Component | Source File | Purpose |
-|-----------|-------------|---------|
-| **Aggregator** | [`backend/cli/daily_summary.py`](../backend/cli/daily_summary.py) | Math & Formatting logic |
-
-### Output
-
-The summary appears in the GitHub Actions job summary:
-
-```
-🎬 CineRadar Daily Summary - 2026-01-15
-
-📊 AUDIENCE STATISTICS
-━━━━━━━━━━━━━━━━━━━━━━
-🎟️ Total Audience: 42,350 seats sold
-🪑 Total Capacity: 125,000 seats
-📈 Occupancy Rate: 33.9%
-
-📋 COVERAGE
-━━━━━━━━━━━━━━━━━━━━━━
-🎬 Movies: 28
-🏢 Theatres: 487
-🏙️ Cities: 83
-⏰ Showtimes: 12,450
-```
-
-### Firestore Output
-
-Daily summary is written to `scraper_logs/{date}` (merged with morning scrape and JIT data):
-
-```json
-{
-  "date": "2026-01-15",
-  "created_at": "2026-01-15T06:30:00Z",
-  "morning_run": {
-    "status": "success",
-    "end_time": "2026-01-15T06:30:00Z",
-    "movies_found": 28,
-    "theatres_total": 487,
-    "cities_covered": 83
-  },
-  "jit_runs": {
-    "10:00": { "showtimes_found": 45, "jobs_published": 45, "status": "ok" },
-    "10:05": { "showtimes_found": 52, "jobs_published": 52, "status": "ok" }
-  },
-  "daily_summary": {
-    "generated_at": "2026-01-16T00:00:15Z",
-    "total_audience": 42350,
-    "total_seats": 125000,
-    "occupancy_pct": 33.9,
-    "showtime_count": 12450,
-    "movie_count": 28,
-    "theatre_count": 487,
-    "city_count": 83
-  }
-}
-```
-
----
-
 ## Admin Dashboard: Scraper Monitor
 
 The Admin Dashboard `/scraper` page consumes `scraper_logs` via Next.js API routes:
@@ -393,7 +320,7 @@ The Admin Dashboard `/scraper` page consumes `scraper_logs` via Next.js API rout
 
 ---
 
-## Phase 5: Monthly Maintenance (1st of Month)
+## Phase 5: Monthly Geocoding (1st of Month)
 
 ### Purpose
 Geocode new theatre locations using Google Maps API to ensure map visualization covers all 480+ cinemas.
@@ -457,11 +384,6 @@ uv run python -m backend.cli movie-details --movie-id 1961889705591132160
 
 # Backfill from movie_performance collection
 uv run python -m backend.cli movie-details --from-performance
-```
-
-### Generate Daily Summary Locally
-```bash
-uv run python -m backend.cli.daily_summary
 ```
 
 ### Check Token Status
