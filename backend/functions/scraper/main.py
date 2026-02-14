@@ -631,6 +631,7 @@ def scrape_seat(cloud_event: Any) -> None:
     theatre_name = showtime_data.get("theatre_name", "")[:30]
     showtime_time = showtime_data.get("showtime", "")
     batch_id = showtime_data.get("batch_id", "")
+    movie_title = showtime_data.get("movie_title", "Unknown")[:50]
 
     logger.info(f"Scraping {theatre_name} @ {showtime_time}")
 
@@ -644,6 +645,7 @@ def scrape_seat(cloud_event: Any) -> None:
             {
                 "batch_id": batch_id,
                 "showtime_id": showtime_id,
+                "movie_title": movie_title,
                 "theatre": theatre_name,
                 "time": showtime_time,
             },
@@ -660,6 +662,7 @@ def scrape_seat(cloud_event: Any) -> None:
             {
                 "batch_id": batch_id,
                 "showtime_id": showtime_id,
+                "movie_title": movie_title,
                 "theatre": theatre_name,
                 "time": showtime_time,
                 "merchant": merchant,
@@ -681,6 +684,7 @@ def scrape_seat(cloud_event: Any) -> None:
                     {
                         "batch_id": batch_id,
                         "showtime_id": showtime_id,
+                        "movie_title": movie_title,
                         "theatre": theatre_name,
                         "severity": "CRITICAL",
                         "impact": "all_scrapes_affected",
@@ -690,7 +694,7 @@ def scrape_seat(cloud_event: Any) -> None:
             else:
                 log_warning(
                     f"Schema validation issue: {validation_msg}",
-                    {"batch_id": batch_id, "showtime_id": showtime_id, "theatre": theatre_name, "severity": severity},
+                    {"batch_id": batch_id, "showtime_id": showtime_id, "movie_title": movie_title, "theatre": theatre_name, "severity": severity},
                 )
         else:
             log_info(f"Schema validation passed for {showtime_id}")
