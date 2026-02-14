@@ -31,10 +31,12 @@ interface ScraperLog {
         theatres_total?: number;
         cities_covered?: number;
     };
-    jit_runs?: Record<string, {
+    dispatches?: Record<string, {
         showtimes_found?: number;
         jobs_published?: number;
         status?: string;
+        total_errors?: number;
+        total_successes?: number;
     }>;
     daily_summary?: {
         generated_at?: string;
@@ -45,6 +47,12 @@ interface ScraperLog {
         movie_count?: number;
         theatre_count?: number;
         city_count?: number;
+    };
+    daily_error_summary?: {
+        total_dispatches?: number;
+        total_errors?: number;
+        total_successes?: number;
+        error_rate_pct?: number;
     };
 }
 
@@ -73,6 +81,7 @@ export async function GET(request: NextRequest) {
         ]);
 
         let scraperLog: ScraperLog | null = (scraperLogDoc as unknown as ScraperLog) || null;
+        let logDate = effectiveDate;
 
         // If no scraper log for today, try yesterday
         let fallbackDate = null;
@@ -83,6 +92,28 @@ export async function GET(request: NextRequest) {
             const yesterdayDoc = await firestoreRestClient.getDocument('scraper_logs', fallbackDate);
             if (yesterdayDoc) {
                 scraperLog = yesterdayDoc as unknown as ScraperLog;
+                logDate = fallbackDate;
+            }
+        }
+
+        // Fetch dispatches subcollection for the scraperLog date
+        if (scraperLog) {
+            const dispatchDocs = await firestoreRestClient.getSubCollection(
+                `scraper_logs/${logDate}/dispatches`
+            );
+            if (dispatchDocs.length > 0) {
+                const dispatches: ScraperLog['dispatches'] = {};
+                for (const d of dispatchDocs) {
+                    const slot = (d.id as string) || '';
+                    dispatches[slot] = {
+                        showtimes_found: (d.showtimes_found as number) || 0,
+                        jobs_published: (d.jobs_published as number) || 0,
+                        status: (d.status as string) || 'ok',
+                        total_errors: (d.total_errors as number) || 0,
+                        total_successes: (d.total_successes as number) || 0,
+                    };
+                }
+                scraperLog.dispatches = dispatches;
             }
         }
 
@@ -127,20 +158,24 @@ export async function GET(request: NextRequest) {
         // Extract data from scraper log
         const dailySummary = scraperLog?.daily_summary;
         const morningRun = scraperLog?.morning_run;
-        const jitRuns = scraperLog?.jit_runs;
+        const dispatches = scraperLog?.dispatches;
 
-        // Calculate JIT summary
-        const jitEntries = jitRuns ? Object.entries(jitRuns) : [];
-        const jitSummary = jitEntries.length > 0 ? {
-            totalRuns: jitEntries.length,
-            totalShowtimesFound: jitEntries.reduce((sum, [, entry]) => sum + (entry.showtimes_found || 0), 0),
-            totalJobsPublished: jitEntries.reduce((sum, [, entry]) => sum + (entry.jobs_published || 0), 0),
-            errorCount: jitEntries.filter(([, entry]) => entry.status === 'error').length,
-            lastDispatch: jitEntries.sort(([a], [b]) => b.localeCompare(a))[0]?.[0],
+        // Calculate JIT summary from dispatches
+        const dispatchEntries = dispatches ? Object.entries(dispatches) : [];
+        const jitSummary = dispatchEntries.length > 0 ? {
+            totalRuns: dispatchEntries.length,
+            totalShowtimesFound: dispatchEntries.reduce((sum, [, entry]) => sum + (entry.showtimes_found || 0), 0),
+            totalJobsPublished: dispatchEntries.reduce((sum, [, entry]) => sum + (entry.jobs_published || 0), 0),
+            totalErrors: dispatchEntries.reduce((sum, [, entry]) => sum + (entry.total_errors || 0), 0),
+            totalSuccesses: dispatchEntries.reduce((sum, [, entry]) => sum + (entry.total_successes || 0), 0),
+            errorCount: dispatchEntries.filter(([, entry]) => entry.status === 'error').length,
+            lastDispatch: dispatchEntries.sort(([a], [b]) => b.localeCompare(a))[0]?.[0]?.replace('-', ':'),
         } : {
             totalRuns: 0,
             totalShowtimesFound: 0,
             totalJobsPublished: 0,
+            totalErrors: 0,
+            totalSuccesses: 0,
             errorCount: 0,
             lastDispatch: null,
         };

@@ -326,38 +326,48 @@ def log_jit_dispatch_to_firestore(
     status: str = "ok",
     error: str | None = None,
 ) -> None:
-    """Log JIT dispatcher run to scraper_logs/{today}/jit_runs.{time_slot}."""
-    from google.api_core.exceptions import NotFound
+    """Log JIT dispatcher run to scraper_logs/{today}/dispatches/{HH-MM}.
 
+    Creates the dispatch doc with metadata. Scrapers will later increment
+    total_errors / total_successes on this same doc.
+    """
     now = datetime.now(JAKARTA_TZ)
     today_str = now.strftime("%Y-%m-%d")
 
-    jit_entry = {
+    # Use HH-MM format for doc ID (colons not allowed in Firestore doc IDs)
+    dispatch_slot = time_slot.replace(":", "-")
+
+    dispatch_entry = {
         "dispatched_at": datetime.utcnow().isoformat() + "Z",
+        "time_slot": time_slot,
         "showtimes_found": showtimes_found,
         "jobs_published": jobs_published,
         "window_start": window_start_str,
         "window_end": window_end_str,
         "status": status,
+        "total_errors": 0,
+        "total_successes": 0,
     }
     if error:
-        jit_entry["error"] = error
+        dispatch_entry["error"] = error
 
-    doc_ref = db.collection("scraper_logs").document(today_str)
+    # Ensure the parent daily doc exists
+    daily_ref = db.collection("scraper_logs").document(today_str)
+    daily_ref.set(
+        {
+            "date": today_str,
+            "created_at": datetime.utcnow().isoformat() + "Z",
+        },
+        merge=True,
+    )
 
-    try:
-        doc_ref.update({f"jit_runs.{time_slot}": jit_entry})
-        logger.info(f"Logged JIT dispatch ({time_slot}) to scraper_logs/{today_str}")
-    except NotFound:
-        # Create doc if missing (morning scrape hasn't run yet)
-        doc_ref.set(
-            {
-                "date": today_str,
-                "created_at": datetime.utcnow().isoformat() + "Z",
-                "jit_runs": {time_slot: jit_entry},
-            }
-        )
-        logger.info(f"Created scraper_logs/{today_str} with JIT dispatch ({time_slot})")
+    # Create the dispatch subcollection doc
+    dispatch_ref = daily_ref.collection("dispatches").document(dispatch_slot)
+    dispatch_ref.set(dispatch_entry)
+
+    logger.info(
+        f"Logged dispatch ({time_slot}) to scraper_logs/{today_str}/dispatches/{dispatch_slot}"
+    )
 
 
 @functions_framework.http  # type: ignore[untyped-decorator]

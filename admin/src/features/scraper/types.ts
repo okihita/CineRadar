@@ -41,10 +41,13 @@ export interface MorningScrape {
 
 export interface JITSummary {
     totalRuns: number;
-    totalShowtimes: number;
-    successfulShowtimes: number;
-    firstRun: string;
-    lastRun: string;
+    totalShowtimesFound: number;
+    totalJobsPublished: number;
+    totalErrors: number;
+    totalSuccesses: number;
+    errorCount: number;
+    firstDispatch: string;
+    lastDispatch: string;
 }
 
 // ============================================================================
@@ -66,7 +69,7 @@ export interface MorningRunLog {
 }
 
 /**
- * Individual JIT dispatch entry
+ * @deprecated Use DispatchEntry instead. Kept for backwards compatibility during migration.
  */
 export interface JITRunEntry {
     dispatched_at: string;
@@ -74,7 +77,25 @@ export interface JITRunEntry {
     window_end: string;
     showtimes_found: number;
     jobs_published: number;
-    status: 'ok' | 'error';
+    status: string;
+    error?: string;
+}
+
+/**
+ * Dispatch entry from scraper_logs/{date}/dispatches/{HH-MM}
+ * Contains both dispatch metadata (written by dispatcher) and
+ * completion counters (incremented by scraper instances).
+ */
+export interface DispatchEntry {
+    dispatched_at: string;
+    time_slot: string;
+    showtimes_found: number;
+    jobs_published: number;
+    window_start: string;
+    window_end: string;
+    status: string;
+    total_errors: number;
+    total_successes: number;
     error?: string;
 }
 
@@ -93,12 +114,23 @@ export interface DailySummaryLog {
 }
 
 /**
+ * Daily error summary rollup (computed by daily_summary CLI)
+ */
+export interface DailyErrorSummary {
+    total_dispatches: number;
+    total_errors: number;
+    total_successes: number;
+    error_rate_pct: number;
+}
+
+/**
  * Consolidated daily log document from scraper_logs/{date}
  */
 export interface ScraperLog {
     date: string;
     created_at: string;
     morning_run?: MorningRunLog;
-    jit_runs?: Record<string, JITRunEntry>;
+    dispatches?: Record<string, DispatchEntry>;
     daily_summary?: DailySummaryLog;
+    daily_error_summary?: DailyErrorSummary;
 }

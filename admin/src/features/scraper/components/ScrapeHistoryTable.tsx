@@ -65,7 +65,7 @@ export function ScrapeHistoryTable({ logs }: ScrapeHistoryTableProps) {
                                 const movieDiff = prevLog ? currentMovies - prevMovies : 0;
                                 const theatreDiff = prevLog ? currentTheatres - prevTheatres : 0;
                                 const status = log.morning_run?.status || 'unknown';
-                                const jitCount = log.jit_runs ? Object.keys(log.jit_runs).length : 0;
+                                const jitCount = log.dispatches ? Object.keys(log.dispatches).length : 0;
 
                                 return (
                                     <TableRow key={log.date}>

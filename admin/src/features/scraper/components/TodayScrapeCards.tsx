@@ -84,24 +84,28 @@ export function TodayScrapeCards({ morningScrape, jitSummary }: TodayScrapeCards
                             <div className="flex items-center gap-2">
                                 <CheckCircle2 className="w-8 h-8 text-blue-500" />
                                 <div>
-                                    <div className="font-semibold">{jitSummary.totalRuns} runs today</div>
+                                    <div className="font-semibold">{jitSummary.totalRuns} dispatches today</div>
                                     <div className="text-xs text-muted-foreground">
-                                        Last: {formatWIBWithRelative(jitSummary.lastRun)}
+                                        Last: {formatWIBWithRelative(jitSummary.lastDispatch)}
                                     </div>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-2 text-center">
+                            <div className="grid grid-cols-3 gap-2 text-center">
                                 <div className="p-2 bg-muted/50 rounded">
-                                    <div className="font-bold">{jitSummary.totalShowtimes}</div>
-                                    <div className="text-xs text-muted-foreground">Total Showtimes</div>
+                                    <div className="font-bold">{jitSummary.totalJobsPublished}</div>
+                                    <div className="text-xs text-muted-foreground">Jobs Published</div>
                                 </div>
                                 <div className="p-2 bg-muted/50 rounded">
-                                    <div className="font-bold text-green-600">{jitSummary.successfulShowtimes}</div>
-                                    <div className="text-xs text-muted-foreground">Successful</div>
+                                    <div className="font-bold text-green-600">{jitSummary.totalSuccesses}</div>
+                                    <div className="text-xs text-muted-foreground">Successes</div>
+                                </div>
+                                <div className="p-2 bg-muted/50 rounded">
+                                    <div className="font-bold text-red-600">{jitSummary.totalErrors}</div>
+                                    <div className="text-xs text-muted-foreground">Errors</div>
                                 </div>
                             </div>
                             <div className="text-xs text-muted-foreground text-center">
-                                First run: {formatWIBShort(jitSummary.firstRun)}
+                                First dispatch: {formatWIBShort(jitSummary.firstDispatch)}
                             </div>
                         </div>
                     ) : (

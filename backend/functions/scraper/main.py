@@ -54,32 +54,51 @@ def get_firestore_client() -> firestore.Client:
 
 
 
-def log_error_to_firestore(severity: str, message: str, context: dict[str, Any]) -> None:
-    """Log error to Firestore 'scraper_errors/{batch_id}/errors/{auto-id}'.
+def _parse_batch_id(batch_id: str) -> tuple[str, str]:
+    """Parse batch_id (e.g. '20260213-162200') into (date_str, dispatch_slot).
 
-    Groups errors by dispatcher batch for easy browsing in Firestore console.
-    Parent batch doc is lazily created via set(merge=True).
+    Returns:
+        (date_str, dispatch_slot) e.g. ('2026-02-13', '16-22')
+        Falls back to today's date and '_unbatched' if parsing fails.
+    """
+    if batch_id:
+        try:
+            dt = datetime.strptime(batch_id, "%Y%m%d-%H%M%S")
+            return dt.strftime("%Y-%m-%d"), dt.strftime("%H-%M")
+        except ValueError:
+            pass
+    # Fallback: use today's date
+    now = datetime.now(JAKARTA_TZ)
+    return now.strftime("%Y-%m-%d"), "_unbatched"
+
+
+def _get_dispatch_ref(db: firestore.Client, date_str: str, dispatch_slot: str) -> Any:
+    """Get Firestore reference to scraper_logs/{date}/dispatches/{dispatch_slot}."""
+    return (
+        db.collection("scraper_logs")
+        .document(date_str)
+        .collection("dispatches")
+        .document(dispatch_slot)
+    )
+
+
+def log_error_to_firestore(severity: str, message: str, context: dict[str, Any]) -> None:
+    """Log error to scraper_logs/{date}/dispatches/{HH-MM}/errors/{auto-id}.
+
+    Also atomically increments total_errors on the dispatch summary doc.
     """
     try:
         db = get_firestore_client()
         now_iso = datetime.utcnow().isoformat() + "Z"
 
-        # Determine batch doc ID (e.g. "20260213-162200" -> "2026-02-13_16-22")
         batch_id = context.get("batch_id", "")
-        if batch_id:
-            # Reformat YYYYMMDD-HHMMSS -> YYYY-MM-DD_HH-MM for readability
-            try:
-                dt = datetime.strptime(batch_id, "%Y%m%d-%H%M%S")
-                batch_doc_id = dt.strftime("%Y-%m-%d_%H-%M")
-            except ValueError:
-                batch_doc_id = batch_id  # Use raw if format differs
-        else:
-            batch_doc_id = "_unbatched"
+        date_str, dispatch_slot = _parse_batch_id(batch_id)
 
-        # Lazily create/update parent batch doc
-        batch_ref = db.collection("scraper_errors").document(batch_doc_id)
-        batch_ref.set(
-            {"batch_id": batch_id, "created_at": now_iso},
+        dispatch_ref = _get_dispatch_ref(db, date_str, dispatch_slot)
+
+        # Atomically increment total_errors on the dispatch summary doc
+        dispatch_ref.set(
+            {"total_errors": firestore.Increment(1)},
             merge=True,
         )
 
@@ -88,13 +107,37 @@ def log_error_to_firestore(severity: str, message: str, context: dict[str, Any])
             "timestamp": now_iso,
             "severity": severity,
             "message": message,
-            "context": context,
+            "showtime_id": context.get("showtime_id", ""),
+            "movie_title": context.get("movie_title", ""),
+            "theatre": context.get("theatre", ""),
+            "merchant": context.get("merchant", ""),
+            "http_status": context.get("http_status", 0),
+            "api_error": context.get("api_error", ""),
+            "error_type": context.get("error_type", ""),
             "resolved": False,
         }
-        batch_ref.collection("errors").add(error_doc)
+        dispatch_ref.collection("errors").add(error_doc)
     except Exception as e:
         # Fallback to stdout if Firestore logging fails
         logger.error(f"Failed to log error to Firestore: {e}")
+
+
+def log_success_to_firestore(batch_id: str) -> None:
+    """Atomically increment total_successes on scraper_logs/{date}/dispatches/{HH-MM}.
+
+    Called after a successful scrape to track completion rate per dispatch batch.
+    """
+    try:
+        db = get_firestore_client()
+        date_str, dispatch_slot = _parse_batch_id(batch_id)
+        dispatch_ref = _get_dispatch_ref(db, date_str, dispatch_slot)
+
+        dispatch_ref.set(
+            {"total_successes": firestore.Increment(1)},
+            merge=True,
+        )
+    except Exception as e:
+        logger.warning(f"Failed to log success to Firestore: {e}")
 
 
 def log_critical(message: str, context: dict[str, Any]) -> None:
@@ -715,24 +758,7 @@ def scrape_seat(cloud_event: Any) -> None:
         f"✓ {theatre_name} @ {showtime_time}: {occupancy_pct}% ({sold_seats}/{total_seats})"
     )
 
-    # Log metrics to jit_stats if batch_id is present
+    # Log success to dispatch summary (replaces jit_stats)
     batch_id = showtime_data.get("batch_id")
     if batch_id:
-        try:
-            end_time = time.time()
-            duration_ms = int((end_time - start_time) * 1000)
-
-            # Lightweight stat doc
-            stat_doc = {
-                "batch_id": batch_id,
-                "showtime_id": showtime_id,
-                "duration_ms": duration_ms,
-                "finished_at": datetime.utcnow().isoformat() + "Z",
-                "status": "success",
-                "occupancy_pct": occupancy_pct
-            }
-
-            # Fire and forget
-            db.collection("jit_stats").add(stat_doc)
-        except Exception as e:
-            logger.warning(f"Failed to log jit_stats: {e}")
+        log_success_to_firestore(batch_id)

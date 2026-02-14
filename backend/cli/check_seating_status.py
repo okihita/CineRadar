@@ -174,14 +174,16 @@ def check_showtime_raw_responses(db: firestore.Client, date_str: str) -> dict[st
 
 def check_jit_runs(db: firestore.Client, date_str: str) -> dict[str, Any]:
     """
-    Query scraper_logs/{date} to get JIT run information.
+    Query scraper_logs/{date}/dispatches subcollection to get JIT run information.
 
     Returns dict with:
-    - total_runs: Number of jit_runs entries
+    - total_runs: Number of dispatch entries
     - successful_runs: Number of runs with status 'ok'
     - failed_runs: Number of runs with status 'error'
     - total_jobs_published: Total jobs published across all runs
     - total_showtimes_found: Total showtimes found across all runs
+    - total_scrape_errors: Total scraper errors across all dispatches
+    - total_scrape_successes: Total scraper successes across all dispatches
     - first_run: Earliest timestamp
     - last_run: Latest timestamp
     - runs_detail: List of individual run details
@@ -189,55 +191,50 @@ def check_jit_runs(db: firestore.Client, date_str: str) -> dict[str, Any]:
     logger.info(f"\n🔄 Checking JIT scraper runs for {date_str}...")
     logger.info("=" * 70)
 
-    doc_ref = db.collection("scraper_logs").document(date_str)
-    doc = doc_ref.get()
+    dispatch_ref = (
+        db.collection("scraper_logs")
+        .document(date_str)
+        .collection("dispatches")
+    )
+    dispatch_docs = list(dispatch_ref.stream())
 
-    if not doc.exists:
-        logger.info(f"  ⚠️  No scraper_logs document found for {date_str}")
+    if not dispatch_docs:
+        logger.info(f"  ⚠️  No dispatches found in scraper_logs/{date_str}/dispatches")
         return {
             "total_runs": 0,
             "successful_runs": 0,
             "failed_runs": 0,
             "total_jobs_published": 0,
             "total_showtimes_found": 0,
+            "total_scrape_errors": 0,
+            "total_scrape_successes": 0,
             "first_run": None,
             "last_run": None,
             "runs_detail": [],
         }
 
-    data = doc.to_dict()
-    jit_runs = data.get("jit_runs", {})
-
-    if not jit_runs:
-        logger.info(f"  ⚠️  No jit_runs data found in scraper_logs/{date_str}")
-        return {
-            "total_runs": 0,
-            "successful_runs": 0,
-            "failed_runs": 0,
-            "total_jobs_published": 0,
-            "total_showtimes_found": 0,
-            "first_run": None,
-            "last_run": None,
-            "runs_detail": [],
-        }
-
-    total_runs = len(jit_runs)
+    total_runs = len(dispatch_docs)
     successful_runs = 0
     failed_runs = 0
     total_jobs_published = 0
     total_showtimes_found = 0
+    total_scrape_errors = 0
+    total_scrape_successes = 0
     runs_detail = []
     timestamps = []
 
-    # Sort by time slot
-    sorted_slots = sorted(jit_runs.keys())
+    # Sort by document ID (HH-MM format)
+    sorted_docs = sorted(dispatch_docs, key=lambda d: d.id)
 
-    for time_slot in sorted_slots:
-        run_data = jit_runs[time_slot]
+    for dispatch_doc in sorted_docs:
+        run_data = dispatch_doc.to_dict()
+        time_slot = run_data.get("time_slot", dispatch_doc.id.replace("-", ":"))
         status = run_data.get("status", "unknown")
         jobs_published = run_data.get("jobs_published", 0)
         showtimes_found = run_data.get("showtimes_found", 0)
         dispatched_at = run_data.get("dispatched_at", "")
+        scrape_errors = run_data.get("total_errors", 0)
+        scrape_successes = run_data.get("total_successes", 0)
 
         if status == "ok":
             successful_runs += 1
@@ -246,6 +243,8 @@ def check_jit_runs(db: firestore.Client, date_str: str) -> dict[str, Any]:
 
         total_jobs_published += jobs_published
         total_showtimes_found += showtimes_found
+        total_scrape_errors += scrape_errors
+        total_scrape_successes += scrape_successes
 
         if dispatched_at:
             try:
@@ -262,12 +261,16 @@ def check_jit_runs(db: firestore.Client, date_str: str) -> dict[str, Any]:
                 "showtimes_found": showtimes_found,
                 "jobs_published": jobs_published,
                 "dispatched_at": dispatched_at,
+                "total_errors": scrape_errors,
+                "total_successes": scrape_successes,
             }
         )
 
         status_icon = "✅" if status == "ok" else "❌" if status == "error" else "⚠️"
+        error_info = f" | Errors: {scrape_errors}" if scrape_errors > 0 else ""
         logger.info(
-            f"  {status_icon} {time_slot}: Found {showtimes_found}, Published {jobs_published} jobs"
+            f"  {status_icon} {time_slot}: Found {showtimes_found}, Published {jobs_published} jobs, "
+            f"Success: {scrape_successes}{error_info}"
         )
 
     first_run = min(timestamps) if timestamps else None
@@ -279,6 +282,8 @@ def check_jit_runs(db: firestore.Client, date_str: str) -> dict[str, Any]:
         "failed_runs": failed_runs,
         "total_jobs_published": total_jobs_published,
         "total_showtimes_found": total_showtimes_found,
+        "total_scrape_errors": total_scrape_errors,
+        "total_scrape_successes": total_scrape_successes,
         "first_run": first_run,
         "last_run": last_run,
         "runs_detail": runs_detail,

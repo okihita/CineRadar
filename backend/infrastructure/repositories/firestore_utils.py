@@ -327,7 +327,10 @@ def log_jit_dispatch(
     status: str = "ok",
     error: str | None = None,
 ) -> bool:
-    """Log JIT dispatcher run to consolidated daily scraper_logs document.
+    """Log JIT dispatcher run to scraper_logs/{date}/dispatches/{HH-MM}.
+
+    Creates the dispatch subcollection doc with metadata. Scrapers will later
+    increment total_errors / total_successes on this same doc.
 
     Args:
         time_slot: Dispatch time in HH:MM format (e.g., "09:05")
@@ -343,8 +346,6 @@ def log_jit_dispatch(
     """
     from zoneinfo import ZoneInfo
 
-    from google.api_core.exceptions import NotFound
-
     try:
         db = get_firestore_client()
 
@@ -352,36 +353,43 @@ def log_jit_dispatch(
         jakarta_now = datetime.now(ZoneInfo("Asia/Jakarta"))
         today_str = jakarta_now.strftime("%Y-%m-%d")
 
-        jit_entry = {
+        # Use HH-MM format for doc ID (colons not allowed in Firestore doc IDs)
+        dispatch_slot = time_slot.replace(":", "-")
+
+        dispatch_entry: dict[str, Any] = {
             "dispatched_at": datetime.now(UTC).isoformat(),
+            "time_slot": time_slot,
             "showtimes_found": showtimes_found,
             "jobs_published": jobs_published,
             "status": status,
+            "total_errors": 0,
+            "total_successes": 0,
         }
 
         if window_start:
-            jit_entry["window_start"] = window_start
+            dispatch_entry["window_start"] = window_start
         if window_end:
-            jit_entry["window_end"] = window_end
+            dispatch_entry["window_end"] = window_end
         if error:
-            jit_entry["error"] = error
+            dispatch_entry["error"] = error
 
-        doc_ref = db.collection("scraper_logs").document(today_str)
+        # Ensure the parent daily doc exists
+        daily_ref = db.collection("scraper_logs").document(today_str)
+        daily_ref.set(
+            {
+                "date": today_str,
+                "created_at": datetime.now(UTC).isoformat(),
+            },
+            merge=True,
+        )
 
-        # Use update with field path to avoid overwriting other slots
-        try:
-            doc_ref.update({f"jit_runs.{time_slot}": jit_entry})
-        except NotFound:
-            # Create doc if missing (e.g., morning scrape failed or hasn't run)
-            doc_ref.set(
-                {
-                    "date": today_str,
-                    "created_at": datetime.now(UTC).isoformat(),
-                    "jit_runs": {time_slot: jit_entry},
-                }
-            )
+        # Create the dispatch subcollection doc
+        dispatch_ref = daily_ref.collection("dispatches").document(dispatch_slot)
+        dispatch_ref.set(dispatch_entry)
 
-        logger.info(f"   Logged JIT dispatch ({time_slot}) to scraper_logs/{today_str}")
+        logger.info(
+            f"   Logged dispatch ({time_slot}) to scraper_logs/{today_str}/dispatches/{dispatch_slot}"
+        )
         return True
 
     except Exception as e:

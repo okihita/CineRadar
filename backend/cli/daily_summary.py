@@ -127,6 +127,42 @@ def send_github_summary(message: str) -> None:
         logger.info(message)
 
 
+def _compute_daily_error_summary(daily_ref: Any) -> dict[str, Any]:
+    """Aggregate error/success counts from all dispatches subcollection docs.
+
+    Args:
+        daily_ref: Firestore document reference for scraper_logs/{date}
+
+    Returns:
+        Dict with total_dispatches, total_errors, total_successes, error_rate_pct
+    """
+    total_dispatches = 0
+    total_errors = 0
+    total_successes = 0
+
+    try:
+        dispatches = daily_ref.collection("dispatches").stream()
+        for dispatch_doc in dispatches:
+            data = dispatch_doc.to_dict()
+            if not data:
+                continue
+            total_dispatches += 1
+            total_errors += data.get("total_errors", 0)
+            total_successes += data.get("total_successes", 0)
+    except Exception as e:
+        logger.warning(f"Failed to read dispatches subcollection: {e}")
+
+    total_jobs = total_errors + total_successes
+    error_rate_pct = (total_errors / total_jobs * 100) if total_jobs > 0 else 0.0
+
+    return {
+        "total_dispatches": total_dispatches,
+        "total_errors": total_errors,
+        "total_successes": total_successes,
+        "error_rate_pct": round(error_rate_pct, 1),
+    }
+
+
 def main() -> None:
     logger.info("\n" + "=" * 60)
     logger.info("📊 CineRadar Daily Summary Report")
@@ -155,7 +191,7 @@ def main() -> None:
     # Output to GitHub Actions summary if available
     send_github_summary(message)
 
-    # Store summary in Firestore for historical tracking (new location: scraper_logs)
+    # Store summary in Firestore for historical tracking
     try:
         db = get_firestore_client()
         daily_summary_data = {
@@ -168,11 +204,27 @@ def main() -> None:
             "theatre_count": stats["theatre_count"],
             "city_count": stats["city_count"],
         }
-        db.collection("scraper_logs").document(yesterday).set(
-            {"daily_summary": daily_summary_data},
+
+        daily_ref = db.collection("scraper_logs").document(yesterday)
+
+        # Compute daily error rollup from dispatches subcollection
+        daily_error_summary = _compute_daily_error_summary(daily_ref)
+
+        daily_ref.set(
+            {
+                "daily_summary": daily_summary_data,
+                "daily_error_summary": daily_error_summary,
+            },
             merge=True,
         )
         logger.info(f"💾 Saved summary to Firestore: scraper_logs/{yesterday}")
+        if daily_error_summary["total_dispatches"] > 0:
+            logger.info(
+                f"   📊 Error rollup: {daily_error_summary['total_errors']} errors "
+                f"/ {daily_error_summary['total_successes']} successes "
+                f"across {daily_error_summary['total_dispatches']} dispatches "
+                f"({daily_error_summary['error_rate_pct']:.1f}% error rate)"
+            )
     except Exception as e:
         logger.error(f"⚠️ Failed to save summary: {e}")
 
