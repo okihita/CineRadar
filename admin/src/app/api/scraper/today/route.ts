@@ -63,17 +63,50 @@ export async function GET(request: NextRequest) {
             daily_error_summary: doc.daily_error_summary as ScraperLog['daily_error_summary'],
         };
 
+        // Fetch total schedules count for the date from schedules/{date}/movies
+        // Count all showtimes across all movies, theatres, and rooms
+        let totalSchedules = 0;
+        try {
+            const moviesRaw = await firestoreRestClient.getSubCollection(
+                `schedules/${dateStr}/movies`
+            );
+
+            // Count showtimes from each movie's cities -> theatres -> rooms -> all_showtimes
+            for (const movie of moviesRaw) {
+                const cities = movie.cities as Record<string, unknown[]> || {};
+                for (const theatres of Object.values(cities)) {
+                    if (!Array.isArray(theatres)) continue;
+                    for (const theatre of theatres) {
+                        const rooms = (theatre as Record<string, unknown>).rooms as unknown[] || [];
+                        for (const room of rooms) {
+                            const allShowtimes = (room as Record<string, unknown>).all_showtimes as unknown[];
+                            if (Array.isArray(allShowtimes)) {
+                                totalSchedules += allShowtimes.length;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch {
+            // Silently fail - totalSchedules will be 0
+        }
+
         // Compute summary stats for dispatches
         const dispatchEntries = Object.entries(dispatches);
+        const totalShowtimesScraped = dispatchEntries.reduce((sum, [, entry]) => sum + (entry.showtimes_found || 0), 0);
+
         const jitSummary = dispatchEntries.length > 0 ? {
             totalRuns: dispatchEntries.length,
-            totalShowtimesFound: dispatchEntries.reduce((sum, [, entry]) => sum + (entry.showtimes_found || 0), 0),
+            totalShowtimesFound: totalShowtimesScraped,
             totalJobsPublished: dispatchEntries.reduce((sum, [, entry]) => sum + (entry.jobs_published || 0), 0),
             totalErrors: dispatchEntries.reduce((sum, [, entry]) => sum + (entry.total_errors || 0), 0),
             totalSuccesses: dispatchEntries.reduce((sum, [, entry]) => sum + (entry.total_successes || 0), 0),
             errorCount: dispatchEntries.filter(([, entry]) => entry.status === 'error').length,
             firstDispatch: dispatchEntries.sort(([a], [b]) => a.localeCompare(b))[0]?.[0]?.replace('-', ':'),
             lastDispatch: dispatchEntries.sort(([a], [b]) => b.localeCompare(a))[0]?.[0]?.replace('-', ':'),
+            // Add schedule coverage metrics
+            totalSchedules,
+            coveragePercent: totalSchedules > 0 ? Math.round((totalShowtimesScraped / totalSchedules) * 100) : 0,
         } : null;
 
         return NextResponse.json({
@@ -90,3 +123,4 @@ export async function GET(request: NextRequest) {
         );
     }
 }
+
