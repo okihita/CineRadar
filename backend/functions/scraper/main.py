@@ -16,7 +16,7 @@ import gzip
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, cast
 from zoneinfo import ZoneInfo
 
@@ -193,7 +193,7 @@ class TokenRefreshLock:
 
     def acquire(self, instance_id: str) -> bool:
         """Attempt to acquire the lock."""
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         try:
             # Try to create lock doc
             self.lock_ref.create({
@@ -211,7 +211,9 @@ class TokenRefreshLock:
             locked_at_str = data.get("locked_at", "")
             try:
                 locked_at = datetime.fromisoformat(locked_at_str)
-                age = (datetime.utcnow() - locked_at).total_seconds()
+                if locked_at.tzinfo is None:
+                    locked_at = locked_at.replace(tzinfo=timezone.utc)
+                age = (datetime.now(timezone.utc) - locked_at).total_seconds()
                 if age > self.timeout:
                     logger.warning(f"Taking over stale lock (age={age:.1f}s)")
                     self.lock_ref.set({
@@ -254,13 +256,7 @@ def refresh_access_token(db: firestore.Client, refresh_token: str) -> str | None
 
         logger.info(f"Another instance is refreshing, waiting... ({i+1}/{max_retries})")
         time.sleep(1.0) # Wait 1s between checks
-        # Check if the other instance finished successfully
-        token_data = load_token_data(db)
-        if token_data and token_data.get("token"):
-            # If the token was updated very recently (e.g. within last 30s), use it
-            # This handles the case where the lock holder finished and released
-            # For simplicity, just return the token if valid
-            return str(token_data["token"])
+        # Wait for lock - don't return old token, let the lock holder finish refreshing
 
     # If we still don't have the lock after retries, try one last check
     if not lock.acquire(instance_id):
@@ -289,8 +285,8 @@ def refresh_access_token(db: firestore.Client, refresh_token: str) -> str | None
             new_token = data.get("data", {}).get("token")
 
             if new_token:
-                # Update Firestore
-                now_iso = datetime.now().isoformat()
+                # Update Firestore with UTC timezone-aware timestamp
+                now_iso = datetime.now(timezone.utc).isoformat()
                 db.collection("auth_tokens").document("tix_jwt").set(
                     {
                         "token": new_token,
@@ -333,12 +329,16 @@ def get_valid_token(db: firestore.Client, force_refresh: bool = False) -> str | 
             # Handle potentially naive or aware inputs
             stored_at = datetime.fromisoformat(stored_at_str)
             if stored_at.tzinfo is None:
-                # distinct lack of timezone info in stored string
-                # assume local/server time matches
-                age = datetime.now() - stored_at
-            else:
-                # stored time has timezone -> use timezone aware now
-                age = datetime.now(stored_at.tzinfo) - stored_at
+                # Legacy data without timezone - assume it was stored as UTC
+                # (Previously stored by CLI in Jakarta time, but we now store as UTC)
+                # To handle old data correctly, we need to check if the timestamp
+                # looks like Jakarta time (afternoon hours = morning UTC)
+                # For safety, treat as UTC but log a warning
+                logger.warning(f"Token stored_at has no timezone, assuming UTC: {stored_at_str}")
+                stored_at = stored_at.replace(tzinfo=timezone.utc)
+            
+            # Always use UTC for comparison
+            age = datetime.now(timezone.utc) - stored_at
 
             age_minutes = age.total_seconds() / 60
 

@@ -111,6 +111,48 @@ Now, only the scraper handles refresh because:
 - It runs with `max_instances=1`, avoiding concurrent refresh attempts
 - It has robust retry logic with token validation between attempts
 
+### ⚠️ CRITICAL: Timezone Handling for Token Timestamps
+
+**Always use UTC with explicit timezone when storing `stored_at` timestamps.**
+
+#### The Bug (Fixed Feb 2026)
+The `stored_at` timestamp was stored without timezone info (`2026-02-14T16:10:05`), causing:
+- CLI scripts stored timestamps in Jakarta time (UTC+7)
+- Cloud Functions run in UTC
+- Age calculation: `datetime.now() - stored_at` compared UTC vs Jakarta time
+- **Result: 7-hour offset bug** - tokens appeared to be from the future!
+
+#### Correct Pattern
+```python
+from datetime import datetime, timezone
+
+# ✅ CORRECT: Always store with UTC timezone
+now_iso = datetime.now(timezone.utc).isoformat()
+# Result: "2026-02-15T04:23:47.448980+00:00"
+
+# ❌ WRONG: Naive datetime (no timezone)
+now_iso = datetime.now().isoformat()
+# Result: "2026-02-15T11:23:47.448980" (Jakarta time, but no marker!)
+```
+
+#### Reading Timestamps
+```python
+stored_at = datetime.fromisoformat(stored_at_str)
+
+# Handle legacy data without timezone
+if stored_at.tzinfo is None:
+    # Assume it was intended to be UTC
+    stored_at = stored_at.replace(tzinfo=timezone.utc)
+
+# Always compare with timezone-aware UTC
+age = datetime.now(timezone.utc) - stored_at
+```
+
+#### Why This Matters
+- TIX.id access tokens expire after 30 minutes
+- If the age calculation is wrong by 7 hours, the scraper won't know when to refresh
+- This caused cascading 401 errors across all scrapes until manual intervention
+
 ## Cost Estimate (Updated Feb 2026)
 
 | Resource | Monthly Usage | Cost |
