@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
+  // Set Turbopack root to silence multiple lockfiles warning
+  turbopack: {
+    root: path.join(__dirname, '..'),
+  },
   images: {
     remotePatterns: [
       {

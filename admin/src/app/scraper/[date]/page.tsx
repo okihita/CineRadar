@@ -186,6 +186,7 @@ export default function ScraperDatePage({ params }: PageProps) {
                         dispatches={dispatches}
                         selectedId={selectedDispatch}
                         onDispatchClick={handleDispatchClick}
+                        date={selectedDate}
                     />
                 </div>
             )}

@@ -82,6 +82,16 @@ export interface JITRunEntry {
 }
 
 /**
+ * Error counts grouped by HTTP status code.
+ * Used to distinguish between logic issues (401) and operational issues (400).
+ */
+export interface ErrorCounts {
+    "401": number;  // Auth/token issues - DANGER (logic/software issue)
+    "400": number;  // Operational - WARNING (showtime passed, etc.)
+    "other": number; // Network errors, schema issues, etc.
+}
+
+/**
  * Dispatch entry from scraper_logs/{date}/dispatches/{HH-MM}
  * Contains both dispatch metadata (written by dispatcher) and
  * completion counters (incremented by scraper instances).
@@ -97,6 +107,7 @@ export interface DispatchEntry {
     total_errors: number;
     total_successes: number;
     error?: string;
+    error_counts?: ErrorCounts;  // Breakdown by HTTP status (fetched on demand)
 }
 
 /**

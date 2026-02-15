@@ -11,7 +11,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Target, Users, Armchair, MapPin, Clock, Loader2, Calendar, ChevronLeft, Building2, Filter, ArrowUpDown, Layers, ChevronDown, ChevronRight } from 'lucide-react';
+import { Target, Users, Armchair, MapPin, Clock, Loader2, Calendar, ChevronLeft, Filter, ArrowUpDown, Layers, ChevronDown, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -58,14 +58,7 @@ type GroupBy = 'none' | 'theatre' | 'city' | 'merchant';
 
 const PAGE_SIZES = [20, 50, 100, 200];
 
-// Merchant logo mapping
-const MERCHANT_LOGOS: Record<string, string> = {
-    'CGV': '/merchants/cgv.svg',
-    'XXI': '/merchants/xxi.svg',
-    'Cinépolis': '/merchants/cinepolis.svg',
-    'CINEPOLIS': '/merchants/cinepolis.svg',
-};
-
+// Merchant colors for badges
 const MERCHANT_COLORS: Record<string, string> = {
     'CGV': 'bg-red-500',
     'XXI': 'bg-blue-600',
@@ -586,8 +579,6 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
                                             key={groupName}
                                             title={groupName}
                                             items={items}
-                                            sortField={sortField}
-                                            sortDirection={sortDirection}
                                             toggleSort={toggleSort}
                                         />
                                     ))}
@@ -776,14 +767,10 @@ function ShowtimeRow({ showtime: st }: { showtime: ShowtimeSnapshot }) {
 function GroupedSection({
     title,
     items,
-    sortField,
-    sortDirection,
     toggleSort,
 }: {
     title: string;
     items: ShowtimeSnapshot[];
-    sortField: SortField;
-    sortDirection: SortDirection;
     toggleSort: (field: SortField) => void;
 }) {
     const [expanded, setExpanded] = useState(true);

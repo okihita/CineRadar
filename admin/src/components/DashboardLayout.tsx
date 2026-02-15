@@ -1,18 +1,22 @@
 'use client';
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useSyncExternalStore } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 
 interface DashboardLayoutProps {
     children: ReactNode;
 }
 
-export function DashboardLayout({ children }: DashboardLayoutProps) {
-    const [mounted, setMounted] = useState(false);
+// Empty subscribe function for server snapshot
+const emptySubscribe = () => () => { };
 
-    useEffect(() => {
-        setMounted(true);
-    }, []);
+export function DashboardLayout({ children }: DashboardLayoutProps) {
+    // useSyncExternalStore to safely detect client-side mounting
+    const mounted = useSyncExternalStore(
+        emptySubscribe,
+        () => true,
+        () => false
+    );
 
     // Prevent hydration mismatch by showing placeholder until mounted
     // The blocking script in layout.tsx handles the initial theme
@@ -34,3 +38,4 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
     );
 }
+
