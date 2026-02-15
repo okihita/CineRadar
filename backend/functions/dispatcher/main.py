@@ -209,6 +209,62 @@ def log_jit_dispatch_to_firestore(
     )
 
 
+def log_job_creation(db: firestore.Client, batch_id: str, showtime: dict[str, Any]) -> None:
+    """Log job creation to scraper_logs/{date}/dispatches/{slot}/jobs/{showtime_id}.
+
+    This creates the initial job document with created_at timestamp.
+    The scraper will update this document with checkpoints as it processes the job.
+
+    Args:
+        db: Firestore client
+        batch_id: Batch ID in format "YYYYMMDD-HHMMSS"
+        showtime: Showtime data dict
+    """
+    try:
+        # Parse batch_id to get date and dispatch slot
+        dt = datetime.strptime(batch_id, "%Y%m%d-%H%M%S")
+        date_str = dt.strftime("%Y-%m-%d")
+        dispatch_slot = dt.strftime("%H-%M")
+        showtime_id = showtime.get("showtime_id")
+
+        if not showtime_id:
+            return
+
+        now_iso = datetime.utcnow().isoformat() + "Z"
+
+        job_ref = (
+            db.collection("scraper_logs")
+            .document(date_str)
+            .collection("dispatches")
+            .document(dispatch_slot)
+            .collection("jobs")
+            .document(showtime_id)
+        )
+
+        job_ref.set({
+            "showtime_id": showtime_id,
+            "batch_id": batch_id,
+            "job_data": {
+                "movie_id": showtime.get("movie_id"),
+                "movie_title": showtime.get("movie_title"),
+                "theatre_id": showtime.get("theatre_id"),
+                "theatre_name": showtime.get("theatre_name"),
+                "city": showtime.get("city"),
+                "merchant": showtime.get("merchant"),
+                "showtime": showtime.get("showtime"),
+            },
+            "lifecycle": {
+                "created_at": now_iso,
+            },
+            "status": "pending",
+            "created_at": now_iso,
+            "updated_at": now_iso,
+        })
+
+    except Exception as e:
+        logger.warning(f"Failed to log job creation for {showtime.get('showtime_id')}: {e}")
+
+
 @functions_framework.http  # type: ignore[untyped-decorator]
 def dispatch_jobs(request: Any) -> Any:
     """HTTP Cloud Function entry point.
@@ -254,9 +310,10 @@ def dispatch_jobs(request: Any) -> Any:
             # Generate batch ID (timestamp of dispatch)
             batch_id = now.strftime("%Y%m%d-%H%M%S")
 
-            # Add batch_id to all showtimes
+            # Add batch_id to all showtimes and log job creation
             for s in showtimes:
                 s["batch_id"] = batch_id
+                log_job_creation(db, batch_id, s)  # Log job creation for lifecycle tracking
 
             # Publish to Pub/Sub
             count = publish_to_pubsub(publisher, showtimes)

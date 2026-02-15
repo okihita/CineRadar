@@ -210,3 +210,53 @@ We follow **Clean Architecture** principles. The dependency rule is strict: inne
       - `dispatcher/`: Pub/Sub triggered function that fans out scraping jobs to workers.
       - `scraper/`: The worker function that scrapes a specific batch of movies/theatres.
       - `sweeper/`: Cleanup function that monitors job status and handles failures/retries.
+
+---
+
+## 📊 Job Lifecycle Logging
+
+The JIT scraper system includes comprehensive job lifecycle logging for debugging and performance analysis.
+
+### Architecture
+
+Each scraping job is tracked from creation to completion:
+
+```
+scraper_logs/{date}/dispatches/{HH-MM}/jobs/{showtime_id}
+├── status: "pending" → "running" → "success" | "error"
+├── lifecycle: {created_at, started_at, finished_at, ...}
+├── checkpoints: {token, api, schema, occupancy, snapshot}
+├── timing: {queue_time_ms, api_call_ms, processing_ms}
+└── error: {checkpoint, code, message}  # if failed
+```
+
+### Checkpoints
+
+| Checkpoint | Description |
+|------------|-------------|
+| JOB_CREATED | Job published by dispatcher |
+| JOB_STARTED | Scraper picked up the job |
+| TOKEN_ACQUIRED | Auth token obtained |
+| API_CALLED | TIX API request started |
+| API_COMPLETED | TIX API response received |
+| SCHEMA_VALIDATED | Response schema validated |
+| OCCUPANCY_CALCULATED | Seat occupancy computed |
+| SNAPSHOT_SAVED | Data saved to Firestore |
+| JOB_COMPLETED | Final status logged |
+
+### Key Classes
+
+- **[`JobLogger`](functions/scraper/main.py)**: Tracks job lifecycle checkpoints
+- **[`log_job_creation()`](functions/dispatcher/main.py)**: Logs job creation in dispatcher
+
+### Timing Metrics
+
+The system automatically computes:
+- **queue_time_ms**: Time from job creation to scraper pickup
+- **token_acquire_ms**: Time to get valid auth token
+- **api_call_ms**: TIX API response time
+- **processing_ms**: Total scraper execution time
+
+### Cost Estimate
+
+~$2.71/month for full lifecycle logging (~8 writes × 6,265 jobs × 30 days)

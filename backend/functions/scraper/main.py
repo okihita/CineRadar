@@ -7,7 +7,7 @@ Pub/Sub-triggered Cloud Function that:
 3. Calls TIX.id API to get seat layout
 4. Saves compressed snapshot to Firestore
 
-Configure max_instances=5 to limit concurrency and avoid rate limiting.
+Configure max_instances=1 to limit concurrency and avoid rate limiting.
 """
 
 import base64
@@ -16,7 +16,7 @@ import gzip
 import json
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, cast
 from zoneinfo import ZoneInfo
 
@@ -140,6 +140,283 @@ def log_success_to_firestore(batch_id: str) -> None:
         logger.warning(f"Failed to log success to Firestore: {e}")
 
 
+# ============================================================================
+# Job Lifecycle Logger - Tracks job progress through checkpoints
+# ============================================================================
+
+class JobLogger:
+    """Tracks job lifecycle checkpoints with timestamps.
+
+    Logs each job's progress to:
+    scraper_logs/{date}/dispatches/{dispatch_slot}/jobs/{showtime_id}
+
+    Checkpoints:
+    1. JOB_STARTED - Scraper picked up the job
+    2. TOKEN_ACQUIRED - Auth token obtained
+    3. API_CALLED - TIX API request started
+    4. API_COMPLETED - TIX API response received
+    5. SCHEMA_VALIDATED - Response schema validated
+    6. OCCUPANCY_CALCULATED - Seat occupancy computed
+    7. SNAPSHOT_SAVED - Data saved to Firestore
+    8. JOB_COMPLETED - Final status (success/error)
+    """
+
+    def __init__(self, db: firestore.Client, batch_id: str, showtime_id: str):
+        self.db = db
+        self.batch_id = batch_id
+        self.showtime_id = showtime_id
+        self.date_str, self.dispatch_slot = self._parse_batch_id(batch_id)
+        self.job_ref = self._get_job_ref()
+        self.timestamps: dict[str, str] = {}
+        self.checkpoints: dict[str, dict[str, Any]] = {}
+        self._start_time: float | None = None
+
+    def _parse_batch_id(self, batch_id: str) -> tuple[str, str]:
+        """Parse batch_id into (date_str, dispatch_slot)."""
+        if batch_id:
+            try:
+                dt = datetime.strptime(batch_id, "%Y%m%d-%H%M%S")
+                return dt.strftime("%Y-%m-%d"), dt.strftime("%H-%M")
+            except ValueError:
+                pass
+        now = datetime.now(JAKARTA_TZ)
+        return now.strftime("%Y-%m-%d"), "_unbatched"
+
+    def _get_job_ref(self) -> firestore.DocumentReference:
+        """Get Firestore reference to job document."""
+        return (
+            self.db.collection("scraper_logs")
+            .document(self.date_str)
+            .collection("dispatches")
+            .document(self.dispatch_slot)
+            .collection("jobs")
+            .document(self.showtime_id)
+        )
+
+    def _now(self) -> str:
+        """Get current UTC timestamp as ISO string."""
+        return datetime.now(UTC).isoformat()
+
+    def _now_ms(self) -> float:
+        """Get current time in milliseconds for timing calculations."""
+        import time
+        return time.time() * 1000
+
+    def _update(self, data: dict[str, Any]) -> None:
+        """Update job document with new data (fire-and-forget)."""
+        try:
+            data["updated_at"] = self._now()
+            self.job_ref.set(data, merge=True)
+        except Exception as e:
+            logger.warning(f"JobLogger: Failed to update job doc: {e}")
+
+    # -------------------------------------------------------------------------
+    # Checkpoint Methods
+    # -------------------------------------------------------------------------
+
+    def log_started(self, job_data: dict[str, Any]) -> None:
+        """Checkpoint 1: Job started processing."""
+        self._start_time = self._now_ms()
+        self.timestamps["started_at"] = self._now()
+        self._update({
+            "showtime_id": self.showtime_id,
+            "batch_id": self.batch_id,
+            "job_data": {
+                "movie_id": job_data.get("movie_id"),
+                "movie_title": job_data.get("movie_title"),
+                "theatre_id": job_data.get("theatre_id"),
+                "theatre_name": job_data.get("theatre_name"),
+                "city": job_data.get("city"),
+                "merchant": job_data.get("merchant"),
+                "showtime": job_data.get("showtime"),
+            },
+            "lifecycle": self.timestamps,
+            "status": "running",
+            "created_at": self._now(),  # Document creation time
+        })
+
+    def log_token_acquired(self, age_minutes: float, was_refreshed: bool) -> None:
+        """Checkpoint 2: Token acquired."""
+        self.timestamps["token_acquired_at"] = self._now()
+        self.checkpoints["token"] = {
+            "acquired": True,
+            "age_minutes": round(age_minutes, 1),
+            "was_refreshed": was_refreshed,
+        }
+        self._update({
+            "lifecycle": self.timestamps,
+            "checkpoints": self.checkpoints,
+        })
+
+    def log_token_failed(self, reason: str) -> None:
+        """Checkpoint 2 (error): Token acquisition failed."""
+        self.timestamps["token_failed_at"] = self._now()
+        self.checkpoints["token"] = {
+            "acquired": False,
+            "reason": reason,
+        }
+        self._update({
+            "lifecycle": self.timestamps,
+            "checkpoints": self.checkpoints,
+        })
+
+    def log_api_started(self) -> None:
+        """Checkpoint 3: API call started."""
+        self.timestamps["api_called_at"] = self._now()
+        self._update({"lifecycle": self.timestamps})
+
+    def log_api_completed(self, http_status: int, retries: int, error_detail: str | None) -> None:
+        """Checkpoint 4: API call completed."""
+        self.timestamps["api_completed_at"] = self._now()
+        self.checkpoints["api"] = {
+            "http_status": http_status,
+            "retries": retries,
+            "error_detail": error_detail,
+            "success": http_status == 200 and error_detail is None,
+        }
+        self._update({
+            "lifecycle": self.timestamps,
+            "checkpoints": self.checkpoints,
+        })
+
+    def log_schema_validated(self, is_valid: bool, severity: str | None, message: str | None) -> None:
+        """Checkpoint 5: Schema validation completed."""
+        self.timestamps["schema_validated_at"] = self._now()
+        self.checkpoints["schema"] = {
+            "validated": True,
+            "is_valid": is_valid,
+            "severity": severity,
+            "message": message,
+        }
+        self._update({
+            "lifecycle": self.timestamps,
+            "checkpoints": self.checkpoints,
+        })
+
+    def log_occupancy_calculated(self, total_seats: int, sold_seats: int, occupancy_pct: float) -> None:
+        """Checkpoint 6: Occupancy calculation completed."""
+        self.timestamps["occupancy_calculated_at"] = self._now()
+        self.checkpoints["occupancy"] = {
+            "total_seats": total_seats,
+            "sold_seats": sold_seats,
+            "occupancy_pct": round(occupancy_pct, 1),
+        }
+        self._update({
+            "lifecycle": self.timestamps,
+            "checkpoints": self.checkpoints,
+        })
+
+    def log_snapshot_saved(self, document_path: str) -> None:
+        """Checkpoint 7: Snapshot saved to Firestore."""
+        self.timestamps["snapshot_saved_at"] = self._now()
+        self.checkpoints["snapshot"] = {
+            "saved": True,
+            "document_path": document_path,
+        }
+        self._update({
+            "lifecycle": self.timestamps,
+            "checkpoints": self.checkpoints,
+        })
+
+    def log_snapshot_failed(self, reason: str) -> None:
+        """Checkpoint 7 (error): Snapshot save failed."""
+        self.timestamps["snapshot_failed_at"] = self._now()
+        self.checkpoints["snapshot"] = {
+            "saved": False,
+            "reason": reason,
+        }
+        self._update({
+            "lifecycle": self.timestamps,
+            "checkpoints": self.checkpoints,
+        })
+
+    def log_success(self) -> None:
+        """Checkpoint 8: Job completed successfully."""
+        self.timestamps["finished_at"] = self._now()
+        timing = self._compute_timing()
+
+        self._update({
+            "lifecycle": self.timestamps,
+            "timing": timing,
+            "status": "success",
+            "error": None,
+        })
+
+    def log_error(self, checkpoint: str, error_code: str, message: str, details: dict[str, Any] | None = None) -> None:
+        """Checkpoint 8 (error): Job failed with error."""
+        self.timestamps["finished_at"] = self._now()
+        timing = self._compute_timing()
+
+        error_info: dict[str, Any] = {
+            "checkpoint": checkpoint,
+            "code": error_code,
+            "message": message,
+        }
+        if details:
+            error_info.update(details)
+
+        self._update({
+            "lifecycle": self.timestamps,
+            "timing": timing,
+            "status": "error",
+            "error": error_info,
+        })
+
+    # -------------------------------------------------------------------------
+    # Timing Calculations
+    # -------------------------------------------------------------------------
+
+    def _compute_timing(self) -> dict[str, int]:
+        """Compute timing metrics from timestamps."""
+        def parse_ts(ts: str | None) -> datetime | None:
+            if not ts:
+                return None
+            try:
+                return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+            except ValueError:
+                return None
+
+        timing: dict[str, int] = {}
+
+        # Queue time: started_at - created_at (from existing doc)
+        if "started_at" in self.timestamps:
+            try:
+                doc = self.job_ref.get()
+                if doc.exists:
+                    doc_data = doc.to_dict() or {}
+                    created_at = doc_data.get("lifecycle", {}).get("created_at")
+                    started_at = parse_ts(self.timestamps.get("started_at"))
+                    if created_at and started_at:
+                        created_dt = parse_ts(created_at)
+                        if created_dt:
+                            timing["queue_time_ms"] = int((started_at - created_dt).total_seconds() * 1000)
+            except Exception:
+                pass
+
+        # Token acquire time
+        if "token_acquired_at" in self.timestamps and "started_at" in self.timestamps:
+            token_at = parse_ts(self.timestamps["token_acquired_at"])
+            started_at = parse_ts(self.timestamps["started_at"])
+            if token_at and started_at:
+                timing["token_acquire_ms"] = int((token_at - started_at).total_seconds() * 1000)
+
+        # API call time
+        if "api_completed_at" in self.timestamps and "api_called_at" in self.timestamps:
+            api_end = parse_ts(self.timestamps["api_completed_at"])
+            api_start = parse_ts(self.timestamps["api_called_at"])
+            if api_end and api_start:
+                timing["api_call_ms"] = int((api_end - api_start).total_seconds() * 1000)
+
+        # Processing time: finished_at - started_at
+        if "finished_at" in self.timestamps and "started_at" in self.timestamps:
+            finished_at = parse_ts(self.timestamps["finished_at"])
+            started_at = parse_ts(self.timestamps["started_at"])
+            if finished_at and started_at:
+                timing["processing_ms"] = int((finished_at - started_at).total_seconds() * 1000)
+
+        return timing
+
+
 def log_critical(message: str, context: dict[str, Any]) -> None:
     """Log critical error with context for alerting."""
     logger.critical(f"🚨 CRITICAL: {message} | Context: {context}")
@@ -193,7 +470,7 @@ class TokenRefreshLock:
 
     def acquire(self, instance_id: str) -> bool:
         """Attempt to acquire the lock."""
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         try:
             # Try to create lock doc
             self.lock_ref.create({
@@ -212,8 +489,8 @@ class TokenRefreshLock:
             try:
                 locked_at = datetime.fromisoformat(locked_at_str)
                 if locked_at.tzinfo is None:
-                    locked_at = locked_at.replace(tzinfo=timezone.utc)
-                age = (datetime.now(timezone.utc) - locked_at).total_seconds()
+                    locked_at = locked_at.replace(tzinfo=UTC)
+                age = (datetime.now(UTC) - locked_at).total_seconds()
                 if age > self.timeout:
                     logger.warning(f"Taking over stale lock (age={age:.1f}s)")
                     self.lock_ref.set({
@@ -286,7 +563,7 @@ def refresh_access_token(db: firestore.Client, refresh_token: str) -> str | None
 
             if new_token:
                 # Update Firestore with UTC timezone-aware timestamp
-                now_iso = datetime.now(timezone.utc).isoformat()
+                now_iso = datetime.now(UTC).isoformat()
                 db.collection("auth_tokens").document("tix_jwt").set(
                     {
                         "token": new_token,
@@ -335,10 +612,10 @@ def get_valid_token(db: firestore.Client, force_refresh: bool = False) -> str | 
                 # looks like Jakarta time (afternoon hours = morning UTC)
                 # For safety, treat as UTC but log a warning
                 logger.warning(f"Token stored_at has no timezone, assuming UTC: {stored_at_str}")
-                stored_at = stored_at.replace(tzinfo=timezone.utc)
-            
+                stored_at = stored_at.replace(tzinfo=UTC)
+
             # Always use UTC for comparison
-            age = datetime.now(timezone.utc) - stored_at
+            age = datetime.now(UTC) - stored_at
 
             age_minutes = age.total_seconds() / 60
 
@@ -364,6 +641,51 @@ def get_valid_token(db: firestore.Client, force_refresh: bool = False) -> str | 
         logger.warning("Refresh failed, using existing token as fallback")
 
     return cast("str", current_token)
+
+
+def get_valid_token_with_metadata(db: firestore.Client, force_refresh: bool = False) -> tuple[str | None, float, bool]:
+    """Get a valid token with metadata for job logging.
+
+    Returns:
+        Tuple of (token, age_minutes, was_refreshed)
+        - token: The auth token, or None if unavailable
+        - age_minutes: Age of the token in minutes (0 if refreshed)
+        - was_refreshed: True if token was just refreshed
+    """
+    token_data = load_token_data(db)
+    if not token_data or not token_data.get("token"):
+        return None, 0.0, False
+
+    current_token = token_data["token"]
+    refresh_token = token_data.get("refresh_token")
+    stored_at_str = token_data.get("stored_at")
+
+    age_minutes = 0.0
+    should_refresh = force_refresh
+
+    if stored_at_str:
+        try:
+            stored_at = datetime.fromisoformat(stored_at_str)
+            if stored_at.tzinfo is None:
+                stored_at = stored_at.replace(tzinfo=UTC)
+            age = datetime.now(UTC) - stored_at
+            age_minutes = age.total_seconds() / 60
+
+            if age_minutes >= 25:
+                should_refresh = True
+        except ValueError:
+            should_refresh = True
+    else:
+        should_refresh = True
+
+    if should_refresh and refresh_token:
+        new_token = refresh_access_token(db, refresh_token)
+        if new_token:
+            return new_token, 0.0, True  # Fresh token, age = 0
+        # Refresh failed, use existing token
+        logger.warning("Refresh failed, using existing token as fallback")
+
+    return cast("str", current_token), age_minutes, False
 
 
 def fetch_seat_layout(showtime_id: str, merchant: str, token: str) -> dict[str, Any] | None:
@@ -608,14 +930,19 @@ def save_snapshot(
     sold_seats: int,
     occupancy_pct: float,
     raw_api_response: dict[str, Any] | None = None,
-) -> bool:
+) -> tuple[bool, str]:
     """Save showtime snapshot to Firestore with compressed layout and raw API response.
 
     Path: movie_performance/{movie_id}/days/{date}/showtimes/{showtime_id}
+
+    Returns:
+        Tuple of (success, document_path)
     """
     movie_id = showtime_data["movie_id"]
     date = showtime_data["date"]
     showtime_id = showtime_data["showtime_id"]
+
+    document_path = f"movie_performance/{movie_id}/days/{date}/showtimes/{showtime_id}"
 
     # Compress layout
     layout_json_str = json.dumps(layout)
@@ -651,10 +978,10 @@ def save_snapshot(
         )
         doc_ref.set(snapshot_data)
         logger.info(f"Saved snapshot for {showtime_id}")
-        return True
+        return True, document_path
     except Exception as e:
         logger.error(f"Failed to save snapshot: {e}")
-        return False
+        return False, document_path
 
 
 @functions_framework.cloud_event  # type: ignore[untyped-decorator]
@@ -663,6 +990,15 @@ def scrape_seat(cloud_event: Any) -> None:
 
     Triggered by messages on scrape-seat-jit topic.
     Scrapes one showtime and saves to Firestore.
+
+    Job lifecycle checkpoints are logged via JobLogger:
+    1. JOB_STARTED - Entry point
+    2. TOKEN_ACQUIRED - After token load
+    3. API_CALLED/COMPLETED - TIX API interaction
+    4. SCHEMA_VALIDATED - Response validation
+    5. OCCUPANCY_CALCULATED - Seat processing
+    6. SNAPSHOT_SAVED - Firestore write
+    7. JOB_COMPLETED - Success or error
     """
     # Decode Pub/Sub message
     message_data = base64.b64decode(cloud_event.data["message"]["data"])
@@ -673,14 +1009,25 @@ def scrape_seat(cloud_event: Any) -> None:
     showtime_time = showtime_data.get("showtime", "")
     batch_id = showtime_data.get("batch_id", "")
     movie_title = showtime_data.get("movie_title", "Unknown")[:50]
+    merchant = showtime_data.get("merchant", "XXI")
 
     logger.info(f"Scraping {theatre_name} @ {showtime_time}")
 
     db = get_firestore_client()
 
-    # Load token (with auto-refresh)
-    token = get_valid_token(db)
+    # Initialize job logger for lifecycle tracking
+    job_logger = JobLogger(db, batch_id, showtime_id) if batch_id else None
+
+    # CHECKPOINT 1: Job started
+    if job_logger:
+        job_logger.log_started(showtime_data)
+
+    # CHECKPOINT 2: Load token (with auto-refresh)
+    token, token_age, was_refreshed = get_valid_token_with_metadata(db)
     if not token:
+        if job_logger:
+            job_logger.log_token_failed("No valid token available")
+            job_logger.log_error("token_acquire", "NO_TOKEN", "No valid token available")
         log_critical(
             "No valid token available - authentication failure",
             {
@@ -693,11 +1040,29 @@ def scrape_seat(cloud_event: Any) -> None:
         )
         return  # Pub/Sub will retry
 
-    # Fetch seat layout - need merchant for API path
-    merchant = showtime_data.get("merchant", "XXI")
+    if job_logger:
+        job_logger.log_token_acquired(token_age, was_refreshed)
+
+    # CHECKPOINT 3: API call started
+    if job_logger:
+        job_logger.log_api_started()
+
     raw_api_response, status_code, error_detail = fetch_seat_layout_with_retry(showtime_id, merchant, token, db)
 
+    # CHECKPOINT 4: API call completed
+    if job_logger:
+        # Track if there was a retry (401 triggers retry)
+        retries = 1 if status_code == 401 else 0
+        job_logger.log_api_completed(status_code, retries, error_detail)
+
     if not raw_api_response:
+        if job_logger:
+            job_logger.log_error(
+                "api_call",
+                f"HTTP_{status_code}",
+                f"Failed to fetch seat layout: {error_detail}",
+                {"http_status": status_code, "api_error": error_detail}
+            )
         log_critical(
             f"Failed to fetch seat layout (HTTP {status_code})",
             {
@@ -714,9 +1079,12 @@ def scrape_seat(cloud_event: Any) -> None:
         )
         return  # Pub/Sub will retry
 
-    # Validate schema if enabled
+    # CHECKPOINT 5: Schema validation
     if ENABLE_SCHEMA_VALIDATION:
         is_valid, severity, validation_msg = validate_api_response(raw_api_response)
+
+        if job_logger:
+            job_logger.log_schema_validated(is_valid, severity if not is_valid else None, validation_msg if not is_valid else None)
 
         if not is_valid:
             if severity == "CRITICAL":
@@ -744,19 +1112,33 @@ def scrape_seat(cloud_event: Any) -> None:
     data = raw_api_response.get("data", {})
     seat_map = data.get("seat_map", [])
 
-    # Calculate occupancy
+    # CHECKPOINT 6: Occupancy calculation
     total_seats, sold_seats, occupancy_pct, layout = calculate_occupancy(seat_map)
 
-    # Save to Firestore with raw API response
-    save_snapshot(
+    if job_logger:
+        job_logger.log_occupancy_calculated(total_seats, sold_seats, occupancy_pct)
+
+    # CHECKPOINT 7: Save snapshot
+    success, doc_path = save_snapshot(
         db, showtime_data, layout, total_seats, sold_seats, occupancy_pct, raw_api_response
     )
+
+    if job_logger:
+        if success:
+            job_logger.log_snapshot_saved(doc_path)
+        else:
+            job_logger.log_snapshot_failed("Failed to save to Firestore")
+            job_logger.log_error("snapshot_save", "SAVE_FAILED", "Failed to save snapshot to Firestore")
 
     logger.info(
         f"✓ {theatre_name} @ {showtime_time}: {occupancy_pct}% ({sold_seats}/{total_seats})"
     )
 
-    # Log success to dispatch summary (replaces jit_stats)
-    batch_id = showtime_data.get("batch_id")
-    if batch_id:
-        log_success_to_firestore(batch_id)
+    # CHECKPOINT 8: Job completed successfully
+    if success:
+        if job_logger:
+            job_logger.log_success()
+
+        # Log success to dispatch summary
+        if batch_id:
+            log_success_to_firestore(batch_id)
