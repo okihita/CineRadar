@@ -13,6 +13,8 @@ dependencies = [
     "aiohttp>=3.9.0",
     "google-cloud-firestore>=2.13.0",
     "pydantic>=2.5.0",
+    # Security fix: CVE-2026-26007 - Subgroup Attack on SECT Curves
+    "cryptography>=46.0.5",
 ]
 
 [project.optional-dependencies]
