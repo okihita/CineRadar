@@ -11,8 +11,8 @@ interface DispatchTimelineProps {
 }
 
 interface TimelineSlot {
-    slot: string;
-    time: string;
+    slot: string;  // Keep for internal key (doc ID)
+    showtimeBucket: string;  // e.g., "12:15-12:20"
     dispatch: DispatchEntry;
 }
 
@@ -27,7 +27,7 @@ export const DispatchTimeline: React.FC<DispatchTimelineProps> = ({
     const timeline: TimelineSlot[] = Object.entries(dispatches)
         .map(([slot, dispatch]) => ({
             slot,
-            time: slot.replace('-', ':'),
+            showtimeBucket: `${dispatch.window_start}-${dispatch.window_end}`,
             dispatch,
         }))
         .sort((a, b) => a.slot.localeCompare(b.slot));
@@ -79,16 +79,16 @@ export const DispatchTimeline: React.FC<DispatchTimelineProps> = ({
             <div className="px-4 py-3 border-b border-border flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     <Clock className="w-4 h-4 text-blue-500" />
-                    Dispatch Timeline
+                    Showtime Coverage
                 </h3>
                 <span className="text-xs text-muted-foreground">
-                    {timeline.length} dispatches
+                    {timeline.length} time slots
                 </span>
             </div>
 
             {/* Timeline */}
             <div className="divide-y divide-border/50">
-                {visibleTimeline.map(({ slot, time, dispatch }) => {
+                {visibleTimeline.map(({ slot, showtimeBucket, dispatch }) => {
                     const status = getStatusDisplay(dispatch);
                     const StatusIcon = status.icon;
                     const barWidth = ((dispatch.showtimes_found || 0) / maxShowtimes) * 100;
@@ -109,8 +109,8 @@ export const DispatchTimeline: React.FC<DispatchTimelineProps> = ({
                             >
                                 {/* Time and bar */}
                                 <div className="flex items-center gap-4 flex-1">
-                                    <div className="w-14 text-sm font-mono text-foreground">
-                                        {time}
+                                    <div className="w-24 text-sm font-mono text-foreground">
+                                        {showtimeBucket}
                                     </div>
                                     <div className="flex-1 max-w-xs">
                                         <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -154,7 +154,13 @@ export const DispatchTimeline: React.FC<DispatchTimelineProps> = ({
                             {/* Expanded details */}
                             {isExpanded && (
                                 <div className="bg-muted/30 px-4 py-3 border-t border-border/50">
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+                                        <div>
+                                            <span className="text-muted-foreground text-xs">Dispatch Time</span>
+                                            <div className="text-foreground font-mono">
+                                                {dispatch.time_slot || '-'}
+                                            </div>
+                                        </div>
                                         <div>
                                             <span className="text-muted-foreground text-xs">Dispatched At</span>
                                             <div className="text-foreground font-mono">
@@ -201,7 +207,7 @@ export const DispatchTimeline: React.FC<DispatchTimelineProps> = ({
                         onClick={() => setShowAll(true)}
                         className="w-full py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors"
                     >
-                        Show {hiddenCount} more dispatches
+                        Show {hiddenCount} more time slots
                     </button>
                 </div>
             )}
