@@ -7,14 +7,14 @@ interface DailyStatsCardsProps {
     totalSchedules: number;
     coveragePercent: number;
     totalDispatches: number;
-    errorDispatches: number;
+    totalErrors: number;  // Changed from errorDispatches to totalErrors
 }
 
 export const DailyStatsCards: React.FC<DailyStatsCardsProps> = ({
     totalSchedules,
     coveragePercent,
     totalDispatches,
-    errorDispatches
+    totalErrors
 }) => {
     const stats = [
         {
@@ -49,12 +49,12 @@ export const DailyStatsCards: React.FC<DailyStatsCardsProps> = ({
         },
         {
             label: 'Errors',
-            value: errorDispatches,
+            value: totalErrors > 0 ? totalErrors.toLocaleString() : '0',
             icon: AlertTriangle,
-            color: errorDispatches > 0
+            color: totalErrors > 0
                 ? 'text-red-500 dark:text-red-400'
                 : 'text-muted-foreground',
-            bgColor: errorDispatches > 0
+            bgColor: totalErrors > 0
                 ? 'bg-red-500/10 dark:bg-red-500/10'
                 : 'bg-muted',
         },

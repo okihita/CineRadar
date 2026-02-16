@@ -150,7 +150,7 @@ export default function ScraperDatePage({ params }: PageProps) {
                     totalSchedules={dayStats.totalSchedules}
                     coveragePercent={dayStats.coveragePercent}
                     totalDispatches={dayStats.totalDispatches}
-                    errorDispatches={dayStats.errorDispatches}
+                    totalErrors={dayStats.totalErrors}
                 />
             </div>
 
