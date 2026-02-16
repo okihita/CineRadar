@@ -8,7 +8,7 @@ Requires authentication token from Firestore.
 import logging
 from typing import Any
 
-import aiohttp
+import httpx
 
 from backend.infrastructure.core.config import API_BASE, USER_AGENT
 
@@ -32,7 +32,7 @@ class MovieDetailsClient:
     """
 
     def __init__(self, timeout: float = 30.0) -> None:
-        self.timeout = aiohttp.ClientTimeout(total=timeout)
+        self.timeout = timeout
         self._token: str | None = None
 
     def set_token(self, token: str) -> None:
@@ -91,15 +91,13 @@ class MovieDetailsClient:
         url = f"{MOVIE_DETAILS_ENDPOINT}/{movie_id}"
 
         try:
-            async with (
-                aiohttp.ClientSession(timeout=self.timeout) as session,
-                session.get(url, headers=self._get_headers()) as response,
-            ):
-                if response.status != 200:
-                    logger.error(f"HTTP error fetching movie {movie_id}: {response.status}")
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.get(url, headers=self._get_headers())
+                if response.status_code != 200:
+                    logger.error(f"HTTP error fetching movie {movie_id}: {response.status_code}")
                     return None
 
-                json_data = await response.json()
+                json_data = response.json()
 
                 if not json_data.get("success"):
                     logger.warning(f"API returned success=false for movie {movie_id}")
@@ -108,7 +106,7 @@ class MovieDetailsClient:
                 data: dict[str, Any] | None = json_data.get("data")
                 return data
 
-        except aiohttp.ClientError as e:
+        except httpx.RequestError as e:
             logger.error(f"Request error fetching movie {movie_id}: {e}")
             return None
         except Exception as e:

@@ -13,12 +13,13 @@ Usage:
     token = await refresher.ensure_valid_token()
 """
 
+import asyncio
 import logging
 import os
 import time
 from typing import cast
 
-import requests
+import httpx
 
 from backend.domain.models import Token
 from backend.infrastructure.repositories.firestore_token import (
@@ -67,7 +68,7 @@ class TokenRefresher:
             return True
         return token.minutes_until_expiry < self.MIN_TTL_MINUTES
 
-    def try_api_refresh(self, refresh_token: str) -> str | None:
+    async def try_api_refresh(self, refresh_token: str) -> str | None:
         """
         Attempt to refresh access token via API.
 
@@ -80,35 +81,36 @@ class TokenRefresher:
         logger.info("🔄 Attempting API token refresh...")
 
         try:
-            response = requests.post(
-                self.REFRESH_API_URL,
-                headers={
-                    "Authorization": f"Bearer {refresh_token}",
-                    "Content-Type": "application/json",
-                    "platform": "web",
-                },
-                timeout=30,
-            )
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    self.REFRESH_API_URL,
+                    headers={
+                        "Authorization": f"Bearer {refresh_token}",
+                        "Content-Type": "application/json",
+                        "platform": "web",
+                    },
+                    timeout=30,
+                )
 
-            if response.status_code == 200:
-                data = response.json()
-                new_token = data.get("data", {}).get("token")
-                if new_token:
-                    logger.info("✅ API refresh successful!")
-                    return cast("str", new_token)
+                if response.status_code == 200:
+                    data = response.json()
+                    new_token = data.get("data", {}).get("token")
+                    if new_token:
+                        logger.info("✅ API refresh successful!")
+                        return cast("str", new_token)
+                    else:
+                        logger.error("❌ API refresh response missing token")
+                elif response.status_code == 401:
+                    logger.warning("⚠️ Refresh token expired or invalid (401)")
                 else:
-                    logger.error("❌ API refresh response missing token")
-            elif response.status_code == 401:
-                logger.warning("⚠️ Refresh token expired or invalid (401)")
-            else:
-                logger.error(f"❌ API refresh failed: {response.status_code}")
+                    logger.error(f"❌ API refresh failed: {response.status_code}")
 
-        except requests.RequestException as e:
+        except httpx.RequestError as e:
             logger.error(f"❌ API refresh request failed: {e}")
 
         return None
 
-    def trigger_gha_workflow(self) -> str | None:
+    async def trigger_gha_workflow(self) -> str | None:
         """
         Trigger the token-refresh GHA workflow.
 
@@ -123,47 +125,48 @@ class TokenRefresher:
 
         try:
             url = f"https://api.github.com/repos/{self.github_repo}/actions/workflows/token-refresh.yml/dispatches"
-            response = requests.post(
-                url,
-                headers={
-                    "Authorization": f"Bearer {self.github_token}",
-                    "Accept": "application/vnd.github+json",
-                    "X-GitHub-Api-Version": "2022-11-28",
-                },
-                json={"ref": "main"},
-                timeout=30,
-            )
-
-            if response.status_code == 204:
-                logger.info("✅ GHA workflow triggered!")
-                # Get the run ID by listing recent runs
-                time.sleep(2)
-                runs_url = f"https://api.github.com/repos/{self.github_repo}/actions/workflows/token-refresh.yml/runs"
-                runs_response = requests.get(
-                    runs_url,
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    url,
                     headers={
                         "Authorization": f"Bearer {self.github_token}",
                         "Accept": "application/vnd.github+json",
+                        "X-GitHub-Api-Version": "2022-11-28",
                     },
-                    params={"per_page": 1},
+                    json={"ref": "main"},
                     timeout=30,
                 )
-                if runs_response.status_code == 200:
-                    runs = runs_response.json().get("workflow_runs", [])
-                    if runs:
-                        return str(runs[0]["id"])
-                return "triggered"  # Fallback if we can't get run ID
-            else:
-                logger.error(
-                    f"❌ Failed to trigger workflow: {response.status_code} {response.text}"
-                )
 
-        except requests.RequestException as e:
+                if response.status_code == 204:
+                    logger.info("✅ GHA workflow triggered!")
+                    # Get the run ID by listing recent runs
+                    await asyncio.sleep(2)
+                    runs_url = f"https://api.github.com/repos/{self.github_repo}/actions/workflows/token-refresh.yml/runs"
+                    runs_response = await client.get(
+                        runs_url,
+                        headers={
+                            "Authorization": f"Bearer {self.github_token}",
+                            "Accept": "application/vnd.github+json",
+                        },
+                        params={"per_page": 1},
+                        timeout=30,
+                    )
+                    if runs_response.status_code == 200:
+                        runs = runs_response.json().get("workflow_runs", [])
+                        if runs:
+                            return str(runs[0]["id"])
+                    return "triggered"  # Fallback if we can't get run ID
+                else:
+                    logger.error(
+                        f"❌ Failed to trigger workflow: {response.status_code} {response.text}"
+                    )
+
+        except httpx.RequestError as e:
             logger.error(f"❌ Workflow trigger request failed: {e}")
 
         return None
 
-    def wait_for_gha_completion(self, run_id: str) -> bool:
+    async def wait_for_gha_completion(self, run_id: str) -> bool:
         """
         Wait for GHA workflow to complete.
 
@@ -173,44 +176,45 @@ class TokenRefresher:
         if run_id == "triggered":
             # Can't track without run ID, just wait a fixed time
             logger.info("⏳ Waiting 90s for workflow (no run ID)...")
-            time.sleep(90)
+            await asyncio.sleep(90)
             return True  # Assume success, will verify token anyway
 
         logger.info(f"⏳ Waiting for GHA workflow {run_id} to complete...")
 
-        start_time = time.time()
+        start_time = time.monotonic()
         url = f"https://api.github.com/repos/{self.github_repo}/actions/runs/{run_id}"
 
-        while time.time() - start_time < self.GHA_TIMEOUT:
-            try:
-                response = requests.get(
-                    url,
-                    headers={
-                        "Authorization": f"Bearer {self.github_token}",
-                        "Accept": "application/vnd.github+json",
-                    },
-                    timeout=30,
-                )
+        async with httpx.AsyncClient() as client:
+            while time.monotonic() - start_time < self.GHA_TIMEOUT:
+                try:
+                    response = await client.get(
+                        url,
+                        headers={
+                            "Authorization": f"Bearer {self.github_token}",
+                            "Accept": "application/vnd.github+json",
+                        },
+                        timeout=30,
+                    )
 
-                if response.status_code == 200:
-                    run = response.json()
-                    status = run.get("status")
-                    conclusion = run.get("conclusion")
+                    if response.status_code == 200:
+                        run = response.json()
+                        status = run.get("status")
+                        conclusion = run.get("conclusion")
 
-                    if status == "completed":
-                        if conclusion == "success":
-                            logger.info("✅ GHA workflow completed successfully!")
-                            return True
+                        if status == "completed":
+                            if conclusion == "success":
+                                logger.info("✅ GHA workflow completed successfully!")
+                                return True
+                            else:
+                                logger.error(f"❌ GHA workflow failed: {conclusion}")
+                                return False
                         else:
-                            logger.error(f"❌ GHA workflow failed: {conclusion}")
-                            return False
-                    else:
-                        logger.debug(f"   Workflow status: {status}")
+                            logger.debug(f"   Workflow status: {status}")
 
-            except requests.RequestException as e:
-                logger.warning(f"⚠️ Error checking workflow status: {e}")
+                except httpx.RequestError as e:
+                    logger.warning(f"⚠️ Error checking workflow status: {e}")
 
-            time.sleep(self.GHA_POLL_INTERVAL)
+                await asyncio.sleep(self.GHA_POLL_INTERVAL)
 
         logger.error("❌ GHA workflow timed out")
         return False
@@ -234,7 +238,7 @@ class TokenRefresher:
 
         # Try API refresh first
         if token and token.refresh_token:
-            new_access_token = self.try_api_refresh(token.refresh_token)
+            new_access_token = await self.try_api_refresh(token.refresh_token)
             if new_access_token:
                 # Store new token, preserve refresh token
                 store_token(new_access_token, token.phone, refresh_token=token.refresh_token)
@@ -247,9 +251,9 @@ class TokenRefresher:
 
         # Fallback to GHA Full Login
         logger.warning("⚠️ API refresh failed, falling back to GHA Full Login...")
-        run_id = self.trigger_gha_workflow()
+        run_id = await self.trigger_gha_workflow()
 
-        if run_id and self.wait_for_gha_completion(run_id):
+        if run_id and await self.wait_for_gha_completion(run_id):
             # Reload token from storage
             new_token = self.get_current_token()
             if new_token and not self.needs_refresh(new_token):

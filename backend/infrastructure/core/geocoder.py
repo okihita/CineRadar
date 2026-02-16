@@ -11,7 +11,7 @@ import logging
 import os
 from typing import Any, cast
 
-import aiohttp
+import httpx
 
 # Default cache file location
 DEFAULT_CACHE_PATH = os.path.join(
@@ -22,7 +22,7 @@ DEFAULT_CACHE_PATH = os.path.join(
 async def geocode_address(
     address: str,
     city: str,
-    session: aiohttp.ClientSession,
+    client: httpx.AsyncClient,
     cache: dict[str, dict[str, float]],
 ) -> dict[str, float] | None:
     """
@@ -31,7 +31,7 @@ async def geocode_address(
     Args:
         address: Street address to geocode
         city: City name for context
-        session: aiohttp client session (reuse for rate limiting)
+        client: httpx async client (reuse for rate limiting)
         cache: In-memory cache dict to store results
 
     Returns:
@@ -56,17 +56,20 @@ async def geocode_address(
         }
         headers = {"User-Agent": "CineRadar/1.0 (cinema data aggregator)"}
 
-        async with session.get(url, params=params, headers=headers) as response:
-            if response.status == 200:
-                data = await response.json()
-                if data and len(data) > 0:
-                    result = {"lat": float(data[0]["lat"]), "lng": float(data[0]["lon"])}
-                    cache[cache_key] = result
-                    return result
+        response = await client.get(url, params=params, headers=headers)
+        if response.status_code == 200:
+            data = response.json()
+            if data and len(data) > 0:
+                result = {"lat": float(data[0]["lat"]), "lng": float(data[0]["lon"])}
+                cache[cache_key] = result
+                return result
 
         return None
 
-    except Exception:
+    except httpx.RequestError:
+        return None
+    except (KeyError, IndexError, ValueError):
+        # Handle malformed response data
         return None
 
 
@@ -191,9 +194,9 @@ class Geocoder:
         geocoded = 0
         failed = 0
 
-        async with aiohttp.ClientSession() as session:
+        async with httpx.AsyncClient() as client:
             for i, item in enumerate(theatres_to_geocode):
-                coords = await geocode_address(item["address"], item["city"], session, self.cache)
+                coords = await geocode_address(item["address"], item["city"], client, self.cache)
 
                 if coords:
                     item["theatre"]["lat"] = coords["lat"]

@@ -11,7 +11,7 @@ import time
 from pathlib import Path
 from typing import Any, cast
 
-import requests
+import httpx
 
 logger = logging.getLogger(__name__)
 GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY")
@@ -44,7 +44,7 @@ def search_place(theatre_name: str, city: str) -> dict[str, Any] | None:
     query = f"{theatre_name} cinema {city} Indonesia"
 
     try:
-        response = requests.post(
+        response = httpx.post(
             PLACES_SEARCH_URL,
             headers={
                 "Content-Type": "application/json",

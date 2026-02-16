@@ -21,7 +21,7 @@ from typing import Any, cast
 from zoneinfo import ZoneInfo
 
 import functions_framework
-import requests
+import httpx
 from google.cloud import firestore
 
 # Configure logging
@@ -547,7 +547,7 @@ def refresh_access_token(db: firestore.Client, refresh_token: str) -> str | None
     logger.info("🔄 Acquired lock, attempting token refresh...")
 
     try:
-        response = requests.post(
+        response = httpx.post(
             REFRESH_API_URL,
             headers={
                 "Authorization": f"Bearer {refresh_token}",
@@ -581,7 +581,7 @@ def refresh_access_token(db: firestore.Client, refresh_token: str) -> str | None
         else:
             logger.error(f"❌ Refresh failed: {response.status_code} {response.text[:100]}")
 
-    except requests.RequestException as e:
+    except httpx.RequestError as e:
         logger.error(f"❌ Refresh request exception: {e}")
     finally:
         lock.release()
@@ -714,7 +714,7 @@ def fetch_seat_layout(showtime_id: str, merchant: str, token: str) -> dict[str, 
     }
 
     try:
-        response = requests.get(url, headers=headers, params=params, timeout=10)
+        response = httpx.get(url, headers=headers, params=params, timeout=10)
 
         if response.status_code == 200:
             data = response.json()
@@ -731,7 +731,7 @@ def fetch_seat_layout(showtime_id: str, merchant: str, token: str) -> dict[str, 
             logger.error(f"API error {response.status_code}: {body}")
             return None
 
-    except requests.RequestException as e:
+    except httpx.RequestError as e:
         logger.error(f"Request failed: {e}")
         return None
 
@@ -759,7 +759,7 @@ def fetch_seat_layout_with_retry(
         params = {"show_time_id": showtime_id, "tz": "7"}
 
         try:
-            response = requests.get(url, headers=headers, params=params, timeout=10)
+            response = httpx.get(url, headers=headers, params=params, timeout=10)
             last_status = response.status_code
 
             if response.status_code == 200:
@@ -804,7 +804,7 @@ def fetch_seat_layout_with_retry(
                 logger.error(f"API error {response.status_code}: {last_error_detail}")
                 return None, response.status_code, last_error_detail
 
-        except requests.RequestException as e:
+        except httpx.RequestError as e:
             last_error_detail = str(e)
             logger.error(f"Request failed: {e}")
             if attempt == 0:

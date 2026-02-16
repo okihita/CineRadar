@@ -14,7 +14,7 @@ from datetime import datetime
 from types import MappingProxyType
 from typing import Any, ClassVar, cast
 
-import aiohttp
+import httpx
 
 from backend.infrastructure.core.config import USER_AGENT
 from backend.infrastructure.repositories import FirestoreTokenRepository
@@ -189,25 +189,25 @@ class SeatScraper(BaseScraper):
         }
 
         try:
-            async with (
-                aiohttp.ClientSession() as session,
-                session.get(url, headers=headers, params=params) as response,
-            ):
-                if response.status == 200:
-                    data = await response.json()
+            async with httpx.AsyncClient() as client:
+                response = await client.get(url, headers=headers, params=params)
+                if response.status_code == 200:
+                    data = response.json()
                     if data.get("success"):
                         return cast("dict[str, Any]", data)
                     else:
                         self.log(
                             f"   ⚠️ API error: {data.get('error', {}).get('message', 'Unknown')}"
                         )
-                elif response.status == 401:
+                elif response.status_code == 401:
                     self.log("   ⚠️ Auth token expired - need to re-login")
                 else:
-                    body = await response.text()
-                    self.log(f"   ⚠️ API returned {response.status}: {body[:200]}")
+                    body = response.text
+                    self.log(f"   ⚠️ API returned {response.status_code}: {body[:200]}")
+        except httpx.RequestError as e:
+            self.log(f"   ⚠️ HTTP request failed: {e}")
         except Exception as e:
-            self.log(f"   ⚠️ API call failed: {e}")
+            self.log(f"   ⚠️ Unexpected error during API call: {e}")
 
         return None
 
