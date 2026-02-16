@@ -20,6 +20,39 @@ Cloud Scheduler (every 5 min)
     Firestore (movie_performance)
 ```
 
+### ⚠️ CRITICAL: Self-Contained Function constraint
+
+**Each Cloud Function MUST be entirely self-contained.** This is a hard architectural constraint.
+
+#### What This Means
+
+1. **No imports from `backend.*`** - The functions deploy with `--source=.` which only uploads files within the function directory (e.g., `backend/functions/scraper/`)
+
+2. **All dependencies must be in `requirements.txt`** - The function cannot access the monorepo's shared code
+
+3. **Code duplication is intentional** - If you see duplicated code between `backend/infrastructure/` and `backend/functions/`, **DO NOT** attempt to extract it to a shared module. This will break production deployments.
+
+#### Why This Exists
+
+- **Cold start performance**: Minimizing dependencies reduces cold start time
+- **Deployment isolation**: Functions can be deployed independently without rebuilding the entire monorepo
+- **Security surface**: Smaller attack surface with fewer dependencies
+
+#### Examples of Intentional Duplication
+
+| Code | Location 1 | Location 2 | Reason |
+|------|------------|------------|--------|
+| `MERCHANT_PATHS` dict | `functions/scraper/main.py` | `infrastructure/core/seat_scraper.py` | Cannot share constants |
+| Token refresh logic | `functions/scraper/main.py` | `infrastructure/token_refresher.py` | Different runtimes |
+
+#### Before Refactoring
+
+If you're tempted to "clean up" duplicated code between functions and infrastructure:
+
+1. **Stop** - The duplication exists for a reason
+2. **Check** - Verify both locations are still in sync
+3. **Document** - If you must change one, update both manually
+
 ## Deployment
 
 ### Prerequisites

@@ -13,6 +13,8 @@ from typing import Any, cast
 
 import httpx
 
+logger = logging.getLogger(__name__)
+
 # Default cache file location
 DEFAULT_CACHE_PATH = os.path.join(
     os.path.dirname(__file__), "..", "..", "data", "geocode_cache.json"
@@ -66,10 +68,11 @@ async def geocode_address(
 
         return None
 
-    except httpx.RequestError:
+    except httpx.RequestError as e:
+        logger.warning(f"Geocoding network error for '{address}, {city}': {e}")
         return None
-    except (KeyError, IndexError, ValueError):
-        # Handle malformed response data
+    except (KeyError, IndexError, ValueError) as e:
+        logger.debug(f"Geocoding parse error for '{address}, {city}': {e}")
         return None
 
 
