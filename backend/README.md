@@ -204,7 +204,6 @@ We follow **Clean Architecture** principles. The dependency rule is strict: inne
       - `monthly_geocode.py`: Batched job to geocode new theatres using Google Maps/OSM.
       - `merge_batches.py`: Utility to combine partial JSON results from parallel scrapers.
       - `populate_firestore.py`: Utility to upload scraped JSON data to Firestore.
-      - `upload_seats.py`: Utility to upload seat availability data to Firestore.
       - `validate.py`: Quality assurance script that runs sanity checks on scraped data.
     - `functions/`:
       - `dispatcher/`: Pub/Sub triggered function that fans out scraping jobs to workers.

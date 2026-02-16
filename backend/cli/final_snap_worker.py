@@ -56,9 +56,6 @@ class FinalSnapWorker:
                 # Save locally as well
                 self._save_local(data, task)
 
-                # TODO: Direct Firestore upload if desired, or let upload_seats handle it
-                # For now, we rely on local files + upload_seats
-
                 logger.info(f"✅ Final snap captured for {showtime_id}")
                 return True
             else:

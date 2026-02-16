@@ -175,7 +175,6 @@ sequenceDiagram
 |-----------|-------------|---------|
 | **Entry Point** | [`backend/cli/cli.py`](../backend/cli/cli.py) | `seats` subcommand handler |
 | **Worker** | [`backend/infrastructure/core/seat_scraper.py`](../backend/infrastructure/core/seat_scraper.py) | Async API fetcher |
-| **Uploader** | [`backend/cli/upload_seats.py`](../backend/cli/upload_seats.py) | Firestore partitioning |
 | **Validator** | [`backend/schemas/scraper_run.py`](../backend/schemas/scraper_run.py) | Run metadata schema |
 
 ### 🚨 Failure Runbook
@@ -351,7 +350,6 @@ Geocode new theatre locations using Google Maps API to ensure map visualization 
 | `schedules/{date}/movies` | `{movie_id}` | upload_schedules.py | Daily 6:30 AM |
 | `movies` | `{movie_id}` | movie-details CLI | Daily ~6:35 AM |
 | `movies/{id}/rating_history` | `{YYYY-MM-DD}` | movie-details CLI | Daily |
-| `seat_snapshots` | `{showtime_id}_{type}_{time}` | upload_seats.py | Daily 7:30 AM |
 | `movie_performance` | `{movie_id}` | movie_performance.py | Daily 8:00 AM |
 | `movie_performance/{id}/showtimes` | `{showtime_id}` | movie_performance.py | Daily 8:00 AM |
 | `scraper_logs` | `{YYYY-MM-DD}` | Various | Consolidated daily log |
