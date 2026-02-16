@@ -15,7 +15,6 @@ This layer depends on everything else. It imports `domain` models to wrap data a
 # NOTE: Scrapers are NOT imported here to avoid requiring playwright
 # Import scrapers directly: from backend.infrastructure.scrapers import TixMovieScraper
 from backend.infrastructure.repositories import (
-    FileMovieRepository,
     FirestoreMovieRepository,
     FirestoreTheatreRepository,
     FirestoreTokenRepository,
@@ -23,7 +22,6 @@ from backend.infrastructure.repositories import (
 
 __all__ = [
     # Repositories
-    "FileMovieRepository",
     "FirestoreMovieRepository",
     "FirestoreTheatreRepository",
     "FirestoreTokenRepository",
