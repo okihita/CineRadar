@@ -14,9 +14,10 @@ from typing import Any, cast
 import httpx
 
 logger = logging.getLogger(__name__)
-GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY")
-if not GOOGLE_MAPS_API_KEY:
+_api_key = os.environ.get("GOOGLE_MAPS_API_KEY")
+if not _api_key:
     raise ValueError("GOOGLE_MAPS_API_KEY environment variable not set")
+GOOGLE_MAPS_API_KEY: str = _api_key
 PLACES_SEARCH_URL = "https://places.googleapis.com/v1/places:searchText"
 CACHE_FILE = Path(__file__).parent.parent.parent / "data" / "places_cache.json"
 
