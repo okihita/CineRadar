@@ -62,7 +62,7 @@ export function useScraperData() {
     };
 
     // Transform new ScraperLog to MorningScrape for UI
-    const morningScrape: MorningScrape | null = todayData?.log.morning_run ? {
+    const morningScrape: MorningScrape | null = todayData?.log?.morning_run ? {
         status: todayData.log.morning_run.status,
         timestamp: todayData.log.morning_run.end_time || todayData.log.morning_run.start_time || todayData.log.created_at,
         movies: todayData.log.morning_run.movies_found,
