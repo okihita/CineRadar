@@ -44,6 +44,26 @@ deploy_dispatcher() {
 deploy_scraper() {
     echo "📥 Deploying scraper function..."
     cd scraper
+    # =========================================================================
+    # ⚠️ IMPORTANT: max_instances=5 (was 1 until Feb 17, 2026)
+    # =========================================================================
+    # On Feb 16, 2026, the scraper achieved only 7.4% success rate due to 
+    # Pub/Sub queue backlog. With max_instances=1, peak slot processing took 
+    # 13+ minutes, causing jobs to be processed after showtimes passed.
+    #
+    # Analysis showed:
+    # - 8,240 jobs × 3.9s avg = 8.9 hours minimum processing time
+    # - 44% of jobs waited >30 minutes in queue
+    # - Token expired during wait → 16.5% needed refresh (adding 20s each)
+    # - 81% of errors were HTTP 400 (EXPIRED_EVENT_DETAIL - showtime passed)
+    #
+    # With max_instances=5:
+    # - Peak slot processing: ~3 minutes (within 10-minute JIT window)
+    # - Expected success rate: >85%
+    #
+    # DO NOT reduce this value without understanding the implications.
+    # See: backend/docs/scaling-analysis-2026-02-16.md
+    # =========================================================================
     gcloud functions deploy scrape-seat-jit \
         --gen2 \
         --runtime=python312 \
@@ -51,13 +71,13 @@ deploy_scraper() {
         --source=. \
         --entry-point=scrape_seat \
         --trigger-topic=$PUBSUB_TOPIC \
-        --max-instances=1 \
+        --max-instances=5 \
         --memory=512MB \
         --timeout=60s \
         --set-env-vars="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,ENABLE_SCHEMA_VALIDATION=true" \
         --project=$PROJECT_ID
     cd ..
-    echo "   ✓ Scraper deployed"
+    echo "   ✓ Scraper deployed (max_instances=5)"
 }
 
 deploy_scheduler() {
