@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronDown, ChevronRight, Clock, CheckCircle, AlertTriangle, XCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Clock, CheckCircle, AlertTriangle, XCircle, AlertCircle, Loader2, ExternalLink, Download } from 'lucide-react';
 import type { DispatchEntry, ErrorCounts } from '@/features/scraper/types';
 
 interface DispatchTimelineProps {
@@ -15,6 +15,19 @@ interface TimelineSlot {
     slot: string;  // Keep for internal key (doc ID)
     showtimeBucket: string;  // e.g., "12:15-12:20"
     dispatch: DispatchEntry;
+}
+
+interface ErrorDetail {
+    http_status: number;
+    api_error: string;
+    movie_title: string;
+    theatre: string;
+    merchant: string;
+}
+
+interface ErrorDetailsCache {
+    counts: ErrorCounts;
+    details: ErrorDetail[];
 }
 
 // Component to display error type breakdown
@@ -56,6 +69,82 @@ const ErrorTypeBadges: React.FC<{
     );
 };
 
+// Component to display list of 400 errors with movie/theatre details
+const ErrorDetailList: React.FC<{
+    errors: ErrorDetail[];
+    filterStatus?: number;
+}> = ({ errors, filterStatus }) => {
+    const filteredErrors = filterStatus 
+        ? errors.filter(e => e.http_status === filterStatus)
+        : errors;
+
+    if (filteredErrors.length === 0) return null;
+
+    // Extract city from theatre name (usually last word or in parentheses)
+    const extractCity = (theatre: string): string => {
+        // Try to find city in format "CINEMA NAME (CITY)" or "CINEMA NAME CITY"
+        const match = theatre.match(/\(([^)]+)\)/);
+        if (match) return match[1];
+        
+        // For XXI/CGV, city is often the last word(s)
+        const parts = theatre.split(' ');
+        if (parts.length >= 2) {
+            // Check for known city patterns
+            return parts.slice(-1)[0];
+        }
+        return theatre;
+    };
+
+    // Get TIX URL for the movie
+    const getTixUrl = (merchant: string): string => {
+        const merchantPath = merchant.toLowerCase();
+        return `https://www.tix.id/movie/${merchantPath}`;
+    };
+
+    return (
+        <div className="mt-2 space-y-1 max-h-60 overflow-y-auto">
+            <div className="text-xs text-muted-foreground mb-2">
+                {filterStatus === 400 
+                    ? '🔴 Closed Showtimes (click to verify on TIX):'
+                    : 'All Errors:'
+                }
+            </div>
+            <div className="space-y-1">
+                {filteredErrors.map((err, idx) => (
+                    <div 
+                        key={idx}
+                        className="flex items-center gap-2 p-2 bg-muted/50 rounded text-xs group hover:bg-muted transition-colors"
+                    >
+                        <div className="flex-1 min-w-0">
+                            <div className="font-medium text-foreground truncate">
+                                {err.movie_title || 'Unknown Movie'}
+                            </div>
+                            <div className="text-muted-foreground truncate">
+                                {err.theatre} • {extractCity(err.theatre)}
+                            </div>
+                            {err.api_error && (
+                                <div className="text-amber-600 dark:text-amber-400 truncate text-[10px]">
+                                    {err.api_error}
+                                </div>
+                            )}
+                        </div>
+                        <a 
+                            href={getTixUrl(err.merchant)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-muted-foreground/10 rounded"
+                            onClick={(e) => e.stopPropagation()}
+                            title="Open TIX"
+                        >
+                            <ExternalLink className="w-3 h-3 text-muted-foreground" />
+                        </a>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 export const DispatchTimeline: React.FC<DispatchTimelineProps> = ({
     dispatches,
     onDispatchClick,
@@ -63,7 +152,7 @@ export const DispatchTimeline: React.FC<DispatchTimelineProps> = ({
 }) => {
     const [expandedSlot, setExpandedSlot] = useState<string | null>(null);
     const [showAll, setShowAll] = useState(false);
-    const [errorCountsCache, setErrorCountsCache] = useState<Record<string, ErrorCounts>>({});
+    const [errorDetailsCache, setErrorDetailsCache] = useState<Record<string, ErrorDetailsCache>>({});
     const [loadingErrors, setLoadingErrors] = useState<Record<string, boolean>>({});
 
     // Convert dispatches to sorted timeline
@@ -86,7 +175,7 @@ export const DispatchTimeline: React.FC<DispatchTimelineProps> = ({
         if (!dispatch || dispatch.total_errors === 0) return;
 
         // Already cached?
-        if (errorCountsCache[expandedSlot]) return;
+        if (errorDetailsCache[expandedSlot]) return;
 
         // Avoid duplicate fetches
         if (pendingFetchRef.current === expandedSlot) return;
@@ -100,9 +189,12 @@ export const DispatchTimeline: React.FC<DispatchTimelineProps> = ({
                 .then(res => res.json())
                 .then(data => {
                     if (data.error_counts) {
-                        setErrorCountsCache(prev => ({
+                        setErrorDetailsCache(prev => ({
                             ...prev,
-                            [expandedSlot]: data.error_counts
+                            [expandedSlot]: {
+                                counts: data.error_counts,
+                                details: data.errors || [],
+                            }
                         }));
                     }
                 })
@@ -117,7 +209,7 @@ export const DispatchTimeline: React.FC<DispatchTimelineProps> = ({
             clearTimeout(timeoutId);
             pendingFetchRef.current = null;
         };
-    }, [expandedSlot, date, dispatches, errorCountsCache]);
+    }, [expandedSlot, date, dispatches, errorDetailsCache]);
 
     if (timeline.length === 0) {
         return (
@@ -190,7 +282,9 @@ export const DispatchTimeline: React.FC<DispatchTimelineProps> = ({
             {/* Timeline */}
             <div className="divide-y divide-border/50">
                 {visibleTimeline.map(({ slot, showtimeBucket, dispatch }) => {
-                    const cachedErrors = errorCountsCache[slot];
+                    const cachedData = errorDetailsCache[slot];
+                    const cachedErrors = cachedData?.counts || null;
+                    const errorDetails = cachedData?.details || [];
                     const isLoading = loadingErrors[slot];
                     const status = getStatusDisplay(dispatch, cachedErrors);
                     const StatusIcon = status.icon;
@@ -306,7 +400,38 @@ export const DispatchTimeline: React.FC<DispatchTimelineProps> = ({
                                     {/* Error breakdown in expanded view */}
                                     {cachedErrors && dispatch.total_errors > 0 && (
                                         <div className="mt-3 p-2 bg-red-500/5 border border-red-500/10 rounded-lg">
-                                            <div className="text-xs text-muted-foreground mb-1">Error Breakdown:</div>
+                                            <div className="flex items-center justify-between mb-1">
+                                                <div className="text-xs text-muted-foreground">Error Breakdown:</div>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        const exportData = {
+                                                            date: date,
+                                                            slot: slot,
+                                                            showtimeBucket: showtimeBucket,
+                                                            exportedAt: new Date().toISOString(),
+                                                            summary: {
+                                                                total_errors: dispatch.total_errors,
+                                                                total_successes: dispatch.total_successes,
+                                                                error_counts: cachedErrors
+                                                            },
+                                                            errors: errorDetails
+                                                        };
+                                                        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                                                        const url = URL.createObjectURL(blob);
+                                                        const a = document.createElement('a');
+                                                        a.href = url;
+                                                        a.download = `scraper-errors-${date}_${slot}.json`;
+                                                        a.click();
+                                                        URL.revokeObjectURL(url);
+                                                    }}
+                                                    className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded transition-colors"
+                                                    title="Download error logs as JSON"
+                                                >
+                                                    <Download className="w-3 h-3" />
+                                                    JSON
+                                                </button>
+                                            </div>
                                             <div className="flex flex-wrap gap-2">
                                                 {cachedErrors["401"] > 0 && (
                                                     <span className="text-xs text-red-500 dark:text-red-400">
@@ -324,6 +449,14 @@ export const DispatchTimeline: React.FC<DispatchTimelineProps> = ({
                                                     </span>
                                                 )}
                                             </div>
+                                            
+                                            {/* 400 Error Details - Closed Showtimes */}
+                                            {cachedErrors["400"] > 0 && errorDetails.length > 0 && (
+                                                <ErrorDetailList 
+                                                    errors={errorDetails}
+                                                    filterStatus={400}
+                                                />
+                                            )}
                                         </div>
                                     )}
 
