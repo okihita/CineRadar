@@ -89,7 +89,7 @@ def log_error_to_firestore(severity: str, message: str, context: dict[str, Any])
     """
     try:
         db = get_firestore_client()
-        now_iso = datetime.utcnow().isoformat() + "Z"
+        now_iso = datetime.now(UTC).isoformat()
 
         batch_id = context.get("batch_id", "")
         date_str, dispatch_slot = _parse_batch_id(batch_id)

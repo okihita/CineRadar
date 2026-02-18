@@ -17,7 +17,7 @@ API calls, with proper retry logic and distributed locking.
 import json
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -177,7 +177,7 @@ def log_jit_dispatch_to_firestore(
     dispatch_slot = time_slot.replace(":", "-")
 
     dispatch_entry = {
-        "dispatched_at": datetime.utcnow().isoformat() + "Z",
+        "dispatched_at": datetime.now(UTC).isoformat(),
         "time_slot": time_slot,
         "showtimes_found": showtimes_found,
         "jobs_published": jobs_published,
@@ -195,7 +195,7 @@ def log_jit_dispatch_to_firestore(
     daily_ref.set(
         {
             "date": today_str,
-            "created_at": datetime.utcnow().isoformat() + "Z",
+            "created_at": datetime.now(UTC).isoformat(),
         },
         merge=True,
     )
@@ -230,7 +230,7 @@ def log_job_creation(db: firestore.Client, batch_id: str, showtime: dict[str, An
         if not showtime_id:
             return
 
-        now_iso = datetime.utcnow().isoformat() + "Z"
+        now_iso = datetime.now(UTC).isoformat()
 
         job_ref = (
             db.collection("scraper_logs")
