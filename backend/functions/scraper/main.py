@@ -562,19 +562,48 @@ def refresh_access_token(db: firestore.Client, refresh_token: str) -> str | None
             new_token = data.get("data", {}).get("token")
 
             if new_token:
-                # Update Firestore with UTC timezone-aware timestamp
+                # Wait for token to propagate to TIX's Redis nodes
+                # Data shows 100% of 401 errors occur with tokens 0-30s old
+                # Use adaptive delays: 2s for first 10 attempts, then 5s for next 4
+                # Total max wait: 10*2 + 4*5 = 40s (covers 99%+ of cases)
+                retry_schedule = [2] * 10 + [5] * 4  # [2,2,2,2,2,2,2,2,2,2,5,5,5,5]
+                validated_at_attempt = -1
+
+                for attempt, delay in enumerate(retry_schedule):
+                    if test_token_valid(new_token):
+                        validated_at_attempt = attempt
+                        elapsed = sum(retry_schedule[:attempt])
+                        logger.info(f"✅ Token validated after {attempt} attempts ({elapsed}s elapsed)")
+                        break
+
+                    # Log every few attempts to reduce noise
+                    if attempt % 5 == 0 or attempt >= 10:
+                        logger.warning(f"⏳ Token not propagated, waiting {delay}s (attempt {attempt+1}/{len(retry_schedule)})")
+                    time.sleep(delay)
+
+                if validated_at_attempt < 0:
+                    # All retries failed - keep old token
+                    logger.error("❌ Token never propagated after 40s, keeping old token")
+                    lock.release()
+                    return None
+
+                # Save validated token to Firestore
                 now_iso = datetime.now(UTC).isoformat()
+                elapsed_s = sum(retry_schedule[:validated_at_attempt])
                 db.collection("auth_tokens").document("tix_jwt").set(
                     {
                         "token": new_token,
                         "refresh_token": refresh_token,
                         "stored_at": now_iso,
                         "updated_by": instance_id,
+                        "validated": True,
+                        "propagation_attempts": validated_at_attempt,
+                        "propagation_elapsed_s": elapsed_s,
                     },
                     merge=True,
                 )
 
-                logger.info("✅ Inline refresh successful & saved to Firestore")
+                logger.info(f"✅ Token refreshed & validated (propagation: {elapsed_s}s)")
                 return cast("str", new_token)
             else:
                 logger.error("❌ Refresh response missing token")
@@ -734,6 +763,30 @@ def fetch_seat_layout(showtime_id: str, merchant: str, token: str) -> dict[str, 
     except httpx.RequestError as e:
         logger.error(f"Request failed: {e}")
         return None
+
+
+def test_token_valid(token: str) -> bool:
+    """Test if a token is valid by making a lightweight API call.
+
+    Returns True if the token is accepted (any response except 401).
+    This checks if the token's session has propagated to TIX's Redis nodes.
+    """
+    try:
+        response = httpx.get(
+            "https://api-b2b.tix.id/v1/movies/cgv/layout",
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/json",
+                "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15",
+            },
+            params={"show_time_id": "0", "tz": "7"},
+            timeout=5,
+        )
+        # Any non-401 response means token is valid (session exists in Redis)
+        return response.status_code != 401
+    except Exception as e:
+        logger.warning(f"Token test failed: {e}")
+        return False
 
 
 def fetch_seat_layout_with_retry(
