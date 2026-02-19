@@ -13,7 +13,7 @@ from datetime import UTC, datetime
 from typing import Any, cast
 
 from backend.domain.models import MovieDetails, RatingScore
-from backend.infrastructure.repositories.firestore_token import _get_firestore_client
+from backend.infrastructure.repositories.firestore_utils import get_firestore_client
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ class FirestoreMovieDetailsRepository:
     @property
     def db(self) -> Any:
         if self._db is None:
-            self._db = _get_firestore_client()
+            self._db = get_firestore_client()
         return self._db
 
     def save(self, movie_details: MovieDetails) -> bool:

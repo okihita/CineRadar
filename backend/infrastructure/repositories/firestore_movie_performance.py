@@ -5,37 +5,13 @@ Stores and retrieves movie performance data and showtime snapshots.
 Collection: movie_performance/{movie_id}/showtimes/{showtime_id}
 """
 
-import json
 import logging
-import os
-import tempfile
 from typing import Any
 
 from backend.domain.models import DailyPerformance, MovieMetadata, ShowtimeSnapshot
+from backend.infrastructure.repositories.firestore_utils import get_firestore_client
 
 logger = logging.getLogger(__name__)
-
-
-def _get_firestore_client() -> Any:
-    """Get Firestore client with proper credentials.
-
-    Supports:
-    - FIREBASE_SERVICE_ACCOUNT env var (JSON string) for CI/CD
-    - GOOGLE_APPLICATION_CREDENTIALS file path
-    - Default application credentials (local dev)
-    """
-    from google.cloud import firestore
-
-    service_account_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
-    if service_account_json:
-        creds_data = json.loads(service_account_json)
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-            json.dump(creds_data, f)
-            temp_path = f.name
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = temp_path
-        return firestore.Client(project=creds_data.get("project_id", "cineradar-481014"))
-
-    return firestore.Client(project=os.environ.get("FIREBASE_PROJECT_ID", "cineradar-481014"))
 
 
 class FirestoreMoviePerformanceRepository:
@@ -59,7 +35,7 @@ class FirestoreMoviePerformanceRepository:
     def db(self) -> Any:
         """Lazy-load Firestore client."""
         if self._db is None:
-            self._db = _get_firestore_client()
+            self._db = get_firestore_client()
         return self._db
 
     def save_showtime(self, snapshot: ShowtimeSnapshot) -> bool:

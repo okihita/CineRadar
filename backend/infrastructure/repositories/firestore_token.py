@@ -4,39 +4,15 @@ Firestore Token Repository
 Implements ITokenRepository using Firebase Firestore.
 """
 
-import json
 import logging
-import os
-import tempfile
 from typing import Any, cast
 
 from backend.application.ports.storage import ITokenRepository
 from backend.domain.errors import FirestoreError
 from backend.domain.models import Token
+from backend.infrastructure.repositories.firestore_utils import get_firestore_client
 
 logger = logging.getLogger(__name__)
-
-
-def _get_firestore_client() -> Any:
-    """Get Firestore client with proper credentials.
-
-    Supports:
-    - FIREBASE_SERVICE_ACCOUNT env var (JSON string) for CI/CD
-    - GOOGLE_APPLICATION_CREDENTIALS file path
-    - Default application credentials (local dev)
-    """
-    from google.cloud import firestore
-
-    service_account_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
-    if service_account_json:
-        creds_data = json.loads(service_account_json)
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-            json.dump(creds_data, f)
-            temp_path = f.name
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = temp_path
-        return firestore.Client(project=creds_data.get("project_id", "cineradar-481014"))
-
-    return firestore.Client(project=os.environ.get("FIREBASE_PROJECT_ID", "cineradar-481014"))
 
 
 class FirestoreTokenRepository(ITokenRepository):
@@ -69,7 +45,7 @@ class FirestoreTokenRepository(ITokenRepository):
     def db(self) -> Any:
         """Lazy-load Firestore client."""
         if self._db is None:
-            self._db = _get_firestore_client()
+            self._db = get_firestore_client()
         return self._db
 
     def store(self, token: Token) -> bool:
