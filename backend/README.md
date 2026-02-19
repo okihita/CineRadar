@@ -159,7 +159,6 @@ We follow **Clean Architecture** principles. The dependency rule is strict: inne
       - `IMovieRepository`: Interface for saving/loading movie snapshots.
       - `ITheatreRepository`: Interface for managing theatre locations/metadata.
       - `ITokenRepository`: Interface for securely storing the JWT auth token.
-      - `IScraperRunRepository`: Interface for logging scraper execution history.
       - `IMovieScraper`: Interface for fetching movie data from an external source.
       - `ISeatScraper`: Interface for fetching seat layouts.
       - `IGeocodingService`: Interface for converting addresses to coordinates.
@@ -174,7 +173,7 @@ We follow **Clean Architecture** principles. The dependency rule is strict: inne
       - `FirestoreTheatreRepository`: Implementation of `ITheatreRepository` using Cloud Firestore.
       - `FirestoreTokenRepository`: Implementation of `ITokenRepository` for managing TIX.id tokens.
       - `FirestoreMoviePerformanceRepository`: specialised repository for storing compressed seat layouts.
-      - `FileMovieRepository`: Local filesystem implementation for testing/debugging.
+      - `FirestoreMovieDetailsRepository`: Repository for movie details (cast, synopsis, ratings).
     - `scrapers/`:
       - `TixMovieScraper`: Clean implementation of `IMovieScraper` that wraps the legacy `CineRadarScraper`.
       - `TixSeatScraper`: Clean implementation of `ISeatScraper` that uses `SeatScraper`.

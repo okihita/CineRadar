@@ -177,7 +177,7 @@ All data passing through the pipeline is validated using Pydantic V2 schemas.
 | **MovieSchema** | [`backend/schemas/movie.py`](../backend/schemas/movie.py) | Complete movie object with optional schedules |
 | **TheatreSchema** | [`backend/schemas/theatre.py`](../backend/schemas/theatre.py) | Geocoded theatre location data |
 | **TokenSchema** | [`backend/schemas/token.py`](../backend/schemas/token.py) | JWT payload structure and TTL validation |
-| **ScraperRunSchema** | [`backend/schemas/scraper_run.py`](../backend/schemas/scraper_run.py) | Metadata for each scraper execution |
+| **MovieDetailsResponseSchema** | [`backend/schemas/movie_details.py`](../backend/schemas/movie_details.py) | Movie details (cast, synopsis, ratings) |
 
 ### Quick Import Snippet
 For testing in `ipython` or scripts:
