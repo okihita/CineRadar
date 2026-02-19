@@ -210,6 +210,13 @@ We follow **Clean Architecture** principles. The dependency rule is strict: inne
       - `scraper/`: The worker function that scrapes a specific batch of movies/theatres.
       - `sweeper/`: Cleanup function that monitors job status and handles failures/retries.
 
+      > ⚠️ **CRITICAL: Cloud Functions are self-contained.** 
+      > Each function deploys with `--source=.` which only uploads files in that function's directory.
+      > **DO NOT** extract shared code to common modules - this will break deployments.
+      > Code duplication with `backend/infrastructure/` is **intentional**.
+      > See [`functions/README.md`](functions/README.md#critical-self-contained-function-constraint) and 
+      > [`docs/cloud-functions-architecture.md`](docs/cloud-functions-architecture.md) for details.
+
 ---
 
 ## 📊 Job Lifecycle Logging

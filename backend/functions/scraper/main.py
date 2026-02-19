@@ -7,7 +7,27 @@ Pub/Sub-triggered Cloud Function that:
 3. Calls TIX.id API to get seat layout
 4. Saves compressed snapshot to Firestore
 
-Configure max_instances=1 to limit concurrency and avoid rate limiting.
+Configure max_instances=5 to balance throughput and rate limiting.
+
+⚠️ SELF-CONTAINED FUNCTION CONSTRAINT ⚠️
+This function MUST be entirely self-contained. DO NOT:
+- Import from `backend.*` (will break deployment - paths don't exist in container)
+- Extract constants/helpers to shared modules (will break deployment)
+- Attempt to "clean up" duplication with infrastructure code
+
+Code duplication with backend/infrastructure/ is INTENTIONAL and required for:
+- Deployment isolation (--source=. only uploads this directory)
+- Cold start performance (minimal dependencies)
+- Independent deployments (update one function without affecting others)
+
+Duplicated code in this file:
+- PROJECT_ID, JAKARTA_TZ constants → also in dispatcher/main.py, sweeper/main.py
+- MERCHANT_PATHS dict → also in infrastructure/core/seat_scraper.py
+- get_firestore_client() → also in infrastructure/repositories/firestore_utils.py
+- Token refresh logic → also in infrastructure/token_refresher.py
+
+See: backend/functions/README.md#critical-self-contained-function-constraint
+See: backend/docs/cloud-functions-architecture.md
 """
 
 import base64

@@ -10,6 +10,24 @@ HTTP-triggered Cloud Function that:
 5. Aggregates ALL-TIME stats (root collection)
 
 Triggered by Cloud Scheduler every 30 minutes.
+
+⚠️ SELF-CONTAINED FUNCTION CONSTRAINT ⚠️
+This function MUST be entirely self-contained. DO NOT:
+- Import from `backend.*` (will break deployment - paths don't exist in container)
+- Extract constants/helpers to shared modules (will break deployment)
+- Attempt to "clean up" duplication with infrastructure code
+
+Code duplication with backend/infrastructure/ is INTENTIONAL and required for:
+- Deployment isolation (--source=. only uploads this directory)
+- Cold start performance (minimal dependencies)
+- Independent deployments (update one function without affecting others)
+
+Duplicated code in this file:
+- PROJECT_ID, JAKARTA_TZ constants → also in dispatcher/main.py, scraper/main.py
+- get_firestore_client() → also in infrastructure/repositories/firestore_utils.py
+
+See: backend/functions/README.md#critical-self-contained-function-constraint
+See: backend/docs/cloud-functions-architecture.md
 """
 
 import logging
