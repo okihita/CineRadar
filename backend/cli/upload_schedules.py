@@ -100,7 +100,6 @@ def upload_schedules_to_firestore(movies: list[dict[str, Any]], date: str) -> No
         # Write to schedules/{date}/movies/{movie_id}
         doc_ref = db.collection("schedules").document(date).collection("movies").document(movie_id)
         doc_ref.set(schedule_doc)
-        doc_ref.set(schedule_doc)
         uploaded += 1
         logger.info(f"   ✓ {movie.get('title', movie_id)[:40]}")
 
