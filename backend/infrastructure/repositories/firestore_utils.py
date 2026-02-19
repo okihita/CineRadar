@@ -10,6 +10,8 @@ import tempfile
 from datetime import UTC, datetime
 from typing import Any, cast
 
+from backend.domain.time import JAKARTA_TZ
+
 logger = logging.getLogger(__name__)
 
 
@@ -276,14 +278,11 @@ def log_morning_scrape(
     Returns:
         True if successful
     """
-    from zoneinfo import ZoneInfo
-
     try:
         db = get_firestore_client()
 
         # Use Jakarta timezone for document ID
-        jakarta_now = datetime.now(ZoneInfo("Asia/Jakarta"))
-        today_str = jakarta_now.strftime("%Y-%m-%d")
+        today_str = datetime.now(JAKARTA_TZ).strftime("%Y-%m-%d")
 
         morning_run: dict[str, Any] = {"status": status}
 
@@ -343,14 +342,11 @@ def log_jit_dispatch(
     Returns:
         True if successful
     """
-    from zoneinfo import ZoneInfo
-
     try:
         db = get_firestore_client()
 
         # Use Jakarta timezone for document ID
-        jakarta_now = datetime.now(ZoneInfo("Asia/Jakarta"))
-        today_str = jakarta_now.strftime("%Y-%m-%d")
+        today_str = datetime.now(JAKARTA_TZ).strftime("%Y-%m-%d")
 
         # Use HH-MM format for doc ID (colons not allowed in Firestore doc IDs)
         dispatch_slot = time_slot.replace(":", "-")

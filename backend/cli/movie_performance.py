@@ -13,9 +13,11 @@ Usage:
 import argparse
 import asyncio
 import logging
+from datetime import datetime
 
 from backend.application.services import PerformanceAggregator
 from backend.domain.models import ShowtimeSnapshot
+from backend.domain.time import JAKARTA_TZ, get_jakarta_date_str
 from backend.infrastructure.core.seat_scraper import SeatScraper
 from backend.infrastructure.repositories import (
     FirestoreMoviePerformanceRepository,
@@ -64,10 +66,7 @@ def scrape_movie_performance(movie_id: str, aggregator: PerformanceAggregator) -
     db = aggregator.repo.db
 
     # Use today's date (Jakarta) instead of snapshot date (which might be stale/UTC-1)
-    from datetime import datetime
-    from zoneinfo import ZoneInfo
-
-    date_str = datetime.now(ZoneInfo("Asia/Jakarta")).strftime("%Y-%m-%d")
+    date_str = get_jakarta_date_str()
 
     logger.info(f"📥 Fetching detailed schedule from schedules/{date_str}/movies/{movie_id}")
 
@@ -215,15 +214,12 @@ def initialize_performance_data(aggregator: PerformanceAggregator) -> None:
     """
     logger.info("🚀 Initializing performance data for today...")
 
-    from datetime import datetime
-    from zoneinfo import ZoneInfo
-
     from backend.domain.models import DailyPerformance, MovieMetadata
 
     # Use the existing authenticated client from repository
     db = aggregator.repo.db
 
-    date_str = datetime.now(ZoneInfo("Asia/Jakarta")).strftime("%Y-%m-%d")
+    date_str = get_jakarta_date_str()
     logger.info(f"📅 Date: {date_str}")
 
     # Get all movies from schedules collection
@@ -263,7 +259,7 @@ def initialize_performance_data(aggregator: PerformanceAggregator) -> None:
             title=data.get("title", "Unknown"),
             poster=data.get("poster"),
             age_category=data.get("age_category"),
-            last_updated=datetime.now(ZoneInfo("Asia/Jakarta")).isoformat(),
+            last_updated=datetime.now(JAKARTA_TZ).isoformat(),
         )
         aggregator.repo.update_metadata(metadata)
 
@@ -275,7 +271,7 @@ def initialize_performance_data(aggregator: PerformanceAggregator) -> None:
             total_sold=0,
             avg_occupancy_pct=0.0,
             cities=list(cities_data.keys()) if isinstance(cities_data, dict) else [],
-            last_updated=datetime.now(ZoneInfo("Asia/Jakarta")).isoformat(),
+            last_updated=datetime.now(JAKARTA_TZ).isoformat(),
         )
 
         if aggregator.repo.update_daily_stats(daily, movie_id):

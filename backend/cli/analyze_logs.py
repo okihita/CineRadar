@@ -13,7 +13,6 @@ import argparse
 import logging
 import sys
 from collections import defaultdict
-from datetime import datetime
 from typing import Any
 
 from backend.infrastructure.repositories.firestore_utils import get_firestore_client
@@ -278,9 +277,8 @@ def main() -> None:
         date_str = args.date
     else:
         # Default to today in Jakarta timezone
-        from zoneinfo import ZoneInfo
-        jakarta_tz = ZoneInfo("Asia/Jakarta")
-        date_str = datetime.now(jakarta_tz).strftime("%Y-%m-%d")
+        from backend.domain.time import get_jakarta_date_str
+        date_str = get_jakarta_date_str()
 
     try:
         analyze_logs(date_str, focus_errors=args.errors, verbose=args.verbose)

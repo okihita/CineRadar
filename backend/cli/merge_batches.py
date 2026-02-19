@@ -4,9 +4,9 @@
 import json
 import logging
 import sys
-from datetime import datetime
 from pathlib import Path
-from zoneinfo import ZoneInfo
+
+from backend.domain.time import get_jakarta_date_str, get_jakarta_datetime_str
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ def merge_batches(data_dir: str = "data", validate: bool = True) -> bool:
         True if merge (and validation) successful
     """
     data_path = Path(data_dir)
-    date_str = datetime.now(ZoneInfo("Asia/Jakarta")).strftime("%Y-%m-%d")
+    date_str = get_jakarta_date_str()
 
     # Find all batch files
     batch_files = sorted(data_path.glob("batch_*_*.json"))
@@ -68,7 +68,7 @@ def merge_batches(data_dir: str = "data", validate: bool = True) -> bool:
 
     # Build output data
     output_data = {
-        "scraped_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "scraped_at": get_jakarta_datetime_str(),
         "date": date_str,
         "summary": {
             "total_cities": len(city_stats),

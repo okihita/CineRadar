@@ -4,12 +4,11 @@
 import json
 import logging
 import sys
-from datetime import datetime
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 sys.path.insert(0, str(Path(__file__).parent))
 
+from backend.domain.time import get_jakarta_date_str
 from backend.infrastructure.repositories.firestore_utils import (
     log_morning_scrape,
     save_daily_snapshot,
@@ -26,7 +25,7 @@ def main() -> None:
 
     # Use today's date to find the correct file
     # Use today's date in Jakarta time
-    today = datetime.now(ZoneInfo("Asia/Jakarta")).strftime("%Y-%m-%d")
+    today = get_jakarta_date_str()
     input_file = data_dir / f"movies_{today}.json"
 
     # Fall back to latest file if today's doesn't exist

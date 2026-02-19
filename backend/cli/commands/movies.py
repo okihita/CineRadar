@@ -8,8 +8,8 @@ import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-from zoneinfo import ZoneInfo
 
+from backend.domain.time import JAKARTA_TZ
 from backend.infrastructure.city_data import CITIES
 from backend.infrastructure.core.tix_client import CineRadarScraper
 
@@ -33,7 +33,7 @@ def run_movie_scrape(
         output_path = Path(output_dir)
         output_path.mkdir(exist_ok=True)
 
-        current_time = datetime.now(ZoneInfo("Asia/Jakarta"))
+        current_time = datetime.now(JAKARTA_TZ)
         date_str = current_time.strftime("%Y-%m-%d")
         timestamp = current_time.strftime("%Y-%m-%d %H:%M:%S")
 
