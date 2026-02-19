@@ -19,6 +19,7 @@ from backend.application.services import PerformanceAggregator
 from backend.domain.models import ShowtimeSnapshot
 from backend.domain.time import JAKARTA_TZ, get_jakarta_date_str
 from backend.infrastructure.core.seat_scraper import SeatScraper
+from backend.infrastructure.firestore_collections import MOVIES, SCHEDULES
 from backend.infrastructure.repositories import (
     FirestoreMoviePerformanceRepository,
     FirestoreMovieRepository,
@@ -68,9 +69,9 @@ def scrape_movie_performance(movie_id: str, aggregator: PerformanceAggregator) -
     # Use today's date (Jakarta) instead of snapshot date (which might be stale/UTC-1)
     date_str = get_jakarta_date_str()
 
-    logger.info(f"📥 Fetching detailed schedule from schedules/{date_str}/movies/{movie_id}")
+    logger.info(f"📥 Fetching detailed schedule from {SCHEDULES}/{date_str}/{MOVIES}/{movie_id}")
 
-    doc_ref = db.collection("schedules").document(date_str).collection("movies").document(movie_id)
+    doc_ref = db.collection(SCHEDULES).document(date_str).collection(MOVIES).document(movie_id)
     doc = doc_ref.get()
 
     if not doc.exists:
@@ -223,11 +224,11 @@ def initialize_performance_data(aggregator: PerformanceAggregator) -> None:
     logger.info(f"📅 Date: {date_str}")
 
     # Get all movies from schedules collection
-    movies_ref = db.collection("schedules").document(date_str).collection("movies")
+    movies_ref = db.collection(SCHEDULES).document(date_str).collection(MOVIES)
     docs = list(movies_ref.stream())
 
     if not docs:
-        logger.warning(f"⚠️ No movies found in schedules/{date_str}/movies")
+        logger.warning(f"⚠️ No movies found in {SCHEDULES}/{date_str}/{MOVIES}")
         return
 
     logger.info(f"📊 Found {len(docs)} movies in schedule")

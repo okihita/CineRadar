@@ -11,6 +11,12 @@ from datetime import UTC, datetime
 from typing import Any, cast
 
 from backend.domain.time import JAKARTA_TZ
+from backend.infrastructure.firestore_collections import (
+    DISPATCHES,
+    SCRAPER_LOGS,
+    SNAPSHOTS,
+    THEATRES,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +80,7 @@ def upsert_theatre(theatre_data: dict[str, Any], validate: bool = True) -> bool:
         if not theatre_id:
             return False
 
-        doc_ref = db.collection("theatres").document(str(theatre_id))
+        doc_ref = db.collection(THEATRES).document(str(theatre_id))
 
         # Check if exists
         doc = doc_ref.get()
@@ -134,7 +140,7 @@ def get_theatre(theatre_id: str) -> dict[str, Any] | None:
     """Get a theatre by ID."""
     try:
         db = get_firestore_client()
-        doc = db.collection("theatres").document(str(theatre_id)).get()
+        doc = db.collection(THEATRES).document(str(theatre_id)).get()
         if doc.exists:
             return cast("dict[str, Any]", doc.to_dict())
         return None
@@ -147,7 +153,7 @@ def get_all_theatres() -> list[dict[str, Any]]:
     """Get all theatres."""
     try:
         db = get_firestore_client()
-        docs = db.collection("theatres").stream()
+        docs = db.collection(THEATRES).stream()
         return [doc.to_dict() for doc in docs]
     except Exception as e:
         logger.error(f"Error getting all theatres: {e}")
@@ -158,7 +164,7 @@ def get_theatres_by_city(city: str) -> list[dict[str, Any]]:
     """Get all theatres in a city."""
     try:
         db = get_firestore_client()
-        docs = db.collection("theatres").where("city", "==", city.upper()).stream()
+        docs = db.collection(THEATRES).where("city", "==", city.upper()).stream()
         return [doc.to_dict() for doc in docs]
     except Exception as e:
         logger.error(f"Error getting theatres for {city}: {e}")
@@ -270,7 +276,7 @@ def log_morning_scrape(
         if error:
             morning_run["error"] = error
 
-        db.collection("scraper_logs").document(today_str).set(
+        db.collection(SCRAPER_LOGS).document(today_str).set(
             {
                 "date": today_str,
                 "created_at": datetime.now(UTC).isoformat(),
@@ -340,7 +346,7 @@ def log_jit_dispatch(
             dispatch_entry["error"] = error
 
         # Ensure the parent daily doc exists
-        daily_ref = db.collection("scraper_logs").document(today_str)
+        daily_ref = db.collection(SCRAPER_LOGS).document(today_str)
         daily_ref.set(
             {
                 "date": today_str,
@@ -350,7 +356,7 @@ def log_jit_dispatch(
         )
 
         # Create the dispatch subcollection doc
-        dispatch_ref = daily_ref.collection("dispatches").document(dispatch_slot)
+        dispatch_ref = daily_ref.collection(DISPATCHES).document(dispatch_slot)
         dispatch_ref.set(dispatch_entry)
 
         logger.info(
@@ -402,7 +408,7 @@ def log_daily_summary(
             "city_count": city_count,
         }
 
-        db.collection("scraper_logs").document(date_str).set(
+        db.collection(SCRAPER_LOGS).document(date_str).set(
             {"daily_summary": daily_summary},
             merge=True,
         )
@@ -453,11 +459,11 @@ def save_daily_snapshot(data: dict[str, Any]) -> bool:
         }
 
         # Save to 'latest' (overwrites previous)
-        db.collection("snapshots").document("latest").set(snapshot_data)
+        db.collection(SNAPSHOTS).document("latest").set(snapshot_data)
         logger.info("   Saved snapshot to 'latest'")
 
         # Also save to dated document (archive)
-        db.collection("snapshots").document(date).set(snapshot_data)
+        db.collection(SNAPSHOTS).document(date).set(snapshot_data)
         logger.info(f"   Archived snapshot to '{date}'")
 
         return True

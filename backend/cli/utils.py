@@ -12,6 +12,8 @@ from typing import Any, cast
 from google.cloud import firestore
 from google.oauth2 import service_account
 
+from backend.infrastructure.firestore_collections import MOVIES, SCHEDULES
+
 logger = logging.getLogger(__name__)
 
 
@@ -63,8 +65,8 @@ def load_movie_data_from_firestore(date_str: str) -> dict[str, Any] | None:
         db = firestore.Client()
 
     # Load all movies from schedules/{date}/movies
-    logger.info(f"📥 Loading movies from Firestore: schedules/{date_str}/movies")
-    movies_ref = db.collection("schedules").document(date_str).collection("movies")
+    logger.info(f"📥 Loading movies from Firestore: {SCHEDULES}/{date_str}/{MOVIES}")
+    movies_ref = db.collection(SCHEDULES).document(date_str).collection(MOVIES)
 
     docs = movies_ref.stream()
     movies = []

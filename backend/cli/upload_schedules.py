@@ -14,6 +14,8 @@ from typing import Any, cast
 from google.cloud import firestore
 from google.oauth2 import service_account
 
+from backend.infrastructure.firestore_collections import MOVIES, SCHEDULES
+
 logger = logging.getLogger(__name__)
 
 
@@ -98,12 +100,12 @@ def upload_schedules_to_firestore(movies: list[dict[str, Any]], date: str) -> No
         schedule_doc = transform_for_firestore(movie, date)
 
         # Write to schedules/{date}/movies/{movie_id}
-        doc_ref = db.collection("schedules").document(date).collection("movies").document(movie_id)
+        doc_ref = db.collection(SCHEDULES).document(date).collection(MOVIES).document(movie_id)
         doc_ref.set(schedule_doc)
         uploaded += 1
         logger.info(f"   ✓ {movie.get('title', movie_id)[:40]}")
 
-    logger.info(f"\n✅ Uploaded {uploaded} movie schedules to schedules/{date}/movies/")
+    logger.info(f"\n✅ Uploaded {uploaded} movie schedules to {SCHEDULES}/{date}/{MOVIES}/")
 
 
 def main() -> None:

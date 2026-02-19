@@ -15,6 +15,12 @@ import sys
 from collections import defaultdict
 from typing import Any
 
+from backend.infrastructure.firestore_collections import (
+    DISPATCHES,
+    ERRORS,
+    JOBS,
+    SCRAPER_LOGS,
+)
 from backend.infrastructure.repositories.firestore_utils import get_firestore_client
 
 logger = logging.getLogger(__name__)
@@ -22,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 def fetch_scraper_logs(db: Any, date_str: str) -> dict[str, Any] | None:
     """Fetch the daily scraper log document."""
-    doc_ref = db.collection("scraper_logs").document(date_str)
+    doc_ref = db.collection(SCRAPER_LOGS).document(date_str)
     doc = doc_ref.get()
     if doc.exists:
         result: dict[str, Any] = doc.to_dict() or {}
@@ -33,7 +39,7 @@ def fetch_scraper_logs(db: Any, date_str: str) -> dict[str, Any] | None:
 def fetch_dispatches(db: Any, date_str: str) -> list[dict[str, Any]]:
     """Fetch all dispatch entries for a date."""
     dispatches = []
-    dispatch_refs = db.collection("scraper_logs").document(date_str).collection("dispatches").stream()
+    dispatch_refs = db.collection(SCRAPER_LOGS).document(date_str).collection(DISPATCHES).stream()
     for doc in dispatch_refs:
         data = doc.to_dict()
         data["slot"] = doc.id
@@ -45,11 +51,11 @@ def fetch_errors_for_dispatch(db: Any, date_str: str, dispatch_slot: str) -> lis
     """Fetch all errors for a specific dispatch."""
     errors = []
     error_refs = (
-        db.collection("scraper_logs")
+        db.collection(SCRAPER_LOGS)
         .document(date_str)
-        .collection("dispatches")
+        .collection(DISPATCHES)
         .document(dispatch_slot)
-        .collection("errors")
+        .collection(ERRORS)
         .stream()
     )
     for doc in error_refs:
@@ -63,11 +69,11 @@ def fetch_jobs_for_dispatch(db: Any, date_str: str, dispatch_slot: str) -> list[
     """Fetch all jobs for a specific dispatch."""
     jobs = []
     job_refs = (
-        db.collection("scraper_logs")
+        db.collection(SCRAPER_LOGS)
         .document(date_str)
-        .collection("dispatches")
+        .collection(DISPATCHES)
         .document(dispatch_slot)
-        .collection("jobs")
+        .collection(JOBS)
         .stream()
     )
     for doc in job_refs:
