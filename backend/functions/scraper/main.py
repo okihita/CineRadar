@@ -466,7 +466,7 @@ class TokenRefreshLock:
     def __init__(self, db: firestore.Client):
         self.db = db
         self.lock_ref = db.collection("auth_tokens").document("refresh_lock")
-        self.timeout = 30  # seconds
+        self.timeout = 60  # seconds (increased from 30 to cover max propagation wait of 40s)
 
     def acquire(self, instance_id: str) -> bool:
         """Attempt to acquire the lock."""
