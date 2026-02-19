@@ -48,6 +48,14 @@ export interface JITSummary {
     errorCount: number;
     firstDispatch: string;
     lastDispatch: string;
+    totalSchedules: number;
+    availableSchedules: number;
+    coveragePercent: number;
+    errorBreakdown: {
+        auth: number;      // 401 - token/auth issues (CRITICAL)
+        closed: number;    // 400 - seating closed/passed (expected)
+        other: number;     // Other errors (network, schema, etc.)
+    };
 }
 
 // ============================================================================

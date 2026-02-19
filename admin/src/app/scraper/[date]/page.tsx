@@ -148,9 +148,12 @@ export default function ScraperDatePage({ params }: PageProps) {
             <div className="mb-6">
                 <DailyStatsCards
                     totalSchedules={dayStats.totalSchedules}
+                    availableSchedules={dayStats.availableSchedules}
                     coveragePercent={dayStats.coveragePercent}
                     totalDispatches={dayStats.totalDispatches}
+                    totalSuccesses={dayStats.totalSuccesses}
                     totalErrors={dayStats.totalErrors}
+                    errorBreakdown={dayStats.errorBreakdown}
                 />
             </div>
 

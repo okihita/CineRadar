@@ -12,7 +12,13 @@ interface JITSummary {
     firstDispatch?: string;
     lastDispatch?: string;
     totalSchedules: number;
+    availableSchedules: number;
     coveragePercent: number;
+    errorBreakdown: {
+        auth: number;      // 401 - token/auth issues (CRITICAL)
+        closed: number;    // 400 - seating closed/passed (expected)
+        other: number;     // Other errors (network, schema, etc.)
+    };
 }
 
 interface DayResponse {
@@ -62,7 +68,10 @@ export function useScraperDay(date: string) {
         errorDispatches: dispatchList.filter(d => d.status === 'error' || (d.total_errors || 0) > 0).length,
         // New fields for schedule coverage
         totalSchedules: jitSummary?.totalSchedules ?? 0,
+        availableSchedules: jitSummary?.availableSchedules ?? 0,
         coveragePercent: jitSummary?.coveragePercent ?? 0,
+        // Error breakdown by type
+        errorBreakdown: jitSummary?.errorBreakdown ?? { auth: 0, closed: 0, other: 0 },
     };
 
     return {

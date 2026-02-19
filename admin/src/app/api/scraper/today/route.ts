@@ -24,12 +24,14 @@ export async function GET(request: NextRequest) {
         // 1. ALWAYS fetch schedules first (available after morning scrape ~6:35 AM)
         // This ensures "Schedules Today" card shows data even before JIT dispatcher runs
         let totalSchedules = 0;
+        let availableSchedules = 0;
         try {
             const moviesRaw = await firestoreRestClient.getSubCollection(
                 `schedules/${dateStr}/movies`
             );
 
             // Count showtimes from each movie's cities -> theatres -> rooms -> all_showtimes
+            // Separate count for total vs available (is_available !== false)
             for (const movie of moviesRaw) {
                 const cities = movie.cities as Record<string, unknown[]> || {};
                 for (const theatres of Object.values(cities)) {
@@ -39,7 +41,13 @@ export async function GET(request: NextRequest) {
                         for (const room of rooms) {
                             const allShowtimes = (room as Record<string, unknown>).all_showtimes as unknown[];
                             if (Array.isArray(allShowtimes)) {
-                                totalSchedules += allShowtimes.length;
+                                for (const showtime of allShowtimes) {
+                                    totalSchedules++;
+                                    // Count as available unless explicitly marked unavailable
+                                    if ((showtime as Record<string, unknown>).is_available !== false) {
+                                        availableSchedules++;
+                                    }
+                                }
                             }
                         }
                     }
@@ -66,7 +74,9 @@ export async function GET(request: NextRequest) {
                     firstDispatch: null,
                     lastDispatch: null,
                     totalSchedules,
+                    availableSchedules,
                     coveragePercent: 0,
+                    errorBreakdown: { auth: 0, closed: 0, other: 0 },
                 },
                 date: dateStr,
                 hasScraperLog: false,
@@ -107,12 +117,43 @@ export async function GET(request: NextRequest) {
         // Compute summary stats for dispatches
         const dispatchEntries = Object.entries(dispatches);
         const totalShowtimesScraped = dispatchEntries.reduce((sum, [, entry]) => sum + (entry.showtimes_found || 0), 0);
+        const totalErrors = dispatchEntries.reduce((sum, [, entry]) => sum + (entry.total_errors || 0), 0);
+
+        // Aggregate error counts by HTTP status from errors subcollections
+        const errorBreakdown = {
+            auth: 0,      // 401 - token/auth issues (CRITICAL)
+            closed: 0,    // 400 - seating closed/passed (expected)
+            other: 0,     // Other errors (network, schema, etc.)
+        };
+
+        // Fetch errors from subcollections in PARALLEL for dispatches that have errors
+        const errorFetchPromises = dispatchEntries
+            .filter(([, entry]) => (entry.total_errors || 0) > 0)
+            .map(async ([slot]) => {
+                try {
+                    const errors = await firestoreRestClient.getSubCollection(
+                        `scraper_logs/${dateStr}/dispatches/${slot}/errors`
+                    );
+                    return errors.map(err => err.http_status as number);
+                } catch {
+                    return [];
+                }
+            });
+
+        const allErrorStatuses = await Promise.all(errorFetchPromises);
+        for (const statuses of allErrorStatuses) {
+            for (const status of statuses) {
+                if (status === 401) errorBreakdown.auth++;
+                else if (status === 400) errorBreakdown.closed++;
+                else errorBreakdown.other++;
+            }
+        }
 
         const jitSummary = {
             totalRuns: dispatchEntries.length,
             totalShowtimesFound: totalShowtimesScraped,
             totalJobsPublished: dispatchEntries.reduce((sum, [, entry]) => sum + (entry.jobs_published || 0), 0),
-            totalErrors: dispatchEntries.reduce((sum, [, entry]) => sum + (entry.total_errors || 0), 0),
+            totalErrors,
             totalSuccesses: dispatchEntries.reduce((sum, [, entry]) => sum + (entry.total_successes || 0), 0),
             errorCount: dispatchEntries.filter(([, entry]) => entry.status === 'error').length,
             firstDispatch: dispatchEntries.length > 0
@@ -121,9 +162,12 @@ export async function GET(request: NextRequest) {
             lastDispatch: dispatchEntries.length > 0
                 ? dispatchEntries.sort(([a], [b]) => b.localeCompare(a))[0]?.[0]?.replace('-', ':')
                 : null,
-            // Schedule coverage metrics
+            // Schedule coverage metrics - use availableSchedules for accurate coverage
             totalSchedules,
-            coveragePercent: totalSchedules > 0 ? Math.round((totalShowtimesScraped / totalSchedules) * 100) : 0,
+            availableSchedules,
+            coveragePercent: availableSchedules > 0 ? Math.round((totalShowtimesScraped / availableSchedules) * 100) : 0,
+            // Error breakdown by type
+            errorBreakdown,
         };
 
         return NextResponse.json({
