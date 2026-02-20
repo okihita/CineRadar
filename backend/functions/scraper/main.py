@@ -486,7 +486,7 @@ class TokenRefreshLock:
     def __init__(self, db: firestore.Client):
         self.db = db
         self.lock_ref = db.collection("auth_tokens").document("refresh_lock")
-        self.timeout = 60  # seconds (increased from 30 to cover max propagation wait of 40s)
+        self.timeout = 75  # seconds (increased from 60 to safely cover the 60s max propagation wait plus network latency)
 
     def acquire(self, instance_id: str) -> bool:
         """Attempt to acquire the lock."""
@@ -546,14 +546,29 @@ def refresh_access_token(db: firestore.Client, refresh_token: str) -> str | None
 
     # Try to acquire lock with retry
     # If another instance is refreshing, we wait for it to finish instead of failing
-    max_retries = 20
+    max_retries = 40  # 40 * 2s = 80s wait (exceeds 75s lock timeout to outlast worst-case refresh)
     for i in range(max_retries):
+        # Check if another instance already refreshed the token while we were waiting
+        token_data = load_token_data(db)
+        if token_data and token_data.get("token") and token_data.get("stored_at"):
+            try:
+                stored_at = datetime.fromisoformat(token_data["stored_at"])
+                if stored_at.tzinfo is None:
+                    stored_at = stored_at.replace(tzinfo=UTC)
+                age_seconds = (datetime.now(UTC) - stored_at).total_seconds()
+                
+                # If token was refreshed in the last 2 minutes, it's fresh! Use it immediately.
+                if age_seconds < 120:
+                    logger.info(f"Token was refreshed by another instance while waiting (age: {age_seconds:.1f}s)")
+                    return str(token_data["token"])
+            except ValueError:
+                pass
+
         if lock.acquire(instance_id):
             break
 
         logger.info(f"Another instance is refreshing, waiting... ({i+1}/{max_retries})")
-        time.sleep(2.0) # Wait 1s between checks
-        # Wait for lock - don't return old token, let the lock holder finish refreshing
+        time.sleep(2.0) # Wait 2s between checks
 
     # If we still don't have the lock after retries, try one last check
     if not lock.acquire(instance_id):
@@ -582,11 +597,11 @@ def refresh_access_token(db: firestore.Client, refresh_token: str) -> str | None
             new_token = data.get("data", {}).get("token")
 
             if new_token:
-                # Wait for token to propagate to TIX's Redis nodes
-                # Data shows 100% of 401 errors occur with tokens 0-30s old
-                # Use adaptive delays: 2s for first 10 attempts, then 5s for next 4
-                # Total max wait: 10*2 + 4*5 = 40s (covers 99%+ of cases)
-                retry_schedule = [2] * 10 + [5] * 4  # [2,2,2,2,2,2,2,2,2,2,5,5,5,5]
+                # Wait for token to propagate to TIX's Redis nodes.
+                # Since immediate propagation is unlikely, we wait 5s initially to reduce noise,
+                # then check rapidly (2s), then fall back to 5s if it's struggling.
+                # Total max wait = 20s + 20s + 20s = 60s.
+                retry_schedule = [5] * 4 + [2] * 10 + [5] * 4
                 validated_at_attempt = -1
 
                 for attempt, delay in enumerate(retry_schedule):
@@ -603,7 +618,7 @@ def refresh_access_token(db: firestore.Client, refresh_token: str) -> str | None
 
                 if validated_at_attempt < 0:
                     # All retries failed - keep old token
-                    logger.error("❌ Token never propagated after 40s, keeping old token")
+                    logger.error("❌ Token never propagated after 60s, keeping old token")
                     lock.release()
                     return None
 
