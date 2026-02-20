@@ -50,8 +50,8 @@ JAKARTA_TZ = ZoneInfo("Asia/Jakarta")
 # Window configuration (minutes from now)
 # Exactly one 5-minute bucket so each dispatch captures unique showtimes with no overlap.
 # e.g., dispatch at 12:00 → captures showtimes from 12:20 to 12:24.
-WINDOW_START_MINUTES = 20  # Start of window: showtimes starting 20 min from now
-WINDOW_END_MINUTES = 25  # End of window: showtimes starting up to 25 min from now (exclusive)
+WINDOW_START_MINUTES = 30  # Start of window: showtimes starting 30 min from now
+WINDOW_END_MINUTES = 35  # End of window: showtimes starting up to 35 min from now (exclusive)
 
 
 def get_firestore_client() -> firestore.Client:
