@@ -6,7 +6,7 @@ import useSWR from "swr";
 import { DateNavigator } from "@/features/schedules/components/DateNavigator";
 import { ScheduleStats } from "@/features/schedules/components/ScheduleStats";
 import { MovieScheduleList } from "@/features/schedules/components/MovieScheduleList";
-import { ScheduleResponse, countMovieShowtimes } from "@/features/schedules/types";
+import { ScheduleResponse, countMovieShowtimes, countAvailableMovieShowtimes } from "@/features/schedules/types";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -26,6 +26,7 @@ export default function SchedulesPage() {
     // Calculate aggregated stats
     const totalMovies = data?.movies?.length || 0;
     let totalShowtimes = 0;
+    let totalAvailableShowtimes = 0;
     let totalTheatres = 0;
 
     // Process movies: Deduplicate and Sort
@@ -36,6 +37,7 @@ export default function SchedulesPage() {
         processedMovies.forEach(m => {
             if (!m.cities) return;
             totalShowtimes += countMovieShowtimes(m.cities);
+            totalAvailableShowtimes += countAvailableMovieShowtimes(m.cities);
             Object.values(m.cities).forEach(theatres => {
                 totalTheatres += theatres.length;
             });
@@ -60,47 +62,50 @@ export default function SchedulesPage() {
 
     return (
         <div className="min-h-screen bg-background text-foreground flex flex-col">
-            <DateNavigator date={date} setDate={setDate} isLoading={isLoading} />
+            <div className="w-full flex-1 flex flex-col">
+                <DateNavigator date={date} setDate={setDate} isLoading={isLoading} />
 
-            <div className="flex-1 p-6 space-y-6 w-full">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Showtime Intelligence</h1>
-                        <p className="text-muted-foreground">
-                            Daily schedule coverage and analysis
-                        </p>
+                <div className="flex-1 p-6 space-y-6 w-full">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-2xl font-bold tracking-tight">Showtime Intelligence</h1>
+                            <p className="text-muted-foreground">
+                                Daily schedule coverage and analysis
+                            </p>
+                        </div>
+                        {isLoading && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
                     </div>
-                    {isLoading && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
+
+                    {error && (
+                        <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>Error</AlertTitle>
+                            <AlertDescription>
+                                Failed to load schedules: {String(error)}
+                            </AlertDescription>
+                        </Alert>
+                    )}
+
+                    {!error && (
+                        <>
+                            <ScheduleStats
+                                totalMovies={totalMovies}
+                                totalShowtimes={totalShowtimes}
+                                totalAvailableShowtimes={totalAvailableShowtimes}
+                                totalTheatres={totalTheatres}
+                            />
+
+                            {processedMovies.length > 0 && (
+                                <AggregatedShowtimeChart movies={processedMovies} />
+                            )}
+
+                            <MovieScheduleList
+                                movies={processedMovies}
+                                isLoading={isLoading}
+                            />
+                        </>
+                    )}
                 </div>
-
-                {error && (
-                    <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>Error</AlertTitle>
-                        <AlertDescription>
-                            Failed to load schedules: {String(error)}
-                        </AlertDescription>
-                    </Alert>
-                )}
-
-                {!error && (
-                    <>
-                        <ScheduleStats
-                            totalMovies={totalMovies}
-                            totalShowtimes={totalShowtimes}
-                            totalTheatres={totalTheatres}
-                        />
-
-                        {processedMovies.length > 0 && (
-                            <AggregatedShowtimeChart movies={processedMovies} />
-                        )}
-
-                        <MovieScheduleList
-                            movies={processedMovies}
-                            isLoading={isLoading}
-                        />
-                    </>
-                )}
             </div>
         </div>
     );

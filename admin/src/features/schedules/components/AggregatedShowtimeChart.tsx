@@ -10,17 +10,18 @@ interface AggregatedShowtimeChartProps {
 }
 
 export function AggregatedShowtimeChart({ movies }: AggregatedShowtimeChartProps) {
-    const { data, totalShowtimes } = useMemo(() => {
+    const { data, totalShowtimes, totalAvailable } = useMemo(() => {
         // Re-initializing with 5 min intervals to match existing style
-        const bucketMap = new Map<string, number>();
+        const bucketMap = new Map<string, { available: number; unavailable: number }>();
         for (let h = 9; h <= 23; h++) {
             for (let m = 0; m < 60; m += 5) {
                 const timeStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-                bucketMap.set(timeStr, 0);
+                bucketMap.set(timeStr, { available: 0, unavailable: 0 });
             }
         }
 
         let total = 0;
+        let available = 0;
 
         movies.forEach(movie => {
             if (!movie.cities) return;
@@ -38,8 +39,14 @@ export function AggregatedShowtimeChart({ movies }: AggregatedShowtimeChartProps
                                 if (h >= 9 && h <= 23) {
                                     const mRounded = Math.floor(m / 5) * 5;
                                     const bucketKey = `${h.toString().padStart(2, '0')}:${mRounded.toString().padStart(2, '0')}`;
-                                    if (bucketMap.has(bucketKey)) {
-                                        bucketMap.set(bucketKey, (bucketMap.get(bucketKey) || 0) + 1);
+                                    const bucket = bucketMap.get(bucketKey);
+                                    if (bucket) {
+                                        if (show.is_available) {
+                                            bucket.available++;
+                                            available++;
+                                        } else {
+                                            bucket.unavailable++;
+                                        }
                                         total++;
                                     }
                                 }
@@ -50,63 +57,80 @@ export function AggregatedShowtimeChart({ movies }: AggregatedShowtimeChartProps
             });
         });
 
-        const formattedData = Array.from(bucketMap.entries()).map(([time, count]) => ({
+        const formattedData = Array.from(bucketMap.entries()).map(([time, counts]) => ({
             time,
-            count
+            available: counts.available,
+            unavailable: counts.unavailable,
+            total: counts.available + counts.unavailable
         }));
 
-        return { data: formattedData, totalShowtimes: total };
+        return { data: formattedData, totalShowtimes: total, totalAvailable: available };
     }, [movies]);
 
     if (totalShowtimes === 0) return null;
 
-    const maxCount = Math.max(...data.map(d => d.count), 1);
+    const maxCount = Math.max(...data.map(d => d.total), 1);
 
     return (
-        <Card className="col-span-1">
+        <Card className="col-span-1 border-border/60 shadow-sm">
             <CardHeader className="pb-2">
-                <CardTitle className="text-base font-medium">Global Showtime Distribution</CardTitle>
-                <CardDescription>
-                    Aggregated volume across all {movies.length} movies ({totalShowtimes} showtimes)
-                </CardDescription>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <CardTitle className="text-base font-medium">Global Showtime Distribution</CardTitle>
+                        <CardDescription>
+                            Aggregated volume across all {movies.length} movies ({totalShowtimes} showtimes)
+                        </CardDescription>
+                    </div>
+                    <div className="text-xs flex gap-3 text-muted-foreground mt-1">
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-2.5 h-2.5 rounded-sm bg-primary"></div>
+                            <span>Available ({totalAvailable.toLocaleString()})</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-2.5 h-2.5 rounded-sm bg-muted-foreground/20"></div>
+                            <span>Closed ({Math.max(0, totalShowtimes - totalAvailable).toLocaleString()})</span>
+                        </div>
+                    </div>
+                </div>
             </CardHeader>
             <CardContent>
-                <div className="h-[200px] w-full">
+                <div className="h-[200px] w-full mt-2">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={data} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" opacity={0.2} />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.4} />
                             <XAxis
                                 dataKey="time"
                                 tick={{ fontSize: 10 }}
                                 interval={23} // Show rough hourly ticks (12 * 5min = 60min)
-                                stroke="#888888"
+                                stroke="hsl(var(--muted-foreground))"
                                 minTickGap={30}
+                                tickLine={false}
+                                axisLine={false}
                             />
                             <YAxis
                                 tick={{ fontSize: 10 }}
-                                stroke="#888888"
+                                stroke="hsl(var(--muted-foreground))"
                                 allowDecimals={false}
                                 width={30}
+                                tickLine={false}
+                                axisLine={false}
                             />
                             <Tooltip
                                 contentStyle={{
                                     backgroundColor: 'hsl(var(--popover))',
-                                    borderRadius: '6px',
+                                    borderRadius: '4px',
                                     border: '1px solid hsl(var(--border))',
-                                    fontSize: '12px'
+                                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+                                    fontSize: '12px',
+                                    padding: '8px 12px'
                                 }}
-                                itemStyle={{ color: 'hsl(var(--popover-foreground))' }}
-                                cursor={{ fill: 'hsl(var(--muted)/0.2)' }}
-                                labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
+                                itemStyle={{ color: 'hsl(var(--popover-foreground))', padding: '2px 0' }}
+                                cursor={{ fill: 'hsl(var(--muted))' }}
+                                labelStyle={{ color: 'hsl(var(--muted-foreground))', marginBottom: '4px', fontWeight: 500 }}
+                                formatter={(value: number, name: string) => [value, name === 'available' ? 'Available' : 'Closed']}
                             />
-                            <Bar dataKey="count" radius={[2, 2, 0, 0]} maxBarSize={40}>
-                                {data.map((entry, index) => (
-                                    <Cell
-                                        key={`cell-${index}`}
-                                        fill={entry.count > maxCount * 0.8 ? "hsl(var(--primary))" : "hsl(var(--primary)/0.6)"}
-                                    />
-                                ))}
-                            </Bar>
+                            <Bar dataKey="available" stackId="a" fill="hsl(var(--primary))" radius={[0, 0, 0, 0]} />
+                            <Bar dataKey="unavailable" stackId="a" fill="hsl(var(--muted-foreground))" opacity={0.2} radius={[2, 2, 0, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>

@@ -64,3 +64,17 @@ export function countMovieShowtimes(cities: CitySchedule): number {
     }
     return total;
 }
+
+// Helper: count only available showtimes across all theatres in all cities
+export function countAvailableMovieShowtimes(cities: CitySchedule): number {
+    let total = 0;
+    for (const theatres of Object.values(cities)) {
+        for (const theatre of theatres) {
+            total += (theatre.rooms || []).reduce((sum, room) => {
+                const availableCount = (room.all_showtimes || []).filter(s => s.is_available).length;
+                return sum + availableCount;
+            }, 0);
+        }
+    }
+    return total;
+}

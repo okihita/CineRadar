@@ -15,7 +15,7 @@ interface DateNavigatorProps {
 
 export function DateNavigator({ date, setDate, isLoading }: DateNavigatorProps) {
     return (
-        <div className="flex items-center gap-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10 py-4 border-b">
+        <div className="flex items-center gap-2 bg-background sticky top-0 z-10 px-6 py-4 border-b border-border shadow-sm">
             <Button
                 variant="outline"
                 size="icon"

@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { CitySchedule } from "../types";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 interface ShowtimeDistributionChartProps {
     cityData: CitySchedule;
@@ -10,13 +10,13 @@ interface ShowtimeDistributionChartProps {
 
 export function ShowtimeDistributionChart({ cityData }: ShowtimeDistributionChartProps) {
     const data = useMemo(() => {
-        const buckets = new Map<string, number>();
+        const buckets = new Map<string, { available: number; unavailable: number }>();
 
         // Initialize buckets from 10:00 to 23:00 in 5-minute intervals
         for (let h = 10; h <= 23; h++) {
             for (let m = 0; m < 60; m += 5) {
                 const timeStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-                buckets.set(timeStr, 0);
+                buckets.set(timeStr, { available: 0, unavailable: 0 });
             }
         }
 
@@ -32,8 +32,13 @@ export function ShowtimeDistributionChart({ cityData }: ShowtimeDistributionChar
                         if (!isNaN(h) && !isNaN(m) && h >= 10 && h <= 23) {
                             const mRounded = Math.floor(m / 5) * 5;
                             const bucketKey = `${h.toString().padStart(2, '0')}:${mRounded.toString().padStart(2, '0')}`;
-                            if (buckets.has(bucketKey)) {
-                                buckets.set(bucketKey, (buckets.get(bucketKey) || 0) + 1);
+                            const bucket = buckets.get(bucketKey);
+                            if (bucket) {
+                                if (show.is_available) {
+                                    bucket.available++;
+                                } else {
+                                    bucket.unavailable++;
+                                }
                             }
                         }
                     });
@@ -42,21 +47,33 @@ export function ShowtimeDistributionChart({ cityData }: ShowtimeDistributionChar
         });
 
         // Return all buckets (including zeros) to maintain consistent x-axis
-        return Array.from(buckets.entries()).map(([time, count]) => ({
+        return Array.from(buckets.entries()).map(([time, counts]) => ({
             time,
-            count
+            available: counts.available,
+            unavailable: counts.unavailable,
+            total: counts.available + counts.unavailable
         }));
     }, [cityData]);
 
     if (data.length === 0) return null;
 
-    const maxCount = Math.max(...data.map(d => d.count), 1);
-
     return (
         <div>
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Showtime Distribution (10am - 11pm)
-            </h4>
+            <div className="flex justify-between items-center mb-2">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Showtime Distribution (10am - 11pm)
+                </h4>
+                <div className="text-[10px] flex gap-2 text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-sm bg-primary"></div>
+                        <span>Available</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-sm bg-muted-foreground/20"></div>
+                        <span>Closed</span>
+                    </div>
+                </div>
+            </div>
             <div className="h-[120px]">
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={data}>
@@ -64,32 +81,34 @@ export function ShowtimeDistributionChart({ cityData }: ShowtimeDistributionChar
                             dataKey="time"
                             tick={{ fontSize: 10 }}
                             interval={Math.floor(data.length / 8)}
-                            stroke="#888888"
+                            stroke="hsl(var(--muted-foreground))"
+                            tickLine={false}
+                            axisLine={false}
                         />
                         <YAxis
                             tick={{ fontSize: 10 }}
                             width={28}
-                            stroke="#888888"
+                            stroke="hsl(var(--muted-foreground))"
                             allowDecimals={false}
+                            tickLine={false}
+                            axisLine={false}
                         />
                         <Tooltip
                             contentStyle={{
                                 backgroundColor: 'hsl(var(--popover))',
-                                borderRadius: '6px',
+                                borderRadius: '4px',
                                 border: '1px solid hsl(var(--border))',
-                                fontSize: '12px'
+                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+                                fontSize: '11px',
+                                padding: '6px 10px'
                             }}
-                            itemStyle={{ color: 'hsl(var(--popover-foreground))' }}
-                            cursor={{ fill: 'hsl(var(--muted)/0.2)' }}
+                            itemStyle={{ color: 'hsl(var(--popover-foreground))', padding: '1px 0' }}
+                            cursor={{ fill: 'hsl(var(--muted))' }}
+                            labelStyle={{ color: 'hsl(var(--muted-foreground))', marginBottom: '2px', fontWeight: 500 }}
+                            formatter={(value: number, name: string) => [value, name === 'available' ? 'Available' : 'Closed']}
                         />
-                        <Bar dataKey="count" radius={[2, 2, 0, 0]}>
-                            {data.map((entry, index) => (
-                                <Cell
-                                    key={`cell-${index}`}
-                                    fill={entry.count > maxCount * 0.7 ? "hsl(var(--primary))" : "hsl(var(--primary)/0.5)"}
-                                />
-                            ))}
-                        </Bar>
+                        <Bar dataKey="available" stackId="a" fill="hsl(var(--primary))" radius={[0, 0, 0, 0]} />
+                        <Bar dataKey="unavailable" stackId="a" fill="hsl(var(--muted-foreground))" opacity={0.2} radius={[2, 2, 0, 0]} />
                     </BarChart>
                 </ResponsiveContainer>
             </div>
