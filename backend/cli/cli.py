@@ -55,7 +55,7 @@ Examples:
     seats_parser.add_argument("--batch", type=int, help="Batch number")
     seats_parser.add_argument("--total-batches", type=int, default=9)
     seats_parser.add_argument(
-        "--jit-window", type=int, default=15, help="JIT window in minutes (default: 15 for T-15)"
+        "--jit-window", type=int, default=20, help="JIT window in minutes (default: 20 for T-20)"
     )
     seats_parser.add_argument(
         "--use-stored-token",

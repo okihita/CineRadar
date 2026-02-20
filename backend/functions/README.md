@@ -1,6 +1,6 @@
 # JIT Seat Scraper - Cloud Functions
 
-Event-driven seat scraper using GCP Cloud Functions + Pub/Sub for T-15 precision at ~$1.30/month.
+Event-driven seat scraper using GCP Cloud Functions + Pub/Sub for T-20 precision at ~$1.30/month.
 
 ## Architecture
 
@@ -87,8 +87,8 @@ The system uses a **Fan-out** pattern to handle variable load:
 
 1. **Scheduler (Timer)**: Triggers the Dispatcher every 5 minutes.
 2. **Dispatcher (Brain)**:
-   - Queries Firestore for showtimes starting in the [T+15, T+20) minute window.
-   - Example: Dispatch at 12:00 → captures showtimes from 12:15 to 12:19.
+   - Queries Firestore for showtimes starting in the [T+20, T+25) minute window.
+   - Example: Dispatch at 12:00 → captures showtimes from 12:20 to 12:24.
    - Publishes **one message per showtime** to Pub/Sub.
 3. **Scraper (Sequential Worker)**:
    - Triggered by Pub/Sub messages.
@@ -97,7 +97,7 @@ The system uses a **Fan-out** pattern to handle variable load:
 
 ### Timing Precision
 
-The T-15 window means we scrape showtimes **15 minutes before they start**:
+The T-20 window means we scrape showtimes **20 minutes before they start**:
 - Early enough to capture seat availability before showtime
 - Late enough to get meaningful occupancy data
 - 5-minute buckets ensure no overlap or missed showtimes
@@ -107,7 +107,7 @@ The T-15 window means we scrape showtimes **15 minutes before they start**:
 ### Dispatcher (`dispatch-jit-jobs`)
 - **Trigger**: HTTP (Cloud Scheduler)
 - **Schedule**: Every 5 minutes, 9 AM - 11 PM WIB
-- **Purpose**: Find showtimes in T+15 to T+20 window, publish to Pub/Sub
+- **Purpose**: Find showtimes in T+20 to T+25 window, publish to Pub/Sub
 
 ### Scraper (`scrape-seat-jit`)
 - **Trigger**: Pub/Sub (`scrape-seat-jit` topic)

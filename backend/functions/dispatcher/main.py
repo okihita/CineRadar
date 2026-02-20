@@ -2,7 +2,7 @@
 JIT Seat Scraper - Dispatcher Function
 
 HTTP-triggered Cloud Function that:
-1. Queries Firestore for showtimes starting in exactly the [T+15, T+20) minute window
+1. Queries Firestore for showtimes starting in exactly the [T+20, T+25) minute window
 2. Publishes each showtime to Pub/Sub for individual scraping
 3. Each 5-minute dispatch captures exactly one non-overlapping bucket
 
@@ -49,9 +49,9 @@ JAKARTA_TZ = ZoneInfo("Asia/Jakarta")
 
 # Window configuration (minutes from now)
 # Exactly one 5-minute bucket so each dispatch captures unique showtimes with no overlap.
-# e.g., dispatch at 12:00 → captures showtimes from 12:15 to 12:19.
-WINDOW_START_MINUTES = 15  # Start of window: showtimes starting 15 min from now
-WINDOW_END_MINUTES = 20  # End of window: showtimes starting up to 20 min from now (exclusive)
+# e.g., dispatch at 12:00 → captures showtimes from 12:20 to 12:24.
+WINDOW_START_MINUTES = 20  # Start of window: showtimes starting 20 min from now
+WINDOW_END_MINUTES = 25  # End of window: showtimes starting up to 25 min from now (exclusive)
 
 
 def get_firestore_client() -> firestore.Client:
