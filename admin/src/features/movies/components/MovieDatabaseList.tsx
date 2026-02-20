@@ -99,12 +99,12 @@ export function MovieDatabaseList() {
                 </div>
 
                 {uniqueNowShowing.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                        <Film className="w-10 h-10 mx-auto mb-2 opacity-40" />
-                        <p>No movies showing today</p>
+                    <div className="text-center py-8 bg-muted/20 border border-border rounded-lg text-muted-foreground">
+                        <Film className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                        <p className="text-sm">No movies showing today</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-1">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-4">
                         {uniqueNowShowing.map((movie) => {
                             // Calculate days showing (from movie.date to today)
                             const movieDate = new Date(movie.date);
@@ -115,60 +115,62 @@ export function MovieDatabaseList() {
                                 <Link
                                     key={movie.movie_id}
                                     href={`/movies/${movie.movie_id}`}
-                                    className="group relative cursor-pointer"
+                                    className="group flex flex-col cursor-pointer bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-colors"
                                 >
                                     {/* Poster */}
-                                    <div className="aspect-[2/3] relative overflow-hidden rounded-md bg-muted ring-1 ring-border hover:ring-2 hover:ring-primary transition-all mb-2">
+                                    <div className="aspect-[2/3] relative bg-muted border-b border-border">
                                         {movie.poster ? (
                                             <Image
                                                 src={movie.poster}
                                                 alt={movie.title}
                                                 fill
-                                                className="object-cover transition-transform duration-500 group-hover:scale-110"
-                                                sizes="200px"
+                                                className="object-cover"
+                                                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 15vw"
                                             />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                                                <Film className="w-8 h-8" />
+                                                <Film className="w-8 h-8 opacity-20" />
                                             </div>
                                         )}
 
                                         {/* Presale Badge */}
                                         {movie.is_presale && (
-                                            <div className="absolute top-0 left-0 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-br z-10">
+                                            <div className="absolute top-2 left-2 bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm">
                                                 PRESALE
                                             </div>
                                         )}
-
-                                        {/* Hover Overlay */}
-                                        <div className="absolute inset-x-0 bottom-0 bg-black/80 backdrop-blur-sm text-white p-3 translate-y-full transition-transform duration-300 group-hover:translate-y-0">
-                                            {/* Age Rating at top */}
-                                            {movie.age_category && (
-                                                <div className="mb-2">
-                                                    <Badge variant="outline" className="text-[10px] bg-white/10 text-white border-white/30">
-                                                        {movie.age_category}
-                                                    </Badge>
-                                                </div>
-                                            )}
-                                            {/* Genres at bottom */}
-                                            <div className="flex flex-wrap gap-1">
-                                                {movie.genres?.slice(0, 3).map((g) => (
-                                                    <Badge key={g} variant="secondary" className="text-[10px] bg-white/20 text-white border-0">
-                                                        {g}
-                                                    </Badge>
-                                                ))}
+                                        {/* Age Rating Badge */}
+                                        {movie.age_category && (
+                                            <div className="absolute top-2 right-2 bg-background/90 text-foreground border border-border text-[9px] font-bold px-1.5 py-0.5 rounded">
+                                                {movie.age_category}
                                             </div>
-                                        </div>
+                                        )}
                                     </div>
 
-                                    {/* Title */}
-                                    <h3 className="font-semibold text-sm leading-tight line-clamp-1 group-hover:text-primary transition-colors" title={movie.title}>
-                                        {movie.title}
-                                    </h3>
-                                    {/* Showing duration */}
-                                    <p className="text-[10px] text-muted-foreground font-normal">
-                                        Showing for {daysShowing} {daysShowing === 1 ? 'day' : 'days'}
-                                    </p>
+                                    {/* Content */}
+                                    <div className="p-3 flex flex-col flex-1 group-hover:bg-muted/30 transition-colors">
+                                        <h3 className="font-semibold text-xs leading-tight line-clamp-2 mb-1 group-hover:text-primary transition-colors" title={movie.title}>
+                                            {movie.title}
+                                        </h3>
+
+                                        <div className="mt-auto">
+                                            {/* Genres */}
+                                            {movie.genres && movie.genres.length > 0 && (
+                                                <div className="flex flex-wrap gap-1 mb-1.5">
+                                                    {movie.genres.slice(0, 2).map((g) => (
+                                                        <span key={g} className="text-[9px] px-1 py-0.5 bg-muted rounded text-muted-foreground truncate max-w-full">
+                                                            {g}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            {/* Showing duration */}
+                                            <p className="text-[10px] text-muted-foreground font-medium">
+                                                Showing {daysShowing} {daysShowing === 1 ? 'day' : 'days'}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </Link>
                             );
                         })}
@@ -178,48 +180,52 @@ export function MovieDatabaseList() {
 
             {/* PAST MOVIES */}
             {pastMovies.length > 0 && (
-                <section className="pt-4 border-t">
+                <section className="pt-6 border-t border-border">
                     <button
                         onClick={() => setIsArchiveOpen(!isArchiveOpen)}
                         className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors w-full group"
                     >
-                        <div className="p-1 rounded bg-muted group-hover:bg-muted/80">
+                        <div className="p-1 rounded bg-muted/50 border border-transparent group-hover:border-border transition-colors">
                             {isArchiveOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                         </div>
                         <Archive className="w-4 h-4" />
                         <span className="font-medium text-sm">Past Movies</span>
-                        <Badge variant="outline" className="ml-auto font-normal">{pastMovies.length}</Badge>
+                        <div className="ml-auto text-xs font-mono bg-muted px-2 py-0.5 rounded border border-border">
+                            {pastMovies.length}
+                        </div>
                     </button>
 
                     {isArchiveOpen && (
-                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-10 gap-3 mt-4 animate-in slide-in-from-top-2 duration-200">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3 mt-4 animate-in fade-in slide-in-from-top-2 duration-200">
                             {pastMovies.map((movie) => (
                                 <Link
                                     key={movie.id}
                                     href={`/movies/${movie.movie_id || movie.id}`}
-                                    className="group relative opacity-70 hover:opacity-100 transition"
+                                    className="group flex flex-col bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-colors opacity-70 hover:opacity-100"
                                 >
-                                    <div className="aspect-[2/3] w-full relative rounded-md overflow-hidden bg-muted">
+                                    <div className="aspect-[2/3] w-full relative bg-muted border-b border-border">
                                         {movie.poster ? (
                                             <Image
                                                 src={movie.poster}
                                                 alt={movie.title}
                                                 fill
-                                                className="object-cover grayscale group-hover:grayscale-0 transition-all"
-                                                sizes="150px"
+                                                className="object-cover grayscale group-hover:grayscale-0 transition-all duration-300"
+                                                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 10vw"
                                             />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                                                <Film className="w-4 h-4" />
+                                                <Film className="w-6 h-6 opacity-20" />
                                             </div>
                                         )}
                                     </div>
-                                    <p className="text-xs font-medium truncate mt-1.5">{movie.title}</p>
-                                    {movie.last_updated && (
-                                        <p className="text-[10px] text-muted-foreground">
-                                            Last updated: {new Date(movie.last_updated).toLocaleDateString()}
-                                        </p>
-                                    )}
+                                    <div className="p-2 group-hover:bg-muted/30 transition-colors flex-1 flex flex-col">
+                                        <p className="text-[11px] font-semibold line-clamp-2 leading-tight group-hover:text-primary transition-colors">{movie.title}</p>
+                                        {movie.last_updated && (
+                                            <p className="text-[9px] text-muted-foreground mt-auto pt-1">
+                                                {new Date(movie.last_updated).toLocaleDateString()}
+                                            </p>
+                                        )}
+                                    </div>
                                 </Link>
                             ))}
                         </div>

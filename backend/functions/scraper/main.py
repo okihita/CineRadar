@@ -556,7 +556,7 @@ def refresh_access_token(db: firestore.Client, refresh_token: str) -> str | None
                 if stored_at.tzinfo is None:
                     stored_at = stored_at.replace(tzinfo=UTC)
                 age_seconds = (datetime.now(UTC) - stored_at).total_seconds()
-                
+
                 # If token was refreshed in the last 2 minutes, it's fresh! Use it immediately.
                 if age_seconds < 120:
                     logger.info(f"Token was refreshed by another instance while waiting (age: {age_seconds:.1f}s)")
@@ -818,7 +818,7 @@ def test_token_valid(token: str) -> bool:
             timeout=5,
         )
         # Any non-401 response means token is valid (session exists in Redis)
-        return response.status_code != 401
+        return bool(response.status_code != 401)
     except Exception as e:
         logger.warning(f"Token test failed: {e}")
         return False

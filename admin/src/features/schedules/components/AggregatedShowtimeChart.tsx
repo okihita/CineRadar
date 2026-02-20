@@ -127,7 +127,7 @@ export function AggregatedShowtimeChart({ movies }: AggregatedShowtimeChartProps
                                 itemStyle={{ color: 'hsl(var(--popover-foreground))', padding: '2px 0' }}
                                 cursor={{ fill: 'hsl(var(--muted))' }}
                                 labelStyle={{ color: 'hsl(var(--muted-foreground))', marginBottom: '4px', fontWeight: 500 }}
-                                formatter={(value: number, name: string) => [value, name === 'available' ? 'Available' : 'Closed']}
+                                formatter={(value: any, name: any) => [value, name === 'available' ? 'Available' : 'Closed']}
                             />
                             <Bar dataKey="available" stackId="a" fill="hsl(var(--primary))" radius={[0, 0, 0, 0]} />
                             <Bar dataKey="unavailable" stackId="a" fill="hsl(var(--muted-foreground))" opacity={0.2} radius={[2, 2, 0, 0]} />

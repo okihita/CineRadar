@@ -104,8 +104,8 @@ export function ShowtimeDistributionChart({ cityData }: ShowtimeDistributionChar
                             }}
                             itemStyle={{ color: 'hsl(var(--popover-foreground))', padding: '1px 0' }}
                             cursor={{ fill: 'hsl(var(--muted))' }}
-                            labelStyle={{ color: 'hsl(var(--muted-foreground))', marginBottom: '2px', fontWeight: 500 }}
-                            formatter={(value: number, name: string) => [value, name === 'available' ? 'Available' : 'Closed']}
+                            labelStyle={{ color: 'hsl(var(--muted-foreground))', marginBottom: '4px', fontWeight: 500 }}
+                            formatter={(value: any, name: any) => [value, name === 'available' ? 'Available' : 'Closed']}
                         />
                         <Bar dataKey="available" stackId="a" fill="hsl(var(--primary))" radius={[0, 0, 0, 0]} />
                         <Bar dataKey="unavailable" stackId="a" fill="hsl(var(--muted-foreground))" opacity={0.2} radius={[2, 2, 0, 0]} />
