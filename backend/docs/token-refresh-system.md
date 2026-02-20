@@ -122,7 +122,8 @@ In [`backend/functions/scraper/main.py`](functions/scraper/main.py), the `refres
 ## Configuration
 
 - **max_instances**: 5 (from [`deploy.sh`](functions/deploy.sh))
-- **Distributed lock timeout**: 30 seconds
+- **Distributed lock timeout**: 60 seconds
+- **Lock Wait max\_retries**: 20 attempts (with 2.0s sleep = up to 40s wait, matching token propagation time)
 - **Token refresh threshold**: 25 minutes (emergency)
 - **JWT validity**: 30 minutes
 
