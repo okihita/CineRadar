@@ -73,11 +73,11 @@ deploy_scraper() {
         --trigger-topic=$PUBSUB_TOPIC \
         --max-instances=5 \
         --memory=512MB \
-        --timeout=60s \
+        --timeout=180s \
         --set-env-vars="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,ENABLE_SCHEMA_VALIDATION=true" \
         --project=$PROJECT_ID
     cd ..
-    echo "   ✓ Scraper deployed (max_instances=5)"
+    echo "   ✓ Scraper deployed (max_instances=5) with 180s timeout"
 }
 
 deploy_scheduler() {

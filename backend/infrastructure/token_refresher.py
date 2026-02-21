@@ -68,7 +68,7 @@ class TokenRefresher:
             return True
         return token.minutes_until_expiry < self.MIN_TTL_MINUTES
 
-    async def try_api_refresh(self, refresh_token: str) -> str | None:
+    async def try_api_refresh(self, refresh_token: str) -> tuple[str | None, str | None]:
         """
         Attempt to refresh access token via API.
 
@@ -76,7 +76,7 @@ class TokenRefresher:
             refresh_token: The 91-day refresh token
 
         Returns:
-            New access token string, or None if failed
+            Tuple of (new_access_token, new_refresh_token), or (None, None) if failed
         """
         logger.info("🔄 Attempting API token refresh...")
 
@@ -95,9 +95,10 @@ class TokenRefresher:
                 if response.status_code == 200:
                     data = response.json()
                     new_token = data.get("data", {}).get("token")
+                    new_refresh = data.get("data", {}).get("refresh_token", refresh_token)
                     if new_token:
                         logger.info("✅ API refresh successful!")
-                        return cast("str", new_token)
+                        return cast("str", new_token), cast("str", new_refresh)
                     else:
                         logger.error("❌ API refresh response missing token")
                 elif response.status_code == 401:
@@ -108,7 +109,7 @@ class TokenRefresher:
         except httpx.RequestError as e:
             logger.error(f"❌ API refresh request failed: {e}")
 
-        return None
+        return None, None
 
     async def trigger_gha_workflow(self) -> str | None:
         """
@@ -238,10 +239,10 @@ class TokenRefresher:
 
         # Try API refresh first
         if token and token.refresh_token:
-            new_access_token = await self.try_api_refresh(token.refresh_token)
+            new_access_token, new_refresh_token = await self.try_api_refresh(token.refresh_token)
             if new_access_token:
-                # Store new token, preserve refresh token
-                store_token(new_access_token, token.phone, refresh_token=token.refresh_token)
+                # Store new token, preserve/update refresh token
+                store_token(new_access_token, token.phone, refresh_token=new_refresh_token or token.refresh_token)
                 refreshed_token = self.get_current_token()
                 if not refreshed_token:
                     raise TokenRefreshError(

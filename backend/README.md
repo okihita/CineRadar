@@ -265,3 +265,10 @@ The system automatically computes:
 ### Cost Estimate
 
 ~$2.71/month for full lifecycle logging (~8 writes × 6,265 jobs × 30 days)
+
+---
+
+### 5. `backend/scripts/` & `backend/plans/` (Scratchpads)
+**Temporary development files.**
+- **`backend/scripts/`**: Place any intermediary or debugging scripts (e.g., pulling ad-hoc logs, testing token refresh, simulating states) here.
+- **`backend/plans/`**: Place any intermediary implementation plans, task checklists, or markdown notes here.

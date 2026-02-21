@@ -546,7 +546,7 @@ def refresh_access_token(db: firestore.Client, refresh_token: str) -> str | None
 
     # Try to acquire lock with retry
     # If another instance is refreshing, we wait for it to finish instead of failing
-    max_retries = 40  # 40 * 2s = 80s wait (exceeds 75s lock timeout to outlast worst-case refresh)
+    max_retries = 20  # 20 * 2s = 40s wait (reduced to give instance more headroom)
     for i in range(max_retries):
         # Check if another instance already refreshed the token while we were waiting
         token_data = load_token_data(db)
@@ -595,13 +595,13 @@ def refresh_access_token(db: firestore.Client, refresh_token: str) -> str | None
         if response.status_code == 200:
             data = response.json()
             new_token = data.get("data", {}).get("token")
+            # Get the new refresh token from the response, fallback to the old one
+            new_refresh = data.get("data", {}).get("refresh_token", refresh_token)
 
             if new_token:
                 # Wait for token to propagate to TIX's Redis nodes.
-                # Since immediate propagation is unlikely, we wait 5s initially to reduce noise,
-                # then check rapidly (2s), then fall back to 5s if it's struggling.
-                # Total max wait = 20s + 20s + 20s = 60s.
-                retry_schedule = [5] * 4 + [2] * 10 + [5] * 4
+                # Total max wait = 10s + 10s + 10s = 30s.
+                retry_schedule = [2] * 5 + [2] * 5 + [2] * 5
                 validated_at_attempt = -1
 
                 for attempt, delay in enumerate(retry_schedule):
@@ -628,7 +628,7 @@ def refresh_access_token(db: firestore.Client, refresh_token: str) -> str | None
                 db.collection("auth_tokens").document("tix_jwt").set(
                     {
                         "token": new_token,
-                        "refresh_token": refresh_token,
+                        "refresh_token": new_refresh,
                         "stored_at": now_iso,
                         "updated_by": instance_id,
                         "validated": True,
