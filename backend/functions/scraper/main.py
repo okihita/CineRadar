@@ -547,6 +547,7 @@ def refresh_access_token(db: firestore.Client, refresh_token: str) -> str | None
     # Try to acquire lock with retry
     # If another instance is refreshing, we wait for it to finish instead of failing
     max_retries = 20  # 20 * 2s = 40s wait (reduced to give instance more headroom)
+    acquired = False
     for i in range(max_retries):
         # Check if another instance already refreshed the token while we were waiting
         token_data = load_token_data(db)
@@ -565,13 +566,19 @@ def refresh_access_token(db: firestore.Client, refresh_token: str) -> str | None
                 pass
 
         if lock.acquire(instance_id):
+            acquired = True
             break
 
         logger.info(f"Another instance is refreshing, waiting... ({i+1}/{max_retries})")
         time.sleep(2.0) # Wait 2s between checks
 
+    if not acquired:
+        # Try one last time just in case it was released right as we gave up
+        if lock.acquire(instance_id):
+            acquired = True
+
     # If we still don't have the lock after retries, try one last check
-    if not lock.acquire(instance_id):
+    if not acquired:
          # Just return whatever is there, hoping it was refreshed
         token_data = load_token_data(db)
         if token_data and token_data.get("token"):
