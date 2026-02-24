@@ -11,7 +11,6 @@ import useSWR from 'swr';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Loader2, Clapperboard, Archive, ChevronDown, ChevronRight, Film, AlertCircle } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());

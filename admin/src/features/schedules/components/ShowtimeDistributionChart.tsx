@@ -105,6 +105,7 @@ export function ShowtimeDistributionChart({ cityData }: ShowtimeDistributionChar
                             itemStyle={{ color: 'hsl(var(--popover-foreground))', padding: '1px 0' }}
                             cursor={{ fill: 'hsl(var(--muted))' }}
                             labelStyle={{ color: 'hsl(var(--muted-foreground))', marginBottom: '4px', fontWeight: 500 }}
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             formatter={(value: any, name: any) => [value, name === 'available' ? 'Available' : 'Closed']}
                         />
                         <Bar dataKey="available" stackId="a" fill="hsl(var(--primary))" radius={[0, 0, 0, 0]} />

@@ -572,10 +572,9 @@ def refresh_access_token(db: firestore.Client, refresh_token: str) -> str | None
         logger.info(f"Another instance is refreshing, waiting... ({i+1}/{max_retries})")
         time.sleep(2.0) # Wait 2s between checks
 
-    if not acquired:
+    if not acquired and lock.acquire(instance_id):
         # Try one last time just in case it was released right as we gave up
-        if lock.acquire(instance_id):
-            acquired = True
+        acquired = True
 
     # If we still don't have the lock after retries, try one last check
     if not acquired:
@@ -1079,7 +1078,7 @@ def save_snapshot(
         return False, document_path
 
 
-@functions_framework.cloud_event  # type: ignore[untyped-decorator]
+@functions_framework.cloud_event
 def scrape_seat(cloud_event: Any) -> None:
     """Pub/Sub Cloud Function entry point.
 

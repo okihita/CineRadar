@@ -20,15 +20,14 @@ interface DailyStatsCardsProps {
 export const DailyStatsCards: React.FC<DailyStatsCardsProps> = ({
     totalSchedules,
     availableSchedules,
-    coveragePercent,
     totalDispatches,
     totalSuccesses,
     totalErrors,
     errorBreakdown
 }) => {
     // Calculate actual scrape success rate (successes / dispatched jobs)
-    const scrapeSuccessRate = availableSchedules > 0 
-        ? Math.round((totalSuccesses / availableSchedules) * 100) 
+    const scrapeSuccessRate = availableSchedules > 0
+        ? Math.round((totalSuccesses / availableSchedules) * 100)
         : 0;
 
     // Calculate error percentages
@@ -53,7 +52,7 @@ export const DailyStatsCards: React.FC<DailyStatsCardsProps> = ({
         {
             label: 'Available Today',
             value: availableSchedules > 0 ? availableSchedules.toLocaleString() : '-',
-            sublabel: totalSchedules > availableSchedules 
+            sublabel: totalSchedules > availableSchedules
                 ? <span className="text-xs text-muted-foreground ml-1">out of {totalSchedules.toLocaleString()} showtimes</span>
                 : undefined,
             icon: Calendar,
@@ -63,14 +62,14 @@ export const DailyStatsCards: React.FC<DailyStatsCardsProps> = ({
         {
             label: 'Scraped',
             value: totalSuccesses > 0 ? totalSuccesses.toLocaleString() : '0',
-            sublabel: availableSchedules > 0 
+            sublabel: availableSchedules > 0
                 ? <span className="text-xs text-muted-foreground ml-1">{scrapeSuccessRate}% success</span>
                 : undefined,
             icon: CheckCircle,
-            color: totalSuccesses > 0 
+            color: totalSuccesses > 0
                 ? 'text-green-500 dark:text-green-400'
                 : 'text-muted-foreground',
-            bgColor: totalSuccesses > 0 
+            bgColor: totalSuccesses > 0
                 ? 'bg-green-500/10 dark:bg-green-500/10'
                 : 'bg-muted',
         },

@@ -7,8 +7,6 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.join(__dirname, '..'),
   },
-  // Exclude native modules from serverless bundling - they don't work on Vercel
-  serverExternalPackages: ['firebase-admin'],
   // Allow movie poster images from TIX.id CDN
   images: {
     remotePatterns: [

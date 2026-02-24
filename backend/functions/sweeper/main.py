@@ -200,7 +200,7 @@ def aggregate_all_time_stats(db: firestore.Client, movie_id: str) -> bool:
         return False
 
 
-@functions_framework.http  # type: ignore
+@functions_framework.http
 def run_sweeper(request: Any) -> Any:
     """HTTP Cloud Function entry point."""
     now = datetime.now(JAKARTA_TZ)

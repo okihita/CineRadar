@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { MovieSchedule } from "../types";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 interface AggregatedShowtimeChartProps {
@@ -69,8 +69,6 @@ export function AggregatedShowtimeChart({ movies }: AggregatedShowtimeChartProps
 
     if (totalShowtimes === 0) return null;
 
-    const maxCount = Math.max(...data.map(d => d.total), 1);
-
     return (
         <Card className="col-span-1 border-border/60 shadow-sm">
             <CardHeader className="pb-2">
@@ -127,6 +125,7 @@ export function AggregatedShowtimeChart({ movies }: AggregatedShowtimeChartProps
                                 itemStyle={{ color: 'hsl(var(--popover-foreground))', padding: '2px 0' }}
                                 cursor={{ fill: 'hsl(var(--muted))' }}
                                 labelStyle={{ color: 'hsl(var(--muted-foreground))', marginBottom: '4px', fontWeight: 500 }}
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 formatter={(value: any, name: any) => [value, name === 'available' ? 'Available' : 'Closed']}
                             />
                             <Bar dataKey="available" stackId="a" fill="hsl(var(--primary))" radius={[0, 0, 0, 0]} />
