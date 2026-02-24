@@ -87,16 +87,36 @@ graph TD
 
 ## Phase 2: Integrating the Base Scraper
 
+### Context: The Strange History of `BaseScraper._login()`
+You might be wondering: *"Wait, why was `BaseScraper._login()` logging in with Playwright if `TokenRefresher` already existed to get tokens?"*
+
+This is a remnant of the **original architecture**. Early on, the scrapers (like `MovieScraper` and `SeatScraper`) were designed to be totally standalone and isolated. They didn't know about Firestore at all. So, the original design was for every single script to simply spin up Chrome, go to `app.tix.id/login`, type in the phone number, and pull its own token out of the browser. 
+
+Later, when you implemented the fast 30-minute API `TokenRefresher`, that utility was built to store and fetch from Firestore. **But `BaseScraper` was never updated to use it yet!** 
+
+So currently, when the GitHub Action runs the `daily-morning-scrape`, the code:
+1. Launches a full headless Chrome browser (`Playwright`).
+2. Navigates to `app.tix.id/login`.
+3. Literally types your phone number and password into the UI fields.
+4. Clicks the "Login" button and waits for the page to load.
+5. Steals the token out of `localStorage`.
+
+### Can we just use the stored token inside Firestore? (YES!)
+Yes, absolutely! The `daily-morning-scrape` GitHub Action already has the `FIREBASE_SERVICE_ACCOUNT` secret mapped into its environment. This means the GitHub Action has full access to read the `auth_tokens/tix_jwt` document from Firestore and skip the Playwright UI login entirely.
+
 ### Step 2: Replace `BaseScraper._login()`
-**Goal:** Update the core base class so that the main movie scraping workflows (run daily) utilize the new, fast API login to fetch their working session token. We will keep Playwright intact for the actual movie/schedule scraping part in this step.
+**Goal:** Stop using Playwright UI login for daily scrapes. Update the core base class so that all scrapers simply fetch the valid 30-minute token we prepared in Phase 1. 
+
 **Changes:**
-1. Modify `_login` in `backend/infrastructure/scrapers/base.py` to use the direct API payload.
-2. Ensure the returned token is properly assigned to `self.auth_token` for the scraping methods to pick up.
+1. Modify `_login` in `backend/infrastructure/scrapers/base.py` to delete the Playwright form-filling logic.
+2. Replace it with `TokenRefresher().ensure_valid_token()`. This will load the valid token from Firestore, and if it's expired, it will instantly refresh it via the API.
+3. Assign the returned token to `self.auth_token` for the legacy `CineRadarScraper` to inherit.
+*(Playwright will still be initialized, but only for navigating the movie schedules, not for logging in).*
 
 **Verification:**
 - **Local:** Run a limited local scrape (e.g., `uv run python -m backend.cli --schedules --city "JAKARTA"`). Watch the logs to confirm the "Logging in via direct API" message appears and scraping continues flawlessly.
 - **Deployment:** Deploy the branch. Let the next `daily-morning-scrape.yml` or a manual dispatch run.
-- **Data Check:** Verify that the daily scrape output still correctly pushes data to Firestore. The scraping should take exactly the same amount of time, except the initial 15-second login delay will be gone.
+- **Data Check:** Verify that the daily scrape output still correctly pushes data to Firestore. The scraping should take exactly the same amount of time, except the initial 15-second UI login delay will be gone.
 
 ---
 
