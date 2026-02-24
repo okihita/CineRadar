@@ -1,18 +1,19 @@
 # Token Refresh Workflow
-# Full Login via Playwright - runs every ~60 days or on manual trigger
-# For daily scraping, use API refresh instead (see token_refresher.py)
+# Generates a Long-Term (91-day) Refresh Token directly via TIX ID's API using RSA Encryption
+# Runs monthly or on manual trigger
+# For daily scraping, use the fast API /refresh endpoint instead (see token_refresher.py)
 name: Token Refresh
 
 on:
   schedule:
-    # 1st of every 2nd month @ 5:50 AM WIB (22:50 UTC previous day)
-    - cron: '50 22 1 */2 *'
+    # 1st of EVERY month @ 5:50 AM WIB (22:50 UTC previous day)
+    - cron: '50 22 1 * *'
   workflow_dispatch:  # Manual trigger
 
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
 
     steps:
       - uses: actions/checkout@v6
@@ -24,17 +25,11 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: |
-          uv sync
-          uv run playwright install chromium
-          uv run playwright install-deps chromium
-          sudo apt-get install -y xvfb
+        run: uv sync
 
-      - name: Refresh TIX.id token (with xvfb)
+      - name: Refresh TIX.id token (Instant RSA API Login)
         id: refresh
-        run: |
-          xvfb-run --auto-servernum --server-args="-screen 0 1280x720x24" \
-            uv run python -m backend.cli.refresh_token
+        run: uv run python -m backend.cli.refresh_token
         env:
           TIX_PHONE_NUMBER: ${{ secrets.TIX_PHONE_NUMBER }}
           TIX_PASSWORD: ${{ secrets.TIX_PASSWORD }}
@@ -57,9 +52,9 @@ jobs:
             **Run ID:** ${{ github.run_id }}
             **Time:** ${new Date().toISOString()}
             
-            The Playwright-based login to TIX.id failed. This usually means:
-            - The login page UI has changed (buttons moved, selectors changed)
-            - TIX.id is temporarily down
+            The RSA API-based login to TIX.id failed. This usually means:
+            - The Guest token API endpoint changed
+            - TIX.id Public Key has rotated or encryption algorithm changed
             - Credentials are invalid
             
             **Action Required:**
