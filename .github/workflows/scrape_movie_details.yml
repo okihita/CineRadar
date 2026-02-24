@@ -1,0 +1,55 @@
+name: Daily Metadata Backfill
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 7 AM WIB (00:00 UTC)
+  workflow_dispatch:
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: astral-sh/setup-uv@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Backfill Movie Details
+        run: uv run python -m backend.cli movie-details --from-performance
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Alert on failure
+        if: failure()
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const title = '🚨 Daily Metadata Backfill Failed';
+            const body = `## Movie Details Scrape Failed
+            
+            **Run ID:** ${{ github.run_id }}
+            **Time:** ${new Date().toISOString()}
+            
+            The 7 AM WIB metadata backfill failed.
+            
+            **Action Required:**
+            1. Check the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            2. Re-run the workflow manually if transient failure
+            
+            cc @${{ github.repository_owner }}`;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['bug', 'scraper']
+            });
