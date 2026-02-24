@@ -92,7 +92,23 @@ By adding this exact `POST /v1/auth` request to our scraper script, we can dynam
 
 ## 4. The Public Key & Future Automation
 
-While we cannot decrypt *existing* payloads, we *can* find the Public Key to automate future logins programmatically.
+We successfully extracted TIX ID's hardcoded RSA Public Key.
+
+### Is this standard Flutter security practice?
+No, this is a custom security implementation. Out-of-the-box, Flutter defaults to relying strictly on HTTPS (TLS/SSL) to encrypt network payloads.
+
+The TIX ID team went out of their way to add a custom cryptography layer to manually encrypt the password string *before* the network layer. They did this specifically to hide plaintext passwords from network inspectors and to thwart bot credential-stuffing attacks like ours.
+
+### Will the Public Key change soon?
+Highly unlikely. Because they hardcoded the key directly into their source code (`main.dart.js`) instead of fetching a dynamic, one-time key from the server at startup, changing the Public Key is extremely expensive. 
+
+To rotate the key, they would have to:
+1. Recompile the entire Flutter app codebase.
+2. Force an update to the Apple App Store and Google Play Store.
+3. Update the `app.tix.id` web frontend.
+4. Risk temporarily breaking logins for all users who haven't updated their phone apps yet (as the server would no longer understand the old encryptions).
+
+We can safely expect this exact RSA Public Key to remain identical for months—or years—unless TIX ID forces a major platform-wide version upgrade.
 
 By downloading the compiled Flutter web chunk (`main.dart.js`) and searching for standard PKCS#8 ASN.1 headers (`MIIBI`), we successfully extracted TIX ID's hardcoded RSA Public Key:
 
