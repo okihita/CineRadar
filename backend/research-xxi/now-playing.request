@@ -1,0 +1,18 @@
+curl 'https://m.21cineplex.com/api/movies?type=now-playing&city_id=10' \
+  -H 'accept: */*' \
+  -H 'accept-language: en,zh-CN;q=0.9,zh;q=0.8,id;q=0.7' \
+  -H 'content-type: application/json' \
+  -b '_ga_B87QWNSGB3=deleted; _ga=GA1.1.411094583.1765412531; X-DEVICE-UIID=a57ab5bc-9c4a-401f-8e37-2a1a90750aee; X-FINGERPRINT-DATA=U2FsdGVkX1+UjBdXyAAwkKR8YZOm51yW4waCHqCyM0lNALnlyfe35wyd/bAkTyAqDqMUTW0ygkszX+TauP+fBIowmZSn+FhxKYw8tYUvKQ4uhLdAj/VOxj3UIVnlArFlYHJfqwKhlbM/Oes68Umvdwpf3kqgpsmBj4FswCVVeJQU2J+fLCKoeYr2yhlkjfN0j5HGx5FfCF5bqql9930NVf/vNHIPQ+a2in/pcRYlf0/K7QGW6FZZ0bnQPmhDBbn035x5YhRmh9dKqhaDYD90HqDj6RvtDnbEqydRug9IskDaha2IqS7q4btMNfkmrRRayQYgV80Xiq25MD6trsbctBDCxKHXBK9azXz2fCVBI6h5Z0pJzLGi88X91aylUXvhmHvow59QPaQPOl3PqN5ytfhjB4rkN7+CnxZ3kLuHdnS8ezqhMclEaahCvYOaLc/xHEFUDVQj1bg7HMdS3aM+JU+QmYBdEnaXKVFQa0AAI1I=; NEXT_LOCALE=id; __Host-next-auth.csrf-token=ff73abfacfffe730746e61974a4a8106285a2f3a96905875c5269d28f7a1de41%7C4751bd09a22af17ef742e6ac67bea60ddfa82d00ec464dfdd4e01547c031cc95; MTIX_WEB_SESSID=ar3nb5m47g5gv5lmbp07ajutg1; MTIX-WEB=MTIXWEB01; mtix-city_id=10; __Secure-next-auth.callback-url=https%3A%2F%2Fm.21cineplex.com%2F; __Secure-next-auth.session-token=eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2R0NNIn0..AIMe2OcMkXMyE145.OcLJ5SkBaAxmjTtg3VSJVYroqFd_pKfe2P2fQnlc6tzisysHe2GFeABbhGxN-NJyUaWMbxpqJN9Jd8_mipHOEMAgPcxg13yP2Ci2SP4Wgq9jM_oWxV9yKZvpMIiG5yKo6Zr7ZGBBit02fENxpiZUIkzldAagZSSausdiElLSlpJI2e77ZaEhGcosA33ck2nDp-7KKmTX-oF_Z9fVyxqXawj0vLQSEIL3hLS_7-MT_8feHwASGXc5Sdh-lcZNRJWxNFzt9aWxAAX1mfHNGDnYPDixy8eZcuQgDJkGDZ5ljdcxtFNfqWfbAFFnygax8r_ezocHqYTPiTLeYGH2uR7fq0HXRx0JFgS9js2aCLW2ps9nsCn-yW4kTwlOaDW0ef3hXyet4jNt5gaR8BEfexLbmPEXCepJROoFwCxi3O9M_MVEb05Yt1Z5UhtCArd3dRZ5Hi6azUHU2tCTVFPEB50bN0JIa0-fxyLjrj61JBBCJZUIOyUFxT1OYlolSOgQH2tKvP7c7bglB72ooC0qtiaAkAn6yw4wWEWVH0YusiLy6FoRF3eSV9-3hvI4LhyM9LMkWps06BDDwbGhsdPoFOc_Sg6fjIi1wlJ3o1VLfra4BqUOQrdK4ohDeazbHGXw_rft92MUdFXycFaqlzlPZLxXYzMMWU4vvNraIvxqBH5V4s_5NzXCDKYkfDyeQ6B4pdZPMPeEcZn2A6cEgWWP-TWSEMWCp8rPZc5GGL2Pt5jKEz3dRa_p4-XgncOfnsMDcwZUFAyO1hCWufRx1Sd384qt0j63GRq_qxW6akPtextcCIAj_l9Oe6KqX7E5Ude0MrUGb02u3FgCWon8Izpnd3KctakJ1dyPF49oDYo6yStr3gkf8KHom4aO3Z9EUxF_VSlqNHBu4GKs0BYWpIERiYXq30kI-zql5NWUu3Kz6nXkzk1VsZmNWbVj5jpHATqe27Q9W_xyP231Q9IbZToY2j8GWW5q14HPEWWEKVSm6R92pqVSQ_6Nv_uzTihRwpGgpobsnAcf4VP6xEpeD21oR3CHridYdg6RwIKit0OrvNBtQq4SsTEJ2Szt4KFGeBHRPwLw0oJHz-gNjfNtAogkFM6Ku-DUPfhHEu4CbP2rFVUm_EhIemhepr6L1nrOh26z_LP072FI9CWD2biO3vsY45ocVgOBkpVpuXQ8_JtldwlPRfmdSkB8po3t-E6inPdU8yU3w4OPk0rIbFZAx-GlQnlIuDh3ZYXeTvqGug.uUuQVsXtVCk2AbjwtUYx8w; _ga_B87QWNSGB3=GS2.1.s1771927998$o13$g1$t1771930228$j60$l0$h0' \
+  -H 'dnt: 1' \
+  -H 'priority: u=1, i' \
+  -H 'referer: https://m.21cineplex.com/id/movies' \
+  -H 'sec-ch-ua: "Not:A-Brand";v="99", "Google Chrome";v="145", "Chromium";v="145"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "macOS"' \
+  -H 'sec-fetch-dest: empty' \
+  -H 'sec-fetch-mode: cors' \
+  -H 'sec-fetch-site: same-origin' \
+  -H 'user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36' \
+  -H 'x-device-uiid: a57ab5bc-9c4a-401f-8e37-2a1a90750aee' \
+  -H 'x-fingerprint-data: U2FsdGVkX1+UjBdXyAAwkKR8YZOm51yW4waCHqCyM0lNALnlyfe35wyd/bAkTyAqDqMUTW0ygkszX+TauP+fBIowmZSn+FhxKYw8tYUvKQ4uhLdAj/VOxj3UIVnlArFlYHJfqwKhlbM/Oes68Umvdwpf3kqgpsmBj4FswCVVeJQU2J+fLCKoeYr2yhlkjfN0j5HGx5FfCF5bqql9930NVf/vNHIPQ+a2in/pcRYlf0/K7QGW6FZZ0bnQPmhDBbn035x5YhRmh9dKqhaDYD90HqDj6RvtDnbEqydRug9IskDaha2IqS7q4btMNfkmrRRayQYgV80Xiq25MD6trsbctBDCxKHXBK9azXz2fCVBI6h5Z0pJzLGi88X91aylUXvhmHvow59QPaQPOl3PqN5ytfhjB4rkN7+CnxZ3kLuHdnS8ezqhMclEaahCvYOaLc/xHEFUDVQj1bg7HMdS3aM+JU+QmYBdEnaXKVFQa0AAI1I=' \
+  -H 'x-language: id'

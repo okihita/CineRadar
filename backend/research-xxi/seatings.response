@@ -1,0 +1,23 @@
+{
+    "accessTime": "24-02-2026 18:17:54",
+    "data": {
+        "is_success": true,
+        "value": {
+            "auto_check_voucher": 0,
+            "city_id": 0,
+            "city_name": "",
+            "count_down": 0,
+            "layout": "A1#free;A2#free;A3#free;A4#free;A5#free;A6#free;A7#free;A8#free;A9#free;A10#free;A10#col;A11#free;A12#free;A13#free;A14#free;A15#free;A16#free;A17#free;A18#free|B1#free;B2#free;B3#free;B4#free;B5#free;B6#free;B7#free;B8#free;B9#free;B10#free;B10#col;B11#free;B12#free;B13#free;B14#free;B15#free;B16#free;B17#free;B18#free|C3#col;C3#col;C3#free;C4#free;C5#free;C6#free;C7#free;C8#free;C9#free;C10#free;C10#col;C11#free;C12#free;C13#free;C14#free;C15#free;C16#free;C17#free;C18#free|D3#col;D3#col;D3#free;D4#free;D5#free;D6#free;D7#free;D8#free;D9#free;D10#free;D10#col;D11#free;D12#free;D13#free;D14#free;D15#free;D16#free;D17#free;D18#free|E3#col;E3#col;E3#free;E4#free;E5#free;E6#free;E7#free;E8#free;E9#free;E10#free;E10#col;E11#free;E12#free;E13#free;E14#free;E15#free;E16#free;E17#free;E18#free|F3#col;F3#col;F3#free;F4#free;F5#free;F6#free;F7#free;F8#free;F9#free;F10#free;F10#col;F11#free;F12#free;F13#free;F14#free;F15#free;F16#free;F17#free;F18#free|G3#col;G3#col;G3#free;G4#free;G5#free;G6#free;G7#free;G8#free;G9#free;G10#free;G10#col;G11#free;G12#free;G13#free;G14#free;G15#free;G16#free;G17#free;G18#free|H3#col;H3#col;H3#free;H4#free;H5#free;H6#free;H7#free;H8#free;H9#free;H10#free;H10#col;H11#free;H12#free;H13#free;H14#free;H15#free;H16#free;H17#free;H18#free|J3#col;J3#col;J3#free;J4#free;J5#free;J6#free;J7#free;J8#free;J9#free;J10#free;J10#col;J11#free;J12#free;J13#free;J14#free;J15#free;J16#free;J17#free;J18#free|K3#col;K3#col;K3#free;K4#free;K5#free;K6#free;K7#free;K8#free;K9#free;K10#free;K10#col;K11#free;K12#free;K13#free;K14#free;K15#free;K16#free;K17#free;K18#free",
+            "list_payment": "",
+            "list_surcharge": "[{\"payment_id\":\"sakuku\",\"surcharge\":4000},{\"payment_id\":\"qris\",\"surcharge\":4000},{\"payment_id\":\"gopay\",\"surcharge\":4000},{\"payment_id\":\"allo\",\"surcharge\":4000},{\"payment_id\":\"mva\",\"surcharge\":4000},{\"payment_id\":\"ccdc\",\"surcharge\":4000},{\"payment_id\":\"mtix\",\"surcharge\":4000},{\"payment_id\":\"sakukus\",\"surcharge\":4000},{\"payment_id\":\"gopayw\",\"surcharge\":4000},{\"payment_id\":\"bcava\",\"surcharge\":4000}]",
+            "max_ticket_book": 0,
+            "member_balance": 0,
+            "message": "",
+            "show_sakuku": 0,
+            "status": 0,
+            "sub_message": "",
+            "url_cc_payment": ""
+        }
+    },
+    "status": "OK"
+}

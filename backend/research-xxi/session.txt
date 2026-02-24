@@ -1,0 +1,29 @@
+{
+    "user": {
+        "content": {
+            "balance": 0,
+            "email": "U2FsdGVkX1+2/K6FD6sDG0xSDuU2TIoAPhpPe43Lh2MLAOYMMcahQYhIlcWfWj2R",
+            "member_id": "ROW8133560744721123017174309",
+            "msisdn": "U2FsdGVkX1+D+UxbOraLaB1/tB/4nyQCGYjJ0Db4s54=",
+            "name": "Okihita Hasiholan Sihaloho",
+            "picture": "",
+            "sid": "1eb35f58d2b9a0c486effabaea1fc716"
+        },
+        "is_registered": 1,
+        "message": "Success",
+        "refresh_token": "c3a318a3-7428-4748-bf63-09f83d76d2a1",
+        "show_point": 1,
+        "show_sakuku": 1,
+        "show_visitor": 1,
+        "status": 0,
+        "sub_status": 0,
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJNZW1iZXJJRCI6IlJPVzgxMzM1NjA3NDQ3MjExMjMwMTcxNzQzMDkiLCJpc3MiOiJST1c4MTMzNTYwNzQ0NzIxMTIzMDE3MTc0MzA5IiwibmJmIjoxNzcxOTI5MzAwLCJpYXQiOjE3NzE5MjkzMDB9.5coYecJ-q1-iHJc__j__Dh6oNYPH5-hA0BgO2T2v-_8",
+        "url_cc_member": "https://m.21cineplex.com/gui.payment_method.php?source=app",
+        "url_redirect": "",
+        "url_visitor": "https://m.21cineplex.com/ajax_request_free.php",
+        "iat": 1771929482,
+        "exp": 1810809482,
+        "jti": "292d2e55-c0dd-4fa3-b863-27bddb1911cf"
+    },
+    "expires": "2027-05-20T10:40:11.729Z"
+}

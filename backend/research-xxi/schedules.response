@@ -1,0 +1,3671 @@
+{
+    "status": "OK",
+    "data": {
+        "is_success": true,
+        "default_date": "24-02-2026",
+        "value": [
+            {
+                "timezone": 1,
+                "date": "24-02-2026",
+                "cinema": {
+                    "xxi": [
+                        {
+                            "cinema_id": "JKTAETB",
+                            "cinema_group": "JKTAETB",
+                            "dc21_cinema_subtype_id": "62eb30fa-715e-4e7f-a765-9b79a791fef6",
+                            "dc21_cinema_id": "60b5a557-0a45-471e-8ec9-8a62e59c27c0",
+                            "dc21_cinema_code": "JKTAETB",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.30697,106.83993",
+                            "distance": 0,
+                            "cinema_name": "AEON MALL TANJUNG BARAT XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "AEON MALL Tanjung Barat Lantai 3Jl. Tanjung Barat No. 163,Tanjung Barat â€“ JagakarsaJakarta Selatan 12660TELEPON : ( 021 ) 50915953",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 45000,
+                                    "time_show": [
+                                        "12:10",
+                                        "16:30",
+                                        "20:50"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        1,
+                                        1,
+                                        1
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTAGT9",
+                            "cinema_group": "JKTAGT9",
+                            "dc21_cinema_subtype_id": "ec94a5fc-4947-4c10-b7c1-21dd285eb93f",
+                            "dc21_cinema_id": "63772150-5872-4377-ad8a-027f2114f6ca",
+                            "dc21_cinema_code": "JKTAGT9",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.198142, 106.821152",
+                            "distance": 0,
+                            "cinema_name": "AGORA MALL XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "Agora Mall Lt. 3Jl. M H Thamrin No. 10, Kebon Melati,Kec. Tanah Abang, Jakarta Pusat 10230TELEPON : ( 021 ) 50115921",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 45000,
+                                    "time_show": [
+                                        "12:45",
+                                        "15:10",
+                                        "17:35",
+                                        "20:00"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "0",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTARIO",
+                            "cinema_group": "JKTARIO",
+                            "dc21_cinema_subtype_id": "cfa930d8-2f17-4909-b5fb-22d7ef25decd",
+                            "dc21_cinema_id": "37b11df7-1e95-4b58-aad5-f3acc1101509",
+                            "dc21_cinema_code": "JKTARIO",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.193882,106.89045",
+                            "distance": 0,
+                            "cinema_name": "ARION XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "ARION PLAZA LT. 4JL. PEMUDA KAV. 3-4,RAWAMANGUNTELEPON : (021) 475 7658",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 25000,
+                                    "time_show": [
+                                        "12:45",
+                                        "15:10",
+                                        "17:35",
+                                        "20:00"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "0",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        3,
+                                        3,
+                                        3,
+                                        3
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTARGA",
+                            "cinema_group": "JKTARGA",
+                            "dc21_cinema_subtype_id": "d83fc722-b385-4a14-9638-05bb686d74b9",
+                            "dc21_cinema_id": "ac804e5b-af7e-4d70-8d07-41d54eda7173",
+                            "dc21_cinema_code": "JKTARGA",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.14638,106.89139",
+                            "distance": 0,
+                            "cinema_name": "ARTHA GADING XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "MAL ARTHA GADING, ATRIUM ITALY, LT.6TELEPON : (021) 4586-4123",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 40000,
+                                    "time_show": [
+                                        "13:15",
+                                        "15:40",
+                                        "18:05",
+                                        "20:30"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        2,
+                                        2,
+                                        2,
+                                        2
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTBASS",
+                            "cinema_group": "JKTBASS",
+                            "dc21_cinema_subtype_id": "b845af7e-fb58-4ead-be38-6235a8ed2c91",
+                            "dc21_cinema_id": "27711336-0357-47f9-b57e-391789c01dab",
+                            "dc21_cinema_code": "JKTBASS",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.224053, 106.877929",
+                            "distance": 0,
+                            "cinema_name": "BASSURA XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "BASSURA CITY LT.2JL. BASUKI RAHMAT NO.1JAKARTA TIMURTELEPON: (021) - 22807229",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 40000,
+                                    "time_show": [
+                                        "13:15",
+                                        "15:40",
+                                        "18:05",
+                                        "20:30"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        1,
+                                        1,
+                                        1,
+                                        1
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTBAPL",
+                            "cinema_group": "JKTBAPL",
+                            "dc21_cinema_subtype_id": "250c8cd9-1522-4fa1-9ab8-644cdb06cb1b",
+                            "dc21_cinema_id": "80694348-e25c-4811-8919-21d237e267f4",
+                            "dc21_cinema_code": "JKTBAPL",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.107952, 106.779028",
+                            "distance": 0,
+                            "cinema_name": "BAYWALK PLUIT XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "MAL BAYWALK PLUIT Lt. 6JL. PLUIT KARANG AYU BLOK B1 UTARAJAKARTA UTARATELEPON : (021) 29629621",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 25000,
+                                    "time_show": [
+                                        "13:15",
+                                        "15:40",
+                                        "18:05",
+                                        "20:30"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        1,
+                                        1,
+                                        1,
+                                        1
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTBMSQ",
+                            "cinema_group": "JKTBMSQ",
+                            "dc21_cinema_subtype_id": "57ed11ad-74db-4377-ba47-5fef1d506c1e",
+                            "dc21_cinema_id": "70e82abe-064a-4292-a3c8-57fb1d4c4451",
+                            "dc21_cinema_code": "JKTBMSQ",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.244494, 106.800805",
+                            "distance": 0,
+                            "cinema_name": "BLOK M SQUARE",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "BLOK M SQUARE LT.5, JL. MELAWAI V, JAKARTA SELATANTELEPON : (021) 7280 2021",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 35000,
+                                    "time_show": [
+                                        "13:15",
+                                        "15:40",
+                                        "18:05",
+                                        "20:30"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTBLOM",
+                            "cinema_group": "JKTBLOM",
+                            "dc21_cinema_subtype_id": "e64b8fa6-ef71-4f31-8918-bfe92ba4faa2",
+                            "dc21_cinema_id": "c3be3cff-f2db-4740-8e79-5243056f00fc",
+                            "dc21_cinema_code": "JKTBLOM",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.244192, 106.797579",
+                            "distance": 0,
+                            "cinema_name": "BLOK M XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "BLOK M PLAZA LT. 6TELEPON : (021) 720 9437",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 45000,
+                                    "time_show": [
+                                        "13:30",
+                                        "16:00",
+                                        "18:30",
+                                        "21:00"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        5,
+                                        5,
+                                        5,
+                                        5
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTCIJA",
+                            "cinema_group": "JKTCIJA",
+                            "dc21_cinema_subtype_id": "930e2b90-73dc-4239-a2ca-0ca7b13d8ddb",
+                            "dc21_cinema_id": "46d2c057-c17f-4f51-9958-c8dbc5014840",
+                            "dc21_cinema_code": "JKTCIJA",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.312387,106.861911",
+                            "distance": 0,
+                            "cinema_name": "CIJANTUNG XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "GRAHA CIJANTUNG LT. 5TELEPON : (021) 877 93 446",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 45000,
+                                    "time_show": [
+                                        "13:05",
+                                        "18:05"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        4,
+                                        4
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTCIPI",
+                            "cinema_group": "JKTCIPI",
+                            "dc21_cinema_subtype_id": "deabe788-874e-4acc-822d-3dbba20010fe",
+                            "dc21_cinema_id": "4d1562bb-4209-4a06-b6a2-7b56ef31daa9",
+                            "dc21_cinema_code": "JKTCIPI",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.238456, 106.894177",
+                            "distance": 0,
+                            "cinema_name": "CIPINANG XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "MAL CIPINANG INDAH LT. 3Jalan Raya Kalimalang No. 88Jakarta TimurTELEPON : (021) 29486938",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 35000,
+                                    "time_show": [
+                                        "13:15",
+                                        "15:40",
+                                        "18:05",
+                                        "20:30"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        2,
+                                        2,
+                                        2,
+                                        2
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTCICE",
+                            "cinema_group": "JKTCICE",
+                            "dc21_cinema_subtype_id": "81a8cc46-2395-4870-bfb2-352b587ae8e0",
+                            "dc21_cinema_id": "4102758a-883b-4b6e-a265-36916f3620c0",
+                            "dc21_cinema_code": "JKTCICE",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.152919, 106.728601",
+                            "distance": 0,
+                            "cinema_name": "CIPLAZ CENGKARENG XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "Ciplaz Cengkareng Lt. 3Jl. Lkr Luar Barat, East Cengkareng,Cengkareng, West Jakarta CityJakarta, 11730TELEPON: (021) 54336021",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 40000,
+                                    "time_show": [
+                                        "20:20"
+                                    ],
+                                    "show_status": [
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        3
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTCIKL",
+                            "cinema_group": "JKTCIKL",
+                            "dc21_cinema_subtype_id": "fcd5213c-07b7-49b6-863d-8b0fbd2be4f5",
+                            "dc21_cinema_id": "17e85d26-40fe-4cd8-91a6-aae929aa2584",
+                            "dc21_cinema_code": "JKTCIKL",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.213843, 106.899420",
+                            "distance": 0,
+                            "cinema_name": "CIPLAZ KLENDER XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "City Plaza Klender Lt.4Jln. I Gusti Ngurah Rai Klender - Jakarta TimurTELEPON: (021) 86606331",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 20000,
+                                    "time_show": [
+                                        "18:35",
+                                        "21:00"
+                                    ],
+                                    "show_status": [
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        1,
+                                        1
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTCIXP",
+                            "cinema_group": "JKTCIXP",
+                            "dc21_cinema_subtype_id": "7ebf023c-cf7d-462d-8490-3ffc697fcf12",
+                            "dc21_cinema_id": "2912a54e-6e33-449e-a774-b1e894d9a0f9",
+                            "dc21_cinema_code": "JKTCIXP",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.159698, 106.852782",
+                            "distance": 0,
+                            "cinema_name": "CITRA XPERIENCE XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "Citra Towers Kemayoran Lt. 2Jln. Benyamin Suaeb Kav A6Kemayoran, Jakarta Pusat 10630TELEPON: (021) 39712221",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 40000,
+                                    "time_show": [
+                                        "13:15",
+                                        "15:40",
+                                        "18:05",
+                                        "20:30"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        2,
+                                        2,
+                                        2,
+                                        2
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTCITR",
+                            "cinema_group": "JKTCITR",
+                            "dc21_cinema_subtype_id": "efd86bf0-637c-4a31-976d-ec1003736f2a",
+                            "dc21_cinema_id": "5f21ab5c-e9fd-4e65-a2ea-e8c5b6c6f0ac",
+                            "dc21_cinema_code": "JKTCITR",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.168049,106.786487",
+                            "distance": 0,
+                            "cinema_name": "CITRA XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "MALL CIPUTRA Lantai 5Jl. Arteri S. Parman - GrogolJakarta BaratPHONE\t: (021) 560 0404",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 40000,
+                                    "time_show": [
+                                        "13:15",
+                                        "15:40",
+                                        "18:05",
+                                        "20:30"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        2,
+                                        2,
+                                        2,
+                                        2
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTCIPL",
+                            "cinema_group": "JKTCIPL",
+                            "dc21_cinema_subtype_id": "b5fd5221-ee26-406a-b3d7-e177ad1c3cb4",
+                            "dc21_cinema_id": "221b3144-90ae-46f0-8b5b-58aa8b3e9733",
+                            "dc21_cinema_code": "JKTCIPL",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.214161, 106.864623",
+                            "distance": 0,
+                            "cinema_name": "CITY PLAZA JATINEGARA XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "JALAN MATRAMAN RAYA NO. 173 - 175 LT. 5JAKARTA TIMUR 13310TELEPON: (021) 85909281",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 40000,
+                                    "time_show": [
+                                        "13:00",
+                                        "15:25",
+                                        "19:35"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        3,
+                                        3,
+                                        3
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTDAMG",
+                            "cinema_group": "JKTDAMG",
+                            "dc21_cinema_subtype_id": "b2dd15e2-4904-4123-847f-1491516a6bed",
+                            "dc21_cinema_id": "337900f2-839a-4465-9e1e-efa4db311b32",
+                            "dc21_cinema_code": "JKTDAMG",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.150817,106.714368",
+                            "distance": 0,
+                            "cinema_name": "DAAN MOGOT XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "MAL DAAN MOGOTTELEPON : (021) 544 6733",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 35000,
+                                    "time_show": [
+                                        "13:15",
+                                        "15:40",
+                                        "18:05",
+                                        "20:30"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        2,
+                                        2,
+                                        2,
+                                        2
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTDJAR",
+                            "cinema_group": "JKTDJAR",
+                            "dc21_cinema_subtype_id": "c14b0902-998b-45e8-81db-f4d5d65b81ce",
+                            "dc21_cinema_id": "6aa9db39-82b6-4d3d-b3b1-85d7d672a28f",
+                            "dc21_cinema_code": "JKTDJAR",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.1867881166,106.8238393531363",
+                            "distance": 0,
+                            "cinema_name": "DJAKARTA XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "JL. MH. THAMRINTELEPON : (021) 315 6725",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 35000,
+                                    "time_show": [
+                                        "13:15",
+                                        "18:15",
+                                        "20:40"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        2,
+                                        2,
+                                        2
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTEMPL",
+                            "cinema_group": "JKTEMPL",
+                            "dc21_cinema_subtype_id": "40b4e222-e1fb-4b67-8785-82de2fa76dca",
+                            "dc21_cinema_id": "d44d029a-75a5-4839-90da-8aea6678bb72",
+                            "dc21_cinema_code": "JKTEMPL",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.127582, 106.790985",
+                            "distance": 0,
+                            "cinema_name": "EMPORIUM PLUIT XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "MAL EMPORIUM PLUIT UNIT 5-01, JL. PLUIT SELATAN RAYATELEPON : (021) 6667 6421",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 45000,
+                                    "time_show": [
+                                        "13:30",
+                                        "15:55",
+                                        "18:20",
+                                        "20:45"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        1,
+                                        1,
+                                        1,
+                                        1
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTEPIC",
+                            "cinema_group": "JKTEPIC",
+                            "dc21_cinema_subtype_id": "a496c969-9b8b-4bee-8c45-d5bdf371334d",
+                            "dc21_cinema_id": "2cfedf21-d0fa-42c1-aa1f-daaaaab5b7b0",
+                            "dc21_cinema_code": "JKTEPIC",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.216624, 106.834781",
+                            "distance": 0,
+                            "cinema_name": "EPICENTRUM XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "Epicentrum Walk Ground Floor Jl. H.R. Rasuna SaidTELEPON : 021 2994 1300",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 30000,
+                                    "time_show": [
+                                        "18:15",
+                                        "20:40"
+                                    ],
+                                    "show_status": [
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        2,
+                                        2
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTGAND",
+                            "cinema_group": "JKTGAND",
+                            "dc21_cinema_subtype_id": "e3db64aa-9b3f-45df-b439-9bcdecb69f5a",
+                            "dc21_cinema_id": "acdc56c3-9933-4788-8b9e-dff05cdf9570",
+                            "dc21_cinema_code": "JKTGAND",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.24420,106.78360",
+                            "distance": 0,
+                            "cinema_name": "GANDARIA CITY XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "Gandaria City Level 2, Jl Sultan Iskandar Muda, Kebayoran LamaJakartaTELEPON: (021) 29053218",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 50000,
+                                    "time_show": [
+                                        "12:50",
+                                        "15:20",
+                                        "17:50",
+                                        "20:20"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "0",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTGRPA",
+                            "cinema_group": "JKTGRPA",
+                            "dc21_cinema_subtype_id": "07db5a3b-c64d-40cd-ad52-9dd09a8eb60b",
+                            "dc21_cinema_id": "ef391f3b-8314-4764-a637-453a0aa54f58",
+                            "dc21_cinema_code": "JKTGRPA",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.151716, 106.816120",
+                            "distance": 0,
+                            "cinema_name": "GRAND PARAGON XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "Grand Paragon Mall Lt.3Jln. Gajah Mada No. 126Jakarta BaratTELEPON: (021) - 29073151",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 35000,
+                                    "time_show": [
+                                        "13:30",
+                                        "15:55",
+                                        "18:20",
+                                        "20:45"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        7,
+                                        7,
+                                        7,
+                                        7
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTGRSE",
+                            "cinema_group": "JKTGRSE",
+                            "dc21_cinema_subtype_id": "af8be5ff-7dc1-403c-80df-8014460d2e5e",
+                            "dc21_cinema_id": "e9de2bb0-80a9-4585-a844-105bb3ce40b0",
+                            "dc21_cinema_code": "JKTGRSE",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.13912, 106.72876",
+                            "distance": 0,
+                            "cinema_name": "GREEN SEDAYU MALL XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "Green Sedayu Mall - Lantai 2Jl. Lingkar Luar Barat,Komplek Taman Palem Lestari No. 10,Kec. Cengkareng, Jakarta Barat 11730TELEPON: (021) - 40127021",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 40000,
+                                    "time_show": [
+                                        "13:05",
+                                        "15:30",
+                                        "17:55",
+                                        "20:20"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "0",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        1,
+                                        1,
+                                        1,
+                                        1
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTKALI",
+                            "cinema_group": "JKTKALI",
+                            "dc21_cinema_subtype_id": "63936e55-4fdf-41e9-93d6-f4991a40b7c7",
+                            "dc21_cinema_id": "8fa11139-b9fb-4e48-a51f-f1c26ea202d0",
+                            "dc21_cinema_code": "JKTKALI",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.257061,106.855967",
+                            "distance": 0,
+                            "cinema_name": "KALIBATA XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "KALIBATA MALL LT. 3, JL. RAYA KALIBATATELEPON : (021) 799 1870",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 35000,
+                                    "time_show": [
+                                        "13:05",
+                                        "15:30",
+                                        "17:55",
+                                        "20:20"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "0",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        3,
+                                        3,
+                                        3,
+                                        3
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTGADN",
+                            "cinema_group": "JKTGADN",
+                            "dc21_cinema_subtype_id": "ea7ac333-a769-4779-a065-78c4780c63d3",
+                            "dc21_cinema_id": "1449afc2-32f6-426a-a9dd-a099f46e2f52",
+                            "dc21_cinema_code": "JKTGADN",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.158872, 106.907002",
+                            "distance": 0,
+                            "cinema_name": "KELAPA GADING XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "MALL KELAPA GADING 3, LT.3TELEPON : (021) 458 53 821",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 50000,
+                                    "time_show": [
+                                        "12:45",
+                                        "15:15",
+                                        "17:45",
+                                        "20:15"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "0",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        2,
+                                        2,
+                                        2,
+                                        2
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTKEVI",
+                            "cinema_group": "JKTKEVI",
+                            "dc21_cinema_subtype_id": "a80a798e-8425-4d1d-babe-e868b133f02b",
+                            "dc21_cinema_id": "a9451eb9-c3a4-4e4b-b6a2-3843e81d7d8f",
+                            "dc21_cinema_code": "JKTKEVI",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.260739, 106.812536",
+                            "distance": 0,
+                            "cinema_name": "KEMANG VILLAGE XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "LIPPO MALL KEMANG LT. 3JL. PANGERAN ANTASARI NO. 36TELEPON : (021) 29056866",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 40000,
+                                    "time_show": [
+                                        "13:15",
+                                        "15:40",
+                                        "18:05",
+                                        "20:30"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        5,
+                                        5,
+                                        5,
+                                        5
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTKASA",
+                            "cinema_group": "JKTKASA",
+                            "dc21_cinema_subtype_id": "82a0b5ec-a21f-4cbf-83a4-cc67a6696419",
+                            "dc21_cinema_id": "99db8619-2321-4db6-a85e-4fbf56bef9f3",
+                            "dc21_cinema_code": "JKTKASA",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.224099, 106.843225",
+                            "distance": 0,
+                            "cinema_name": "KOTA KASABLANKA XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "Mal Kota Kasablanka Lt. 2Jl. Casablanca Kav. 88Jakarta Selatan 12870TELEPON : (021) 29465221",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 50000,
+                                    "time_show": [
+                                        "13:20",
+                                        "15:50",
+                                        "18:20",
+                                        "20:50"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTKRJT",
+                            "cinema_group": "JKTKRJT",
+                            "dc21_cinema_subtype_id": "51e2d524-c637-4c2c-8803-b80c57fb0c52",
+                            "dc21_cinema_id": "617b401b-0e9f-45f9-803a-6d0f25c656c8",
+                            "dc21_cinema_code": "JKTKRJT",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.270643, 106.869037",
+                            "distance": 0,
+                            "cinema_name": "KRAMAT JATI XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "KRAMAT JATI INDAH LT. 3JL. RAYA BOGOR KM. 19JAKARTA TIMURTELEPON : (021) 80877457",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 35000,
+                                    "time_show": [
+                                        "18:20",
+                                        "20:45"
+                                    ],
+                                    "show_status": [
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        3,
+                                        3
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTKUCI",
+                            "cinema_group": "JKTKUCI",
+                            "dc21_cinema_subtype_id": "424360e7-e424-4311-b5c8-d53b59933fa1",
+                            "dc21_cinema_id": "69cbb08f-1574-41e4-9815-1167abf7070a",
+                            "dc21_cinema_code": "JKTKUCI",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.224782, 106.829289",
+                            "distance": 0,
+                            "cinema_name": "KUNINGAN CITY XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "Kuningan City Lt. 3 Jl. Prof. Dr. Satrio Kav 18 Kuningan SetiabudiTELEPON : (021) 30480621",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 35000,
+                                    "time_show": [
+                                        "13:20",
+                                        "15:45",
+                                        "18:10",
+                                        "20:35"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        2,
+                                        2,
+                                        2,
+                                        2
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTSTMO",
+                            "cinema_group": "JKTSTMO",
+                            "dc21_cinema_subtype_id": "bd5df8ab-29d5-4529-8859-385d10de0f9f",
+                            "dc21_cinema_id": "da93d8c8-c4ff-499b-9b62-1a78e1c0a913",
+                            "dc21_cinema_code": "JKTSTMO",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.187539, 106.739378",
+                            "distance": 0,
+                            "cinema_name": "LIPPO MALL PURI XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "JL. PURI INDAH RAYA BLOK U1 LT. 1JAKARTA - BARATTELEPON: (021) 29111370",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 50000,
+                                    "time_show": [
+                                        "13:15",
+                                        "15:45",
+                                        "18:15",
+                                        "20:45"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        2,
+                                        2,
+                                        2,
+                                        2
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTLOSA",
+                            "cinema_group": "JKTLOSA",
+                            "dc21_cinema_subtype_id": "81cf8739-f89f-42d1-9ebe-69a329e52215",
+                            "dc21_cinema_id": "6d10b588-8be9-4563-ae10-63c512095856",
+                            "dc21_cinema_code": "JKTLOSA",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.224015, 106.822697",
+                            "distance": 0,
+                            "cinema_name": "LOTTE SHOPPING AVENUE XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "LOTTE SHOPPING AVENUE LT. 4Jl. Dr. Satrio Kav. 3-5Karet KuninganJakarta 12940TELP : 021-29889421",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 40000,
+                                    "time_show": [
+                                        "13:15",
+                                        "15:40",
+                                        "18:05",
+                                        "20:30"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        6,
+                                        6,
+                                        6,
+                                        6
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTATRI",
+                            "cinema_group": "JKTATRI",
+                            "dc21_cinema_subtype_id": "adf64136-a04c-46fd-bac3-e305837c5c77",
+                            "dc21_cinema_id": "05ec6300-43ac-41f1-9d4c-1f754508b246",
+                            "dc21_cinema_code": "JKTATRI",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.17695,106.841338",
+                            "distance": 0,
+                            "cinema_name": "MAL ATRIUM SENEN XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "ATRIUM SEGITIGA SENEN LT. 4TELEPON : (021) 386 7830",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 45000,
+                                    "time_show": [
+                                        "13:00",
+                                        "15:25",
+                                        "17:50",
+                                        "20:15"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "0",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        1,
+                                        1,
+                                        1,
+                                        1
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTMETR",
+                            "cinema_group": "JKTMETR",
+                            "dc21_cinema_subtype_id": "1809e83b-cf4f-4cbd-94fa-13f2f487d35a",
+                            "dc21_cinema_id": "4a52195c-7722-4663-8ab5-5604e4828fa0",
+                            "dc21_cinema_code": "JKTMETR",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.200043,106.843516",
+                            "distance": 0,
+                            "cinema_name": "METROPOLE XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "KOMP. MEGARIAJl. Pegangsaan 21Jakarta PusatTELEPON: (021) 31922249",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 40000,
+                                    "time_show": [
+                                        "12:45",
+                                        "15:10",
+                                        "17:35",
+                                        "20:00"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "0",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        1,
+                                        1,
+                                        1,
+                                        1
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTONBE",
+                            "cinema_group": "JKTONBE",
+                            "dc21_cinema_subtype_id": "c5c4be90-3955-4370-86ea-496bd8ebd233",
+                            "dc21_cinema_id": "5d601968-a791-471d-9f3c-cd892c73fb78",
+                            "dc21_cinema_code": "JKTONBE",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.304411, 106.795014",
+                            "distance": 0,
+                            "cinema_name": "ONE BELPARK XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "ONE BEL PARK LT. 2JL. RUMAH SAKIT FATMAWATI NO. 1KEL. PONDOK LABU, KEC. CILANDAKJAKARTA SELATANTELEPON: (021) 27653422",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 35000,
+                                    "time_show": [
+                                        "13:30",
+                                        "15:55",
+                                        "18:20",
+                                        "20:45"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        2,
+                                        2,
+                                        2,
+                                        2
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTPGC",
+                            "cinema_group": "JKTPGC",
+                            "dc21_cinema_subtype_id": "6536e0d6-d769-4a1f-a63a-bdd880d0cb86",
+                            "dc21_cinema_id": "b9aab359-3fe8-4101-ba62-eebea85dfbb7",
+                            "dc21_cinema_code": "JKTPGC",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.262174, 106.865471",
+                            "distance": 0,
+                            "cinema_name": "PGC XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "Pusat Grosir Cililitan - Lantai A (7)Jln. Dewi Sartika, CililitanKec. Kramat Jati, Kota Jakarta TimurJakarta 13640TELEPON: (021) 22080068",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 35000,
+                                    "time_show": [
+                                        "13:05",
+                                        "15:30",
+                                        "17:55",
+                                        "20:20"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "0",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        1,
+                                        1,
+                                        1,
+                                        1
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTSTUX",
+                            "cinema_group": "JKTSTUX",
+                            "dc21_cinema_subtype_id": "e45446f2-88ab-4edb-a055-d63bf3cf03d3",
+                            "dc21_cinema_id": "b254680b-8ff2-454f-a43e-f4ee188af743",
+                            "dc21_cinema_code": "JKTSTUX",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.193379, 106.821994",
+                            "distance": 0,
+                            "cinema_name": "PLAZA INDONESIA XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "PLAZA INDONESIA 6th Fl., JL. M.H. THAMRIN KAV. 28-30TELEPON : (021) 398 38 779",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 50000,
+                                    "time_show": [
+                                        "12:45",
+                                        "17:40"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0"
+                                    ],
+                                    "studio_id": [
+                                        3,
+                                        3
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTPLSE",
+                            "cinema_group": "JKTPLSE",
+                            "dc21_cinema_subtype_id": "123f1d9f-f25f-4845-ae73-3b7a5fb00a97",
+                            "dc21_cinema_id": "e70a7039-2327-4fd9-9bcc-5e2b3c9e6921",
+                            "dc21_cinema_code": "JKTPLSE",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.225374,106.7989",
+                            "distance": 0,
+                            "cinema_name": "PLAZA SENAYAN XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "PLAZA SENAYAN P 5 JL. ASIA AFRIKATELEPON : (021) 572 5535",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 50000,
+                                    "time_show": [
+                                        "13:30",
+                                        "16:00",
+                                        "18:30",
+                                        "21:00"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        1,
+                                        1,
+                                        1,
+                                        1
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTPOID",
+                            "cinema_group": "JKTPOID",
+                            "dc21_cinema_subtype_id": "8737c7f2-81b1-4a2b-9f55-78dd09d08884",
+                            "dc21_cinema_id": "a02a2953-95a1-43fb-bf1c-7dd5dd9c1721",
+                            "dc21_cinema_code": "JKTPOID",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.265347,106.782689",
+                            "distance": 0,
+                            "cinema_name": "PONDOK INDAH 2 XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "PONDOK INDAH MALL 2, LT. 3TELEPON : (021) 759 20781",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 50000,
+                                    "time_show": [
+                                        "12:40",
+                                        "15:10",
+                                        "17:40",
+                                        "20:10"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "0",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        3,
+                                        3,
+                                        3,
+                                        3
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTPURI",
+                            "cinema_group": "JKTPURI",
+                            "dc21_cinema_subtype_id": "6b151bb1-c2c3-415c-8ded-c3d823505c69",
+                            "dc21_cinema_id": "2191d538-a03e-4554-b4c3-b231ff55bf65",
+                            "dc21_cinema_code": "JKTPURI",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.188171,106.733594",
+                            "distance": 0,
+                            "cinema_name": "PURI XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "PURI INDAH MALL LT. 2TELEPON : (021) 582 2521",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 40000,
+                                    "time_show": [
+                                        "13:30",
+                                        "16:00",
+                                        "18:30",
+                                        "21:00"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        1,
+                                        1,
+                                        1,
+                                        1
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTSACI",
+                            "cinema_group": "JKTSACI",
+                            "dc21_cinema_subtype_id": "0c3abd57-46c3-40f5-a70f-02ca717cc7b7",
+                            "dc21_cinema_id": "00c14c3e-fadd-4418-a1ca-2a30216e8829",
+                            "dc21_cinema_code": "JKTSACI",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.153331, 106.796725",
+                            "distance": 0,
+                            "cinema_name": "SEASONS CITY XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "SEASONS CITY LT.2 JL. LATUMENTEN, JAKARTA BARATTELEPON : (021) 6385 3901",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 35000,
+                                    "time_show": [
+                                        "13:30",
+                                        "15:55",
+                                        "18:20",
+                                        "20:45"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        1,
+                                        1,
+                                        1,
+                                        1
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTSECI",
+                            "cinema_group": "JKTSECI",
+                            "dc21_cinema_subtype_id": "6bec9d7d-921b-42cc-8d93-f6c6438d6363",
+                            "dc21_cinema_id": "6dc569d7-f002-4f11-b958-f50254a3daae",
+                            "dc21_cinema_code": "JKTSECI",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.227187,106.797377",
+                            "distance": 0,
+                            "cinema_name": "SENAYAN CITY XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "Jl. ASIA AFRIKA LOT 19 LANTAI 5TELEPON : (021) 7278 1221",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 40000,
+                                    "time_show": [
+                                        "13:20",
+                                        "15:50",
+                                        "18:20",
+                                        "20:50"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTANGG",
+                            "cinema_group": "JKTANGG",
+                            "dc21_cinema_subtype_id": "af9b2daa-a4eb-40cf-8458-74fc6aff91bb",
+                            "dc21_cinema_id": "f48f49e6-dbfe-48ba-a622-852e8cb6395e",
+                            "dc21_cinema_code": "JKTANGG",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.178188,106.792088",
+                            "distance": 0,
+                            "cinema_name": "TAMAN ANGGREK XXI",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "MALL TAMAN ANGGREK LT. 3TELEPON : (021) 563 9403",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Reguler 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 35000,
+                                    "time_show": [
+                                        "13:15",
+                                        "15:40",
+                                        "18:05",
+                                        "20:30"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        2,
+                                        2,
+                                        2,
+                                        2
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        }
+                    ],
+                    "imax": [
+                        {
+                            "cinema_id": "JKTIXAT",
+                            "cinema_group": "JKTAGT9",
+                            "dc21_cinema_subtype_id": "86090e14-fa17-47f3-9cc3-3aa717d8d8c7",
+                            "dc21_cinema_id": "63772150-5872-4377-ad8a-027f2114f6ca",
+                            "dc21_cinema_code": "JKTAGT9",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.198142, 106.821152",
+                            "distance": 0,
+                            "cinema_name": "AGORA MALL IMAX",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "Agora Mall Lt. 3Jl. M H Thamrin No. 10, Kebon Melati,Kec. Tanah Abang, Jakarta Pusat 10230TELEPON : ( 021 ) 50115921",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOX2",
+                                    "movie_type_name": "IMAX 2D",
+                                    "dc21_movie_subtype_id": "a17dd167-f395-4fac-a044-e69f2fcac314",
+                                    "dc21_movie_code": "26BOX2",
+                                    "ticket_price": 50000,
+                                    "time_show": [
+                                        "13:30",
+                                        "15:55"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0"
+                                    ],
+                                    "studio_id": [
+                                        1,
+                                        1
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTIXGN",
+                            "cinema_group": "JKTGAND",
+                            "dc21_cinema_subtype_id": "b0072fa3-5269-457b-945f-72310569d2b4",
+                            "dc21_cinema_id": "acdc56c3-9933-4788-8b9e-dff05cdf9570",
+                            "dc21_cinema_code": "JKTGAND",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.24420,106.78360",
+                            "distance": 0,
+                            "cinema_name": "GANDARIA CITY IMAX",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "Gandaria City Level 2, Jl Sultan Iskandar Muda, Kebayoran LamaJakartaTELEPON: (021) 29053218",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOX2",
+                                    "movie_type_name": "IMAX 2D",
+                                    "dc21_movie_subtype_id": "a17dd167-f395-4fac-a044-e69f2fcac314",
+                                    "dc21_movie_code": "26BOX2",
+                                    "ticket_price": 55000,
+                                    "time_show": [
+                                        "13:15",
+                                        "15:45",
+                                        "18:15",
+                                        "20:45"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        1,
+                                        1,
+                                        1,
+                                        1
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTIXGD",
+                            "cinema_group": "JKTGADN",
+                            "dc21_cinema_subtype_id": "fb7b8637-f7ff-4276-8c82-fbb6b5fb1a39",
+                            "dc21_cinema_id": "1449afc2-32f6-426a-a9dd-a099f46e2f52",
+                            "dc21_cinema_code": "JKTGADN",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.158872, 106.907002",
+                            "distance": 0,
+                            "cinema_name": "KELAPA GADING IMAX",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "MALL KELAPA GADING 3, LT.3TELEPON : (021) 458 53 821",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOX2",
+                                    "movie_type_name": "IMAX 2D",
+                                    "dc21_movie_subtype_id": "a17dd167-f395-4fac-a044-e69f2fcac314",
+                                    "dc21_movie_code": "26BOX2",
+                                    "ticket_price": 55000,
+                                    "time_show": [
+                                        "13:15",
+                                        "15:45",
+                                        "18:15",
+                                        "20:45"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        1,
+                                        1,
+                                        1,
+                                        1
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        }
+                    ],
+                    "premiere": [
+                        {
+                            "cinema_id": "JKTPRBP",
+                            "cinema_group": "JKTBAPL",
+                            "dc21_cinema_subtype_id": "0eede30f-6d2b-444e-bebe-9cf10f3661b4",
+                            "dc21_cinema_id": "80694348-e25c-4811-8919-21d237e267f4",
+                            "dc21_cinema_code": "JKTBAPL",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.107952, 106.779028",
+                            "distance": 0,
+                            "cinema_name": "BAYWALK PLUIT PREMIERE",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "MAL BAYWALK PLUIT Lt. 6JL. PLUIT KARANG AYU BLOK B1 UTARAJAKARTA UTARATELEPON : (021) 29629621",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Premiere 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 60000,
+                                    "time_show": [
+                                        "13:30",
+                                        "15:55",
+                                        "18:20",
+                                        "20:45"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        1,
+                                        1,
+                                        1,
+                                        1
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTPREP",
+                            "cinema_group": "JKTEMPL",
+                            "dc21_cinema_subtype_id": "70a7d836-9867-4407-919c-e819d5ac3491",
+                            "dc21_cinema_id": "d44d029a-75a5-4839-90da-8aea6678bb72",
+                            "dc21_cinema_code": "JKTEMPL",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.127582, 106.790985",
+                            "distance": 0,
+                            "cinema_name": "EMPORIUM PLUIT PREMIERE",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "MAL EMPORIUM PLUIT UNIT 5-01, JL. PLUIT SELATAN RAYATELEPON : (021) 6667 6421",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Premiere 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 100000,
+                                    "time_show": [
+                                        "13:45",
+                                        "16:10",
+                                        "18:35",
+                                        "21:00"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        1,
+                                        1,
+                                        1,
+                                        1
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTPRGN",
+                            "cinema_group": "JKTGAND",
+                            "dc21_cinema_subtype_id": "c4e68617-8649-4606-a27f-8d0412bee6f2",
+                            "dc21_cinema_id": "acdc56c3-9933-4788-8b9e-dff05cdf9570",
+                            "dc21_cinema_code": "JKTGAND",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.24420,106.78360",
+                            "distance": 0,
+                            "cinema_name": "GANDARIA CITY PREMIERE",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "Gandaria City Level 2, Jl Sultan Iskandar Muda, Kebayoran LamaJakartaTELEPON: (021) 29053218",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Premiere 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 150000,
+                                    "time_show": [
+                                        "12:25",
+                                        "14:55",
+                                        "20:05"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        2,
+                                        2,
+                                        2
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTPRGA",
+                            "cinema_group": "JKTGADN",
+                            "dc21_cinema_subtype_id": "1b348fd9-f4d7-419e-9e2d-5bb0a414c130",
+                            "dc21_cinema_id": "1449afc2-32f6-426a-a9dd-a099f46e2f52",
+                            "dc21_cinema_code": "JKTGADN",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.158872, 106.907002",
+                            "distance": 0,
+                            "cinema_name": "KELAPA GADING PREMIERE",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "MALL KELAPA GADING 3, LT.3TELEPON : (021) 458 53 821",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Premiere 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 150000,
+                                    "time_show": [
+                                        "13:30",
+                                        "16:00",
+                                        "18:30",
+                                        "21:00"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        1,
+                                        1,
+                                        1,
+                                        1
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTPRKV",
+                            "cinema_group": "JKTKEVI",
+                            "dc21_cinema_subtype_id": "2f1fcf9d-c57d-49d8-98b2-94c662227924",
+                            "dc21_cinema_id": "a9451eb9-c3a4-4e4b-b6a2-3843e81d7d8f",
+                            "dc21_cinema_code": "JKTKEVI",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.260739, 106.812536",
+                            "distance": 0,
+                            "cinema_name": "KEMANG VILLAGE PREMIERE",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "LIPPO MALL KEMANG LT. 3JL. PANGERAN ANTASARI NO. 36TELEPON : (021) 29056866",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Premiere 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 100000,
+                                    "time_show": [
+                                        "20:40"
+                                    ],
+                                    "show_status": [
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        2
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTPRKA",
+                            "cinema_group": "JKTKASA",
+                            "dc21_cinema_subtype_id": "1055ef6e-0101-474a-8513-7d74d1428e50",
+                            "dc21_cinema_id": "99db8619-2321-4db6-a85e-4fbf56bef9f3",
+                            "dc21_cinema_code": "JKTKASA",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.224099, 106.843225",
+                            "distance": 0,
+                            "cinema_name": "KOTA KASABLANKA PREMIERE",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "Mal Kota Kasablanka Lt. 2Jl. Casablanca Kav. 88Jakarta Selatan 12870TELEPON : (021) 29465221",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Premiere 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 150000,
+                                    "time_show": [
+                                        "13:00",
+                                        "17:40"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0"
+                                    ],
+                                    "studio_id": [
+                                        2,
+                                        2
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTPRSM",
+                            "cinema_group": "JKTSTMO",
+                            "dc21_cinema_subtype_id": "01683b0a-2e97-4024-a66b-788c571ca97e",
+                            "dc21_cinema_id": "da93d8c8-c4ff-499b-9b62-1a78e1c0a913",
+                            "dc21_cinema_code": "JKTSTMO",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.187539, 106.739378",
+                            "distance": 0,
+                            "cinema_name": "LIPPO MALL PURI PREMIERE",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "JL. PURI INDAH RAYA BLOK U1 LT. 1JAKARTA - BARATTELEPON: (021) 29111370",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Premiere 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 150000,
+                                    "time_show": [
+                                        "13:30",
+                                        "16:00",
+                                        "18:30",
+                                        "21:00"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        2,
+                                        2,
+                                        2,
+                                        2
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTPRLS",
+                            "cinema_group": "JKTLOSA",
+                            "dc21_cinema_subtype_id": "d5aa8884-7b69-4c18-bc91-3f3392ca29ec",
+                            "dc21_cinema_id": "6d10b588-8be9-4563-ae10-63c512095856",
+                            "dc21_cinema_code": "JKTLOSA",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.224015, 106.822697",
+                            "distance": 0,
+                            "cinema_name": "LOTTE SHOPPING AVENUE PREMIERE",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "LOTTE SHOPPING AVENUE LT. 4Jl. Dr. Satrio Kav. 3-5Karet KuninganJakarta 12940TELP : 021-29889421",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Premiere 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 100000,
+                                    "time_show": [
+                                        "13:30",
+                                        "15:55",
+                                        "18:20",
+                                        "20:45"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        2,
+                                        2,
+                                        2,
+                                        2
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTPRME",
+                            "cinema_group": "JKTMETR",
+                            "dc21_cinema_subtype_id": "bdae013c-3697-4161-a4bd-acc8fae778db",
+                            "dc21_cinema_id": "4a52195c-7722-4663-8ab5-5604e4828fa0",
+                            "dc21_cinema_code": "JKTMETR",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.200043,106.843516",
+                            "distance": 0,
+                            "cinema_name": "METROPOLE PREMIERE",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "KOMP. MEGARIAJl. Pegangsaan 21Jakarta PusatTELEPON: (021) 31922249",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Premiere 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 100000,
+                                    "time_show": [
+                                        "13:00",
+                                        "15:25",
+                                        "17:50",
+                                        "20:15"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "0",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        2,
+                                        2,
+                                        2,
+                                        2
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTPRPN",
+                            "cinema_group": "JKTSTUX",
+                            "dc21_cinema_subtype_id": "34b4c479-1b27-4e99-9685-fa58472d27c1",
+                            "dc21_cinema_id": "b254680b-8ff2-454f-a43e-f4ee188af743",
+                            "dc21_cinema_code": "JKTSTUX",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.193379, 106.821994",
+                            "distance": 0,
+                            "cinema_name": "PLAZA INDONESIA PREMIERE",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "PLAZA INDONESIA 6th Fl., JL. M.H. THAMRIN KAV. 28-30TELEPON : (021) 398 38 779",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Premiere 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 150000,
+                                    "time_show": [
+                                        "15:20"
+                                    ],
+                                    "show_status": [
+                                        "0"
+                                    ],
+                                    "studio_id": [
+                                        1
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTPRPS",
+                            "cinema_group": "JKTPLSE",
+                            "dc21_cinema_subtype_id": "2a5b32af-d5d1-4de4-a4b0-6bb2eb9bb666",
+                            "dc21_cinema_id": "e70a7039-2327-4fd9-9bcc-5e2b3c9e6921",
+                            "dc21_cinema_code": "JKTPLSE",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.225374,106.7989",
+                            "distance": 0,
+                            "cinema_name": "PLAZA SENAYAN PREMIERE",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "PLAZA SENAYAN P 5 JL. ASIA AFRIKATELEPON : (021) 572 5535",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Premiere 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 150000,
+                                    "time_show": [
+                                        "13:00",
+                                        "15:30",
+                                        "18:00",
+                                        "20:30"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        1,
+                                        1,
+                                        1,
+                                        1
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "cinema_id": "JKTPRPU",
+                            "cinema_group": "JKTPURI",
+                            "dc21_cinema_subtype_id": "26e0b525-5ffc-4f56-af63-e683fb1afbd0",
+                            "dc21_cinema_id": "2191d538-a03e-4554-b4c3-b231ff55bf65",
+                            "dc21_cinema_code": "JKTPURI",
+                            "dc21_city_id": "0f9a8b82-a4dc-457e-bcfa-cfdc29db5ecf",
+                            "city_id": 10,
+                            "city_name": "JAKARTA",
+                            "type": 2,
+                            "coordinate": "-6.188171,106.733594",
+                            "distance": 0,
+                            "cinema_name": "PURI PREMIERE",
+                            "is_mtix": 2,
+                            "is_favorites": false,
+                            "have_fnb": 0,
+                            "cinema_address": "PURI INDAH MALL LT. 2TELEPON : (021) 582 2521",
+                            "schedule": [
+                                {
+                                    "movie_id": "26BOTG",
+                                    "movie_type_name": "Premiere 2D",
+                                    "dc21_movie_subtype_id": "7f6d3e76-5855-42b9-9ff6-ca9dfcf3076d",
+                                    "dc21_movie_code": "26BOTG",
+                                    "ticket_price": 100000,
+                                    "time_show": [
+                                        "13:15",
+                                        "15:45",
+                                        "18:15",
+                                        "20:45"
+                                    ],
+                                    "show_status": [
+                                        "0",
+                                        "0",
+                                        "1",
+                                        "1"
+                                    ],
+                                    "studio_id": [
+                                        1,
+                                        1,
+                                        1,
+                                        1
+                                    ],
+                                    "seat_available": [
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        },
+                                        {
+                                            "free_seat": -1,
+                                            "total_seat": -1
+                                        }
+                                    ],
+                                    "statuses": [
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "is_ats": false
+            }
+        ]
+    },
+    "accessTime": "24-02-2026 17:54:23"
+}

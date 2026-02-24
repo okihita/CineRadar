@@ -1,0 +1,34 @@
+{
+    "status": "OK",
+    "data": {
+        "is_success": true,
+        "value": {
+            "status": 0,
+            "content": {
+                "master_id": "26BOTG",
+                "movie_id": "26BOTG",
+                "parent_movie_id": "26BOTG",
+                "title": "BLADES OF THE GUARDIANS",
+                "short_title": "BLADES OF THE GUARDIANS",
+                "duration": 126,
+                "movie_image": "https://nos.jkt-1.neo.id/media.cinema21.co.id/movie-images/26BOTG.jpg",
+                "age_limit": 18,
+                "genre": "Action, History",
+                "distributor": "Alibaba Pictures Group",
+                "producer": "Jing Wu",
+                "director": "Yuen Woo-Ping",
+                "writer": "Chao-Bin Su, Larry Yang",
+                "player": "Jet Li, Jing Wu, Nicholas Tse, Tony Ka Fai Leung, Junhui Wen, CiSha, Jin Zhang, Xing Yu, Rongguang Yu, Kara Ying Hung Wai",
+                "site": "",
+                "rating": "D17+",
+                "description": "Dao Ma (Jing Wu), adalah seorang pengawal bayaran yang tangguh dan berpengalaman. Suatu hari, ia menerima misi berbahaya, mengawal buronan paling dicari bernama Zhi Shi Lang menuju Chang’an, ibu kota kekaisaran. Misi tingkat tinggi ini semakin rumit, karena Zhi Shi Lang menyimpan rahasia besar yang berpotensi mengguncang stabilitas kekaisaran.",
+                "movie_type": "2D",
+                "movie_trailer": "https://nos.jkt-1.neo.id/media.cinema21.co.id/movie-trailer/26BOTG.mp4",
+                "is_dolby": false,
+                "published_date": "2026-02-17",
+                "sales_date": "2026-02-13"
+            }
+        }
+    },
+    "accessTime": "24-02-2026 18:45:12"
+}

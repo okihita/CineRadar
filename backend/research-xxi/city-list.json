@@ -1,0 +1,290 @@
+{
+    "status": "OK",
+    "data": {
+        "is_success": true,
+        "message": "",
+        "value": [
+            {
+                "city_id": 1,
+                "city_name": "BATAM"
+            },
+            {
+                "city_id": 2,
+                "city_name": "BANDUNG"
+            },
+            {
+                "city_id": 3,
+                "city_name": "BOGOR"
+            },
+            {
+                "city_id": 4,
+                "city_name": "BEKASI"
+            },
+            {
+                "city_id": 6,
+                "city_name": "BALIKPAPAN"
+            },
+            {
+                "city_id": 7,
+                "city_name": "CILEGON"
+            },
+            {
+                "city_id": 8,
+                "city_name": "CIREBON"
+            },
+            {
+                "city_id": 9,
+                "city_name": "DENPASAR"
+            },
+            {
+                "city_id": 10,
+                "city_name": "JAKARTA"
+            },
+            {
+                "city_id": 12,
+                "city_name": "SURABAYA"
+            },
+            {
+                "city_id": 13,
+                "city_name": "SAMARINDA"
+            },
+            {
+                "city_id": 14,
+                "city_name": "SEMARANG"
+            },
+            {
+                "city_id": 15,
+                "city_name": "TANGERANG"
+            },
+            {
+                "city_id": 16,
+                "city_name": "MAKASSAR"
+            },
+            {
+                "city_id": 17,
+                "city_name": "MEDAN"
+            },
+            {
+                "city_id": 18,
+                "city_name": "MALANG"
+            },
+            {
+                "city_id": 19,
+                "city_name": "MANADO"
+            },
+            {
+                "city_id": 20,
+                "city_name": "PALEMBANG"
+            },
+            {
+                "city_id": 21,
+                "city_name": "JAMBI"
+            },
+            {
+                "city_id": 22,
+                "city_name": "LAMPUNG"
+            },
+            {
+                "city_id": 23,
+                "city_name": "YOGYAKARTA"
+            },
+            {
+                "city_id": 24,
+                "city_name": "PONTIANAK"
+            },
+            {
+                "city_id": 29,
+                "city_name": "SOLO"
+            },
+            {
+                "city_id": 30,
+                "city_name": "PEKANBARU"
+            },
+            {
+                "city_id": 31,
+                "city_name": "BANJARMASIN"
+            },
+            {
+                "city_id": 32,
+                "city_name": "AMBON"
+            },
+            {
+                "city_id": 34,
+                "city_name": "BENGKULU"
+            },
+            {
+                "city_id": 35,
+                "city_name": "PALANGKARAYA"
+            },
+            {
+                "city_id": 36,
+                "city_name": "TASIKMALAYA"
+            },
+            {
+                "city_id": 37,
+                "city_name": "JAYAPURA"
+            },
+            {
+                "city_id": 38,
+                "city_name": "GORONTALO"
+            },
+            {
+                "city_id": 39,
+                "city_name": "PALU"
+            },
+            {
+                "city_id": 40,
+                "city_name": "SINGKAWANG"
+            },
+            {
+                "city_id": 41,
+                "city_name": "MATARAM"
+            },
+            {
+                "city_id": 42,
+                "city_name": "PADANG"
+            },
+            {
+                "city_id": 43,
+                "city_name": "KARAWANG"
+            },
+            {
+                "city_id": 44,
+                "city_name": "TANJUNG PINANG"
+            },
+            {
+                "city_id": 45,
+                "city_name": "SUMEDANG"
+            },
+            {
+                "city_id": 46,
+                "city_name": "KUPANG"
+            },
+            {
+                "city_id": 47,
+                "city_name": "SIDOARJO"
+            },
+            {
+                "city_id": 48,
+                "city_name": "TERNATE"
+            },
+            {
+                "city_id": 49,
+                "city_name": "GARUT"
+            },
+            {
+                "city_id": 50,
+                "city_name": "KISARAN"
+            },
+            {
+                "city_id": 51,
+                "city_name": "PEKALONGAN"
+            },
+            {
+                "city_id": 52,
+                "city_name": "GRESIK"
+            },
+            {
+                "city_id": 53,
+                "city_name": "RANTAU PRAPAT"
+            },
+            {
+                "city_id": 54,
+                "city_name": "JEMBER"
+            },
+            {
+                "city_id": 55,
+                "city_name": "KEDIRI"
+            },
+            {
+                "city_id": 56,
+                "city_name": "CIKARANG"
+            },
+            {
+                "city_id": 57,
+                "city_name": "PANGKAL PINANG"
+            },
+            {
+                "city_id": 58,
+                "city_name": "DUMAI"
+            },
+            {
+                "city_id": 59,
+                "city_name": "SORONG"
+            },
+            {
+                "city_id": 60,
+                "city_name": "MANOKWARI"
+            },
+            {
+                "city_id": 61,
+                "city_name": "DEPOK"
+            },
+            {
+                "city_id": 62,
+                "city_name": "ROKAN HILIR"
+            },
+            {
+                "city_id": 63,
+                "city_name": "TARAKAN"
+            },
+            {
+                "city_id": 64,
+                "city_name": "CIANJUR"
+            },
+            {
+                "city_id": 65,
+                "city_name": "BONTANG"
+            },
+            {
+                "city_id": 66,
+                "city_name": "KENDARI"
+            },
+            {
+                "city_id": 67,
+                "city_name": "KUALA KAPUAS"
+            },
+            {
+                "city_id": 68,
+                "city_name": "BONDOWOSO"
+            },
+            {
+                "city_id": 69,
+                "city_name": "MADIUN"
+            },
+            {
+                "city_id": 71,
+                "city_name": "TIMIKA"
+            },
+            {
+                "city_id": 72,
+                "city_name": "JABODETABEK"
+            },
+            {
+                "city_id": 73,
+                "city_name": "MAMUJU"
+            },
+            {
+                "city_id": 74,
+                "city_name": "KLATEN"
+            },
+            {
+                "city_id": 75,
+                "city_name": "INDRAMAYU"
+            },
+            {
+                "city_id": 76,
+                "city_name": "PEMATANG SIANTAR"
+            },
+            {
+                "city_id": 77,
+                "city_name": "MAGELANG"
+            },
+            {
+                "city_id": 78,
+                "city_name": "TUBAN"
+            }
+        ]
+    },
+    "accessTime": "24-02-2026 17:40:11"
+}
