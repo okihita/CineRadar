@@ -23,30 +23,31 @@ class TokenRefresher(BaseScraper):
 
     def __init__(self) -> None:
         super().__init__()
-        
+
     async def refresh_token(self, headless: bool = True) -> bool:
         """
         Login to TIX.id via API and store the JWT tokens.
-        
+
         Args:
             headless: Ignored, kept for backward compatibility with CLI parser
-            
+
         Returns:
             True if token was refreshed successfully
         """
         self.log("🔐 Starting fast API token refresh...")
+        import uuid
+
         import httpx
+
         from backend.cli.commands.encrypt_password import encrypt_password
 
-        import uuid
-        
         try:
             # 1. Clean phone number like the app expects
             phone_clean = "+" + self._phone.lstrip("+")
             if not phone_clean.startswith("+62"):
                 # fallback just in case it's literally just the numbers
                 phone_clean = "+62" + self._phone.lstrip("0")
-                
+
             enc_password = encrypt_password(self._password, use_oaep=False)
 
             # Generate a random UUID for device_id if we don't have a static one
@@ -69,40 +70,40 @@ class TokenRefresher(BaseScraper):
                     json={"client_id": "tixid_guest", "auth_code": None},
                     timeout=10.0
                 )
-                
+
                 if auth_resp.status_code != 200:
                     self.log(f"❌ Failed to get Guest Token: {auth_resp.status_code}")
                     return False
-                    
+
                 guest_data = auth_resp.json()
                 guest_token = guest_data.get("data", {}).get("token")
                 if not guest_token:
                     self.log("❌ Failed to parse Guest Token from /v1/auth")
                     return False
-                    
+
                 self.log(f"   ✅ Received Guest Token: {guest_token[:20]}...")
-                
+
                 # 2. Inject Guest Token into Headers for the real login
                 headers["Authorization"] = f"Bearer {guest_token}"
-                
+
                 payload = {
-                    "msisdn": phone_clean, 
+                    "msisdn": phone_clean,
                     "password": enc_password
                 }
 
                 self.log(f"   📡 Sending Encrypted Login for {phone_clean}")
-                
+
                 response = await client.post(
-                    "https://api-b2b.tix.id/v1/users/login", 
-                    headers=headers, 
+                    "https://api-b2b.tix.id/v1/users/login",
+                    headers=headers,
                     json=payload,
                     timeout=10.0
                 )
-                
+
             if response.status_code != 200:
                 self.log(f"❌ Login failed with status {response.status_code}: {response.text}")
                 return False
-                
+
             data = response.json()
             if not data.get("success"):
                 self.log(f"❌ API rejected login: {data}")
@@ -114,7 +115,7 @@ class TokenRefresher(BaseScraper):
             if not token:
                 self.log("❌ Login succeeded but no Access Token returned in data payload")
                 return False
-                
+
             if not refresh_token:
                 self.log("⚠️ Warning: No Refresh Token returned, only Access Token")
 

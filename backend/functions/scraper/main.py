@@ -1078,7 +1078,7 @@ def save_snapshot(
         return False, document_path
 
 
-@functions_framework.cloud_event
+@functions_framework.cloud_event  # type: ignore[untyped-decorator]
 def scrape_seat(cloud_event: Any) -> None:
     """Pub/Sub Cloud Function entry point.
 

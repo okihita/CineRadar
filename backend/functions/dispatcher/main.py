@@ -279,7 +279,7 @@ def log_job_creation(db: firestore.Client, batch_id: str, showtime: dict[str, An
         logger.warning(f"Failed to log job creation for {showtime.get('showtime_id')}: {e}")
 
 
-@functions_framework.http
+@functions_framework.http  # type: ignore[untyped-decorator]
 def dispatch_jobs(request: Any) -> Any:
     """HTTP Cloud Function entry point.
 
