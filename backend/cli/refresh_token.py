@@ -19,147 +19,118 @@ logger = logging.getLogger(__name__)
 
 
 class TokenRefresher(BaseScraper):
-    """Dedicated scraper for token refresh only."""
+    """Dedicated scraper for token refresh only using fast API login."""
 
     def __init__(self) -> None:
         super().__init__()
-
+        
     async def refresh_token(self, headless: bool = True) -> bool:
         """
-        Login to TIX.id and store the JWT token.
-
+        Login to TIX.id via API and store the JWT tokens.
+        
+        Args:
+            headless: Ignored, kept for backward compatibility with CLI parser
+            
         Returns:
             True if token was refreshed successfully
         """
-        self.log("🔐 Starting token refresh...")
+        self.log("🔐 Starting fast API token refresh...")
+        import httpx
+        from backend.cli.commands.encrypt_password import encrypt_password
 
-        playwright, browser, context, page = await self._init_browser(headless)
-
+        import uuid
+        
         try:
-            # Navigate to login - wait longer for Flutter to render
-            await page.goto(f"{self.app_base}/login", wait_until="networkidle", timeout=60000)
-            await asyncio.sleep(15)  # Flutter needs time to render
+            # 1. Clean phone number like the app expects
+            phone_clean = "+" + self._phone.lstrip("+")
+            if not phone_clean.startswith("+62"):
+                # fallback just in case it's literally just the numbers
+                phone_clean = "+62" + self._phone.lstrip("0")
+                
+            enc_password = encrypt_password(self._password, use_oaep=False)
 
-            # Strip 62 prefix from phone
-            phone_clean = self._phone.lstrip("+").lstrip("62")
+            # Generate a random UUID for device_id if we don't have a static one
+            device_uuid = str(uuid.uuid4())
 
-            # Try to find inputs
-            phone_field = page.get_by_placeholder("Type your phone number")
-            password_field = page.get_by_placeholder("Type Password")
+            headers = {
+                'accept': '*/*',
+                'app_version': '1.0.0',
+                'content-type': 'application/json',
+                'device_id': device_uuid,
+                'platform': 'web',
+                'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
 
-            phone_count = await phone_field.count()
-            pass_count = await password_field.count()
-            self.log(f"   📋 Found phone={phone_count}, password={pass_count}")
-
-            if phone_count > 0:
-                await phone_field.click()
-                await asyncio.sleep(0.5)
-                await page.keyboard.type(phone_clean, delay=30)
-                self.log(f"   📱 Typed phone: {phone_clean[:4]}***")
-
-            if pass_count > 0:
-                await password_field.click()
-                await asyncio.sleep(0.5)
-                await page.keyboard.type(self._password, delay=30)
-                self.log("   🔑 Typed password")
-
-            # Click Login - simple approach
-            # IMPORTANT: TIX.id has TWO Login buttons - header (fake) and form (real)
-            # Must use .last to get the form button, not .first!
-            login_button = page.get_by_role("button", name="Login").last
-            if await login_button.count() > 0:
-                await login_button.click()
-                self.log("   📤 Clicked Login button")
-            else:
-                await page.keyboard.press("Enter")
-                self.log("   📤 Pressed Enter")
-
-            # Wait for any processing
-            await asyncio.sleep(5)
-            self.log(f"   📍 After click URL: {page.url}")
-
-            # Navigate to home to check session
-            self.log("   🔄 Navigating to home...")
-            await page.goto(f"{self.app_base}/home", wait_until="networkidle", timeout=30000)
-            await asyncio.sleep(5)
-
-            current_url = page.url
-            self.log(f"   📍 Home page URL: {current_url}")
-
-            # Try to capture JWT from localStorage
-            try:
-                # Debug: list all localStorage keys
-                all_keys = await page.evaluate("Object.keys(localStorage)")
-                self.log(f"   🔑 localStorage keys: {all_keys}")
-
-                # Also check sessionStorage
-                session_keys = await page.evaluate("Object.keys(sessionStorage)")
-                self.log(f"   🔑 sessionStorage keys: {session_keys}")
-
-                # Check cookies
-                cookies = await context.cookies()
-                cookie_names = [c["name"] for c in cookies]
-                self.log(f"   🍪 Cookies: {cookie_names}")
-
-                # Look for token in cookies
-                token = None  # Initialize before checking
-                refresh_token = None  # Also capture refresh token
-                for cookie in cookies:
-                    if "token" in cookie["name"].lower() or "auth" in cookie["name"].lower():
-                        self.log(f"   ✅ Found token cookie: {cookie['name']}")
-                        token = cookie["value"]
-                        break
-
-                # Try multiple possible token key names in localStorage
-                if not token:
-                    for key in [
-                        "authentication_token",
-                        "token",
-                        "auth_token",
-                        "jwt",
-                        "access_token",
-                    ]:
-                        token = await page.evaluate(f"localStorage.getItem('{key}')")
-                        if token:
-                            self.log(f"   ✅ Found token under key: {key}")
-                            break
-
-                # Also get refresh token from localStorage
-                refresh_token = await page.evaluate(
-                    "localStorage.getItem('authentication_refresh_token')"
+            async with httpx.AsyncClient() as client:
+                self.log("   📡 Fetching 30-minute Guest Token...")
+                auth_resp = await client.post(
+                    "https://api-b2b.tix.id/v1/auth",
+                    headers=headers,
+                    json={"client_id": "tixid_guest", "auth_code": None},
+                    timeout=10.0
                 )
+                
+                if auth_resp.status_code != 200:
+                    self.log(f"❌ Failed to get Guest Token: {auth_resp.status_code}")
+                    return False
+                    
+                guest_data = auth_resp.json()
+                guest_token = guest_data.get("data", {}).get("token")
+                if not guest_token:
+                    self.log("❌ Failed to parse Guest Token from /v1/auth")
+                    return False
+                    
+                self.log(f"   ✅ Received Guest Token: {guest_token[:20]}...")
+                
+                # 2. Inject Guest Token into Headers for the real login
+                headers["Authorization"] = f"Bearer {guest_token}"
+                
+                payload = {
+                    "msisdn": phone_clean, 
+                    "password": enc_password
+                }
+
+                self.log(f"   📡 Sending Encrypted Login for {phone_clean}")
+                
+                response = await client.post(
+                    "https://api-b2b.tix.id/v1/users/login", 
+                    headers=headers, 
+                    json=payload,
+                    timeout=10.0
+                )
+                
+            if response.status_code != 200:
+                self.log(f"❌ Login failed with status {response.status_code}: {response.text}")
+                return False
+                
+            data = response.json()
+            if not data.get("success"):
+                self.log(f"❌ API rejected login: {data}")
+                return False
+
+            token = data.get("data", {}).get("token")
+            refresh_token = data.get("data", {}).get("refresh_token")
+
+            if not token:
+                self.log("❌ Login succeeded but no Access Token returned in data payload")
+                return False
+                
+            if not refresh_token:
+                self.log("⚠️ Warning: No Refresh Token returned, only Access Token")
+
+            # Store in Firestore (with refresh token if available)
+            if store_token(token, self._phone, refresh_token=refresh_token):
+                self.log("✅ Token stored in Firestore!")
                 if refresh_token:
-                    # Strip quotes if present
-                    if refresh_token.startswith('"') and refresh_token.endswith('"'):
-                        refresh_token = refresh_token[1:-1]
-                    self.log(f"   ✅ Found refresh token (length: {len(refresh_token)})")
+                    self.log("✅ Refresh token also stored!")
+                return True
+            else:
+                self.log("⚠️ Token storage failed")
+                return False
 
-                if token:
-                    # Strip extra quotes if present (localStorage returns JSON-encoded strings)
-                    if token.startswith('"') and token.endswith('"'):
-                        token = token[1:-1]
-                    self.auth_token = token
-                    self.log(f"✅ JWT token captured! (length: {len(token)})")
-
-                    # Store in Firestore (with refresh token if available)
-                    if store_token(token, self._phone, refresh_token=refresh_token):
-                        self.log("✅ Token stored in Firestore!")
-                        if refresh_token:
-                            self.log("✅ Refresh token also stored!")
-                        return True
-                    else:
-                        self.log("⚠️ Token storage failed")
-                        return False
-                else:
-                    self.log("⚠️ No token found in any localStorage key")
-            except Exception as e:
-                self.log(f"⚠️ Could not read localStorage: {e}")
-
-            self.log("❌ Login failed - could not capture token")
+        except Exception as e:
+            self.log(f"⚠️ Exception during API login: {e}")
             return False
-
-        finally:
-            await self._close_browser(playwright, browser, context, page)
 
 
 def main() -> None:
