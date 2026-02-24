@@ -58,6 +58,11 @@ This happens because TIX ID requires an `authorization: Bearer` header **even du
 The difference between `exp` (Expiry) and `iat` (Issued At) is exactly **1800 seconds (30 minutes)**. 
 When the TIX ID website first loads, it generates this temporary 30-minute "Guest" token. The backend will instantly reject any `/login` request if the Guest Token attached to it is older than 30 minutes, acting as a strict anti-bot and anti-replay protection mechanism!
 
+**Why does this filter bots, and why doesn't it block us?**
+This mechanism is designed to stop "dumb" bots and primitive replay attacks. If a malicious actor intercepts a `login.request` curl command and tries to reuse it 3 hours later for credential stuffing, the server instantly drops it because the Guest Token inside the `Authorization` header is expired. It forces the client to dynamically interact with the server *before* attempting a login.
+
+It doesn't block us because we are acting as a "smart" bot. By reverse-engineering the initialization sequence, our Python script perfectly mimics the behavior of the real Flutter web app: it politely asks the `/v1/auth` endpoint for a fresh Guest session *first*, and only then submits the RSA-encrypted credentials. To the TIX ID backend, our 2-step Python API script looks entirely indistinguishable from a real human opening the homepage before logging in.
+
 ### Fetching the Guest Token Organically
 Thanks to network interception, we discovered exactly how the Flutter application asks the server for this 30-minute Guest token. 
 
