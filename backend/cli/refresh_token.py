@@ -11,9 +11,18 @@ import argparse
 import asyncio
 import logging
 import sys
+from pathlib import Path
 
-from backend.infrastructure.repositories.firestore_token import get_storage, store_token
-from backend.infrastructure.scrapers.base import BaseScraper
+from dotenv import load_dotenv
+
+# Load .env from project root
+env_path = Path(__file__).parent.parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
+from backend.infrastructure.repositories.firestore_token import (  # noqa: E402
+    get_storage,
+    store_token,
+)
+from backend.infrastructure.scrapers.base import BaseScraper  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +44,6 @@ class TokenRefresher(BaseScraper):
             True if token was refreshed successfully
         """
         self.log("🔐 Starting fast API token refresh...")
-        import uuid
 
         import httpx
 
@@ -50,14 +58,16 @@ class TokenRefresher(BaseScraper):
 
             enc_password = encrypt_password(self._password, use_oaep=False)
 
-            # Generate a random UUID for device_id if we don't have a static one
-            device_uuid = str(uuid.uuid4())
+            # Generate a STABLE device_id based on phone number
+            # Using a simple hash ensures we look like the same device every time we login
+            import hashlib
+            device_id = hashlib.md5(phone_clean.encode()).hexdigest()
 
             headers = {
                 'accept': '*/*',
                 'app_version': '1.0.0',
                 'content-type': 'application/json',
-                'device_id': device_uuid,
+                'device_id': device_id,
                 'platform': 'web',
                 'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             }
