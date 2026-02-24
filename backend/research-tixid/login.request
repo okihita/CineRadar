@@ -1,0 +1,22 @@
+curl 'https://api-b2b.tix.id/v1/users/login' \
+  -H 'accept: */*' \
+  -H 'accept-language: en,zh-CN;q=0.9,zh;q=0.8,id;q=0.7' \
+  -H 'access-control-allow-origin: *' \
+  -H 'app_version: 1.0.0' \
+  -H 'authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ0aXgtYjJiIiwic3ViIjoiTW9iaWxlIGF1dGhvcml6YXRpb24gdG9rZW4iLCJleHAiOjE3NzE5NDYyMDcsImlhdCI6MTc3MTk0NDQwNywic2lkIjoiMDE5YzkwMWQtZjE5MS03MDcwLWExZTMtOGEyODljZjUwMmZkIiwibXNpc2RuIjoiIiwidXNlcl9pZCI6IiIsInBhcnRuZXJfaWQiOiIxanA1NHZxeDQySmNUVnBWbXBkbE9ZSU12c1V4QitFbHhNU0RuNER5UE1rQ1lpbkp4YXgwdElXclJFV1grQ3hJd3dBeWIzZVlQdjU2bnp3Z0tDSFNnQT09IiwiYXV0aF9zaWduIjoiIiwicHVycG9zZSI6Imd1ZXN0IiwicGFydG5lcl9uYW1lIjoiVElYIElEIFdlYiIsInBhcnRuZXJfdHlwZSI6IlBBWU1FTlRfSU5URVJOQUwiLCJwYXJ0bmVyX2FjY2Vzc190b2tlbiI6IiJ9.K2E09ffygtPDxfqyNf0BLFC8zzgJfi2WTfPjm5WiVxk' \
+  -H 'content-type: application/json' \
+  -H 'device_id: 019c5c3c-75f1-7c90-9228-5cff3995296d' \
+  -H 'dnt: 1' \
+  -H 'lang: en' \
+  -H 'origin: https://app.tix.id' \
+  -H 'platform: web' \
+  -H 'priority: u=1, i' \
+  -H 'sec-ch-ua: "Not:A-Brand";v="99", "Google Chrome";v="145", "Chromium";v="145"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "macOS"' \
+  -H 'sec-fetch-dest: empty' \
+  -H 'sec-fetch-mode: cors' \
+  -H 'sec-fetch-site: same-site' \
+  -H 'session_id: 019c901d-f13e-7ebf-a921-6621be42fd84' \
+  -H 'user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36' \
+  --data-raw '{"msisdn":"+6281335607447","password":"CRX21k0DE8dGHYqqxUQr/43vpXDumN4FyBB7fJyURrkkaU99hD8trKCkd8QpRLyXffZYhdWqT1jErBjWo/t4mi119AlQIe4GTQaILZjcJqzshdowyHfhJI4dSkY2948YCEPpGvlPD1gTEW4lY9jdjiL++OUr5QNp1VICq9TLys33LSZOs016Bd8yc+zqOap1GiSoTfgDj6Zm3VokG8pKUUrfWhJcbxUjahAS+jxRpUy9WfhaijU2sfkpQ2FGzUJU1kO2GA/tiq2CjQrVtL2A+byCDZyfULibF6Jy/xqx9YjsPIUtv8OLcR/XOsJLYTHIjq//pNS5btpIYFVosNJZpw=="}'

@@ -1,0 +1,12 @@
+{
+    "success": true,
+    "data": {
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ0aXgtYjJiIiwic3ViIjoiTW9iaWxlIGF1dGhvcml6YXRpb24gdG9rZW4iLCJleHAiOjE3NzE5NDcwNTgsImlhdCI6MTc3MTk0NTI1OCwic2lkIjoiMDE5YzkwMmEtZWQ2Ny03YWIzLTllMjgtMDhmNjdkNTQ2ZjRlIiwibXNpc2RuIjoiIiwidXNlcl9pZCI6IiIsInBhcnRuZXJfaWQiOiJjNzJ2d0o3OUlvcXVQV0xYRDE1SXkvaFZ4WG9Kc3VuRC9TMUxQbFdsUGg1NDRWdzNtNWo4VjBnTkd6Z2pxaURDNmJ2Q2l6UmhYb0tTNnlld2hrOVI2QT09IiwiYXV0aF9zaWduIjoiIiwicHVycG9zZSI6Imd1ZXN0IiwicGFydG5lcl9uYW1lIjoiVElYIElEIFdlYiIsInBhcnRuZXJfdHlwZSI6IlBBWU1FTlRfSU5URVJOQUwiLCJwYXJ0bmVyX2FjY2Vzc190b2tlbiI6IiJ9.D_tMq4VkXgO_QlZGM0u1AhIt7Uet_3yyU_DZ3rVckbw",
+        "webview_url": "https://app.tix.id?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ0aXgtYjJiIiwic3ViIjoiTW9iaWxlIGF1dGhvcml6YXRpb24gdG9rZW4iLCJleHAiOjE3NzE5NDcwNTgsImlhdCI6MTc3MTk0NTI1OCwic2lkIjoiMDE5YzkwMmEtZWQ2Ny03YWIzLTllMjgtMDhmNjdkNTQ2ZjRlIiwibXNpc2RuIjoiIiwidXNlcl9pZCI6IiIsInBhcnRuZXJfaWQiOiJjNzJ2d0o3OUlvcXVQV0xYRDE1SXkvaFZ4WG9Kc3VuRC9TMUxQbFdsUGg1NDRWdzNtNWo4VjBnTkd6Z2pxaURDNmJ2Q2l6UmhYb0tTNnlld2hrOVI2QT09IiwiYXV0aF9zaWduIjoiIiwicHVycG9zZSI6Imd1ZXN0IiwicGFydG5lcl9uYW1lIjoiVElYIElEIFdlYiIsInBhcnRuZXJfdHlwZSI6IlBBWU1FTlRfSU5URVJOQUwiLCJwYXJ0bmVyX2FjY2Vzc190b2tlbiI6IiJ9.D_tMq4VkXgO_QlZGM0u1AhIt7Uet_3yyU_DZ3rVckbw",
+        "expires_in": 30,
+        "expired_at": 1771947058343,
+        "partner_id": "tixid_guest",
+        "partner_name": "TIX ID Web",
+        "partner_type": "PAYMENT_INTERNAL"
+    }
+}
