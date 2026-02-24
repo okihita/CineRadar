@@ -5,7 +5,7 @@
  *   → Get daily stats + list of showtimes for that day
  */
 import { NextResponse } from 'next/server';
-import { firestoreAdminClient } from '@/lib/firebase-admin';
+import { firestoreRestClient } from '@/lib/firestore-rest';
 
 export async function GET(
     request: Request,
@@ -24,7 +24,7 @@ export async function GET(
         // Actually, we can just treat the history list as the source of stats.
         // But the showtimes are in a sub-subcollection: .../days/{date}/showtimes
 
-        const showtimes = await firestoreAdminClient.getSubCollection(
+        const showtimes = await firestoreRestClient.getSubCollection(
             `movie_performance/${movieId}/days/${date}/showtimes`
         );
 

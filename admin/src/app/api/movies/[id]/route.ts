@@ -5,7 +5,7 @@
  *   → Fetches a single movie document from Firestore /movies/{id}
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { firestoreAdminClient } from '@/lib/firebase-admin';
+import { firestoreRestClient } from '@/lib/firestore-rest';
 
 export async function GET(
     _request: NextRequest,
@@ -14,7 +14,7 @@ export async function GET(
     try {
         const { id } = await params;
 
-        const movie = await firestoreAdminClient.getDocument(`movies/${id}`);
+        const movie = await firestoreRestClient.getDocument('movies', id);
 
         if (!movie) {
             return NextResponse.json(

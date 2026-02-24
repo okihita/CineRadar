@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { firestoreAdminClient } from '@/lib/firebase-admin';
+import { firestoreRestClient } from '@/lib/firestore-rest';
 
 interface SeatSnapshot {
     showtime_id: string;
@@ -28,7 +28,7 @@ export async function GET() {
         // 1. Fetch seat snapshots for today
         // Note: In a real scenario, we might want to query by date
         // For now, we fetch recent snapshots and filter
-        const snapshots = await firestoreAdminClient.getCollectionWithQuery('seat_snapshots', 'scraped_at', 500) as unknown as SeatSnapshot[];
+        const snapshots = await firestoreRestClient.getCollectionWithQuery('seat_snapshots', 'scraped_at', 500) as unknown as SeatSnapshot[];
 
         // 2. Group by hour (e.g., "12:00", "13:00")
         const grouped: Record<string, GroupedItem[]> = {};

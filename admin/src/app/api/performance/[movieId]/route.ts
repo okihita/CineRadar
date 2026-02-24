@@ -5,27 +5,7 @@
  *   → Get specific movie with all showtime snapshots
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { initializeApp, cert, getApps, applicationDefault } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
-
-function getDB() {
-    if (!getApps().length) {
-        const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
-
-        if (serviceAccountJson && serviceAccountJson !== '{}') {
-            const serviceAccount = JSON.parse(serviceAccountJson);
-            initializeApp({
-                credential: cert(serviceAccount),
-            });
-        } else {
-            initializeApp({
-                credential: applicationDefault(),
-                projectId: 'cineradar-481014',
-            });
-        }
-    }
-    return getFirestore();
-}
+import { firestoreRestClient } from '@/lib/firestore-rest';
 
 export async function GET(
     request: NextRequest,
@@ -33,32 +13,30 @@ export async function GET(
 ) {
     try {
         const { movieId } = await params;
-        const db = getDB();
 
         // Get movie summary
-        const summaryDoc = await db.collection('movie_performance').doc(movieId).get();
+        const summaryDoc = await firestoreRestClient.getDocument('movie_performance', movieId);
 
-        if (!summaryDoc.exists) {
+        if (!summaryDoc) {
             return NextResponse.json(
                 { success: false, error: 'Movie not found' },
                 { status: 404 }
             );
         }
 
-        const summary = { id: summaryDoc.id, ...summaryDoc.data() };
+        const summary = summaryDoc;
 
         // Get all showtime snapshots for this movie
-        const showtimesSnap = await db
-            .collection('movie_performance')
-            .doc(movieId)
-            .collection('showtimes')
-            .orderBy('showtime', 'asc')
-            .get();
+        let showtimes = await firestoreRestClient.getSubCollection(
+            `movie_performance/${movieId}/showtimes`
+        );
 
-        const showtimes = showtimesSnap.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
+        // Sort showtimes by 'showtime' field ascending since REST client doesn't sort by default in getSubCollection
+        showtimes = showtimes.sort((a, b) => {
+            const timeA = (a.showtime as string) || '';
+            const timeB = (b.showtime as string) || '';
+            return timeA.localeCompare(timeB);
+        });
 
         return NextResponse.json({
             success: true,

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { firestoreAdminClient } from '@/lib/firebase-admin';
+import { firestoreRestClient } from '@/lib/firestore-rest';
 
 interface DayRecord {
     date: string;
@@ -16,7 +16,7 @@ export async function GET(
         // Get 'days' subcollection
         // Path: movie_performance/{movieId}/days
         // We order by 'date' descending
-        const days = await firestoreAdminClient.getSubCollection(
+        const days = await firestoreRestClient.getSubCollection(
             `movie_performance/${movieId}/days`
         ) as DayRecord[];
 

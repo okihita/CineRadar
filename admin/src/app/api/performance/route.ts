@@ -5,7 +5,7 @@
  *   → List all movies with performance data + today's stats
  */
 import { NextResponse } from 'next/server';
-import { firestoreAdminClient } from '@/lib/firebase-admin';
+import { firestoreRestClient } from '@/lib/firestore-rest';
 
 // Get today's date in Jakarta timezone (YYYY-MM-DD)
 function getTodayJakarta(): string {
@@ -34,7 +34,7 @@ export async function GET() {
         const today = getTodayJakarta();
 
         // Get all movie metadata (Root Collection)
-        const movies = (await firestoreAdminClient.getCollectionWithQuery(
+        const movies = (await firestoreRestClient.getCollectionWithQuery(
             'movie_performance',
             'last_updated',
             100
@@ -49,7 +49,7 @@ export async function GET() {
             const results = await Promise.all(
                 batch.map(async (movie) => {
                     try {
-                        const days = await firestoreAdminClient.getSubCollection(
+                        const days = await firestoreRestClient.getSubCollection(
                             `movie_performance/${movie.id}/days`
                         );
                         const todayStats = days.find((d) => d.date === today);

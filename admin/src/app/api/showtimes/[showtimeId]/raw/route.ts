@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { firestoreAdminClient } from '@/lib/firebase-admin';
+import { firestoreRestClient } from '@/lib/firestore-rest';
 
 interface RawShowtimeResponse {
     showtimeId: string;
@@ -35,8 +35,9 @@ export async function GET(
     }
 
     try {
-        const doc = await firestoreAdminClient.getDocument(
-            `movie_performance/${movieId}/days/${date}/showtimes/${showtimeId}`
+        const doc = await firestoreRestClient.getDocument(
+            `movie_performance/${movieId}/days/${date}/showtimes`,
+            showtimeId
         );
 
         if (!doc) {

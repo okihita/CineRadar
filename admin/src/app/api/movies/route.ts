@@ -6,7 +6,7 @@
  *     AND "past movies" from movie_performance that aren't showing today
  */
 import { NextResponse } from 'next/server';
-import { firestoreAdminClient } from '@/lib/firebase-admin';
+import { firestoreRestClient } from '@/lib/firestore-rest';
 
 function getTodayJakarta(): string {
     return new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Jakarta' });
@@ -18,10 +18,10 @@ export async function GET() {
 
         // 1. Get today's schedule movies
         const schedulePath = `schedules/${today}/movies`;
-        const scheduleMovies = await firestoreAdminClient.getSubCollection(schedulePath);
+        const scheduleMovies = await firestoreRestClient.getSubCollection(schedulePath);
 
         // 2. Get all movies from movie_performance (for past movies)
-        const performanceMovies = await firestoreAdminClient.getCollectionWithQuery(
+        const performanceMovies = await firestoreRestClient.getCollectionWithQuery(
             'movie_performance',
             'last_updated',
             200

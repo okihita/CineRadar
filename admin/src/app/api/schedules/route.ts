@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { firestoreAdminClient } from '@/lib/firebase-admin';
+import { firestoreRestClient } from '@/lib/firestore-rest';
 import { ScheduleResponse, MovieSchedule } from '@/features/schedules/types';
 
 // Get today's date in Jakarta timezone (YYYY-MM-DD)
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
         const path = `schedules/${date}/movies`;
 
         // Using getSubCollection which internally does a runQuery on the parent document
-        const moviesRaw = await firestoreAdminClient.getSubCollection(path);
+        const moviesRaw = await firestoreRestClient.getSubCollection(path);
 
         return NextResponse.json({
             success: true,
