@@ -1,0 +1,20 @@
+curl 'https://api-b2b.tix.id/v1/schedules/date?schedule_id=1973311976000012288&city_id=1244607994935726080' \
+  -H 'accept: */*' \
+  -H 'accept-language: en,zh-CN;q=0.9,zh;q=0.8,id;q=0.7' \
+  -H 'access-control-allow-origin: *' \
+  -H 'app_version: 1.0.0' \
+  -H 'authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ0aXgtYjJiIiwic3ViIjoiTW9iaWxlIGF1dGhvcml6YXRpb24gdG9rZW4iLCJleHAiOjE3NzE5OTg0NTMsImlhdCI6MTc3MTk5NjY1Mywic2lkIjoiMDE5YzkzM2ItMjg5Ni03NDRhLTg3MDAtZWQwZWVmNTA5OThiIiwibXNpc2RuIjoiIiwidXNlcl9pZCI6IiIsInBhcnRuZXJfaWQiOiJ1WWVCV0F5NG03ZDQ5M2p5emlYeDVGVjlxNlNGY1lueWl0cGQ2VkdlZ1NFVVZqeWtLd3V1Uk5TRys5NXU5TWRoS0ErTDJZT0FGOTAwY2lRTVNHZjVNQT09IiwiYXV0aF9zaWduIjoiIiwicHVycG9zZSI6Imd1ZXN0IiwicGFydG5lcl9uYW1lIjoiVElYIElEIFdlYiIsInBhcnRuZXJfdHlwZSI6IlBBWU1FTlRfSU5URVJOQUwiLCJwYXJ0bmVyX2FjY2Vzc190b2tlbiI6IiJ9.0OJ7II8B96mLKB_MUtJ-spPHN1FzvPcnc0JSDFyr2CA' \
+  -H 'device_id: 019c5c3c-75f1-7c90-9228-5cff3995296d' \
+  -H 'dnt: 1' \
+  -H 'lang: en' \
+  -H 'origin: https://app.tix.id' \
+  -H 'platform: web' \
+  -H 'priority: u=1, i' \
+  -H 'sec-ch-ua: "Not:A-Brand";v="99", "Google Chrome";v="145", "Chromium";v="145"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "macOS"' \
+  -H 'sec-fetch-dest: empty' \
+  -H 'sec-fetch-mode: cors' \
+  -H 'sec-fetch-site: same-site' \
+  -H 'session_id: 019c933b-2773-7e41-9c2b-9bf8b71282e1' \
+  -H 'user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36'

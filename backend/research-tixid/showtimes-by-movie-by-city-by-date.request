@@ -1,0 +1,20 @@
+curl 'https://api-b2b.tix.id/v1/schedules/movies/1996107175268794368?city_id=967969975509716992&date=2026-02-25&page=1' \
+  -H 'accept: */*' \
+  -H 'accept-language: en,zh-CN;q=0.9,zh;q=0.8,id;q=0.7' \
+  -H 'access-control-allow-origin: *' \
+  -H 'app_version: 1.0.0' \
+  -H 'authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ0aXgtYjJiIiwic3ViIjoiTW9iaWxlIGF1dGhvcml6YXRpb24gdG9rZW4iLCJleHAiOjE3NzE5NjA1ODIsImlhdCI6MTc3MTk1ODc4Miwic2lkIjoiMDE5YzkwZjktNGE2ZS03Y2IwLWFlNmYtM2JmZTExYWIzOGE0IiwibXNpc2RuIjoiIiwidXNlcl9pZCI6IiIsInBhcnRuZXJfaWQiOiJBay9FLzJqYytuRTZZS1hTQWdPNzliOTMxMzQ1ck5MNHZpZmFGNmVmK2g0SnI5ZEF3ZitDZkxkTXV0ZUczUXdCNGFFWFAvUXBldFBvVFdJbHkyUGV4dz09IiwiYXV0aF9zaWduIjoiIiwicHVycG9zZSI6Imd1ZXN0IiwicGFydG5lcl9uYW1lIjoiVElYIElEIFdlYiIsInBhcnRuZXJfdHlwZSI6IlBBWU1FTlRfSU5URVJOQUwiLCJwYXJ0bmVyX2FjY2Vzc190b2tlbiI6IiJ9.2WtjYRxaXbwIIcjYoLvZ-f6PhPCJP2m2sk2tYbb45pg' \
+  -H 'device_id: 019c5c3c-75f1-7c90-9228-5cff3995296d' \
+  -H 'dnt: 1' \
+  -H 'lang: en' \
+  -H 'origin: https://app.tix.id' \
+  -H 'platform: web' \
+  -H 'priority: u=1, i' \
+  -H 'sec-ch-ua: "Not:A-Brand";v="99", "Google Chrome";v="145", "Chromium";v="145"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "macOS"' \
+  -H 'sec-fetch-dest: empty' \
+  -H 'sec-fetch-mode: cors' \
+  -H 'sec-fetch-site: same-site' \
+  -H 'session_id: 019c90f9-494d-7e2f-9ee0-92d0c145c52c' \
+  -H 'user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36'

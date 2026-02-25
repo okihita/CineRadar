@@ -1,0 +1,934 @@
+{
+    "success": true,
+    "data": [
+        {
+            "id": "1996107175268794368",
+            "title": "KUYANK",
+            "genres": [
+                {
+                    "id": "1577",
+                    "name": "Horror"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/e635fc88-f472-4736-ad1b-12e34507c964.webp",
+            "age_category": "R",
+            "presale_flag": 0,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "1996107160261574656",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                },
+                {
+                    "merchant_id": "37cee700-7e19-4353-b806-dbb1dcdcfbd2",
+                    "merchant_name": "Cinépolis",
+                    "sort": 3
+                }
+            ],
+            "country": ""
+        },
+        {
+            "id": "2014634242524397568",
+            "title": "BLADES OF THE GUARDIANS",
+            "genres": [
+                {
+                    "id": "1579",
+                    "name": "Action"
+                },
+                {
+                    "id": "94",
+                    "name": "History"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/3c610809-ae6e-4ca5-be1e-27322078766e.webp",
+            "age_category": "D",
+            "presale_flag": 0,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "2014634241349992448",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                },
+                {
+                    "merchant_id": "37cee700-7e19-4353-b806-dbb1dcdcfbd2",
+                    "merchant_name": "Cinépolis",
+                    "sort": 3
+                }
+            ],
+            "country": "China"
+        },
+        {
+            "id": "2014257253724536832",
+            "title": "CRIME 101",
+            "genres": [
+                {
+                    "id": "1580",
+                    "name": "Crime"
+                },
+                {
+                    "id": "1582",
+                    "name": "Thriller"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/e451372a-83ba-4c02-b013-3e6fcfe4f8af.webp",
+            "age_category": "D",
+            "presale_flag": 0,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "2014257251354755072",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                },
+                {
+                    "merchant_id": "37cee700-7e19-4353-b806-dbb1dcdcfbd2",
+                    "merchant_name": "Cinépolis",
+                    "sort": 3
+                }
+            ],
+            "country": "USA"
+        },
+        {
+            "id": "2021528679225581568",
+            "title": "ANTARA MAMA CINTA & SURGA",
+            "genres": [
+                {
+                    "id": "1581",
+                    "name": "Drama"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/9a0abb0d-d53a-4248-9b0a-cf6a1ccffd4f.webp",
+            "age_category": "SU",
+            "presale_flag": 0,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "2021528674976751616",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                }
+            ],
+            "country": ""
+        },
+        {
+            "id": "1991446453926576128",
+            "title": "ALAS ROBAN",
+            "genres": [
+                {
+                    "id": "1577",
+                    "name": "Horror"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/eb4bb18b-2b8e-4dc2-957f-0263ce8dfcc4.webp",
+            "age_category": "D",
+            "presale_flag": 0,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "1991446452714422272",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                },
+                {
+                    "merchant_id": "37cee700-7e19-4353-b806-dbb1dcdcfbd2",
+                    "merchant_name": "Cinépolis",
+                    "sort": 3
+                }
+            ],
+            "country": ""
+        },
+        {
+            "id": "2011332514521628672",
+            "title": "WUTHERING HEIGHTS",
+            "genres": [
+                {
+                    "id": "1372",
+                    "name": "Romance"
+                },
+                {
+                    "id": "1581",
+                    "name": "Drama"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/b6f4986f-5c1d-4fb0-8b65-8c4f167dc579.webp",
+            "age_category": "D",
+            "presale_flag": 0,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "2011332512982319104",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                }
+            ],
+            "country": "USA"
+        },
+        {
+            "id": "2018595349358264320",
+            "title": "ONCE WE WERE US",
+            "genres": [
+                {
+                    "id": "1372",
+                    "name": "Romance"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/73a9a304-1b08-4020-b50e-7e9c09b570c4.webp",
+            "age_category": "D",
+            "presale_flag": 0,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "2018595348473266176",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                },
+                {
+                    "merchant_id": "37cee700-7e19-4353-b806-dbb1dcdcfbd2",
+                    "merchant_name": "Cinépolis",
+                    "sort": 3
+                }
+            ],
+            "country": "South Korea"
+        },
+        {
+            "id": "2021094806305984512",
+            "title": "KOKUHO",
+            "genres": [
+                {
+                    "id": "1581",
+                    "name": "Drama"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie/2021094805467123712.jpg",
+            "age_category": "P",
+            "presale_flag": 0,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "2021094805467123712",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                },
+                {
+                    "merchant_id": "37cee700-7e19-4353-b806-dbb1dcdcfbd2",
+                    "merchant_name": "Cinépolis",
+                    "sort": 3
+                }
+            ],
+            "country": "Japan"
+        },
+        {
+            "id": "2014257255322566656",
+            "title": "GOAT",
+            "genres": [
+                {
+                    "id": "1585",
+                    "name": "Animation"
+                },
+                {
+                    "id": "106",
+                    "name": "Sport"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/1c477b1b-634d-4560-8e29-40deb45d6d37.webp",
+            "age_category": "SU",
+            "presale_flag": 0,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "2014257254206881792",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                },
+                {
+                    "merchant_id": "37cee700-7e19-4353-b806-dbb1dcdcfbd2",
+                    "merchant_name": "Cinépolis",
+                    "sort": 3
+                }
+            ],
+            "country": "USA"
+        },
+        {
+            "id": "2000869040863657984",
+            "title": "KAFIR GERBANG SUKMA",
+            "genres": [
+                {
+                    "id": "1577",
+                    "name": "Horror"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/7071a2c7-96f3-43ac-9a4c-d7e8f1d637e9.webp",
+            "age_category": "D",
+            "presale_flag": 0,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "2000869039747973120",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                }
+            ],
+            "country": "Indonesia"
+        },
+        {
+            "id": "2019295456852525056",
+            "title": "SCREAM 7",
+            "genres": [
+                {
+                    "id": "1582",
+                    "name": "Thriller"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/3046081c-f64c-4a01-85da-63b7d54de542.webp",
+            "age_category": "D21",
+            "presale_flag": 1,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "2019295455988498432",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac02",
+                    "merchant_name": "XXI",
+                    "sort": 1
+                },
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                },
+                {
+                    "merchant_id": "37cee700-7e19-4353-b806-dbb1dcdcfbd2",
+                    "merchant_name": "Cinépolis",
+                    "sort": 3
+                }
+            ],
+            "country": "USA"
+        },
+        {
+            "id": "2023234909161742336",
+            "title": "MARTY SUPREME",
+            "genres": [
+                {
+                    "id": "1581",
+                    "name": "Drama"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/e124e090-2333-4afc-a8a5-54c9e63a118c.webp",
+            "age_category": "D",
+            "presale_flag": 1,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "2023234908742311936",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac02",
+                    "merchant_name": "XXI",
+                    "sort": 1
+                },
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                },
+                {
+                    "merchant_id": "37cee700-7e19-4353-b806-dbb1dcdcfbd2",
+                    "merchant_name": "Cinépolis",
+                    "sort": 3
+                }
+            ],
+            "country": "USA"
+        },
+        {
+            "id": "2018958310073516032",
+            "title": "PANDA PLAN: THE MAGICAL TRIBE",
+            "genres": [
+                {
+                    "id": "1579",
+                    "name": "Action"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/6e23edc3-279a-48a7-b14e-33d88f2c5b01.webp",
+            "age_category": "R",
+            "presale_flag": 1,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "2018958227630276608",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac02",
+                    "merchant_name": "XXI",
+                    "sort": 1
+                },
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                },
+                {
+                    "merchant_id": "37cee700-7e19-4353-b806-dbb1dcdcfbd2",
+                    "merchant_name": "Cinépolis",
+                    "sort": 3
+                }
+            ],
+            "country": "China"
+        },
+        {
+            "id": "2022147747473350656",
+            "title": "IRON LUNG",
+            "genres": [
+                {
+                    "id": "1582",
+                    "name": "Thriller"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/ee49ff70-f4f4-446b-af8a-b75587b3bfc0.webp",
+            "age_category": "R",
+            "presale_flag": 1,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "2022147745543970816",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                },
+                {
+                    "merchant_id": "37cee700-7e19-4353-b806-dbb1dcdcfbd2",
+                    "merchant_name": "Cinépolis",
+                    "sort": 3
+                }
+            ],
+            "country": "USA"
+        },
+        {
+            "id": "2003773177779535872",
+            "title": "PAPA ZOLA THE MOVIE",
+            "genres": [
+                {
+                    "id": "1585",
+                    "name": "Animation"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/09882111-d434-4f7d-90e0-e1431082067b.webp",
+            "age_category": "SU",
+            "presale_flag": 0,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "2003773176210866176",
+            "merchant": [
+                {
+                    "merchant_id": "37cee700-7e19-4353-b806-dbb1dcdcfbd2",
+                    "merchant_name": "Cinépolis",
+                    "sort": 3
+                }
+            ],
+            "country": ""
+        },
+        {
+            "id": "2009532118006317056",
+            "title": "TITIP BUNDA DI SURGA-MU",
+            "genres": [
+                {
+                    "id": "1581",
+                    "name": "Drama"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/af7bc577-4334-4430-81ae-4198a6c18bb1.webp",
+            "age_category": "R",
+            "presale_flag": 1,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "2009532117171650560",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac02",
+                    "merchant_name": "XXI",
+                    "sort": 1
+                },
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                },
+                {
+                    "merchant_id": "37cee700-7e19-4353-b806-dbb1dcdcfbd2",
+                    "merchant_name": "Cinépolis",
+                    "sort": 3
+                }
+            ],
+            "country": "Indonesia"
+        },
+        {
+            "id": "2011720543115493376",
+            "title": "LIFT",
+            "genres": [
+                {
+                    "id": "1582",
+                    "name": "Thriller"
+                },
+                {
+                    "id": "1512",
+                    "name": "Mystery"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/c140ee20-df54-433b-ae0a-1d0c286e56f0.webp",
+            "age_category": "D",
+            "presale_flag": 1,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "2011720541836230656",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                },
+                {
+                    "merchant_id": "37cee700-7e19-4353-b806-dbb1dcdcfbd2",
+                    "merchant_name": "Cinépolis",
+                    "sort": 3
+                }
+            ],
+            "country": "Indonesia"
+        },
+        {
+            "id": "2010566422241042432",
+            "title": "RAJAH",
+            "genres": [
+                {
+                    "id": "1577",
+                    "name": "Horror"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/b0e6c4d9-e0e6-4b74-9c14-868c31fb3f18.webp",
+            "age_category": "D",
+            "presale_flag": 1,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "2010566421070831616",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac02",
+                    "merchant_name": "XXI",
+                    "sort": 1
+                }
+            ],
+            "country": "Indonesia"
+        },
+        {
+            "id": "2019316582009888768",
+            "title": "TWENTY ONE PILOTS: MORE THAN WE EVER IMAGINED",
+            "genres": [
+                {
+                    "id": "1576",
+                    "name": "Music"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/eb4a2617-49ba-4288-9a8d-3d6584207f83.webp",
+            "age_category": "R",
+            "presale_flag": 1,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "2019316580759986176",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac02",
+                    "merchant_name": "XXI",
+                    "sort": 1
+                },
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                },
+                {
+                    "merchant_id": "37cee700-7e19-4353-b806-dbb1dcdcfbd2",
+                    "merchant_name": "Cinépolis",
+                    "sort": 3
+                }
+            ],
+            "country": "USA"
+        },
+        {
+            "id": "2018595347017842688",
+            "title": "EPIC: ELVIS PRESLEY IN CONCERT",
+            "genres": [
+                {
+                    "id": "1575",
+                    "name": "Documentary"
+                },
+                {
+                    "id": "1576",
+                    "name": "Music"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/a65b656a-0c7f-49ed-880e-b4d7b22650c7.webp",
+            "age_category": "R",
+            "presale_flag": 1,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "2018595345537253376",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac02",
+                    "merchant_name": "XXI",
+                    "sort": 1
+                },
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                },
+                {
+                    "merchant_id": "37cee700-7e19-4353-b806-dbb1dcdcfbd2",
+                    "merchant_name": "Cinépolis",
+                    "sort": 3
+                }
+            ],
+            "country": "USA"
+        },
+        {
+            "id": "2023961200433381376",
+            "title": "HAMNET",
+            "genres": [
+                {
+                    "id": "1581",
+                    "name": "Drama"
+                },
+                {
+                    "id": "94",
+                    "name": "History"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie/2023961198965374976.jpg",
+            "age_category": "D",
+            "presale_flag": 1,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "2023961198965374976",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                }
+            ],
+            "country": ""
+        },
+        {
+            "id": "2015655970830630912",
+            "title": "RUMAH TANPA CAHAYA",
+            "genres": [
+                {
+                    "id": "1581",
+                    "name": "Drama"
+                },
+                {
+                    "id": "1583",
+                    "name": "Family"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/2158369f-f82e-490d-8794-85d9905494e1.webp",
+            "age_category": "R",
+            "presale_flag": 0,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "2015655969538785280",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                }
+            ],
+            "country": "Indonesia"
+        },
+        {
+            "id": "2021419442667347968",
+            "title": "O ROMEO",
+            "genres": [
+                {
+                    "id": "1579",
+                    "name": "Action"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie/2021419439928467456.jpg",
+            "age_category": "D",
+            "presale_flag": 0,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "2021419439928467456",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                }
+            ],
+            "country": "India"
+        },
+        {
+            "id": "1899679775174254592",
+            "title": "THE LAST SUPPER",
+            "genres": [
+                {
+                    "id": "1581",
+                    "name": "Drama"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/b57de1b6-5b29-40c8-9e78-32e605f0f2fd.webp",
+            "age_category": "R",
+            "presale_flag": 0,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "1899679775128117248",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                }
+            ],
+            "country": ""
+        },
+        {
+            "id": "1945770978508357632",
+            "title": "DEMON SLAYER -KIMETSU NO YAIBA- THE MOVIE: INFINITY CASTLE",
+            "genres": [
+                {
+                    "id": "1585",
+                    "name": "Animation"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/ced7afe3-96bb-421b-a12a-21dea0bdecf2.webp",
+            "age_category": "D",
+            "presale_flag": 0,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "1945770977107460096",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                }
+            ],
+            "country": ""
+        },
+        {
+            "id": "1991461579962540032",
+            "title": "ETERNITY",
+            "genres": [
+                {
+                    "id": "1581",
+                    "name": "Drama"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/9ae27a63-fbdc-4223-9758-15b6baf5b9c8.webp",
+            "age_category": "D",
+            "presale_flag": 0,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "1991461578532282368",
+            "merchant": [
+                {
+                    "merchant_id": "37cee700-7e19-4353-b806-dbb1dcdcfbd2",
+                    "merchant_name": "Cinépolis",
+                    "sort": 3
+                }
+            ],
+            "country": "USA"
+        },
+        {
+            "id": "2013914986635681792",
+            "title": "MUDBORN",
+            "genres": [
+                {
+                    "id": "1577",
+                    "name": "Horror"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/5e765857-e24c-4a59-8d2d-791bcafd2c64.webp",
+            "age_category": "D",
+            "presale_flag": 0,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "2013914985251561472",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                }
+            ],
+            "country": "Taiwan"
+        },
+        {
+            "id": "1955434661794631680",
+            "title": "JANUR IRENG: SEWU DINO THE PREQUEL",
+            "genres": [
+                {
+                    "id": "1577",
+                    "name": "Horror"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/b2050b1a-d2fd-4b50-a64f-e283140d274d.webp",
+            "age_category": "D",
+            "presale_flag": 0,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "1955434660712501248",
+            "merchant": [
+                {
+                    "merchant_id": "37cee700-7e19-4353-b806-dbb1dcdcfbd2",
+                    "merchant_name": "Cinépolis",
+                    "sort": 3
+                }
+            ],
+            "country": ""
+        },
+        {
+            "id": "1977633930408443904",
+            "title": "AGAK LAEN: MENYALA PANTIKU!",
+            "genres": [
+                {
+                    "id": "1581",
+                    "name": "Drama"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/8018f5c0-d9bc-4850-9ce6-47f7b60c6839.webp",
+            "age_category": "R",
+            "presale_flag": 0,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "1977633929036906496",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                },
+                {
+                    "merchant_id": "37cee700-7e19-4353-b806-dbb1dcdcfbd2",
+                    "merchant_name": "Cinépolis",
+                    "sort": 3
+                }
+            ],
+            "country": "Indonesia"
+        },
+        {
+            "id": "1973311976000012288",
+            "title": "SAMPAI TITIK TERAKHIRMU",
+            "genres": [
+                {
+                    "id": "1581",
+                    "name": "Drama"
+                },
+                {
+                    "id": "1372",
+                    "name": "Romance"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/64777848-3bb1-48e2-86df-0b4ee2c585ea.webp",
+            "age_category": "R",
+            "presale_flag": 0,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "1973311974502645760",
+            "merchant": [
+                {
+                    "merchant_id": "37cee700-7e19-4353-b806-dbb1dcdcfbd2",
+                    "merchant_name": "Cinépolis",
+                    "sort": 3
+                }
+            ],
+            "country": "Indonesia"
+        },
+        {
+            "id": "2018186136068898816",
+            "title": "ENHYPEN [WALK THE LINE SUMMER EDITION] IN CINEMAS",
+            "genres": [
+                {
+                    "id": "1576",
+                    "name": "Music"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie/2018186134638641152.jpg",
+            "age_category": "P",
+            "presale_flag": 1,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "2018186134638641152",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac02",
+                    "merchant_name": "XXI",
+                    "sort": 1
+                },
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                },
+                {
+                    "merchant_id": "37cee700-7e19-4353-b806-dbb1dcdcfbd2",
+                    "merchant_name": "Cinépolis",
+                    "sort": 3
+                }
+            ],
+            "country": "South Korea"
+        },
+        {
+            "id": "2020807911088939008",
+            "title": "BRING ME THE HORIZON: L.I.V.E. IN SÃO PAULO (LIVE IMMERSIVE VIRTUAL EXPERIMENT)",
+            "genres": [
+                {
+                    "id": "1576",
+                    "name": "Music"
+                }
+            ],
+            "poster_path": "https://asset.tix.id/movie_poster_v2/5a5ae716-6e8e-40fc-89df-90b7be8c9fad.webp",
+            "age_category": "P",
+            "presale_flag": 1,
+            "rating_score": 0,
+            "score_home_display": false,
+            "movie_id": "2020807910736617472",
+            "merchant": [
+                {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV",
+                    "sort": 2
+                },
+                {
+                    "merchant_id": "37cee700-7e19-4353-b806-dbb1dcdcfbd2",
+                    "merchant_name": "Cinépolis",
+                    "sort": 3
+                }
+            ],
+            "country": "UK"
+        }
+    ]
+}

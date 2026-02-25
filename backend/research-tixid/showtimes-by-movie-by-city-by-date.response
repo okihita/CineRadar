@@ -1,0 +1,100 @@
+{
+    "success": true,
+    "data": {
+        "has_next": false,
+        "page": 1,
+        "show_date": 1771977600000,
+        "theaters": [
+            {
+                "id": "1244607997733326848",
+                "name": "GAJAH MADA PLAZA CINEPOLIS",
+                "type": 0,
+                "presale_flag": 0,
+                "merchant": {
+                    "merchant_id": "37cee700-7e19-4353-b806-dbb1dcdcfbd2",
+                    "merchant_name": "Cinépolis"
+                },
+                "address": "Gajah Mada Plaza, Jl. Gajah Mada No. 19-26 Jakarta Pusat , Jakarta",
+                "location": {
+                    "latitude": "-6.16079568862915",
+                    "longitude": "106.81820678710938"
+                },
+                "price_groups": [
+                    {
+                        "category": "REGULAR 2D",
+                        "low_price": 25000,
+                        "high_price": 25000,
+                        "price_string": "Rp25.000",
+                        "show_time": [
+                            {
+                                "id": "2025957805491572736",
+                                "time": 1772023500000,
+                                "display_time": "12:45",
+                                "studio": "11",
+                                "expired": 1772023500000,
+                                "status": 1,
+                                "studio_type": "",
+                                "price": 25000
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": "1178839445806338048",
+                "name": "SLIPI JAYA CGV",
+                "type": 0,
+                "presale_flag": 0,
+                "merchant": {
+                    "merchant_id": "2224f7e3-da00-4fb9-9de3-2b888d83ac03",
+                    "merchant_name": "CGV"
+                },
+                "address": "Plaza Slipi Jaya Lantai 4 Jl. Letjend S Parman no. Kav 17-18 - Jakarta Barat 11410",
+                "location": {
+                    "latitude": "-6.189181804656982",
+                    "longitude": "106.7962875366211"
+                },
+                "price_groups": [
+                    {
+                        "category": "REGULAR 2D",
+                        "low_price": 20000,
+                        "high_price": 20000,
+                        "price_string": "Rp20.000",
+                        "show_time": [
+                            {
+                                "id": "2026335293564608512",
+                                "time": 1772027700000,
+                                "display_time": "13:55",
+                                "studio": "100101",
+                                "expired": 1772026500000,
+                                "status": 1,
+                                "studio_type": "",
+                                "price": 20000
+                            },
+                            {
+                                "id": "2026335296202825728",
+                                "time": 1772041800000,
+                                "display_time": "17:50",
+                                "studio": "100301",
+                                "expired": 1772040600000,
+                                "status": 1,
+                                "studio_type": "",
+                                "price": 20000
+                            },
+                            {
+                                "id": "2026335297649860608",
+                                "time": 1772049300000,
+                                "display_time": "19:55",
+                                "studio": "100301",
+                                "expired": 1772048100000,
+                                "status": 1,
+                                "studio_type": "",
+                                "price": 20000
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

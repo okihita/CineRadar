@@ -85,37 +85,32 @@ graph TD
 
 ---
 
-## Phase 2: Integrating the Base Scraper
+## Phase 2: Bypassing Login for Daily Scraping
 
 ### Context: The Strange History of `BaseScraper._login()`
 You might be wondering: *"Wait, why was `BaseScraper._login()` logging in with Playwright if `TokenRefresher` already existed to get tokens?"*
 
-This is a remnant of the **original architecture**. Early on, the scrapers (like `MovieScraper` and `SeatScraper`) were designed to be totally standalone and isolated. They didn't know about Firestore at all. So, the original design was for every single script to simply spin up Chrome, go to `app.tix.id/login`, type in the phone number, and pull its own token out of the browser. 
-
+This is a remnant of the **original architecture**. Early on, the scrapers was designed to be totally standalone and isolated. 
 Later, when you implemented the fast 30-minute API `TokenRefresher`, that utility was built to store and fetch from Firestore. **But `BaseScraper` was never updated to use it yet!** 
 
-So currently, when the GitHub Action runs the `daily-morning-scrape`, the code:
-1. Launches a full headless Chrome browser (`Playwright`).
-2. Navigates to `app.tix.id/login`.
-3. Literally types your phone number and password into the UI fields.
-4. Clicks the "Login" button and waits for the page to load.
-5. Steals the token out of `localStorage`.
+### Do we even need to login for daily scrapes? (NO!)
+Recent API analysis revealed a massive simplification: **The `/v1/movies` and `/v1/schedules/movies` endpoints do NOT require a full user login token!** They only require the 30-minute **Guest Token** (acquired via `POST /v1/auth`).
 
-### Can we just use the stored token inside Firestore? (YES!)
-Yes, absolutely! The `daily-morning-scrape` GitHub Action already has the `FIREBASE_SERVICE_ACCOUNT` secret mapped into its environment. This means the GitHub Action has full access to read the `auth_tokens/tix_jwt` document from Firestore and skip the Playwright UI login entirely.
+This means for our daily morning scrape—which focuses exclusively on building the catalog of movies and showtimes (Showtime IDs, prices, room types)—we don't need to read from Firestore, refresh a long-term token, or use Playwright to log in. We just ask `/v1/auth` for a fresh Guest Token.
 
-### Step 2: Replace `BaseScraper._login()`
-**Goal:** Stop using Playwright UI login for daily scrapes. Update the core base class so that all scrapers simply fetch the valid 30-minute token we prepared in Phase 1. 
+**⚠️ CRITICAL DISTINCTION:** This Guest Token bypass *only* applies to the daily catalog scrape. The real-time JIT Seat Scrapers (which fetch the actual theatre seating layouts/JSON) **still strictly require a full User Access Token**. Those seat scrapers will continue to use the `TokenRefresher` API login we built in Phase 1.
+
+### Step 2: Replace `BaseScraper._login()` with Guest Token
+**Goal:** Stop using Playwright UI login for daily scrapes. Update the core base class so that all scrapers simply fetch a fresh Guest Token via API.
 
 **Changes:**
-1. Modify `_login` in `backend/infrastructure/scrapers/base.py` to delete the Playwright form-filling logic.
-2. Replace it with `TokenRefresher().ensure_valid_token()`. This will load the valid token from Firestore, and if it's expired, it will instantly refresh it via the API.
+1. Modify `_login` in `backend/infrastructure/scrapers/base.py` to delete the Playwright form-filling logic entirely.
+2. Replace it with a direct `httpx.post("https://api-b2b.tix.id/v1/auth")` call to fetch a newly minted Guest Token.
 3. Assign the returned token to `self.auth_token` for the legacy `CineRadarScraper` to inherit.
 *(Playwright will still be initialized, but only for navigating the movie schedules, not for logging in).*
 
 **Verification:**
 - **Local:** Run a limited local scrape (e.g., `uv run python -m backend.cli --schedules --city "JAKARTA"`). Watch the logs to confirm the "Logging in via direct API" message appears and scraping continues flawlessly.
-- **Deployment:** Deploy the branch. Let the next `daily-morning-scrape.yml` or a manual dispatch run.
 - **Data Check:** Verify that the daily scrape output still correctly pushes data to Firestore. The scraping should take exactly the same amount of time, except the initial 15-second UI login delay will be gone.
 
 ---
@@ -134,12 +129,40 @@ Yes, absolutely! The `daily-morning-scrape` GitHub Action already has the `FIREB
 - **Deployment:** Deploy the branch. Let the daily scraper run.
 - **Data Check:** Verify the exact same number of movies are being scraped across the cities as before.
 
+### Hypothesis: API Rate Limiting & Scrape Duration
+You are absolutely correct about the $O(C \times M \times P)$ complexity. To get all the showtime IDs, the nested looping structure demands proportional API hits:
+$O(\text{Cities}) \times O(\text{Movies\_Per\_City}) \times O(\text{Pages\_Per\_Movie})$
+
+**Theoretical Calculation per Scrape (National):**
+1. **Fetch Guest Token:** 1 hit
+2. **Fetch Cities:** 1 hit (or hardcoded)
+3. **Fetch Movies per City:** 85 active cities = 85 hits
+4. **Fetch Schedules:** 
+   - *Assumptions:* An average city has ~15 movies playing. 
+   - *Base Combinations:* $85 \text{ cities} \times 15 \text{ movies} \approx 1,275$ schedule page 1 hits.
+   - *Pagination Multiplier:* Only blockbuster movies in massive metropolitan cities (Jakarta, Bandung, Surabaya) span multiple pages. Let's assume a 10-15% pagination overhead $\approx 150$ extra hits.
+   
+**Total National API Hits** $\approx 1 + 1 + 85 + 1275 + 150 \approx \textbf{1,512 hits}$
+
+**Duration at Gentle Speeds (Single Thread):**
+- At **2 requests/second:** $\approx 756\text{ sec}$ (12.6 minutes)
+- At **1 request/second:** $\approx 1512\text{ sec}$ (25.2 minutes)
+
+Wait, remember the **GitHub Actions Matrix Strategy**! 
+Your `daily-morning-scrape.yml` uses parallel workers (`Batch 0-8`). That means 9 parallel servers are running `cli.py` simultaneously! 
+If each of the 9 workers is scanning $\approx 10$ cities:
+- Each worker makes $\approx 160$ API hits.
+- If we set the internal `aiolimiter` to **1 req/sec** per worker, each worker finishes in $\approx 2.6 \text{ minutes}$.
+- **Warning:** However, 9 concurrent workers hitting at 1 req/sec means your global load on TIX ID's firewall is actually **9 req/sec**. 
+
+To be extremely safe and gentle to their WAF, we should calculate the rate limit setting based on the matrix concurrency.
+
 ### Step 4: Replace `/v1/schedules/movies` Fetching
 **Goal:** Migrate the highly intensive schedule fetching logic away from Playwright routing.
 **Changes:**
 1. In `tix_client.py` (`_fetch_movie_schedule`), remove the Playwright `page.route` interception.
 2. Replace it with direct rate-limited `httpx` GET requests to `v1/schedules/movies/{movie_id}`.
-3. Apply `aiolimiter.AsyncLimiter(max_rate=2, time_period=1)` around the API call here to guarantee we do not surpass 2 hits per second.
+3. Apply `aiolimiter.AsyncLimiter(max_rate=1, time_period=1)` around the API calls to enforce a strict local 1 req/sec limit per worker.
 
 **Verification:**
 - **Local:** Run the scraper locally with the `--schedules` flag. Watch the output to ensure the rate limiter smoothly spaces out the API calls without throwing HTTP 429 Too Many Requests errors.
