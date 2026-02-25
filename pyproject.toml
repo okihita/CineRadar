@@ -15,6 +15,7 @@ dependencies = [
     # Security fix: CVE-2026-26007 - Subgroup Attack on SECT Curves
     "cryptography>=46.0.5",
     "pycryptodomex>=3.20.0",
+    "aiolimiter>=1.2.1",
 ]
 
 [project.optional-dependencies]

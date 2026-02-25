@@ -21,5 +21,8 @@
       "fast-xml-parser": ">=5.3.6",
       "brace-expansion": ">=2.0.2"
     }
+  },
+  "dependencies": {
+    "crypto-js": "^4.2.0"
   }
 }
