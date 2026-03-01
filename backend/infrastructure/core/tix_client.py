@@ -14,7 +14,6 @@ from playwright.async_api import BrowserContext, Page, Request, Route, async_pla
 
 from backend.infrastructure.city_data import CITIES
 from backend.infrastructure.core.config import LOCALE, TIMEZONE, USER_AGENT, VIEWPORT
-from backend.infrastructure.core.geocoder import Geocoder
 from backend.infrastructure.scrapers.base import BaseScraper
 
 
@@ -158,16 +157,6 @@ class CineRadarScraper(BaseScraper):
                 await page.unroute("**/v1/schedules/movies/**")
 
         return theatres
-
-    async def geocode_all_theatres(self, movie_map: dict[str, Any]) -> dict[str, Any]:
-        """
-        Geocode all theatre addresses in the movie data.
-        Uses caching to avoid repeated API calls.
-
-        Delegates to Geocoder class for actual geocoding.
-        """
-        geocoder = Geocoder(logger=self.log)
-        return await geocoder.geocode_theatres_in_movie_data(movie_map)
 
     async def scrape(
         self,

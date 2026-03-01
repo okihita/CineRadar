@@ -114,31 +114,6 @@ class ITheatreRepository(ABC):
         """
         pass
 
-    @abstractmethod
-    def get_without_location(self) -> list[Theatre]:
-        """Get theatres that haven't been geocoded.
-
-        Returns:
-            List of theatres with no lat/lng
-        """
-        pass
-
-    @abstractmethod
-    def update_location(
-        self, theatre_id: str, lat: float, lng: float, place_id: str | None = None
-    ) -> bool:
-        """Update theatre location.
-
-        Args:
-            theatre_id: Theatre identifier
-            lat: Latitude
-            lng: Longitude
-            place_id: Optional Google Places ID
-
-        Returns:
-            True if update successful
-        """
-        pass
 
 
 class ITokenRepository(ABC):

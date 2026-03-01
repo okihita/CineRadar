@@ -9,7 +9,6 @@ Use Cases: Application-specific business rules
 """
 
 from backend.application.ports import (
-    IGeocodingService,
     IMovieRepository,
     IMovieScraper,
     ISeatScraper,
@@ -18,7 +17,6 @@ from backend.application.ports import (
 )
 
 __all__ = [
-    "IGeocodingService",
     "IMovieRepository",
     # Ports (interfaces)
     "IMovieScraper",

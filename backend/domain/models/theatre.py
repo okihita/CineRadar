@@ -70,11 +70,6 @@ class Theatre:
     )
 
     @property
-    def has_location(self) -> bool:
-        """Check if theatre has geocoded location."""
-        return self.lat is not None and self.lng is not None
-
-    @property
     def is_premium(self) -> bool:
         """Check if theatre has premium room types."""
         return any(room.upper() in self.PREMIUM_ROOMS for room in self.room_types)
@@ -89,14 +84,6 @@ class Theatre:
     def is_valid_merchant(self) -> bool:
         """Validate merchant is a known cinema chain."""
         return self.merchant in self.VALID_MERCHANTS
-
-    def set_location(self, lat: float, lng: float, place_id: str | None = None) -> None:
-        """Set geocoded location."""
-        self.lat = lat
-        self.lng = lng
-        if place_id:
-            self.place_id = place_id
-        self.updated_at = get_now_iso()
 
     def add_room_type(self, room_type: str) -> None:
         """Add a room type if not already present."""

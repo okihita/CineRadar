@@ -7,41 +7,6 @@ Abstract interfaces for external services like geocoding.
 from abc import ABC, abstractmethod
 
 
-class IGeocodingService(ABC):
-    """Interface for geocoding addresses to coordinates.
-
-    Could be implemented using Google Maps, OpenStreetMap, etc.
-    """
-
-    @abstractmethod
-    async def geocode(self, address: str, city: str) -> tuple[float, float] | None:
-        """Geocode an address to lat/lng coordinates.
-
-        Args:
-            address: Street address
-            city: City name for context
-
-        Returns:
-            Tuple of (latitude, longitude) or None if not found
-        """
-        pass
-
-    @abstractmethod
-    async def geocode_with_place_id(
-        self, address: str, city: str
-    ) -> tuple[float, float, str] | None:
-        """Geocode an address and return place ID.
-
-        Args:
-            address: Street address
-            city: City name for context
-
-        Returns:
-            Tuple of (latitude, longitude, place_id) or None if not found
-        """
-        pass
-
-
 class INotificationService(ABC):
     """Interface for sending notifications.
 

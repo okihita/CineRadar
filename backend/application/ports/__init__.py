@@ -12,11 +12,9 @@ This allows us to write and test our business logic without needing a running da
 """
 
 from backend.application.ports.scraper import IMovieScraper, ISeatScraper
-from backend.application.ports.services import IGeocodingService
 from backend.application.ports.storage import IMovieRepository, ITheatreRepository, ITokenRepository
 
 __all__ = [
-    "IGeocodingService",
     "IMovieRepository",
     "IMovieScraper",
     "ISeatScraper",

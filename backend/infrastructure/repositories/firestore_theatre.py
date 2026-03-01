@@ -77,15 +77,8 @@ class FirestoreTheatreRepository(ITheatreRepository):
                     "room_types": merged_rooms,
                 }
 
-                # Only update location if provided and not already set
-                existing_lat = existing.get("lat")
-                existing_lng = existing.get("lng")
-                if theatre.lat is not None and existing_lat is None:
-                    update_data["lat"] = theatre.lat
-                if theatre.lng is not None and existing_lng is None:
-                    update_data["lng"] = theatre.lng
-                if theatre.place_id and not existing.get("place_id"):
-                    update_data["place_id"] = theatre.place_id
+                # Location fields are preserved in the DB; they are updated externally or kept as-is.
+                # update_data["lat"], update_data["lng"], update_data["place_id"] are removed from here.
 
                 doc_ref.update(update_data)
             else:
@@ -153,36 +146,6 @@ class FirestoreTheatreRepository(ITheatreRepository):
             logger.error(f"⚠️ Error getting theatres for {merchant}: {e}")
             return []
 
-    def get_without_location(self) -> list[Theatre]:
-        """Get theatres that haven't been geocoded."""
-        try:
-            docs = self.db.collection(self.COLLECTION).where("lat", "==", None).stream()
-            return [Theatre.from_dict(doc.to_dict()) for doc in docs]
-        except Exception:
-            # Firestore doesn't handle null queries well, get all and filter
-            all_theatres = self.get_all()
-            return [t for t in all_theatres if not t.has_location]
-
-    def update_location(
-        self, theatre_id: str, lat: float, lng: float, place_id: str | None = None
-    ) -> bool:
-        """Update theatre location."""
-        try:
-            doc_ref = self.db.collection(self.COLLECTION).document(str(theatre_id))
-
-            update_data = {
-                "lat": lat,
-                "lng": lng,
-                "updated_at": datetime.now(UTC).isoformat(),
-            }
-            if place_id:
-                update_data["place_id"] = place_id
-
-            doc_ref.update(update_data)
-            return True
-        except Exception as e:
-            logger.error(f"⚠️ Error updating location for {theatre_id}: {e}")
-            return False
 
     def count(self) -> int:
         """Get total theatre count."""
