@@ -31,7 +31,7 @@ Start here to understand the system.
 ### 📦 Component Guides
 
 - **[Admin Documentation](./admin/README.md)**: Dashboard modules, Google Maps setup, & Auth.
-- **[Web Documentation](./web/README.md)**: Consumer app features & Leaflet integration.
+- **[Web Documentation](./web/README.md)**: Consumer app features & Map integration.
 
 ## 🔗 Quick Access
 
