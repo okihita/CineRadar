@@ -100,10 +100,36 @@ This means for our daily morning scrape—which focuses exclusively on building 
 
 **⚠️ CRITICAL DISTINCTION:** This Guest Token bypass *only* applies to the daily catalog scrape. The real-time JIT Seat Scrapers (which fetch the actual theatre seating layouts/JSON) **still strictly require a full User Access Token**. Those seat scrapers will continue to use the `TokenRefresher` API login we built in Phase 1.
 
-### Step 2: Replace `BaseScraper._login()` with Guest Token
+### Step 2: Replace `BaseScraper._login()` with Guest Token (IN PROGRESS)
 **Goal:** Stop using Playwright UI login for daily scrapes. Update the core base class so that all scrapers simply fetch a fresh Guest Token via API.
 
-**Changes:**
+**Atomic Implementation Steps:**
+
+#### Step 2.1: Create Guest Token Fetcher Module ✅ DONE
+**File:** `backend/infrastructure/core/guest_token.py`
+- Create standalone module with `fetch_guest_token()` async function
+- Returns `GuestToken` dataclass with token and expiry metadata
+- Zero risk - new file, doesn't modify existing code
+
+**Verification:** ✅ PASSED (2026-03-01)
+```bash
+uv run python -m backend.scripts.test_guest_token
+# Results: ✅ Guest token acquired (30 min validity)
+#          ✅ Valid JWT structure (3 parts)
+#          ✅ Fetched 33 movies from Jakarta
+```
+
+#### Step 2.2: Add Guest Token Method to BaseScraper (PENDING)
+**File:** `backend/infrastructure/scrapers/base.py`
+- Add `_get_guest_token()` method to BaseScraper class
+- Low risk - additive only, doesn't modify existing `_login()`
+
+#### Step 2.3: Create API-only Scraper V2 (PENDING)
+**File:** `backend/infrastructure/core/tix_client_v2.py`
+- New `CineRadarScraperV2` class using pure HTTP API
+- Zero risk - new file, can run in parallel with V1 for comparison
+
+**Final Changes (after atomic steps verified):**
 1. Modify `_login` in `backend/infrastructure/scrapers/base.py` to delete the Playwright form-filling logic entirely.
 2. Replace it with a direct `httpx.post("https://api-b2b.tix.id/v1/auth")` call to fetch a newly minted Guest Token.
 3. Assign the returned token to `self.auth_token` for the legacy `CineRadarScraper` to inherit.
