@@ -21,6 +21,7 @@ from backend.infrastructure.core.config import (
     USER_AGENT,
     VIEWPORT,
 )
+from backend.infrastructure.core.guest_token import GuestToken, fetch_guest_token
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +54,24 @@ class BaseScraper:
         self.auth_token: str | None = None
         self._phone = os.environ.get("TIX_PHONE_NUMBER", "")
         self._password = os.environ.get("TIX_PASSWORD", "")
+
+    async def _get_guest_token(self) -> GuestToken | None:
+        """Fetch a fresh Guest Token for API authentication.
+
+        This is a lightweight alternative to _login() for endpoints
+        that don't require full user authentication (e.g., /v1/movies).
+
+        Returns:
+            GuestToken if successful, None otherwise
+        """
+        self.log("🎫 Fetching Guest Token via API...")
+        guest = await fetch_guest_token()
+        if guest:
+            self.auth_token = guest.token
+            self.log(f"   ✅ Guest token valid for {guest.minutes_remaining:.0f} min")
+        else:
+            self.log("   ❌ Failed to fetch guest token")
+        return guest
 
     def log(self, message: str) -> None:
         """Print timestamped log message.

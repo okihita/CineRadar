@@ -119,15 +119,51 @@ uv run python -m backend.scripts.test_guest_token
 #          ✅ Fetched 33 movies from Jakarta
 ```
 
-#### Step 2.2: Add Guest Token Method to BaseScraper (PENDING)
-**File:** `backend/infrastructure/scrapers/base.py`
-- Add `_get_guest_token()` method to BaseScraper class
-- Low risk - additive only, doesn't modify existing `_login()`
+#### Step 2.2: Add Guest Token Method to BaseScraper ✅ DONE
+**File:** `backend/infrastructure/core/guest_token.py`
+
+**Changes Made:**
+- Added import: `from backend.infrastructure.core.guest_token import GuestToken, fetch_guest_token`
+- Added new method `_get_guest_token()` after `__init__()` - **additive only, no modifications to existing code**
+
+| Aspect | Before | After |
+|--------|--------|-------|
+| Methods | 5 methods | 6 methods (additive) |
+| `_login()` | Unchanged | Unchanged |
+| Risk | N/A | **Zero** - additive only |
+| Time | ~15s for login | ~0.5s for guest token |
+
+**Verification:** ✅ PASSED (2026-03-01)
+```bash
+uv run python -c "
+import asyncio
+from backend.infrastructure.scrapers.base import BaseScraper
+async def test():
+    scraper = BaseScraper()
+    guest = await scraper._get_guest_token()
+    print(f'✅ Works: {guest is not None}')
+    print(f'   auth_token set: {scraper.auth_token is not None}')
+asyncio.run(test())
+"
+```
 
 #### Step 2.3: Create API-only Scraper V2 (PENDING)
 **File:** `backend/infrastructure/core/tix_client_v2.py`
 - New `CineRadarScraperV2` class using pure HTTP API
 - Zero risk - new file, can run in parallel with V1 for comparison
+- **Includes bug fix:** Checks `/v1/schedules/date` before fetching showtimes
+
+**V2 Scraper Flow (with bug fix):**
+```
+1. GET /v1/auth → Guest Token
+2. For each city:
+   a. GET /v1/movies?city_id=X → List of movies
+   b. For each movie:
+      i. GET /v1/schedules/date?schedule_id=X&city_id=Y
+      ii. Check if TODAY has is_any_schedule: true
+      iii. If false: SKIP (no shows today)
+      iv. If true: GET /v1/schedules/movies/X?date=TODAY
+```
 
 **Final Changes (after atomic steps verified):**
 1. Modify `_login` in `backend/infrastructure/scrapers/base.py` to delete the Playwright form-filling logic entirely.
@@ -138,6 +174,49 @@ uv run python -m backend.scripts.test_guest_token
 **Verification:**
 - **Local:** Run a limited local scrape (e.g., `uv run python -m backend.cli --schedules --city "JAKARTA"`). Watch the logs to confirm the "Logging in via direct API" message appears and scraping continues flawlessly.
 - **Data Check:** Verify that the daily scrape output still correctly pushes data to Firestore. The scraping should take exactly the same amount of time, except the initial 15-second UI login delay will be gone.
+
+---
+
+## Bug Fix: The "Wrong Date" Issue
+
+### Problem Description
+The current `_fetch_movie_schedule()` implementation has a critical bug:
+
+**Current (Wrong) Behavior:**
+1. Navigate to movie page: `app.tix.id/movies/{slug}-{movie_id}/{today_date}`
+2. Scrape whatever showtimes appear on the page
+
+**The Bug:** For presale/upcoming movies, the TIX.id website shows the FIRST available date, not today's date. If a movie opens tomorrow, the page shows tomorrow's showtimes even though we requested today.
+
+**Impact:**
+- Wasted resources scraping movies with no shows today
+- Wrong data: storing future showtimes as if they were today
+- Slower scraping: unnecessary page loads for movies not playing today
+
+### The Fix: Check `/v1/schedules/date` First
+
+**Correct (New) Behavior:**
+```
+For each movie in city:
+1. GET /v1/schedules/date?schedule_id={movie_id}&city_id={city_id}
+2. Check if TODAY has is_any_schedule: true
+3. If false: SKIP this movie (no shows today)
+4. If true: GET /v1/schedules/movies/{movie_id}?date={today}
+```
+
+**Example API Response:**
+```json
+{
+  "data": [
+    {"date": "2026-02-26", "is_any_schedule": true},   ← Has shows
+    {"date": "2026-02-27", "is_any_schedule": false},
+    {"date": "2026-03-01", "is_any_schedule": false},  ← TODAY - no shows!
+    ...
+  ]
+}
+```
+
+This fix will be implemented in Step 2.3 (V2 Scraper) as part of the pure API approach.
 
 ---
 
