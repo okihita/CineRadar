@@ -6,8 +6,8 @@ name: Token Refresh
 
 on:
   schedule:
-    # 1st of EVERY month @ 5:50 AM WIB (22:50 UTC previous day)
-    - cron: '50 22 1 * *'
+    # 1st of EVERY month @ 2:50 AM WIB (19:50 UTC previous day)
+    - cron: '50 19 1 * *'
   workflow_dispatch:  # Manual trigger
 
 jobs:

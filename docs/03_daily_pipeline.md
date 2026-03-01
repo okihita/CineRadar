@@ -6,7 +6,7 @@
 
 The pipeline runs in two phases:
 
-1. **Morning Movie Scrape** (6:00-6:40 AM): Scrapes all movies and showtimes
+1. **Morning Movie Scrape** (3:00-3:40 AM): Scrapes all movies and showtimes
 2. **JIT Seat Scraping** (10 AM-11 PM): Scrapes seats hourly, 8 min before showtime
 
 > [!NOTE]
@@ -23,12 +23,12 @@ gantt
     axisFormat %H:%M
     
     section Auth
-    Token Refresh (AM)   :crit, 05:50, 5m
+    Token Refresh (AM)   :crit, 02:50, 5m
     Token Refresh (Noon) :crit, 12:00, 5m
 
     section Movie Data
-    Movie Scrape         :active, 06:00, 30m
-    Merge and Upload     :active, 06:30, 10m
+    Movie Scrape         :active, 03:00, 30m
+    Merge and Upload     :active, 03:30, 10m
 
     section JIT Seats (Hourly)
     09:52 JIT Scrape     :active, 09:52, 18m
@@ -41,7 +41,7 @@ All times are **WIB (UTC+7)**. GitHub Action schedules use UTC.
 
 ---
 
-## Phase 1: Token Refresh (5:50 AM WIB)
+## Phase 1: Token Refresh (2:50 AM WIB)
 
 ### Purpose
 Capture a fresh JWT token from TIX.id for authenticated API calls.
@@ -90,7 +90,7 @@ sequenceDiagram
 
 ---
 
-## Phase 2: Movie Scraping (6:00 AM WIB)
+## Phase 2: Movie Scraping (3:00 AM WIB)
 
 ### Purpose
 Scrape all movies, showtimes, and theatre information for the day.
@@ -142,7 +142,7 @@ flowchart LR
 
 ---
 
-## Phase 3: Seat Scraping (~6:40 AM WIB)
+## Phase 3: Seat Scraping (~3:40 AM WIB)
 
 ### Purpose
 Scrape seat availability for ALL showtimes collected in Phase 2.
@@ -191,7 +191,7 @@ sequenceDiagram
     uv run python -m backend.cli.cli seats --mode morning --concurrency 20
     ```
 
-## Phase 4: Movie Performance Aggregation (~8:00 AM WIB)
+## Phase 4: Movie Performance Aggregation (~5:00 AM WIB)
 
 ### Purpose
 Aggregate seat occupancy data into per-movie performance summaries for the Admin Dashboard.
@@ -344,14 +344,14 @@ Geocode new theatre locations using Google Maps API to ensure map visualization 
 
 | Collection | Document ID | Updated By | Frequency |
 |------------|-------------|------------|-----------|
-| `auth_tokens` | `tix_jwt` | token-refresh.yml | Daily 5:50 AM |
-| `theatres` | `{theatre_id}` | populate_firestore.py | Daily 6:30 AM |
-| `snapshots` | `latest`, `{date}` | populate_firestore.py | Daily 6:30 AM |
-| `schedules/{date}/movies` | `{movie_id}` | upload_schedules.py | Daily 6:30 AM |
-| `movies` | `{movie_id}` | movie-details CLI | Daily ~6:35 AM |
+| `auth_tokens` | `tix_jwt` | token-refresh.yml | Daily 2:50 AM |
+| `theatres` | `{theatre_id}` | populate_firestore.py | Daily 3:30 AM |
+| `snapshots` | `latest`, `{date}` | populate_firestore.py | Daily 3:30 AM |
+| `schedules/{date}/movies` | `{movie_id}` | upload_schedules.py | Daily 3:30 AM |
+| `movies` | `{movie_id}` | movie-details CLI | Daily ~3:35 AM |
 | `movies/{id}/rating_history` | `{YYYY-MM-DD}` | movie-details CLI | Daily |
-| `movie_performance` | `{movie_id}` | movie_performance.py | Daily 8:00 AM |
-| `movie_performance/{id}/showtimes` | `{showtime_id}` | movie_performance.py | Daily 8:00 AM |
+| `movie_performance` | `{movie_id}` | movie_performance.py | Daily 5:00 AM |
+| `movie_performance/{id}/showtimes` | `{showtime_id}` | movie_performance.py | Daily 5:00 AM |
 | `scraper_logs` | `{YYYY-MM-DD}` | Various | Consolidated daily log |
 
 ---
