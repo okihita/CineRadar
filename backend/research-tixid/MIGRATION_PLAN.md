@@ -147,11 +147,31 @@ asyncio.run(test())
 "
 ```
 
-#### Step 2.3: Create API-only Scraper V2 (PENDING)
+#### Step 2.3: Create API-only Scraper V2 ✅ DONE
 **File:** `backend/infrastructure/core/tix_client_v2.py`
 - New `CineRadarScraperV2` class using pure HTTP API
 - Zero risk - new file, can run in parallel with V1 for comparison
 - **Includes bug fix:** Checks `/v1/schedules/date` before fetching showtimes
+
+**Bug Fix During Implementation:**
+- Issue: Used `movie.get("movie_id")` but API requires `movie.get("id")` for schedule endpoints
+- Symptom: All movies reported as "skipped" even when they had shows
+- Fix: Changed to `movie.get("id") or movie.get("movie_id", "")`
+- Test: BAUBAU city - KUYANK movie now correctly shows 4 showtimes
+
+**Verification:** ✅ PASSED (2026-03-02)
+```bash
+uv run python -c "
+import asyncio
+from backend.infrastructure.core.tix_client_v2 import CineRadarScraperV2
+async def test():
+    scraper = CineRadarScraperV2()
+    result = await scraper.scrape(specific_city='BAUBAU')
+    print('Stats:', result.get('stats'))
+asyncio.run(test())
+"
+# Results: movies_with_shows=7, movies_skipped=0, total_showtimes=12
+```
 
 **V2 Scraper Flow (with bug fix):**
 ```
@@ -159,11 +179,108 @@ asyncio.run(test())
 2. For each city:
    a. GET /v1/movies?city_id=X → List of movies
    b. For each movie:
-      i. GET /v1/schedules/date?schedule_id=X&city_id=Y
+      i. GET /v1/schedules/date?schedule_id=M&city_id=C
       ii. Check if TODAY has is_any_schedule: true
-      iii. If false: SKIP (no shows today)
-      iv. If true: GET /v1/schedules/movies/X?date=TODAY
+      iii. If false: SKIP this movie in THIS city
+      iv. If true: GET /v1/schedules/movies/M?city_id=C&date=TODAY
 ```
+
+**Critical: Per-City Schedule Check**
+
+The `is_any_schedule` check is **per (movie, city) pair**, not per movie globally:
+- Same movie may have shows TODAY in Jakarta but not in Bandung
+- API: `GET /v1/schedules/date?schedule_id={movie_id}&city_id={city_id}`
+- Decision to skip/scrape is made independently for each city
+
+**Example:**
+```
+Movie: "Captain America"
+├── Jakarta:    is_any_schedule=true  → SCRAPE showtimes
+├── Bandung:    is_any_schedule=false → SKIP (no shows today)
+└── Surabaya:   is_any_schedule=true  → SCRAPE showtimes
+```
+
+**JIT Queue Integration:**
+Only showtimes from (movie, city) pairs with `is_any_schedule=true` are queued for JIT seat scraping. This prevents:
+- Wasted JIT API calls for movies not playing today
+- Missing seat data for cities where movie IS playing today
+
+**Firestore Collection: schedules_v2**
+
+V2 scraper writes to a NEW collection `schedules_v2` with identical structure to `schedules`:
+
+```
+### Firestore Collection Structure
+
+**Note:** There is NO root-level `movies` collection. All schedule data is stored as subcollections under `schedules/{date}/movies/{movie_id}`.
+
+**Document Structure (both V1 and V2 use identical schema):**
+```typescript
+// schedules/{date}/movies/{movie_id} or schedules_v2/{date}/movies/{movie_id}
+{
+  "movie_id": "1899679775128117248",
+  "title": "TITIP BUNDA DI SURGA-MU",
+  "poster": "https://...",
+  "genres": ["Drama", "Action"],
+  "age_category": "17+",
+  "merchants": ["CGV", "XXI"],
+  "is_presale": false,
+  "date": "2026-03-02",
+  "uploaded_at": "2026-03-02T00:13:00Z",
+  "cities": {                          // <-- Per-city schedules
+    "JAKARTA": [
+      {
+        "theatre_id": "123",
+        "theatre_name": "CGV Grand Indonesia",
+        "merchant": "CGV",
+        "address": "Jl. Harsono No.1...",
+        "rooms": [
+          {
+            "category": "Regular",
+            "price": "Rp 75.000",
+            "showtimes": ["10:00", "12:30"],      // Available times
+            "all_showtimes": [...],              // All times with status
+            "past_showtimes": ["08:00"]          // Past/unavailable times
+          }
+        ]
+      }
+    ],
+    "BANDUNG": [...]  // <-- Empty if is_any_schedule=false for today
+  }
+}
+```
+
+**Collection Comparison:**
+```
+schedules/                          # V1 (current - includes upcoming movies)
+├── 2026-03-02/
+│   └── movies/
+│       ├── 1899679775128117248    # Movie playing TODAY
+│       ├── 1973311976000012288    # Movie playing TODAY
+│       └── 2098765432109876543    # UPCOMING movie (no shows today - BUG!)
+
+schedules_v2/                       # V2 (new - excludes upcoming movies)
+├── 2026-03-02/
+│   └── movies/
+│       ├── 1899679775128117248    # Same content as V1
+│       └── 1973311976000012288    # Same content as V1
+│       # 2098765432109876543 NOT HERE - skipped (is_any_schedule=false)
+```
+
+| Aspect | V1 (`schedules`) | V2 (`schedules_v2`) |
+|--------|------------------|---------------------|
+| Document Schema | Same | Same |
+| Movies with shows TODAY | ✅ Included | ✅ Included (same content) |
+| Upcoming movies | ✅ Included (bug!) | ❌ NOT included |
+| Per-city check | No | Yes (`is_any_schedule`) |
+| Document count | More | Fewer (filtered) |
+
+**Migration Path:**
+1. V2 scraper runs in parallel with V1
+2. Compare `schedules` vs `schedules_v2` for same date
+3. Verify V2 has correct subset (no upcoming movies)
+4. Switch JIT dispatcher to read from `schedules_v2`
+5. Deprecate V1 collection
 
 **Final Changes (after atomic steps verified):**
 1. Modify `_login` in `backend/infrastructure/scrapers/base.py` to delete the Playwright form-filling logic entirely.

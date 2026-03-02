@@ -1,0 +1,358 @@
+"""
+CineRadar TIX.id Scraper Client V2
+Pure API implementation without Playwright.
+
+This is a migration-friendly version that uses direct HTTP API calls
+instead of browser automation. Key improvements over V1:
+- No Playwright dependency (faster, lighter)
+- Checks is_any_schedule before fetching showtimes (fixes "wrong date" bug)
+- Per-city filtering (same movie may have shows in Jakarta but not Bandung)
+"""
+
+import asyncio
+import logging
+from datetime import datetime
+from typing import Any
+
+import httpx
+
+from backend.infrastructure.city_data import CITIES
+from backend.infrastructure.core.config import API_BASE
+from backend.infrastructure.core.guest_token import GuestToken, fetch_guest_token
+
+logger = logging.getLogger(__name__)
+
+# API endpoints
+MOVIES_URL = f"{API_BASE}/v1/movies"
+SCHEDULES_DATE_URL = f"{API_BASE}/v1/schedules/date"
+SCHEDULES_MOVIES_URL = f"{API_BASE}/v1/schedules/movies"
+
+
+class CineRadarScraperV2:
+    """Movie availability scraper for TIX.id - Pure API version."""
+
+    def __init__(self) -> None:
+        self.cities = CITIES
+        self.api_base = API_BASE
+        self.guest_token: GuestToken | None = None
+        self._client: httpx.AsyncClient | None = None
+
+    async def _ensure_client(self) -> httpx.AsyncClient:
+        """Ensure we have an HTTP client with valid token."""
+        if self._client is None:
+            self._client = httpx.AsyncClient(timeout=30.0)
+
+        # Refresh token if needed
+        if not self.guest_token or self.guest_token.is_expired:
+            self.guest_token = await fetch_guest_token()
+            if not self.guest_token:
+                raise RuntimeError("Failed to acquire guest token")
+
+        return self._client
+
+    async def _get_headers(self) -> dict[str, str]:
+        """Get headers with valid authorization."""
+        await self._ensure_client()
+        return {
+            "Authorization": f"Bearer {self.guest_token.token}",
+            "Content-Type": "application/json",
+            "platform": "web",
+        }
+
+    async def fetch_movies(self, city_id: str) -> list[dict[str, Any]]:
+        """Fetch movies for a city using direct API call."""
+        client = await self._ensure_client()
+        headers = await self._get_headers()
+
+        response = await client.get(
+            MOVIES_URL,
+            params={
+                "city_id": city_id,
+                "movie_type": "NOW_PLAYING",
+                "timezone": "7",
+            },
+            headers=headers,
+        )
+
+        if response.status_code == 200:
+            data = response.json()
+            return data.get("data", [])
+        else:
+            logger.error(f"Failed to fetch movies: HTTP {response.status_code}")
+            return []
+
+    async def check_schedule_availability(
+        self, movie_id: str, city_id: str, date: str
+    ) -> bool:
+        """Check if movie has any schedules for the given date in the given city.
+
+        This is the key fix for the "wrong date" bug - we check BEFORE fetching.
+        """
+        client = await self._ensure_client()
+        headers = await self._get_headers()
+
+        response = await client.get(
+            SCHEDULES_DATE_URL,
+            params={
+                "schedule_id": movie_id,
+                "city_id": city_id,
+            },
+            headers=headers,
+        )
+
+        if response.status_code == 200:
+            data = response.json()
+            dates = data.get("data", [])
+
+            # Find today's date and check is_any_schedule
+            for date_entry in dates:
+                if date_entry.get("date") == date:
+                    return date_entry.get("is_any_schedule", False)
+
+            # Date not found in response = no schedules
+            return False
+
+        return False
+
+    async def fetch_movie_schedules(
+        self, movie_id: str, city_id: str, date: str
+    ) -> list[dict[str, Any]]:
+        """Fetch theatre schedules for a movie in a city for a specific date.
+
+        Handles pagination via has_next flag.
+        """
+        client = await self._ensure_client()
+        headers = await self._get_headers()
+
+        all_theatres = []
+        page = 1
+
+        while True:
+            response = await client.get(
+                f"{SCHEDULES_MOVIES_URL}/{movie_id}",
+                params={
+                    "city_id": city_id,
+                    "date": date,
+                    "page": page,
+                },
+                headers=headers,
+            )
+
+            if response.status_code != 200:
+                logger.error(f"Failed to fetch schedules: HTTP {response.status_code}")
+                break
+
+            data = response.json()
+            if not data.get("success", True):
+                break
+
+            theatres = data.get("data", {}).get("theaters", [])
+            has_next = data.get("data", {}).get("has_next", False)
+
+            all_theatres.extend(theatres)
+
+            if not has_next or not theatres:
+                break
+
+            page += 1
+            # Rate limiting: small delay between pages
+            await asyncio.sleep(0.1)
+
+        return all_theatres
+
+    def _parse_theatre(self, theatre_data: dict[str, Any]) -> dict[str, Any]:
+        """Parse theatre data from API response."""
+        theatre = {
+            "theatre_id": theatre_data.get("id"),
+            "theatre_name": theatre_data.get("name"),
+            "merchant": theatre_data.get("merchant", {}).get("merchant_name"),
+            "address": theatre_data.get("address"),
+            "rooms": [],
+        }
+
+        for group in theatre_data.get("price_groups", []):
+            room = {
+                "category": group.get("category"),
+                "price": group.get("price_string"),
+                "showtimes": [],
+                "all_showtimes": [],
+                "past_showtimes": [],
+            }
+
+            for show in group.get("show_time", []):
+                display_time = show.get("display_time")
+                status = show.get("status")
+                showtime_id = show.get("id")
+
+                showtime_obj = {
+                    "time": display_time,
+                    "status": status,
+                    "is_available": status == 1,
+                    "showtime_id": showtime_id,
+                }
+                room["all_showtimes"].append(showtime_obj)
+
+                if status == 1:
+                    room["showtimes"].append(display_time)
+                else:
+                    room["past_showtimes"].append(display_time)
+
+            if room["all_showtimes"]:
+                theatre["rooms"].append(room)
+
+        return theatre
+
+    async def scrape_city(
+        self, city: dict[str, Any], date: str
+    ) -> dict[str, Any]:
+        """Scrape movies for a single city with per-movie schedule checking."""
+        city_id = str(city.get("id", ""))
+        city_name = city.get("name", "Unknown")
+
+        logger.info(f"📍 Scraping {city_name}...")
+
+        # Step 1: Fetch all movies in city
+        movies = await self.fetch_movies(city_id)
+        logger.info(f"   Found {len(movies)} movies")
+
+        result = {
+            "city": city_name,
+            "city_id": city_id,
+            "date": date,
+            "movies": [],
+            "stats": {
+                "total_movies": len(movies),
+                "movies_with_shows": 0,
+                "movies_skipped": 0,
+                "total_showtimes": 0,
+            },
+        }
+
+        # Step 2: For each movie, check if it has shows TODAY
+        for movie in movies:
+            # Use "id" field for schedule API, not "movie_id"
+            movie_id = str(movie.get("id") or movie.get("movie_id", ""))
+            movie_title = movie.get("title", "Unknown")
+
+            # Check is_any_schedule for TODAY in THIS city
+            has_shows = await self.check_schedule_availability(movie_id, city_id, date)
+
+            if not has_shows:
+                logger.debug(f"   ⏭️ {movie_title}: No shows today, skipping")
+                result["stats"]["movies_skipped"] += 1
+                continue
+
+            # Step 3: Fetch actual schedules
+            theatres = await self.fetch_movie_schedules(movie_id, city_id, date)
+
+            if theatres:
+                parsed_theatres = [self._parse_theatre(t) for t in theatres]
+
+                # Count showtimes
+                showtime_count = sum(
+                    len(r.get("all_showtimes", []))
+                    for t in parsed_theatres
+                    for r in t.get("rooms", [])
+                )
+
+                movie_entry = {
+                    "movie_id": movie_id,
+                    "title": movie_title,
+                    "poster": movie.get("poster_path", ""),
+                    "genres": [g.get("name") for g in movie.get("genres", [])],
+                    "age_category": movie.get("age_category", ""),
+                    "merchants": [
+                        m.get("merchant_name") for m in movie.get("merchant", [])
+                    ],
+                    "is_presale": movie.get("presale_flag", 0) == 1,
+                    "theatres": parsed_theatres,
+                    "showtime_count": showtime_count,
+                }
+
+                result["movies"].append(movie_entry)
+                result["stats"]["movies_with_shows"] += 1
+                result["stats"]["total_showtimes"] += showtime_count
+
+                logger.info(f"   ✅ {movie_title}: {len(theatres)} theatres, {showtime_count} showtimes")
+
+        return result
+
+    async def scrape(
+        self,
+        city_limit: int | None = None,
+        specific_city: str | None = None,
+        city_names: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Scrape movie availability for cities using pure API.
+
+        Args:
+            city_limit: Limit number of cities to scrape
+            specific_city: Scrape only this city
+            city_names: List of specific city names to scrape
+
+        Returns:
+            Dict with movies and stats
+        """
+        logger.info("🎬 Starting V2 API-only movie scrape...")
+
+        # Get today's date
+        today = datetime.now().strftime("%Y-%m-%d")
+
+        # Filter cities
+        if specific_city:
+            cities = [
+                c for c in self.cities if c["name"].upper() == specific_city.upper()
+            ]
+            if not cities:
+                logger.error(f"❌ City '{specific_city}' not found")
+                return {}
+        elif city_names:
+            city_names_upper = [n.upper() for n in city_names]
+            cities = [
+                c for c in self.cities if c["name"].upper() in city_names_upper
+            ]
+        else:
+            cities = self.cities[:city_limit] if city_limit else self.cities
+
+        logger.info(f"📍 Processing {len(cities)} cities for {today}")
+
+        results = []
+        total_stats = {
+            "total_movies": 0,
+            "movies_with_shows": 0,
+            "movies_skipped": 0,
+            "total_showtimes": 0,
+        }
+
+        for city in cities:
+            city_result = await self.scrape_city(city, today)
+            results.append(city_result)
+
+            # Aggregate stats
+            stats = city_result.get("stats", {})
+            total_stats["total_movies"] += stats.get("total_movies", 0)
+            total_stats["movies_with_shows"] += stats.get("movies_with_shows", 0)
+            total_stats["movies_skipped"] += stats.get("movies_skipped", 0)
+            total_stats["total_showtimes"] += stats.get("total_showtimes", 0)
+
+        # Close client
+        if self._client:
+            await self._client.aclose()
+            self._client = None
+
+        logger.info("=" * 60)
+        logger.info("📊 Scraping Complete:")
+        logger.info(f"   Cities: {len(cities)}")
+        logger.info(f"   Movies checked: {total_stats['total_movies']}")
+        logger.info(f"   Movies with shows today: {total_stats['movies_with_shows']}")
+        logger.info(f"   Movies skipped (no shows): {total_stats['movies_skipped']}")
+        logger.info(f"   Total showtimes: {total_stats['total_showtimes']}")
+        logger.info("=" * 60)
+
+        return {
+            "results": results,
+            "date": today,
+            "total_cities": len(cities),
+            "stats": total_stats,
+        }
