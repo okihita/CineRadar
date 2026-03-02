@@ -245,6 +245,85 @@ MOVIES WITH SHOWS TODAY: 25 movies (311 total showtimes)
 - Compare V2 data in `schedules_v2` with V1 data in `schedules`
 - Verify presale movies are correctly excluded
 - Check showtime counts match between V1 and V2
+
+#### Step 2.6: Admin Dashboard "Showtime Intelligence V2" Menu (PENDING)
+
+**Goal:** Add monitoring dashboard for V2 scraper results.
+
+**Files to Create/Modify:**
+- `admin/src/components/Sidebar.tsx` - Add new menu item
+- `admin/src/app/showtimes_v2/page.tsx` - New page (create)
+- `admin/src/app/api/showtimes_v2/route.ts` - New API endpoint (create)
+
+**Features:**
+- Read from `schedules_v2` collection instead of `schedules`
+- Display comparison stats (V1 vs V2)
+- Show skipped movies list (presale/upcoming)
+- Visual indicator for data quality
+
+#### Step 2.7: Add Rate Limiting to V2 Scraper (PENDING)
+
+**Goal:** Enforce max 4 requests/second to avoid triggering TIX.id WAF.
+
+**Implementation:**
+```python
+import asyncio
+from aiolimiter import AsyncLimiter
+
+class CineRadarScraperV2:
+    def __init__(self):
+        self.rate_limiter = AsyncLimiter(max_rate=4, time_period=1)
+    
+    async def _rate_limited_request(self, ...):
+        async with self.rate_limiter:
+            return await client.get(...)
+```
+
+**Time Estimation for National Scrape:**
+- ~100 cities × (1 movies + 30 schedule checks + 25 schedule fetches) = ~5,600 API calls
+- At 4 req/sec: 5,600 ÷ 4 = 1,400 seconds ≈ **23 minutes**
+
+#### Step 2.8: Run National Scrape with V2 (PENDING)
+
+**Goal:** Scrape all cities with V2 scraper and upload to `schedules_v2`.
+
+**Command:**
+```bash
+uv run python -c "
+import asyncio
+from backend.infrastructure.core.tix_client_v2 import CineRadarScraperV2
+async def main():
+    scraper = CineRadarScraperV2()
+    result = await scraper.scrape_and_upload()
+    print(f'Uploaded: {result.get(\"uploaded\")} movies')
+asyncio.run(main())
+"
+```
+
+**Expected Duration:** ~23 minutes (with 4 req/sec rate limiting)
+
+**Post-Scrape Verification:**
+1. Check Firestore `schedules_v2/{date}/movies/` document count
+2. Compare with `schedules/{date}/movies/` count
+3. Verify V2 has fewer documents (presale movies excluded)
+4. Check skipped_movies list for accuracy
+
+---
+
+## V1 Playwright Scraper Status
+
+**Will V1 still work tomorrow morning?** ✅ YES
+
+**Reasons:**
+- V2 scraper is a **new file** (`tix_client_v2.py`) - doesn't modify existing code
+- `BaseScraper._login()` method is **unchanged**
+- Existing GitHub Actions / Cloud Scheduler jobs still reference the old code
+- No breaking changes to existing scrapers
+
+**Files NOT modified (V1 remains functional):**
+- `backend/infrastructure/core/tix_client.py` - Original Playwright scraper
+- `backend/infrastructure/scrapers/base.py` - Only added `_get_guest_token()` method (additive)
+
 ```
 1. GET /v1/auth → Guest Token
 2. For each city:

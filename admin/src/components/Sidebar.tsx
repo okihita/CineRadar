@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, MapPin, Film, ChevronLeft, ChevronRight, Database, Calendar, Clapperboard, Sun, Moon, Monitor } from 'lucide-react';
+import { LayoutDashboard, MapPin, Film, ChevronLeft, ChevronRight, Database, Calendar, Clapperboard, Sun, Moon, Monitor, CalendarCheck } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useDarkModeContext } from '@/hooks';
@@ -37,7 +37,14 @@ const menuItems = [
     description: 'Daily coverage & analysis',
     href: '/schedules',
     icon: Calendar,
-  }, {
+  },
+  {
+    title: 'Showtime Intelligence V2',
+    description: 'API scraper (no presale)',
+    href: '/schedules_v2',
+    icon: CalendarCheck,
+  },
+  {
     title: 'Scraper Monitor',
     description: 'Data collection & runs',
     href: '/scraper',

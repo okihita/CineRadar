@@ -7,12 +7,14 @@ instead of browser automation. Key improvements over V1:
 - No Playwright dependency (faster, lighter)
 - Checks is_any_schedule before fetching showtimes (fixes "wrong date" bug)
 - Per-city filtering (same movie may have shows in Jakarta but not Bandung)
+- Rate limiting to avoid triggering TIX.id WAF
 """
 
 import asyncio
 import json
 import logging
 import os
+import time
 from datetime import UTC, datetime
 from typing import Any
 
@@ -30,15 +32,34 @@ MOVIES_URL = f"{API_BASE}/v1/movies"
 SCHEDULES_DATE_URL = f"{API_BASE}/v1/schedules/date"
 SCHEDULES_MOVIES_URL = f"{API_BASE}/v1/schedules/movies"
 
+# Rate limiting: 4 requests per second
+RATE_LIMIT = 4  # requests per second
+MIN_INTERVAL = 1.0 / RATE_LIMIT  # 0.25 seconds between requests
+
 
 class CineRadarScraperV2:
     """Movie availability scraper for TIX.id - Pure API version."""
 
-    def __init__(self) -> None:
+    def __init__(self, rate_limit: int = RATE_LIMIT) -> None:
         self.cities = CITIES
         self.api_base = API_BASE
         self.guest_token: GuestToken | None = None
         self._client: httpx.AsyncClient | None = None
+        self._last_request_time: float = 0.0
+        self._min_interval = 1.0 / rate_limit if rate_limit > 0 else 0
+        self._request_count = 0
+
+    async def _rate_limit(self) -> None:
+        """Enforce rate limiting between API calls."""
+        if self._min_interval <= 0:
+            return
+
+        now = time.time()
+        elapsed = now - self._last_request_time
+        if elapsed < self._min_interval:
+            await asyncio.sleep(self._min_interval - elapsed)
+        self._last_request_time = time.time()
+        self._request_count += 1
 
     async def _ensure_client(self) -> httpx.AsyncClient:
         """Ensure we have an HTTP client with valid token."""
@@ -64,6 +85,7 @@ class CineRadarScraperV2:
 
     async def fetch_movies(self, city_id: str) -> list[dict[str, Any]]:
         """Fetch movies for a city using direct API call."""
+        await self._rate_limit()
         client = await self._ensure_client()
         headers = await self._get_headers()
 
@@ -91,6 +113,7 @@ class CineRadarScraperV2:
 
         This is the key fix for the "wrong date" bug - we check BEFORE fetching.
         """
+        await self._rate_limit()
         client = await self._ensure_client()
         headers = await self._get_headers()
 
@@ -131,6 +154,7 @@ class CineRadarScraperV2:
         page = 1
 
         while True:
+            await self._rate_limit()
             response = await client.get(
                 f"{SCHEDULES_MOVIES_URL}/{movie_id}",
                 params={
@@ -357,6 +381,7 @@ class CineRadarScraperV2:
         logger.info(f"   Movies with shows today: {total_stats['movies_with_shows']}")
         logger.info(f"   Movies skipped (no shows): {total_stats['movies_skipped']}")
         logger.info(f"   Total showtimes: {total_stats['total_showtimes']}")
+        logger.info(f"   API requests made: {self._request_count}")
         logger.info("=" * 60)
 
         return {
@@ -364,6 +389,7 @@ class CineRadarScraperV2:
             "date": today,
             "total_cities": len(cities),
             "stats": total_stats,
+            "api_requests": self._request_count,
         }
 
     def transform_for_firestore(
