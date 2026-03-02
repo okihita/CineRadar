@@ -173,7 +173,78 @@ asyncio.run(test())
 # Results: movies_with_shows=7, movies_skipped=0, total_showtimes=12
 ```
 
-**V2 Scraper Flow (with bug fix):**
+#### Step 2.4: Add Firestore Integration ✅ DONE
+**File:** `backend/infrastructure/core/tix_client_v2.py`
+
+**Changes Made:**
+- Added `SCHEDULES_V2` constant to `firestore_collections.py`
+- Added `transform_for_firestore()` method - converts city-based results to movie-based documents
+- Added `upload_to_firestore()` method - writes to `schedules_v2/{date}/movies/{movie_id}`
+- Added `scrape_and_upload()` convenience method with `dry_run` option
+
+**Document Structure (identical to V1):**
+```typescript
+// schedules_v2/{date}/movies/{movie_id}
+{
+  movie_id: string,
+  title: string,
+  poster: string,
+  genres: string[],
+  age_category: string,
+  merchants: string[],
+  is_presale: boolean,
+  date: string,
+  uploaded_at: string,
+  source: "v2_api",
+  cities: {
+    [cityName: string]: Theatre[]
+  }
+}
+```
+
+**Verification:** ✅ PASSED (2026-03-02)
+```bash
+uv run python -c "
+import asyncio
+from backend.infrastructure.core.tix_client_v2 import CineRadarScraperV2
+async def test():
+    scraper = CineRadarScraperV2()
+    result = await scraper.scrape_and_upload(specific_city='BAUBAU')
+    print('Uploaded:', result.get('uploaded'))
+asyncio.run(test())
+"
+# Results: Uploaded 7 movies to schedules_v2/2026-03-02/movies/
+```
+
+#### Step 2.5: Run V1 and V2 Comparison for SURABAYA ✅ DONE
+
+**Test Date:** 2026-03-02
+
+**V2 Scraper Results:**
+```
+City: SURABAYA
+  Movies with shows: 25
+  Movies skipped (no shows today): 4
+
+SKIPPED MOVIES (upcoming/presale with no shows today):
+  - THE BRIDE! [PRESALE]
+  - SETAN ALAS! [PRESALE]
+  - ENHYPEN [WALK THE LINE SUMMER EDITION] IN CINEMAS [PRESALE]
+  - BRING ME THE HORIZON: L.I.V.E. IN SÃO PAULO [PRESALE]
+
+MOVIES WITH SHOWS TODAY: 25 movies (311 total showtimes)
+```
+
+**Key Findings:**
+1. ✅ V2 correctly skips 4 presale movies with no shows today
+2. ✅ V2 includes 25 movies with actual showtimes
+3. ✅ All skipped movies are marked as PRESALE
+4. ✅ Uploaded to `schedules_v2/2026-03-02/movies/` for comparison
+
+**Manual Verification Needed:**
+- Compare V2 data in `schedules_v2` with V1 data in `schedules`
+- Verify presale movies are correctly excluded
+- Check showtime counts match between V1 and V2
 ```
 1. GET /v1/auth → Guest Token
 2. For each city:

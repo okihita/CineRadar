@@ -10,8 +10,10 @@ instead of browser automation. Key improvements over V1:
 """
 
 import asyncio
+import json
 import logging
-from datetime import datetime
+import os
+from datetime import UTC, datetime
 from typing import Any
 
 import httpx
@@ -19,6 +21,7 @@ import httpx
 from backend.infrastructure.city_data import CITIES
 from backend.infrastructure.core.config import API_BASE
 from backend.infrastructure.core.guest_token import GuestToken, fetch_guest_token
+from backend.infrastructure.firestore_collections import MOVIES, SCHEDULES_V2
 
 logger = logging.getLogger(__name__)
 
@@ -220,6 +223,7 @@ class CineRadarScraperV2:
             "city_id": city_id,
             "date": date,
             "movies": [],
+            "skipped_movies": [],  # Track skipped movies for debugging
             "stats": {
                 "total_movies": len(movies),
                 "movies_with_shows": 0,
@@ -239,6 +243,11 @@ class CineRadarScraperV2:
 
             if not has_shows:
                 logger.debug(f"   ⏭️ {movie_title}: No shows today, skipping")
+                result["skipped_movies"].append({
+                    "movie_id": movie_id,
+                    "title": movie_title,
+                    "is_presale": movie.get("presale_flag", 0) == 1,
+                })
                 result["stats"]["movies_skipped"] += 1
                 continue
 
@@ -356,3 +365,153 @@ class CineRadarScraperV2:
             "total_cities": len(cities),
             "stats": total_stats,
         }
+
+    def transform_for_firestore(
+        self, scrape_result: dict[str, Any]
+    ) -> list[dict[str, Any]]:
+        """
+        Transform V2 scrape results to Firestore document format.
+
+        V2 output is organized by city, but Firestore expects per-movie documents
+        with a 'cities' dict containing {city_name: [theatres]}.
+
+        Args:
+            scrape_result: Output from scrape() method
+
+        Returns:
+            List of movie dicts ready for Firestore upload
+        """
+        # Group by movie_id across all cities
+        movie_map: dict[str, dict[str, Any]] = {}
+
+        for city_result in scrape_result.get("results", []):
+            city_name = city_result.get("city", "")
+
+            for movie in city_result.get("movies", []):
+                movie_id = movie.get("movie_id", "")
+
+                if movie_id not in movie_map:
+                    # Initialize movie entry
+                    movie_map[movie_id] = {
+                        "movie_id": movie_id,
+                        "title": movie.get("title", ""),
+                        "poster": movie.get("poster", ""),
+                        "genres": movie.get("genres", []),
+                        "age_category": movie.get("age_category", ""),
+                        "merchants": movie.get("merchants", []),
+                        "is_presale": movie.get("is_presale", False),
+                        "cities": {},  # {city_name: [theatres]}
+                    }
+
+                # Add theatres for this city
+                theatres = movie.get("theatres", [])
+                if theatres:
+                    movie_map[movie_id]["cities"][city_name] = theatres
+
+        return list(movie_map.values())
+
+    def upload_to_firestore(
+        self, movies: list[dict[str, Any]], date: str
+    ) -> int:
+        """
+        Upload movie schedules to Firestore schedules_v2 collection.
+
+        Args:
+            movies: List of movie dicts from transform_for_firestore()
+            date: Date string (YYYY-MM-DD)
+
+        Returns:
+            Number of movies uploaded
+        """
+        if not movies:
+            logger.warning("⚠️ No movies to upload")
+            return 0
+
+        # Lazy import to avoid dependency issues in tests
+        from google.cloud import firestore
+        from google.oauth2 import service_account
+
+        # Initialize Firestore client
+        sa_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
+        if sa_json:
+            sa_info = json.loads(sa_json)
+            credentials = service_account.Credentials.from_service_account_info(sa_info)
+            db = firestore.Client(credentials=credentials, project=sa_info["project_id"])
+        else:
+            db = firestore.Client()
+
+        logger.info(f"📤 Uploading {len(movies)} movies to {SCHEDULES_V2}/{date}/{MOVIES}/...")
+
+        uploaded = 0
+        for movie in movies:
+            movie_id = movie.get("movie_id")
+            if not movie_id:
+                continue
+
+            # Add metadata
+            doc = {
+                **movie,
+                "date": date,
+                "uploaded_at": datetime.now(UTC).isoformat(),
+                "source": "v2_api",
+            }
+
+            # Write to schedules_v2/{date}/movies/{movie_id}
+            doc_ref = (
+                db.collection(SCHEDULES_V2)
+                .document(date)
+                .collection(MOVIES)
+                .document(movie_id)
+            )
+            doc_ref.set(doc)
+            uploaded += 1
+            logger.info(f"   ✓ {movie.get('title', movie_id)[:40]}")
+
+        logger.info(f"✅ Uploaded {uploaded} movies to {SCHEDULES_V2}/{date}/{MOVIES}/")
+        return uploaded
+
+    async def scrape_and_upload(
+        self,
+        city_limit: int | None = None,
+        specific_city: str | None = None,
+        city_names: list[str] | None = None,
+        dry_run: bool = False,
+    ) -> dict[str, Any]:
+        """
+        Scrape and optionally upload to Firestore.
+
+        Args:
+            city_limit: Limit number of cities to scrape
+            specific_city: Scrape only this city
+            city_names: List of specific city names to scrape
+            dry_run: If True, skip Firestore upload
+
+        Returns:
+            Dict with scrape results and upload status
+        """
+        # Scrape
+        result = await self.scrape(
+            city_limit=city_limit,
+            specific_city=specific_city,
+            city_names=city_names,
+        )
+
+        if not result:
+            return {"success": False, "error": "No scrape results"}
+
+        # Transform for Firestore
+        movies = self.transform_for_firestore(result)
+        date = result.get("date", "")
+
+        result["movies_for_firestore"] = len(movies)
+
+        # Upload unless dry run
+        if not dry_run:
+            uploaded = self.upload_to_firestore(movies, date)
+            result["uploaded"] = uploaded
+        else:
+            result["uploaded"] = 0
+            logger.info("🔍 Dry run - skipping Firestore upload")
+
+        result["success"] = True
+        return result

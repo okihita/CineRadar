@@ -38,6 +38,7 @@ Collection Structure:
 # Root collections
 THEATRES = "theatres"
 SCHEDULES = "schedules"
+SCHEDULES_V2 = "schedules_v2"  # V2 API-only scraper collection
 MOVIE_PERFORMANCE = "movie_performance"
 SCRAPER_LOGS = "scraper_logs"
 SNAPSHOTS = "snapshots"
