@@ -41,7 +41,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Constants
-RATE_LIMIT = 5  # requests per second
+RATE_LIMIT = 4  # requests per second (conservative to avoid rate limiting)
 TOKEN_REFRESH_THRESHOLD = 25 * 60  # 25 minutes in seconds
 MERCHANT_PATHS = {
     "CGV": "cgv",
@@ -72,19 +72,27 @@ def get_token_from_firestore(db: firestore.Client) -> tuple[str | None, float]:
     Returns:
         Tuple of (token, age_in_minutes)
     """
-    doc = db.collection("auth_tokens").document("tix_login").get()
+    doc = db.collection("auth_tokens").document("tix_jwt").get()
     if not doc.exists:
         return None, 999
 
     data = doc.to_dict()
-    token = data.get("access_token")
+    # Handle both field name variants
+    token = data.get("token") or data.get("access_token")
+    stored_at = data.get("stored_at")
     expires_at = data.get("expires_at")
 
     if not token:
         return None, 999
 
-    # Calculate age
-    if expires_at:
+    # Calculate age from stored_at
+    if stored_at:
+        try:
+            stored_dt = datetime.fromisoformat(stored_at.replace("Z", "+00:00"))
+            age = (datetime.now(UTC) - stored_dt).total_seconds() / 60
+        except Exception:
+            age = 0
+    elif expires_at:
         try:
             exp_dt = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
             age = (datetime.now(UTC) - exp_dt).total_seconds() / 60
@@ -117,7 +125,7 @@ def refresh_token_via_api(db: firestore.Client, refresh_token: str) -> str | Non
             new_token = data.get("data", {}).get("token")
             if new_token:
                 # Update Firestore
-                db.collection("auth_tokens").document("tix_login").set(
+                db.collection("auth_tokens").document("tix_jwt").set(
                     {
                         "access_token": new_token,
                         "refresh_token": refresh_token,
@@ -145,7 +153,7 @@ def get_valid_token(db: firestore.Client) -> str | None:
     if age > TOKEN_REFRESH_THRESHOLD / 60:
         logger.info(f"🔄 Token age {age:.1f}min, refreshing...")
         # Get refresh token
-        doc = db.collection("auth_tokens").document("tix_login").get()
+        doc = db.collection("auth_tokens").document("tix_jwt").get()
         if doc.exists:
             refresh_token = doc.to_dict().get("refresh_token")
             if refresh_token:
@@ -251,7 +259,11 @@ def calculate_occupancy(seat_map: list[dict[str, Any]]) -> tuple[int, int, list[
 
 
 def load_showtimes_from_schedule(db: firestore.Client, date: str) -> list[dict[str, Any]]:
-    """Load all showtimes from schedules/{date}/movies/."""
+    """Load all showtimes from schedules/{date}/movies/.
+    
+    Handles the nested structure:
+    cities.{city}.theatres[].rooms[].all_showtimes[]
+    """
     logger.info(f"📥 Loading showtimes from {SCHEDULES}/{date}/{MOVIES}/...")
 
     movies_ref = db.collection(SCHEDULES).document(date).collection(MOVIES)
@@ -269,24 +281,27 @@ def load_showtimes_from_schedule(db: firestore.Client, date: str) -> list[dict[s
                 theatre_name = theatre.get("theatre_name")
                 merchant = theatre.get("merchant")
 
-                for showtime_info in theatre.get("showtimes", []):
-                    showtime_id = showtime_info.get("showtime_id")
-                    showtime_time = showtime_info.get("showtime")
-                    room_category = showtime_info.get("room_category", "")
-
-                    if showtime_id:
-                        showtimes.append({
-                            "showtime_id": showtime_id,
-                            "showtime": showtime_time,
-                            "movie_id": movie_id,
-                            "movie_title": movie_title,
-                            "theatre_id": theatre_id,
-                            "theatre_name": theatre_name,
-                            "merchant": merchant,
-                            "city": city_name,
-                            "date": date,
-                            "room_category": room_category,
-                        })
+                # New structure: showtimes are in rooms[].all_showtimes[]
+                for room in theatre.get("rooms", []):
+                    room_category = room.get("category", "")
+                    
+                    for showtime_info in room.get("all_showtimes", []):
+                        showtime_id = showtime_info.get("showtime_id")
+                        showtime_time = showtime_info.get("time")
+                        
+                        if showtime_id:
+                            showtimes.append({
+                                "showtime_id": showtime_id,
+                                "showtime": showtime_time,
+                                "movie_id": movie_id,
+                                "movie_title": movie_title,
+                                "theatre_id": theatre_id,
+                                "theatre_name": theatre_name,
+                                "merchant": merchant,
+                                "city": city_name,
+                                "date": date,
+                                "room_category": room_category,
+                            })
 
     logger.info(f"   Found {len(showtimes)} showtimes")
     return showtimes
@@ -336,6 +351,9 @@ def save_initial_layout(
                 "initial_unavailable": unavailable,
                 "initial_available": total_seats - unavailable,
                 "initial_scraped_at": datetime.now(JAKARTA_TZ).isoformat(),
+                # Placeholder values for dashboard compatibility (will be updated by JIT scraper)
+                "sold_seats": 0,
+                "occupancy_pct": 0.0,
             },
             merge=True,
         )
