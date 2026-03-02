@@ -23,7 +23,7 @@ import httpx
 from backend.infrastructure.city_data import CITIES
 from backend.infrastructure.core.config import API_BASE
 from backend.infrastructure.core.guest_token import GuestToken, fetch_guest_token
-from backend.infrastructure.firestore_collections import MOVIES, SCHEDULES_V2
+from backend.infrastructure.firestore_collections import MOVIES, SCHEDULES
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +77,8 @@ class CineRadarScraperV2:
     async def _get_headers(self) -> dict[str, str]:
         """Get headers with valid authorization."""
         await self._ensure_client()
+        if not self.guest_token:
+            raise RuntimeError("Guest token not available")
         return {
             "Authorization": f"Bearer {self.guest_token.token}",
             "Content-Type": "application/json",
@@ -101,7 +103,7 @@ class CineRadarScraperV2:
 
         if response.status_code == 200:
             data = response.json()
-            return data.get("data", [])
+            return list(data.get("data", []))
         else:
             logger.error(f"Failed to fetch movies: HTTP {response.status_code}")
             return []
@@ -133,7 +135,7 @@ class CineRadarScraperV2:
             # Find today's date and check is_any_schedule
             for date_entry in dates:
                 if date_entry.get("date") == date:
-                    return date_entry.get("is_any_schedule", False)
+                    return bool(date_entry.get("is_any_schedule", False))
 
             # Date not found in response = no schedules
             return False
@@ -440,7 +442,7 @@ class CineRadarScraperV2:
         self, movies: list[dict[str, Any]], date: str
     ) -> int:
         """
-        Upload movie schedules to Firestore schedules_v2 collection.
+        Upload movie schedules to Firestore schedules collection.
 
         Args:
             movies: List of movie dicts from transform_for_firestore()
@@ -466,7 +468,7 @@ class CineRadarScraperV2:
         else:
             db = firestore.Client()
 
-        logger.info(f"📤 Uploading {len(movies)} movies to {SCHEDULES_V2}/{date}/{MOVIES}/...")
+        logger.info(f"📤 Uploading {len(movies)} movies to {SCHEDULES}/{date}/{MOVIES}/...")
 
         uploaded = 0
         for movie in movies:
@@ -482,9 +484,9 @@ class CineRadarScraperV2:
                 "source": "v2_api",
             }
 
-            # Write to schedules_v2/{date}/movies/{movie_id}
+            # Write to schedules/{date}/movies/{movie_id}
             doc_ref = (
-                db.collection(SCHEDULES_V2)
+                db.collection(SCHEDULES)
                 .document(date)
                 .collection(MOVIES)
                 .document(movie_id)
@@ -493,7 +495,7 @@ class CineRadarScraperV2:
             uploaded += 1
             logger.info(f"   ✓ {movie.get('title', movie_id)[:40]}")
 
-        logger.info(f"✅ Uploaded {uploaded} movies to {SCHEDULES_V2}/{date}/{MOVIES}/")
+        logger.info(f"✅ Uploaded {uploaded} movies to {SCHEDULES}/{date}/{MOVIES}/")
         return uploaded
 
     async def scrape_and_upload(
