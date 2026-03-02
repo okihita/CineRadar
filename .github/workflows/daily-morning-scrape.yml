@@ -1,4 +1,5 @@
-# Daily Morning Scraper - Parallel Edition
+# Daily Morning Scraper - V2 API Edition
+# Pure HTTP API scraper (no Playwright required)
 name: Daily Morning Scrape
 
 on:
@@ -10,41 +11,6 @@ jobs:
   scrape:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      max-parallel: 2
-      matrix:
-        batch: [0, 1, 2, 3, 4, 5, 6, 7, 8]
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: astral-sh/setup-uv@v7
-
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-
-      - name: Install dependencies
-        run: |
-          uv sync
-          uv run playwright install chromium
-          uv run playwright install-deps chromium
-
-      - name: Run scraper batch ${{ matrix.batch }}
-        run: uv run python -m backend.cli --schedules --batch ${{ matrix.batch }} --total-batches 9
-
-      - name: Upload batch artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: batch-${{ matrix.batch }}
-          path: data/batch_*.json
-          retention-days: 1
-
-  merge:
-    needs: scrape
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
 
     steps:
       - uses: actions/checkout@v6
@@ -57,27 +23,15 @@ jobs:
 
       - name: Install dependencies
         run: uv sync
+        # NOTE: No Playwright installation needed - V2 uses pure HTTP API
 
-      - name: Download all batch artifacts
-        uses: actions/download-artifact@v7
-        with:
-          path: data/
-          pattern: batch-*
-          merge-multiple: true
-
-      - name: Merge batches
-        run: uv run python -m backend.cli.merge_batches
-
-      - name: Validate merged data
-        run: uv run python -m backend.cli.validate
-
-      - name: Upload to Firestore
-        run: uv run python -m backend.cli.populate_firestore
+      - name: Run V2 API scraper
+        run: PYTHONPATH=. uv run python backend/scripts/run_national_scrape.py
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
-      - name: Upload per-movie schedules
-        run: uv run python -m backend.cli.upload_schedules
+      - name: Sync post-processing data
+        run: PYTHONPATH=. uv run python backend/scripts/post_process.py
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
@@ -91,18 +45,10 @@ jobs:
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
-      - name: Upload final artifact
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: scrape-data-${{ github.run_id }}
-          path: data/movies_*.json
-          retention-days: 7
-
   # Note: Seat scraping moved to jit-seat-scrape.yml (runs hourly)
 
   alert:
-    needs: merge
+    needs: scrape
     if: failure()
     runs-on: ubuntu-latest
 
@@ -118,9 +64,10 @@ jobs:
             **Time:** ${new Date().toISOString()}
             
             The daily movie scrape failed. Possible causes:
-            - TIX.id website changed
+            - TIX.id API changed
             - Network timeout
             - Firestore write failed
+            - Guest token acquisition failed
             
             **Action Required:**
             1. Check the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})

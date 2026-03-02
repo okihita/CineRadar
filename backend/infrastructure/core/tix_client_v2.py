@@ -191,11 +191,24 @@ class CineRadarScraperV2:
 
     def _parse_theatre(self, theatre_data: dict[str, Any]) -> dict[str, Any]:
         """Parse theatre data from API response."""
+        # Extract location data if available
+        location = theatre_data.get("location", {})
+        lat = None
+        lng = None
+        if location:
+            try:
+                lat = float(location.get("latitude", 0)) if location.get("latitude") else None
+                lng = float(location.get("longitude", 0)) if location.get("longitude") else None
+            except (ValueError, TypeError):
+                pass
+
         theatre = {
             "theatre_id": theatre_data.get("id"),
             "theatre_name": theatre_data.get("name"),
             "merchant": theatre_data.get("merchant", {}).get("merchant_name"),
             "address": theatre_data.get("address"),
+            "lat": lat,
+            "lng": lng,
             "rooms": [],
         }
 
@@ -463,7 +476,7 @@ class CineRadarScraperV2:
         sa_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
         if sa_json:
             sa_info = json.loads(sa_json)
-            credentials = service_account.Credentials.from_service_account_info(sa_info)
+            credentials = service_account.Credentials.from_service_account_info(sa_info)  # type: ignore[no-untyped-call]
             db = firestore.Client(credentials=credentials, project=sa_info["project_id"])
         else:
             db = firestore.Client()

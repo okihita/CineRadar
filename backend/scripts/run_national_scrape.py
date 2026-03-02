@@ -1,8 +1,10 @@
-#!/usr/bin/env python3
+#!/usr/env python3
 """
 Run national scrape with V2 scraper.
 
-Estimated time: ~25 minutes (100 cities, 4 req/sec rate limit)
+This is the entry point for the daily morning scrape.
+
+Estimated time: ~10-15 minutes (83 cities, 4 req/sec rate limit)
 
 Usage:
     PYTHONPATH=. uv run python backend/scripts/run_national_scrape.py
@@ -23,16 +25,15 @@ logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(message)s",
     datefmt="%H:%M:%S",
 )
+logger = logging.getLogger(__name__)
 
 
-async def main():
-    print("=" * 60)
-    print("CineRadar V2 National Scrape")
-    print("=" * 60)
-    print()
-    print("Rate limit: 4 req/sec")
-    print("Estimated time: ~25 minutes")
-    print()
+async def main() -> None:
+    logger.info("=" * 60)
+    logger.info("CineRadar V2 National Scrape")
+    logger.info("=" * 60)
+    logger.info("Rate limit: 4 req/sec")
+    logger.info("Estimated time: ~10-15 minutes")
 
     scraper = CineRadarScraperV2(rate_limit=4)
 
@@ -40,19 +41,18 @@ async def main():
     result = await scraper.scrape_and_upload(dry_run=False)
     elapsed = time.time() - start
 
-    print()
-    print("=" * 60)
-    print("National Scrape Complete!")
-    print("=" * 60)
-    print(f"Date: {result.get('date')}")
-    print(f"Cities: {result.get('total_cities')}")
-    print(f"Stats: {result.get('stats')}")
-    print(f"API requests: {result.get('api_requests')}")
-    print(f"Movies uploaded: {result.get('uploaded')}")
-    print(f"Elapsed: {elapsed / 60:.1f} minutes")
+    logger.info("=" * 60)
+    logger.info("National Scrape Complete!")
+    logger.info("=" * 60)
+    logger.info(f"Date: {result.get('date')}")
+    logger.info(f"Cities: {result.get('total_cities')}")
+    logger.info(f"Stats: {result.get('stats')}")
+    logger.info(f"API requests: {result.get('api_requests')}")
+    logger.info(f"Movies uploaded: {result.get('uploaded')}")
+    logger.info(f"Elapsed: {elapsed / 60:.1f} minutes")
     if result.get("api_requests"):
-        print(f"Effective rate: {result['api_requests'] / elapsed:.1f} req/sec")
-    print("=" * 60)
+        logger.info(f"Effective rate: {result['api_requests'] / elapsed:.1f} req/sec")
+    logger.info("=" * 60)
 
 
 if __name__ == "__main__":
