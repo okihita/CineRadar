@@ -344,8 +344,9 @@ class CineRadarScraperV2:
         """
         logger.info("🎬 Starting V2 API-only movie scrape...")
 
-        # Get today's date
-        today = datetime.now().strftime("%Y-%m-%d")
+        # Get today's date in Jakarta time
+        from backend.domain.time import JAKARTA_TZ
+        today = datetime.now(JAKARTA_TZ).strftime("%Y-%m-%d")
 
         # Filter cities
         if specific_city:
