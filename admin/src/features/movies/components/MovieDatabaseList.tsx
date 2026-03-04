@@ -18,6 +18,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 interface ScheduleMovie {
     id: string;
     movie_id: string;
+    tix_metadata_id?: string;
     title: string;
     poster: string;
     genres: string[];
@@ -31,6 +32,7 @@ interface ScheduleMovie {
 interface PastMovie {
     id: string;
     movie_id: string;
+    tix_metadata_id?: string;
     title: string;
     poster: string;
     last_updated: string;
@@ -76,9 +78,10 @@ export function MovieDatabaseList() {
     const nowShowing = data.now_showing || [];
     const pastMovies = data.past_movies || [];
 
-    // Deduplicate now_showing by movie_id
+    // Deduplicate now_showing by their actual schedule document ID
+    // Some older records might not have 'id' yet, so fallback to movie_id
     const uniqueNowShowing = Array.from(
-        new Map(nowShowing.map((m) => [m.movie_id, m])).values()
+        new Map(nowShowing.map((m) => [m.id || m.movie_id, m])).values()
     );
 
     return (
@@ -112,8 +115,8 @@ export function MovieDatabaseList() {
 
                             return (
                                 <Link
-                                    key={movie.movie_id}
-                                    href={`/movies/${movie.movie_id}`}
+                                    key={movie.id || movie.movie_id}
+                                    href={`/movies/${movie.tix_metadata_id || movie.movie_id || movie.id}`}
                                     className="group flex flex-col cursor-pointer bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-colors"
                                 >
                                     {/* Poster */}
@@ -198,8 +201,8 @@ export function MovieDatabaseList() {
                         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3 mt-4 animate-in fade-in slide-in-from-top-2 duration-200">
                             {pastMovies.map((movie) => (
                                 <Link
-                                    key={movie.id}
-                                    href={`/movies/${movie.movie_id || movie.id}`}
+                                    key={movie.id || movie.movie_id}
+                                    href={`/movies/${movie.tix_metadata_id || movie.movie_id || movie.id}`}
                                     className="group flex flex-col bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-colors opacity-70 hover:opacity-100"
                                 >
                                     <div className="aspect-[2/3] w-full relative bg-muted border-b border-border">
