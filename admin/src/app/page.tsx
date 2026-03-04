@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/PageHeader';
+import { DeltaBadge } from '@/components/DeltaBadge';
 import {
-    LayoutDashboard, TrendingUp, TrendingDown, AlertTriangle, CheckCircle,
+    LayoutDashboard, AlertTriangle, CheckCircle,
     XCircle, Film, Building2, Lightbulb, ArrowRight, Clock, Database
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -44,19 +45,6 @@ function formatRupiah(value: number): string {
     if (value >= 1_000_000) return `Rp${(value / 1_000_000).toFixed(0)}M`;
     if (value >= 1_000) return `Rp${(value / 1_000).toFixed(0)}K`;
     return `Rp${value}`;
-}
-
-function DeltaBadge({ value }: { value: string }) {
-    const isPositive = value.startsWith('+') || (!value.startsWith('-') && parseFloat(value) > 0);
-    const isNegative = value.startsWith('-') || parseFloat(value) < 0;
-
-    return (
-        <span className={`inline-flex items-center gap-1 text-sm font-medium ${isPositive ? 'text-green-600' : isNegative ? 'text-red-600' : 'text-muted-foreground'
-            }`}>
-            {isPositive ? <TrendingUp className="w-4 h-4" /> : isNegative ? <TrendingDown className="w-4 h-4" /> : null}
-            {isPositive && !value.startsWith('+') ? '+' : ''}{value}%
-        </span>
-    );
 }
 
 export default function ExecutiveDashboard() {
