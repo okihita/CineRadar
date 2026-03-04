@@ -260,7 +260,7 @@ def calculate_occupancy(seat_map: list[dict[str, Any]]) -> tuple[int, int, list[
 
 def load_showtimes_from_schedule(db: firestore.Client, date: str) -> list[dict[str, Any]]:
     """Load all showtimes from schedules/{date}/movies/.
-    
+
     Handles the nested structure:
     cities.{city}.theatres[].rooms[].all_showtimes[]
     """
@@ -284,11 +284,11 @@ def load_showtimes_from_schedule(db: firestore.Client, date: str) -> list[dict[s
                 # New structure: showtimes are in rooms[].all_showtimes[]
                 for room in theatre.get("rooms", []):
                     room_category = room.get("category", "")
-                    
+
                     for showtime_info in room.get("all_showtimes", []):
                         showtime_id = showtime_info.get("showtime_id")
                         showtime_time = showtime_info.get("time")
-                        
+
                         if showtime_id:
                             showtimes.append({
                                 "showtime_id": showtime_id,
