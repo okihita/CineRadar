@@ -24,6 +24,13 @@ from backend.infrastructure.city_data import CITIES
 from backend.infrastructure.core.config import API_BASE
 from backend.infrastructure.core.guest_token import GuestToken, fetch_guest_token
 from backend.infrastructure.firestore_collections import MOVIES, SCHEDULES
+from backend.schemas.tix_api import (
+    TixMovieItem,
+    TixMovieResponse,
+    TixScheduleDateResponse,
+    TixSchedulesResponse,
+    TixTheatre,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +92,7 @@ class CineRadarScraperV2:
             "platform": "web",
         }
 
-    async def fetch_movies(self, city_id: str) -> list[dict[str, Any]]:
+    async def fetch_movies(self, city_id: str) -> list[TixMovieItem]:
         """Fetch movies for a city using direct API call."""
         await self._rate_limit()
         client = await self._ensure_client()
@@ -102,15 +109,13 @@ class CineRadarScraperV2:
         )
 
         if response.status_code == 200:
-            data = response.json()
-            return list(data.get("data", []))
+            data = TixMovieResponse.model_validate(response.json())
+            return data.data
         else:
             logger.error(f"Failed to fetch movies: HTTP {response.status_code}")
             return []
 
-    async def check_schedule_availability(
-        self, movie_id: str, city_id: str, date: str
-    ) -> bool:
+    async def check_schedule_availability(self, schedule_id: str, city_id: str, date: str) -> bool:
         """Check if movie has any schedules for the given date in the given city.
 
         This is the key fix for the "wrong date" bug - we check BEFORE fetching.
@@ -122,20 +127,19 @@ class CineRadarScraperV2:
         response = await client.get(
             SCHEDULES_DATE_URL,
             params={
-                "schedule_id": movie_id,
+                "schedule_id": schedule_id,
                 "city_id": city_id,
             },
             headers=headers,
         )
 
         if response.status_code == 200:
-            data = response.json()
-            dates = data.get("data", [])
+            data = TixScheduleDateResponse.model_validate(response.json())
 
             # Find today's date and check is_any_schedule
-            for date_entry in dates:
-                if date_entry.get("date") == date:
-                    return bool(date_entry.get("is_any_schedule", False))
+            for date_entry in data.data:
+                if date_entry.date == date:
+                    return date_entry.is_any_schedule
 
             # Date not found in response = no schedules
             return False
@@ -143,8 +147,8 @@ class CineRadarScraperV2:
         return False
 
     async def fetch_movie_schedules(
-        self, movie_id: str, city_id: str, date: str
-    ) -> list[dict[str, Any]]:
+        self, schedule_id: str, city_id: str, date: str
+    ) -> list[TixTheatre]:
         """Fetch theatre schedules for a movie in a city for a specific date.
 
         Handles pagination via has_next flag.
@@ -158,7 +162,7 @@ class CineRadarScraperV2:
         while True:
             await self._rate_limit()
             response = await client.get(
-                f"{SCHEDULES_MOVIES_URL}/{movie_id}",
+                f"{SCHEDULES_MOVIES_URL}/{schedule_id}",
                 params={
                     "city_id": city_id,
                     "date": date,
@@ -171,12 +175,17 @@ class CineRadarScraperV2:
                 logger.error(f"Failed to fetch schedules: HTTP {response.status_code}")
                 break
 
-            data = response.json()
-            if not data.get("success", True):
+            try:
+                data = TixSchedulesResponse.model_validate(response.json())
+            except Exception as e:
+                logger.error(f"Failed to parse schedules response: {e}")
                 break
 
-            theatres = data.get("data", {}).get("theaters", [])
-            has_next = data.get("data", {}).get("has_next", False)
+            if not data.success or not data.data:
+                break
+
+            theatres = data.data.theaters
+            has_next = data.data.has_next
 
             all_theatres.extend(theatres)
 
@@ -189,42 +198,49 @@ class CineRadarScraperV2:
 
         return all_theatres
 
-    def _parse_theatre(self, theatre_data: dict[str, Any]) -> dict[str, Any]:
+    def _parse_theatre(self, theatre_data: TixTheatre) -> dict[str, Any]:
         """Parse theatre data from API response."""
         # Extract location data if available
-        location = theatre_data.get("location", {})
         lat = None
         lng = None
-        if location:
+        if theatre_data.location:
             try:
-                lat = float(location.get("latitude", 0)) if location.get("latitude") else None
-                lng = float(location.get("longitude", 0)) if location.get("longitude") else None
+                lat = (
+                    float(theatre_data.location.latitude)
+                    if theatre_data.location.latitude
+                    else None
+                )
+                lng = (
+                    float(theatre_data.location.longitude)
+                    if theatre_data.location.longitude
+                    else None
+                )
             except (ValueError, TypeError):
                 pass
 
-        theatre = {
-            "theatre_id": theatre_data.get("id"),
-            "theatre_name": theatre_data.get("name"),
-            "merchant": theatre_data.get("merchant", {}).get("merchant_name"),
-            "address": theatre_data.get("address"),
+        theatre: dict[str, Any] = {
+            "theatre_id": theatre_data.id,
+            "theatre_name": theatre_data.name,
+            "merchant": theatre_data.merchant.merchant_name if theatre_data.merchant else None,
+            "address": theatre_data.address,
             "lat": lat,
             "lng": lng,
             "rooms": [],
         }
 
-        for group in theatre_data.get("price_groups", []):
-            room = {
-                "category": group.get("category"),
-                "price": group.get("price_string"),
+        for group in theatre_data.price_groups:
+            room: dict[str, Any] = {
+                "category": group.category,
+                "price": group.price_string,
                 "showtimes": [],
                 "all_showtimes": [],
                 "past_showtimes": [],
             }
 
-            for show in group.get("show_time", []):
-                display_time = show.get("display_time")
-                status = show.get("status")
-                showtime_id = show.get("id")
+            for show in group.show_time:
+                display_time = show.display_time
+                status = show.status
+                showtime_id = show.id
 
                 showtime_obj = {
                     "time": display_time,
@@ -244,10 +260,13 @@ class CineRadarScraperV2:
 
         return theatre
 
-    async def scrape_city(
-        self, city: dict[str, Any], date: str
-    ) -> dict[str, Any]:
-        """Scrape movies for a single city with per-movie schedule checking."""
+    async def scrape_city(self, city: dict[str, Any], date: str) -> dict[str, Any]:
+        """Scrape movies for a single city with per-movie schedule checking.
+
+        This coordinates the discovery of playing movies. It explicitly manages
+        the TIX API dual-ID system by delegating `id` to the schedule endpoints
+        and retaining `movie_id` for downstream metadata resolution.
+        """
         city_id = str(city.get("id", ""))
         city_name = city.get("name", "Unknown")
 
@@ -273,25 +292,31 @@ class CineRadarScraperV2:
 
         # Step 2: For each movie, check if it has shows TODAY
         for movie in movies:
-            # Use "id" field for schedule API, not "movie_id"
-            movie_id = str(movie.get("id") or movie.get("movie_id", ""))
-            movie_title = movie.get("title", "Unknown")
+            # The TIX API provides two distinct IDs:
+            # 1. `movie.id`: The Schedule Allocation ID. Used to fetch showtimes. Backwards-compatible with V1 Firestore Documents.
+            # 2. `movie.movie_id`: The Metadata ID. Used to fetch enriched trailers/synopsis in the root `movies` collection.
+            schedule_id = movie.id
+            metadata_id = movie.movie_id
+            movie_title = movie.title
 
             # Check is_any_schedule for TODAY in THIS city
-            has_shows = await self.check_schedule_availability(movie_id, city_id, date)
+            has_shows = await self.check_schedule_availability(schedule_id, city_id, date)
 
             if not has_shows:
                 logger.debug(f"   ⏭️ {movie_title}: No shows today, skipping")
-                result["skipped_movies"].append({
-                    "movie_id": movie_id,
-                    "title": movie_title,
-                    "is_presale": movie.get("presale_flag", 0) == 1,
-                })
+                result["skipped_movies"].append(
+                    {
+                        "movie_id": schedule_id,
+                        "tix_metadata_id": metadata_id,
+                        "title": movie_title,
+                        "is_presale": movie.presale_flag == 1,
+                    }
+                )
                 result["stats"]["movies_skipped"] += 1
                 continue
 
             # Step 3: Fetch actual schedules
-            theatres = await self.fetch_movie_schedules(movie_id, city_id, date)
+            theatres = await self.fetch_movie_schedules(schedule_id, city_id, date)
 
             if theatres:
                 parsed_theatres = [self._parse_theatre(t) for t in theatres]
@@ -304,15 +329,14 @@ class CineRadarScraperV2:
                 )
 
                 movie_entry = {
-                    "movie_id": movie_id,
+                    "movie_id": schedule_id,
+                    "tix_metadata_id": metadata_id,
                     "title": movie_title,
-                    "poster": movie.get("poster_path", ""),
-                    "genres": [g.get("name") for g in movie.get("genres", [])],
-                    "age_category": movie.get("age_category", ""),
-                    "merchants": [
-                        m.get("merchant_name") for m in movie.get("merchant", [])
-                    ],
-                    "is_presale": movie.get("presale_flag", 0) == 1,
+                    "poster": movie.poster_path,
+                    "genres": [g.name for g in movie.genres],
+                    "age_category": movie.age_category,
+                    "merchants": [m.merchant_name for m in movie.merchant],
+                    "is_presale": movie.presale_flag == 1,
                     "theatres": parsed_theatres,
                     "showtime_count": showtime_count,
                 }
@@ -321,7 +345,9 @@ class CineRadarScraperV2:
                 result["stats"]["movies_with_shows"] += 1
                 result["stats"]["total_showtimes"] += showtime_count
 
-                logger.info(f"   ✅ {movie_title}: {len(theatres)} theatres, {showtime_count} showtimes")
+                logger.info(
+                    f"   ✅ {movie_title}: {len(theatres)} theatres, {showtime_count} showtimes"
+                )
 
         return result
 
@@ -346,21 +372,18 @@ class CineRadarScraperV2:
 
         # Get today's date in Jakarta time
         from backend.domain.time import JAKARTA_TZ
+
         today = datetime.now(JAKARTA_TZ).strftime("%Y-%m-%d")
 
         # Filter cities
         if specific_city:
-            cities = [
-                c for c in self.cities if c["name"].upper() == specific_city.upper()
-            ]
+            cities = [c for c in self.cities if c["name"].upper() == specific_city.upper()]
             if not cities:
                 logger.error(f"❌ City '{specific_city}' not found")
                 return {}
         elif city_names:
             city_names_upper = [n.upper() for n in city_names]
-            cities = [
-                c for c in self.cities if c["name"].upper() in city_names_upper
-            ]
+            cities = [c for c in self.cities if c["name"].upper() in city_names_upper]
         else:
             cities = self.cities[:city_limit] if city_limit else self.cities
 
@@ -408,9 +431,7 @@ class CineRadarScraperV2:
             "api_requests": self._request_count,
         }
 
-    def transform_for_firestore(
-        self, scrape_result: dict[str, Any]
-    ) -> list[dict[str, Any]]:
+    def transform_for_firestore(self, scrape_result: dict[str, Any]) -> list[dict[str, Any]]:
         """
         Transform V2 scrape results to Firestore document format.
 
@@ -436,6 +457,7 @@ class CineRadarScraperV2:
                     # Initialize movie entry
                     movie_map[movie_id] = {
                         "movie_id": movie_id,
+                        "tix_metadata_id": movie.get("tix_metadata_id", ""),
                         "title": movie.get("title", ""),
                         "poster": movie.get("poster", ""),
                         "genres": movie.get("genres", []),
@@ -452,9 +474,7 @@ class CineRadarScraperV2:
 
         return list(movie_map.values())
 
-    def upload_to_firestore(
-        self, movies: list[dict[str, Any]], date: str
-    ) -> int:
+    def upload_to_firestore(self, movies: list[dict[str, Any]], date: str) -> int:
         """
         Upload movie schedules to Firestore schedules collection.
 
@@ -499,12 +519,7 @@ class CineRadarScraperV2:
             }
 
             # Write to schedules/{date}/movies/{movie_id}
-            doc_ref = (
-                db.collection(SCHEDULES)
-                .document(date)
-                .collection(MOVIES)
-                .document(movie_id)
-            )
+            doc_ref = db.collection(SCHEDULES).document(date).collection(MOVIES).document(movie_id)
             doc_ref.set(doc)
             uploaded += 1
             logger.info(f"   ✓ {movie.get('title', movie_id)[:40]}")

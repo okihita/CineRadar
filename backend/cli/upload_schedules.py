@@ -56,6 +56,10 @@ def load_movie_data(data_dir: str = "data") -> dict[str, Any] | None:
 def transform_for_firestore(movie: dict[str, Any], date: str) -> dict[str, Any]:
     """Transform a movie dict into Firestore document format.
 
+    Crucially, this enforces the dual-ID schema mapping:
+    - The Firestore Document relies on the `id` field from the scraper.
+    - We explicitly pass `tix_metadata_id` for metadata cross-referencing.
+
     Args:
         movie: Raw movie dict from JSON.
         date: Date string (YYYY-MM-DD).
@@ -65,6 +69,7 @@ def transform_for_firestore(movie: dict[str, Any], date: str) -> dict[str, Any]:
     """
     return {
         "movie_id": movie.get("id", ""),
+        "tix_metadata_id": movie.get("tix_metadata_id", ""),
         "title": movie.get("title", ""),
         "poster": movie.get("poster", ""),
         "genres": movie.get("genres", []),

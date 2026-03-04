@@ -265,14 +265,19 @@ erDiagram
 |------------|-------------|---------|
 | `theatres` | `{theatre_id}` | Master list of cinema locations |
 | `snapshots` | `latest` or `{YYYY-MM-DD}` | Daily movie data (slim) |
-| `schedules/{date}/movies` | `{movie_id}` | Full showtime data by date |
-| `movies` | `{movie_id}` | **[NEW]** Detailed movie info (cast, synopsis, ratings) |
-| `movies/{movie_id}/rating_history` | `{YYYY-MM-DD}` | **[NEW]** Daily rating score snapshots |
-| `movie_performance` | `{movie_id}` | Movie metadata (title, poster, age_category) |
-| `movie_performance/{movie_id}/days` | `{YYYY-MM-DD}` | Daily aggregated stats (Total Showtimes, Scraped, Sold) |
-| `movie_performance/{movie_id}/days/{date}/showtimes` | `{showtime_id}` | Individual showtime snapshots with compressed seat layout (gzip) + full raw API response for debugging |
+| `schedules/{date}/movies` | `{id}` (TIX Schedule ID) | Full showtime data by date |
+| `movies` | `{movie_id}` (TIX Metadata ID) | Full, enriched movie details (cast, synopsis, trailers) |
+| `movie_performance` | `{id}` (TIX Schedule ID) | Aggregated seat and occupancy statistics |
+| `scraper_logs` | `{YYYY-MM-DD}` | Dispatcher and scraper job history |
 | `scraper_runs` | `{timestamp}_{type}` | Scraper run logs |
 | `auth_tokens` | `tix_jwt` | JWT token storage |
+
+> 🚨 **Critical Schema Warning: Movie Identifiers**
+> The TIX API provides two distinct identifiers for a film:
+> - **`id`** (Schedule ID, e.g., `2021094806305984512` for KOKUHO): This fundamentally tracks the schedule allocation. It is historically the primary key used across `schedules` and `movie_performance`.
+> - **`movie_id`** (Metadata ID, e.g., `2021094805467123712` for KOKUHO): This tracks the movie's descriptive entity. It is the primary key used in the root `movies` collection.
+>
+> **Do not mix these up**. Scripts dealing with tickets/seats must key by `id` (or `schedule_id`). Scripts dealing with fetching actor names or synopsis must query the root `movies` collection by `movie_id` (`tix_metadata_id`).
 
 ---
 
