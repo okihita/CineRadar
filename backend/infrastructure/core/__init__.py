@@ -2,7 +2,7 @@
 Backend Services Module (Core Scrapers)
 
 > **Note**
-> This module contains the core scraping implementations using Playwright.
+> This module contains the core scraping implementations.
 > They are wrapped by the Clean Architecture infrastructure layer.
 
 Current Contents:
@@ -17,4 +17,3 @@ Import scrapers directly when needed:
     from backend.infrastructure.core.tix_client import CineRadarScraper
 """
 
-# Don't import scrapers here - they require playwright

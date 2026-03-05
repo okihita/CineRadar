@@ -27,15 +27,6 @@ class BaseScraper:
     - Logging utilities
 
     Subclasses should implement specific scraping logic.
-
-    Example:
-        class MyScraper(BaseScraper):
-            async def scrape(self):
-                playwright, browser, context, page = await self._init_browser()
-                try:
-                    # ... scraping logic ...
-                finally:
-                    await self._close_browser(playwright, browser, context, page)
     """
 
     def __init__(self) -> None:

@@ -21,20 +21,20 @@
 **Impact:** Total Data Loss
 
 ### Scenario 1: Login Flow Change
-TIX.id frequently changes their React hydration logic or login DOM structure to break scrapers.
-- **Symptoms**: `ElementHandle.click: Timeout` in `token-refresh`.
+TIX.id frequently changes their RSA encryption keys, auth endpoints, or login payload structure.
+- **Symptoms**: `403 Forbidden` or `ParseError` in `token-refresh`.
 - **Strategic Fix**:
-    1.  **Debug Mode**: Run `backend.cli.refresh_token --visible` to visually inspect the new flow.
-    2.  **Selector Strategy**: Shift from CSS classes (brittle) to XPath or Text selectors (resilient).
-    3.  **Playwright Upgrade**: Update `browser_context` user-agent strings.
+    1.  **Debug Mode**: Run `backend.cli.refresh_token` locally to inspect the HTTP API response.
+    2.  **Reverse Engineer**: Check if the Public Key or encryption algorithm changed in the client bundles.
+    3.  **API Upgrade**: Update the `token_refresher.py` payload to match the new format.
 
 ### Scenario 2: Cloudflare / WAF Blocking
-If TIX.id introduces aggressive WAF (Cloudflare Turnstile):
-- **Symptoms**: `403 Forbidden` on all API calls; "Verify you are human" in screenshots.
+If TIX.id introduces aggressive WAF (Cloudflare Turnstile) preventing pure HTTP requests:
+- **Symptoms**: `403 Forbidden` on all API calls; Cloudflare HTML returned instead of JSON.
 - **Mitigation Architecture**:
-    - **Short Term**: Implement `stealth-plugin` for Playwright.
+    - **Short Term**: Adjust HTTP headers (User-Agent, sec-ch-ua) to match standard browsers.
     - **Long Term**: Pivot to a **Residential Proxy Network** (e.g., BrightData).
-      - *Implementation*: Inject proxy config into `tix_client.py`.
+      - *Implementation*: Inject proxy config into `httpx` clients.
 
 ---
 

@@ -9,7 +9,8 @@ Unlock the repository only if you meet these exact requirements:
 
 | Dependency | Required Version | Reason |
 |------------|------------------|--------|
-| **OS** | macOS (ARM64) or Linux | Playwright binary compatibility |
+| **Hardware** | 8GB RAM minimum | Required for Next.js build and memory-intensive Python operations |
+| **OS** | macOS (ARM64) or Linux | Standard dev environment compatibility |
 | **Node.js** | `v24.0.0+` (LTS) | Next.js 16+ & Stability DNA |
 | **pnpm** | `v10.0.0+` | Monorepo workspace protocol |
 | **Python** | `3.12.0+` | Type hinting features used in Scraper |
@@ -61,12 +62,6 @@ pnpm install
 
 # Install Python environment
 uv sync
-```
-
-### 2. Install Playwright Browsers
-The scraper requires specific browser binaries:
-```bash
-uv run playwright install chromium
 ```
 
 ---

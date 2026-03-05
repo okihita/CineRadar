@@ -1,7 +1,7 @@
 # CineRadar Backend 🐍
 
 > **The Scraper & API Engine**
-> Powered by Python 3.12, Playwright, and Firestore.
+> Powered by Python 3.12 and Firestore.
 
 ## ⚡ Quick Start
 
@@ -10,7 +10,6 @@ We use `uv` for lightning-fast package management.
 ### 1. Install Environment
 ```bash
 uv sync
-uv run playwright install chromium
 ```
 
 ### 2. Run Scraper (Test Mode)
@@ -98,15 +97,14 @@ flowchart TD
 - **Tier 3 (Every 60 Days)**: If the silent refresh fails (the "master key" expired), it triggers the heavy **Credential Bot** (Diagram #4 below) to do a full browser login.
 
 ### 4. Auth Refresh Pipeline (`token-refresh.yml`)
-The "Headless Bot" that performs a full browser login to refresh credentials.
+The "API Login Bot" that performs a direct HTTP request to TIX API using RSA encryption.
 
 ```mermaid
 flowchart TD
     GH[GitHub Actions: token-refresh.yml] -->|Scheduled| RTC[cli.refresh_token]
     
     subgraph "Headless Auth"
-        RTC -->|Playwright| PW[Chromium Browser]
-        PW -->|Login Flow| TIX[(TIX.id Login)]
+        RTC -->|RSA Encrypted POST| TIX[(TIX.id Login API)]
         TIX -->|Success| RTC
         
         RTC -->|Port| TR[ITokenRepository]
@@ -115,7 +113,7 @@ flowchart TD
     end
 ```
 
-**Narrative**: This is our **Emergency Master-Key Generator**. When the silent API refresh is no longer enough, this bot launches a hidden web browser (Playwright) to mimic a human user logging in. It types the phone number, handles the password, and extracts a brand new 91-day "Master Key" (Refresh Token). This happens automatically every 2 months or as an emergency fallback.
+**Narrative**: This is our **Emergency Master-Key Generator**. When the silent API refresh is no longer enough (e.g. key expired after 91 days), this fast API script triggers a direct login request using the TIX API and RSA payload encryption. This happens automatically every month to obtain a brand new "Master Key" (Refresh Token).
 
 ---
 
@@ -178,7 +176,7 @@ We follow **Clean Architecture** principles. The dependency rule is strict: inne
       - `TixMovieScraper`: Clean implementation of `IMovieScraper` that wraps the legacy `CineRadarScraper`.
       - `TixSeatScraper`: Clean implementation of `ISeatScraper` that uses `SeatScraper`.
     - `core/`:
-      - `CineRadarScraper`: **Legacy** Playwright script for scraping movie schedules (monolithic).
+      - `CineRadarScraper`: **Legacy** API script for scraping movie schedules.
       - `SeatScraper`: **Legacy** logic for calling TIX.id B2B APIs to get seat layouts.
       - `Geocoder`: Service for resolving theatre addresses to coordinates using external APIs.
     - `city_data.py`: Static configuration of supported cities and their IDs.

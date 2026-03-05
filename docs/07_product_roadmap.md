@@ -29,9 +29,6 @@
 > **A Note to My Successor:**
 > You might wonder why we chose this specific stack. We prioritize **Stability DNA**—boring, proven, LTS technology—over the "new and shiny".
 
-### Why Playwright over Selenium/Puppeteer?
-We started with Selenium, but TIX.id's React hydration caused endless `ElementNotInteractable` errors. We needed a browser that "waits" like a human. **Playwright**'s auto-waiting mechanism reduced our flake rate from 40% to <2%. It also handles the "Stealth" requirements much better out of the box.
-
 ### Why Firestore (NoSQL)?
 We considered Postgres. However, our scraper schema changes weekly. TIX.id adds a field? We need to save it *now* without running migrations. Firestore gives us that schema flexibility. Plus, the **Real-time Listeners** allowed us to build the "Live Seat View" feature for minimal effort—something that would have required a complex WebSocket server with SQL.
 

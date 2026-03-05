@@ -54,17 +54,13 @@ Capture a fresh JWT token from TIX.id for authenticated API calls.
 ```mermaid
 sequenceDiagram
     participant GH as GitHub Actions
-    participant PW as Playwright Browser
-    participant TIX as TIX.id
+    participant API as TIX.id RSA API
     participant FS as Firestore
 
-    GH->>PW: Launch headless browser
-    PW->>TIX: Navigate to /login
-    PW->>TIX: Fill phone + password
-    PW->>TIX: Click Login button
-    TIX-->>PW: Redirect to /home (success)
-    PW->>PW: Extract tokens from localStorage
-    PW->>FS: Store tokens at auth_tokens/tix_jwt
+    GH->>API: POST /v1/users/login (RSA encrypted payload)
+    API-->>GH: 200 OK
+    GH->>GH: Parse JWT tokens from JSON
+    GH->>FS: Store tokens at auth_tokens/tix_jwt
     Note over FS: {token, refresh_token, stored_at}
 ```
 
@@ -72,7 +68,7 @@ sequenceDiagram
 
 | Component | Source File | Purpose |
 |-----------|-------------|---------|
-| **Entry Point** | [`backend/cli/refresh_token.py`](../backend/cli/refresh_token.py) | Main CLI command for Playwright flow |
+| **Entry Point** | [`backend/cli/refresh_token.py`](../backend/cli/refresh_token.py) | Main CLI command for API login flow |
 | **Logic** | [`backend/infrastructure/token_refresher.py`](../backend/infrastructure/token_refresher.py) | API-based refresh logic |
 | **Storage** | [`backend/infrastructure/repositories/firestore_token.py`](../backend/infrastructure/repositories/firestore_token.py) | Firestore read/write operations |
 
@@ -80,11 +76,11 @@ sequenceDiagram
 
 **Trigger:** Workflow fails with `TimeoutError` or `Login Failed`.
 
-1.  **Check Screenshots**: Download the `debug-screenshots` artifact from the failed GitHub Action run.
+1.  **Check Logs**: Review the step output from the failed GitHub Action run. Usually, a failure here indicates the public RSA key or the salt rotated on TIX's end.
 2.  **Manual Refresh**:
     ```bash
-    # Run locally with visible browser to debug
-    uv run python -m backend.cli.refresh_token --visible
+    # Run locally to trace the API response
+    uv run python -m backend.cli.refresh_token
     ```
 3.  **Force Push**: If local refresh works, the new token is already in Firestore. You can re-run dependent jobs manually.
 
@@ -100,19 +96,13 @@ Scrape all movies, showtimes, and theatre information for the day.
 
 ### How It Works
 
+The V2 API-based scraper is exceptionally fast and no longer requires parallel batching or Playwright.
+
 ```mermaid
 flowchart LR
-    subgraph "9 Parallel Jobs"
-        B0[Batch 0: Cities 0-9]
-        B1[Batch 1: Cities 10-19]
-        B8[Batch 8: Cities 74-83]
-    end
-
-    B0 --> M[Merge Job]
-    B1 --> M
-    B8 --> M
-
-    M --> V[Validate]
+    S[Single API Runner] -->|GET /v1/movies/latest| TIX[TIX.id API]
+    TIX -->|JSON Response| S
+    S --> V[Validate]
     V --> FS[(Firestore)]
 ```
 
@@ -127,10 +117,9 @@ flowchart LR
 
 ### 🚨 Failure Runbook
 
-**Trigger:** `Merge` job fails due to `ValidationError`.
+**Trigger:** Job fails due to `ValidationError` or network timeout.
 
-1.  **Identify Bad Batch**: Check logs to see which batch produced invalid JSON.
-2.  **Partial Upload**:
+1.  **Partial Upload**:
     ```bash
     # Upload whatever valid data we have
     uv run python -m backend.cli.populate_firestore --force
@@ -148,7 +137,7 @@ flowchart LR
 Scrape seat availability for ALL showtimes collected in Phase 2.
 
 ### Workflow File
-[`.github/workflows/daily-initial-scrape.yml`](../.github/workflows/daily-initial-scrape.yml) (jobs: `token-refresh-pre-seat`, `seat-morning-scrape`, `seat-merge-upload`)
+[`.github/workflows/daily-initial-layouts.yml`](../.github/workflows/daily-initial-layouts.yml) and [`.github/workflows/initial-layout-scrape.yml`](../.github/workflows/initial-layout-scrape.yml)
 
 ### How It Works
 

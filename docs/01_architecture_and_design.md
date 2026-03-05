@@ -18,7 +18,7 @@ We follow a loose **Clean Architecture** pattern to separate concerns between th
 | **2. Use Cases** | `application/` | **Orchestrator.** Connects Scrapers -> Repositories. Pure Python, no framework dependencies. |
 | **3. Domain** | `domain/` | **Entities.** Pydantic models & Error definitions. pure business rules. |
 | **4. Contracts** | `schemas/` | **DTOs.** Data Transfer Objects for validation (e.g., TIX.id JSON responses). |
-| **5. Infrastructure** | `infrastructure/` | **The "Dirty" Work.** Playwright scripts, Token Logic, and Firestore Adapters. |
+| **5. Infrastructure** | `infrastructure/` | **The "Dirty" Work.** API scraping, Token Logic, and Firestore Adapters. |
 
 ---
 
@@ -71,7 +71,7 @@ flowchart LR
 
 ### Infrastructure Components
 
-- **Backend**: Python 3.12+ using Playwright for scraping and interactions.
+- **Backend**: Python 3.12+ using pure HTTP API for scraping and interactions.
 - **Database**: Google Cloud Firestore (NoSQL).
 - **Admin**: Next.js 16 (React 19) dashboard.
 - **Web**: Next.js 16 (React 19) consumer app.
@@ -79,26 +79,26 @@ flowchart LR
 
 ### Morning Scraper Environment (Batch)
 
-The morning pipeline operates on **GitHub Actions**, utilizing parallel jobs to map the entire day's schedule.
+The morning pipeline operates on **GitHub Actions**, utilizing a single runner to map the entire day's schedule via fast HTTP APIs.
 
 #### Executors & Limits
 *   **Runner**: `ubuntu-latest` (Standard GitHub Actions runner).
 *   **Limits**: Subject to standard GitHub Actions concurrency and storage quotas.
-*   **Strategy**: Matrix strategies are used to parallelize scraping batches, reducing total runtime.
+*   **Strategy**: Single runner. The pure HTTP API scraper is fast enough (10-15 minutes) that parallel matrix strategies are no longer required.
 
 #### Workflow Ecosystem
 
 | Workflow | Schedule | Python Entry Point | Description |
 |----------|----------|--------------------|-------------|
 | **`daily-initial-scrape.yml`** | Daily 06:00 WIB | `.cli`, `.movie_performance` | **Main Pipeline**. Scrapes movies and aggregates performance data. |
-| **`token-refresh.yml`** | Bi-monthly | `.refresh_token` | **Headless Login**. Runs full Playwright with `xvfb` to regenerate valid refresh tokens (~90 day TTL). |
+| **`token-refresh.yml`** | Monthly | `.refresh_token` | **API Login**. Authenticates directly to TIX APIs via RSA encryption to regenerate refresh tokens (~90 day TTL). |
 
 #### Artifact Data Handover
 
 Data is not persisted immediately. Instead, it flows through **GitHub Artifacts** to ensure atomic operations and easier debugging.
 
 1.  **Intermediate Artifacts** (1-day retention):
-    *   `batch-{N}`: Raw movie data from each parallel shard.
+    *   `raw-scrape-data`: Raw movie data from the API scraper.
 
 2.  **Final Artifacts** (7-day retention):
     *   `scrape-data-{RUN_ID}`: Merged, validated movie dataset.
@@ -141,7 +141,7 @@ Final persistence is handled by dedicated Python CLI tools at the end of the wor
 
 ```mermaid
 flowchart TD
-    A[Initial: Playwright Login] --> B[Capture tokens from localStorage]
+    A[Initial: API Login via RSA] --> B[Obtain tokens from TIX]
     B --> C[Store both tokens in Firestore]
     C --> D[Seat Scraper checks token TTL]
     D --> E{TTL > 5 min?}
@@ -153,7 +153,7 @@ flowchart TD
     F --> J[API Call]
     J -->|200 OK| K[Success]
     J -->|401| L[Refresh token expired]
-    L --> M[Re-login via Playwright]
+    L --> M[Re-login via API RSA]
     M --> B
 ```
 
@@ -172,7 +172,7 @@ Authorization: Bearer <REFRESH_TOKEN>
 - Works **before** token expiration (proactive refresh)
 - Works **after** token expiration (recovery)
 - Refresh token lasts ~91 days
-- Initial login still requires Playwright (to get refresh token)
+- Initial login requires `refresh_token.py` (RSA encrypted POST)
 
 ### Firestore Storage
 
