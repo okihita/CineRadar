@@ -242,7 +242,11 @@ class TokenRefresher:
             new_access_token, new_refresh_token = await self.try_api_refresh(token.refresh_token)
             if new_access_token:
                 # Store new token, preserve/update refresh token
-                store_token(new_access_token, token.phone, refresh_token=new_refresh_token or token.refresh_token)
+                store_token(
+                    new_access_token,
+                    token.phone,
+                    refresh_token=new_refresh_token or token.refresh_token,
+                )
                 refreshed_token = self.get_current_token()
                 if not refreshed_token:
                     raise TokenRefreshError(

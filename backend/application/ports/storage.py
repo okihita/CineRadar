@@ -115,7 +115,6 @@ class ITheatreRepository(ABC):
         pass
 
 
-
 class ITokenRepository(ABC):
     """Interface for token persistence.
 

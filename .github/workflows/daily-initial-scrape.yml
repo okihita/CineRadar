@@ -1,10 +1,10 @@
-# Daily Morning Scraper - V2 API Edition
+# Daily Initial Scraper - V2 API Edition
 # Pure HTTP API scraper (no Playwright required)
-name: Daily Morning Scrape
+name: Daily Initial Scrape
 
 on:
   schedule:
-    - cron: '0 20 * * *'  # 3 AM WIB (20:00 UTC)
+    - cron: '0 18 * * *'  # 01:00 WIB (18:00 UTC)
   workflow_dispatch:
 
 jobs:

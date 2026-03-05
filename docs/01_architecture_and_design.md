@@ -90,7 +90,7 @@ The morning pipeline operates on **GitHub Actions**, utilizing parallel jobs to 
 
 | Workflow | Schedule | Python Entry Point | Description |
 |----------|----------|--------------------|-------------|
-| **`daily-morning-scrape.yml`** | Daily 06:00 WIB | `.cli`, `.movie_performance` | **Main Pipeline**. Scrapes movies and aggregates performance data. |
+| **`daily-initial-scrape.yml`** | Daily 06:00 WIB | `.cli`, `.movie_performance` | **Main Pipeline**. Scrapes movies and aggregates performance data. |
 | **`token-refresh.yml`** | Bi-monthly | `.refresh_token` | **Headless Login**. Runs full Playwright with `xvfb` to regenerate valid refresh tokens (~90 day TTL). |
 
 #### Artifact Data Handover
@@ -291,7 +291,7 @@ erDiagram
 | `api-smoke-tests.yml` | Push to `admin/**` + daily | Test production APIs |
 | `security-scan.yml` | Push/PR + weekly | CodeQL security analysis |
 | `failure-reporter.yml` | Workflow failures | Auto-create GitHub issues |
-| `daily-morning-scrape.yml` | Daily 6 AM WIB | Movie + seat scraping |
+| `daily-initial-scrape.yml` | Daily 6 AM WIB | Movie + seat scraping |
 | `token-refresh.yml` | Daily 5:50 AM WIB | JWT token refresh |
 
 ### Quality Gates (Required for Merge)

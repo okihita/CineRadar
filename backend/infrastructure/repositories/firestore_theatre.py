@@ -146,7 +146,6 @@ class FirestoreTheatreRepository(ITheatreRepository):
             logger.error(f"⚠️ Error getting theatres for {merchant}: {e}")
             return []
 
-
     def count(self) -> int:
         """Get total theatre count."""
         try:

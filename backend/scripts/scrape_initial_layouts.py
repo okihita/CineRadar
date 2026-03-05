@@ -163,7 +163,9 @@ def get_valid_token(db: firestore.Client) -> str | None:
 
                 logger.critical("🚨 REFRESH TOKEN IS DEAD! 🚨")
                 logger.critical("The token refresh API returned an error.")
-                logger.critical("Manual intervention required: Run `uv run python -m backend.cli token set --jwt '...' --refresh '...'`")
+                logger.critical(
+                    "Manual intervention required: Run `uv run python -m backend.cli token set --jwt '...' --refresh '...'`"
+                )
                 logger.critical("Then re-run this GitHub workflow.")
                 sys.exit(1)
 
@@ -297,18 +299,20 @@ def load_showtimes_from_schedule(db: firestore.Client, date: str) -> list[dict[s
                         showtime_time = showtime_info.get("time")
 
                         if showtime_id:
-                            showtimes.append({
-                                "showtime_id": showtime_id,
-                                "showtime": showtime_time,
-                                "movie_id": movie_id,
-                                "movie_title": movie_title,
-                                "theatre_id": theatre_id,
-                                "theatre_name": theatre_name,
-                                "merchant": merchant,
-                                "city": city_name,
-                                "date": date,
-                                "room_category": room_category,
-                            })
+                            showtimes.append(
+                                {
+                                    "showtime_id": showtime_id,
+                                    "showtime": showtime_time,
+                                    "movie_id": movie_id,
+                                    "movie_title": movie_title,
+                                    "theatre_id": theatre_id,
+                                    "theatre_name": theatre_name,
+                                    "merchant": merchant,
+                                    "city": city_name,
+                                    "date": date,
+                                    "room_category": room_category,
+                                }
+                            )
 
     logger.info(f"   Found {len(showtimes)} showtimes")
     return showtimes
@@ -403,7 +407,7 @@ async def scrape_showtimes(
             stats["skipped"] += 1
             if (i + 1) % 50 == 0:
                 logger.info(
-                    f"📊 Progress: {i+1}/{len(showtimes)} "
+                    f"📊 Progress: {i + 1}/{len(showtimes)} "
                     f"({stats['success']} ok, {stats['skipped']} skipped, {stats['failed']} fail, {stats['no_layout']} empty)"
                 )
             continue
@@ -411,7 +415,7 @@ async def scrape_showtimes(
         # 2. Token Maintenance
         elapsed = time.time() - token_acquired_at
         if elapsed > TOKEN_REFRESH_THRESHOLD:
-            logger.info(f"🔄 Refreshing token (age: {elapsed/60:.1f}min)...")
+            logger.info(f"🔄 Refreshing token (age: {elapsed / 60:.1f}min)...")
             new_token = get_valid_token(db)
             if new_token:
                 token = new_token
@@ -466,7 +470,7 @@ async def scrape_showtimes(
         # Progress logging
         if (i + 1) % 50 == 0:
             logger.info(
-                f"📊 Progress: {i+1}/{len(showtimes)} "
+                f"📊 Progress: {i + 1}/{len(showtimes)} "
                 f"({stats['success']} ok, {stats['skipped']} skipped, {stats['failed']} fail, {stats['no_layout']} empty)"
             )
 
@@ -521,8 +525,8 @@ def main() -> None:
     logger.info(f"  Skipped: {stats['skipped']}")
     logger.info(f"  Failed: {stats['failed']}")
     logger.info(f"  No layout: {stats['no_layout']}")
-    logger.info(f"  Elapsed: {elapsed/60:.1f} minutes")
-    if stats['success'] > 0:
+    logger.info(f"  Elapsed: {elapsed / 60:.1f} minutes")
+    if stats["success"] > 0:
         logger.info(f"  Rate: {stats['success'] / elapsed:.1f} showtimes/sec")
     logger.info("=" * 60)
 

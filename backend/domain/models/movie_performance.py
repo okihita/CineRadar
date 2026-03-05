@@ -90,7 +90,6 @@ class ShowtimeSnapshot:
             "total_seats": self.total_seats,
             "sold_seats": self.sold_seats,
             "occupancy_pct": self.occupancy_pct,
-
             # True Audience Metrics
             "initial_unavailable": self.initial_unavailable,
             "final_unavailable": self.final_unavailable,
@@ -143,7 +142,6 @@ class ShowtimeSnapshot:
             final_unavailable=data.get("final_unavailable", 0),
             audience_count=data.get("audience_count"),
             audience_pct=data.get("audience_pct"),
-
             layout=layout,
             raw_api_response=data.get("raw_api_response"),
             scraped_at=data.get("scraped_at", ""),

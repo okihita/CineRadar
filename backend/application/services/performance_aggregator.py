@@ -115,9 +115,7 @@ class PerformanceAggregator:
         )
 
         # Calculate average occupancy
-        avg_occupancy = (
-            (total_sold / total_seats * 100) if total_seats > 0 else 0.0
-        )
+        avg_occupancy = (total_sold / total_seats * 100) if total_seats > 0 else 0.0
 
         return DailyPerformance(
             date=date,

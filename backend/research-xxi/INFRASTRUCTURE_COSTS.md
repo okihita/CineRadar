@@ -3,7 +3,7 @@
 This document analyzes the cost, performance, and strategic viability of hosting the new M-Tix scraper on GitHub Actions versus Google Cloud Platform (GCP) Cloud Functions (or Cloud Run).
 
 ## 1. Current State: The TIX ID GitHub Actions Scraper
-The existing `daily-morning-scrape.yml` uses a highly aggressive parallel matrix strategy:
+The existing `daily-initial-scrape.yml` uses a highly aggressive parallel matrix strategy:
 - **Frequency:** Once daily (06:00 WIB).
 - **Concurrency:** 9 parallel Ubuntu runners (`batch: [0...8]`).
 - **Dependencies:** Installs Python 3.12, `uv`, and downloads Chromium via Playwright (very heavy initialization).

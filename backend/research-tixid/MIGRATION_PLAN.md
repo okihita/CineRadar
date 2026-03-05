@@ -584,7 +584,7 @@ $O(\text{Cities}) \times O(\text{Movies\_Per\_City}) \times O(\text{Pages\_Per\_
 - At **1 request/second:** $\approx 1512\text{ sec}$ (25.2 minutes)
 
 Wait, remember the **GitHub Actions Matrix Strategy**! 
-Your `daily-morning-scrape.yml` uses parallel workers (`Batch 0-8`). That means 9 parallel servers are running `cli.py` simultaneously! 
+Your `daily-initial-scrape.yml` uses parallel workers (`Batch 0-8`). That means 9 parallel servers are running `cli.py` simultaneously! 
 If each of the 9 workers is scanning $\approx 10$ cities:
 - Each worker makes $\approx 160$ API hits.
 - If we set the internal `aiolimiter` to **1 req/sec** per worker, each worker finishes in $\approx 2.6 \text{ minutes}$.

@@ -399,10 +399,10 @@ if __name__ == "__main__":
 ```
 
 #### 1.2 Update Morning Workflow
-- **File**: `.github/workflows/daily-morning-scrape.yml`
+- **File**: `.github/workflows/daily-initial-scrape.yml`
 
 ```yaml
-name: Daily Morning Scrape
+name: Daily Initial Scrape
 
 on:
   schedule:
@@ -527,7 +527,7 @@ def save_snapshot(...):
   - [ ] Add `load_showtimes()` to read from `schedules/{date}/movies/`
   - [ ] Add `fetch_seat_layout()` using Login Token
   - [ ] Add `save_initial_layout()` with gzip compression
-- [ ] Update `.github/workflows/daily-morning-scrape.yml`
+- [ ] Update `.github/workflows/daily-initial-scrape.yml`
   - [ ] Add step after post-processing
 
 ### Phase 2: JIT Scraper Updates

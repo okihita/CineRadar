@@ -5,7 +5,7 @@ Post-processing script for V2 scraper.
 Handles the following tasks after V2 scrape completes:
 1. Update snapshots/latest - for movie-details command
 2. Sync theatres to theatres collection
-3. Log morning scrape status
+3. Log initial scrape status
 
 Usage:
     PYTHONPATH=. uv run python backend/scripts/post_process.py
@@ -121,7 +121,7 @@ def sync_theatres(movies: list[dict[str, Any]]) -> None:
 
 
 def log_scrape_status(movies: list[dict[str, Any]], city_stats: dict[str, int]) -> None:
-    """Log the morning scrape status."""
+    """Log the initial scrape status."""
     logger.info("📝 Logging scrape status...")
 
     # Count total theatres

@@ -2,7 +2,7 @@
 """
 Run national scrape with V2 scraper.
 
-This is the entry point for the daily morning scrape.
+This is the entry point for the daily initial scrape.
 
 Estimated time: ~10-15 minutes (83 cities, 4 req/sec rate limit)
 

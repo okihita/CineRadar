@@ -105,7 +105,9 @@ def analyze_logs(date_str: str, focus_errors: bool = False, verbose: bool = Fals
     morning_run = daily_log.get("morning_run", {})
     if morning_run:
         status = morning_run.get("status", "unknown")
-        status_emoji = {"success": "✅", "partial": "⚠️", "failed": "❌", "running": "🔄"}.get(status, "❓")
+        status_emoji = {"success": "✅", "partial": "⚠️", "failed": "❌", "running": "🔄"}.get(
+            status, "❓"
+        )
         logger.info(f"   Status: {status_emoji} {status}")
         logger.info(f"   Movies found: {morning_run.get('movies_found', 0)}")
         logger.info(f"   Theatres: {morning_run.get('theatres_total', 0)}")
@@ -158,7 +160,9 @@ def analyze_logs(date_str: str, focus_errors: bool = False, verbose: bool = Fals
             jobs = d.get("jobs_published", 0)
             successes = d.get("total_successes", 0)
             errors = d.get("total_errors", 0)
-            logger.info(f"   {slot}: {emoji} {showtimes} showtimes, {jobs} jobs ({successes}✅ {errors}❌)")
+            logger.info(
+                f"   {slot}: {emoji} {showtimes} showtimes, {jobs} jobs ({successes}✅ {errors}❌)"
+            )
 
     # 5. Error analysis
     if focus_errors or total_errors > 0:
@@ -191,7 +195,9 @@ def analyze_logs(date_str: str, focus_errors: bool = False, verbose: bool = Fals
             for severity, errors in sorted(by_severity.items()):
                 logger.info(f"\n   {severity.upper()} ({len(errors)} errors):")
                 for e in errors[:5]:  # Show first 5 of each severity
-                    logger.error(f"      [{e.get('dispatch_slot')}] {e.get('message', 'No message')[:80]}")
+                    logger.error(
+                        f"      [{e.get('dispatch_slot')}] {e.get('message', 'No message')[:80]}"
+                    )
                     if verbose and e.get("context"):
                         context = e["context"]
                         if isinstance(context, dict):
@@ -235,7 +241,9 @@ def analyze_logs(date_str: str, focus_errors: bool = False, verbose: bool = Fals
                 if failed_jobs:
                     logger.info(f"\n   Failed jobs ({len(failed_jobs)}):")
                     for job in failed_jobs[:3]:
-                        logger.error(f"      {job.get('id')}: {job.get('error', 'No error message')}")
+                        logger.error(
+                            f"      {job.get('id')}: {job.get('error', 'No error message')}"
+                        )
 
     # 7. Summary
     logger.info("\n" + "=" * 60)
@@ -261,19 +269,17 @@ def main() -> None:
     """CLI entry point."""
     parser = argparse.ArgumentParser(description="Analyze CineRadar scraper logs from Firestore")
     parser.add_argument(
-        "--date", "-d",
+        "--date",
+        "-d",
         default=None,
-        help="Date to analyze (YYYY-MM-DD). Default: today in Jakarta timezone"
+        help="Date to analyze (YYYY-MM-DD). Default: today in Jakarta timezone",
     )
+    parser.add_argument("--errors", "-e", action="store_true", help="Focus on error analysis")
     parser.add_argument(
-        "--errors", "-e",
+        "--verbose",
+        "-v",
         action="store_true",
-        help="Focus on error analysis"
-    )
-    parser.add_argument(
-        "--verbose", "-v",
-        action="store_true",
-        help="Show detailed dispatch timeline and job statuses"
+        help="Show detailed dispatch timeline and job statuses",
     )
 
     args = parser.parse_args()
@@ -284,6 +290,7 @@ def main() -> None:
     else:
         # Default to today in Jakarta timezone
         from backend.domain.time import get_jakarta_date_str
+
         date_str = get_jakarta_date_str()
 
     try:
@@ -292,13 +299,11 @@ def main() -> None:
         logger.error(f"❌ Error analyzing logs: {e}")
         if args.verbose:
             import traceback
+
             traceback.print_exc()
         sys.exit(1)
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(message)s"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     main()

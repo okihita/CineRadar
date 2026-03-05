@@ -17,7 +17,7 @@ flowchart TB
         A2 --> A3[Rate Limiting]
         A3 --> A4[Firestore Save]
         A1 --> A5[GitHub Workflow]
-        A5 -.->|NOT DONE| A6[Add to daily-morning-scrape.yml]
+        A5 -.->|NOT DONE| A6[Add to daily-initial-scrape.yml]
     end
     
     subgraph Phase2[Phase 2: JIT Integration]
@@ -42,7 +42,7 @@ flowchart TB
 
 ### 1. GitHub Workflow - NOT DONE ❌
 
-**File**: `.github/workflows/daily-morning-scrape.yml`
+**File**: `.github/workflows/daily-initial-scrape.yml`
 
 **Current State**: Runs V2 scraper, post-processing, performance init, and movie details - but NOT initial layout scraper.
 
@@ -137,7 +137,7 @@ def save_snapshot(...):
 
 ### Phase 1: Complete Morning Workflow
 
-- [ ] Update `.github/workflows/daily-morning-scrape.yml`
+- [ ] Update `.github/workflows/daily-initial-scrape.yml`
   - Add initial layout scraper step after post-processing
   - Ensure proper env vars are passed
 

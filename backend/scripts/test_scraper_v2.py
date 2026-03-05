@@ -74,7 +74,9 @@ async def test_scraper(city: str | None = None, limit: int = 3) -> int:
         movies = city_result.get("movies", [])
         if movies:
             first = movies[0]
-            logger.info(f"   First movie: {first.get('title')} ({first.get('showtime_count')} showtimes)")
+            logger.info(
+                f"   First movie: {first.get('title')} ({first.get('showtime_count')} showtimes)"
+            )
         logger.info("")
 
     logger.info("=" * 60)

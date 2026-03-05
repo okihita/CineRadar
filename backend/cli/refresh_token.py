@@ -61,15 +61,16 @@ class TokenRefresher(BaseScraper):
             # Generate a STABLE device_id based on phone number
             # Using a simple hash ensures we look like the same device every time we login
             import hashlib
+
             device_id = hashlib.md5(phone_clean.encode()).hexdigest()
 
             headers = {
-                'accept': '*/*',
-                'app_version': '1.0.0',
-                'content-type': 'application/json',
-                'device_id': device_id,
-                'platform': 'web',
-                'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                "accept": "*/*",
+                "app_version": "1.0.0",
+                "content-type": "application/json",
+                "device_id": device_id,
+                "platform": "web",
+                "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             }
 
             async with httpx.AsyncClient() as client:
@@ -78,7 +79,7 @@ class TokenRefresher(BaseScraper):
                     "https://api-b2b.tix.id/v1/auth",
                     headers=headers,
                     json={"client_id": "tixid_guest", "auth_code": None},
-                    timeout=10.0
+                    timeout=10.0,
                 )
 
                 if auth_resp.status_code != 200:
@@ -96,10 +97,7 @@ class TokenRefresher(BaseScraper):
                 # 2. Inject Guest Token into Headers for the real login
                 headers["Authorization"] = f"Bearer {guest_token}"
 
-                payload = {
-                    "msisdn": phone_clean,
-                    "password": enc_password
-                }
+                payload = {"msisdn": phone_clean, "password": enc_password}
 
                 self.log(f"   📡 Sending Encrypted Login for {phone_clean}")
 
@@ -107,7 +105,7 @@ class TokenRefresher(BaseScraper):
                     "https://api-b2b.tix.id/v1/users/login",
                     headers=headers,
                     json=payload,
-                    timeout=10.0
+                    timeout=10.0,
                 )
 
             if response.status_code != 200:

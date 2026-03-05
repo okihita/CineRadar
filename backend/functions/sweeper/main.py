@@ -1,4 +1,3 @@
-
 """
 JIT Seat Scraper - Sweeper Function
 
@@ -53,7 +52,9 @@ def get_firestore_client() -> firestore.Client:
     return firestore.Client(project=PROJECT_ID)
 
 
-def aggregate_daily_stats(db: firestore.Client, date_str: str, movie_id: str, movie_title: str) -> bool:
+def aggregate_daily_stats(
+    db: firestore.Client, date_str: str, movie_id: str, movie_title: str
+) -> bool:
     """Aggregate showtimes for a specific date and update DailyPerformance.
 
     Returns: True if updated (even if 0)
@@ -104,7 +105,9 @@ def aggregate_daily_stats(db: firestore.Client, date_str: str, movie_id: str, mo
                 cities.add(s_city)
 
         # Calculate averages
-        avg_occupancy = (occupancy_sum / total_showtimes_scraped) if total_showtimes_scraped > 0 else 0.0
+        avg_occupancy = (
+            (occupancy_sum / total_showtimes_scraped) if total_showtimes_scraped > 0 else 0.0
+        )
 
         # 3. Update DailyPerformance
         daily_ref = (
@@ -140,11 +143,7 @@ def aggregate_all_time_stats(db: firestore.Client, movie_id: str) -> bool:
     Sums up all 'days' documents.
     """
     try:
-        days_ref = (
-            db.collection("movie_performance")
-            .document(movie_id)
-            .collection("days")
-        )
+        days_ref = db.collection("movie_performance").document(movie_id).collection("days")
 
         # Read all daily summaries (Read Ops = M days)
         # M is typically small (1-60)
@@ -177,9 +176,7 @@ def aggregate_all_time_stats(db: firestore.Client, movie_id: str) -> bool:
         # Average of daily averages (simple approximation)
         # OR weighted average: (total_sold / total_seats) * 100
         # Weighted is more accurate for "All Time Occupancy"
-        avg_occupancy = (
-            (all_time_sold / all_time_seats) * 100 if all_time_seats > 0 else 0.0
-        )
+        avg_occupancy = (all_time_sold / all_time_seats) * 100 if all_time_seats > 0 else 0.0
 
         # Update Root Metadata
         root_ref = db.collection("movie_performance").document(movie_id)

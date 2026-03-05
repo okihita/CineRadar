@@ -15,6 +15,7 @@ PUB_KEY_B64 = (
     "uQIDAQAB"
 )
 
+
 def encrypt_password(password: str, use_oaep: bool = False) -> str:
     """
     Encrypts a plaintext password using TIX ID's public key.
@@ -31,7 +32,7 @@ def encrypt_password(password: str, use_oaep: bool = False) -> str:
     pub_key_der = base64.b64decode(PUB_KEY_B64)
     pub_key = RSA.import_key(pub_key_der)
 
-    message = password.encode('utf-8')
+    message = password.encode("utf-8")
 
     if use_oaep:
         cipher: Any = PKCS1_OAEP.new(pub_key)
@@ -39,13 +40,17 @@ def encrypt_password(password: str, use_oaep: bool = False) -> str:
         cipher = PKCS1_v1_5.new(pub_key)
 
     encrypted_bytes = cipher.encrypt(message)
-    return base64.b64encode(encrypted_bytes).decode('utf-8')
+    return base64.b64encode(encrypted_bytes).decode("utf-8")
+
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser(description="Encrypt TIX ID Password")
     parser.add_argument("password", help="The plaintext password to encrypt")
-    parser.add_argument("--oaep", action="store_true", help="Use OAEP padding instead of PKCS#1 v1.5")
+    parser.add_argument(
+        "--oaep", action="store_true", help="Use OAEP padding instead of PKCS#1 v1.5"
+    )
     args = parser.parse_args()
 
     encrypted = encrypt_password(args.password, use_oaep=args.oaep)

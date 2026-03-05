@@ -29,12 +29,12 @@ uv run python -m backend.cli.refresh_token --check
 
 ## 🗺️ Visual Call Graphs
 
-### 1. Daily Movie & Schedule Scrape (`daily-morning-scrape.yml`)
+### 1. Daily Movie & Schedule Scrape (`daily-initial-scrape.yml`)
 The "Big Scrape" that runs every morning to refresh the entire catalog.
 
 ```mermaid
 flowchart TD
-    GH[GitHub Actions: daily-morning-scrape.yml] -->|Matrix Batch 0-8| CLI[cli.py]
+    GH[GitHub Actions: daily-initial-scrape.yml] -->|Matrix Batch 0-8| CLI[cli.py]
     
     subgraph "Application Layer"
         CLI --> UC[ScrapeMoviesUseCase]

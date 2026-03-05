@@ -255,25 +255,27 @@ def log_job_creation(db: firestore.Client, batch_id: str, showtime: dict[str, An
             .document(showtime_id)
         )
 
-        job_ref.set({
-            "showtime_id": showtime_id,
-            "batch_id": batch_id,
-            "job_data": {
-                "movie_id": showtime.get("movie_id"),
-                "movie_title": showtime.get("movie_title"),
-                "theatre_id": showtime.get("theatre_id"),
-                "theatre_name": showtime.get("theatre_name"),
-                "city": showtime.get("city"),
-                "merchant": showtime.get("merchant"),
-                "showtime": showtime.get("showtime"),
-            },
-            "lifecycle": {
+        job_ref.set(
+            {
+                "showtime_id": showtime_id,
+                "batch_id": batch_id,
+                "job_data": {
+                    "movie_id": showtime.get("movie_id"),
+                    "movie_title": showtime.get("movie_title"),
+                    "theatre_id": showtime.get("theatre_id"),
+                    "theatre_name": showtime.get("theatre_name"),
+                    "city": showtime.get("city"),
+                    "merchant": showtime.get("merchant"),
+                    "showtime": showtime.get("showtime"),
+                },
+                "lifecycle": {
+                    "created_at": now_iso,
+                },
+                "status": "pending",
                 "created_at": now_iso,
-            },
-            "status": "pending",
-            "created_at": now_iso,
-            "updated_at": now_iso,
-        })
+                "updated_at": now_iso,
+            }
+        )
 
     except Exception as e:
         logger.warning(f"Failed to log job creation for {showtime.get('showtime_id')}: {e}")
@@ -290,16 +292,13 @@ def dispatch_jobs(request: Any) -> Any:
 
     # Snap to the nearest 5-minute floor so slight scheduler delays (e.g., 12:01
     # instead of 12:00) still produce the same deterministic window.
-    now = actual_now.replace(
-        minute=(actual_now.minute // 5) * 5, second=0, microsecond=0
-    )
+    now = actual_now.replace(minute=(actual_now.minute // 5) * 5, second=0, microsecond=0)
 
     window_start = now + timedelta(minutes=WINDOW_START_MINUTES)
     window_end = now + timedelta(minutes=WINDOW_END_MINUTES)
 
     logger.info(
-        f"Dispatcher triggered at {actual_now.isoformat()} "
-        f"(snapped to {now.strftime('%H:%M')})"
+        f"Dispatcher triggered at {actual_now.isoformat()} (snapped to {now.strftime('%H:%M')})"
     )
     logger.info(f"Window: {window_start.strftime('%H:%M')} - {window_end.strftime('%H:%M')}")
 
