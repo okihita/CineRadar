@@ -1042,6 +1042,28 @@ def save_snapshot(
     layout_json_str = json.dumps(layout)
     layout_compressed = gzip.compress(layout_json_str.encode("utf-8"))
 
+    doc_ref = (
+        db.collection("movie_performance")
+        .document(movie_id)
+        .collection("days")
+        .document(date)
+        .collection("showtimes")
+        .document(showtime_id)
+    )
+
+    # Calculate actual audience from morning baseline
+    initial_unavailable = 0
+    try:
+        existing_doc = doc_ref.get()
+        if existing_doc.exists:
+            initial_unavailable = existing_doc.to_dict().get("initial_unavailable", 0)
+    except Exception as e:
+        logger.warning(f"Could not load initial_unavailable for {showtime_id}: {e}")
+
+    # The True Metric:
+    audience_count = max(0, sold_seats - initial_unavailable)
+    audience_pct = (audience_count / total_seats * 100) if total_seats > 0 else 0.0
+
     snapshot_data = {
         "showtime_id": showtime_id,
         "movie_id": movie_id,
@@ -1059,17 +1081,14 @@ def save_snapshot(
         "layout_compressed": layout_compressed,
         "raw_api_response": raw_api_response,
         "scraped_at": datetime.now(JAKARTA_TZ).isoformat(),
+        # New True Audience Metrics
+        "initial_unavailable": initial_unavailable,
+        "final_unavailable": sold_seats,
+        "audience_count": audience_count,
+        "audience_pct": round(audience_pct, 1),
     }
 
     try:
-        doc_ref = (
-            db.collection("movie_performance")
-            .document(movie_id)
-            .collection("days")
-            .document(date)
-            .collection("showtimes")
-            .document(showtime_id)
-        )
         doc_ref.set(snapshot_data)
         logger.info(f"Saved snapshot for {showtime_id}")
         return True, document_path

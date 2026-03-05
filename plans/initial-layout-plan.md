@@ -142,9 +142,9 @@ class InitialLayoutScraper:
 ```
 
 ### Token Refresh Strategy
-1. **Primary**: Use existing `TokenRefresher` class
-2. **Timing**: Refresh when token age > 25 minutes
-3. **Fallback**: If refresh fails, abort and alert (don't continue with expired token)
+1. **Primary**: Use existing API refresh endpoint manually inside the scraper.
+2. **Timing**: Refresh proactively when token age > 25 minutes.
+3. **Dead Token Fallback**: If the refresh token itself is completely dead (API returns 401 on refresh), the script will immediately abort execution. It is safer to fail the GitHub Action than continually hammer the API with a dead token and risk an IP ban.
 
 ## Data Structure Changes
 

@@ -160,7 +160,12 @@ def get_valid_token(db: firestore.Client) -> str | None:
                 new_token = refresh_token_via_api(db, refresh_token)
                 if new_token:
                     return new_token
-                logger.warning("⚠️ Refresh failed, using existing token")
+
+                logger.critical("🚨 REFRESH TOKEN IS DEAD! 🚨")
+                logger.critical("The token refresh API returned an error.")
+                logger.critical("Manual intervention required: Run `uv run python -m backend.cli token set --jwt '...' --refresh '...'`")
+                logger.critical("Then re-run this GitHub workflow.")
+                sys.exit(1)
 
     logger.info(f"🔑 Using token (age: {age:.1f}min)")
     return token
@@ -194,6 +199,8 @@ def fetch_seat_layout_sync(showtime_id: str, merchant: str, token: str) -> dict[
                 logger.warning(f"API error for {showtime_id}: {error_msg}")
         elif response.status_code == 401:
             logger.warning(f"Auth token expired (401) for {showtime_id}")
+            # Special return to indicate an auth failure specifically
+            return {"__auth_failure": True}
         else:
             logger.warning(f"HTTP {response.status_code} for {showtime_id}")
     except httpx.RequestError as e:
@@ -368,8 +375,8 @@ async def scrape_showtimes(
     showtimes: list[dict[str, Any]],
     rate_limit: int = RATE_LIMIT,
 ) -> dict[str, int]:
-    """Scrape all showtimes with rate limiting and token refresh."""
-    stats = {"total": len(showtimes), "success": 0, "failed": 0, "no_layout": 0}
+    """Scrape all showtimes with rate limiting, token refresh, and checkpointing."""
+    stats = {"total": len(showtimes), "success": 0, "failed": 0, "no_layout": 0, "skipped": 0}
 
     # Get initial token
     token = get_valid_token(db)
@@ -381,7 +388,27 @@ async def scrape_showtimes(
     rate_limiter = AsyncLimiter(rate_limit, 1)
 
     for i, showtime in enumerate(showtimes):
-        # Check token refresh
+        # 1. Native Checkpointing
+        # Check if the baseline already exists
+        doc_ref = (
+            db.collection("movie_performance")
+            .document(showtime["movie_id"])
+            .collection("days")
+            .document(showtime["date"])
+            .collection("showtimes")
+            .document(showtime["showtime_id"])
+        )
+        doc = doc_ref.get()
+        if doc.exists and "initial_unavailable" in doc.to_dict():
+            stats["skipped"] += 1
+            if (i + 1) % 50 == 0:
+                logger.info(
+                    f"📊 Progress: {i+1}/{len(showtimes)} "
+                    f"({stats['success']} ok, {stats['skipped']} skipped, {stats['failed']} fail, {stats['no_layout']} empty)"
+                )
+            continue
+
+        # 2. Token Maintenance
         elapsed = time.time() - token_acquired_at
         if elapsed > TOKEN_REFRESH_THRESHOLD:
             logger.info(f"🔄 Refreshing token (age: {elapsed/60:.1f}min)...")
@@ -390,18 +417,35 @@ async def scrape_showtimes(
                 token = new_token
                 token_acquired_at = time.time()
             else:
-                logger.warning("⚠️ Token refresh failed, continuing with current token")
+                # get_valid_token sys.exits(1) if refresh is completely dead, so we only hit this if purely unaccounted error
+                logger.critical("⚠️ Token refresh completely failed. Exiting.")
+                sys.exit(1)
 
-        # Rate limiting
+        # 3. Rate limiting and Layout Fetch
         async with rate_limiter:
-            # Fetch layout (synchronous call)
             layout_data = fetch_seat_layout_sync(
                 showtime["showtime_id"],
                 showtime["merchant"],
                 token,
             )
 
-            if not layout_data:
+            # Handle reactive 401s (token died before our 25-minute timer)
+            if layout_data and layout_data.get("__auth_failure"):
+                logger.warning("Reactive 401 caught. Forcing early token refresh strategy.")
+                new_token = get_valid_token(db)
+                if new_token:
+                    token = new_token
+                    token_acquired_at = time.time()
+                    # Retry the scrape precisely once
+                    layout_data = fetch_seat_layout_sync(
+                        showtime["showtime_id"],
+                        showtime["merchant"],
+                        token,
+                    )
+                else:
+                    sys.exit(1)
+
+            if not layout_data or layout_data.get("__auth_failure"):
                 stats["failed"] += 1
                 continue
 
@@ -423,7 +467,7 @@ async def scrape_showtimes(
         if (i + 1) % 50 == 0:
             logger.info(
                 f"📊 Progress: {i+1}/{len(showtimes)} "
-                f"({stats['success']} ok, {stats['failed']} fail, {stats['no_layout']} empty)"
+                f"({stats['success']} ok, {stats['skipped']} skipped, {stats['failed']} fail, {stats['no_layout']} empty)"
             )
 
     return stats
@@ -472,10 +516,9 @@ def main() -> None:
     elapsed = time.time() - start
 
     logger.info("=" * 60)
-    logger.info("Initial Layout Scraping Complete!")
-    logger.info("=" * 60)
     logger.info(f"  Total: {stats['total']}")
     logger.info(f"  Success: {stats['success']}")
+    logger.info(f"  Skipped: {stats['skipped']}")
     logger.info(f"  Failed: {stats['failed']}")
     logger.info(f"  No layout: {stats['no_layout']}")
     logger.info(f"  Elapsed: {elapsed/60:.1f} minutes")

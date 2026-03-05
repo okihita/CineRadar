@@ -17,8 +17,14 @@ export interface ShowtimeSnapshot {
     merchant: string;
     showtime: string;
     total_seats: number;
-    sold_seats: number;
-    occupancy_pct: number;
+    sold_seats: number; // Legacy/fallback count
+    occupancy_pct: number; // Legacy/fallback count
+
+    // True Audience Metrics (Delta Calculation from Phase 2)
+    initial_unavailable?: number;
+    final_unavailable?: number;
+    audience_count?: number;
+    audience_pct?: number;
 }
 
 type SortField = 'showtime' | 'occupancy' | 'theatre' | 'city';
@@ -94,7 +100,9 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
                     comparison = a.showtime.localeCompare(b.showtime);
                     break;
                 case 'occupancy':
-                    comparison = a.occupancy_pct - b.occupancy_pct;
+                    const occA = a.audience_pct !== undefined ? a.audience_pct : a.occupancy_pct;
+                    const occB = b.audience_pct !== undefined ? b.audience_pct : b.occupancy_pct;
+                    comparison = occA - occB;
                     break;
                 case 'theatre':
                     comparison = a.theatre_name.localeCompare(b.theatre_name);
@@ -155,7 +163,9 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
     const summaryStats = useMemo(() => {
         const totalShowtimes = processedShowtimes.length;
         const totalSeats = processedShowtimes.reduce((sum, st) => sum + st.total_seats, 0);
-        const totalSold = processedShowtimes.reduce((sum, st) => sum + st.sold_seats, 0);
+
+        // Use true audience_count if available, otherwise fallback to raw sold_seats
+        const totalSold = processedShowtimes.reduce((sum, st) => sum + (st.audience_count ?? st.sold_seats), 0);
         const avgOccupancy = totalSeats > 0 ? (totalSold / totalSeats * 100) : 0;
 
         return { totalShowtimes, totalSeats, totalSold, avgOccupancy };
@@ -446,6 +456,12 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
 function ShowtimeRow({ showtime: st }: { showtime: ShowtimeSnapshot }) {
     const merchantColor = MERCHANT_COLORS[st.merchant] || 'bg-gray-500';
 
+    // Choose which metric to show: True Delta or Legacy Raw
+    const isTrueDelta = st.audience_count !== undefined;
+    const finalSold = isTrueDelta ? st.audience_count! : st.sold_seats;
+    const finalPct = isTrueDelta ? st.audience_pct! : st.occupancy_pct;
+    const initialBlocked = isTrueDelta ? st.initial_unavailable ?? 0 : 0;
+
     return (
         <tr className="border-b last:border-0 hover:bg-muted/20 transition-colors">
             <td className="py-3 px-4 font-mono font-medium text-foreground">{st.showtime}</td>
@@ -462,24 +478,40 @@ function ShowtimeRow({ showtime: st }: { showtime: ShowtimeSnapshot }) {
                 </Badge>
             </td>
             <td className="py-3 px-4">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 group relative cursor-help">
                     <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                         <div
                             className={cn(
                                 "h-full rounded-full transition-all duration-500",
-                                st.occupancy_pct > 80 ? "bg-red-500" :
-                                    st.occupancy_pct > 50 ? "bg-amber-500" : "bg-primary"
+                                finalPct > 80 ? "bg-red-500" :
+                                    finalPct > 50 ? "bg-amber-500" : "bg-primary"
                             )}
-                            style={{ width: `${st.occupancy_pct}%` }}
+                            style={{ width: `${finalPct}%` }}
                         />
                     </div>
                     <span className="text-xs w-10 text-right font-mono text-muted-foreground">
-                        {st.occupancy_pct}%
+                        {finalPct}%
                     </span>
+
+                    {/* Hover Tooltip for True Delta Math */}
+                    {isTrueDelta && (
+                        <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity z-50 bg-popover text-popover-foreground border shadow-lg rounded-md px-3 py-2 text-xs bottom-full mb-2 left-1/2 -translate-x-1/2 w-48 text-center pointer-events-none">
+                            <div className="font-semibold mb-1 border-b pb-1">Sales Breakdown</div>
+                            <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-left">
+                                <span className="text-muted-foreground">T-30 Blocked:</span>
+                                <span className="text-right">{st.final_unavailable}</span>
+                                <span className="text-muted-foreground">Morning Blocked:</span>
+                                <span className="text-right">-{initialBlocked}</span>
+                                <span className="font-semibold col-span-2 text-right border-t pt-1 mt-1 text-primary">
+                                    {finalSold} Net Sold
+                                </span>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </td>
             <td className="py-3 px-4 text-right font-mono text-muted-foreground">
-                <span className="text-foreground font-medium">{st.sold_seats}</span>
+                <span className="text-foreground font-medium">{finalSold}</span>
                 <span className="opacity-50">/{st.total_seats}</span>
             </td>
         </tr>
@@ -496,9 +528,9 @@ function GroupedSection({
 }) {
     const [expanded, setExpanded] = useState(true);
 
-    // Calculate group summary
+    // Calculate group summary using precise delta data if available
     const totalSeats = items.reduce((sum, st) => sum + st.total_seats, 0);
-    const totalSold = items.reduce((sum, st) => sum + st.sold_seats, 0);
+    const totalSold = items.reduce((sum, st) => sum + (st.audience_count ?? st.sold_seats), 0);
     const avgOccupancy = totalSeats > 0 ? (totalSold / totalSeats * 100) : 0;
 
     return (

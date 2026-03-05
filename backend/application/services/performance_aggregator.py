@@ -107,11 +107,16 @@ class PerformanceAggregator:
 
         # Calculate totals
         total_seats = sum(st.total_seats for st in showtimes)
-        total_sold = sum(st.sold_seats for st in showtimes)
+
+        # Determine actual sold using True Audience Delta if available (else fallback)
+        total_sold = sum(
+            (st.audience_count if st.audience_count is not None else st.sold_seats)
+            for st in showtimes
+        )
 
         # Calculate average occupancy
         avg_occupancy = (
-            sum(st.occupancy_pct for st in showtimes) / len(showtimes) if showtimes else 0.0
+            (total_sold / total_seats * 100) if total_seats > 0 else 0.0
         )
 
         return DailyPerformance(

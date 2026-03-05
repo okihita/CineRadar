@@ -1,0 +1,64 @@
+name: Scrape Initial Layouts
+
+on:
+  schedule:
+    - cron: '0 21 * * *'  # 4 AM WIB (21:00 UTC)
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60  # 1 hour limit
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: astral-sh/setup-uv@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Scrape Initial Seat Layouts (Baseline)
+        run: PYTHONPATH=. uv run python backend/scripts/scrape_initial_layouts.py
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+  alert:
+    needs: scrape
+    if: failure()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Alert on failure
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const title = '🚨 Initial Layout Scrape Failed';
+            const body = `## Initial Layout Scrape Workflow Failed
+            
+            **Run ID:** ${{ github.run_id }}
+            **Time:** ${new Date().toISOString()}
+            
+            The morning baseline scrape failed. Possible causes:
+            - TIX.id JWT Token Refresh Failed (Dead Token)
+            - Network timeout
+            - Too many showtimes / took over 6 hours
+            
+            **Action Required:**
+            1. Check the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            2. If Dead Token, acquire a new token via CLI.
+            3. Re-run the workflow manually (Checkpointing will ensure it resumes where it left off).
+            
+            cc @${{ github.repository_owner }}`;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['bug', 'scraper']
+            });

@@ -103,7 +103,7 @@ def save_snapshot(...):
     if initial_data:
         initial_unavailable = initial_data.get("initial_unavailable", 0)
     
-    # Calculate actual audience
+    # Calculate actual audience (True Sold Seats = JIT Unavailable - Morning Unavailable)
     audience_count = max(0, sold_seats - initial_unavailable)
     audience_pct = (audience_count / total_seats * 100) if total_seats > 0 else 0
     

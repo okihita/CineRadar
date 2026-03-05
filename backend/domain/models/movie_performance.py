@@ -49,6 +49,13 @@ class ShowtimeSnapshot:
     total_seats: int
     sold_seats: int
     occupancy_pct: float
+
+    # True Audience Metrics (Delta Calculation from Phase 2)
+    initial_unavailable: int = 0
+    final_unavailable: int = 0
+    audience_count: int | None = None
+    audience_pct: float | None = None
+
     layout: list[list[dict[str, Any]]] = field(default_factory=list)
     raw_api_response: dict[str, Any] | None = None
     scraped_at: str = field(default_factory=lambda: get_now_iso())
@@ -83,6 +90,12 @@ class ShowtimeSnapshot:
             "total_seats": self.total_seats,
             "sold_seats": self.sold_seats,
             "occupancy_pct": self.occupancy_pct,
+
+            # True Audience Metrics
+            "initial_unavailable": self.initial_unavailable,
+            "final_unavailable": self.final_unavailable,
+            "audience_count": self.audience_count,
+            "audience_pct": self.audience_pct,
             "layout_compressed": layout_compressed,  # gzip bytes (~3.2KB)
             "raw_api_response": self.raw_api_response,  # Full raw API response for debugging
             "scraped_at": self.scraped_at,
@@ -125,6 +138,12 @@ class ShowtimeSnapshot:
             total_seats=data.get("total_seats", 0),
             sold_seats=data.get("sold_seats", 0),
             occupancy_pct=data.get("occupancy_pct", 0.0),
+            # True Audience Metrics
+            initial_unavailable=data.get("initial_unavailable", 0),
+            final_unavailable=data.get("final_unavailable", 0),
+            audience_count=data.get("audience_count"),
+            audience_pct=data.get("audience_pct"),
+
             layout=layout,
             raw_api_response=data.get("raw_api_response"),
             scraped_at=data.get("scraped_at", ""),
