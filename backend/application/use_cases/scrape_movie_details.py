@@ -107,6 +107,10 @@ class ScrapeMovieDetailsUseCase:
                 # Convert to domain model
                 movie_details = MovieDetails.from_api_response(data)
 
+                # The API sometimes returns deleted/expired movies with blank string IDs.
+                # Force the ID to match what we requested so we can log it properly.
+                movie_details.movie_id = movie_details.movie_id or movie_id
+
                 # Save to Firestore
                 if self.repository.save(movie_details):
                     scraped += 1
