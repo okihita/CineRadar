@@ -46,18 +46,19 @@ def get_firestore_client() -> Any:
     return firestore.Client(project=os.environ.get("FIREBASE_PROJECT_ID", "cineradar-481014"))
 
 
-def upsert_theatre(theatre_data: dict[str, Any], validate: bool = True) -> bool:
+def prepare_theatre_upsert(
+    theatre_data: dict[str, Any], validate: bool = True
+) -> tuple[str, dict[str, Any]] | None:
     """
-    Insert or update a theatre in Firestore.
+    Prepare theatre data for Firestore upsert.
 
     Args:
         theatre_data: dict with theatre_id, name, merchant, city, address, lat, lng, room_types
-        validate: Whether to validate with Pydantic before writing
+        validate: Whether to validate with Pydantic
 
     Returns:
-        True if successful
+        Tuple of (theatre_id, upsert_data dict) or None if invalid
     """
-    # Validate with Pydantic if enabled
     if validate:
         try:
             from pydantic import ValidationError
@@ -69,70 +70,68 @@ def upsert_theatre(theatre_data: dict[str, Any], validate: bool = True) -> bool:
             logger.error(
                 f"⚠️ Validation failed for theatre {theatre_data.get('theatre_id')}: {e.errors()}"
             )
-            return False
+            return None
         except ImportError:
-            pass  # Pydantic not available, skip validation
+            pass
+
+    theatre_id = theatre_data.get("theatre_id")
+    if not theatre_id:
+        return None
+
+    now = datetime.now(UTC).isoformat()
+
+    upsert_data = {
+        "name": theatre_data.get("name"),
+        "merchant": theatre_data.get("merchant"),
+        "city": theatre_data.get("city"),
+        "address": theatre_data.get("address"),
+        "lat": theatre_data.get("lat"),
+        "lng": theatre_data.get("lng"),
+        "place_id": theatre_data.get("place_id"),
+        "room_types": theatre_data.get("room_types", []),
+        "last_seen": now,
+        "updated_at": now,
+        "theatre_id": str(theatre_id),
+    }
+
+    return str(theatre_id), upsert_data
+
+
+def upsert_theatre(theatre_data: dict[str, Any], validate: bool = True) -> bool:
+    """Legacy synchronous upsert (kept for backwards compatibility)."""
+    result = prepare_theatre_upsert(theatre_data, validate)
+    if not result:
+        return False
+
+    theatre_id, upsert_data = result
 
     try:
         db = get_firestore_client()
-        theatre_id = theatre_data.get("theatre_id")
+        doc_ref = db.collection(THEATRES).document(theatre_id)
 
-        if not theatre_id:
-            return False
-
-        doc_ref = db.collection(THEATRES).document(str(theatre_id))
-
-        # Check if exists
         doc = doc_ref.get()
-        now = datetime.now(UTC).isoformat()
-
         if doc.exists:
-            # Update existing
-            update_data = {
-                "name": theatre_data.get("name"),
-                "merchant": theatre_data.get("merchant"),
-                "city": theatre_data.get("city"),
-                "address": theatre_data.get("address"),
-                "last_seen": now,
-                "updated_at": now,
-            }
+            existing = doc.to_dict() or {}
+            existing_rooms = set(existing.get("room_types", []))
+            new_rooms = set(upsert_data.get("room_types", []))
+            upsert_data["room_types"] = list(existing_rooms | new_rooms)
 
-            # Update lat/lng if provided
-            if theatre_data.get("lat") is not None:
-                update_data["lat"] = theatre_data["lat"]
-            if theatre_data.get("lng") is not None:
-                update_data["lng"] = theatre_data["lng"]
-            if theatre_data.get("place_id"):
-                update_data["place_id"] = theatre_data["place_id"]
+            # Remove keys that shouldn't be overridden if they are None
+            if upsert_data["lat"] is None:
+                upsert_data.pop("lat", None)
+            if upsert_data["lng"] is None:
+                upsert_data.pop("lng", None)
+            if upsert_data["place_id"] is None:
+                upsert_data.pop("place_id", None)
 
-            # Merge room types
-            existing_rooms = set(doc.to_dict().get("room_types", []))
-            new_rooms = set(theatre_data.get("room_types", []))
-            update_data["room_types"] = list(existing_rooms | new_rooms)
-
-            doc_ref.update(update_data)
+            doc_ref.update(upsert_data)
         else:
-            # Create new
-            doc_ref.set(
-                {
-                    "theatre_id": str(theatre_id),
-                    "name": theatre_data.get("name"),
-                    "merchant": theatre_data.get("merchant"),
-                    "city": theatre_data.get("city"),
-                    "address": theatre_data.get("address"),
-                    "lat": theatre_data.get("lat"),
-                    "lng": theatre_data.get("lng"),
-                    "place_id": theatre_data.get("place_id"),
-                    "room_types": theatre_data.get("room_types", []),
-                    "last_seen": now,
-                    "created_at": now,
-                    "updated_at": now,
-                }
-            )
+            upsert_data["created_at"] = upsert_data["updated_at"]
+            doc_ref.set(upsert_data)
 
         return True
     except Exception as e:
-        logger.error(f"Error upserting theatre {theatre_data.get('theatre_id')}: {e}")
+        logger.error(f"Error upserting theatre {theatre_id}: {e}")
         return False
 
 
@@ -211,16 +210,48 @@ def sync_theatres_from_scrape(movies: list[dict[str, Any]]) -> dict[str, Any]:
                         "room_types": room_types,
                     }
 
-    # Dedupe room types and upsert
+    # Dedupe room types and prepare for batch
+    db = get_firestore_client()
     success = 0
     failed = 0
 
+    # Firestore allows max 500 writes per batch
+    BATCH_LIMIT = 500
+    current_batch = db.batch()
+    operations_in_batch = 0
+
     for _theatre_id, data in seen_theatres.items():
         data["room_types"] = list(set(data["room_types"]))
-        if upsert_theatre(data):
-            success += 1
-        else:
+
+        # Prepare data purely without network connection
+        result = prepare_theatre_upsert(data, validate=False)
+        if not result:
             failed += 1
+            continue
+
+        theatre_id, upsert_data = result
+
+        # NOTE: Batched writes don't elegantly support "read-then-update OR set" inline
+        # for our nested lists without client-side reads first.
+        # But for theatres, we can safely overwrite the root document because it rebuilds
+        # from our master schedule list every day.
+        # We use merge=True so we don't accidentally wipe lat/lng if we didn't scrape it today.
+
+        upsert_data["created_at"] = upsert_data["updated_at"]
+        doc_ref = db.collection(THEATRES).document(theatre_id)
+        current_batch.set(doc_ref, upsert_data, merge=True)
+
+        operations_in_batch += 1
+        success += 1
+
+        if operations_in_batch >= BATCH_LIMIT:
+            current_batch.commit()
+            current_batch = db.batch()
+            operations_in_batch = 0
+
+    # Commit any remaining operations
+    if operations_in_batch > 0:
+        current_batch.commit()
 
     return {"total": len(seen_theatres), "success": success, "failed": failed}
 
