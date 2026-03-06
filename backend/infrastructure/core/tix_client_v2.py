@@ -39,9 +39,9 @@ MOVIES_URL = f"{API_BASE}/v1/movies"
 SCHEDULES_DATE_URL = f"{API_BASE}/v1/schedules/date"
 SCHEDULES_MOVIES_URL = f"{API_BASE}/v1/schedules/movies"
 
-# Rate limiting: 4 requests per second
-RATE_LIMIT = 4  # requests per second
-MIN_INTERVAL = 1.0 / RATE_LIMIT  # 0.25 seconds between requests
+# Rate limiting: 5 requests per second
+RATE_LIMIT = 5  # requests per second
+MIN_INTERVAL = 1.0 / RATE_LIMIT  # 0.20 seconds between requests
 
 
 class CineRadarScraperV2:

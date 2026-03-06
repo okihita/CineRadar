@@ -41,7 +41,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Constants
-RATE_LIMIT = 4  # requests per second (conservative to avoid rate limiting)
+RATE_LIMIT = 5  # requests per second (conservative to avoid rate limiting)
 TOKEN_REFRESH_THRESHOLD = 25 * 60  # 25 minutes in seconds
 MERCHANT_PATHS = {
     "CGV": "cgv",
