@@ -4,7 +4,7 @@ name: Daily Initial Scrape
 
 on:
   schedule:
-    - cron: '0 18 * * *'  # 01:00 WIB (18:00 UTC)
+    - cron: '15 18 * * *'  # 01:15 WIB (18:15 UTC) to avoid top-of-hour congestion
   workflow_dispatch:
 
 jobs:
