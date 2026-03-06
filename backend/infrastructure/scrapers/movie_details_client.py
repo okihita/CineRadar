@@ -11,14 +11,12 @@ from typing import Any
 import httpx
 
 from backend.infrastructure.core.config import API_BASE, USER_AGENT
+from backend.infrastructure.core.guest_token import fetch_guest_token
 
 logger = logging.getLogger(__name__)
 
 # Endpoint for movie details - uses /v1 API path
 MOVIE_DETAILS_ENDPOINT = f"{API_BASE}/v1/movies"
-
-
-from backend.infrastructure.core.guest_token import fetch_guest_token
 
 
 class MovieDetailsClient:
@@ -50,7 +48,7 @@ class MovieDetailsClient:
         """
         try:
             guest_token = await fetch_guest_token()
-            
+
             if guest_token and guest_token.token:
                 self._token = guest_token.token
                 return True

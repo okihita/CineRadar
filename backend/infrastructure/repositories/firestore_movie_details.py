@@ -60,9 +60,9 @@ class FirestoreMovieDetailsRepository:
         """
         try:
             movie_id = movie_details.movie_id
-            
+
             if not movie_id:
-                logger.warning(f"⚠️ Cannot save movie details: missing movie_id")
+                logger.warning("⚠️ Cannot save movie details: missing movie_id")
                 return False
 
             data = movie_details.to_dict()
