@@ -469,6 +469,7 @@ def save_daily_snapshot(data: dict[str, Any]) -> bool:
             slim_movies.append(
                 {
                     "id": m.get("id"),
+                    "tix_metadata_id": m.get("tix_metadata_id"),
                     "title": m.get("title"),
                     "genres": m.get("genres", []),
                     "poster": m.get("poster"),

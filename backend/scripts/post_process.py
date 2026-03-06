@@ -72,6 +72,7 @@ def load_schedules_as_movies(db: firestore.Client, date: str) -> list[dict[str, 
 
         movie: dict[str, Any] = {
             "id": data.get("movie_id"),
+            "tix_metadata_id": data.get("tix_metadata_id"),
             "title": data.get("title"),
             "poster": data.get("poster", ""),
             "genres": data.get("genres", []),

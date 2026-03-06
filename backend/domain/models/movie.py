@@ -202,8 +202,9 @@ class Movie:
         False
     """
 
-    id: str
+    id: str  # This legacy field stores the schedule ID
     title: str
+    tix_metadata_id: str | None = None  # The actual TIX.id metadata lookup key
     genres: list[str] = field(default_factory=list)
     poster: str | None = None
     age_category: str | None = None
@@ -237,6 +238,7 @@ class Movie:
         return {
             "id": self.id,
             "title": self.title,
+            "tix_metadata_id": self.tix_metadata_id,
             "genres": self.genres,
             "poster": self.poster,
             "age_category": self.age_category,
@@ -259,6 +261,7 @@ class Movie:
         return cls(
             id=data.get("id", ""),
             title=data.get("title", ""),
+            tix_metadata_id=data.get("tix_metadata_id"),
             genres=data.get("genres", []),
             poster=data.get("poster"),
             age_category=data.get("age_category"),

@@ -63,7 +63,7 @@ def run_movie_details_scrape(
                 logger.error("❌ No movies found in latest snapshot")
                 return None
 
-            movie_ids = [m.id for m in snapshot.movies]
+            movie_ids = [m.tix_metadata_id or m.id for m in snapshot.movies]
             logger.info(f"📋 Found {len(movie_ids)} movies in latest snapshot")
         else:
             logger.error("❌ Specify --movie-id, --all, or --from-performance")
