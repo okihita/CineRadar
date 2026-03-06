@@ -77,7 +77,7 @@ class ScrapeMovieDetailsUseCase:
 
         try:
             # Load authentication token
-            if not self.client.load_token():
+            if not await self.client.load_token():
                 return ScrapeMovieDetailsResult(
                     total_requested=total,
                     scraped_count=0,

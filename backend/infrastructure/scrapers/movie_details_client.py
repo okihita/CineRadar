@@ -18,6 +18,9 @@ logger = logging.getLogger(__name__)
 MOVIE_DETAILS_ENDPOINT = f"{API_BASE}/v1/movies"
 
 
+from backend.infrastructure.core.guest_token import fetch_guest_token
+
+
 class MovieDetailsClient:
     """HTTP client for fetching movie details.
 
@@ -25,7 +28,7 @@ class MovieDetailsClient:
 
     Example:
         client = MovieDetailsClient()
-        client.load_token()  # Load from Firestore
+        await client.load_token()  # Fetch guest token
         data = await client.fetch(movie_id="1991446452714422272")
         if data:
             print(data["name"])
@@ -39,26 +42,20 @@ class MovieDetailsClient:
         """Set the authentication token."""
         self._token = token
 
-    def load_token(self) -> bool:
-        """Load authentication token from Firestore.
+    async def load_token(self) -> bool:
+        """Load authentication token using guest token generator.
 
         Returns:
             True if token loaded successfully
         """
-        from backend.infrastructure.repositories.firestore_token import (
-            FirestoreTokenRepository,
-        )
-
         try:
-            repo = FirestoreTokenRepository()
-            token_info = repo.get_token_info()
-
-            if token_info and token_info.get("token"):
-                self._token = str(token_info["token"])
-                logger.info("✅ Loaded auth token from Firestore")
+            guest_token = await fetch_guest_token()
+            
+            if guest_token and guest_token.token:
+                self._token = guest_token.token
                 return True
 
-            logger.warning("⚠️ No token found in Firestore")
+            logger.warning("⚠️ Failed to acquire guest token")
             return False
 
         except Exception as e:
@@ -70,6 +67,7 @@ class MovieDetailsClient:
         headers = {
             "Accept": "application/json",
             "User-Agent": USER_AGENT,
+            "platform": "web",
         }
         if self._token:
             headers["Authorization"] = f"Bearer {self._token}"
