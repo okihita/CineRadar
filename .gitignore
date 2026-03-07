@@ -29,9 +29,6 @@ data/seats_*.json
 data/jit_granular/
 data/live_seat_snapshot.json
 !data/.gitkeep
-!data/cities.json
-!data/geocode_cache.json
-!data/places_cache.json
 
 # Keep env example
 !.env.example
