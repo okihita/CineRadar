@@ -1,0 +1,20 @@
+curl 'https://api-b2b.tix.id/v1/cities?name=' \
+  -H 'accept: */*' \
+  -H 'accept-language: en-US,en;q=0.9' \
+  -H 'access-control-allow-origin: *' \
+  -H 'app_version: 1.0.0' \
+  -H 'authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ0aXgtYjJiIiwic3ViIjoiTW9iaWxlIGF1dGhvcml6YXRpb24gdG9rZW4iLCJleHAiOjE3NzI4ODYyNTEsImlhdCI6MTc3Mjg4NDQ1MSwic2lkIjoiMDE5Y2M4MjUtZTBmOS03YzFmLWExMTEtNDE1NzI0YjAwYWY3IiwibXNpc2RuIjoiIiwidXNlcl9pZCI6IiIsInBhcnRuZXJfaWQiOiJXbFJpSkQwWjNaREMvaXhESW0wWTJvdzk3L09NOER6UW5qUnpybXJaMVNFTVJBOXh1SmdwSUpnak9CYmFZOWpyKzB0QXVxY1dtZXM0cHQzYlZ0Tmh2Zz09IiwiYXV0aF9zaWduIjoiIiwicHVycG9zZSI6Imd1ZXN0IiwicGFydG5lcl9uYW1lIjoiVElYIElEIFdlYiIsInBhcnRuZXJfdHlwZSI6IlBBWU1FTlRfSU5URVJOQUwiLCJwYXJ0bmVyX2FjY2Vzc190b2tlbiI6IiJ9.lKV-64Vp72xPWUw0XCS_7zsC_9xUtJhgFF_PaNpkqj0' \
+  -H 'device_id: 019c5c3c-75f1-7c90-9228-5cff3995296d' \
+  -H 'dnt: 1' \
+  -H 'lang: en' \
+  -H 'origin: https://app.tix.id' \
+  -H 'platform: web' \
+  -H 'priority: u=1, i' \
+  -H 'sec-ch-ua: "Not:A-Brand";v="99", "Google Chrome";v="145", "Chromium";v="145"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "macOS"' \
+  -H 'sec-fetch-dest: empty' \
+  -H 'sec-fetch-mode: cors' \
+  -H 'sec-fetch-site: same-site' \
+  -H 'session_id: 019cc825-e05d-7b91-b824-61ed5a145808' \
+  -H 'user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36'
