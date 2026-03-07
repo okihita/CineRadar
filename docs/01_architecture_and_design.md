@@ -139,6 +139,9 @@ Final persistence is handled by dedicated Python CLI tools at the end of the wor
 
 ### Token Lifecycle
 
+> ℹ️ **Note on Roles**
+> Token refresh logic is exclusively managed by the **Scraper**. The **Dispatcher** only reads schedules and assigns tasks; it never attempts to fetch, check, or refresh authentication tokens.
+
 ```mermaid
 flowchart TD
     A[Initial: API Login via RSA] --> B[Obtain tokens from TIX]

@@ -3,19 +3,18 @@
 This document analyzes the cost, performance, and strategic viability of hosting the new M-Tix scraper on GitHub Actions versus Google Cloud Platform (GCP) Cloud Functions (or Cloud Run).
 
 ## 1. Current State: The TIX ID GitHub Actions Scraper
-The existing `daily-initial-scrape.yml` uses a highly aggressive parallel matrix strategy:
+The existing `daily-initial-scrape.yml` uses a single runner strategy:
 - **Frequency:** Once daily (06:00 WIB).
-- **Concurrency:** 9 parallel Ubuntu runners (`batch: [0...8]`).
-- **Dependencies:** Installs Python 3.12, `uv`, and downloads Chromium via Playwright (very heavy initialization).
+- **Concurrency:** Single Ubuntu runner.
+- **Dependencies:** Installs Python 3.12 and `uv` (fast initialization).
 - **Timeout Limit:** 30 minutes per job.
 
 ### 1.1 GitHub Actions Quota Analysis
 - **Free Tier:** GitHub provides **2,000 minutes/month** of free Ubuntu runner time for private repositories.
 - **Current Burn Rate (Estimated):**
-  - If each 9 parallel jobs takes ~10 minutes to run (including Chromium install): 90 minutes.
-  - Plus the `merge` job (~2 minutes): 92 minutes/day.
-  - **Monthly Total:** ~2,760 minutes/month.
-- **Conclusion:** The current TIX ID scraper is heavily pushing the boundary of the GitHub free tier, likely requiring paid minutes or relying on public repository unlimited minutes (if the repo is public).
+  - The single job takes ~10-15 minutes to run.
+  - **Monthly Total:** ~450 minutes/month.
+- **Conclusion:** The current TIX ID scraper comfortably fits within the GitHub free tier.
 
 ## 2. Workload Estimation for the M-Tix Scraper
 Unlike the TIX ID Playwright scraper, the M-Tix scraper requires **Zero Browser Overhead**. It is purely making AES-encrypted HTTP `GET`/`POST` requests.
@@ -25,7 +24,7 @@ Unlike the TIX ID Playwright scraper, the M-Tix scraper requires **Zero Browser 
 - **Phase 3 (Schedules):** ~150-300 HTTP requests. Execution time: < 2 minutes.
 - **Phase 4 (Live Seats - Optional):** Variable, but purely REST APIs.
 
-Because the bottleneck is purely network I/O and M-Tix API rate limiting (not local CPU headless rendering), the execution time is incredibly fast, but running it in 9 parallel batches on GitHub Actions is massive overkill.
+Because the bottleneck is purely network I/O and M-Tix API rate limiting, the execution time is incredibly fast, meaning a simple single runner on GitHub Actions is more than sufficient.
 
 ## 3. Cost & Architecture Comparison
 

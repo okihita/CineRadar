@@ -37,7 +37,7 @@ Create these files in the root directory:
 | `TIX_JWT` | **String** | Initial TIX.id Bearer token (from browser) |
 | `TIX_REFRESH_TOKEN` | **String** | 90-day refresh token for rotation |
 | `NEXT_PUBLIC_API_URL` | **URL** | `http://localhost:3000/api` (Dev) |
-| `NEXT_PUBLIC_MAPBOX_TOKEN` | **String** | For rendering Heatmaps |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | **String** | For interactive Google Maps visualizations |
 
 ### 3. Google Cloud Credentials
 Download the Service Account key from GCP IAM console (`cineradar-prod`).
