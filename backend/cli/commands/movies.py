@@ -11,17 +11,15 @@ from typing import Any
 
 from backend.domain.time import JAKARTA_TZ
 from backend.infrastructure.city_data import CITIES
-from backend.infrastructure.core.tix_client import CineRadarScraper
+from backend.infrastructure.core.tix_client_v2 import CineRadarScraperV2
 
 logger = logging.getLogger(__name__)
 
 
 def run_movie_scrape(
     output_dir: str = "data",
-    headless: bool = True,
     city_limit: int | None = None,
     specific_city: str | None = None,
-    schedules: bool = False,
     batch: int | None = None,
     total_batches: int = 9,
     max_retries: int = 3,
@@ -29,7 +27,7 @@ def run_movie_scrape(
     """Run the movie availability scraper with retry logic."""
 
     async def _run() -> dict[str, Any] | None:
-        scraper = CineRadarScraper()
+        scraper = CineRadarScraperV2()
         output_path = Path(output_dir)
         output_path.mkdir(exist_ok=True)
 
@@ -60,14 +58,13 @@ def run_movie_scrape(
         result = None
         for attempt in range(max_retries):
             try:
-                result = await scraper.scrape(
-                    headless=headless,
+                result = await scraper.scrape_and_upload(
                     city_limit=city_limit,
                     specific_city=specific_city,
                     city_names=city_names,
-                    fetch_schedules=schedules,
+                    dry_run=True,  # Match the V1 CLI behavior of writing locally without pushing to DB
                 )
-                if result and result.get("movies"):
+                if result and result.get("success"):
                     break
             except Exception as e:
                 logger.error(f"⚠️ Attempt {attempt + 1}/{max_retries} failed: {e}")
@@ -76,12 +73,15 @@ def run_movie_scrape(
                     logger.info(f"   Retrying in {wait}s...")
                     await asyncio.sleep(wait)
 
-        if not result or not result.get("movies"):
+        if not result or not result.get("success"):
             logger.error("❌ No data collected after retries.")
             return None
 
         # Summary
-        logger.info(f"\n📊 Cities: {result['total_cities']}, Movies: {result['total_movies']}")
+        total_cities = result.get("total_cities", len(CITIES))
+        stats = result.get("stats", {})
+        total_movies = stats.get("total_movies", 0)
+        logger.info(f"\n📊 Cities: {total_cities}, Movies: {total_movies}")
 
         # Save results
         if batch is not None:
@@ -95,8 +95,10 @@ def run_movie_scrape(
                     "scraped_at": timestamp,
                     "date": date_str,
                     "batch": batch,
-                    "movies": result["movies"],
-                    "city_stats": result["city_stats"],
+                    "stats": result.get("stats"),
+                    "movies": result.get("movies_for_firestore", len(result.get("results", []))),
+                    "api_requests": result.get("api_requests"),
+                    "results": result.get("results"),
                 },
                 f,
                 indent=2,

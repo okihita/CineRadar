@@ -37,10 +37,8 @@ Examples:
 
     # Movies subcommand
     movies_parser = subparsers.add_parser("movies", help="Scrape movie availability")
-    movies_parser.add_argument("--visible", action="store_true", help="Show browser window")
     movies_parser.add_argument("--limit", type=int, help="Limit number of cities")
     movies_parser.add_argument("--city", type=str, help="Scrape specific city")
-    movies_parser.add_argument("--schedules", action="store_true", help="Include schedules")
     movies_parser.add_argument("--output", default="data", help="Output directory")
     movies_parser.add_argument("--batch", type=int, help="Batch number (0-indexed)")
     movies_parser.add_argument("--total-batches", type=int, default=9)
@@ -85,10 +83,8 @@ Examples:
     if args.command == "movies":
         run_movie_scrape(
             output_dir=args.output,
-            headless=not args.visible,
             city_limit=args.limit,
             specific_city=args.city,
-            schedules=args.schedules,
             batch=args.batch,
             total_batches=args.total_batches,
         )

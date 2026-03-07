@@ -21,11 +21,11 @@ if __name__ == "__main__":
     else:
         # Old style: run movie scrape directly (backward compatible)
         # Import directly from command module to ensure it works even if cli.py structure changes further
-        parser = argparse.ArgumentParser(description="CineRadar - TIX.id Movie Scraper")
-        parser.add_argument("--visible", action="store_true")
+        parser = argparse.ArgumentParser(
+            description="CineRadar - TIX.id Movie Scraper (Legacy fallback)"
+        )
         parser.add_argument("--limit", type=int)
         parser.add_argument("--city", type=str)
-        parser.add_argument("--schedules", action="store_true")
         parser.add_argument("--output", default="data")
         parser.add_argument("--batch", type=int, help="Batch number (0-indexed)")
         parser.add_argument("--total-batches", type=int, default=9)
@@ -34,10 +34,8 @@ if __name__ == "__main__":
 
         run_movie_scrape(
             output_dir=args.output,
-            headless=not args.visible,
             city_limit=args.limit,
             specific_city=args.city,
-            schedules=args.schedules,
             batch=args.batch,
             total_batches=args.total_batches,
         )
