@@ -41,7 +41,7 @@ export async function GET() {
         )) as unknown as MovieWithStats[];
 
         // Fetch today's stats for each movie in batches to avoid overwhelming Firestore
-        const BATCH_SIZE = 5;
+        const BATCH_SIZE = 20;
         const moviesWithStats: MovieWithStats[] = [];
 
         for (let i = 0; i < movies.length; i += BATCH_SIZE) {
@@ -49,10 +49,10 @@ export async function GET() {
             const results = await Promise.all(
                 batch.map(async (movie) => {
                     try {
-                        const days = await firestoreRestClient.getSubCollection(
-                            `movie_performance/${movie.id}/days`
+                        const todayStats = await firestoreRestClient.getDocument(
+                            `movie_performance/${movie.id}/days`,
+                            today
                         );
-                        const todayStats = days.find((d) => d.date === today);
                         return {
                             ...movie,
                             today: todayStats ? {
