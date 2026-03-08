@@ -179,35 +179,44 @@ class TheatreSchedule:
 
 
 @dataclass
-class Movie:
-    """A movie with all its schedules across cities.
+class MovieSchedule:
+    """A movie's schedule allocation for a specific date.
 
-    The primary entity in the domain. Contains movie metadata
-    and schedules organized by city.
+    This represents WHERE and WHEN a movie is showing, not the movie itself.
+    The same movie can have different schedule allocations across cinema chains.
+
+    TIX.id uses a dual-ID system:
+    - schedule_id: Changes when movie moves between cinema chains; used for showtime queries
+    - metadata_id: Immutable movie entity identifier; used for movie details
 
     Attributes:
-        id: TIX.id movie identifier
+        schedule_id: TIX.id schedule allocation ID (was 'id')
         title: Movie title
+        metadata_id: TIX.id movie entity ID (was 'tix_metadata_id')
         genres: List of genre names
         poster: Poster image URL
         age_category: Age rating (SU, R, D, etc.)
-        merchants: Cinema chains showing this movie
+        merchants: Cinema chains showing this movie on this date
         is_presale: Whether this is advance ticket sales
-        cities: List of cities where movie is showing
+        cities: List of cities where movie is showing on this date
         schedules: City -> List of theatre schedules
 
     Example:
-        >>> movie = Movie(id="123", title="Avatar")
-        >>> movie.total_theatres
+        >>> schedule = MovieSchedule(
+        ...     schedule_id="1996107175268794368",
+        ...     metadata_id="1996107160261574656",
+        ...     title="Avatar"
+        ... )
+        >>> schedule.total_theatres
         0
-        >>> movie.is_showing_in("JAKARTA")
+        >>> schedule.is_showing_in("JAKARTA")
         False
 
     """
 
-    id: str  # This legacy field stores the schedule ID
+    schedule_id: str  # TIX schedule allocation ID (was 'id')
     title: str
-    tix_metadata_id: str | None = None  # The actual TIX.id metadata lookup key
+    metadata_id: str | None = None  # TIX movie entity ID (was 'tix_metadata_id')
     genres: list[str] = field(default_factory=list)
     poster: str | None = None
     age_category: str | None = None
@@ -216,6 +225,18 @@ class Movie:
     is_presale: bool = False
     cities: list[str] = field(default_factory=list)
     schedules: dict[str, list[TheatreSchedule]] = field(default_factory=dict)
+
+    # Backward compatibility: allow 'id' as alias for 'schedule_id'
+    @property
+    def id(self) -> str:
+        """Backward compatibility alias for schedule_id."""
+        return self.schedule_id
+
+    # Backward compatibility: allow 'tix_metadata_id' as alias for 'metadata_id'
+    @property
+    def tix_metadata_id(self) -> str | None:
+        """Backward compatibility alias for metadata_id."""
+        return self.metadata_id
 
     @property
     def total_theatres(self) -> int:
@@ -237,11 +258,19 @@ class Movie:
         return self.schedules.get(city.upper(), [])
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for serialization."""
+        """Convert to dictionary for serialization.
+
+        Uses new field names but includes backward-compatible aliases.
+        """
         return {
-            "id": self.id,
+            # New field names (preferred)
+            "schedule_id": self.schedule_id,
+            "metadata_id": self.metadata_id,
+            # Backward compatibility aliases
+            "id": self.schedule_id,
+            "tix_metadata_id": self.metadata_id,
+            # Other fields
             "title": self.title,
-            "tix_metadata_id": self.tix_metadata_id,
             "genres": self.genres,
             "poster": self.poster,
             "age_category": self.age_category,
@@ -255,16 +284,23 @@ class Movie:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Movie":
-        """Create from dictionary."""
+    def from_dict(cls, data: dict[str, Any]) -> "MovieSchedule":
+        """Create from dictionary.
+
+        Accepts both new field names and legacy field names for backward compatibility.
+        """
         schedules = {}
         for city, theatres in data.get("schedules", {}).items():
             schedules[city] = [TheatreSchedule.from_dict(t) for t in theatres]
 
+        # Support both new and legacy field names
+        schedule_id = data.get("schedule_id") or data.get("id", "")
+        metadata_id = data.get("metadata_id") or data.get("tix_metadata_id")
+
         return cls(
-            id=data.get("id", ""),
+            schedule_id=schedule_id,
             title=data.get("title", ""),
-            tix_metadata_id=data.get("tix_metadata_id"),
+            metadata_id=metadata_id,
             genres=data.get("genres", []),
             poster=data.get("poster"),
             age_category=data.get("age_category"),
@@ -274,6 +310,10 @@ class Movie:
             cities=data.get("cities", []),
             schedules=schedules,
         )
+
+
+# Backward compatibility alias
+Movie = MovieSchedule
 
 
 @dataclass

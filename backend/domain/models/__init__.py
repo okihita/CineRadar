@@ -5,7 +5,8 @@ No external dependencies - these can be used anywhere.
 """
 
 from backend.domain.models.movie import (
-    Movie,
+    Movie,  # Backward compatibility alias for MovieSchedule
+    MovieSchedule,
     Room,
     ScrapeResult,
     Showtime,
@@ -32,9 +33,10 @@ __all__ = [
     "Cast",
     "DailyPerformance",
     "Genre",
-    "Movie",
+    "Movie",  # Backward compatibility alias for MovieSchedule
     "MovieDetails",
     "MovieMetadata",
+    "MovieSchedule",
     "RatingScore",
     "Room",
     "ScrapeResult",
