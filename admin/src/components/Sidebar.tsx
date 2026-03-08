@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, MapPin, Film, ChevronLeft, ChevronRight, Database, Calendar, Clapperboard, Sun, Moon, Monitor } from 'lucide-react';
+import { LayoutDashboard, MapPin, Film, ChevronLeft, ChevronRight, Database, Calendar, Clapperboard, Sun, Moon, Monitor, Layers } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useDarkModeContext } from '@/hooks';
@@ -37,6 +37,12 @@ const menuItems = [
     description: 'Daily coverage & analysis',
     href: '/schedules',
     icon: Calendar,
+  },
+  {
+    title: 'Schedules V2',
+    description: 'Metadata ID validation',
+    href: '/schedules_v2',
+    icon: Layers,
   },
   {
     title: 'Scraper Monitor',
