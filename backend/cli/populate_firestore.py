@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 def main() -> None:
-    # Use project root data/ directory (same as merge_batches.py)
+    # Use project root data/ directory
     project_root = Path(__file__).parent.parent.parent
     data_dir = project_root / "data"
 

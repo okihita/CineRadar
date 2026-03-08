@@ -111,7 +111,6 @@ flowchart LR
 | Component | Source File | Purpose |
 |-----------|-------------|---------|
 | **Scraper** | [`backend/infrastructure/core/tix_client.py`](../backend/infrastructure/core/tix_client.py) | Deep scraper logic |
-| **Merger** | [`backend/cli/merge_batches.py`](../backend/cli/merge_batches.py) | JSON combination logic |
 | **Validator** | [`backend/cli/validate.py`](../backend/cli/validate.py) | Schema integrity checks |
 | **Uploader** | [`backend/cli/populate_firestore.py`](../backend/cli/populate_firestore.py) | Batch write to Firestore |
 

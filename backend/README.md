@@ -199,7 +199,6 @@ We follow **Clean Architecture** principles. The dependency rule is strict: inne
       - `refresh_token.py`: Headless browser automation to log in to TIX.id and refresh the JWT.
       - `movie_performance.py`: Aggregates seat snapshots into movie performance metrics.
       - `monthly_geocode.py`: Batched job to geocode new theatres using Google Maps/OSM.
-      - `merge_batches.py`: Utility to combine partial JSON results from parallel scrapers.
       - `populate_firestore.py`: Utility to upload scraped JSON data to Firestore.
       - `validate.py`: Quality assurance script that runs sanity checks on scraped data.
     - `functions/`:
