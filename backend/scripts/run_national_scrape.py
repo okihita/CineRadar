@@ -1,5 +1,5 @@
 #!/usr/env python3
-"""Run national scrape with V2 scraper.
+"""Run national scrape with API scraper.
 
 This is the entry point for the daily initial scrape.
 
@@ -16,7 +16,7 @@ import time
 
 sys.path.insert(0, ".")
 
-from backend.infrastructure.core.tix_client_v2 import CineRadarScraperV2
+from backend.infrastructure.core.tix_client import CineRadarScraper
 
 # Configure logging
 logging.basicConfig(
@@ -29,12 +29,12 @@ logger = logging.getLogger(__name__)
 
 async def main() -> None:
     logger.info("=" * 60)
-    logger.info("CineRadar V2 National Scrape")
+    logger.info("CineRadar API National Scrape")
     logger.info("=" * 60)
     logger.info("Rate limit: 4 req/sec")
     logger.info("Estimated time: ~10-15 minutes")
 
-    scraper = CineRadarScraperV2(rate_limit=4)
+    scraper = CineRadarScraper(rate_limit=4)
 
     start = time.time()
     result = await scraper.scrape_and_upload(dry_run=False)

@@ -9,7 +9,7 @@ from typing import Any
 
 from backend.domain.time import JAKARTA_TZ
 from backend.infrastructure.city_data import CITIES
-from backend.infrastructure.core.tix_client_v2 import CineRadarScraperV2
+from backend.infrastructure.core.tix_client import CineRadarScraper
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ def run_movie_scrape(
     """Run the movie availability scraper with retry logic."""
 
     async def _run() -> dict[str, Any] | None:
-        scraper = CineRadarScraperV2()
+        scraper = CineRadarScraper()
         output_path = Path(output_dir)
         output_path.mkdir(exist_ok=True)
 

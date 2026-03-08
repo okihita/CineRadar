@@ -1,4 +1,4 @@
-# Daily Initial Scraper - V2 API Edition
+# Daily Initial Scraper - API Edition
 # Pure HTTP API scraper (no Playwright required)
 name: Daily Initial Scrape
 
@@ -23,9 +23,9 @@ jobs:
 
       - name: Install dependencies
         run: uv sync
-        # NOTE: No Playwright installation needed - V2 uses pure HTTP API
+        # NOTE: No Playwright installation needed - pure HTTP API
 
-      - name: Run V2 API scraper
+      - name: Run API scraper
         run: PYTHONPATH=. uv run python backend/scripts/run_national_scrape.py
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}

@@ -1,4 +1,4 @@
-"""CineRadar TIX.id Scraper Client V2
+"""CineRadar TIX.id Scraper Client
 Pure API implementation.
 
 This is a migration-friendly version that uses direct HTTP API calls
@@ -43,7 +43,7 @@ RATE_LIMIT = 5  # requests per second
 MIN_INTERVAL = 1.0 / RATE_LIMIT  # 0.20 seconds between requests
 
 
-class CineRadarScraperV2:
+class CineRadarScraper:
     """Movie availability scraper for TIX.id - Pure API version."""
 
     def __init__(self, rate_limit: int = RATE_LIMIT) -> None:
@@ -367,7 +367,7 @@ class CineRadarScraperV2:
             Dict with movies and stats
 
         """
-        logger.info("🎬 Starting V2 API-only movie scrape...")
+        logger.info("🎬 Starting API-only movie scrape...")
 
         # Get today's date in Jakarta time
         from backend.domain.time import JAKARTA_TZ
@@ -431,9 +431,9 @@ class CineRadarScraperV2:
         }
 
     def transform_for_firestore(self, scrape_result: dict[str, Any]) -> list[dict[str, Any]]:
-        """Transform V2 scrape results to Firestore document format.
+        """Transform scrape results to Firestore document format.
 
-        V2 output is organized by city, but Firestore expects per-movie documents
+        Output is organized by city, but Firestore expects per-movie documents
         with a 'cities' dict containing {city_name: [theatres]}.
 
         Args:
@@ -514,7 +514,7 @@ class CineRadarScraperV2:
                 **movie,
                 "date": date,
                 "uploaded_at": datetime.now(UTC).isoformat(),
-                "source": "v2_api",
+                "source": "api",
             }
 
             # Write to schedules/{date}/movies/{movie_id}

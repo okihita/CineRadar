@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Post-processing script for V2 scraper.
+"""Post-processing script for the API scraper.
 
-Handles the following tasks after V2 scrape completes:
+Handles the following tasks after a scrape completes:
 1. Update snapshots/latest - for movie-details command
 2. Sync theatres to theatres collection
 3. Log initial scrape status
@@ -52,7 +52,7 @@ def get_firestore_client() -> firestore.Client:
 def load_schedules_as_movies(db: firestore.Client, date: str) -> list[dict[str, Any]]:
     """Load schedules and convert to movies format for post-processing.
 
-    The V2 scraper writes to schedules/{date}/movies/{movie_id}.
+    The scraper writes to schedules/{date}/movies/{movie_id}.
     This reads them back and converts to the format expected by
     save_daily_snapshot and sync_theatres_from_scrape.
     """
@@ -65,8 +65,8 @@ def load_schedules_as_movies(db: firestore.Client, date: str) -> list[dict[str, 
     for doc in docs:
         data = doc.to_dict()
 
-        # Convert V2 format to legacy format expected by post-processing
-        # V2 has: { movie_id, title, cities: {city_name: [theatres]} }
+        # Convert new format to legacy format expected by post-processing
+        # Scraper has: { movie_id, title, cities: {city_name: [theatres]} }
         # Legacy expects: { id, title, schedules: {city_name: [theatres]} }
 
         movie: dict[str, Any] = {
@@ -141,7 +141,7 @@ def log_scrape_status(movies: list[dict[str, Any]], city_stats: dict[str, int]) 
 
 def main() -> None:
     logger.info("=" * 60)
-    logger.info("CineRadar V2 Post-Processing")
+    logger.info("CineRadar Post-Processing")
     logger.info("=" * 60)
 
     # Get today's date in Jakarta timezone

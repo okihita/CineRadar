@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Test the V2 scraper.
+"""Test the API scraper.
 
 Usage:
-    PYTHONPATH=. uv run python backend/scripts/test_scraper_v2.py
-    PYTHONPATH=. uv run python backend/scripts/test_scraper_v2.py --city SURABAYA
-    PYTHONPATH=. uv run python backend/scripts/test_scraper_v2.py --limit 5
+    PYTHONPATH=. uv run python backend/scripts/test_scraper.py
+    PYTHONPATH=. uv run python backend/scripts/test_scraper.py --city SURABAYA
+    PYTHONPATH=. uv run python backend/scripts/test_scraper.py --limit 5
 """
 
 import argparse
@@ -14,7 +14,7 @@ import sys
 
 sys.path.insert(0, ".")
 
-from backend.infrastructure.core.tix_client_v2 import CineRadarScraperV2
+from backend.infrastructure.core.tix_client import CineRadarScraper
 
 # Configure logging
 logging.basicConfig(
@@ -26,12 +26,12 @@ logger = logging.getLogger(__name__)
 
 
 async def test_scraper(city: str | None = None, limit: int = 3) -> int:
-    """Test the V2 scraper."""
+    """Test the API scraper."""
     logger.info("=" * 60)
-    logger.info("CineRadarScraperV2 Test")
+    logger.info("CineRadarScraper Test")
     logger.info("=" * 60)
 
-    scraper = CineRadarScraperV2()
+    scraper = CineRadarScraper()
 
     if city:
         logger.info(f"Testing with city: {city}")
@@ -85,7 +85,7 @@ async def test_scraper(city: str | None = None, limit: int = 3) -> int:
 
 def main() -> None:
     """Main entry point."""
-    parser = argparse.ArgumentParser(description="Test the V2 scraper")
+    parser = argparse.ArgumentParser(description="Test the API scraper")
     parser.add_argument("--city", type=str, help="Specific city to test")
     parser.add_argument("--limit", type=int, default=3, help="Number of cities to test")
     args = parser.parse_args()
