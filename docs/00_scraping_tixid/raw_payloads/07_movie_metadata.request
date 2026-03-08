@@ -1,0 +1,20 @@
+curl 'https://api-b2b.tix.id/v1/movies/2018610437561597952' \
+  -H 'accept: */*' \
+  -H 'accept-language: en-US,en;q=0.9' \
+  -H 'access-control-allow-origin: *' \
+  -H 'app_version: 1.0.0' \
+  -H 'authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ0aXgtYjJiIiwic3ViIjoiTW9iaWxlIGF1dGhvcml6YXRpb24gdG9rZW4iLCJleHAiOjE3NzMwMDI5NTYsImlhdCI6MTc3MzAwMTE1Niwic2lkIjoiMDE5Y2NmMWEtYTcyNC03YzgxLThkNjYtODg0YmEzMWM5MzllIiwibXNpc2RuIjoiIiwidXNlcl9pZCI6IiIsInBhcnRuZXJfaWQiOiI3bXRNRHZuSm82Q2ZCeWhFSkkyN2VlQ0NqNURjS0NpVGNpK2g4eEJNSFNWQXppNmJpSTd3aENkU2tLZitQUGdhZ1poSlZKMSs1MjM1djRFcGVoQVUzQT09IiwiYXV0aF9zaWduIjoiIiwicHVycG9zZSI6Imd1ZXN0IiwicGFydG5lcl9uYW1lIjoiVElYIElEIFdlYiIsInBhcnRuZXJfdHlwZSI6IlBBWU1FTlRfSU5URVJOQUwiLCJwYXJ0bmVyX2FjY2Vzc190b2tlbiI6IiJ9.cHnqmlvVlSBQdP61vtbzyoaoOwV1m2p2wZ_Y4b1_xUQ' \
+  -H 'device_id: 019c5c3c-75f1-7c90-9228-5cff3995296d' \
+  -H 'dnt: 1' \
+  -H 'lang: en' \
+  -H 'origin: https://app.tix.id' \
+  -H 'platform: web' \
+  -H 'priority: u=1, i' \
+  -H 'sec-ch-ua: "Not:A-Brand";v="99", "Google Chrome";v="145", "Chromium";v="145"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "macOS"' \
+  -H 'sec-fetch-dest: empty' \
+  -H 'sec-fetch-mode: cors' \
+  -H 'sec-fetch-site: same-site' \
+  -H 'session_id: 019ccf1a-a660-74ac-889b-56e90bbddcc0' \
+  -H 'user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36'

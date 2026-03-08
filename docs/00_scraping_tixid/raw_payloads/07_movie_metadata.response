@@ -1,0 +1,695 @@
+{
+    "success": true,
+    "data": {
+        "id": "2018610439113490432",
+        "movie_id": "2018610437561597952",
+        "name": "HOPPERS",
+        "trailer": {
+            "type": "youtube",
+            "key": "PypDSyIRRSs",
+            "path": "https://youtu.be/PypDSyIRRSs",
+            "thumbnail": "https://asset.tix.id/movie_poster_v2/9aed1fae-012e-4404-a4a9-50a9a83f4455.webp"
+        },
+        "poster_path": "https://asset.tix.id/movie_poster_v2/5ade25fe-2759-491f-a714-c0106d09d844.webp",
+        "casts": [
+            {
+                "name": "Daniel Chong",
+                "profile_photo": "https://image.tmdb.org/t/p/h632/gMYqVwLdoaPhIFyWUAQrRlGGjkE.jpg",
+                "cast_type": "Director",
+                "character": ""
+            },
+            {
+                "name": "",
+                "profile_photo": "https://image.tmdb.org/t/p/h632/iPEnDuW6CYRLaEphS3bD0b8K656.jpg",
+                "cast_type": "Actor",
+                "character": "Mabel Tanaka / Mabel Beaver (voice)"
+            },
+            {
+                "name": "Bobby Moynihan",
+                "profile_photo": "https://image.tmdb.org/t/p/h632/gOvwNz5joi5yWJ7dAhuF8WA2aas.jpg",
+                "cast_type": "Actor",
+                "character": "King George (voice)"
+            },
+            {
+                "name": "Jon Hamm",
+                "profile_photo": "https://image.tmdb.org/t/p/h632/mrXE5fZbEDPc7BEE5G21J6qrwzi.jpg",
+                "cast_type": "Actor",
+                "character": "Mayor Jerry Generazzo (voice)"
+            },
+            {
+                "name": "",
+                "profile_photo": "https://image.tmdb.org/t/p/h632/nqbZF7Igr0SC8Xq8y0jwmx0mLDN.jpg",
+                "cast_type": "Actor",
+                "character": "Dr. Sam (voice)"
+            },
+            {
+                "name": "",
+                "profile_photo": "https://image.tmdb.org/t/p/h632/lgzjs56hk0ucf2rwQnSG5U3Q49i.jpg",
+                "cast_type": "Actor",
+                "character": "Titus (voice)"
+            },
+            {
+                "name": "Eduardo Franco",
+                "profile_photo": "https://image.tmdb.org/t/p/h632/FOnx5Rg8L7xvEWkBhNoXwhELd6.jpg",
+                "cast_type": "Actor",
+                "character": "Loaf (voice)"
+            },
+            {
+                "name": "Aparna Nancherla",
+                "profile_photo": "https://image.tmdb.org/t/p/h632/vwpktqJnQCAGEfq2EKUjB8ZdnhI.jpg",
+                "cast_type": "Actor",
+                "character": "Nisha (voice)"
+            },
+            {
+                "name": "Tom Law",
+                "profile_photo": "",
+                "cast_type": "Actor",
+                "character": "Tom Lizard (voice)"
+            },
+            {
+                "name": "Sam Richardson",
+                "profile_photo": "https://image.tmdb.org/t/p/h632/hUN7IIbegvL7aSqQI5KRWoqqJLm.jpg",
+                "cast_type": "Actor",
+                "character": "Conner (voice)"
+            },
+            {
+                "name": "Melissa Villaseñor",
+                "profile_photo": "https://image.tmdb.org/t/p/h632/144VoO4M5sU0Mn4lpTOYQFAgNVO.jpg",
+                "cast_type": "Actor",
+                "character": "Ellen (voice)"
+            },
+            {
+                "name": "",
+                "profile_photo": "https://image.tmdb.org/t/p/h632/8OIhQb53rMX7VcTLZbAMeVd7tHc.jpg",
+                "cast_type": "Actor",
+                "character": "Bird King (voice)"
+            },
+            {
+                "name": "",
+                "profile_photo": "https://image.tmdb.org/t/p/h632/8wdCJVDq7v4g5N9Qkv8D87B3Xne.jpg",
+                "cast_type": "Actor",
+                "character": "Amphibian King (voice)"
+            },
+            {
+                "name": "Ego Nwodim",
+                "profile_photo": "https://image.tmdb.org/t/p/h632/1vpud1BpXvbJUy0OO3B8Vl24nlp.jpg",
+                "cast_type": "Actor",
+                "character": "Fish Queen (voice)"
+            },
+            {
+                "name": "",
+                "profile_photo": "https://image.tmdb.org/t/p/h632/j7QUSfmbUNR89imZs3ZOt4tW2uH.jpg",
+                "cast_type": "Actor",
+                "character": "Reptile Queens (voice)"
+            },
+            {
+                "name": "Meryl Streep",
+                "profile_photo": "https://image.tmdb.org/t/p/h632/g5cVxQBAQ3AXt3LhdBXtbbN47Uc.jpg",
+                "cast_type": "Actor",
+                "character": "Insect Queen (voice)"
+            },
+            {
+                "name": "",
+                "profile_photo": "https://image.tmdb.org/t/p/h632/dBB3L3EiEKJG2Ww3k0ecsUHgu2T.jpg",
+                "cast_type": "Actor",
+                "character": "Flock of Birds (voice)"
+            },
+            {
+                "name": "Karen Huie",
+                "profile_photo": "https://image.tmdb.org/t/p/h632/aJfKOnA80bfgLEh9oacjdGIq6Or.jpg",
+                "cast_type": "Actor",
+                "character": "Grandma Tanaka (voice)"
+            },
+            {
+                "name": "Vanessa Bayer",
+                "profile_photo": "https://image.tmdb.org/t/p/h632/8IUjlVY8l7S7BEVhfHzKNgVGpUX.jpg",
+                "cast_type": "Actor",
+                "character": "Diane (voice)"
+            },
+            {
+                "name": "Ava Morse",
+                "profile_photo": "https://image.tmdb.org/t/p/h632/xHTaD3IIRRFJzkCuauFbcRbXuC2.jpg",
+                "cast_type": "Actor",
+                "character": "Additional Voices (voice)"
+            }
+        ],
+        "images": [
+            "https://image.tmdb.org/t/p/w1280/2RrLuIfIzGWWIH8IAEo6o0IYHmx.jpg",
+            "https://image.tmdb.org/t/p/w1280/CD8alzNm4VUowOsYWNzMvO0flo.jpg",
+            "https://image.tmdb.org/t/p/w1280/7GubSLYWCmmvB208fclLooG8tpN.jpg",
+            "https://image.tmdb.org/t/p/w1280/5rlnS87v7T9VXNizbrQNTXf73fo.jpg",
+            "https://image.tmdb.org/t/p/w1280/yLFYiGxjFRVoJ0Bs427SE1eHVxo.jpg",
+            "https://image.tmdb.org/t/p/w1280/3gM4xYuRQiSZDj2qz3IQHTGY1xb.jpg",
+            "https://image.tmdb.org/t/p/w1280/6eoKWa89CoU5Vhf8MbqjsNCs6SN.jpg",
+            "https://image.tmdb.org/t/p/w1280/1oqNHtVupMgMQyLcY22vpG5DF58.jpg",
+            "https://image.tmdb.org/t/p/w1280/hFcF4hsEaY73UuTSm1P6JDUxfQ0.jpg",
+            "https://image.tmdb.org/t/p/w1280/19s4DNIDKbK1zXFxov5J4ECFogl.jpg",
+            "https://image.tmdb.org/t/p/w1280/7cmxKPjsoGhBXYYZ42shMKIdrNC.jpg",
+            "https://image.tmdb.org/t/p/w1280/j6PQtExzItfzaaLWENyNmZVB7Nd.jpg",
+            "https://image.tmdb.org/t/p/w1280/7Zk07DUBunUp9E1LtLK63jJGiDk.jpg",
+            "https://image.tmdb.org/t/p/w1280/eHGuxEYWvtTUAaXu4hq6Co6h5GU.jpg",
+            "https://image.tmdb.org/t/p/w1280/hiakixRgbIFo3X2URGdTEcaT1a3.jpg",
+            "https://image.tmdb.org/t/p/w1280/3fLViA0F5deWlYB5c6MQD60xYNv.jpg",
+            "https://image.tmdb.org/t/p/w1280/x91763uieHs7u0TbJalHQDECAGj.jpg",
+            "https://image.tmdb.org/t/p/w1280/n1gp9MMfLGSI77pIJjEAIITzV2J.jpg",
+            "https://image.tmdb.org/t/p/w1280/kJnjt0tdITAKY9LTiRixCtjWu7X.jpg",
+            "https://image.tmdb.org/t/p/w1280/j8IvNjQa7gbqc3mtrdYVKeOhfBF.jpg",
+            "https://image.tmdb.org/t/p/w1280/astUCNT4JRHZxHeiKA8M3y8XsII.jpg",
+            "https://image.tmdb.org/t/p/w1280/u02mnl5YbcBRQHICFwwBMdOzTAx.jpg",
+            "https://image.tmdb.org/t/p/w1280/h1XpPUiqD1aklLwZwRbvtRc3gnK.jpg",
+            "https://image.tmdb.org/t/p/w1280/8aeblmfhl6pYqJbjSAhAk5icJWG.jpg",
+            "https://image.tmdb.org/t/p/w1280/di1Lhkhd3lRQZLrCKaEhEmNtVMN.jpg",
+            "https://image.tmdb.org/t/p/w1280/cmeZPGeX1wrxykiARQJMEd9Dmtl.jpg",
+            "https://image.tmdb.org/t/p/w1280/5ir2bS8ZxcWTeMAy6o6JwcTdBoc.jpg",
+            "https://image.tmdb.org/t/p/w1280/2KgUj3Fmw6DiwJDpIBdXHLOBzSF.jpg",
+            "https://image.tmdb.org/t/p/w1280/nSyXRKI8PyJxJ6oPJFcR6LT0syM.jpg",
+            "https://image.tmdb.org/t/p/w1280/32neu30FQR4DEPybp3ReyW0xCet.jpg",
+            "https://image.tmdb.org/t/p/w1280/ldgb9pXWIatsphdBIqXLFtr7xwk.jpg",
+            "https://image.tmdb.org/t/p/w1280/72u3NJQRqYfg4cAERX72MDciRV1.jpg",
+            "https://image.tmdb.org/t/p/w1280/uvYQ8NDHT7oKoVnoTqKYTBDCoUu.jpg",
+            "https://image.tmdb.org/t/p/w1280/o559hchNsUjdaWWNx6oLUyuafze.jpg",
+            "https://image.tmdb.org/t/p/w1280/AwnXZ7aMsVAjv9FZUjoV8kF8CXg.jpg",
+            "https://image.tmdb.org/t/p/w1280/9hXKhXhXVDT1Egclc2MI7obW3I0.jpg",
+            "https://image.tmdb.org/t/p/w1280/f5J01rP6X7Dzm9az6eJY8n20C6Y.jpg",
+            "https://image.tmdb.org/t/p/w1280/llErxe14hIbSInCkPa0DeHaDTOB.jpg",
+            "https://image.tmdb.org/t/p/w1280/lmfwmsb6Fkh2ohYmgF2DpGTXzvM.jpg",
+            "https://image.tmdb.org/t/p/w1280/6YqkfiKAzQIeI5oAUNmQ4ShNAoh.jpg",
+            "https://image.tmdb.org/t/p/w1280/jj3ohaYX5FdyUGb343hFxl4PXpT.jpg"
+        ],
+        "videos": [
+            {
+                "id": "2019086441992167424",
+                "type": "youtube",
+                "key": "kbhOZig4Wqw",
+                "path": "https://youtu.be/kbhOZig4Wqw",
+                "thumbnail": "https://img.youtube.com/vi/kbhOZig4Wqw/mqdefault.jpg",
+                "title": "\"Get Tickets\""
+            },
+            {
+                "id": "2021260591401803776",
+                "type": "youtube",
+                "key": "fvhsuFCH3tM",
+                "path": "https://youtu.be/fvhsuFCH3tM",
+                "thumbnail": "https://img.youtube.com/vi/fvhsuFCH3tM/mqdefault.jpg",
+                "title": "unhinged, laugh out loud hilarious, and Pixar's funniest movie..."
+            },
+            {
+                "id": "2029235619774865408",
+                "type": "youtube",
+                "key": "wkelCAmdd0w",
+                "path": "https://youtu.be/wkelCAmdd0w",
+                "thumbnail": "https://img.youtube.com/vi/wkelCAmdd0w/mqdefault.jpg",
+                "title": "Pedigree"
+            },
+            {
+                "id": "2019086441845366784",
+                "type": "youtube",
+                "key": "ac6THD6h2yk",
+                "path": "https://youtu.be/ac6THD6h2yk",
+                "thumbnail": "https://img.youtube.com/vi/ac6THD6h2yk/mqdefault.jpg",
+                "title": "Get Tickets"
+            },
+            {
+                "id": "2029235619690979328",
+                "type": "youtube",
+                "key": "ZLGXdPG065g",
+                "path": "https://youtu.be/ZLGXdPG065g",
+                "thumbnail": "https://img.youtube.com/vi/ZLGXdPG065g/mqdefault.jpg",
+                "title": "Party"
+            },
+            {
+                "id": "2020901081059434496",
+                "type": "youtube",
+                "key": "JfxHGluyOno",
+                "path": "https://youtu.be/JfxHGluyOno",
+                "thumbnail": "https://img.youtube.com/vi/JfxHGluyOno/mqdefault.jpg",
+                "title": "\"Big Game Spot\""
+            },
+            {
+                "id": "2019086442143162368",
+                "type": "youtube",
+                "key": "PypDSyIRRSs",
+                "path": "https://youtu.be/PypDSyIRRSs",
+                "thumbnail": "https://img.youtube.com/vi/PypDSyIRRSs/mqdefault.jpg",
+                "title": "Official Trailer"
+            },
+            {
+                "id": "2019086442176716800",
+                "type": "youtube",
+                "key": "hJnAHzo4-KI",
+                "path": "https://youtu.be/hJnAHzo4-KI",
+                "thumbnail": "https://img.youtube.com/vi/hJnAHzo4-KI/mqdefault.jpg",
+                "title": "Teaser Trailer"
+            },
+            {
+                "id": "2019086442021527552",
+                "type": "youtube",
+                "key": "NQITqtfIMjY",
+                "path": "https://youtu.be/NQITqtfIMjY",
+                "thumbnail": "https://img.youtube.com/vi/NQITqtfIMjY/mqdefault.jpg",
+                "title": "Special Look"
+            },
+            {
+                "id": "2019086441958612992",
+                "type": "youtube",
+                "key": "wCOmjtjCzOM",
+                "path": "https://youtu.be/wCOmjtjCzOM",
+                "thumbnail": "https://img.youtube.com/vi/wCOmjtjCzOM/mqdefault.jpg",
+                "title": "Stick around and get your tickets NOW for Hoppers arriving in theaters March 6!"
+            },
+            {
+                "id": "2029235619451904000",
+                "type": "youtube",
+                "key": "TP456QqIo0s",
+                "path": "https://youtu.be/TP456QqIo0s",
+                "thumbnail": "https://img.youtube.com/vi/TP456QqIo0s/mqdefault.jpg",
+                "title": "The talking stick"
+            },
+            {
+                "id": "2029235619581927424",
+                "type": "youtube",
+                "key": "2N2DKof1DAA",
+                "path": "https://youtu.be/2N2DKof1DAA",
+                "thumbnail": "https://img.youtube.com/vi/2N2DKof1DAA/mqdefault.jpg",
+                "title": "Get to Know Our Hoppers Characters"
+            },
+            {
+                "id": "2019086442101219328",
+                "type": "youtube",
+                "key": "85erKvStN1c",
+                "path": "https://youtu.be/85erKvStN1c",
+                "thumbnail": "https://img.youtube.com/vi/85erKvStN1c/mqdefault.jpg",
+                "title": "All hail the (insect) queen 🦋👑 Meryl Streep joins the cast of Hoppers."
+            },
+            {
+                "id": "2022699334918742016",
+                "type": "youtube",
+                "key": "xh9ThqEBWAw",
+                "path": "https://youtu.be/xh9ThqEBWAw",
+                "thumbnail": "https://img.youtube.com/vi/xh9ThqEBWAw/mqdefault.jpg",
+                "title": "“Pixar's Funniest Movie Ever\""
+            },
+            {
+                "id": "2029235619644841984",
+                "type": "youtube",
+                "key": "tkYf_ARUFZw",
+                "path": "https://youtu.be/tkYf_ARUFZw",
+                "thumbnail": "https://img.youtube.com/vi/tkYf_ARUFZw/mqdefault.jpg",
+                "title": "The Right Thing"
+            },
+            {
+                "id": "2019086441920864256",
+                "type": "youtube",
+                "key": "99MXIOGFT5A",
+                "path": "https://youtu.be/99MXIOGFT5A",
+                "thumbnail": "https://img.youtube.com/vi/99MXIOGFT5A/mqdefault.jpg",
+                "title": "Tickets Now Available"
+            },
+            {
+                "id": "2019086442063470592",
+                "type": "youtube",
+                "key": "GsFdFLAxM1I",
+                "path": "https://youtu.be/GsFdFLAxM1I",
+                "thumbnail": "https://img.youtube.com/vi/GsFdFLAxM1I/mqdefault.jpg",
+                "title": "Happy New Year from Tom"
+            },
+            {
+                "id": "2030319769164455936",
+                "type": "youtube",
+                "key": "lchLiXjy8XI",
+                "path": "https://youtu.be/lchLiXjy8XI",
+                "thumbnail": "https://img.youtube.com/vi/lchLiXjy8XI/mqdefault.jpg",
+                "title": "piper was about ready to crash out"
+            },
+            {
+                "id": "2028510813672710144",
+                "type": "youtube",
+                "key": "wArSvliPdF4",
+                "path": "https://youtu.be/wArSvliPdF4",
+                "thumbnail": "https://img.youtube.com/vi/wArSvliPdF4/mqdefault.jpg",
+                "title": "When you overhear PIPING HOT tea"
+            },
+            {
+                "id": "2029597864455315456",
+                "type": "youtube",
+                "key": "e2DpOiMmGZg",
+                "path": "https://youtu.be/e2DpOiMmGZg",
+                "thumbnail": "https://img.youtube.com/vi/e2DpOiMmGZg/mqdefault.jpg",
+                "title": "See Jon Hamm as Mayor Jerry in Hoppers."
+            },
+            {
+                "id": "2028510813727236096",
+                "type": "youtube",
+                "key": "L5YfDD4wBbM",
+                "path": "https://youtu.be/L5YfDD4wBbM",
+                "thumbnail": "https://img.youtube.com/vi/L5YfDD4wBbM/mqdefault.jpg",
+                "title": "POV: It's Friday"
+            },
+            {
+                "id": "2030319769562914816",
+                "type": "youtube",
+                "key": "NizV5WtFVag",
+                "path": "https://youtu.be/NizV5WtFVag",
+                "thumbnail": "https://img.youtube.com/vi/NizV5WtFVag/mqdefault.jpg",
+                "title": "Wild Wild Thoughts"
+            },
+            {
+                "id": "2028873059150077952",
+                "type": "youtube",
+                "key": "XI0YaR_IWaI",
+                "path": "https://youtu.be/XI0YaR_IWaI",
+                "thumbnail": "https://img.youtube.com/vi/XI0YaR_IWaI/mqdefault.jpg",
+                "title": "we did not hold back"
+            },
+            {
+                "id": "2028148251416338432",
+                "type": "youtube",
+                "key": "5L_Gt2bCQfw",
+                "path": "https://youtu.be/5L_Gt2bCQfw",
+                "thumbnail": "https://img.youtube.com/vi/5L_Gt2bCQfw/mqdefault.jpg",
+                "title": "Don't forget to get your tickets for Hoppers!!"
+            },
+            {
+                "id": "2029235619510624256",
+                "type": "youtube",
+                "key": "cANiJ7Qp8t8",
+                "path": "https://youtu.be/cANiJ7Qp8t8",
+                "thumbnail": "https://img.youtube.com/vi/cANiJ7Qp8t8/mqdefault.jpg",
+                "title": "Lizard Lizard Lizard!"
+            },
+            {
+                "id": "2029597864333680640",
+                "type": "youtube",
+                "key": "FZoXe_OgRb8",
+                "path": "https://youtu.be/FZoXe_OgRb8",
+                "thumbnail": "https://img.youtube.com/vi/FZoXe_OgRb8/mqdefault.jpg",
+                "title": "See what everyone can’t stop talking about"
+            },
+            {
+                "id": "2030319769063792640",
+                "type": "youtube",
+                "key": "vcclC8fRREg",
+                "path": "https://youtu.be/vcclC8fRREg",
+                "thumbnail": "https://img.youtube.com/vi/vcclC8fRREg/mqdefault.jpg",
+                "title": "Inside the Hoppers UK Premiere in London! Cast & Filmmakers on the Yellow Carpet"
+            },
+            {
+                "id": "2030319769328033792",
+                "type": "youtube",
+                "key": "ug5UVrVMjpk",
+                "path": "https://youtu.be/ug5UVrVMjpk",
+                "thumbnail": "https://img.youtube.com/vi/ug5UVrVMjpk/mqdefault.jpg",
+                "title": "ta-daaaah"
+            },
+            {
+                "id": "2028148251521196032",
+                "type": "youtube",
+                "key": "QnwOAVw_UEc",
+                "path": "https://youtu.be/QnwOAVw_UEc",
+                "thumbnail": "https://img.youtube.com/vi/QnwOAVw_UEc/mqdefault.jpg",
+                "title": "From the pond to the premiere"
+            },
+            {
+                "id": "2028510813530103808",
+                "type": "youtube",
+                "key": "z4aSItp3OSI",
+                "path": "https://youtu.be/z4aSItp3OSI",
+                "thumbnail": "https://img.youtube.com/vi/z4aSItp3OSI/mqdefault.jpg",
+                "title": "Hoppers Cast & Creatives in the UK"
+            },
+            {
+                "id": "2024886096311099392",
+                "type": "youtube",
+                "key": "33NYTMlhVzU",
+                "path": "https://youtu.be/33NYTMlhVzU",
+                "thumbnail": "https://img.youtube.com/vi/33NYTMlhVzU/mqdefault.jpg",
+                "title": "What are Pixar's Pond Rules?!"
+            },
+            {
+                "id": "2029597864493064192",
+                "type": "youtube",
+                "key": "pxgYN0pkemM",
+                "path": "https://youtu.be/pxgYN0pkemM",
+                "thumbnail": "https://img.youtube.com/vi/pxgYN0pkemM/mqdefault.jpg",
+                "title": "Certified Fresh"
+            },
+            {
+                "id": "2030319769231564800",
+                "type": "youtube",
+                "key": "K3Mq8Kxid2s",
+                "path": "https://youtu.be/K3Mq8Kxid2s",
+                "thumbnail": "https://img.youtube.com/vi/K3Mq8Kxid2s/mqdefault.jpg",
+                "title": "All Hoppers Easter Eggs You Missed! Cast & Director Interview"
+            },
+            {
+                "id": "2029235619539984384",
+                "type": "youtube",
+                "key": "niXWX5scUD8",
+                "path": "https://youtu.be/niXWX5scUD8",
+                "thumbnail": "https://img.youtube.com/vi/niXWX5scUD8/mqdefault.jpg",
+                "title": "it's time to answer the call of the wild."
+            },
+            {
+                "id": "2028510813618184192",
+                "type": "youtube",
+                "key": "kjW4pgyDzJY",
+                "path": "https://youtu.be/kjW4pgyDzJY",
+                "thumbnail": "https://img.youtube.com/vi/kjW4pgyDzJY/mqdefault.jpg",
+                "title": "POV: You're the Personality Hire"
+            },
+            {
+                "id": "2030319769294479360",
+                "type": "youtube",
+                "key": "JPCrZfwySMo",
+                "path": "https://youtu.be/JPCrZfwySMo",
+                "thumbnail": "https://img.youtube.com/vi/JPCrZfwySMo/mqdefault.jpg",
+                "title": "Alan Carr & Amanda Holden Join Hoppers! Meet Amanda the Spider & Alan the Squirrel"
+            },
+            {
+                "id": "2030319769265119232",
+                "type": "youtube",
+                "key": "vpG1AwmIyHk",
+                "path": "https://youtu.be/vpG1AwmIyHk",
+                "thumbnail": "https://img.youtube.com/vi/vpG1AwmIyHk/mqdefault.jpg",
+                "title": "Hoppers Is Out Now!"
+            },
+            {
+                "id": "2030319769361588224",
+                "type": "youtube",
+                "key": "QIrjP6h9WjI",
+                "path": "https://youtu.be/QIrjP6h9WjI",
+                "thumbnail": "https://img.youtube.com/vi/QIrjP6h9WjI/mqdefault.jpg",
+                "title": "do you think he said lizard"
+            },
+            {
+                "id": "2028148251483447296",
+                "type": "youtube",
+                "key": "fFguvgqSehw",
+                "path": "https://youtu.be/fFguvgqSehw",
+                "thumbnail": "https://img.youtube.com/vi/fFguvgqSehw/mqdefault.jpg",
+                "title": "Don't miss out!"
+            },
+            {
+                "id": "2028148251609276416",
+                "type": "youtube",
+                "key": "cYjESO7xxZ0",
+                "path": "https://youtu.be/cYjESO7xxZ0",
+                "thumbnail": "https://img.youtube.com/vi/cYjESO7xxZ0/mqdefault.jpg",
+                "title": "Absolutely ❌no words❌"
+            },
+            {
+                "id": "2029597864409178112",
+                "type": "youtube",
+                "key": "jF571PgcuK4",
+                "path": "https://youtu.be/jF571PgcuK4",
+                "thumbnail": "https://img.youtube.com/vi/jF571PgcuK4/mqdefault.jpg",
+                "title": "Bobby does Piper's DITL voiceover"
+            },
+            {
+                "id": "2019086441774063616",
+                "type": "youtube",
+                "key": "n9gQT3pHgd0",
+                "path": "https://youtu.be/n9gQT3pHgd0",
+                "thumbnail": "https://img.youtube.com/vi/n9gQT3pHgd0/mqdefault.jpg",
+                "title": "It's going to blow your mind."
+            },
+            {
+                "id": "2019086441811812352",
+                "type": "youtube",
+                "key": "O7a17sbBMvs",
+                "path": "https://youtu.be/O7a17sbBMvs",
+                "thumbnail": "https://img.youtube.com/vi/O7a17sbBMvs/mqdefault.jpg",
+                "title": "Class is in session: Hopping 101"
+            },
+            {
+                "id": "2030319769130901504",
+                "type": "youtube",
+                "key": "3Gf2NRxmdTI",
+                "path": "https://youtu.be/3Gf2NRxmdTI",
+                "thumbnail": "https://img.youtube.com/vi/3Gf2NRxmdTI/mqdefault.jpg",
+                "title": "Enough said"
+            },
+            {
+                "id": "2023074003748397056",
+                "type": "youtube",
+                "key": "nIKsi-Ud3w8",
+                "path": "https://youtu.be/nIKsi-Ud3w8",
+                "thumbnail": "https://img.youtube.com/vi/nIKsi-Ud3w8/mqdefault.jpg",
+                "title": "Hoppy Valentines"
+            },
+            {
+                "id": "2028873059233964032",
+                "type": "youtube",
+                "key": "G8iy0PeFMos",
+                "path": "https://youtu.be/G8iy0PeFMos",
+                "thumbnail": "https://img.youtube.com/vi/G8iy0PeFMos/mqdefault.jpg",
+                "title": "A day in the life as a robot beaver"
+            },
+            {
+                "id": "2028510813437829120",
+                "type": "youtube",
+                "key": "AuNB89gLPyw",
+                "path": "https://youtu.be/AuNB89gLPyw",
+                "thumbnail": "https://img.youtube.com/vi/AuNB89gLPyw/mqdefault.jpg",
+                "title": "On the Yellow Carpet: Hoppers UK Premiere"
+            },
+            {
+                "id": "2029235619384795136",
+                "type": "youtube",
+                "key": "XrP-zlJpr4Y",
+                "path": "https://youtu.be/XrP-zlJpr4Y",
+                "thumbnail": "https://img.youtube.com/vi/XrP-zlJpr4Y/mqdefault.jpg",
+                "title": "Fight Back"
+            },
+            {
+                "id": "2019086441883115520",
+                "type": "youtube",
+                "key": "1XpeFjhbsas",
+                "path": "https://youtu.be/1XpeFjhbsas",
+                "thumbnail": "https://img.youtube.com/vi/1XpeFjhbsas/mqdefault.jpg",
+                "title": "Are you ready to hop into IMAX?"
+            },
+            {
+                "id": "2028148251567333376",
+                "type": "youtube",
+                "key": "Hkf0EqgfFJw",
+                "path": "https://youtu.be/Hkf0EqgfFJw",
+                "thumbnail": "https://img.youtube.com/vi/Hkf0EqgfFJw/mqdefault.jpg",
+                "title": "🎟️🦎🎟️🦎🎟️🦎🎟️🦎🎟️🦎"
+            },
+            {
+                "id": "2030319769206398976",
+                "type": "youtube",
+                "key": "kGbJLFrn7pc",
+                "path": "https://youtu.be/kGbJLFrn7pc",
+                "thumbnail": "https://img.youtube.com/vi/kGbJLFrn7pc/mqdefault.jpg",
+                "title": "🦎NOW PLAYING🦎NOW PLAYING🦎"
+            },
+            {
+                "id": "2030319769097347072",
+                "type": "youtube",
+                "key": "LBE8668jt1E",
+                "path": "https://youtu.be/LBE8668jt1E",
+                "thumbnail": "https://img.youtube.com/vi/LBE8668jt1E/mqdefault.jpg",
+                "title": "🤯🤯🤯"
+            },
+            {
+                "id": "2028148251449892864",
+                "type": "youtube",
+                "key": "bpjO_l37qTw",
+                "path": "https://youtu.be/bpjO_l37qTw",
+                "thumbnail": "https://img.youtube.com/vi/bpjO_l37qTw/mqdefault.jpg",
+                "title": "Hoppers is instantly iconic!"
+            },
+            {
+                "id": "2029960326119694336",
+                "type": "youtube",
+                "key": "EQ988qE-2TQ",
+                "path": "https://youtu.be/EQ988qE-2TQ",
+                "thumbnail": "https://img.youtube.com/vi/EQ988qE-2TQ/mqdefault.jpg",
+                "title": "THIS 🧠 into THIS 🦫"
+            },
+            {
+                "id": "2025244345510141952",
+                "type": "youtube",
+                "key": "PCL6CJKmR-Q",
+                "path": "https://youtu.be/PCL6CJKmR-Q",
+                "thumbnail": "https://img.youtube.com/vi/PCL6CJKmR-Q/mqdefault.jpg",
+                "title": "HOPPERS CAMEO: THE BIG REVEAL"
+            },
+            {
+                "id": "2029235619841974272",
+                "type": "youtube",
+                "key": "7EfxXHm37H8",
+                "path": "https://youtu.be/7EfxXHm37H8",
+                "thumbnail": "https://img.youtube.com/vi/7EfxXHm37H8/mqdefault.jpg",
+                "title": "IHOP"
+            },
+            {
+                "id": "2029235619485458432",
+                "type": "youtube",
+                "key": "EGQt_7nY_6w",
+                "path": "https://youtu.be/EGQt_7nY_6w",
+                "thumbnail": "https://img.youtube.com/vi/EGQt_7nY_6w/mqdefault.jpg",
+                "title": "Wildlife Camera 10hr Nature Ambiance"
+            },
+            {
+                "id": "2029597864648253440",
+                "type": "youtube",
+                "key": "9UDDgJICN0o",
+                "path": "https://youtu.be/9UDDgJICN0o",
+                "thumbnail": "https://img.youtube.com/vi/9UDDgJICN0o/mqdefault.jpg",
+                "title": "Cute Until Provoked"
+            },
+            {
+                "id": "2029235619418349568",
+                "type": "youtube",
+                "key": "1i1R8Ynb2IE",
+                "path": "https://youtu.be/1i1R8Ynb2IE",
+                "thumbnail": "https://img.youtube.com/vi/1i1R8Ynb2IE/mqdefault.jpg",
+                "title": "See Pixar’s funniest movie ever"
+            },
+            {
+                "id": "2028510813479772160",
+                "type": "youtube",
+                "key": "4eTY9trAHqQ",
+                "path": "https://youtu.be/4eTY9trAHqQ",
+                "thumbnail": "https://img.youtube.com/vi/4eTY9trAHqQ/mqdefault.jpg",
+                "title": "A quick hop through everything you need to know before Hoppers"
+            }
+        ],
+        "status": "NOW_PLAYING",
+        "presale_flag": 0,
+        "release_date": 1772290800,
+        "synopsis": "<p>Seorang gadis berusia 19 tahun pencinta hewan menggunakan teknologi yang menempatkan kesadarannya ke dalam robot berang-berang untuk mengungkap misteri di dunia hewan di luar imajinasinya.</p>",
+        "production_company": "Walt Disney Pictures",
+        "actor": "Piper Curda, Bobby Moynihan, Jon Hamm, Kathy Najimy, Dave Franco, Meryl Streep, Eduardo Franco, Aparna Nancherla, Sam Richardson",
+        "genres": [
+            {
+                "id": "1585",
+                "name": "Animation"
+            }
+        ],
+        "duration": 104,
+        "trailer_path": "https://web3.21cineplex.com/movie-trailer/26HOPS.mp4",
+        "trailer_thumbnail_path": "https://asset.tix.id/movie_poster_v2/9aed1fae-012e-4404-a4a9-50a9a83f4455.webp",
+        "producer": "Nicole Paradis Grindle",
+        "director": "Daniel Chong",
+        "age_category": "SU",
+        "age_category_message": "",
+        "information": "Scientists have discovered how to 'hop' human consciousness into lifelike robotic animals, allowing people to communicate with animals as animals. Animal lover Mabel seizes an opportunity to use the technology, uncovering mysteries within the animal world beyond anything she could have imagined.",
+        "rating_score": {
+            "vote_average": 9.6,
+            "vote_count": 581,
+            "average_source": 1,
+            "detail": {
+                "1": 0,
+                "2": 0,
+                "3": 0,
+                "4": 11,
+                "5": 89
+            }
+        },
+        "country": "USA"
+    }
+}
