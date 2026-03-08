@@ -1,5 +1,4 @@
-"""
-Token Refresher Utility
+"""Token Refresher Utility.
 
 Provides a unified interface for token refresh with automatic fallback:
 1. Try API refresh (fast, uses refresh_token)
@@ -45,12 +44,12 @@ class TokenRefresher:
     GHA_TIMEOUT = 300  # Max seconds to wait for GHA workflow
 
     def __init__(self, github_token: str | None = None):
-        """
-        Initialize the refresher.
+        """Initialize the refresher.
 
         Args:
             github_token: GitHub PAT for triggering workflows.
                          Falls back to GITHUB_TOKEN env var.
+
         """
         self.repo = FirestoreTokenRepository()
         self.github_token = github_token or os.environ.get("GITHUB_TOKEN")
@@ -69,14 +68,14 @@ class TokenRefresher:
         return token.minutes_until_expiry < self.MIN_TTL_MINUTES
 
     async def try_api_refresh(self, refresh_token: str) -> tuple[str | None, str | None]:
-        """
-        Attempt to refresh access token via API.
+        """Attempt to refresh access token via API.
 
         Args:
             refresh_token: The 91-day refresh token
 
         Returns:
             Tuple of (new_access_token, new_refresh_token), or (None, None) if failed
+
         """
         logger.info("🔄 Attempting API token refresh...")
 
@@ -112,11 +111,11 @@ class TokenRefresher:
         return None, None
 
     async def trigger_gha_workflow(self) -> str | None:
-        """
-        Trigger the token-refresh GHA workflow.
+        """Trigger the token-refresh GHA workflow.
 
         Returns:
             Run ID if triggered successfully, None otherwise
+
         """
         if not self.github_token:
             logger.error("❌ No GITHUB_TOKEN available for workflow dispatch")
@@ -168,11 +167,11 @@ class TokenRefresher:
         return None
 
     async def wait_for_gha_completion(self, run_id: str) -> bool:
-        """
-        Wait for GHA workflow to complete.
+        """Wait for GHA workflow to complete.
 
         Returns:
             True if workflow succeeded, False otherwise
+
         """
         if run_id == "triggered":
             # Can't track without run ID, just wait a fixed time
@@ -221,14 +220,14 @@ class TokenRefresher:
         return False
 
     async def ensure_valid_token(self) -> Token:
-        """
-        Ensure a valid token is available, refreshing if needed.
+        """Ensure a valid token is available, refreshing if needed.
 
         Returns:
             Valid Token object
 
         Raises:
             TokenRefreshError: If all refresh methods fail
+
         """
         # Check current token
         token = self.get_current_token()

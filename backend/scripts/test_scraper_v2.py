@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Test the V2 scraper.
+"""Test the V2 scraper.
 
 Usage:
     PYTHONPATH=. uv run python backend/scripts/test_scraper_v2.py

@@ -1,6 +1,4 @@
-"""
-Seats command for CLI.
-"""
+"""Seats command for CLI."""
 
 import asyncio
 import json
@@ -81,8 +79,7 @@ def extract_showtimes_from_data(
 def filter_jit_showtimes(
     showtimes: list[dict[str, Any]], window_minutes: int = 20
 ) -> list[dict[str, Any]]:
-    """
-    Filter showtimes to capture at T-20 minutes before start.
+    """Filter showtimes to capture at T-20 minutes before start.
 
     Default window: showtimes starting in 5-25 minutes from now.
     For hourly JIT runs, use window_minutes=60 to get showtimes in 5-65 minutes.
@@ -94,6 +91,7 @@ def filter_jit_showtimes(
 
     Returns:
         Filtered list of showtimes in the target window
+
     """
     now = datetime.now()
     cutoff_minutes = 5  # TIX.id closes booking 5 minutes before showtime

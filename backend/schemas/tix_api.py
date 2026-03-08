@@ -1,5 +1,4 @@
-"""
-TIX.id API Response Schemas
+"""TIX.id API Response Schemas
 Validates and parses JSON responses from TIX.id B2B API.
 """
 

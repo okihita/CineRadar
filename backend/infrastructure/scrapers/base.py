@@ -1,5 +1,4 @@
-"""
-CineRadar Base Scraper
+"""CineRadar Base Scraper.
 
 Common functionality for all TIX.id scrapers.
 Provides browser initialization, login, and logging.
@@ -45,6 +44,7 @@ class BaseScraper:
 
         Returns:
             GuestToken if successful, None otherwise
+
         """
         self.log("🎫 Fetching Guest Token via API...")
         guest = await fetch_guest_token()
@@ -60,6 +60,7 @@ class BaseScraper:
 
         Args:
             message: Message to log
+
         """
         logger.info(message)
 
@@ -68,5 +69,6 @@ class BaseScraper:
 
         Returns:
             True if auth_token is set
+
         """
         return bool(self.auth_token)

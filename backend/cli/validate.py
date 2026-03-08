@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-CineRadar Data Validator
+"""CineRadar Data Validator
 Validates scraped data before Firestore upload.
 
 Usage:
@@ -32,6 +31,7 @@ def validate_daily_scrape(data_dir: str = "data", file_path: str | None = None) 
 
     Returns:
         True if validation passed, False otherwise
+
     """
     from backend.schemas.movie import DailySnapshotSchema
 

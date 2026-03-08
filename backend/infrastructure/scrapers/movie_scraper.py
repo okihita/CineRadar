@@ -1,5 +1,4 @@
-"""
-TIX.id Movie Scraper (Deprecated)
+"""TIX.id Movie Scraper (Deprecated).
 
 Implements IMovieScraper interface for scraping movie data from TIX.id.
 Playwright V1 scraper has been permanently removed.

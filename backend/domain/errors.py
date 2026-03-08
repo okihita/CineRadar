@@ -1,5 +1,4 @@
-"""
-CineRadar Domain Errors
+"""CineRadar Domain Errors.
 
 Custom exception hierarchy for clear error handling across the application.
 All exceptions inherit from CineRadarError for easy catching.

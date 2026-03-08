@@ -1,5 +1,4 @@
-"""
-Firestore Token Repository
+"""Firestore Token Repository.
 
 Implements ITokenRepository using Firebase Firestore.
 """
@@ -31,6 +30,7 @@ class FirestoreTokenRepository(ITokenRepository):
         if repo.is_valid():
             current = repo.get_current()
             print(f"Token valid for {current.minutes_until_expiry} min")
+
     """
 
     COLLECTION = "auth_tokens"
@@ -59,6 +59,7 @@ class FirestoreTokenRepository(ITokenRepository):
 
         Raises:
             FirestoreError: If store fails
+
         """
         try:
             doc_ref = self.db.collection(self.COLLECTION).document(self.DOC_ID)
@@ -72,6 +73,7 @@ class FirestoreTokenRepository(ITokenRepository):
 
         Returns:
             Token or None if no token stored
+
         """
         try:
             doc_ref = self.db.collection(self.COLLECTION).document(self.DOC_ID)
@@ -92,6 +94,7 @@ class FirestoreTokenRepository(ITokenRepository):
 
         Returns:
             True if token exists and not expired
+
         """
         token = self.get_current()
         return token is not None and not token.is_expired
@@ -104,6 +107,7 @@ class FirestoreTokenRepository(ITokenRepository):
 
         Returns:
             True if token has sufficient TTL
+
         """
         token = self.get_current()
         if not token:
@@ -115,6 +119,7 @@ class FirestoreTokenRepository(ITokenRepository):
 
         Returns:
             True if deleted successfully
+
         """
         try:
             doc_ref = self.db.collection(self.COLLECTION).document(self.DOC_ID)
@@ -129,6 +134,7 @@ class FirestoreTokenRepository(ITokenRepository):
 
         Returns:
             Dict with token metadata or None
+
         """
         try:
             doc_ref = self.db.collection(self.COLLECTION).document(self.DOC_ID)
@@ -158,6 +164,7 @@ def store_token(token: str, phone: str | None = None, refresh_token: str | None 
 
     Returns:
         True if stored successfully
+
     """
     repo = FirestoreTokenRepository()
     token_obj = Token.create_new(token, phone, refresh_token=refresh_token)

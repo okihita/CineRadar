@@ -1,5 +1,4 @@
-"""
-Movie Details Schemas
+"""Movie Details Schemas.
 
 Pydantic schemas for validating TIX.id movie details API responses.
 """

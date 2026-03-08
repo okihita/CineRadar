@@ -1,5 +1,4 @@
-"""
-Movie Domain Models
+"""Movie Domain Models.
 
 Core business entities for movies and showtimes.
 Pure Python dataclasses with no external dependencies.
@@ -25,6 +24,7 @@ class Showtime:
         >>> st = Showtime(time="19:35", showtime_id="2000039256042586112")
         >>> st.is_evening
         True
+
     """
 
     time: str  # HH:MM format
@@ -80,6 +80,7 @@ class Room:
         category: Room type name
         price: Price string (e.g., "Rp35.000")
         showtimes: List of available showtimes
+
     """
 
     category: str
@@ -136,6 +137,7 @@ class TheatreSchedule:
         merchant: Cinema chain (XXI, CGV, Cinépolis)
         address: Physical address
         rooms: Available screening rooms
+
     """
 
     theatre_id: str
@@ -200,6 +202,7 @@ class Movie:
         0
         >>> movie.is_showing_in("JAKARTA")
         False
+
     """
 
     id: str  # This legacy field stores the schedule ID

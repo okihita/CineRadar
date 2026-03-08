@@ -1,5 +1,4 @@
-"""
-Application Services Package
+"""Application Services Package.
 
 Business logic services for complex operations.
 """

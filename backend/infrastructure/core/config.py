@@ -1,5 +1,4 @@
-"""
-Global configuration for TIX.id scraping engine.
+"""Global configuration for TIX.id scraping engine.
 Defines API endpoints, browser emulation settings, and regional defaults.
 """
 

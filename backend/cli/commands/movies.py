@@ -1,6 +1,4 @@
-"""
-Movies command for CLI.
-"""
+"""Movies command for CLI."""
 
 import asyncio
 import json

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-CineRadar Scraper Log Analyzer
+"""CineRadar Scraper Log Analyzer
 Fetches and analyzes scraper logs from Firestore for a specific date.
 
 Usage:

@@ -17,8 +17,7 @@ PUB_KEY_B64 = (
 
 
 def encrypt_password(password: str, use_oaep: bool = False) -> str:
-    """
-    Encrypts a plaintext password using TIX ID's public key.
+    """Encrypts a plaintext password using TIX ID's public key.
 
     Args:
         password: The plaintext password.
@@ -28,6 +27,7 @@ def encrypt_password(password: str, use_oaep: bool = False) -> str:
 
     Returns:
         The Base64 encoded encrypted password string ready for the API payload.
+
     """
     pub_key_der = base64.b64decode(PUB_KEY_B64)
     pub_key = RSA.import_key(pub_key_der)

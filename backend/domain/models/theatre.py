@@ -1,5 +1,4 @@
-"""
-Theatre Domain Model
+"""Theatre Domain Model.
 
 Represents a cinema theatre location.
 """
@@ -46,6 +45,7 @@ class Theatre:
         False
         >>> theatre.is_premium
         False
+
     """
 
     theatre_id: str
@@ -128,7 +128,6 @@ class Theatre:
     @classmethod
     def from_schedule(cls, schedule: TheatreSchedule, city: str) -> Theatre:
         """Create Theatre from a TheatreSchedule (from scrape data)."""
-
         room_types = [room.category for room in schedule.rooms]
 
         return cls(

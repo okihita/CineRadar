@@ -1,5 +1,4 @@
-"""
-Scrape Movie Details Use Case
+"""Scrape Movie Details Use Case.
 
 Orchestrates fetching movie details for discovered movies and saving to Firestore.
 Designed to run as part of daily morning scrape for new movies.
@@ -38,6 +37,7 @@ class ScrapeMovieDetailsUseCase:
 
         if result.success:
             print(f"Scraped {result.scraped_count} movies")
+
     """
 
     def __init__(
@@ -50,6 +50,7 @@ class ScrapeMovieDetailsUseCase:
         Args:
             client: Movie details API client (optional, creates default)
             repository: Firestore repository (optional, creates default)
+
         """
         self.client = client or MovieDetailsClient()
         self.repository = repository or FirestoreMovieDetailsRepository()
@@ -69,6 +70,7 @@ class ScrapeMovieDetailsUseCase:
 
         Returns:
             ScrapeMovieDetailsResult with counts and success status
+
         """
         total = len(movie_ids)
         skipped = 0
@@ -145,5 +147,6 @@ class ScrapeMovieDetailsUseCase:
 
         Returns:
             ScrapeMovieDetailsResult
+
         """
         return await self.execute(latest_movie_ids, skip_existing=True)

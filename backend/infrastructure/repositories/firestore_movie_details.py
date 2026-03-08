@@ -1,5 +1,4 @@
-"""
-Firestore Movie Details Repository
+"""Firestore Movie Details Repository.
 
 Stores detailed movie information with daily rating history.
 
@@ -33,6 +32,7 @@ class FirestoreMovieDetailsRepository:
         # Check if movie exists
         if repo.exists("1991446452714422272"):
             details = repo.get("1991446452714422272")
+
     """
 
     COLLECTION = "movies"
@@ -57,6 +57,7 @@ class FirestoreMovieDetailsRepository:
 
         Returns:
             True if save successful
+
         """
         try:
             movie_id = movie_details.movie_id
@@ -87,6 +88,7 @@ class FirestoreMovieDetailsRepository:
         Args:
             movie_id: Movie identifier
             rating_score: Current rating score
+
         """
         if not rating_score:
             return
@@ -115,6 +117,7 @@ class FirestoreMovieDetailsRepository:
 
         Returns:
             MovieDetails or None if not found
+
         """
         try:
             doc_ref = self.db.collection(self.COLLECTION).document(movie_id)
@@ -137,6 +140,7 @@ class FirestoreMovieDetailsRepository:
 
         Returns:
             True if document exists
+
         """
         try:
             doc_ref = self.db.collection(self.COLLECTION).document(movie_id)
@@ -150,6 +154,7 @@ class FirestoreMovieDetailsRepository:
 
         Returns:
             Set of movie IDs that already have details saved
+
         """
         try:
             docs = self.db.collection(self.COLLECTION).stream()
@@ -166,6 +171,7 @@ class FirestoreMovieDetailsRepository:
 
         Returns:
             List of rating snapshots sorted by date
+
         """
         try:
             history_ref = (
@@ -188,6 +194,7 @@ class FirestoreMovieDetailsRepository:
 
         Returns:
             Number of successfully saved movies
+
         """
         saved = 0
         for details in movie_details_list:

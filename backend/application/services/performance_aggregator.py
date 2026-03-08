@@ -1,5 +1,4 @@
-"""
-Performance Aggregator Service
+"""Performance Aggregator Service.
 
 Aggregates showtime snapshots into movie performance summaries.
 Runs in real-time after each showtime is scraped.
@@ -25,6 +24,7 @@ class PerformanceAggregator:
 
         Args:
             repo: Firestore repository for persistence
+
         """
         self.repo = repo
 
@@ -45,6 +45,7 @@ class PerformanceAggregator:
 
         Returns:
             Updated DailyPerformance summary
+
         """
         movie_id = snapshot.movie_id
         date = snapshot.date
@@ -98,6 +99,7 @@ class PerformanceAggregator:
 
         Returns:
             DailyPerformance summary
+
         """
         if not showtimes:
             return DailyPerformance(date=date)

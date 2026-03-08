@@ -1,5 +1,4 @@
-"""
-Scraper Port Interfaces
+"""Scraper Port Interfaces.
 
 Abstract interfaces for scraping operations.
 Infrastructure layer must provide concrete implementations.
@@ -42,6 +41,7 @@ class IMovieScraper(ABC):
         Raises:
             ScrapingError: If scraping fails
             LoginFailedError: If authentication required and fails
+
         """
         pass
 
@@ -54,6 +54,7 @@ class IMovieScraper(ABC):
 
         Raises:
             LoginFailedError: If login fails
+
         """
         pass
 
@@ -82,6 +83,7 @@ class ISeatScraper(ABC):
         Raises:
             ScrapingError: If scraping fails
             TokenExpiredError: If auth token is invalid
+
         """
         pass
 
@@ -91,5 +93,6 @@ class ISeatScraper(ABC):
 
         Args:
             token: JWT token string
+
         """
         pass

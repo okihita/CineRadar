@@ -1,5 +1,4 @@
-"""
-JIT Seat Scraper - Scraper Function
+"""JIT Seat Scraper - Scraper Function.
 
 Pub/Sub-triggered Cloud Function that:
 1. Receives showtime data from Pub/Sub message
@@ -79,6 +78,7 @@ def _parse_batch_id(batch_id: str) -> tuple[str, str]:
     Returns:
         (date_str, dispatch_slot) e.g. ('2026-02-13', '16-22')
         Falls back to today's date and '_unbatched' if parsing fails.
+
     """
     if batch_id:
         try:
@@ -752,6 +752,7 @@ def get_valid_token_with_metadata(
         - token: The auth token, or None if unavailable
         - age_minutes: Age of the token in minutes (0 if refreshed)
         - was_refreshed: True if token was just refreshed
+
     """
     token_data = load_token_data(db)
     if not token_data or not token_data.get("token"):
@@ -799,6 +800,7 @@ def fetch_seat_layout(showtime_id: str, merchant: str, token: str) -> dict[str, 
 
     Returns:
         Seat layout dict or None if failed
+
     """
     merchant_path = get_merchant_path(merchant)
     url = f"https://api-b2b.tix.id/v1/movies/{merchant_path}/layout"
@@ -941,8 +943,7 @@ def fetch_seat_layout_with_retry(
 
 
 def validate_api_response(raw_response: dict[str, Any]) -> tuple[bool, str, str]:
-    """
-    Validate raw API response structure and detect schema changes.
+    """Validate raw API response structure and detect schema changes.
 
     Returns:
         (is_valid, severity, error_message)
@@ -951,6 +952,7 @@ def validate_api_response(raw_response: dict[str, Any]) -> tuple[bool, str, str]
     - CRITICAL: Schema change that will break all scrapes
     - WARNING: Potential issue but might recover
     - INFO: Minor anomaly
+
     """
     if not isinstance(raw_response, dict):
         return False, "CRITICAL", "API response is not a dict"
@@ -993,6 +995,7 @@ def calculate_occupancy(
 
     Returns:
         Tuple of (total_seats, sold_seats, occupancy_pct, layout_grid)
+
     """
     total_seats = 0
     sold_seats = 0
@@ -1062,6 +1065,7 @@ def save_snapshot(
 
     Returns:
         Tuple of (success, document_path)
+
     """
     movie_id = showtime_data["movie_id"]
     date = showtime_data["date"]

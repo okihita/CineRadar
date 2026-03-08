@@ -12,6 +12,7 @@ def get_now_iso() -> str:
 
     Returns:
         ISO 8601 formatted datetime string in UTC timezone.
+
     """
     return datetime.now(UTC).isoformat()
 
@@ -21,6 +22,7 @@ def get_now_jakarta() -> datetime:
 
     Returns:
         Timezone-aware datetime in Asia/Jakarta timezone.
+
     """
     return datetime.now(JAKARTA_TZ)
 
@@ -32,6 +34,7 @@ def get_jakarta_date_str() -> str:
 
     Returns:
         Date string in YYYY-MM-DD format.
+
     """
     return datetime.now(JAKARTA_TZ).strftime("%Y-%m-%d")
 
@@ -43,5 +46,6 @@ def get_jakarta_datetime_str() -> str:
 
     Returns:
         Datetime string in YYYY-MM-DD HH:MM:SS format.
+
     """
     return datetime.now(JAKARTA_TZ).strftime("%Y-%m-%d %H:%M:%S")

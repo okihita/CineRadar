@@ -1,5 +1,4 @@
-"""
-CineRadar TIX.id Scraper Client V2
+"""CineRadar TIX.id Scraper Client V2
 Pure API implementation without Playwright.
 
 This is a migration-friendly version that uses direct HTTP API calls
@@ -357,8 +356,7 @@ class CineRadarScraperV2:
         specific_city: str | None = None,
         city_names: list[str] | None = None,
     ) -> dict[str, Any]:
-        """
-        Scrape movie availability for cities using pure API.
+        """Scrape movie availability for cities using pure API.
 
         Args:
             city_limit: Limit number of cities to scrape
@@ -367,6 +365,7 @@ class CineRadarScraperV2:
 
         Returns:
             Dict with movies and stats
+
         """
         logger.info("🎬 Starting V2 API-only movie scrape...")
 
@@ -432,8 +431,7 @@ class CineRadarScraperV2:
         }
 
     def transform_for_firestore(self, scrape_result: dict[str, Any]) -> list[dict[str, Any]]:
-        """
-        Transform V2 scrape results to Firestore document format.
+        """Transform V2 scrape results to Firestore document format.
 
         V2 output is organized by city, but Firestore expects per-movie documents
         with a 'cities' dict containing {city_name: [theatres]}.
@@ -443,6 +441,7 @@ class CineRadarScraperV2:
 
         Returns:
             List of movie dicts ready for Firestore upload
+
         """
         # Group by movie_id across all cities
         movie_map: dict[str, dict[str, Any]] = {}
@@ -475,8 +474,7 @@ class CineRadarScraperV2:
         return list(movie_map.values())
 
     def upload_to_firestore(self, movies: list[dict[str, Any]], date: str) -> int:
-        """
-        Upload movie schedules to Firestore schedules collection.
+        """Upload movie schedules to Firestore schedules collection.
 
         Args:
             movies: List of movie dicts from transform_for_firestore()
@@ -484,6 +482,7 @@ class CineRadarScraperV2:
 
         Returns:
             Number of movies uploaded
+
         """
         if not movies:
             logger.warning("⚠️ No movies to upload")
@@ -534,8 +533,7 @@ class CineRadarScraperV2:
         city_names: list[str] | None = None,
         dry_run: bool = False,
     ) -> dict[str, Any]:
-        """
-        Scrape and optionally upload to Firestore.
+        """Scrape and optionally upload to Firestore.
 
         Args:
             city_limit: Limit number of cities to scrape
@@ -545,6 +543,7 @@ class CineRadarScraperV2:
 
         Returns:
             Dict with scrape results and upload status
+
         """
         # Scrape
         result = await self.scrape(

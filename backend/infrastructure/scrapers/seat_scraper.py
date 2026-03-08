@@ -1,5 +1,4 @@
-"""
-TIX.id Seat Scraper
+"""TIX.id Seat Scraper.
 
 Implements ISeatScraper interface for scraping seat occupancy data.
 """
@@ -24,6 +23,7 @@ class TixSeatScraper(BaseScraper, ISeatScraper):
             showtime_ids=['123', '456'],
             merchant='XXI'
         )
+
     """
 
     def __init__(self) -> None:
@@ -42,6 +42,7 @@ class TixSeatScraper(BaseScraper, ISeatScraper):
 
         Returns:
             List of SeatOccupancy domain objects
+
         """
         if not self.auth_token:
             raise TokenExpiredError("No token set - call set_token() first")
@@ -95,6 +96,7 @@ class TixSeatScraper(BaseScraper, ISeatScraper):
 
         Args:
             token: JWT token string
+
         """
         self.auth_token = token
 
@@ -103,6 +105,7 @@ class TixSeatScraper(BaseScraper, ISeatScraper):
 
         Returns:
             True if token loaded and valid
+
         """
         from backend.infrastructure.repositories import FirestoreTokenRepository
 

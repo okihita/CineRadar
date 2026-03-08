@@ -1,5 +1,4 @@
-"""
-Firestore client for CineRadar theatre database.
+"""Firestore client for CineRadar theatre database.
 Manages theatre collection with geocoding data.
 """
 
@@ -49,8 +48,7 @@ def get_firestore_client() -> Any:
 def prepare_theatre_upsert(
     theatre_data: dict[str, Any], validate: bool = True
 ) -> tuple[str, dict[str, Any]] | None:
-    """
-    Prepare theatre data for Firestore upsert.
+    """Prepare theatre data for Firestore upsert.
 
     Args:
         theatre_data: dict with theatre_id, name, merchant, city, address, lat, lng, room_types
@@ -58,6 +56,7 @@ def prepare_theatre_upsert(
 
     Returns:
         Tuple of (theatre_id, upsert_data dict) or None if invalid
+
     """
     if validate:
         try:
@@ -171,14 +170,14 @@ def get_theatres_by_city(city: str) -> list[dict[str, Any]]:
 
 
 def sync_theatres_from_scrape(movies: list[dict[str, Any]]) -> dict[str, Any]:
-    """
-    Sync theatres from scraped movie data to Firestore.
+    """Sync theatres from scraped movie data to Firestore.
 
     Args:
         movies: List of movie dicts with schedules
 
     Returns:
         Summary dict with counts
+
     """
     seen_theatres: dict[str, dict[str, Any]] = {}
 
@@ -285,6 +284,7 @@ def log_morning_scrape(
 
     Returns:
         True if successful
+
     """
     try:
         db = get_firestore_client()
@@ -349,6 +349,7 @@ def log_jit_dispatch(
 
     Returns:
         True if successful
+
     """
     try:
         db = get_firestore_client()
@@ -424,6 +425,7 @@ def log_daily_summary(
 
     Returns:
         True if successful
+
     """
     try:
         db = get_firestore_client()

@@ -1,6 +1,4 @@
-"""
-Movie Details command for CLI.
-"""
+"""Movie Details command for CLI."""
 
 import asyncio
 import logging
@@ -30,6 +28,7 @@ def run_movie_details_scrape(
         from_performance: If True, scrape all movies from movie_performance collection
         skip_existing: Skip movies that already have details saved
         update_ratings: Force update ratings even for existing movies
+
     """
 
     async def _run() -> Any:

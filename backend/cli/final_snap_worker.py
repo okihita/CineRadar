@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-Final Snap Worker - Captures the final seating layout 5 minutes before showtime.
-"""
+"""Final Snap Worker - Captures the final seating layout 5 minutes before showtime."""
 
 import asyncio
 import json

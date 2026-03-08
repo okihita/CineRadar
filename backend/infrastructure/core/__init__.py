@@ -1,5 +1,4 @@
-"""
-Backend Services Module (Core Scrapers)
+"""Backend Services Module (Core Scrapers).
 
 > **Note**
 > This module contains the core scraping implementations.

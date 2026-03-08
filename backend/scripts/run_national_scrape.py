@@ -1,6 +1,5 @@
 #!/usr/env python3
-"""
-Run national scrape with V2 scraper.
+"""Run national scrape with V2 scraper.
 
 This is the entry point for the daily initial scrape.
 

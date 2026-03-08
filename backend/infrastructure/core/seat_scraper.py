@@ -1,5 +1,4 @@
-"""
-CineRadar Seat Scraper
+"""CineRadar Seat Scraper
 Scrapes seat occupancy data from TIX.id for all showtimes.
 
 Approach:
@@ -38,11 +37,11 @@ class SeatScraper(BaseScraper):
         super().__init__()
 
     def load_token_from_storage(self) -> bool:
-        """
-        Load JWT token from Firestore storage.
+        """Load JWT token from Firestore storage.
 
         Returns:
             True if token loaded successfully
+
         """
         try:
             repo = FirestoreTokenRepository()
@@ -62,8 +61,7 @@ class SeatScraper(BaseScraper):
         return self.MERCHANT_PATHS.get(merchant, merchant.lower())
 
     def _count_seat(self, status: int, counters: dict[str, int]) -> int:
-        """
-        Helper to increment counters based on status.
+        """Helper to increment counters based on status.
 
         Status codes (verified Dec 23, 2025):
         - 1: Available (can purchase)
@@ -72,6 +70,7 @@ class SeatScraper(BaseScraper):
 
         Returns:
             1 if available, 0 if unavailable, -1 if other
+
         """
         if status == 1:  # Available
             counters["available"] += 1
@@ -85,8 +84,7 @@ class SeatScraper(BaseScraper):
         return -1
 
     def calculate_occupancy(self, layout_data: dict[str, Any]) -> dict[str, Any]:
-        """
-        Parse seat layout response and calculate occupancy.
+        """Parse seat layout response and calculate occupancy.
         Handles both nested (XXI/CGV) and flat (Cinépolis) structures.
 
         Note: API cannot distinguish "sold" from "blocked/maintenance".
@@ -157,8 +155,7 @@ class SeatScraper(BaseScraper):
     async def _fetch_seat_layout_api(
         self, showtime_id: str, merchant: str
     ) -> dict[str, Any] | None:
-        """
-        Fetch seat layout via direct API call using JWT token.
+        """Fetch seat layout via direct API call using JWT token.
 
         This is more reliable than browser navigation for Flutter apps.
 
@@ -168,6 +165,7 @@ class SeatScraper(BaseScraper):
 
         Returns:
             Dict with layout data or None if failed
+
         """
         if not self.auth_token:
             self.log("⚠️ No auth token - cannot call layout API")
@@ -214,14 +212,14 @@ class SeatScraper(BaseScraper):
     async def scrape_showtime_occupancy(
         self, showtime_info: dict[str, Any]
     ) -> dict[str, Any] | None:
-        """
-        Scrape seat occupancy for a single showtime via direct API call.
+        """Scrape seat occupancy for a single showtime via direct API call.
 
         Args:
             showtime_info: Dict with showtime details (must include showtime_id, merchant)
 
         Returns:
             Dict with occupancy data or None
+
         """
         show_time_id = showtime_info.get("showtime_id")
         merchant = showtime_info.get("merchant")
@@ -255,8 +253,7 @@ class SeatScraper(BaseScraper):
     async def scrape_all_showtimes_api_only(
         self, showtimes: list[dict[str, Any]], delay_between_requests: float = 1.0
     ) -> list[dict[str, Any]]:
-        """
-        Scrape seat occupancy using API calls only (no browser).
+        """Scrape seat occupancy using API calls only (no browser).
 
         Requires auth_token to be set beforehand via load_token_from_storage().
 
@@ -266,6 +263,7 @@ class SeatScraper(BaseScraper):
 
         Returns:
             List of occupancy data dicts
+
         """
         import random
 

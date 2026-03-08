@@ -1,5 +1,4 @@
-"""
-Repositories Package
+"""Repositories Package.
 
 Data persistence implementations.
 """

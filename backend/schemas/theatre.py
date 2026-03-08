@@ -1,5 +1,4 @@
-"""
-Theatre Schema
+"""Theatre Schema
 Validates theatre data for Firestore storage.
 """
 
@@ -20,6 +19,7 @@ class TheatreSchema(BaseModel):
             "lng": 112.6547,
             "room_types": ["2D", "GOLD CLASS"]
         }
+
     """
 
     theatre_id: str = Field(..., min_length=1)

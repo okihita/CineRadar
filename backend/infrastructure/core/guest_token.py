@@ -1,5 +1,4 @@
-"""
-Guest Token fetcher for TIX.id API authentication.
+"""Guest Token fetcher for TIX.id API authentication.
 
 This module provides functionality to acquire short-lived (30-minute)
 guest tokens from the TIX.id API. These tokens are sufficient for
@@ -36,6 +35,7 @@ class GuestToken:
     Attributes:
         token: The JWT token string
         expires_at: When the token expires (UTC)
+
     """
 
     token: str
@@ -54,8 +54,7 @@ class GuestToken:
 
 
 async def fetch_guest_token() -> GuestToken | None:
-    """
-    Fetch a fresh 30-minute Guest Token from TIX.id.
+    """Fetch a fresh 30-minute Guest Token from TIX.id.
 
     This token is required for accessing /v1/movies and /v1/schedules
     endpoints without full user login.
@@ -68,6 +67,7 @@ async def fetch_guest_token() -> GuestToken | None:
         >>> if guest:
         ...     print(f"Token valid for {guest.minutes_remaining:.1f} min")
         ...     headers = {"Authorization": f"Bearer {guest.token}"}
+
     """
     try:
         async with httpx.AsyncClient() as client:
@@ -120,6 +120,7 @@ def fetch_guest_token_sync() -> GuestToken | None:
 
     Returns:
         GuestToken object or None if failed
+
     """
     import asyncio
 

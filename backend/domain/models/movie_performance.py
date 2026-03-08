@@ -1,5 +1,4 @@
-"""
-Movie Performance Domain Models
+"""Movie Performance Domain Models.
 
 Represents aggregated movie performance data and individual showtime snapshots.
 Used for tracking occupancy across all cities/theatres for a specific movie.
@@ -34,6 +33,7 @@ class ShowtimeSnapshot:
         layout: Full seat map as nested list
         raw_api_response: Full raw API response from TIX.id for debugging/audit
         scraped_at: ISO timestamp when captured
+
     """
 
     showtime_id: str

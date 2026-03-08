@@ -1,5 +1,4 @@
-"""
-CineRadar Application Ports (Interfaces) 🔌
+"""CineRadar Application Ports (Interfaces) 🔌.
 
 Technical Explanation:
 In Clean Architecture (and Hexagonal Architecture), "Ports" are the **Interfaces** that the Application Layer uses to communicate with the outside world (Infrastructure).

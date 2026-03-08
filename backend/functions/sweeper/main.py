@@ -1,5 +1,4 @@
-"""
-JIT Seat Scraper - Sweeper Function
+"""JIT Seat Scraper - Sweeper Function.
 
 HTTP-triggered Cloud Function that:
 1. Lists all movies for today from `schedules`

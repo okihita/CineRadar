@@ -1,5 +1,4 @@
-"""
-CineRadar Domain Models
+"""CineRadar Domain Models.
 
 Pure Python dataclasses representing core business entities.
 No external dependencies - these can be used anywhere.

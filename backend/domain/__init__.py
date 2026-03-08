@@ -1,5 +1,4 @@
-"""
-CineRadar Domain Layer (The Core) 🧠
+"""CineRadar Domain Layer (The Core) 🧠.
 
 Technical Explanation:
 The **Domain Layer** represents the "Business Logic" and "Entities" of the application.

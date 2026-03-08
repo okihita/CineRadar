@@ -1,5 +1,4 @@
-"""
-CineRadar Application Layer
+"""CineRadar Application Layer.
 
 Use cases and port interfaces.
 This layer orchestrates business logic using domain objects.

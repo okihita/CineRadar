@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-CineRadar Token Refresh Script
+"""CineRadar Token Refresh Script
 Logs into TIX.id and stores the JWT token in Firestore.
 
 Usage:
@@ -34,14 +33,14 @@ class TokenRefresher(BaseScraper):
         super().__init__()
 
     async def refresh_token(self, headless: bool = True) -> bool:
-        """
-        Login to TIX.id via API and store the JWT tokens.
+        """Login to TIX.id via API and store the JWT tokens.
 
         Args:
             headless: Ignored, kept for backward compatibility with CLI parser
 
         Returns:
             True if token was refreshed successfully
+
         """
         self.log("🔐 Starting fast API token refresh...")
 

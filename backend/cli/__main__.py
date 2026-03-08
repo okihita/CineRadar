@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-CineRadar Scrapers Entry Point
+"""CineRadar Scrapers Entry Point.
 
 This module provides backward compatibility by redirecting to the unified CLI.
 For new usage, prefer: python -m backend.cli.cli [movies|seats] [options]

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Post-processing script for V2 scraper.
+"""Post-processing script for V2 scraper.
 
 Handles the following tasks after V2 scrape completes:
 1. Update snapshots/latest - for movie-details command

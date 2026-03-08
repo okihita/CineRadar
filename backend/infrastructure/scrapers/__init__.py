@@ -1,5 +1,4 @@
-"""
-Scrapers Package
+"""Scrapers Package.
 
 TIX.id scraping implementations.
 """

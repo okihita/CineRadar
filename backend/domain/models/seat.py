@@ -1,5 +1,4 @@
-"""
-Seat Occupancy Domain Model
+"""Seat Occupancy Domain Model.
 
 Represents seat availability data for a showtime.
 """
@@ -58,6 +57,7 @@ class SeatOccupancy:
         75.0
         >>> occ.is_nearly_full
         True
+
     """
 
     showtime_id: str

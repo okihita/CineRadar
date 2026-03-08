@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Upload movie schedules to Firestore.
+"""Upload movie schedules to Firestore.
 Creates per-movie documents in schedules/{date}/movies/{movie_id} collection.
 """
 
@@ -39,6 +38,7 @@ def load_movie_data(data_dir: str = "data") -> dict[str, Any] | None:
 
     Returns:
         Parsed movie data dict, or None if no files found.
+
     """
     data_path = Path(data_dir)
     movie_files = list(data_path.glob("movies_*.json"))
@@ -66,6 +66,7 @@ def transform_for_firestore(movie: dict[str, Any], date: str) -> dict[str, Any]:
 
     Returns:
         Transformed dict ready for Firestore.
+
     """
     return {
         "movie_id": movie.get("id", ""),
@@ -88,6 +89,7 @@ def upload_schedules_to_firestore(movies: list[dict[str, Any]], date: str) -> No
     Args:
         movies: List of movie dicts with schedules.
         date: Date string (YYYY-MM-DD).
+
     """
     if not movies:
         logger.warning("⚠️ No movies to upload")

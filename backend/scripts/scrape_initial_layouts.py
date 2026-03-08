@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Initial Layout Scraper - Scrape seat layouts for all showtimes.
+"""Initial Layout Scraper - Scrape seat layouts for all showtimes.
 
 This captures the "baseline" unavailable seats (blocked/broken) before
 any sales happen, allowing accurate audience calculation later.
@@ -71,6 +70,7 @@ def get_token_from_firestore(db: firestore.Client) -> tuple[str | None, float]:
 
     Returns:
         Tuple of (token, age_in_minutes)
+
     """
     doc = db.collection("auth_tokens").document("tix_jwt").get()
     if not doc.exists:
@@ -216,6 +216,7 @@ def calculate_occupancy(seat_map: list[dict[str, Any]]) -> tuple[int, int, list[
 
     Returns:
         Tuple of (total_seats, unavailable_seats, layout_grid)
+
     """
     total_seats = 0
     unavailable = 0

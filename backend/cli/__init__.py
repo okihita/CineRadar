@@ -1,5 +1,4 @@
-"""
-CineRadar CLI (The Entry Point) 🎮
+"""CineRadar CLI (The Entry Point) 🎮.
 
 Technical Explanation:
 The **CLI** acts as the "Main Controller" or "Composition Root" for the application.

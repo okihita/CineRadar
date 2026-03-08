@@ -1,5 +1,4 @@
-"""
-CineRadar Infrastructure Layer (The Adapters) 🔌
+"""CineRadar Infrastructure Layer (The Adapters) 🔌.
 
 Technical Explanation:
 The **Infrastructure Layer** contains the concrete implementations of the interfaces defined in `application/ports`.

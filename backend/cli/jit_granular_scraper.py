@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-JIT Granular Seat Scraper
+"""JIT Granular Seat Scraper
 Monitors seat occupancy for upcoming showtimes with 5-minute granularity.
 Includes anti-bot measures (random jitter, user-agent rotation, rate limiting).
 """

@@ -1,5 +1,4 @@
-"""
-CineRadar Backend Package
+"""CineRadar Backend Package.
 
 Follows Clean Architecture principles to separate concerns:
 - domain: Business logic and models

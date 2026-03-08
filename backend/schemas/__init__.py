@@ -1,5 +1,4 @@
-"""
-CineRadar Data Schemas
+"""CineRadar Data Schemas
 Pydantic V2 models for data validation across the scraping pipeline.
 """
 

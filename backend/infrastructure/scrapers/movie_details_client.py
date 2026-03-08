@@ -1,5 +1,4 @@
-"""
-Movie Details API Client
+"""Movie Details API Client.
 
 Simple HTTP client for fetching detailed movie information from TIX.id API.
 Requires authentication token from Firestore.
@@ -30,6 +29,7 @@ class MovieDetailsClient:
         data = await client.fetch(movie_id="1991446452714422272")
         if data:
             print(data["name"])
+
     """
 
     def __init__(self, timeout: float = 30.0) -> None:
@@ -45,6 +45,7 @@ class MovieDetailsClient:
 
         Returns:
             True if token loaded successfully
+
         """
         try:
             guest_token = await fetch_guest_token()
@@ -79,6 +80,7 @@ class MovieDetailsClient:
 
         Returns:
             The 'data' field from API response, or None if failed
+
         """
         if not self._token:
             logger.error("❌ No auth token set - call load_token() first")
@@ -120,6 +122,7 @@ class MovieDetailsClient:
 
         Returns:
             List of movie data dicts (only successful fetches)
+
         """
         results: list[dict[str, Any]] = []
         skip = skip_existing or set()

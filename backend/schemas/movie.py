@@ -1,5 +1,4 @@
-"""
-Movie and Showtime Schemas
+"""Movie and Showtime Schemas
 Validates movie data from TIX.id scraper output.
 """
 
@@ -15,6 +14,7 @@ class ShowtimeSchema(BaseModel):
         {"time": "19:35", "showtime_id": "2000039256042586112", "status": 1, "is_available": true}
 
     Note: showtime_id may be missing in some batch files but should exist in final merged output.
+
     """
 
     time: str = Field(..., pattern=r"^\d{2}:\d{2}$", description="Time in HH:MM format")
@@ -30,6 +30,7 @@ class RoomSchema(BaseModel):
 
     Example:
         {"category": "2D", "price": "Rp35.000", "all_showtimes": [...]}
+
     """
 
     category: str = Field(..., min_length=1, description="Room type: 2D, IMAX, GOLD CLASS, etc.")
@@ -56,6 +57,7 @@ class TheatreScheduleSchema(BaseModel):
             "merchant": "XXI",
             "rooms": [...]
         }
+
     """
 
     theatre_id: str = Field(..., min_length=1)
@@ -128,6 +130,7 @@ class DailySnapshotSchema(BaseModel):
 
         Raises:
             AssertionError: If minimum thresholds not met
+
         """
         assert len(self.movies) >= min_movies, f"Too few movies: {len(self.movies)} < {min_movies}"
         assert len(self.city_stats) >= min_cities, (

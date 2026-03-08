@@ -1,5 +1,4 @@
-"""
-External Service Port Interfaces
+"""External Service Port Interfaces.
 
 Abstract interfaces for external services like geocoding.
 """
@@ -24,6 +23,7 @@ class INotificationService(ABC):
 
         Returns:
             True if sent successfully
+
         """
         pass
 
@@ -45,5 +45,6 @@ class INotificationService(ABC):
 
         Returns:
             True if sent successfully
+
         """
         pass

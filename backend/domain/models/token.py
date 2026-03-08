@@ -1,5 +1,4 @@
-"""
-Token Domain Model
+"""Token Domain Model.
 
 Represents a JWT authentication token.
 """
@@ -31,6 +30,7 @@ class Token:
         ... )
         >>> token.is_expired
         True  # If current time is past stored_at + 30 min
+
     """
 
     token: str
@@ -124,8 +124,8 @@ class Token:
 
         Returns:
             Token instance
-        """
 
+        """
         return cls(
             token=token,
             phone=phone,

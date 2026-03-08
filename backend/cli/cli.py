@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-CineRadar CLI - Unified Scraper Command Line Interface
+"""CineRadar CLI - Unified Scraper Command Line Interface.
 
 Usage:
     python -m backend.cli movies [options]    # Scrape movie availability

@@ -1,5 +1,4 @@
-"""
-Storage Port Interfaces (Repositories)
+"""Storage Port Interfaces (Repositories).
 
 Abstract interfaces for data persistence.
 Follows the Repository pattern - abstracts storage details from business logic.
@@ -29,6 +28,7 @@ class IMovieRepository(ABC):
 
         Raises:
             StorageError: If save fails
+
         """
         pass
 
@@ -41,6 +41,7 @@ class IMovieRepository(ABC):
 
         Raises:
             StorageError: If retrieval fails
+
         """
         pass
 
@@ -53,6 +54,7 @@ class IMovieRepository(ABC):
 
         Returns:
             ScrapeResult or None if not found
+
         """
         pass
 
@@ -78,6 +80,7 @@ class ITheatreRepository(ABC):
 
         Raises:
             StorageError: If operation fails
+
         """
         pass
 
@@ -90,6 +93,7 @@ class ITheatreRepository(ABC):
 
         Returns:
             Theatre or None if not found
+
         """
         pass
 
@@ -99,6 +103,7 @@ class ITheatreRepository(ABC):
 
         Returns:
             List of all Theatre objects
+
         """
         pass
 
@@ -111,6 +116,7 @@ class ITheatreRepository(ABC):
 
         Returns:
             List of theatres in that city
+
         """
         pass
 
@@ -133,6 +139,7 @@ class ITokenRepository(ABC):
 
         Raises:
             StorageError: If store fails
+
         """
         pass
 
@@ -142,6 +149,7 @@ class ITokenRepository(ABC):
 
         Returns:
             Token or None if no token stored
+
         """
         pass
 
@@ -151,6 +159,7 @@ class ITokenRepository(ABC):
 
         Returns:
             True if token exists and not expired
+
         """
         pass
 
@@ -160,5 +169,6 @@ class ITokenRepository(ABC):
 
         Returns:
             True if deleted successfully
+
         """
         pass

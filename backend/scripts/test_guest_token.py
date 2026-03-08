@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Test script for guest token fetcher.
+"""Test script for guest token fetcher.
 
 Verifies that:
 1. Guest token can be acquired from TIX.id API

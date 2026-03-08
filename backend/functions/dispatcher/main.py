@@ -1,5 +1,4 @@
-"""
-JIT Seat Scraper - Dispatcher Function
+"""JIT Seat Scraper - Dispatcher Function.
 
 HTTP-triggered Cloud Function that:
 1. Queries Firestore for showtimes starting in exactly the [T+20, T+25) minute window
@@ -87,6 +86,7 @@ def find_upcoming_showtimes(
 
     Returns:
         List of showtime dicts with showtime_id, movie_id, time, etc.
+
     """
     today = window_start.strftime("%Y-%m-%d")
     logger.info(f"Querying schedules/{today}/movies")
@@ -153,6 +153,7 @@ def publish_to_pubsub(publisher: pubsub_v1.PublisherClient, showtimes: list[dict
 
     Returns:
         Number of messages published
+
     """
     topic_path = publisher.topic_path(PROJECT_ID, PUBSUB_TOPIC)
     futures = []
@@ -233,6 +234,7 @@ def log_job_creation(db: firestore.Client, batch_id: str, showtime: dict[str, An
         db: Firestore client
         batch_id: Batch ID in format "YYYYMMDD-HHMMSS"
         showtime: Showtime data dict
+
     """
     try:
         # Parse batch_id to get date and dispatch slot

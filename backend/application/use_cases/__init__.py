@@ -1,5 +1,4 @@
-"""
-CineRadar Use Cases (The Application) ⚙️
+"""CineRadar Use Cases (The Application) ⚙️.
 
 Technical Explanation:
 **Use Cases** orchestrate the flow of data to achieve a specific user goal.

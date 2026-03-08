@@ -1,6 +1,4 @@
-"""
-Shared utilities for CLI commands.
-"""
+"""Shared utilities for CLI commands."""
 
 import json
 import logging
@@ -23,6 +21,7 @@ def load_movie_data(data_dir: str = "data", use_firestore: bool = False) -> dict
     Args:
         data_dir: Directory for local JSON files
         use_firestore: If True, load from Firestore instead of local files
+
     """
     date_str = datetime.now().strftime("%Y-%m-%d")
 

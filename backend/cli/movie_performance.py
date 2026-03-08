@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Movie Performance CLI
+"""Movie Performance CLI.
 
 Manually trigger movie performance data aggregation.
 
@@ -34,6 +33,7 @@ def scrape_movie_performance(movie_id: str, aggregator: PerformanceAggregator) -
     Args:
         movie_id: Movie identifier
         aggregator: PerformanceAggregator instance
+
     """
     logger.info(f"\n{'=' * 60}")
     logger.info(f"🎬 Scraping performance for movie {movie_id}")
@@ -189,6 +189,7 @@ def scrape_all_movies(limit: int, aggregator: PerformanceAggregator) -> None:
     Args:
         limit: Maximum number of movies to process
         aggregator: PerformanceAggregator instance
+
     """
     movie_repo = FirestoreMovieRepository()
     snapshot = movie_repo.get_latest_snapshot()

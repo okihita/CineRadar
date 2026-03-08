@@ -1,5 +1,4 @@
-"""
-Firestore Theatre Repository
+"""Firestore Theatre Repository.
 
 Implements ITheatreRepository using Firebase Firestore.
 """
@@ -29,6 +28,7 @@ class FirestoreTheatreRepository(ITheatreRepository):
 
         # Get theatres without location
         ungeocoded = repo.get_without_location()
+
     """
 
     COLLECTION = "theatres"
@@ -52,6 +52,7 @@ class FirestoreTheatreRepository(ITheatreRepository):
 
         Returns:
             True if operation successful
+
         """
         try:
             doc_ref = self.db.collection(self.COLLECTION).document(str(theatre.theatre_id))

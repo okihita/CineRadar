@@ -1,5 +1,4 @@
-"""
-Token Schema
+"""Token Schema
 Validates JWT tokens with TTL checking for TIX.id API authentication.
 """
 
@@ -20,6 +19,7 @@ class TokenSchema(BaseModel):
             "stored_at": "2025-12-17T09:06:29.115024",
             "expires_at": "2025-12-18T05:06:29.115029"
         }
+
     """
 
     token: str = Field(..., min_length=50, description="JWT token (typically 100+ chars)")
@@ -59,6 +59,7 @@ class TokenSchema(BaseModel):
 
         Returns:
             True if token will be valid for at least min_minutes
+
         """
         return self.minutes_until_expiry() >= min_minutes
 

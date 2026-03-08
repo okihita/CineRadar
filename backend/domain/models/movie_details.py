@@ -1,5 +1,4 @@
-"""
-Movie Details Domain Model
+"""Movie Details Domain Model.
 
 Represents detailed movie information from the TIX.id movie details API.
 This is enriched data beyond the basic movie scraped during daily runs.
@@ -150,6 +149,7 @@ class MovieDetails:
     Example:
         >>> details = MovieDetails.from_api_response(api_data)
         >>> print(details.name, details.director)
+
     """
 
     # Primary identifiers
@@ -281,6 +281,7 @@ class MovieDetails:
 
         Returns:
             MovieDetails instance
+
         """
         return cls.from_dict(
             {

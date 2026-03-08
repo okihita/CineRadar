@@ -1,5 +1,4 @@
-"""
-Firestore Movie Repository
+"""Firestore Movie Repository.
 
 Implements IMovieRepository using Firebase Firestore.
 """
@@ -28,6 +27,7 @@ class FirestoreMovieRepository(IMovieRepository):
 
         # Get latest
         latest = repo.get_latest_snapshot()
+
     """
 
     COLLECTION = "snapshots"
@@ -52,6 +52,7 @@ class FirestoreMovieRepository(IMovieRepository):
 
         Returns:
             True if save successful
+
         """
         try:
             data = result.to_dict()
@@ -90,6 +91,7 @@ class FirestoreMovieRepository(IMovieRepository):
 
         Returns:
             ScrapeResult or None if no snapshots exist
+
         """
         try:
             doc_ref = self.db.collection(self.COLLECTION).document(self.LATEST_DOC)
@@ -113,6 +115,7 @@ class FirestoreMovieRepository(IMovieRepository):
 
         Returns:
             ScrapeResult or None if not found
+
         """
         try:
             doc_ref = self.db.collection(self.COLLECTION).document(date)

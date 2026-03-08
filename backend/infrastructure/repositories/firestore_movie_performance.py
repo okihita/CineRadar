@@ -1,5 +1,4 @@
-"""
-Firestore Movie Performance Repository
+"""Firestore Movie Performance Repository.
 
 Stores and retrieves movie performance data and showtime snapshots.
 Collection: movie_performance/{movie_id}/showtimes/{showtime_id}
@@ -153,6 +152,7 @@ class FirestoreMoviePerformanceRepository:
 
         Returns:
             List of ShowtimeSnapshot objects
+
         """
         try:
             collection_ref = (
