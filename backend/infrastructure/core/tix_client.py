@@ -22,7 +22,7 @@ import httpx
 from backend.infrastructure.city_data import CITIES
 from backend.infrastructure.core.config import API_BASE
 from backend.infrastructure.core.guest_token import GuestToken, fetch_guest_token
-from backend.infrastructure.firestore_collections import MOVIES, SCHEDULES
+from backend.infrastructure.firestore_collections import MOVIES, SCHEDULES, SCHEDULES_V2
 from backend.schemas.tix_api import (
     TixMovieItem,
     TixMovieResponse,
@@ -476,6 +476,10 @@ class CineRadarScraper:
     def upload_to_firestore(self, movies: list[dict[str, Any]], date: str) -> int:
         """Upload movie schedules to Firestore schedules collection.
 
+        Implements dual-write to both V1 (schedules) and V2 (schedules_v2) collections:
+        - V1: Uses schedule_id as document ID (backward compatible)
+        - V2: Uses metadata_id as document ID (immutable, consolidates schedule_ids)
+
         Args:
             movies: List of movie dicts from transform_for_firestore()
             date: Date string (YYYY-MM-DD)
@@ -504,9 +508,12 @@ class CineRadarScraper:
         logger.info(f"📤 Uploading {len(movies)} movies to {SCHEDULES}/{date}/{MOVIES}/...")
 
         uploaded = 0
+        v2_uploaded = 0
+
         for movie in movies:
-            movie_id = movie.get("movie_id")
-            if not movie_id:
+            schedule_id = movie.get("movie_id")
+            metadata_id = movie.get("tix_metadata_id")
+            if not schedule_id:
                 continue
 
             # Add metadata
@@ -517,13 +524,48 @@ class CineRadarScraper:
                 "source": "api",
             }
 
-            # Write to schedules/{date}/movies/{movie_id}
-            doc_ref = db.collection(SCHEDULES).document(date).collection(MOVIES).document(movie_id)
+            # V1: Write to schedules/{date}/movies/{schedule_id}
+            doc_ref = db.collection(SCHEDULES).document(date).collection(MOVIES).document(schedule_id)
             doc_ref.set(doc)
             uploaded += 1
-            logger.info(f"   ✓ {movie.get('title', movie_id)[:40]}")
+
+            # V2: Write to schedules_v2/{date}/movies/{metadata_id}
+            # Uses metadata_id as document ID, accumulates schedule_ids
+            if metadata_id:
+                v2_doc_ref = db.collection(SCHEDULES_V2).document(date).collection(MOVIES).document(metadata_id)
+
+                # Check if document exists to merge schedule_ids
+                existing_doc = v2_doc_ref.get()
+                if existing_doc.exists:
+                    existing_data = existing_doc.to_dict() or {}
+                    existing_schedule_ids = set(existing_data.get("schedule_ids", []))
+                    existing_schedule_ids.add(schedule_id)
+                    schedule_ids_list = list(existing_schedule_ids)
+                else:
+                    schedule_ids_list = [schedule_id]
+
+                v2_doc = {
+                    "metadata_id": metadata_id,
+                    "schedule_ids": schedule_ids_list,  # All schedule_ids for this movie
+                    "title": movie.get("title", ""),
+                    "poster": movie.get("poster", ""),
+                    "genres": movie.get("genres", []),
+                    "age_category": movie.get("age_category", ""),
+                    "merchants": movie.get("merchants", []),
+                    "is_presale": movie.get("is_presale", False),
+                    "cities": movie.get("cities", {}),
+                    "date": date,
+                    "uploaded_at": datetime.now(UTC).isoformat(),
+                    "source": "api",
+                }
+
+                v2_doc_ref.set(v2_doc)
+                v2_uploaded += 1
+
+            logger.info(f"   ✓ {movie.get('title', schedule_id)[:40]}")
 
         logger.info(f"✅ Uploaded {uploaded} movies to {SCHEDULES}/{date}/{MOVIES}/")
+        logger.info(f"✅ Uploaded {v2_uploaded} movies to {SCHEDULES_V2}/{date}/{MOVIES}/")
         return uploaded
 
     async def scrape_and_upload(
