@@ -112,7 +112,7 @@ flowchart LR
 |-----------|-------------|---------|
 | **Scraper** | [`backend/infrastructure/core/tix_client.py`](../backend/infrastructure/core/tix_client.py) | Deep scraper logic |
 | **Validator** | [`backend/cli/validate.py`](../backend/cli/validate.py) | Schema integrity checks |
-| **Uploader** | [`backend/cli/populate_firestore.py`](../backend/cli/populate_firestore.py) | Batch write to Firestore |
+| **Uploader** | [`backend/cli/populate_firestore.py`](../backend/cli/populate_firestore.py) | Write to Firestore |
 
 ### 🚨 Failure Runbook
 
@@ -398,7 +398,7 @@ uv run python -m backend.cli.movie_performance --all --limit 10
 | Seat API returns 401 | Token expired | Re-run token refresh workflow |
 | No seat data uploaded | Key mismatch (fixed) | Verify using latest code |
 | Summary shows 0 | No seat data for date | Check seat_snapshots collection |
-| Movies missing schedules | Partial scrape failure | Check batch job logs |
+| Movies missing schedules | Partial scrape failure | Check scrape job logs |
 | Performance tab empty | No aggregated data | Run `movie_performance --recalculate` |
 
 ---

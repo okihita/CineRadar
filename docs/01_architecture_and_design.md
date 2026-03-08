@@ -4,7 +4,7 @@ This document details the system design, data flow, token management, and infras
 
 ## System Overview
 
-CineRadar is a **hybrid scraping pipeline** combining **Morning Batch** (GitHub Actions) and **Real-Time JIT** (Cloud Functions) for TIX.id movie data collection, feeding into a Firestore database.
+CineRadar is a **hybrid scraping pipeline** combining **Morning Scraping** (GitHub Actions) and **Real-Time JIT** (Cloud Functions) for TIX.id movie data collection, feeding into a Firestore database.
 
 ---
 
@@ -77,7 +77,7 @@ flowchart LR
 - **Web**: Next.js 16 (React 19) consumer app.
 - **CI/CD**: GitHub Actions for daily scraping, testing, and deployment.
 
-### Morning Scraper Environment (Batch)
+### Morning Scraper Environment
 
 The morning pipeline operates on **GitHub Actions**, utilizing a single runner to map the entire day's schedule via fast HTTP APIs.
 
