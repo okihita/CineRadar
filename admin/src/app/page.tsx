@@ -317,7 +317,7 @@ export default function ExecutiveDashboard() {
                                         tick={{ fontSize: 10 }}
                                         tickFormatter={(v) => v.length > 15 ? v.slice(0, 15) + '...' : v}
                                     />
-                                    <Tooltip formatter={(v: number | undefined) => v !== undefined ? [formatRupiah(v), 'Revenue'] : ['', '']} />
+                                    <Tooltip formatter={(v: number | string | undefined) => v !== undefined ? [formatRupiah(Number(v)), 'Revenue'] : ['', '']} />
                                     <Bar dataKey="revenue" radius={[0, 4, 4, 0]}>
                                         {data.topTheatres.map((t, i) => (
                                             <Cell key={i} fill={['#10b981', '#22c55e', '#84cc16', '#eab308', '#f59e0b'][i]} />
