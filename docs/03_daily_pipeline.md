@@ -111,19 +111,12 @@ flowchart LR
 | Component | Source File | Purpose |
 |-----------|-------------|---------|
 | **Scraper** | [`backend/infrastructure/core/tix_client.py`](../backend/infrastructure/core/tix_client.py) | Deep scraper logic |
-| **Validator** | [`backend/cli/validate.py`](../backend/cli/validate.py) | Schema integrity checks |
-| **Uploader** | [`backend/cli/populate_firestore.py`](../backend/cli/populate_firestore.py) | Write to Firestore |
 
 ### 🚨 Failure Runbook
 
-**Trigger:** Job fails due to `ValidationError` or network timeout.
+**Trigger:** Job fails due to network timeout.
 
-1.  **Partial Upload**:
-    ```bash
-    # Upload whatever valid data we have
-    uv run python -m backend.cli.populate_firestore --force
-    ```
-3.  **Retry Specific City**:
+1.  **Retry Specific City**:
     ```bash
     uv run python -m backend.cli --city BANDUNG --schedules
     ```

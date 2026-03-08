@@ -131,8 +131,6 @@ def run_seat_scrape(
     headless: bool = True,
     city: str | None = None,
     limit: int | None = None,
-    batch: int | None = None,
-    total_batches: int = 9,
     output_dir: str = "data",
     jit_window: int = 8,
     use_stored_token: bool = False,
@@ -151,14 +149,6 @@ def run_seat_scrape(
         if not showtimes:
             logger.warning("⚠️ No showtimes with IDs found")
             return None
-
-        # Apply batching if specified
-        if batch is not None:
-            per_batch = len(showtimes) // total_batches + 1
-            start = batch * per_batch
-            end = min(start + per_batch, len(showtimes))
-            showtimes = showtimes[start:end]
-            logger.info(f"🔢 Batch {batch}: {len(showtimes)} showtimes")
 
         # JIT mode: filter to upcoming showtimes only
         if mode == "jit":
@@ -188,11 +178,7 @@ def run_seat_scrape(
         if results:
             date_str = datetime.now().strftime("%Y-%m-%d")
             output_path = Path(output_dir)
-
-            if batch is not None:
-                filename = f"seats_batch_{batch}_{date_str}.json"
-            else:
-                filename = f"seats_{mode}_{date_str}.json"
+            filename = f"seats_{mode}_{date_str}.json"
 
             with open(output_path / filename, "w") as f:
                 json.dump(

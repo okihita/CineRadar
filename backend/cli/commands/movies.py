@@ -18,8 +18,6 @@ def run_movie_scrape(
     output_dir: str = "data",
     city_limit: int | None = None,
     specific_city: str | None = None,
-    batch: int | None = None,
-    total_batches: int = 9,
     max_retries: int = 3,
 ) -> dict[str, Any] | None:
     """Run the movie availability scraper with retry logic."""
@@ -33,18 +31,7 @@ def run_movie_scrape(
         date_str = current_time.strftime("%Y-%m-%d")
         timestamp = current_time.strftime("%Y-%m-%d %H:%M:%S")
 
-        # Determine cities to scrape
-        if batch is not None:
-            cities_per_batch = len(CITIES) // total_batches + 1
-            start_idx = batch * cities_per_batch
-            end_idx = min(start_idx + cities_per_batch, len(CITIES))
-            city_names = [c["name"] for c in CITIES[start_idx:end_idx]]
-            logger.info(
-                f"🔢 Batch {batch}/{total_batches - 1}: cities {start_idx}-{end_idx - 1} "
-                f"({len(city_names)} cities)"
-            )
-        else:
-            city_names = None
+        city_names = None
 
         # Header
         logger.info("\n" + "=" * 60)
@@ -82,17 +69,13 @@ def run_movie_scrape(
         logger.info(f"\n📊 Cities: {total_cities}, Movies: {total_movies}")
 
         # Save results
-        if batch is not None:
-            output_file = output_path / f"batch_{batch}_{date_str}.json"
-        else:
-            output_file = output_path / f"movies_{date_str}.json"
+        output_file = output_path / f"movies_{date_str}.json"
 
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump(
                 {
                     "scraped_at": timestamp,
                     "date": date_str,
-                    "batch": batch,
                     "stats": result.get("stats"),
                     "movies": result.get("movies_for_firestore", len(result.get("results", []))),
                     "api_requests": result.get("api_requests"),

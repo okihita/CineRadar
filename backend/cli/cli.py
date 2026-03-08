@@ -24,7 +24,6 @@ def main() -> None:
         epilog="""
 Examples:
   python -m backend.cli movies --city JAKARTA
-  python -m backend.cli movies --batch 0 --total-batches 9
   python -m backend.cli seats --mode morning
   python -m backend.cli seats --city JAKARTA --limit 10
   python -m backend.cli movie-details --movie-id 1991446452714422272
@@ -39,8 +38,6 @@ Examples:
     movies_parser.add_argument("--limit", type=int, help="Limit number of cities")
     movies_parser.add_argument("--city", type=str, help="Scrape specific city")
     movies_parser.add_argument("--output", default="data", help="Output directory")
-    movies_parser.add_argument("--batch", type=int, help="Batch number (0-indexed)")
-    movies_parser.add_argument("--total-batches", type=int, default=9)
 
     # Seats subcommand
     seats_parser = subparsers.add_parser("seats", help="Scrape seat occupancy")
@@ -49,8 +46,6 @@ Examples:
     seats_parser.add_argument("--city", type=str, help="Filter by city")
     seats_parser.add_argument("--limit", type=int, help="Limit showtimes")
     seats_parser.add_argument("--output", default="data", help="Output directory")
-    seats_parser.add_argument("--batch", type=int, help="Batch number")
-    seats_parser.add_argument("--total-batches", type=int, default=9)
     seats_parser.add_argument(
         "--jit-window", type=int, default=20, help="JIT window in minutes (default: 20 for T-20)"
     )
@@ -84,8 +79,6 @@ Examples:
             output_dir=args.output,
             city_limit=args.limit,
             specific_city=args.city,
-            batch=args.batch,
-            total_batches=args.total_batches,
         )
     elif args.command == "seats":
         run_seat_scrape(
@@ -93,8 +86,6 @@ Examples:
             headless=not args.visible,
             city=args.city,
             limit=args.limit,
-            batch=args.batch,
-            total_batches=args.total_batches,
             output_dir=args.output,
             jit_window=args.jit_window,
             use_stored_token=args.use_stored_token,

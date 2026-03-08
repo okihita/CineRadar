@@ -31,10 +31,9 @@ def load_movie_data(data_dir: str = "data", use_firestore: bool = False) -> dict
 
     data_path = Path(data_dir)
 
-    # Try today's merged file first, then batch files
+    # Try today's merged file
     candidates = [
         data_path / f"movies_{date_str}.json",
-        data_path / f"batch_0_{date_str}.json",
     ]
 
     for path in candidates:

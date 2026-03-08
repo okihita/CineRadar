@@ -26,8 +26,6 @@ if __name__ == "__main__":
         parser.add_argument("--limit", type=int)
         parser.add_argument("--city", type=str)
         parser.add_argument("--output", default="data")
-        parser.add_argument("--batch", type=int, help="Batch number (0-indexed)")
-        parser.add_argument("--total-batches", type=int, default=9)
 
         args = parser.parse_args()
 
@@ -35,6 +33,4 @@ if __name__ == "__main__":
             output_dir=args.output,
             city_limit=args.limit,
             specific_city=args.city,
-            batch=args.batch,
-            total_batches=args.total_batches,
         )
