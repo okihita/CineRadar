@@ -1,6 +1,6 @@
 # M-Tix Login Bypass & Encryption Mechanisms
 
-Through reverse-engineering the Next.js client bundles for `m.21cineplex.com`, the client-side encryption used to protect user credentials has been fully bypassed. We can now programmatically log in and obtain valid JWT tokens without needing a browser or Playwright.
+Through reverse-engineering the Next.js client bundles for `m.21cineplex.com`, the client-side encryption used to protect user credentials has been fully bypassed. We can now programmatically log in and obtain valid JWT tokens without needing a browser.
 
 ## Encryption Implementation
 

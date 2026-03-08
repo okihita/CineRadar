@@ -1,9 +1,9 @@
 """CineRadar TIX.id Scraper Client V2
-Pure API implementation without Playwright.
+Pure API implementation.
 
 This is a migration-friendly version that uses direct HTTP API calls
 instead of browser automation. Key improvements over V1:
-- No Playwright dependency (faster, lighter)
+- No browser dependency (faster, lighter)
 - Checks is_any_schedule before fetching showtimes (fixes "wrong date" bug)
 - Per-city filtering (same movie may have shows in Jakarta but not Bandung)
 - Rate limiting to avoid triggering TIX.id WAF

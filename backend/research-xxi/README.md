@@ -34,7 +34,7 @@ To understand how the scraper works, review the documentation in this order:
 
 7. **[7-scraping-plan.md](./7-scraping-plan.md)**
    * **Subject:** Architecture & The Dual-Source Approach.
-   * **Takeaway:** The master architectural blueprint. Details how we merge the exclusive XXI live-seat data from these endpoints with the rich meta-aggregator data from the existing **TIX ID** Playwright scraper to build the ultimate Box Office Analytics dashboard.
+   * **Takeaway:** The master architectural blueprint. Details how we merge the exclusive XXI live-seat data from these endpoints with the rich meta-aggregator data from the existing **TIX ID** API scraper to build the ultimate Box Office Analytics dashboard.
 
 ## Request/Response Snapshots
 

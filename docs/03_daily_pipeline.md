@@ -96,7 +96,7 @@ Scrape all movies, showtimes, and theatre information for the day.
 
 ### How It Works
 
-The V2 API-based scraper is exceptionally fast and no longer requires parallel batching or Playwright.
+The V2 API-based scraper is exceptionally fast and no longer requires parallel batching.
 
 ```mermaid
 flowchart LR

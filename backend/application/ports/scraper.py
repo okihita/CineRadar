@@ -17,7 +17,7 @@ class IMovieScraper(ABC):
     Example implementation:
         class TixMovieScraper(IMovieScraper):
             async def scrape_movies(self, cities=None, fetch_schedules=True):
-                # ... Playwright scraping logic ...
+                # ... API scraping logic ...
                 return [Movie(...), Movie(...)]
     """
 
