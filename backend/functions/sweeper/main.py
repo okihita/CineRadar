@@ -322,7 +322,7 @@ def run_sweeper(request: Any) -> Any:
     all_time_updates = 0
 
     # 3. Execution Loop
-    for movie_key, info in movie_info.items():
+    for _, info in movie_info.items():
         title = info["title"]
         schedule_id = info["schedule_id"]
         metadata_id = info.get("metadata_id")

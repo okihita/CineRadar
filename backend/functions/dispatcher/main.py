@@ -89,36 +89,36 @@ def find_upcoming_showtimes(
 
     """
     today = window_start.strftime("%Y-%m-%d")
-    
+
     # V2 Migration: Try schedules_v2 first, fallback to schedules (V1)
     movies_ref_v2 = db.collection("schedules_v2").document(today).collection("movies")
     movies_ref_v1 = db.collection("schedules").document(today).collection("movies")
-    
+
     movie_docs = list(movies_ref_v2.stream())
     use_v2_schema = True
-    
+
     if not movie_docs:
         logger.info(f"No data in schedules_v2/{today}/movies, falling back to schedules (V1)")
         movie_docs = list(movies_ref_v1.stream())
         use_v2_schema = False
     else:
         logger.info(f"Using schedules_v2/{today}/movies (V2 schema)")
-    
+
     showtimes_to_scrape = []
 
     for movie_doc in movie_docs:
         movie = movie_doc.to_dict()
         movie_title = movie.get("title", "")
-        
+
         if use_v2_schema:
             # V2 schema: document ID is metadata_id, schedule_ids is an array
             metadata_id = movie_doc.id
             schedule_ids = movie.get("schedule_ids", [])
-            
+
             if not schedule_ids:
                 logger.warning(f"No schedule_ids for metadata_id={metadata_id} ({movie_title}), skipping")
                 continue
-            
+
             # Use the first schedule_id for API calls
             movie_id = schedule_ids[0]
         else:

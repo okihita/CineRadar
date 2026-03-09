@@ -1087,7 +1087,7 @@ def save_snapshot(
         .collection("showtimes")
         .document(showtime_id)
     )
-    
+
     # V2 document reference (new - only if metadata_id available)
     doc_ref_v2 = None
     if metadata_id:
@@ -1141,13 +1141,13 @@ def save_snapshot(
         # V1 write (existing - keep for backward compatibility)
         doc_ref.set(snapshot_data)
         logger.info(f"Saved V1 snapshot for {showtime_id}")
-        
+
         # V2 write (new - only if metadata_id available)
         if doc_ref_v2:
             v2_snapshot_data = {**snapshot_data, "schedule_id": movie_id}
             doc_ref_v2.set(v2_snapshot_data)
             logger.info(f"Saved V2 snapshot for {showtime_id} (metadata_id={metadata_id})")
-        
+
         return True, document_path
     except Exception as e:
         logger.error(f"Failed to save snapshot: {e}")
