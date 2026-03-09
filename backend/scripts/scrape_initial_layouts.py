@@ -29,7 +29,13 @@ from google.cloud import firestore
 from google.oauth2 import service_account
 
 from backend.domain.time import JAKARTA_TZ
-from backend.infrastructure.firestore_collections import MOVIES, SCHEDULES
+from backend.infrastructure.firestore_collections import (
+    MOVIES,
+    SCHEDULES,
+    SCHEDULES_V2,
+    MOVIE_PERFORMANCE,
+    MOVIE_PERFORMANCE_V2,
+)
 
 # Configure logging
 logging.basicConfig(
@@ -269,21 +275,43 @@ def calculate_occupancy(seat_map: list[dict[str, Any]]) -> tuple[int, int, list[
 
 
 def load_showtimes_from_schedule(db: firestore.Client, date: str) -> list[dict[str, Any]]:
-    """Load all showtimes from schedules/{date}/movies/.
+    """Load all showtimes from schedules_v2 or schedules (V1 fallback).
 
     Handles the nested structure:
     cities.{city}.theatres[].rooms[].all_showtimes[]
-    """
-    logger.info(f"📥 Loading showtimes from {SCHEDULES}/{date}/{MOVIES}/...")
 
-    movies_ref = db.collection(SCHEDULES).document(date).collection(MOVIES)
+    Returns showtimes with both movie_id (schedule_id) and metadata_id for V2 compatibility.
+    """
+    # V2 Migration: Try schedules_v2 first, fallback to schedules (V1)
+    movies_ref_v2 = db.collection(SCHEDULES_V2).document(date).collection(MOVIES)
+    movies_ref_v1 = db.collection(SCHEDULES).document(date).collection(MOVIES)
+
+    movie_docs = list(movies_ref_v2.stream())
+    use_v2_schema = True
+
+    if not movie_docs:
+        logger.info(f"📥 No data in {SCHEDULES_V2}/{date}/{MOVIES}, falling back to {SCHEDULES}")
+        movie_docs = list(movies_ref_v1.stream())
+        use_v2_schema = False
+    else:
+        logger.info(f"📥 Loading showtimes from {SCHEDULES_V2}/{date}/{MOVIES}/...")
+
     showtimes = []
 
-    for movie_doc in movies_ref.stream():
+    for movie_doc in movie_docs:
         movie = movie_doc.to_dict()
-        movie_id = movie.get("movie_id", movie_doc.id)
         movie_title = movie.get("title", "Unknown")
         cities = movie.get("cities", {})
+
+        if use_v2_schema:
+            # V2 schema: document ID is metadata_id, schedule_ids is an array
+            metadata_id = movie_doc.id
+            schedule_ids = movie.get("schedule_ids", [])
+            movie_id = schedule_ids[0] if schedule_ids else metadata_id
+        else:
+            # V1 schema: movie_id is schedule_id, metadata_id may be in tix_metadata_id
+            movie_id = movie.get("movie_id", movie_doc.id)
+            metadata_id = movie.get("tix_metadata_id") or movie.get("metadata_id")
 
         for city_name, theatres in cities.items():
             for theatre in theatres:
@@ -304,7 +332,8 @@ def load_showtimes_from_schedule(db: firestore.Client, date: str) -> list[dict[s
                                 {
                                     "showtime_id": showtime_id,
                                     "showtime": showtime_time,
-                                    "movie_id": movie_id,
+                                    "movie_id": movie_id,  # schedule_id for V1 compatibility
+                                    "metadata_id": metadata_id,  # NEW: immutable movie entity ID for V2
                                     "movie_title": movie_title,
                                     "theatre_id": theatre_id,
                                     "theatre_name": theatre_name,
@@ -315,7 +344,7 @@ def load_showtimes_from_schedule(db: firestore.Client, date: str) -> list[dict[s
                                 }
                             )
 
-    logger.info(f"   Found {len(showtimes)} showtimes")
+    logger.info(f"   Found {len(showtimes)} showtimes (schema: {'v2' if use_v2_schema else 'v1'})")
     return showtimes
 
 
@@ -326,8 +355,13 @@ def save_initial_layout(
     unavailable: int,
     layout_grid: list[Any],
 ) -> bool:
-    """Save initial layout to Firestore."""
+    """Save initial layout to Firestore (dual-write to V1 and V2).
+
+    V1 path: movie_performance/{movie_id}/days/{date}/showtimes/{showtime_id}
+    V2 path: movie_performance_v2/{metadata_id}/days/{date}/showtimes/{showtime_id}
+    """
     movie_id = showtime["movie_id"]
+    metadata_id = showtime.get("metadata_id")  # V2: immutable movie entity ID
     date = showtime["date"]
     showtime_id = showtime["showtime_id"]
 
@@ -335,40 +369,55 @@ def save_initial_layout(
     layout_json = json.dumps(layout_grid)
     layout_compressed = gzip.compress(layout_json.encode("utf-8"))
 
+    # Build document data
+    doc_data = {
+        "showtime_id": showtime_id,
+        "movie_id": movie_id,
+        "movie_title": showtime.get("movie_title", ""),
+        "theatre_id": showtime.get("theatre_id"),
+        "theatre_name": showtime.get("theatre_name"),
+        "showtime": showtime.get("showtime"),
+        "date": date,
+        "city": showtime.get("city"),
+        "merchant": showtime.get("merchant"),
+        "room_category": showtime.get("room_category"),
+        "total_seats": total_seats,
+        # Initial state (morning scrape)
+        "initial_layout_compressed": layout_compressed,
+        "initial_unavailable": unavailable,
+        "initial_available": total_seats - unavailable,
+        "initial_scraped_at": datetime.now(JAKARTA_TZ).isoformat(),
+        # Placeholder values for dashboard compatibility (will be updated by JIT scraper)
+        "sold_seats": 0,
+        "occupancy_pct": 0.0,
+    }
+
     try:
-        doc_ref = (
-            db.collection("movie_performance")
+        # V1 write (existing - keep for backward compatibility)
+        doc_ref_v1 = (
+            db.collection(MOVIE_PERFORMANCE)
             .document(movie_id)
             .collection("days")
             .document(date)
             .collection("showtimes")
             .document(showtime_id)
         )
+        doc_ref_v1.set(doc_data, merge=True)
 
-        doc_ref.set(
-            {
-                "showtime_id": showtime_id,
-                "movie_id": movie_id,
-                "movie_title": showtime.get("movie_title", ""),
-                "theatre_id": showtime.get("theatre_id"),
-                "theatre_name": showtime.get("theatre_name"),
-                "showtime": showtime.get("showtime"),
-                "date": date,
-                "city": showtime.get("city"),
-                "merchant": showtime.get("merchant"),
-                "room_category": showtime.get("room_category"),
-                "total_seats": total_seats,
-                # Initial state (morning scrape)
-                "initial_layout_compressed": layout_compressed,
-                "initial_unavailable": unavailable,
-                "initial_available": total_seats - unavailable,
-                "initial_scraped_at": datetime.now(JAKARTA_TZ).isoformat(),
-                # Placeholder values for dashboard compatibility (will be updated by JIT scraper)
-                "sold_seats": 0,
-                "occupancy_pct": 0.0,
-            },
-            merge=True,
-        )
+        # V2 write (new - only if metadata_id available)
+        if metadata_id:
+            doc_ref_v2 = (
+                db.collection(MOVIE_PERFORMANCE_V2)
+                .document(metadata_id)
+                .collection("days")
+                .document(date)
+                .collection("showtimes")
+                .document(showtime_id)
+            )
+            # Include schedule_id for V2 reference
+            v2_doc_data = {**doc_data, "schedule_id": movie_id}
+            doc_ref_v2.set(v2_doc_data, merge=True)
+
         return True
     except Exception as e:
         logger.error(f"Failed to save {showtime_id}: {e}")
@@ -393,18 +442,44 @@ async def scrape_showtimes(
     rate_limiter = AsyncLimiter(rate_limit, 1)
 
     for i, showtime in enumerate(showtimes):
-        # 1. Native Checkpointing
+        # 1. Native Checkpointing (V2 first, then V1 fallback)
         # Check if the baseline already exists
-        doc_ref = (
-            db.collection("movie_performance")
-            .document(showtime["movie_id"])
-            .collection("days")
-            .document(showtime["date"])
-            .collection("showtimes")
-            .document(showtime["showtime_id"])
-        )
-        doc = doc_ref.get()
-        if doc.exists and "initial_unavailable" in doc.to_dict():
+        metadata_id = showtime.get("metadata_id")
+        movie_id = showtime["movie_id"]
+        date = showtime["date"]
+        showtime_id = showtime["showtime_id"]
+
+        already_scraped = False
+
+        # Try V2 first if metadata_id available
+        if metadata_id:
+            doc_ref_v2 = (
+                db.collection(MOVIE_PERFORMANCE_V2)
+                .document(metadata_id)
+                .collection("days")
+                .document(date)
+                .collection("showtimes")
+                .document(showtime_id)
+            )
+            doc_v2 = doc_ref_v2.get()
+            if doc_v2.exists and "initial_unavailable" in doc_v2.to_dict():
+                already_scraped = True
+
+        # Fallback to V1 check
+        if not already_scraped:
+            doc_ref_v1 = (
+                db.collection(MOVIE_PERFORMANCE)
+                .document(movie_id)
+                .collection("days")
+                .document(date)
+                .collection("showtimes")
+                .document(showtime_id)
+            )
+            doc_v1 = doc_ref_v1.get()
+            if doc_v1.exists and "initial_unavailable" in doc_v1.to_dict():
+                already_scraped = True
+
+        if already_scraped:
             stats["skipped"] += 1
             if (i + 1) % 50 == 0:
                 logger.info(
