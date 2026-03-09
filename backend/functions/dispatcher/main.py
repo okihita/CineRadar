@@ -85,19 +85,46 @@ def find_upcoming_showtimes(
         window_end: End of window (showtime must be < this, exclusive)
 
     Returns:
-        List of showtime dicts with showtime_id, movie_id, time, etc.
+        List of showtime dicts with showtime_id, movie_id, metadata_id, time, etc.
 
     """
     today = window_start.strftime("%Y-%m-%d")
-    logger.info(f"Querying schedules/{today}/movies")
-
-    movies_ref = db.collection("schedules").document(today).collection("movies")
+    
+    # V2 Migration: Try schedules_v2 first, fallback to schedules (V1)
+    movies_ref_v2 = db.collection("schedules_v2").document(today).collection("movies")
+    movies_ref_v1 = db.collection("schedules").document(today).collection("movies")
+    
+    movie_docs = list(movies_ref_v2.stream())
+    use_v2_schema = True
+    
+    if not movie_docs:
+        logger.info(f"No data in schedules_v2/{today}/movies, falling back to schedules (V1)")
+        movie_docs = list(movies_ref_v1.stream())
+        use_v2_schema = False
+    else:
+        logger.info(f"Using schedules_v2/{today}/movies (V2 schema)")
+    
     showtimes_to_scrape = []
 
-    for movie_doc in movies_ref.stream():
+    for movie_doc in movie_docs:
         movie = movie_doc.to_dict()
-        movie_id = movie.get("movie_id", movie_doc.id)
         movie_title = movie.get("title", "")
+        
+        if use_v2_schema:
+            # V2 schema: document ID is metadata_id, schedule_ids is an array
+            metadata_id = movie_doc.id
+            schedule_ids = movie.get("schedule_ids", [])
+            
+            if not schedule_ids:
+                logger.warning(f"No schedule_ids for metadata_id={metadata_id} ({movie_title}), skipping")
+                continue
+            
+            # Use the first schedule_id for API calls
+            movie_id = schedule_ids[0]
+        else:
+            # V1 schema: movie_id is schedule_id, metadata_id may be in tix_metadata_id
+            movie_id = movie.get("movie_id", movie_doc.id)
+            metadata_id = movie.get("tix_metadata_id") or movie.get("metadata_id")
 
         # Handle schema: 'cities' key (Firestore) or 'schedules' key (legacy)
         cities = movie.get("cities") or movie.get("schedules", {})
@@ -129,7 +156,8 @@ def find_upcoming_showtimes(
                             showtimes_to_scrape.append(
                                 {
                                     "showtime_id": showtime_id,
-                                    "movie_id": movie_id,
+                                    "movie_id": movie_id,  # schedule_id for V1 compatibility
+                                    "metadata_id": metadata_id,  # NEW: immutable movie entity ID for V2
                                     "movie_title": movie_title,
                                     "theatre_id": theatre_id,
                                     "theatre_name": theatre_name,

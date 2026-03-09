@@ -18,12 +18,20 @@ Collection Structure:
     │       └── {metadata_id}   # ✓ Immutable movie entity identifier
     │           └── schedule_ids: [...]  # List of associated schedule_ids
 
-    movie_performance/           # Seat occupancy tracking
+    movie_performance/           # V1: Seat occupancy tracking (uses schedule_id)
     ├── {movie_id}/
     │   └── days/
     │       └── {date}/
     │           └── showtimes/
     │               └── {showtime_id}
+
+    movie_performance_v2/       # V2: Seat occupancy tracking (uses metadata_id)
+    ├── {metadata_id}/
+    │   └── days/
+    │       └── {date}/
+    │           ├── showtimes/
+    │           │   └── {showtime_id}
+    │           └── DailyPerformance (aggregated stats)
 
     scraper_logs/               # Daily scraper monitoring
     ├── {date}/
@@ -46,6 +54,7 @@ THEATRES = "theatres"
 SCHEDULES = "schedules"
 SCHEDULES_V2 = "schedules_v2"  # V2: Uses metadata_id as document ID
 MOVIE_PERFORMANCE = "movie_performance"
+MOVIE_PERFORMANCE_V2 = "movie_performance_v2"  # V2: Uses metadata_id as document ID
 SCRAPER_LOGS = "scraper_logs"
 SNAPSHOTS = "snapshots"
 AUTH_TOKENS = "auth_tokens"

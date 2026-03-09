@@ -1068,6 +1068,7 @@ def save_snapshot(
 
     """
     movie_id = showtime_data["movie_id"]
+    metadata_id = showtime_data.get("metadata_id")  # V2: immutable movie entity ID
     date = showtime_data["date"]
     showtime_id = showtime_data["showtime_id"]
 
@@ -1077,6 +1078,7 @@ def save_snapshot(
     layout_json_str = json.dumps(layout)
     layout_compressed = gzip.compress(layout_json_str.encode("utf-8"))
 
+    # V1 document reference (existing - keep for backward compatibility)
     doc_ref = (
         db.collection("movie_performance")
         .document(movie_id)
@@ -1085,6 +1087,18 @@ def save_snapshot(
         .collection("showtimes")
         .document(showtime_id)
     )
+    
+    # V2 document reference (new - only if metadata_id available)
+    doc_ref_v2 = None
+    if metadata_id:
+        doc_ref_v2 = (
+            db.collection("movie_performance_v2")
+            .document(metadata_id)
+            .collection("days")
+            .document(date)
+            .collection("showtimes")
+            .document(showtime_id)
+        )
 
     # Calculate actual audience from morning baseline
     initial_unavailable = 0
@@ -1124,8 +1138,16 @@ def save_snapshot(
     }
 
     try:
+        # V1 write (existing - keep for backward compatibility)
         doc_ref.set(snapshot_data)
-        logger.info(f"Saved snapshot for {showtime_id}")
+        logger.info(f"Saved V1 snapshot for {showtime_id}")
+        
+        # V2 write (new - only if metadata_id available)
+        if doc_ref_v2:
+            v2_snapshot_data = {**snapshot_data, "schedule_id": movie_id}
+            doc_ref_v2.set(v2_snapshot_data)
+            logger.info(f"Saved V2 snapshot for {showtime_id} (metadata_id={metadata_id})")
+        
         return True, document_path
     except Exception as e:
         logger.error(f"Failed to save snapshot: {e}")

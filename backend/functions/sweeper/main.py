@@ -1,7 +1,7 @@
 """JIT Seat Scraper - Sweeper Function.
 
 HTTP-triggered Cloud Function that:
-1. Lists all movies for today from `schedules`
+1. Lists all movies for today from `schedules` (V1) or `schedules_v2` (V2)
 2. For each movie, reads all `showtimes` (snapshots)
 3. Aggregates DAILY stats (total sold, occupancy)
 4. Updates the parent `DailyPerformance` document
@@ -52,33 +52,60 @@ def get_firestore_client() -> firestore.Client:
 
 
 def aggregate_daily_stats(
-    db: firestore.Client, date_str: str, movie_id: str, movie_title: str
+    db: firestore.Client,
+    date_str: str,
+    movie_id: str,
+    movie_title: str,
+    metadata_id: str | None = None,
 ) -> bool:
     """Aggregate showtimes for a specific date and update DailyPerformance.
+
+    Args:
+        db: Firestore client
+        date_str: Date string (YYYY-MM-DD)
+        movie_id: Schedule ID (V1 compatibility)
+        movie_title: Movie title for logging
+        metadata_id: Immutable movie entity ID (V2 schema)
 
     Returns: True if updated (even if 0)
     """
     try:
-        # 1. Get all showtimes for this date
-        showtimes_ref = (
-            db.collection("movie_performance")
-            .document(movie_id)
-            .collection("days")
-            .document(date_str)
-            .collection("showtimes")
-        )
+        # V2 Migration: Try movie_performance_v2 first if metadata_id available
+        showtimes_ref = None
+        use_v2 = False
+
+        if metadata_id:
+            showtimes_ref_v2 = (
+                db.collection("movie_performance_v2")
+                .document(metadata_id)
+                .collection("days")
+                .document(date_str)
+                .collection("showtimes")
+            )
+            # Check if V2 has data
+            v2_snapshots = list(showtimes_ref_v2.limit(1).stream())
+            if v2_snapshots:
+                showtimes_ref = showtimes_ref_v2
+                use_v2 = True
+                logger.debug(f"Using V2 performance data for {metadata_id}")
+
+        # Fallback to V1 if V2 not available
+        if not showtimes_ref:
+            showtimes_ref = (
+                db.collection("movie_performance")
+                .document(movie_id)
+                .collection("days")
+                .document(date_str)
+                .collection("showtimes")
+            )
 
         # Stream all snapshots (Read Ops = N showtimes)
         snapshots = list(showtimes_ref.stream())
 
         if not snapshots:
-            # Maybe the movie is in schedule but no showtimes scraped yet?
-            # We skip updating to save writes, unless we want to clear stats?
-            # Let's verify if DailyPerformance exists. If not, we might want to create it?
-            # Actually, initialize_performance_data creates the doc.
             return False
 
-        # 2. Daily Aggregation InMemory
+        # Daily Aggregation InMemory
         total_showtimes_scraped = 0
         total_seats = 0
         total_sold = 0
@@ -93,7 +120,6 @@ def aggregate_daily_stats(
             s_city = data.get("city", "")
             s_occ = data.get("occupancy_pct", 0.0)
 
-            # Use total_seats > 0 as proxy for "successfully scraped"
             if s_seats > 0:
                 total_showtimes_scraped += 1
                 total_seats += s_seats
@@ -108,14 +134,7 @@ def aggregate_daily_stats(
             (occupancy_sum / total_showtimes_scraped) if total_showtimes_scraped > 0 else 0.0
         )
 
-        # 3. Update DailyPerformance
-        daily_ref = (
-            db.collection("movie_performance")
-            .document(movie_id)
-            .collection("days")
-            .document(date_str)
-        )
-
+        # Update DailyPerformance (dual-write to V1 and V2)
         update_data = {
             "total_showtimes_scraped": total_showtimes_scraped,
             "total_seats": total_seats,
@@ -125,8 +144,25 @@ def aggregate_daily_stats(
             "last_swept_at": datetime.now(JAKARTA_TZ).isoformat(),
         }
 
-        # Merge update
-        daily_ref.set(update_data, merge=True)
+        # V1 write (existing - keep for backward compatibility)
+        daily_ref_v1 = (
+            db.collection("movie_performance")
+            .document(movie_id)
+            .collection("days")
+            .document(date_str)
+        )
+        daily_ref_v1.set(update_data, merge=True)
+
+        # V2 write (new - only if metadata_id available and using V2 data)
+        if metadata_id and use_v2:
+            daily_ref_v2 = (
+                db.collection("movie_performance_v2")
+                .document(metadata_id)
+                .collection("days")
+                .document(date_str)
+            )
+            daily_ref_v2.set(update_data, merge=True)
+            logger.debug(f"Daily Update V2 {metadata_id} ({date_str}): {total_sold}/{total_seats} seats")
 
         logger.debug(f"Daily Update {movie_id} ({date_str}): {total_sold}/{total_seats} seats")
         return True
@@ -136,16 +172,41 @@ def aggregate_daily_stats(
         return False
 
 
-def aggregate_all_time_stats(db: firestore.Client, movie_id: str) -> bool:
+def aggregate_all_time_stats(
+    db: firestore.Client, movie_id: str, metadata_id: str | None = None
+) -> bool:
     """Aggregate all daily stats into root MovieMetadata.
 
     Sums up all 'days' documents.
+
+    Args:
+        db: Firestore client
+        movie_id: Schedule ID (V1 compatibility)
+        metadata_id: Immutable movie entity ID (V2 schema)
     """
     try:
-        days_ref = db.collection("movie_performance").document(movie_id).collection("days")
+        # V2 Migration: Try movie_performance_v2 first if metadata_id available
+        days_ref = None
+        use_v2 = False
+
+        if metadata_id:
+            days_ref_v2 = (
+                db.collection("movie_performance_v2")
+                .document(metadata_id)
+                .collection("days")
+            )
+            # Check if V2 has data
+            v2_daily_docs = list(days_ref_v2.limit(1).stream())
+            if v2_daily_docs:
+                days_ref = days_ref_v2
+                use_v2 = True
+                logger.debug(f"Using V2 performance data for all-time stats: {metadata_id}")
+
+        # Fallback to V1 if V2 not available
+        if not days_ref:
+            days_ref = db.collection("movie_performance").document(movie_id).collection("days")
 
         # Read all daily summaries (Read Ops = M days)
-        # M is typically small (1-60)
         daily_docs = list(days_ref.stream())
 
         if not daily_docs:
@@ -172,13 +233,8 @@ def aggregate_all_time_stats(db: firestore.Client, movie_id: str) -> bool:
                 occupancy_sum += d_occ
                 days_with_data += 1
 
-        # Average of daily averages (simple approximation)
-        # OR weighted average: (total_sold / total_seats) * 100
-        # Weighted is more accurate for "All Time Occupancy"
+        # Weighted average for "All Time Occupancy"
         avg_occupancy = (all_time_sold / all_time_seats) * 100 if all_time_seats > 0 else 0.0
-
-        # Update Root Metadata
-        root_ref = db.collection("movie_performance").document(movie_id)
 
         root_update = {
             "total_sold": all_time_sold,
@@ -188,7 +244,15 @@ def aggregate_all_time_stats(db: firestore.Client, movie_id: str) -> bool:
             "last_swept_at": datetime.now(JAKARTA_TZ).isoformat(),
         }
 
-        root_ref.set(root_update, merge=True)
+        # V1 write (existing - keep for backward compatibility)
+        root_ref_v1 = db.collection("movie_performance").document(movie_id)
+        root_ref_v1.set(root_update, merge=True)
+
+        # V2 write (new - only if metadata_id available and using V2 data)
+        if metadata_id and use_v2:
+            root_ref_v2 = db.collection("movie_performance_v2").document(metadata_id)
+            root_ref_v2.set(root_update, merge=True)
+
         return True
 
     except Exception as e:
@@ -202,8 +266,6 @@ def run_sweeper(request: Any) -> Any:
     now = datetime.now(JAKARTA_TZ)
 
     # 1. Determine Date to Sweep
-    # Simplified: Always sweep TODAY only.
-    # Valid validation confirms latest show is ~23:15, so 23:30 sweep covers it.
     today_str = now.strftime("%Y-%m-%d")
     dates_to_sweep = {today_str}
 
@@ -212,50 +274,80 @@ def run_sweeper(request: Any) -> Any:
     db = get_firestore_client()
 
     # 2. Get list of active movies
-    # Fetch movies from schedules/{today}/movies
-    movies_ref = db.collection("schedules").document(today_str).collection("movies")
-    movie_docs = list(movies_ref.stream())
+    # V2 Migration: Try schedules_v2 first, fallback to schedules (V1)
+    movies_ref_v2 = db.collection("schedules_v2").document(today_str).collection("movies")
+    movies_ref_v1 = db.collection("schedules").document(today_str).collection("movies")
 
-    target_movie_ids = set()
-    movie_titles = {}  # id -> title
+    movie_docs = list(movies_ref_v2.stream())
+    use_v2_schema = True
+
+    if not movie_docs:
+        logger.info(f"No data in schedules_v2/{today_str}/movies, falling back to schedules (V1)")
+        movie_docs = list(movies_ref_v1.stream())
+        use_v2_schema = False
+    else:
+        logger.info(f"Using schedules_v2/{today_str}/movies (V2 schema)")
+
+    # Store movie info: for V2, key is metadata_id; for V1, key is schedule_id
+    movie_info = {}  # id -> {title, metadata_id, schedule_id}
 
     # Load Today's Movies
     for doc in movie_docs:
         data = doc.to_dict()
-        mid = data.get("movie_id") or data.get("id") or doc.id
-        target_movie_ids.add(mid)
-        movie_titles[mid] = data.get("title", "Unknown")
+        title = data.get("title", "Unknown")
 
-    logger.info(f"Found {len(target_movie_ids)} unique active movies to sweep.")
+        if use_v2_schema:
+            # V2 schema: document ID is metadata_id, schedule_ids is an array
+            metadata_id = doc.id
+            schedule_ids = data.get("schedule_ids", [])
+            schedule_id = schedule_ids[0] if schedule_ids else metadata_id
+            movie_info[metadata_id] = {
+                "title": title,
+                "metadata_id": metadata_id,
+                "schedule_id": schedule_id,
+            }
+        else:
+            # V1 schema: movie_id is schedule_id, metadata_id may be in tix_metadata_id
+            schedule_id = data.get("movie_id") or data.get("id") or doc.id
+            metadata_id = data.get("tix_metadata_id") or data.get("metadata_id")
+            movie_info[schedule_id] = {
+                "title": title,
+                "metadata_id": metadata_id,
+                "schedule_id": schedule_id,
+            }
+
+    logger.info(f"Found {len(movie_info)} unique active movies to sweep.")
 
     daily_updates = 0
     all_time_updates = 0
 
     # 3. Execution Loop
-    for movie_id in target_movie_ids:
-        title = movie_titles.get(movie_id, "Unknown")
+    for movie_key, info in movie_info.items():
+        title = info["title"]
+        schedule_id = info["schedule_id"]
+        metadata_id = info.get("metadata_id")
 
         # A. Update Daily Stats (for all target dates)
         updated_any_day = False
         for date_str in dates_to_sweep:
-            if aggregate_daily_stats(db, date_str, movie_id, title):
+            if aggregate_daily_stats(db, date_str, schedule_id, title, metadata_id):
                 updated_any_day = True
 
         if updated_any_day:
             daily_updates += 1
 
         # B. Update All-Time Stats
-        # Always run this if we are processing the movie, to ensure consistency
-        if aggregate_all_time_stats(db, movie_id):
+        if aggregate_all_time_stats(db, schedule_id, metadata_id):
             all_time_updates += 1
 
     # Log summary
     summary = {
         "dates_swept": list(dates_to_sweep),
-        "movies_processed": len(target_movie_ids),
+        "movies_processed": len(movie_info),
         "daily_updates": daily_updates,
         "all_time_updates": all_time_updates,
         "timestamp": now.isoformat(),
+        "schema": "v2" if use_v2_schema else "v1",
     }
 
     logger.info(
