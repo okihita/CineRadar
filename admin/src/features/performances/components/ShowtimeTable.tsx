@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Clock, Filter, ArrowUpDown, Layers, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SeatProgressBar } from './SeatProgressBar';
+import { SeatBreakdownCard } from './SeatBreakdownCard';
+import { TrueAudienceBadge } from './TrueAudienceBadge';
 
 export interface ShowtimeSnapshot {
     id: string;
@@ -454,67 +457,83 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
 
 // Showtime Row Component
 function ShowtimeRow({ showtime: st }: { showtime: ShowtimeSnapshot }) {
-    const merchantColor = MERCHANT_COLORS[st.merchant] || 'bg-gray-500';
+    const merchantColor = MERCHANT_COLORS[st.merchant] || 'bg-gray-500'
+    const [expanded, setExpanded] = useState(false);
 
     // Choose which metric to show: True Delta or Legacy Raw
     const isTrueDelta = st.audience_count !== undefined;
-    const finalSold = isTrueDelta ? st.audience_count! : st.sold_seats;
-    const finalPct = isTrueDelta ? st.audience_pct! : st.occupancy_pct;
-    const initialBlocked = isTrueDelta ? st.initial_unavailable ?? 0 : 0;
+    const isScraped = st.sold_seats !== undefined && st.sold_seats > 0;
+    const finalSold = isTrueDelta ? st.audience_count! : (st.sold_seats ?? 0);
+    const finalPct = isTrueDelta ? st.audience_pct! : (st.occupancy_pct ?? 0);
+    const initialBlocked = isTrueDelta ? (st.initial_unavailable ?? 0) : 0;
 
     return (
-        <tr className="border-b last:border-0 hover:bg-muted/20 transition-colors">
-            <td className="py-3 px-4 font-mono font-medium text-foreground">{st.showtime}</td>
-            <td className="py-3 px-4">
-                <div className="flex items-center gap-2">
-                    <div className={cn("w-1.5 h-4 rounded-full", merchantColor)} />
-                    <span className="font-medium">{st.theatre_name}</span>
-                </div>
-            </td>
-            <td className="py-3 px-4 text-muted-foreground">{st.city}</td>
-            <td className="py-3 px-4">
-                <Badge variant="outline" className="text-xs font-normal text-muted-foreground">
-                    {st.room_category}
-                </Badge>
-            </td>
-            <td className="py-3 px-4">
-                <div className="flex items-center gap-3 group relative cursor-help">
-                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                        <div
-                            className={cn(
-                                "h-full rounded-full transition-all duration-500",
-                                finalPct > 80 ? "bg-red-500" :
-                                    finalPct > 50 ? "bg-amber-500" : "bg-primary"
-                            )}
-                            style={{ width: `${finalPct}%` }}
-                        />
+        <>
+            <tr
+                className={cn(
+                    "border-b last:border-0 hover:bg-muted/20 transition-colors cursor-pointer",
+                    expanded && "bg-muted/10"
+                )}
+                onClick={() => setExpanded(!expanded)}
+            >
+                <td className="py-3 px-4 font-mono font-medium text-foreground">{st.showtime}</td>
+                <td className="py-3 px-4">
+                    <div className="flex items-center gap-2">
+                        <div className={cn("w-1.5 h-4 rounded-full", merchantColor)} />
+                        <span className="font-medium">{st.theatre_name}</span>
                     </div>
-                    <span className="text-xs w-10 text-right font-mono text-muted-foreground">
-                        {finalPct}%
-                    </span>
-
-                    {/* Hover Tooltip for True Delta Math */}
-                    {isTrueDelta && (
-                        <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity z-50 bg-popover text-popover-foreground border shadow-lg rounded-md px-3 py-2 text-xs bottom-full mb-2 left-1/2 -translate-x-1/2 w-48 text-center pointer-events-none">
-                            <div className="font-semibold mb-1 border-b pb-1">Sales Breakdown</div>
-                            <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-left">
-                                <span className="text-muted-foreground">T-30 Blocked:</span>
-                                <span className="text-right">{st.final_unavailable}</span>
-                                <span className="text-muted-foreground">Morning Blocked:</span>
-                                <span className="text-right">-{initialBlocked}</span>
-                                <span className="font-semibold col-span-2 text-right border-t pt-1 mt-1 text-primary">
-                                    {finalSold} Net Sold
-                                </span>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </td>
-            <td className="py-3 px-4 text-right font-mono text-muted-foreground">
-                <span className="text-foreground font-medium">{finalSold}</span>
-                <span className="opacity-50">/{st.total_seats}</span>
-            </td>
-        </tr>
+                </td>
+                <td className="py-3 px-4 text-muted-foreground">{st.city}</td>
+                <td className="py-3 px-4">
+                    <Badge variant="outline" className="text-xs font-normal text-muted-foreground">
+                        {st.room_category}
+                    </Badge>
+                </td>
+                <td className="py-3 px-4">
+                    {/* Use SeatProgressBar component for stacked visualization */}
+                    <SeatProgressBar
+                        totalSeats={st.total_seats}
+                        blockedSeats={initialBlocked}
+                        soldSeats={finalSold}
+                        showLabels={false}
+                        size="sm"
+                    />
+                </td>
+                <td className="py-3 px-4 text-right font-mono text-muted-foreground">
+                    <div className="flex items-center gap-2 justify-end">
+                        {!isScraped && !isTrueDelta ? (
+                            <span className="text-xs text-muted-foreground italic">Not scraped yet</span>
+                        ) : (
+                            <>
+                                <span className="text-foreground font-medium">{finalSold}</span>
+                                <span className="opacity-50">/{st.total_seats}</span>
+                                {isTrueDelta && <TrueAudienceBadge audienceCount={finalSold} totalSeats={st.total_seats} />}
+                            </>
+                        )}
+                        <ChevronRight className={cn(
+                            "w-4 h-4 text-muted-foreground transition-transform",
+                            expanded && "rotate-90"
+                        )} />
+                    </div>
+                </td>
+            </tr>
+            {/* Expanded Detail Row */}
+            {expanded && (
+                <tr className="border-b bg-muted/5">
+                    <td colSpan={6} className="p-4">
+                        <SeatBreakdownCard
+                            totalSeats={st.total_seats}
+                            blockedSeats={initialBlocked}
+                            soldSeats={finalSold}
+                            audienceCount={finalSold}
+                            trueOccupancyPct={finalPct}
+                            rawOccupancyPct={st.occupancy_pct ?? 0}
+                            size="sm"
+                        />
+                    </td>
+                </tr>
+            )}
+        </>
     );
 }
 
