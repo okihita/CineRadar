@@ -30,11 +30,11 @@ from google.oauth2 import service_account
 
 from backend.domain.time import JAKARTA_TZ
 from backend.infrastructure.firestore_collections import (
-    MOVIE_PERFORMANCE,
-    MOVIE_PERFORMANCE_V2,
     MOVIES,
     SCHEDULES,
     SCHEDULES_V2,
+    MOVIE_PERFORMANCE,
+    MOVIE_PERFORMANCE_V2,
 )
 
 # Configure logging
@@ -75,7 +75,7 @@ async def get_firestore_async_client() -> AsyncClient:
 class TokenManager:
     """Manages TIX API token with lock-protected refresh."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.token: str | None = None
         self.token_acquired_at: float = 0
         self.lock = asyncio.Lock()
@@ -90,16 +90,20 @@ class TokenManager:
 
     async def _fetch_token_from_firestore(self) -> str | None:
         """Get current token from Firestore."""
+        if self._db is None:
+            return None
         doc = await self._db.collection("auth_tokens").document("tix_jwt").get()
         if not doc.exists:
             return None
 
         data = doc.to_dict()
         token = data.get("token") or data.get("access_token")
-        return token
+        return str(token) if token else None
 
     async def _refresh_token_via_api(self) -> str | None:
         """Refresh access token via API."""
+        if self._db is None:
+            return None
         doc = await self._db.collection("auth_tokens").document("tix_jwt").get()
         if not doc.exists:
             return None
@@ -453,7 +457,7 @@ class ScraperContext:
         db: AsyncClient,
         rate_limit: int = RATE_LIMIT,
         max_concurrent: int = MAX_CONCURRENT,
-    ):
+    ) -> None:
         self._db = db
         self.rate_limiter = AsyncLimiter(rate_limit, 1)
         self.semaphore = asyncio.Semaphore(max_concurrent)
@@ -465,7 +469,7 @@ class ScraperContext:
             limits=httpx.Limits(max_keepalive_connections=10, max_connections=20),
         )
 
-    async def increment_stat(self, key: str):
+    async def increment_stat(self, key: str) -> None:
         async with self.stats_lock:
             self.stats[key] += 1
 
@@ -520,7 +524,7 @@ class ScraperContext:
             else:
                 await self.increment_stat("failed")
 
-    async def report_progress(self):
+    async def report_progress(self) -> None:
         """Report progress periodically."""
         while True:
             await asyncio.sleep(30)
@@ -551,7 +555,7 @@ async def scrape_showtimes_concurrent(
             logger.error("❌ No valid token - aborting")
             return ctx.stats
 
-        logger.info("🔑 Token acquired, starting concurrent scrape...")
+        logger.info(f"🔑 Token acquired, starting concurrent scrape...")
 
         # Spawn all tasks - semaphore and rate_limiter control concurrency
         async with asyncio.TaskGroup() as tg:
