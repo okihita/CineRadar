@@ -151,16 +151,16 @@ deploy_sweeper() {
             --quiet 2>/dev/null || true
             
         # Schedule: Every 30 mins from 10:00 to 23:30
-        # Cron: 0,30 10-23 * * *
+        # Cron: */15 10-23 * * *
         gcloud scheduler jobs create http jit-sweeper \
             --location=$REGION \
-            --schedule="0,30 10-23 * * *" \
+            --schedule="*/15 10-23 * * *" \
             --time-zone="Asia/Jakarta" \
             --uri="$SWEEPER_URL" \
             --http-method=POST \
             --project=$PROJECT_ID
             
-        echo "   ✓ Scheduler: Sweeper every 30 min (10:00-23:30 WIB)"
+        echo "   ✓ Scheduler: Sweeper every 15 min (10:00-23:45 WIB)"
     fi
 }
 

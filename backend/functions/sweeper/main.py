@@ -116,9 +116,18 @@ def aggregate_daily_stats(
             data = snap.to_dict()
 
             s_seats = data.get("total_seats", 0)
-            s_sold = data.get("sold_seats", 0)
+
+            # True Audience Delta: Try to use audience_count first, fallback to raw sold_seats
+            s_sold = data.get("audience_count")
+            if s_sold is None:
+                s_sold = data.get("sold_seats", 0)
+
+            # Try to use true delta occupancy first, fallback to raw occupancy
+            s_occ = data.get("audience_pct")
+            if s_occ is None:
+                s_occ = data.get("occupancy_pct", 0.0)
+
             s_city = data.get("city", "")
-            s_occ = data.get("occupancy_pct", 0.0)
 
             if s_seats > 0:
                 total_showtimes_scraped += 1
