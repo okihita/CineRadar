@@ -22,8 +22,8 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
-      - name: Scrape Missing Movie Details
-        run: uv run python -m backend.cli movie-details --from-performance
+      - name: Scrape Movie Details with Daily Rating Updates
+        run: uv run python -m backend.cli movie-details --from-performance --update-ratings
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
