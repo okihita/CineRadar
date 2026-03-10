@@ -30,11 +30,11 @@ from google.oauth2 import service_account
 
 from backend.domain.time import JAKARTA_TZ
 from backend.infrastructure.firestore_collections import (
+    MOVIE_PERFORMANCE,
+    MOVIE_PERFORMANCE_V2,
     MOVIES,
     SCHEDULES,
     SCHEDULES_V2,
-    MOVIE_PERFORMANCE,
-    MOVIE_PERFORMANCE_V2,
 )
 
 # Configure logging
@@ -82,10 +82,24 @@ class TokenManager:
         self._db: AsyncClient | None = None
 
     async def initialize(self, db: AsyncClient) -> str | None:
-        """Initialize token from Firestore."""
+        """Initialize token with forced refresh.
+
+        Always refreshes the token at startup since the stored token is likely
+        expired (access tokens expire in ~30 min, but daily scrapes run 24h apart).
+        This avoids the race condition where the first API calls fail with 401.
+        """
         self._db = db
-        self.token = await self._fetch_token_from_firestore()
-        self.token_acquired_at = time.time()
+        # Force refresh - don't trust stored token's age
+        new_token = await self._refresh_token_via_api()
+        if new_token:
+            self.token = new_token
+            self.token_acquired_at = time.time()
+            logger.info("✅ Token refreshed at startup")
+        else:
+            # Fallback: try to use stored token (may be expired)
+            logger.warning("⚠️ Token refresh failed, trying stored token...")
+            self.token = await self._fetch_token_from_firestore()
+            self.token_acquired_at = time.time()
         return self.token
 
     async def _fetch_token_from_firestore(self) -> str | None:
@@ -555,7 +569,7 @@ async def scrape_showtimes_concurrent(
             logger.error("❌ No valid token - aborting")
             return ctx.stats
 
-        logger.info(f"🔑 Token acquired, starting concurrent scrape...")
+        logger.info("🔑 Token acquired, starting concurrent scrape...")
 
         # Spawn all tasks - semaphore and rate_limiter control concurrency
         async with asyncio.TaskGroup() as tg:
