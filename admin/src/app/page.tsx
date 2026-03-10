@@ -272,7 +272,7 @@ export default function ExecutiveDashboard() {
                     <CardContent className="pt-0">
                         <div className="space-y-3">
                             {data.hotMovies.map((movie, i) => (
-                                <div key={movie.title} className="flex items-center gap-3">
+                                <div key={movie.id} className="flex items-center gap-3">
                                     <span className="text-lg">{['🥇', '🥈', '🥉', '4️⃣', '5️⃣'][i]}</span>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-medium truncate">{movie.title}</p>
