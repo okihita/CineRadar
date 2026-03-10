@@ -210,7 +210,7 @@ async def fetch_seat_layout_async(
     try:
         response = await client.get(url, headers=headers, params=params, timeout=15)
         if response.status_code == 200:
-            data = response.json()
+            data: dict[str, Any] = response.json()
             if data.get("success"):
                 return data
             else:
