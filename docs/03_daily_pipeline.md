@@ -7,10 +7,10 @@
 The pipeline runs in two phases:
 
 1. **Morning Movie Scrape** (3:00-3:40 AM): Scrapes all movies and showtimes
-2. **JIT Seat Scraping** (10 AM-11 PM): Scrapes seats hourly, 8 min before showtime
+2. **JIT Seat Scraping** (10 AM-11 PM): Scrapes seats hourly, 30 min before showtime
 
 > [!NOTE]
-> Seat data is scraped **just-in-time** (JIT) — each showtime is captured ~8 minutes before it starts, giving near-final occupancy.
+> Seat data is scraped **just-in-time** (JIT) — each showtime is captured ~30 minutes before it starts, giving near-final occupancy.
 
 ---
 
@@ -399,10 +399,10 @@ uv run python -m backend.cli.movie_performance --all --limit 10
 ## Phase 5: JIT Seat Scraping (Live)
 
 ### Purpose
-Scrape seat availability for each showtime exactly **8-13 minutes before** it starts (Just-In-Time) to capture near-final occupancy.
+Scrape seat availability for each showtime exactly **30 minutes before** it starts (Just-In-Time) to capture near-final occupancy.
 
 ### Architecture
-This phase runs on **Google Cloud Functions** (Serverless) to handle the high concurrency and frequent scheduling required for T-8 precision.
+This phase runs on **Google Cloud Functions** (Serverless) to handle the high concurrency and frequent scheduling required for T-30 precision.
 
 ```mermaid
 graph TD

@@ -91,7 +91,6 @@ The morning pipeline operates on **GitHub Actions**, utilizing a single runner t
 | Workflow | Schedule | Python Entry Point | Description |
 |----------|----------|--------------------|-------------|
 | **`daily-initial-scrape.yml`** | Daily 06:00 WIB | `.cli`, `.movie_performance` | **Main Pipeline**. Scrapes movies and aggregates performance data. |
-| **`token-refresh.yml`** | Monthly | `.refresh_token` | **API Login**. Authenticates directly to TIX APIs via RSA encryption to regenerate refresh tokens (~90 day TTL). |
 
 #### Artifact Data Handover
 
@@ -105,7 +104,7 @@ Data is not persisted immediately. Instead, it flows through **GitHub Artifacts*
 
 ### JIT Scraper Environment (Real-Time)
 
-The **Just-In-Time (JIT) Scraper** captures seat occupancy data 8 minutes before a showtime starts (T-8) to get the final "sold" count.
+The **Just-In-Time (JIT) Scraper** captures seat occupancy data 30 minutes before a showtime starts (T-30) to get the final "sold" count.
 
 #### Architecture
 *   **Platform**: Google Cloud Functions (Gen 2).
@@ -113,7 +112,7 @@ The **Just-In-Time (JIT) Scraper** captures seat occupancy data 8 minutes before
 
 #### Component Flow
 1.  **Cloud Scheduler**: Triggers the Dispatcher every 5 minutes.
-2.  **Dispatcher**: Queries Firestore for showtimes starting between T+8 and T+15 minutes.
+2.  **Dispatcher**: Queries Firestore for showtimes starting between T+30 and T+35 minutes.
 3.  **Pub/Sub**: Distributes individual scraping jobs (`scrape-seat-jit` topic).
 4.  **Scraper Function**: Consumes message, fetches seat layout, and updates Firestore.
 
@@ -295,7 +294,6 @@ erDiagram
 | `security-scan.yml` | Push/PR + weekly | CodeQL security analysis |
 | `failure-reporter.yml` | Workflow failures | Auto-create GitHub issues |
 | `daily-initial-scrape.yml` | Daily 6 AM WIB | Movie + seat scraping |
-| `token-refresh.yml` | Daily 5:50 AM WIB | JWT token refresh |
 
 ### Quality Gates (Required for Merge)
 

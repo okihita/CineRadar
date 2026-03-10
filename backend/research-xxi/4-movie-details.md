@@ -67,7 +67,7 @@ The response cleanly exposes internal deployment tracking logic:
 
 ## 3. Implications for the Dual-Source Architecture
 
-In `SCRAPING_PLAN.md`, we established that **TIX ID** is our *Master Movie Record* due to its richer dataset (multiple trailers, TMDb IDs, extensive cast array). 
+**TIX ID** serves as our *Master Movie Record* due to its richer dataset (multiple trailers, TMDb IDs, extensive cast array).
 
 However, this `getDetail` endpoint changes the landscape slightly:
 1. **Synopsis & Language:** M-Tix provides a highly localized Indonesian `description`. If TIX ID's synopsis defaults to English (via TMDb fallback), the M-Tix dataset can be used to forcefully localize the UI.

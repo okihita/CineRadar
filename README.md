@@ -14,7 +14,7 @@
 
 **CineRadar** is the "Bloomberg Terminal" for the Indonesian Film Industry.
 
-It solves the "Box Office Black Box" problem by deploying a Just-In-Time (JIT) scraping engine to monitor **real-time seat occupancy** across 480+ theaters (XXI, CGV, Cinepolis) in 83 cities. This data empowers Production Houses to make data-driven decisions on marketing spend and screen allocation, moving beyond "gut feeling" and social buzz.
+It solves the "Box Office Black Box" problem by deploying a Just-In-Time (JIT) scraping engine to monitor **real-time seat occupancy** across 496+ theaters (XXI, CGV, Cinepolis) in 83 cities. This data empowers Production Houses to make data-driven decisions on marketing spend and screen allocation, moving beyond "gut feeling" and social buzz.
 
 ## 📚 Technical Manuals
 

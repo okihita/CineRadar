@@ -208,8 +208,7 @@ We follow **Clean Architecture** principles. The dependency rule is strict: inne
       > Each function deploys with `--source=.` which only uploads files in that function's directory.
       > **DO NOT** extract shared code to common modules - this will break deployments.
       > Code duplication with `backend/infrastructure/` is **intentional**.
-      > See [`functions/README.md`](functions/README.md#critical-self-contained-function-constraint) and 
-      > [`docs/cloud-functions-architecture.md`](docs/cloud-functions-architecture.md) for details.
+      > See [`functions/README.md`](functions/README.md#critical-self-contained-function-constraint) for details.
 
 ---
 

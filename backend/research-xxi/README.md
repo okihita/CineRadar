@@ -32,10 +32,6 @@ To understand how the scraper works, review the documentation in this order:
    * **Subject:** Real-Time Live Occupancy Polling.
    * **Takeaway:** Explains how to map the parameters acquired in the Schedule API into a final encrypted payload to return the physical delimited string of a theater room (`A1#free;A2#col`), allowing us to accurately calculate live capacity vs. booked seats.
 
-7. **[7-scraping-plan.md](./7-scraping-plan.md)**
-   * **Subject:** Architecture & The Dual-Source Approach.
-   * **Takeaway:** The master architectural blueprint. Details how we merge the exclusive XXI live-seat data from these endpoints with the rich meta-aggregator data from the existing **TIX ID** API scraper to build the ultimate Box Office Analytics dashboard.
-
 ## Request/Response Snapshots
 
 The folder also contains raw `.request` (containing the exact cURL setup including cookie and header fingerprints) and `.response` files that correspond to the research documents. These serve as isolated testbeds if the API shape ever changes.
