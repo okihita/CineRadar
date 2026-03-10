@@ -1,6 +1,6 @@
 # Daily Initial Scraper - API Edition
 # Pure HTTP API scraper (no Playwright required)
-name: Daily Initial Scrape
+name: Scrape National Movies & Showtimes
 
 on:
   schedule:
@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  scrape:
+  scrape-movies:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -25,12 +25,12 @@ jobs:
         run: uv sync
         # NOTE: No Playwright installation needed - pure HTTP API
 
-      - name: Run API scraper
+      - name: Scrape Now Playing Movies & Showtimes
         run: PYTHONPATH=. uv run python backend/scripts/run_national_scrape.py
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
-      - name: Sync post-processing data
+      - name: Link Schedules to Theatres & Cities
         run: PYTHONPATH=. uv run python backend/scripts/post_process.py
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
@@ -40,7 +40,7 @@ jobs:
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
-      - name: Scrape Movie Details
+      - name: Scrape Metadata for All New Movies
         run: uv run python -m backend.cli movie-details --all
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
@@ -48,7 +48,7 @@ jobs:
   # Note: Seat scraping moved to jit-seat-scrape.yml (runs hourly)
 
   alert:
-    needs: scrape
+    needs: scrape-movies
     if: failure()
     runs-on: ubuntu-latest
 

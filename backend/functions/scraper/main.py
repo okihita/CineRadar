@@ -1130,6 +1130,7 @@ def save_snapshot(
         "layout_compressed": layout_compressed,
         "raw_api_response": raw_api_response,
         "scraped_at": datetime.now(JAKARTA_TZ).isoformat(),
+        "scrape_phase": showtime_data.get("scrape_phase", "T-30"),  # Track which phase captured this
         # New True Audience Metrics
         "initial_unavailable": initial_unavailable,
         "final_unavailable": sold_seats,
@@ -1180,8 +1181,9 @@ def scrape_seat(cloud_event: Any) -> None:
     batch_id = showtime_data.get("batch_id", "")
     movie_title = showtime_data.get("movie_title", "Unknown")[:50]
     merchant = showtime_data.get("merchant", "XXI")
+    scrape_phase = showtime_data.get("scrape_phase", "T-30")
 
-    logger.info(f"Scraping {theatre_name} @ {showtime_time}")
+    logger.info(f"[{scrape_phase}] Scraping {theatre_name} @ {showtime_time}")
 
     db = get_firestore_client()
 
@@ -1228,6 +1230,15 @@ def scrape_seat(cloud_event: Any) -> None:
         job_logger.log_api_completed(status_code, retries, error_detail)
 
     if not raw_api_response:
+        # Graceful fallback for T-15 closed showtimes
+        if scrape_phase == "T-15" and status_code in (400, 404):
+            logger.info(f"[T-15 SKIP] Showtime closed/passed (HTTP {status_code}). Preserving T-30 data for {showtime_id}.")
+            if job_logger:
+                job_logger.log_success() # Treat as success so queue doesn't retry
+            if batch_id:
+                log_success_to_firestore(batch_id)
+            return
+
         if job_logger:
             job_logger.log_error(
                 "api_call",
@@ -1244,6 +1255,7 @@ def scrape_seat(cloud_event: Any) -> None:
                 "theatre": theatre_name,
                 "time": showtime_time,
                 "merchant": merchant,
+                "scrape_phase": scrape_phase,
                 "error_type": "fetch_layout_failed",
                 "http_status": status_code,
                 "api_error": error_detail,
@@ -1315,7 +1327,7 @@ def scrape_seat(cloud_event: Any) -> None:
             )
 
     logger.info(
-        f"✓ {theatre_name} @ {showtime_time}: {occupancy_pct}% ({sold_seats}/{total_seats})"
+        f"✓ [{scrape_phase}] {theatre_name} @ {showtime_time}: {occupancy_pct}% ({sold_seats}/{total_seats})"
     )
 
     # CHECKPOINT 8: Job completed successfully

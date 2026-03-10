@@ -1,12 +1,12 @@
-name: Daily Metadata Backfill
+name: Scrape Missing Movie Details
 
 on:
   schedule:
-    - cron: '0 21 * * *'  # 4 AM WIB (21:00 UTC previous day)
+    - cron: '30 18 * * *'  # 1:30 AM WIB (18:30 UTC previous day)
   workflow_dispatch:
 
 jobs:
-  backfill:
+  scrape-details:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
-      - name: Backfill Movie Details
+      - name: Scrape Missing Movie Details
         run: uv run python -m backend.cli movie-details --from-performance
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}

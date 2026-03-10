@@ -1,12 +1,12 @@
-name: Scrape Initial Layouts
+name: Scrape Morning Baseline Seat Layouts
 
 on:
   schedule:
-    - cron: '15 21 * * *'  # 4:15 AM WIB (21:15 UTC) to avoid top-of-hour congestion
+    - cron: '45 18 * * *'  # 1:45 AM WIB (18:45 UTC previous day) to avoid top-of-hour congestion
   workflow_dispatch:
 
 jobs:
-  scrape:
+  scrape-baseline:
     runs-on: ubuntu-latest
     timeout-minutes: 120  # 2 hour limit
 
@@ -28,7 +28,7 @@ jobs:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
   alert:
-    needs: scrape
+    needs: scrape-baseline
     if: failure()
     runs-on: ubuntu-latest
 

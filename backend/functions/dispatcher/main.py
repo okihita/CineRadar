@@ -49,8 +49,10 @@ JAKARTA_TZ = ZoneInfo("Asia/Jakarta")
 # Window configuration (minutes from now)
 # Exactly one 5-minute bucket so each dispatch captures unique showtimes with no overlap.
 # e.g., dispatch at 12:00 → captures showtimes from 12:20 to 12:24.
-WINDOW_START_MINUTES = 30  # Start of window: showtimes starting 30 min from now
-WINDOW_END_MINUTES = 35  # End of window: showtimes starting up to 35 min from now (exclusive)
+WINDOWS: list[dict[str, Any]] = [
+    {"name": "T-30", "start": 30, "end": 35},
+    {"name": "T-15", "start": 15, "end": 20},
+]
 
 
 def get_firestore_client() -> firestore.Client:
@@ -75,7 +77,7 @@ def parse_showtime(time_str: str, date: datetime) -> datetime | None:
 
 
 def find_upcoming_showtimes(
-    db: firestore.Client, window_start: datetime, window_end: datetime
+    db: firestore.Client, window_start: datetime, window_end: datetime, phase: str = "T-30"
 ) -> list[dict[str, Any]]:
     """Find showtimes starting within the specified time window.
 
@@ -166,6 +168,7 @@ def find_upcoming_showtimes(
                                     "merchant": merchant,
                                     "showtime": time_str,
                                     "date": today,
+                                    "scrape_phase": phase,
                                 }
                             )
 
@@ -297,6 +300,7 @@ def log_job_creation(db: firestore.Client, batch_id: str, showtime: dict[str, An
                     "city": showtime.get("city"),
                     "merchant": showtime.get("merchant"),
                     "showtime": showtime.get("showtime"),
+                    "scrape_phase": showtime.get("scrape_phase"),
                 },
                 "lifecycle": {
                     "created_at": now_iso,
@@ -324,42 +328,52 @@ def dispatch_jobs(request: Any) -> Any:
     # instead of 12:00) still produce the same deterministic window.
     now = actual_now.replace(minute=(actual_now.minute // 5) * 5, second=0, microsecond=0)
 
-    window_start = now + timedelta(minutes=WINDOW_START_MINUTES)
-    window_end = now + timedelta(minutes=WINDOW_END_MINUTES)
-
     logger.info(
         f"Dispatcher triggered at {actual_now.isoformat()} (snapped to {now.strftime('%H:%M')})"
     )
-    logger.info(f"Window: {window_start.strftime('%H:%M')} - {window_end.strftime('%H:%M')}")
 
     try:
         db = get_firestore_client()
         publisher = get_pubsub_publisher()
 
-        # Find showtimes in window
-        showtimes = find_upcoming_showtimes(db, window_start, window_end)
-        logger.info(f"Found {len(showtimes)} showtimes in window")
+        all_showtimes = []
+
+        # Evaluate each configured window (e.g., T-30, T-15)
+        for window in WINDOWS:
+            window_start = now + timedelta(minutes=float(window["start"]))
+            window_end = now + timedelta(minutes=float(window["end"]))
+            phase_name = str(window["name"])
+
+            logger.info(f"Checking {phase_name} Window: {window_start.strftime('%H:%M')} - {window_end.strftime('%H:%M')}")
+
+            showtimes = find_upcoming_showtimes(db, window_start, window_end, phase=phase_name)
+            all_showtimes.extend(showtimes)
+
+            logger.info(f"Found {len(showtimes)} showtimes in {window['name']} window")
 
         # Log sample showtimes for debugging
-        if showtimes:
-            sample = showtimes[:3]
+        if all_showtimes:
+            sample = all_showtimes[:3]
             for s in sample:
                 logger.info(
-                    f"  Sample: {s.get('theatre_name', '')[:20]} @ {s.get('showtime')} "
+                    f"  Sample [{s.get('scrape_phase')}]: {s.get('theatre_name', '')[:20]} @ {s.get('showtime')} "
                     f"- {s.get('merchant')}"
                 )
 
-        if showtimes:
             # Generate batch ID (timestamp of dispatch)
             batch_id = now.strftime("%Y%m%d-%H%M%S")
 
             # Add batch_id to all showtimes and log job creation
-            for s in showtimes:
+            for s in all_showtimes:
                 s["batch_id"] = batch_id
+
+                # Append phase to showtime_id for logging uniqueness within the same batch
+                s["job_log_id"] = f"{s.get('showtime_id')}_{s.get('scrape_phase')}"
+
                 log_job_creation(db, batch_id, s)  # Log job creation for lifecycle tracking
 
             # Publish to Pub/Sub
-            count = publish_to_pubsub(publisher, showtimes)
+            count = publish_to_pubsub(publisher, all_showtimes)
             logger.info(f"Published {count} messages to {PUBSUB_TOPIC} (Batch: {batch_id})")
 
             # Log to scraper_logs
@@ -367,10 +381,10 @@ def dispatch_jobs(request: Any) -> Any:
             log_jit_dispatch_to_firestore(
                 db=db,
                 time_slot=time_slot,
-                showtimes_found=len(showtimes),
+                showtimes_found=len(all_showtimes),
                 jobs_published=count,
-                window_start_str=window_start.strftime("%H:%M"),
-                window_end_str=window_end.strftime("%H:%M"),
+                window_start_str="T-30/T-15 Combo",
+                window_end_str="T-30/T-15 Combo",
                 status="ok",
             )
 
@@ -383,11 +397,11 @@ def dispatch_jobs(request: Any) -> Any:
                 time_slot=time_slot,
                 showtimes_found=0,
                 jobs_published=0,
-                window_start_str=window_start.strftime("%H:%M"),
-                window_end_str=window_end.strftime("%H:%M"),
+                window_start_str="T-30/T-15 Combo",
+                window_end_str="T-30/T-15 Combo",
                 status="ok",
             )
-            return {"status": "ok", "published": 0, "message": "No showtimes in window"}, 200
+            return {"status": "ok", "published": 0, "message": "No showtimes in windows"}, 200
 
     except Exception as e:
         logger.error(f"Error in dispatcher: {e}", exc_info=True)
