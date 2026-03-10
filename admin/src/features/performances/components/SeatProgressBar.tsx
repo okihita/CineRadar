@@ -57,7 +57,7 @@ export function SeatProgressBar({
         {/* Sold (green - after blocked) */}
         {soldSeats > 0 && (
           <div
-            className="absolute bg-green-500"
+            className="absolute inset-0 bg-green-500"
             style={{ left: `${blockedPct}%`, width: `${soldPct}%` }}
           />
         )}
