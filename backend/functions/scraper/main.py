@@ -1140,13 +1140,14 @@ def save_snapshot(
 
     try:
         # V1 write (existing - keep for backward compatibility)
-        doc_ref.set(snapshot_data)
+        # Use merge=True to preserve initial_layout_compressed from morning scrape
+        doc_ref.set(snapshot_data, merge=True)
         logger.info(f"Saved V1 snapshot for {showtime_id}")
 
         # V2 write (new - only if metadata_id available)
         if doc_ref_v2:
             v2_snapshot_data = {**snapshot_data, "schedule_id": movie_id}
-            doc_ref_v2.set(v2_snapshot_data)
+            doc_ref_v2.set(v2_snapshot_data, merge=True)
             logger.info(f"Saved V2 snapshot for {showtime_id} (metadata_id={metadata_id})")
 
         return True, document_path
