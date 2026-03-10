@@ -1,5 +1,31 @@
 import { NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
+import zlib from 'zlib';
+
+function decompressLayout(base64Data?: string | null): LayoutGrid | null {
+    if (!base64Data) return null;
+    try {
+        const buffer = Buffer.from(base64Data, 'base64');
+        const decompressed = zlib.gunzipSync(buffer);
+        const jsonStr = decompressed.toString('utf-8');
+        return JSON.parse(jsonStr) as LayoutGrid;
+    } catch (error) {
+        console.error('Failed to decompress layout data:', error);
+        return null;
+    }
+}
+
+interface Seat {
+    id: string;
+    status: number;
+}
+
+interface SeatRow {
+    row_name: string;
+    seats: (Seat | null)[];
+}
+
+type LayoutGrid = SeatRow[];
 
 interface RawShowtimeResponse {
     showtimeId: string;
@@ -15,6 +41,8 @@ interface RawShowtimeResponse {
     soldSeats: number;
     scrapedAt: string;
     rawApiResponse: object | null;
+    initialLayout: LayoutGrid | null;
+    finalLayout: LayoutGrid | null;
 }
 
 export async function GET(
@@ -49,6 +77,10 @@ export async function GET(
 
         const data = doc as Record<string, unknown>;
 
+        // Decode layout data
+        const initialLayout = decompressLayout(data.initial_layout_compressed as string | undefined);
+        const finalLayout = decompressLayout(data.layout_compressed as string | undefined);
+
         const response: RawShowtimeResponse = {
             showtimeId: String(data.showtime_id),
             movieTitle: String(data.movie_title),
@@ -63,6 +95,8 @@ export async function GET(
             soldSeats: Number(data.sold_seats),
             scrapedAt: String(data.scraped_at),
             rawApiResponse: (data.raw_api_response as object | null) || null,
+            initialLayout,
+            finalLayout,
         };
 
         return NextResponse.json(response);

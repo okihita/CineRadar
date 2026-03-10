@@ -4,10 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Clock, Filter, ArrowUpDown, Layers, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
+import { Clock, Filter, ArrowUpDown, Layers, ChevronDown, ChevronRight, ChevronFirst, ChevronLast, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SeatProgressBar } from './SeatProgressBar';
 import { SeatBreakdownCard } from './SeatBreakdownCard';
+import { SeatMapVisualizer } from './SeatMapVisualizer';
 import { TrueAudienceBadge } from './TrueAudienceBadge';
 
 export interface ShowtimeSnapshot {
@@ -60,23 +61,31 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
     const [filterCity, setFilterCity] = useState<string>('all');
     const [filterMerchant, setFilterMerchant] = useState<string>('all');
     const [filterRoom, setFilterRoom] = useState<string>('all');
+    const [filterHour, setFilterHour] = useState<string>('all');
 
     // Extract unique filter options from showtimes
     const filterOptions = useMemo(() => {
         const cities = new Set<string>();
         const merchants = new Set<string>();
         const rooms = new Set<string>();
+        const hours = new Set<string>();
 
         showtimes.forEach(st => {
             if (st.city) cities.add(st.city);
             if (st.merchant) merchants.add(st.merchant);
             if (st.room_category) rooms.add(st.room_category);
+            // Extract hour from showtime (e.g., "10:00" -> "10")
+            if (st.showtime) {
+                const hour = st.showtime.split(':')[0];
+                if (hour) hours.add(hour.padStart(2, '0'));
+            }
         });
 
         return {
             cities: Array.from(cities).sort(),
             merchants: Array.from(merchants).sort(),
             rooms: Array.from(rooms).sort(),
+            hours: Array.from(hours).sort((a, b) => parseInt(a) - parseInt(b)),
         };
     }, [showtimes]);
 
@@ -93,6 +102,9 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
         }
         if (filterRoom !== 'all') {
             result = result.filter(st => st.room_category === filterRoom);
+        }
+        if (filterHour !== 'all') {
+            result = result.filter(st => st.showtime.startsWith(filterHour));
         }
 
         // Apply sorting
@@ -118,7 +130,7 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
         });
 
         return result;
-    }, [showtimes, filterCity, filterMerchant, filterRoom, sortField, sortDirection]);
+    }, [showtimes, filterCity, filterMerchant, filterRoom, filterHour, sortField, sortDirection]);
 
     // Grouped showtimes
     const groupedShowtimes = useMemo(() => {
@@ -282,7 +294,7 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
                         {/* Results count */}
                         <div className="flex items-center justify-end text-xs text-muted-foreground">
                             {processedShowtimes.length} results
-                            {(filterCity !== 'all' || filterMerchant !== 'all' || filterRoom !== 'all') && (
+                            {(filterCity !== 'all' || filterMerchant !== 'all' || filterRoom !== 'all' || filterHour !== 'all') && (
                                 <Button
                                     variant="ghost"
                                     size="sm"
@@ -291,6 +303,7 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
                                         setFilterCity('all');
                                         setFilterMerchant('all');
                                         setFilterRoom('all');
+                                        setFilterHour('all');
                                     }}
                                 >
                                     Clear
@@ -303,10 +316,86 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
 
             {/* Showtimes Table */}
             <Card>
-                <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                    <CardTitle className="text-base font-semibold">
-                        Showtimes Breakdown
-                    </CardTitle>
+                <CardHeader className="pb-2">
+                    <div className="flex flex-row items-center justify-between mb-3">
+                        <CardTitle className="text-base font-semibold">
+                            Showtimes Breakdown
+                        </CardTitle>
+                        {/* Top Pagination */}
+                        {!showAll && totalPages > 1 && (
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-muted-foreground">
+                                    Page {currentPage} of {totalPages}
+                                </span>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 w-7 p-0"
+                                    disabled={currentPage === 1}
+                                    onClick={() => setCurrentPage(1)}
+                                >
+                                    <ChevronFirst className="w-3 h-3" />
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 px-2"
+                                    disabled={currentPage === 1}
+                                    onClick={() => setCurrentPage(p => p - 1)}
+                                >
+                                    Prev
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 px-2"
+                                    disabled={currentPage === totalPages}
+                                    onClick={() => setCurrentPage(p => p + 1)}
+                                >
+                                    Next
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 w-7 p-0"
+                                    disabled={currentPage === totalPages}
+                                    onClick={() => setCurrentPage(totalPages)}
+                                >
+                                    <ChevronLast className="w-3 h-3" />
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                    {/* Hour Filter Chips */}
+                    {filterOptions.hours.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                            <Button
+                                variant={filterHour === 'all' ? 'secondary' : 'ghost'}
+                                size="sm"
+                                className={cn(
+                                    'h-7 px-2.5 text-xs rounded-full',
+                                    filterHour === 'all' && 'bg-primary/10 text-primary hover:bg-primary/20'
+                                )}
+                                onClick={() => handleFilterChange(setFilterHour, 'all')}
+                            >
+                                All
+                            </Button>
+                            {filterOptions.hours.map(hour => (
+                                <Button
+                                    key={hour}
+                                    variant={filterHour === hour ? 'secondary' : 'ghost'}
+                                    size="sm"
+                                    className={cn(
+                                        'h-7 px-2.5 text-xs rounded-full',
+                                        filterHour === hour && 'bg-primary/10 text-primary hover:bg-primary/20'
+                                    )}
+                                    onClick={() => handleFilterChange(setFilterHour, hour)}
+                                >
+                                    {hour}:00
+                                </Button>
+                            ))}
+                        </div>
+                    )}
                 </CardHeader>
                 <CardContent>
                     {loading ? (
@@ -455,10 +544,47 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
     );
 }
 
+interface RawDataResponse {
+    initialLayout: any; // Used to cast to LayoutGrid
+    finalLayout: any; // Used to cast to LayoutGrid
+    [key: string]: unknown;
+}
+
 // Showtime Row Component
 function ShowtimeRow({ showtime: st }: { showtime: ShowtimeSnapshot }) {
     const merchantColor = MERCHANT_COLORS[st.merchant] || 'bg-gray-500'
     const [expanded, setExpanded] = useState(false);
+    const [rawData, setRawData] = useState<RawDataResponse | null>(null);
+    const [isLoadingLayout, setIsLoadingLayout] = useState(false);
+
+    // Fetch raw data when expanded
+    const toggleExpand = async () => {
+        const nextExpanded = !expanded;
+        setExpanded(nextExpanded);
+        
+        if (nextExpanded && !rawData && isScraped) {
+            setIsLoadingLayout(true);
+            try {
+                // Determine the parent component's movie context. For now, we assume the movie_id is in the showtime object, but in our domain model, the URL needs it. 
+                // We'll extract movie_id from the window location since we are in the /performances/[movieId]/[date] page
+                const pathParts = window.location.pathname.split('/');
+                const movieId = pathParts[2];
+                const date = pathParts[3];
+                
+                if (movieId && date) {
+                    const res = await fetch(`/api/showtimes/${st.showtime_id}/raw?movieId=${movieId}&date=${date}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        setRawData(data);
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to load layout", e);
+            } finally {
+                setIsLoadingLayout(false);
+            }
+        }
+    };
 
     // Choose which metric to show: True Delta or Legacy Raw
     const isTrueDelta = st.audience_count !== undefined;
@@ -474,7 +600,7 @@ function ShowtimeRow({ showtime: st }: { showtime: ShowtimeSnapshot }) {
                     "border-b last:border-0 hover:bg-muted/20 transition-colors cursor-pointer",
                     expanded && "bg-muted/10"
                 )}
-                onClick={() => setExpanded(!expanded)}
+                onClick={toggleExpand}
             >
                 <td className="py-3 px-4 font-mono font-medium text-foreground">{st.showtime}</td>
                 <td className="py-3 px-4">
@@ -521,15 +647,36 @@ function ShowtimeRow({ showtime: st }: { showtime: ShowtimeSnapshot }) {
             {expanded && (
                 <tr className="border-b bg-muted/5">
                     <td colSpan={6} className="p-4">
-                        <SeatBreakdownCard
-                            totalSeats={st.total_seats}
-                            blockedSeats={initialBlocked}
-                            soldSeats={finalSold}
-                            audienceCount={finalSold}
-                            trueOccupancyPct={finalPct}
-                            rawOccupancyPct={st.occupancy_pct ?? 0}
-                            size="sm"
-                        />
+                        <div className="flex flex-col lg:flex-row gap-4">
+                            <div className="w-full lg:w-1/3">
+                                <SeatBreakdownCard
+                                    totalSeats={st.total_seats}
+                                    blockedSeats={initialBlocked}
+                                    soldSeats={finalSold}
+                                    audienceCount={finalSold}
+                                    trueOccupancyPct={finalPct}
+                                    rawOccupancyPct={st.occupancy_pct ?? 0}
+                                    size="sm"
+                                />
+                            </div>
+                            <div className="w-full lg:w-2/3 min-h-[300px]">
+                                {isLoadingLayout ? (
+                                    <Card className="w-full h-full flex flex-col items-center justify-center min-h-[300px] bg-muted/20">
+                                        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground mb-2" />
+                                        <p className="text-sm text-muted-foreground">Loading cinema layout...</p>
+                                    </Card>
+                                ) : rawData && (rawData.initialLayout || rawData.finalLayout) ? (
+                                    <SeatMapVisualizer 
+                                        initialLayout={rawData.initialLayout} 
+                                        finalLayout={rawData.finalLayout} 
+                                    />
+                                ) : (
+                                    <Card className="w-full h-full flex items-center justify-center min-h-[300px] bg-muted/20">
+                                        <p className="text-muted-foreground text-sm italic">Seat layout visualization not available for this showtime.</p>
+                                    </Card>
+                                )}
+                            </div>
+                        </div>
                     </td>
                 </tr>
             )}

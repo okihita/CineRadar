@@ -82,6 +82,7 @@ interface FirestoreValue {
     doubleValue?: number;
     booleanValue?: boolean;
     timestampValue?: string;
+    bytesValue?: string; // Base64 encoded bytes
     mapValue?: { fields: Record<string, FirestoreValue> };
     arrayValue?: { values?: FirestoreValue[] };
     nullValue?: null;
@@ -93,6 +94,7 @@ function parseValue(value: FirestoreValue): unknown {
     if ('doubleValue' in value) return value.doubleValue;
     if ('booleanValue' in value) return value.booleanValue;
     if ('timestampValue' in value) return value.timestampValue;
+    if ('bytesValue' in value) return value.bytesValue; // Return base64 string directly
     if ('nullValue' in value) return null;
     if ('mapValue' in value && value.mapValue?.fields) {
         const result: Record<string, unknown> = {};
