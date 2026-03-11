@@ -29,6 +29,10 @@ export interface ShowtimeSnapshot {
     final_unavailable?: number;
     audience_count?: number;
     audience_pct?: number;
+
+    // Scrape details
+    scrape_phase?: string;
+    scraped_at?: string;
 }
 
 type SortField = 'showtime' | 'occupancy' | 'theatre' | 'city';
@@ -545,7 +549,9 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
 }
 
 interface RawDataResponse {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     initialLayout: any; // Used to cast to LayoutGrid
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     finalLayout: any; // Used to cast to LayoutGrid
     [key: string]: unknown;
 }
@@ -647,6 +653,25 @@ function ShowtimeRow({ showtime: st }: { showtime: ShowtimeSnapshot }) {
             {expanded && (
                 <tr className="border-b bg-muted/5">
                     <td colSpan={6} className="p-4">
+                        {(st.scrape_phase || st.scraped_at) && (
+                            <div className="flex items-center gap-2 mb-4 text-xs text-muted-foreground">
+                                <Clock className="w-3 h-3" />
+                                <span>Last updated:</span>
+                                {st.scrape_phase && (
+                                    <Badge variant="secondary" className="text-[10px] h-5 px-1.5 font-medium">
+                                        {st.scrape_phase}
+                                    </Badge>
+                                )}
+                                {st.scraped_at && (
+                                    <span>
+                                        {new Date(st.scraped_at).toLocaleTimeString(undefined, { 
+                                            hour: '2-digit', 
+                                            minute: '2-digit' 
+                                        })}
+                                    </span>
+                                )}
+                            </div>
+                        )}
                         <div className="flex flex-col lg:flex-row gap-4">
                             <div className="w-full lg:w-1/3">
                                 <SeatBreakdownCard

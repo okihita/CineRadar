@@ -51,7 +51,8 @@ JAKARTA_TZ = ZoneInfo("Asia/Jakarta")
 # e.g., dispatch at 12:00 → captures showtimes from 12:20 to 12:24.
 WINDOWS: list[dict[str, Any]] = [
     {"name": "T-30", "start": 30, "end": 35},
-    {"name": "T-15", "start": 15, "end": 20},
+    {"name": "T-20", "start": 20, "end": 25},
+    {"name": "T-10", "start": 10, "end": 15},
 ]
 
 

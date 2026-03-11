@@ -1195,6 +1195,31 @@ def scrape_seat(cloud_event: Any) -> None:
     if job_logger:
         job_logger.log_started(showtime_data)
 
+    # CHECKPOINT 1.5: If T-10, check if already closed by T-20 to avoid unnecessary API calls
+    if scrape_phase == "T-10":
+        try:
+            metadata_id = showtime_data.get("metadata_id")
+            date = showtime_data.get("date")
+            if metadata_id and date:
+                doc_ref_v2 = (
+                    db.collection("movie_performance_v2")
+                    .document(metadata_id)
+                    .collection("days")
+                    .document(date)
+                    .collection("showtimes")
+                    .document(showtime_id)
+                )
+                existing = doc_ref_v2.get(["is_closed"])
+                if existing.exists and existing.to_dict().get("is_closed"):
+                    logger.info(f"[{scrape_phase} SKIP] Showtime {showtime_id} was already marked closed by a previous phase. Skipping API call.")
+                    if job_logger:
+                        job_logger.log_success()
+                    if batch_id:
+                        log_success_to_firestore(batch_id)
+                    return
+        except Exception as e:
+            logger.warning(f"Failed to check is_closed flag: {e}")
+
     # CHECKPOINT 2: Load token (with auto-refresh)
     token, token_age, was_refreshed = get_valid_token_with_metadata(db)
     if not token:
@@ -1231,9 +1256,27 @@ def scrape_seat(cloud_event: Any) -> None:
         job_logger.log_api_completed(status_code, retries, error_detail)
 
     if not raw_api_response:
-        # Graceful fallback for T-15 closed showtimes
-        if scrape_phase == "T-15" and status_code in (400, 404):
-            logger.info(f"[T-15 SKIP] Showtime closed/passed (HTTP {status_code}). Preserving T-30 data for {showtime_id}.")
+        # Graceful fallback for closed showtimes in later phases
+        if scrape_phase in ("T-20", "T-15", "T-10") and status_code in (400, 404):
+            logger.info(f"[{scrape_phase} SKIP] Showtime closed/passed (HTTP {status_code}). Preserving previous data for {showtime_id}.")
+
+            # Mark as closed in Firestore to prevent future phases from attempting
+            try:
+                metadata_id = showtime_data.get("metadata_id")
+                date = showtime_data.get("date")
+                if metadata_id and date:
+                    doc_ref_v2 = (
+                        db.collection("movie_performance_v2")
+                        .document(metadata_id)
+                        .collection("days")
+                        .document(date)
+                        .collection("showtimes")
+                        .document(showtime_id)
+                    )
+                    doc_ref_v2.set({"is_closed": True}, merge=True)
+            except Exception as e:
+                logger.warning(f"Failed to mark showtime as closed in Firestore: {e}")
+
             if job_logger:
                 job_logger.log_success() # Treat as success so queue doesn't retry
             if batch_id:

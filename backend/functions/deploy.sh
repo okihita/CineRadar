@@ -45,24 +45,18 @@ deploy_scraper() {
     echo "📥 Deploying scraper function..."
     cd scraper
     # =========================================================================
-    # ⚠️ IMPORTANT: max_instances=5 (was 1 until Feb 17, 2026)
+    # ⚠️ IMPORTANT: max_instances=10 (was 5 until March 11, 2026)
     # =========================================================================
-    # On Feb 16, 2026, the scraper achieved only 7.4% success rate due to 
-    # Pub/Sub queue backlog. With max_instances=1, peak slot processing took 
-    # 13+ minutes, causing jobs to be processed after showtimes passed.
+    # On March 11, 2026, we updated the schedule from T-30/T-15 to T-30/T-20/T-10.
+    # The max_instances was increased to 10 to ensure peak bursts of 800+ jobs
+    # can clear in ~5.2 minutes, preserving the accuracy of our time windows.
     #
-    # Analysis showed:
-    # - 8,240 jobs × 3.9s avg = 8.9 hours minimum processing time
-    # - 44% of jobs waited >30 minutes in queue
-    # - Token expired during wait → 16.5% needed refresh (adding 20s each)
-    # - 81% of errors were HTTP 400 (EXPIRED_EVENT_DETAIL - showtime passed)
-    #
-    # With max_instances=5:
-    # - Peak slot processing: ~3 minutes (within 10-minute JIT window)
-    # - Expected success rate: >85%
+    # With max_instances=10:
+    # - Peak slot processing: ~5 minutes (within 5-minute JIT window)
+    # - Safe TIX API load: ~2.6 RPS / ~153 RPM
     #
     # DO NOT reduce this value without understanding the implications.
-    # See: backend/docs/scaling-analysis-2026-02-16.md
+    # See: plans/seating-scrape-frequency-analysis.md
     # =========================================================================
     gcloud functions deploy scrape-seat-jit \
         --gen2 \
@@ -71,13 +65,13 @@ deploy_scraper() {
         --source=. \
         --entry-point=scrape_seat \
         --trigger-topic=$PUBSUB_TOPIC \
-        --max-instances=5 \
+        --max-instances=10 \
         --memory=512MB \
         --timeout=180s \
         --set-env-vars="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,ENABLE_SCHEMA_VALIDATION=true" \
         --project=$PROJECT_ID
     cd ..
-    echo "   ✓ Scraper deployed (max_instances=5) with 180s timeout"
+    echo "   ✓ Scraper deployed (max_instances=10) with 180s timeout"
 }
 
 deploy_scheduler() {
