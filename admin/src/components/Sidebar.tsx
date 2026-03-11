@@ -93,9 +93,18 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 p-2 space-y-1">
         {menuItems.map((item) => {
-          const isActive = item.href === '/'
-            ? pathname === '/'
-            : pathname.startsWith(item.href);
+          let isActive = false;
+          if (item.href === '/') {
+            isActive = pathname === '/';
+          } else if (item.href === '/performances') {
+             // Exact match for /performances or starts with /performances/ but not /performances_v2
+            isActive = pathname === '/performances' || pathname.startsWith('/performances/');
+          } else if (item.href === '/schedules') {
+             // Same for /schedules to avoid matching /schedules_v2
+            isActive = pathname === '/schedules' || pathname.startsWith('/schedules/');
+          } else {
+            isActive = pathname.startsWith(item.href);
+          }
           const Icon = item.icon;
 
           return (
