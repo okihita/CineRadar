@@ -27,6 +27,12 @@ const menuItems = [
     icon: Film,
   },
   {
+    title: 'Performance V2',
+    description: 'V2 Data architecture',
+    href: '/performances_v2',
+    icon: Film,
+  },
+  {
     title: 'Movie Database',
     description: 'All movies & details',
     href: '/movies',
