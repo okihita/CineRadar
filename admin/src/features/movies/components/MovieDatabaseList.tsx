@@ -6,12 +6,14 @@
  */
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import useSWR from 'swr';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Loader2, Clapperboard, Archive, ChevronDown, ChevronRight, Film, AlertCircle } from 'lucide-react';
+import { Loader2, Clapperboard, Archive, ChevronDown, ChevronRight, Film, AlertCircle, ArrowUpDown } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { cn } from '@/lib/utils';
+import { Card } from '@/components/ui/card';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -46,13 +48,81 @@ interface MovieDatabaseResponse {
     error?: string;
 }
 
+type SortField = 'title' | 'schedule_id' | 'metadata_id' | 'date';
+type SortDirection = 'asc' | 'desc';
+
 export function MovieDatabaseList() {
     const [isArchiveOpen, setIsArchiveOpen] = useState(false);
+    const [sortField, setSortField] = useState<SortField>('date');
+    const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
     const { data, error, isLoading } = useSWR<MovieDatabaseResponse>(
         '/api/movies',
         fetcher
     );
+
+    const toggleSort = (field: SortField) => {
+        if (sortField === field) {
+            setSortDirection(d => d === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortDirection('desc'); // Default to desc when changing fields
+        }
+    };
+
+    const sortedNowShowing = useMemo(() => {
+        if (!data?.now_showing) return [];
+        // Deduplicate
+        const unique = Array.from(
+            new Map(data.now_showing.map((m) => [m.id || m.movie_id, m])).values()
+        );
+        
+        return unique.sort((a, b) => {
+            let comparison = 0;
+            switch (sortField) {
+                case 'title':
+                    comparison = (a.title || '').localeCompare(b.title || '');
+                    break;
+                case 'schedule_id':
+                    comparison = (a.id || a.movie_id || '').localeCompare(b.id || b.movie_id || '');
+                    break;
+                case 'metadata_id':
+                    comparison = (a.tix_metadata_id || '').localeCompare(b.tix_metadata_id || '');
+                    break;
+                case 'date':
+                    const dateA = a.date || '';
+                    const dateB = b.date || '';
+                    comparison = dateA.localeCompare(dateB);
+                    break;
+            }
+            return sortDirection === 'asc' ? comparison : -comparison;
+        });
+    }, [data, sortField, sortDirection]);
+
+    const sortedPastMovies = useMemo(() => {
+        if (!data?.past_movies) return [];
+        
+        return [...data.past_movies].sort((a, b) => {
+            let comparison = 0;
+            switch (sortField) {
+                case 'title':
+                    comparison = (a.title || '').localeCompare(b.title || '');
+                    break;
+                case 'schedule_id':
+                    comparison = (a.id || a.movie_id || '').localeCompare(b.id || b.movie_id || '');
+                    break;
+                case 'metadata_id':
+                    comparison = (a.tix_metadata_id || '').localeCompare(b.tix_metadata_id || '');
+                    break;
+                case 'date':
+                    const dateA = a.last_updated || '';
+                    const dateB = b.last_updated || '';
+                    comparison = dateA.localeCompare(dateB);
+                    break;
+            }
+            return sortDirection === 'asc' ? comparison : -comparison;
+        });
+    }, [data, sortField, sortDirection]);
 
     if (isLoading) {
         return (
@@ -75,17 +145,52 @@ export function MovieDatabaseList() {
         );
     }
 
-    const nowShowing = data.now_showing || [];
-    const pastMovies = data.past_movies || [];
-
-    // Deduplicate now_showing by their actual schedule document ID
-    // Some older records might not have 'id' yet, so fallback to movie_id
-    const uniqueNowShowing = Array.from(
-        new Map(nowShowing.map((m) => [m.id || m.movie_id, m])).values()
+    const renderTableHeader = () => (
+        <thead>
+            <tr className="bg-muted/50 border-b text-left text-muted-foreground">
+                <th className="py-2 px-3 font-medium w-12"></th>
+                <th 
+                    className="py-2 px-3 font-medium cursor-pointer hover:bg-muted transition-colors"
+                    onClick={() => toggleSort('title')}
+                >
+                    <div className="flex items-center gap-1">
+                        Movie
+                        {sortField === 'title' && <ArrowUpDown className="w-3 h-3" />}
+                    </div>
+                </th>
+                <th 
+                    className="py-2 px-3 font-medium cursor-pointer hover:bg-muted transition-colors w-48"
+                    onClick={() => toggleSort('schedule_id')}
+                >
+                    <div className="flex items-center gap-1">
+                        Schedule ID (V1)
+                        {sortField === 'schedule_id' && <ArrowUpDown className="w-3 h-3" />}
+                    </div>
+                </th>
+                <th 
+                    className="py-2 px-3 font-medium cursor-pointer hover:bg-muted transition-colors w-48"
+                    onClick={() => toggleSort('metadata_id')}
+                >
+                    <div className="flex items-center gap-1">
+                        Metadata ID (V2)
+                        {sortField === 'metadata_id' && <ArrowUpDown className="w-3 h-3" />}
+                    </div>
+                </th>
+                <th 
+                    className="py-2 px-3 font-medium cursor-pointer hover:bg-muted transition-colors w-32"
+                    onClick={() => toggleSort('date')}
+                >
+                    <div className="flex items-center gap-1">
+                        Date / Updated
+                        {sortField === 'date' && <ArrowUpDown className="w-3 h-3" />}
+                    </div>
+                </th>
+            </tr>
+        </thead>
     );
 
     return (
-        <div className="space-y-10 animate-in fade-in duration-500">
+        <div className="space-y-8 animate-in fade-in duration-500">
             {/* NOW SHOWING */}
             <section>
                 <div className="flex items-center justify-between mb-4">
@@ -96,92 +201,73 @@ export function MovieDatabaseList() {
                         </h2>
                     </div>
                     <span className="text-sm text-muted-foreground">
-                        {uniqueNowShowing.length} movies
+                        {sortedNowShowing.length} movies
                     </span>
                 </div>
 
-                {uniqueNowShowing.length === 0 ? (
+                {sortedNowShowing.length === 0 ? (
                     <div className="text-center py-8 bg-muted/20 border border-border rounded-lg text-muted-foreground">
                         <Film className="w-8 h-8 mx-auto mb-2 opacity-40" />
                         <p className="text-sm">No movies showing today</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-4">
-                        {uniqueNowShowing.map((movie) => {
-                            // Calculate days showing (from movie.date to today)
-                            const movieDate = new Date(movie.date);
-                            const today = new Date(data.date);
-                            const daysShowing = Math.floor((today.getTime() - movieDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                    <Card className="overflow-hidden border border-border">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                {renderTableHeader()}
+                                <tbody className="divide-y divide-border">
+                                    {sortedNowShowing.map((movie) => {
+                                        const scheduleId = movie.id || movie.movie_id;
+                                        const metadataId = movie.tix_metadata_id || 'Missing';
+                                        const targetLink = `/movies/${movie.tix_metadata_id || scheduleId}`;
 
-                            return (
-                                <Link
-                                    key={movie.id || movie.movie_id}
-                                    href={`/movies/${movie.tix_metadata_id || movie.movie_id || movie.id}`}
-                                    className="group flex flex-col cursor-pointer bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-colors"
-                                >
-                                    {/* Poster */}
-                                    <div className="aspect-[2/3] relative bg-muted border-b border-border">
-                                        {movie.poster ? (
-                                            <Image
-                                                src={movie.poster}
-                                                alt={movie.title}
-                                                fill
-                                                className="object-cover"
-                                                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 15vw"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                                                <Film className="w-8 h-8 opacity-20" />
-                                            </div>
-                                        )}
-
-                                        {/* Presale Badge */}
-                                        {movie.is_presale && (
-                                            <div className="absolute top-2 left-2 bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm">
-                                                PRESALE
-                                            </div>
-                                        )}
-                                        {/* Age Rating Badge */}
-                                        {movie.age_category && (
-                                            <div className="absolute top-2 right-2 bg-background/90 text-foreground border border-border text-[9px] font-bold px-1.5 py-0.5 rounded">
-                                                {movie.age_category}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Content */}
-                                    <div className="p-3 flex flex-col flex-1 group-hover:bg-muted/30 transition-colors">
-                                        <h3 className="font-semibold text-xs leading-tight line-clamp-2 mb-1 group-hover:text-primary transition-colors" title={movie.title}>
-                                            {movie.title}
-                                        </h3>
-
-                                        <div className="mt-auto">
-                                            {/* Genres */}
-                                            {movie.genres && movie.genres.length > 0 && (
-                                                <div className="flex flex-wrap gap-1 mb-1.5">
-                                                    {movie.genres.slice(0, 2).map((g) => (
-                                                        <span key={g} className="text-[9px] px-1 py-0.5 bg-muted rounded text-muted-foreground truncate max-w-full">
-                                                            {g}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            )}
-
-                                            {/* Showing duration */}
-                                            <p className="text-[10px] text-muted-foreground font-medium">
-                                                Showing {daysShowing} {daysShowing === 1 ? 'day' : 'days'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </Link>
-                            );
-                        })}
-                    </div>
+                                        return (
+                                            <tr key={scheduleId} className="hover:bg-muted/30 transition-colors group">
+                                                <td className="py-2 px-3">
+                                                    <Link href={targetLink} className="block">
+                                                        <div className="w-8 h-12 relative bg-muted rounded overflow-hidden">
+                                                            {movie.poster ? (
+                                                                <Image src={movie.poster} alt="" fill className="object-cover" sizes="32px" />
+                                                            ) : (
+                                                                <Film className="w-4 h-4 absolute inset-0 m-auto opacity-20" />
+                                                            )}
+                                                        </div>
+                                                    </Link>
+                                                </td>
+                                                <td className="py-2 px-3">
+                                                    <Link href={targetLink} className="font-semibold hover:text-primary transition-colors block">
+                                                        {movie.title}
+                                                    </Link>
+                                                    <div className="flex gap-2 mt-1">
+                                                        {movie.is_presale && (
+                                                            <span className="text-[9px] font-bold bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded">PRESALE</span>
+                                                        )}
+                                                        {movie.age_category && (
+                                                            <span className="text-[9px] font-bold bg-muted text-muted-foreground px-1.5 py-0.5 rounded">{movie.age_category}</span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="py-2 px-3 font-mono text-xs text-muted-foreground">
+                                                    {scheduleId}
+                                                </td>
+                                                <td className="py-2 px-3 font-mono text-xs text-primary/80">
+                                                    {metadataId}
+                                                </td>
+                                                <td className="py-2 px-3 text-xs text-muted-foreground">
+                                                    {movie.date}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </Card>
                 )}
             </section>
 
             {/* PAST MOVIES */}
-            {pastMovies.length > 0 && (
+            {sortedPastMovies.length > 0 && (
                 <section className="pt-6 border-t border-border">
                     <button
                         onClick={() => setIsArchiveOpen(!isArchiveOpen)}
@@ -193,43 +279,56 @@ export function MovieDatabaseList() {
                         <Archive className="w-4 h-4" />
                         <span className="font-medium text-sm">Past Movies</span>
                         <div className="ml-auto text-xs font-mono bg-muted px-2 py-0.5 rounded border border-border">
-                            {pastMovies.length}
+                            {sortedPastMovies.length}
                         </div>
                     </button>
 
                     {isArchiveOpen && (
-                        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3 mt-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                            {pastMovies.map((movie) => (
-                                <Link
-                                    key={movie.id || movie.movie_id}
-                                    href={`/movies/${movie.tix_metadata_id || movie.movie_id || movie.id}`}
-                                    className="group flex flex-col bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-colors opacity-70 hover:opacity-100"
-                                >
-                                    <div className="aspect-[2/3] w-full relative bg-muted border-b border-border">
-                                        {movie.poster ? (
-                                            <Image
-                                                src={movie.poster}
-                                                alt={movie.title}
-                                                fill
-                                                className="object-cover grayscale group-hover:grayscale-0 transition-all duration-300"
-                                                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 10vw"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                                                <Film className="w-6 h-6 opacity-20" />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="p-2 group-hover:bg-muted/30 transition-colors flex-1 flex flex-col">
-                                        <p className="text-[11px] font-semibold line-clamp-2 leading-tight group-hover:text-primary transition-colors">{movie.title}</p>
-                                        {movie.last_updated && (
-                                            <p className="text-[9px] text-muted-foreground mt-auto pt-1">
-                                                {new Date(movie.last_updated).toLocaleDateString()}
-                                            </p>
-                                        )}
-                                    </div>
-                                </Link>
-                            ))}
+                        <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                            <Card className="overflow-hidden border border-border">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        {renderTableHeader()}
+                                        <tbody className="divide-y divide-border">
+                                            {sortedPastMovies.map((movie) => {
+                                                const scheduleId = movie.id || movie.movie_id;
+                                                const metadataId = movie.tix_metadata_id || 'Missing';
+                                                const targetLink = `/movies/${movie.tix_metadata_id || scheduleId}`;
+
+                                                return (
+                                                    <tr key={scheduleId} className="hover:bg-muted/30 transition-colors group opacity-80 hover:opacity-100">
+                                                        <td className="py-2 px-3">
+                                                            <Link href={targetLink} className="block">
+                                                                <div className="w-8 h-12 relative bg-muted rounded overflow-hidden">
+                                                                    {movie.poster ? (
+                                                                        <Image src={movie.poster} alt="" fill className="object-cover grayscale group-hover:grayscale-0" sizes="32px" />
+                                                                    ) : (
+                                                                        <Film className="w-4 h-4 absolute inset-0 m-auto opacity-20" />
+                                                                    )}
+                                                                </div>
+                                                            </Link>
+                                                        </td>
+                                                        <td className="py-2 px-3">
+                                                            <Link href={targetLink} className="font-semibold hover:text-primary transition-colors block">
+                                                                {movie.title}
+                                                            </Link>
+                                                        </td>
+                                                        <td className="py-2 px-3 font-mono text-xs text-muted-foreground">
+                                                            {scheduleId}
+                                                        </td>
+                                                        <td className="py-2 px-3 font-mono text-xs text-primary/80">
+                                                            {metadataId}
+                                                        </td>
+                                                        <td className="py-2 px-3 text-xs text-muted-foreground">
+                                                            {movie.last_updated && new Date(movie.last_updated).toLocaleDateString()}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </Card>
                         </div>
                     )}
                 </section>
