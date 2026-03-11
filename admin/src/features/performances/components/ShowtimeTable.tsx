@@ -670,6 +670,7 @@ function ShowtimeRow({ showtime: st }: { showtime: ShowtimeSnapshot }) {
                                         })}
                                     </span>
                                 )}
+                                <span className="ml-4 font-mono text-[10px] opacity-50">ID: {st.showtime_id}</span>
                             </div>
                         )}
                         <div className="flex flex-col lg:flex-row gap-4">

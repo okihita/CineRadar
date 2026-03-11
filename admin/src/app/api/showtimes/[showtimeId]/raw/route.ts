@@ -63,10 +63,19 @@ export async function GET(
     }
 
     try {
-        const doc = await firestoreRestClient.getDocument(
-            `movie_performance/${movieId}/days/${date}/showtimes`,
+        // Try V2 collection first (if movieId is actually a metadataId)
+        let doc = await firestoreRestClient.getDocument(
+            `movie_performance_v2/${movieId}/days/${date}/showtimes`,
             showtimeId
         );
+
+        // Fallback to V1 collection
+        if (!doc) {
+            doc = await firestoreRestClient.getDocument(
+                `movie_performance/${movieId}/days/${date}/showtimes`,
+                showtimeId
+            );
+        }
 
         if (!doc) {
             return NextResponse.json(
