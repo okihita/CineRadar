@@ -7,6 +7,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 
+export const revalidate = 300; // Cache for 5 minutes
+
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ movieId: string }> }

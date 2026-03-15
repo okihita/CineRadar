@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 
+export const revalidate = 300; // Cache for 5 minutes
+
 interface DayRecord {
     date: string;
     [key: string]: unknown;
