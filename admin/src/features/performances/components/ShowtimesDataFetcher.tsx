@@ -16,7 +16,7 @@ export async function ShowtimesDataFetcher({
     `movie_performance/${movieId}/days/${date}/showtimes`,
   );
 
-  const showtimes = (showtimesData || []) as ShowtimeSnapshot[];
+  const showtimes = (showtimesData || []) as unknown as ShowtimeSnapshot[];
 
   if (showtimes.length === 0) {
     return (

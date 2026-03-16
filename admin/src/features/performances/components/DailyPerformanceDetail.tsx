@@ -44,7 +44,7 @@ export async function DailyPerformanceDetail({
 
   const movie = movieDoc as MovieSummary | null;
   const dailyStats =
-    (daysSubCollection as DailyPerformance[]).find((d) => d.date === date) ||
+    (daysSubCollection as unknown as DailyPerformance[]).find((d) => d.date === date) ||
     null;
 
   if (!movie) {
