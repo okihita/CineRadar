@@ -323,6 +323,88 @@ export class FirestoreRestClient {
             return [];
         }
     }
+
+    /**
+     * Convert JavaScript value to Firestore value format
+     */
+    private toFirestoreValue(value: unknown): FirestoreValue {
+        if (value === null || value === undefined) {
+            return { nullValue: null };
+        }
+        if (typeof value === 'string') {
+            return { stringValue: value };
+        }
+        if (typeof value === 'number') {
+            if (Number.isInteger(value)) {
+                return { integerValue: value.toString() };
+            }
+            return { doubleValue: value };
+        }
+        if (typeof value === 'boolean') {
+            return { booleanValue: value };
+        }
+        if (value instanceof Date) {
+            return { timestampValue: value.toISOString() };
+        }
+        if (Array.isArray(value)) {
+            return {
+                arrayValue: {
+                    values: value.map(v => this.toFirestoreValue(v)),
+                },
+            };
+        }
+        if (typeof value === 'object') {
+            const fields: Record<string, FirestoreValue> = {};
+            for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+                fields[k] = this.toFirestoreValue(v);
+            }
+            return { mapValue: { fields } };
+        }
+        // Fallback to string
+        return { stringValue: String(value) };
+    }
+
+    /**
+     * Update a document (merge mode - only updates specified fields)
+     */
+    async updateDocument(
+        collectionName: string,
+        documentId: string,
+        data: Record<string, unknown>
+    ): Promise<boolean> {
+        try {
+            const token = await getAccessToken();
+
+            // Convert data to Firestore format
+            const fields: Record<string, FirestoreValue> = {};
+            for (const [key, value] of Object.entries(data)) {
+                fields[key] = this.toFirestoreValue(value);
+            }
+
+            const response = await fetch(
+                `${FIRESTORE_BASE_URL}/${collectionName}/${documentId}?updateMask.fieldPaths=${Object.keys(data).join('&updateMask.fieldPaths=')}`,
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ fields }),
+                }
+            );
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`Failed to update ${collectionName}/${documentId}: ${response.status}`, errorText);
+                return false;
+            }
+
+            return true;
+        } catch (error) {
+            console.error(`Error updating ${collectionName}/${documentId}:`, error);
+            return false;
+        }
+    }
 }
 
 export const firestoreRestClient = new FirestoreRestClient();
