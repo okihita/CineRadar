@@ -250,8 +250,73 @@ export class FirestoreRestClient {
     }
 
     /**
-     * Get a single document by ID
+     * Get all documents from a collection group (allDescendants: true)
      */
+    async getCollectionGroup(collectionId: string): Promise<Record<string, unknown>[]> {
+        try {
+            const token = await getAccessToken();
+            const allDocuments: Record<string, unknown>[] = [];
+            let lastDocName: string | undefined;
+
+            while (true) {
+                const query: Record<string, unknown> = {
+                    structuredQuery: {
+                        from: [{ collectionId: collectionId, allDescendants: true }],
+                        orderBy: [{ field: { fieldPath: '__name__' }, direction: 'ASCENDING' }],
+                        limit: 1000,
+                    },
+                };
+
+                if (lastDocName) {
+                    (query.structuredQuery as Record<string, unknown>).startAt = {
+                        values: [{ referenceValue: lastDocName }],
+                        exclusive: true
+                    };
+                }
+
+                const response = await fetch(`${FIRESTORE_BASE_URL}:runQuery`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(query),
+                });
+
+                if (!response.ok) {
+                    console.error(`Collection group query failed for ${collectionId}: ${response.status}`);
+                    break;
+                }
+
+                const results = await response.json();
+                
+                let count = 0;
+                for (const r of results) {
+                    if (r.document) {
+                        const parsed = parseDocument(r.document);
+                        // Extract parent IDs from the path: projects/.../databases/(default)/documents/theatres/THEATRE_ID/studios/STUDIO_ID
+                        const pathParts = r.document.name.split('/');
+                        if (pathParts.length >= 4) {
+                            parsed._parent_id = pathParts[pathParts.length - 3];
+                            parsed._path = r.document.name;
+                        }
+                        allDocuments.push(parsed);
+                        lastDocName = r.document.name;
+                        count++;
+                    }
+                }
+
+                if (count < 1000) {
+                    break; // No more pages
+                }
+            }
+
+            return allDocuments;
+        } catch (error) {
+            console.error(`Error querying collection group ${collectionId}:`, error);
+            return [];
+        }
+    }
     async getDocument(collectionName: string, documentId: string): Promise<Record<string, unknown> | null> {
         try {
             const token = await getAccessToken();

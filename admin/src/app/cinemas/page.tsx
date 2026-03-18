@@ -30,6 +30,7 @@ import {
   TheatreFilters,
   TheatreTable,
   TheatreDetailPanel,
+  StudioCoverageCard,
   type Theatre,
 } from '@/features/cinemas';
 
@@ -176,6 +177,7 @@ function CinemasPageContent() {
 
           {/* KPI Cards - Vertical Stack */}
           <div className="flex flex-col gap-3">
+            <StudioCoverageCard />
             <RegionBreakdownCard
               regionBreakdown={regionBreakdown}
               totalTheatres={theatres.length}

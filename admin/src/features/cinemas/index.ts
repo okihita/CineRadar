@@ -18,3 +18,4 @@ export { RegionBreakdownCard } from './components/RegionBreakdownCard';
 export { TheatreFilters } from './components/TheatreFilters';
 export { TheatreTable } from './components/TheatreTable';
 export { TheatreDetailPanel } from './components/TheatreDetailPanel';
+export { StudioCoverageCard } from './components/StudioCoverageCard';
