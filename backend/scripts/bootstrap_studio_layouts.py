@@ -1,21 +1,11 @@
 #!/usr/bin/env python3
-"""Bootstrap Studio Layouts — One-Time/Periodic Studio Discovery Script.
+"""Bootstrap Studio Layouts — Tier 2 Capacity Learning.
 
-Discovers all physical cinema studios from today's active showtimes,
-live-scrapes their seat layouts, and stores permanent master baselines
-in Firestore at theatres/{theatre_id}/studios/{studio_id}.
-
-Key behaviours:
-  - Treats all seat statuses (1/5/6) as valid physical seats (existence, not availability).
-  - Performs Logical OR merge across multiple showtimes for the same studio,
-    progressively learning the full physical capacity.
-  - Respects is_locked: never overwrites admin-verified layouts.
+Fetches layout data for showtimes, parses to unified grid, and merges using "Logical OR"
+to progressively learn the true physical layout over time.
 
 Usage:
-    PYTHONPATH=. uv run python backend/scripts/bootstrap_studio_layouts.py
-    PYTHONPATH=. uv run python backend/scripts/bootstrap_studio_layouts.py --date 2026-03-25
-    PYTHONPATH=. uv run python backend/scripts/bootstrap_studio_layouts.py --dry-run
-    PYTHONPATH=. uv run python backend/scripts/bootstrap_studio_layouts.py --limit 20
+    PYTHONPATH=. uv run python backend/scripts/bootstrap_studio_layouts.py --theatre-ids ID1,ID2
 """
 
 import argparse
@@ -24,45 +14,120 @@ import json
 import logging
 import os
 import sys
-import time
-from datetime import datetime
+from collections import defaultdict
+from datetime import datetime, timedelta
 from typing import Any
 
 sys.path.insert(0, ".")
 
-import httpx
 from google.cloud.firestore import AsyncClient
 from google.oauth2 import service_account
 
-from backend.domain.models.theatre import StudioLayout
-from backend.domain.studio_layout_parser import merge_layouts_logical_or, parse_to_master_layout
 from backend.domain.time import JAKARTA_TZ
+from backend.infrastructure.core.seat_scraper import SeatScraper
 from backend.infrastructure.firestore_collections import MOVIES, SCHEDULES_V2, THEATRES
+from backend.infrastructure.repositories import FirestoreTokenRepository
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s",
-    datefmt="%H:%M:%S",
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 logger = logging.getLogger(__name__)
 
-# Constants
-STUDIOS_SUBCOLLECTION = "studios"
-RATE_LIMIT_DELAY = 0.5  # seconds between API calls (conservative)
-MAX_RETRIES = 2
+def parse_to_master_layout(seat_map: list[dict[str, Any]]) -> tuple[int, list[dict[str, Any]]]:
+    """Convert any chain's seat_map into CineRadar Unified Grid format."""
+    total_seats = 0
+    unified_layout: list[dict[str, Any]] = []
 
-MERCHANT_PATHS: dict[str, str] = {
-    "CGV": "cgv",
-    "XXI": "xxi",
-    "Cinépolis": "cinepolis",
-    "CINEPOLIS": "cinepolis",
-}
+    # Check format
+    if not seat_map:
+        return 0, []
+
+    is_nested = any("seat_rows" in item for item in seat_map)
+
+    if is_nested:
+        # XXI / CGV (Nested)
+        for item in seat_map:
+            row_name = item.get("row_name", item.get("seat_code", ""))
+            row_data: dict[str, Any] = {"row_name": row_name, "seats": []}
+
+            for seat in item.get("seat_rows", []):
+                seat_id = seat.get("seat_row", "")
+                if not seat_id:
+                    # Treat as gap/aisle if no seat_id
+                    row_data["seats"].append({"id": "", "type": "aisle"})
+                else:
+                    row_data["seats"].append({"id": seat_id, "type": "seat"})
+                    total_seats += 1
+            unified_layout.append(row_data)
+    else:
+        # Cinépolis / CGV B2B (Flat)
+        # Group by row
+        rows_dict: defaultdict[str, list[dict[str, Any]]] = defaultdict(list)
+        for item in seat_map:
+            row_name = item.get("row_name", "ALL")
+            seat_id = item.get("seat_no", "")
+            seat_yn = str(item.get("seat_yn", "1"))
+
+            if seat_yn == "0" or not seat_id:
+                rows_dict[row_name].append({"id": "", "type": "aisle"})
+            else:
+                rows_dict[row_name].append({"id": seat_id, "type": "seat"})
+                total_seats += 1
+
+        for row_name, seats in rows_dict.items():
+            unified_layout.append({"row_name": row_name, "seats": seats})
+
+    return total_seats, unified_layout
 
 
-# ---------------------------------------------------------------------------
-# Firestore client
-# ---------------------------------------------------------------------------
+def merge_layouts_logical_or(existing_layout: list[dict[str, Any]], new_layout: list[dict[str, Any]]) -> tuple[int, list[dict[str, Any]]]:
+    """Merge two unified layouts using Logical OR. If a seat exists in either, it exists in merged."""
+    if not existing_layout:
+        total = sum(1 for r in new_layout for s in r.get("seats", []) if s.get("type") == "seat")
+        return total, new_layout
+
+    merged_rows: dict[str, list[dict[str, Any]]] = {}
+
+    for row in existing_layout + new_layout:
+        row_name = str(row.get("row_name", ""))
+        if row_name not in merged_rows:
+            merged_rows[row_name] = []
+
+        # Merge seats based on max length
+        current_seats = merged_rows[row_name]
+        incoming_seats: list[dict[str, Any]] = row.get("seats", [])
+
+        merged_seats: list[dict[str, Any]] = []
+        max_len = max(len(current_seats), len(incoming_seats))
+        for i in range(max_len):
+            curr = current_seats[i] if i < len(current_seats) else {"id": "", "type": "aisle"}
+            inc = incoming_seats[i] if i < len(incoming_seats) else {"id": "", "type": "aisle"}
+
+            # Logical OR: If either is a seat, it's a seat
+            if curr.get("type") == "seat" or inc.get("type") == "seat":
+                seat_id = curr.get("id") or inc.get("id")
+                merged_seats.append({"id": seat_id, "type": "seat"})
+            else:
+                merged_seats.append({"id": "", "type": "aisle"})
+
+        merged_rows[row_name] = merged_seats
+
+    # Sort roughly by row name if needed, but dict maintains insertion order (which might be okay)
+    # usually it's better to trust the existing_layout's order. We'll reconstruct in order:
+    ordered_layout: list[dict[str, Any]] = []
+    seen = set()
+    for row in existing_layout:
+        rn = str(row.get("row_name", ""))
+        if rn not in seen:
+            ordered_layout.append({"row_name": rn, "seats": merged_rows[rn]})
+            seen.add(rn)
+    for row in new_layout:
+        rn = str(row.get("row_name", ""))
+        if rn not in seen:
+            ordered_layout.append({"row_name": rn, "seats": merged_rows[rn]})
+            seen.add(rn)
+
+    total = sum(1 for r in ordered_layout for s in (r.get("seats", []) or []) if isinstance(s, dict) and s.get("type") == "seat")
+    return total, ordered_layout
+
 
 async def get_firestore_client() -> AsyncClient:
     """Initialize async Firestore client from env or ADC."""
@@ -74,348 +139,152 @@ async def get_firestore_client() -> AsyncClient:
     return AsyncClient()
 
 
-# ---------------------------------------------------------------------------
-# Token management (reuses same pattern as scrape_initial_layouts.py)
-# ---------------------------------------------------------------------------
-
-async def get_token_from_firestore(db: AsyncClient) -> str | None:
-    """Load JWT token from Firestore auth_tokens/tix_jwt."""
-    doc = await db.collection("auth_tokens").document("tix_jwt").get()
-    if not doc.exists:
-        logger.error("No token found at auth_tokens/tix_jwt")
-        return None
-    data = doc.to_dict() or {}
-    token = data.get("token") or data.get("access_token")
-    return str(token) if token else None
-
-
-async def refresh_token(db: AsyncClient) -> str | None:
-    """Attempt to refresh the access token via TIX API."""
-    doc = await db.collection("auth_tokens").document("tix_jwt").get()
-    if not doc.exists:
-        return None
-    refresh = (doc.to_dict() or {}).get("refresh_token")
-    if not refresh:
-        return None
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                "https://api-b2b.tix.id/v1/users/refresh",
-                headers={
-                    "Authorization": f"Bearer {refresh}",
-                    "Content-Type": "application/json",
-                    "platform": "web",
-                },
-                timeout=30,
-            )
-            if response.status_code == 200:
-                new_token = response.json().get("data", {}).get("token")
-                if new_token:
-                    from datetime import UTC
-                    await db.collection("auth_tokens").document("tix_jwt").set(
-                        {
-                            "access_token": new_token,
-                            "refresh_token": refresh,
-                            "updated_at": datetime.now(UTC).isoformat(),
-                        },
-                        merge=True,
-                    )
-                    return str(new_token)
-    except Exception as e:
-        logger.error(f"Token refresh failed: {e}")
-    return None
-
-
-# ---------------------------------------------------------------------------
-# API fetch
-# ---------------------------------------------------------------------------
-
-async def fetch_seat_layout(
-    client: httpx.AsyncClient,
-    showtime_id: str,
-    merchant: str,
-    token: str,
-    retries: int = MAX_RETRIES,
-) -> dict[str, Any] | None:
-    """Fetch raw seat layout from TIX API for a given showtime.
-
-    Returns the full API response dict on success, None on failure.
-    Returns {"__auth_failure": True} specifically on 401 so callers can retry.
+async def find_showtimes_for_theatres(db: AsyncClient, theatre_ids: list[str] | None) -> dict[str, dict[str, list[dict[str, Any]]]]:
+    """Find showtimes for the given theatres (or all if None) to use for layout scraping.
+    Returns: {theatre_id: {studio_id: [{"showtime_id": x, "merchant": y}, ...]}}
     """
-    merchant_path = MERCHANT_PATHS.get(merchant, merchant.lower())
-    url = f"https://api-b2b.tix.id/v1/movies/{merchant_path}/layout"
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Accept": "application/json",
-        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15",
-    }
-    params = {"show_time_id": showtime_id, "tz": "7"}
+    targets: dict[str, dict[str, list[dict[str, Any]]]] = {}
+    if theatre_ids is not None:
+        targets = {tid: defaultdict(list) for tid in theatre_ids}
+    now_jkt = datetime.now(JAKARTA_TZ)
 
-    for attempt in range(retries + 1):
-        try:
-            response = await client.get(url, headers=headers, params=params, timeout=15)
-            if response.status_code == 200:
-                data: dict[str, Any] = response.json()
-                if data.get("success"):
-                    return data
-                logger.warning(f"  API error for {showtime_id}: {data.get('error', {}).get('message', '?')}")
-                return None
-            elif response.status_code == 401:
-                return {"__auth_failure": True}
-            else:
-                logger.warning(f"  HTTP {response.status_code} for {showtime_id}")
-                if attempt < retries:
-                    await asyncio.sleep(2 ** attempt)
-        except httpx.RequestError as e:
-            logger.warning(f"  Request error for {showtime_id} (attempt {attempt + 1}): {e}")
-            if attempt < retries:
-                await asyncio.sleep(2 ** attempt)
+    # Check next 7 days
+    for i in range(7):
+        target_date = now_jkt + timedelta(days=i)
+        date_str = target_date.strftime("%Y-%m-%d")
+        is_today = i == 0
 
-    return None
+        movies_ref = db.collection(SCHEDULES_V2).document(date_str).collection(MOVIES)
 
+        movie_docs = [doc async for doc in movies_ref.stream()]
+        for doc in movie_docs:
+            data = doc.to_dict() or {}
+            for _city, theatres in data.get("cities", {}).items():
+                for theatre in theatres:
+                    tid = theatre.get("theatre_id", "")
+                    if not tid:
+                        continue
+                    if theatre_ids is not None and tid not in targets:
+                        continue
+                    if tid not in targets:
+                        targets[tid] = defaultdict(list)
 
-# ---------------------------------------------------------------------------
-# Studio discovery
-# ---------------------------------------------------------------------------
+                    merchant = theatre.get("merchant", "")
+                    for room in theatre.get("rooms", []):
+                        for st in room.get("all_showtimes", []):
+                            studio_id = st.get("studio_id")
+                            st_id = st.get("showtime_id")
+                            showtime_str = st.get("time") or st.get("showtime")
 
-async def discover_studios(
-    db: AsyncClient, date: str
-) -> dict[tuple[str, str], dict[str, str]]:
-    """Walk today's schedules_v2 to extract all unique (theatre_id, studio_id) pairs.
+                            if studio_id and st_id and showtime_str:
+                                # If today, ensure showtime is safely in the future (> 1 hour)
+                                if is_today:
+                                    try:
+                                        st_hour, st_minute = map(int, showtime_str.split(':'))
+                                        st_time = target_date.replace(hour=st_hour, minute=st_minute, second=0, microsecond=0)
 
-    Returns:
-        {(theatre_id, studio_id): {"showtime_ids": [...], "merchant": ..., "theatre_name": ...}}
-    """
-    logger.info(f"Discovering studios from schedules_v2/{date}/movies/...")
+                                        # Skip if the showtime has already passed
+                                        if st_time <= now_jkt:
+                                            continue
+                                    except ValueError:
+                                        # If we can't parse the time, be safe and skip if it's today
+                                        continue
 
-    movies_ref = db.collection(SCHEDULES_V2).document(date).collection(MOVIES)
-    movie_docs = [doc async for doc in movies_ref.stream()]
+                                # Keep up to 3 showtimes per studio to merge
+                                if len(targets[tid][studio_id]) < 3:
+                                    targets[tid][studio_id].append({"showtime_id": st_id, "merchant": merchant})
 
-    if not movie_docs:
-        logger.warning(f"No documents found in schedules_v2/{date}/movies/")
-        return {}
+    return targets
 
-    # studio_key → {merchant, theatre_name, showtime_ids: []}
-    studios: dict[tuple[str, str], dict[str, Any]] = {}
+async def bootstrap_theatre_layouts(db: AsyncClient, scraper: SeatScraper, theatre_ids: list[str] | None) -> None:
+    targets = await find_showtimes_for_theatres(db, theatre_ids)
 
-    for movie_doc in movie_docs:
-        data = movie_doc.to_dict() or {}
+    for theatre_id, studios in targets.items():
+        if not studios:
+            logger.warning(f"No showtimes found for theatre {theatre_id}")
+            continue
 
-        for _city, theatres in data.get("cities", {}).items():
-            for theatre in theatres:
-                theatre_id: str = theatre.get("theatre_id", "")
-                merchant: str = theatre.get("merchant", "")
-                theatre_name: str = theatre.get("theatre_name", "")
+        logger.info(f"Processing theatre {theatre_id} with {len(studios)} studios")
+        for studio_id, showtimes in studios.items():
+            studio_ref = db.collection(THEATRES).document(theatre_id).collection("studios").document(studio_id)
+            doc = await studio_ref.get()
 
-                if not theatre_id or not merchant:
+            existing_data = doc.to_dict() if doc.exists else {}
+            if existing_data.get("is_locked"):
+                logger.info(f"  Skipping Studio {studio_id} - Locked")
+                continue
+
+            if existing_data.get("total_seats", 0) > 0 and existing_data.get("layout"):
+                logger.info(f"  Skipping Studio {studio_id} - Already mapped ({existing_data['total_seats']} seats)")
+                continue
+
+            merged_layout = existing_data.get("layout", [])
+
+            for st in showtimes:
+                logger.info(f"  Fetching layout for Studio {studio_id} via showtime {st['showtime_id']}")
+                raw_data = await scraper._fetch_seat_layout_api(st["showtime_id"], st["merchant"])
+
+                # Enforce rate limit (max 5 RPS) immediately after the call to prevent runaway loops
+                await asyncio.sleep(0.2)
+
+                if not raw_data:
+                    logger.warning(f"   Failed to fetch layout for showtime {st['showtime_id']}")
                     continue
 
-                for room in theatre.get("rooms", []):
-                    for st in room.get("all_showtimes", []):
-                        studio_id: str | None = st.get("studio_id")
-                        showtime_id: str | None = st.get("showtime_id")
+                seat_map = raw_data.get("data", {}).get("seat_map", [])
+                _, unified = parse_to_master_layout(seat_map)
+                _, merged_layout = merge_layouts_logical_or(merged_layout, unified)
 
-                        if not studio_id or not showtime_id:
-                            continue
+            if merged_layout:
+                total_seats = sum(1 for r in merged_layout for s in r.get("seats", []) if s.get("type") == "seat")
 
-                        key = (theatre_id, studio_id)
-                        if key not in studios:
-                            studios[key] = {
-                                "merchant": merchant,
-                                "theatre_name": theatre_name,
-                                "showtime_ids": [],
-                            }
-                        # Collect ALL showtime IDs for this studio for OR-merge
-                        if showtime_id not in studios[key]["showtime_ids"]:
-                            studios[key]["showtime_ids"].append(showtime_id)
+                update_data = {
+                    "layout": merged_layout,
+                    "total_seats": total_seats,
+                    "last_updated": datetime.now(JAKARTA_TZ).isoformat()
+                }
 
-    logger.info(f"Discovered {len(studios)} unique (theatre_id, studio_id) pairs.")
-    return studios
+                if doc.exists:
+                    await studio_ref.update(update_data)
+                else:
+                    # Should exist if discover_studios ran, but just in case
+                    update_data["studio_id"] = studio_id
+                    update_data["name"] = f"Studio {studio_id}"
+                    update_data["is_locked"] = False
+                    update_data["version"] = 1
+                    await studio_ref.set(update_data)
 
+                logger.info(f"  Saved Studio {studio_id}: {total_seats} seats")
 
-# ---------------------------------------------------------------------------
-# Main bootstrap logic
-# ---------------------------------------------------------------------------
-
-async def bootstrap_studio(
-    db: AsyncClient,
-    client: httpx.AsyncClient,
-    theatre_id: str,
-    studio_id: str,
-    info: dict[str, Any],
-    token_holder: dict[str, str | None],
-    dry_run: bool,
-) -> str:
-    """Bootstrap a single studio. Returns one of: 'saved', 'locked', 'failed', 'empty'."""
-    theatre_name = info["theatre_name"]
-    merchant = info["merchant"]
-    showtime_ids: list[str] = info["showtime_ids"]
-
-    studio_ref = (
-        db.collection(THEATRES)
-        .document(theatre_id)
-        .collection(STUDIOS_SUBCOLLECTION)
-        .document(studio_id)
-    )
-
-    # Check lock status before doing any API work
-    existing_snap = await studio_ref.get()
-    if existing_snap.exists:
-        existing_data = existing_snap.to_dict() or {}
-        if existing_data.get("is_locked", False):
-            logger.info(f"  [{theatre_name}] Studio {studio_id} → locked, skipping.")
-            return "locked"
-
-    # Build OR-merged layout from all available showtimes for this studio
-    all_layouts: list[list[dict[str, Any]]] = []
-    token = token_holder.get("token")
-
-    for showtime_id in showtime_ids:
-        if not token:
-            logger.error("No valid token — aborting.")
-            return "failed"
-
-        await asyncio.sleep(RATE_LIMIT_DELAY)
-        layout_data = await fetch_seat_layout(client, showtime_id, merchant, token)
-
-        if layout_data and layout_data.get("__auth_failure"):
-            logger.info("  401 detected — attempting token refresh...")
-            token = await refresh_token(db)
-            token_holder["token"] = token
-            if not token:
-                logger.error("  Token refresh failed — aborting studio.")
-                return "failed"
-            layout_data = await fetch_seat_layout(client, showtime_id, merchant, token)
-
-        if not layout_data:
-            logger.warning(f"  [{theatre_name}] Studio {studio_id} / showtime {showtime_id} → fetch failed, skipping showtime.")
-            continue
-
-        seat_map = layout_data.get("data", {}).get("seat_map", [])
-        if not seat_map:
-            logger.warning(f"  [{theatre_name}] Studio {studio_id} / showtime {showtime_id} → empty seat_map.")
-            continue
-
-        total, layout = parse_to_master_layout(seat_map)
-        if total == 0:
-            logger.warning(f"  [{theatre_name}] Studio {studio_id} / showtime {showtime_id} → 0 seats parsed.")
-            continue
-
-        logger.info(f"  [{theatre_name}] Studio {studio_id} / showtime {showtime_id} → {total} seats.")
-        all_layouts.append(layout)
-
-    if not all_layouts:
-        logger.warning(f"  [{theatre_name}] Studio {studio_id} → no valid layouts collected.")
-        return "empty"
-
-    # OR-merge across all showtime layouts
-    merged_layout = merge_layouts_logical_or(all_layouts)
-
-    # Build the StudioLayout model
-    # Preserve existing version + name if already exists (non-locked update)
-    existing_version = 1
-    existing_name = f"Studio {studio_id}"
-    if existing_snap.exists:
-        existing_data = existing_snap.to_dict() or {}
-        existing_version = existing_data.get("version", 1) + 1
-        existing_name = existing_data.get("name", existing_name)
-
-    studio = StudioLayout(
-        studio_id=studio_id,
-        name=existing_name,
-        is_locked=False,
-        version=existing_version,
-        layout=merged_layout,
-        total_seats=sum(
-            1
-            for row in merged_layout
-            for seat in row.get("seats", [])
-            if seat.get("type") == "seat"
-        )
-    )
-
-    # Validate before writing
-    if not studio.validate_seat_count():
-        logger.error(f"  [{theatre_name}] Studio {studio_id} → seat count validation FAILED, skipping write.")
-        return "failed"
-
-    if dry_run:
-        logger.info(f"  [DRY RUN] [{theatre_name}] Studio {studio_id} → {studio.total_seats} seats (would write).")
-        return "saved"
-
-    await studio_ref.set(studio.to_dict(), merge=True)
-    logger.info(f"  [{theatre_name}] Studio {studio_id} → saved ({studio.total_seats} seats, v{studio.version}).")
-    return "saved"
-
-
-async def async_main() -> None:
-    parser = argparse.ArgumentParser(description="Bootstrap studio layouts from today's schedules.")
-    parser.add_argument("--date", type=str, help="Date YYYY-MM-DD (default: today)")
-    parser.add_argument("--dry-run", action="store_true", help="Discover and parse but do not write to Firestore.")
-    parser.add_argument("--limit", type=int, help="Process only the first N studios (for testing).")
+async def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--theatre-ids", type=str, required=False, help="Comma-separated theatre IDs")
+    parser.add_argument("--all", action="store_true", help="Process all theatres found in schedules")
     args = parser.parse_args()
 
-    date = args.date or datetime.now(JAKARTA_TZ).strftime("%Y-%m-%d")
+    if not args.theatre_ids and not args.all:
+        logger.error("Must provide either --theatre-ids or --all")
+        return
 
-    logger.info("=" * 60)
-    logger.info("Studio Layout Bootstrap")
-    logger.info("=" * 60)
-    logger.info(f"Date:    {date}")
-    logger.info(f"Dry run: {args.dry_run}")
+    t_ids = None
+    if args.theatre_ids:
+        t_ids = [tid.strip() for tid in args.theatre_ids.split(",") if tid.strip()]
+
+    # Setup scraper
+    repo = FirestoreTokenRepository()
+    token = repo.get_current()
+    if not token or token.is_expired:
+        logger.error("No valid token found in Firestore. Please run login script.")
+        return
+
+    scraper = SeatScraper()
+    scraper.auth_token = token.token.strip('"')
 
     db = await get_firestore_client()
-
-    # Load token
-    token = await refresh_token(db)
-    if not token:
-        token = await get_token_from_firestore(db)
-    if not token:
-        logger.error("No valid auth token found. Aborting.")
-        return
-
-    token_holder: dict[str, str | None] = {"token": token}
-    logger.info("Token loaded.")
-
-    # Discover studios
-    studios = await discover_studios(db, date)
-    if not studios:
-        logger.warning("No studios discovered — exiting.")
-        return
-
-    studio_items = list(studios.items())
-    if args.limit:
-        studio_items = studio_items[: args.limit]
-        logger.info(f"Limited to {args.limit} studios.")
-
-    logger.info(f"Processing {len(studio_items)} studios...")
-
-    stats: dict[str, int] = {"saved": 0, "locked": 0, "failed": 0, "empty": 0}
-    start = time.time()
-
-    async with httpx.AsyncClient(
-        timeout=httpx.Timeout(15.0, connect=5.0),
-        limits=httpx.Limits(max_keepalive_connections=5, max_connections=10),
-    ) as client:
-        for (theatre_id, studio_id), info in studio_items:
-            result = await bootstrap_studio(
-                db, client, theatre_id, studio_id, info, token_holder, dry_run=args.dry_run
-            )
-            stats[result] = stats.get(result, 0) + 1
-
-    elapsed = time.time() - start
-
-    logger.info("=" * 60)
-    logger.info(f"Done in {elapsed:.1f}s")
-    logger.info(f"  Saved:  {stats['saved']}")
-    logger.info(f"  Locked: {stats['locked']}")
-    logger.info(f"  Failed: {stats['failed']}")
-    logger.info(f"  Empty:  {stats['empty']}")
-    logger.info("=" * 60)
-
-
-def main() -> None:
-    asyncio.run(async_main())
-
+    try:
+        await bootstrap_theatre_layouts(db, scraper, t_ids)
+    finally:
+        db.close()
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

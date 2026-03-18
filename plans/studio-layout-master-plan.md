@@ -282,8 +282,33 @@ This 3-tier strategy ensures each layer builds upon the last while delivering im
 ### Tier 2: Capacity Learning & Dual-Track Metrics (Accuracy MVP)
 **Business Value:** Replaces the flawed 1 AM baseline with absolute physical capacity for mapped studios, immediately improving audience accuracy for those studios.
 *   **Deliverables:**
-    *   **Bootstrap Scraper:** Background worker (`scripts/bootstrap_studio_layouts.py`) using the chain-agnostic parser and "Logical OR" merge to learn true physical layouts over time, updating `total_seats` and `layout`. *Verification: Run script for a specific theatre, inspect Firestore to ensure `layout_compressed` and accurate `total_seats` are populated.*
-    *   **Dual-Track Scraper:** Update JIT scraper (`functions/scraper/main.py`) to calculate sales using the master baseline when available, gracefully falling back to the legacy 1 AM baseline. Includes an in-memory/Redis cache for `total_seats`. *Verification: Trigger a JIT scrape, check the resulting snapshot in Firestore to ensure `baseline_source` is 'master_studio' and `master_total_seats` matches the new baseline.*
+    *   **Bootstrap Scraper (`scripts/bootstrap_studio_layouts.py`):**
+        *   **Spec:** A background worker script that fetches layout data for showtimes. It uses a "Logical OR" merge strategy to progressively learn the true physical layout over time.
+        *   **Implementation Details:**
+            *   Fetch available showtimes for a given `theatre_id` and `studio_id`.
+            *   Parse seat maps using `parse_to_master_layout()`.
+            *   Merge layouts using `merge_layouts_logical_or()`.
+            *   Update the `total_seats` and `layout` array fields in the `theatres/{theatre_id}/studios/{studio_id}` document.
+            *   Respect the `is_locked` flag: do not overwrite layouts manually locked by admins.
+        *   *Verification:* Run the script for a specific theatre. Inspect Firestore to ensure the `layout` array and accurate `total_seats` integer are populated.
+    *   **Dual-Track Scraper Integration (`functions/scraper/main.py`):**
+        *   **Spec:** Update the JIT scraper to calculate sales using the master baseline when available, falling back to the 1 AM baseline gracefully.
+        *   **Implementation Details:**
+            *   Before calculating occupancy, attempt to fetch the studio baseline from `theatres/{theatre_id}/studios/{studio_id}`.
+            *   Implement an in-memory or Redis cache for the `total_seats` to minimize redundant Firestore reads during high-frequency JIT scrapes.
+            *   If a master layout exists and has `total_seats > 0`, calculate delta as `audience_count = master_capacity - seats_available_now`.
+            *   If no master layout exists, fallback to `audience_count = seats_sold_now - initial_unavailable_at_1am`.
+            *   Store `master_total_seats` and `baseline_source` ('master_studio_locked', 'master_studio_auto', '1am_fallback') in the JIT snapshot.
+        *   *Verification:* Trigger a JIT scrape. Check the resulting snapshot in Firestore to ensure `baseline_source` is 'master_studio_auto' or 'master_studio_locked' and `master_total_seats` matches the baseline.
+    *   **Admin UI Layout Viewer (Visual Integration):**
+        *   **Spec:** When an admin clicks on a studio in the theatres panel, display a visual representation of the studio layout, similar to the seat map view in the movie performance per showtime section.
+        *   **Implementation Details:**
+            *   Create a React component (e.g., `StudioLayoutViewer`) that takes the `layout` array from the `Studio` model.
+            *   Render the grid using a 2D layout structure based on rows and columns.
+            *   Represent physical seats with a visual indicator (e.g., a filled square) and aisles as empty spaces.
+            *   Handle different seat grades with distinct colors/labels (e.g., Sweetbox, Premiere).
+            *   Integrate this viewer as a modal or an inline expandable section triggered by clicking a studio row inside the `TheatreStudiosList`.
+        *   *Verification:* Open the Admin UI, navigate to a theatre, click on a mapped studio, and visually confirm the layout grid accurately represents the physical seats and aisles based on the parsed data.
 
 ### Tier 3: Visual Management & Cutover (Operational MVP)
 **Business Value:** Gives the operational team full control over ticketing topology to handle edge cases manually, and finally deprecates the legacy, error-prone 1 AM delta system.
