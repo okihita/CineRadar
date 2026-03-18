@@ -11,7 +11,7 @@ class ShowtimeSchema(BaseModel):
     """Single showtime slot.
 
     Example:
-        {"time": "19:35", "showtime_id": "2000039256042586112", "status": 1, "is_available": true}
+        {"time": "19:35", "showtime_id": "2000039256042586112", "status": 1, "is_available": true, "studio_id": "11"}
 
     Note: showtime_id may be missing in some batch files but should exist in final merged output.
 
@@ -20,6 +20,9 @@ class ShowtimeSchema(BaseModel):
     time: str = Field(..., pattern=r"^\d{2}:\d{2}$", description="Time in HH:MM format")
     showtime_id: str | None = Field(
         None, description="Unique showtime identifier (optional in batches)"
+    )
+    studio_id: str | None = Field(
+        None, description="Physical studio identifier (e.g., '11', '100101')"
     )
     status: int = Field(ge=0, le=2, description="0=sold out, 1=available, 2=almost sold")
     is_available: bool

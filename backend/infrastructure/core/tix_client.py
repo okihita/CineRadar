@@ -240,12 +240,14 @@ class CineRadarScraper:
                 display_time = show.display_time
                 status = show.status
                 showtime_id = show.id
+                studio_id = show.studio
 
                 showtime_obj = {
                     "time": display_time,
                     "status": status,
                     "is_available": status == 1,
                     "showtime_id": showtime_id,
+                    "studio_id": studio_id,
                 }
                 room["all_showtimes"].append(showtime_obj)
 

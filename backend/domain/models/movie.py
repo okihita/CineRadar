@@ -17,11 +17,12 @@ class Showtime:
     Attributes:
         time: Time in HH:MM format (e.g., "19:35")
         showtime_id: TIX.id unique identifier for this showtime
+        studio_id: Physical studio identifier (e.g., "11")
         status: 0=sold out, 1=available, 2=almost sold
         is_available: Whether tickets can be purchased
 
     Example:
-        >>> st = Showtime(time="19:35", showtime_id="2000039256042586112")
+        >>> st = Showtime(time="19:35", showtime_id="2000039256042586112", studio_id="11")
         >>> st.is_evening
         True
 
@@ -29,6 +30,7 @@ class Showtime:
 
     time: str  # HH:MM format
     showtime_id: str | None = None
+    studio_id: str | None = None
     status: int = 1
     is_available: bool = True
 
@@ -55,6 +57,7 @@ class Showtime:
         return {
             "time": self.time,
             "showtime_id": self.showtime_id,
+            "studio_id": self.studio_id,
             "status": self.status,
             "is_available": self.is_available,
         }
@@ -65,6 +68,7 @@ class Showtime:
         return cls(
             time=data.get("time", ""),
             showtime_id=data.get("showtime_id"),
+            studio_id=data.get("studio_id"),
             status=data.get("status", 1),
             is_available=data.get("is_available", True),
         )
