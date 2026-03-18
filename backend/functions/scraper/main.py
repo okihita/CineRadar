@@ -1100,18 +1100,61 @@ def save_snapshot(
             .document(showtime_id)
         )
 
-    # Calculate actual audience from morning baseline
+    # --- Delta Calculation: True Audience Count ---
+    # Strategy (in order of priority):
+    #   1. Master Studio Baseline: theatres/{theatre_id}/studios/{studio_id}.total_seats
+    #      → audience_count = total_seats_master - available_seats_now (most accurate)
+    #   2. 1 AM Baseline fallback: initial_unavailable from this document
+    #      → audience_count = sold_seats_now - initial_unavailable_1am
+    #   See plans/studio-layout-master-plan.md §6 for rationale.
+
     initial_unavailable = 0
-    try:
-        existing_doc = doc_ref.get()
-        if existing_doc.exists:
-            initial_unavailable = existing_doc.to_dict().get("initial_unavailable", 0)
-    except Exception as e:
-        logger.warning(f"Could not load initial_unavailable for {showtime_id}: {e}")
+    studio_total_seats: int | None = None
+    baseline_source = "1am_fallback"
+
+    # 1. Try master studio baseline first
+    theatre_id = showtime_data.get("theatre_id", "")
+    studio_id = showtime_data.get("studio_id")
+    if theatre_id and studio_id:
+        try:
+            studio_ref = (
+                db.collection("theatres")
+                .document(theatre_id)
+                .collection("studios")
+                .document(studio_id)
+            )
+            studio_snap = studio_ref.get(["total_seats", "is_locked"])
+            if studio_snap.exists:
+                studio_data = studio_snap.to_dict() or {}
+                candidate = studio_data.get("total_seats", 0)
+                if candidate > 0:
+                    studio_total_seats = candidate
+                    baseline_source = "master_studio" + ("_locked" if studio_data.get("is_locked") else "_auto")
+        except Exception as e:
+            logger.warning(f"Could not load studio baseline for {studio_id}: {e}")
+
+    # 2. Fallback: load 1 AM initial_unavailable from existing doc
+    if studio_total_seats is None:
+        try:
+            existing_doc = doc_ref.get()
+            if existing_doc.exists:
+                initial_unavailable = existing_doc.to_dict().get("initial_unavailable", 0)
+        except Exception as e:
+            logger.warning(f"Could not load initial_unavailable for {showtime_id}: {e}")
 
     # The True Metric:
-    audience_count = max(0, sold_seats - initial_unavailable)
-    audience_pct = (audience_count / total_seats * 100) if total_seats > 0 else 0.0
+    # Branch on which baseline source we have:
+    #   master_studio → audience = master_capacity - seats_available_now
+    #   1am_fallback  → audience = seats_sold_now - initial_unavailable_at_1am
+    available_seats_now = total_seats - sold_seats
+    if studio_total_seats is not None:
+        audience_count = max(0, studio_total_seats - available_seats_now)
+        audience_pct = (audience_count / studio_total_seats * 100) if studio_total_seats > 0 else 0.0
+        master_total_seats = studio_total_seats
+    else:
+        audience_count = max(0, sold_seats - initial_unavailable)
+        audience_pct = (audience_count / total_seats * 100) if total_seats > 0 else 0.0
+        master_total_seats = total_seats  # best-effort: use JIT total as denominator
 
     snapshot_data = {
         "showtime_id": showtime_id,
@@ -1123,6 +1166,7 @@ def save_snapshot(
         "room_category": showtime_data.get("room_category", ""),
         "merchant": showtime_data.get("merchant", ""),
         "showtime": showtime_data.get("showtime", ""),
+        "studio_id": studio_id,  # Physical studio identifier
         "date": date,
         "total_seats": total_seats,
         "sold_seats": sold_seats,
@@ -1130,12 +1174,14 @@ def save_snapshot(
         "layout_compressed": layout_compressed,
         "raw_api_response": raw_api_response,
         "scraped_at": datetime.now(JAKARTA_TZ).isoformat(),
-        "scrape_phase": showtime_data.get("scrape_phase", "T-30"),  # Track which phase captured this
-        # New True Audience Metrics
-        "initial_unavailable": initial_unavailable,
+        "scrape_phase": showtime_data.get("scrape_phase", "T-30"),
+        # True Audience Metrics
+        "initial_unavailable": initial_unavailable,      # 0 when using master baseline
         "final_unavailable": sold_seats,
         "audience_count": audience_count,
         "audience_pct": round(audience_pct, 1),
+        "master_total_seats": master_total_seats,        # Which capacity was used as denominator
+        "baseline_source": baseline_source,              # 'master_studio_locked' | 'master_studio_auto' | '1am_fallback'
     }
 
     try:

@@ -139,3 +139,67 @@ class Theatre:
             room_types=room_types,
             last_seen=get_now_iso(),
         )
+
+
+@dataclass
+class StudioLayout:
+    """Master baseline physical layout of a cinema studio.
+
+    Stored at: theatres/{theatre_id}/studios/{studio_id}
+
+    The layout encodes physical seat existence (not availability).
+    See plans/studio-layout-master-plan.md §3.1 for format details.
+
+    Attributes:
+        studio_id: Physical studio identifier from TIX API (e.g., "11")
+        name: Human-readable name (e.g., "IMAX", "Premiere")
+        total_seats: Physical seat count (must match layout seat entries)
+        layout: JSON representation of CineRadar Unified Grid
+        is_locked: If True, automated scrapers must not overwrite
+        version: Monotonically incrementing for audit trail
+        last_updated: ISO 8601 timestamp of last write
+
+    """
+
+    studio_id: str
+    name: str = ""
+    total_seats: int = 0
+    layout: list[dict[str, Any]] = field(default_factory=list)
+    is_locked: bool = False
+    version: int = 1
+    last_updated: str = field(default_factory=lambda: get_now_iso())
+
+    def validate_seat_count(self) -> bool:
+        """Check that total_seats matches the actual seat count in layout."""
+        actual = sum(
+            1
+            for row in self.layout
+            for seat in row.get("seats", [])
+            if seat.get("type") == "seat"
+        )
+        return self.total_seats == actual
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary for Firestore storage."""
+        return {
+            "studio_id": self.studio_id,
+            "name": self.name,
+            "total_seats": self.total_seats,
+            "layout": self.layout,
+            "is_locked": self.is_locked,
+            "version": self.version,
+            "last_updated": self.last_updated,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> StudioLayout:
+        """Create from Firestore document."""
+        return cls(
+            studio_id=data.get("studio_id", ""),
+            name=data.get("name", ""),
+            total_seats=data.get("total_seats", 0),
+            layout=data.get("layout", []),
+            is_locked=data.get("is_locked", False),
+            version=data.get("version", 1),
+            last_updated=data.get("last_updated", ""),
+        )

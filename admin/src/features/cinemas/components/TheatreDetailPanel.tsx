@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { getRegion } from '@/lib/regions';
 import type { Theatre } from '../types';
+import { TheatreStudiosList } from './TheatreStudiosList';
 
 interface TheatreDetailPanelProps {
     theatre: Theatre | null;
@@ -30,7 +31,7 @@ export function TheatreDetailPanel({ theatre, apiKey }: TheatreDetailPanelProps)
             <CardHeader className="py-3 px-4">
                 <CardTitle className="text-sm">Theatre Details</CardTitle>
             </CardHeader>
-            <CardContent className="px-4 pb-4">
+            <CardContent className="px-4 pb-4 max-h-[calc(100vh-10rem)] overflow-y-auto">
                 {theatre ? (
                     <div className="space-y-4">
                         {/* Map embed */}
@@ -83,6 +84,8 @@ export function TheatreDetailPanel({ theatre, apiKey }: TheatreDetailPanelProps)
                         <Button size="sm" className="w-full text-xs" onClick={handleOpenInMaps}>
                             Open in Maps →
                         </Button>
+                        
+                        <TheatreStudiosList theatreId={theatre.theatre_id} />
                     </div>
                 ) : (
                     <div className="text-center py-12 text-muted-foreground">
@@ -93,3 +96,4 @@ export function TheatreDetailPanel({ theatre, apiKey }: TheatreDetailPanelProps)
         </Card>
     );
 }
+
