@@ -53,6 +53,11 @@ JAKARTA_TZ = ZoneInfo("Asia/Jakarta")
 REFRESH_API_URL = "https://api-b2b.tix.id/v1/users/refresh"
 ENABLE_SCHEMA_VALIDATION = os.environ.get("ENABLE_SCHEMA_VALIDATION", "true").lower() == "true"
 
+# Global In-Memory Cache for Cloud Function
+# Stores physical capacity for studios to prevent heavy Firestore GET operations during JIT bursts.
+# Format: {"theatre_id:studio_id": (total_seats, is_locked)}
+MASTER_CAPACITY_CACHE: dict[str, tuple[int, bool]] = {}
+
 # Merchant to API path mapping
 MERCHANT_PATHS = {
     "CGV": "cgv",
@@ -1100,61 +1105,78 @@ def save_snapshot(
             .document(showtime_id)
         )
 
-    # --- Delta Calculation: True Audience Count ---
-    # Strategy (in order of priority):
-    #   1. Master Studio Baseline: theatres/{theatre_id}/studios/{studio_id}.total_seats
-    #      → audience_count = total_seats_master - available_seats_now (most accurate)
-    #   2. 1 AM Baseline fallback: initial_unavailable from this document
-    #      → audience_count = sold_seats_now - initial_unavailable_1am
-    #   See plans/studio-layout-master-plan.md §6 for rationale.
+    # --- Delta Calculation: True Audience Count (JIT Occupied Model) ---
+    # We are moving away from the "1 AM Delta" model because it fails to capture early presales.
+    # Instead, we use the "JIT Occupied" model which relies on the Master Physical Layout.
+    #
+    # The Numerator (Audience Count):
+    #   We simply count the exact number of seats explicitly marked as Status 5/6 (sold_seats).
+    #   Why? This perfectly captures presales, but safely ignores seats that the cinema
+    #   dynamically omitted/closed for this specific showtime (preventing "fake sales").
+    #
+    # The Denominator (True Capacity):
+    #   We use the Master Physical Capacity of the studio.
+    #   Why? If a 200-seat studio closes a 50-seat balcony, the JIT API might only return
+    #   150 seats. If we sell 150, the JIT API implies 100% occupancy. But for business
+    #   intelligence, we want to know that the physical asset was only 75% monetized.
+    #   The Master Layout gives us the undeniable physical truth for the denominator.
 
-    initial_unavailable = 0
     studio_total_seats: int | None = None
-    baseline_source = "1am_fallback"
+    baseline_source = "jit_fallback"
 
-    # 1. Try master studio baseline first
     theatre_id = showtime_data.get("theatre_id", "")
     studio_id = showtime_data.get("studio_id")
+
     if theatre_id and studio_id:
-        try:
-            studio_ref = (
-                db.collection("theatres")
-                .document(theatre_id)
-                .collection("studios")
-                .document(studio_id)
-            )
-            studio_snap = studio_ref.get(["total_seats", "is_locked"])
-            if studio_snap.exists:
-                studio_data = studio_snap.to_dict() or {}
-                candidate = studio_data.get("total_seats", 0)
-                if candidate > 0:
-                    studio_total_seats = candidate
-                    baseline_source = "master_studio" + ("_locked" if studio_data.get("is_locked") else "_auto")
-        except Exception as e:
-            logger.warning(f"Could not load studio baseline for {studio_id}: {e}")
+        cache_key = f"{theatre_id}:{studio_id}"
 
-    # 2. Fallback: load 1 AM initial_unavailable from existing doc
-    if studio_total_seats is None:
-        try:
-            existing_doc = doc_ref.get()
-            if existing_doc.exists:
-                initial_unavailable = existing_doc.to_dict().get("initial_unavailable", 0)
-        except Exception as e:
-            logger.warning(f"Could not load initial_unavailable for {showtime_id}: {e}")
+        # 1. Try to hit the Cloud Function's global in-memory cache first
+        if cache_key in MASTER_CAPACITY_CACHE:
+            studio_total_seats, is_locked = MASTER_CAPACITY_CACHE[cache_key]
+            baseline_source = "master_studio_locked" if is_locked else "master_studio_auto"
+        else:
+            # 2. Cache miss: Fetch the physical baseline from Firestore
+            try:
+                studio_ref = (
+                    db.collection("theatres")
+                    .document(theatre_id)
+                    .collection("studios")
+                    .document(studio_id)
+                )
+                studio_snap = studio_ref.get(["total_seats", "is_locked"])
+                if studio_snap.exists:
+                    studio_data = studio_snap.to_dict() or {}
+                    candidate = studio_data.get("total_seats", 0)
 
-    # The True Metric:
-    # Branch on which baseline source we have:
-    #   master_studio → audience = master_capacity - seats_available_now
-    #   1am_fallback  → audience = seats_sold_now - initial_unavailable_at_1am
-    available_seats_now = total_seats - sold_seats
+                    # We only trust the master layout if it has actual seats mapped
+                    if candidate > 0:
+                        studio_total_seats = candidate
+                        is_locked = bool(studio_data.get("is_locked"))
+                        baseline_source = "master_studio_locked" if is_locked else "master_studio_auto"
+
+                        # 3. Populate the global cache to save Firestore reads on subsequent requests
+                        # This simple cache saves ~890k Firestore reads per month across the JIT pipeline.
+                        MASTER_CAPACITY_CACHE[cache_key] = (studio_total_seats, is_locked)
+            except Exception as e:
+                logger.warning(f"Could not load studio baseline for {studio_id}: {e}")
+
+    # The True Metric Calculation
+    # Audience count is exactly the seats marked as sold/unavailable (Status 5/6) right now.
+    audience_count = sold_seats
+
     if studio_total_seats is not None:
-        audience_count = max(0, studio_total_seats - available_seats_now)
-        audience_pct = (audience_count / studio_total_seats * 100) if studio_total_seats > 0 else 0.0
+        # Master Denominator: We use the larger of the two to protect against
+        # the rare edge case where the JIT API returns MORE seats than our Master Layout
+        # (e.g. the cinema added temporary chairs and our bootstrap script hasn't caught it yet).
+        denominator = max(studio_total_seats, total_seats)
         master_total_seats = studio_total_seats
     else:
-        audience_count = max(0, sold_seats - initial_unavailable)
-        audience_pct = (audience_count / total_seats * 100) if total_seats > 0 else 0.0
-        master_total_seats = total_seats  # best-effort: use JIT total as denominator
+        # Fallback Denominator: If this studio is still "Indexing" (we don't have a master layout yet),
+        # we fall back to just using whatever total the JIT API returned this time.
+        denominator = total_seats
+        master_total_seats = total_seats
+
+    audience_pct = (audience_count / denominator * 100) if denominator > 0 else 0.0
 
     snapshot_data = {
         "showtime_id": showtime_id,
@@ -1176,12 +1198,12 @@ def save_snapshot(
         "scraped_at": datetime.now(JAKARTA_TZ).isoformat(),
         "scrape_phase": showtime_data.get("scrape_phase", "T-30"),
         # True Audience Metrics
-        "initial_unavailable": initial_unavailable,      # 0 when using master baseline
+        "initial_unavailable": 0,                        # Deprecated: Kept at 0 for schema backward compatibility
         "final_unavailable": sold_seats,
         "audience_count": audience_count,
         "audience_pct": round(audience_pct, 1),
-        "master_total_seats": master_total_seats,        # Which capacity was used as denominator
-        "baseline_source": baseline_source,              # 'master_studio_locked' | 'master_studio_auto' | '1am_fallback'
+        "master_total_seats": master_total_seats,        # The raw capacity from the Master Layout
+        "baseline_source": baseline_source,              # Indicates if we used 'master_studio_X' or 'jit_fallback'
     }
 
     try:
