@@ -4,15 +4,12 @@ import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, Code, Table } from 'lucide-react';
+import { Code, Table } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// The layout from the scraper is a simple array format:
-// [[row_name, [status1, status2, ...]], ...]
-// where 1 = available, 0 = sold/blocked
+// Snapshot types (Legacy/Incremental)
 type SimpleLayoutGrid = [string, number[]][];
 
-// Alternative object format (for future compatibility)
 interface Seat {
     id: string;
     status: number;
@@ -27,26 +24,37 @@ interface SeatRow {
 }
 
 type ObjectLayoutGrid = SeatRow[];
-
-// Union type for both formats
 type LayoutGrid = SimpleLayoutGrid | ObjectLayoutGrid;
+
+// Master Layout types (Physical Baseline)
+export interface MasterSeat {
+    id: string;
+    type: 'seat' | 'aisle';
+    grade?: string;
+}
+
+export interface MasterRow {
+    row_name: string;
+    seats: MasterSeat[];
+}
+
+export type MasterLayout = MasterRow[];
 
 interface SeatMapVisualizerProps {
     initialLayout: LayoutGrid | null;
     finalLayout: LayoutGrid | null;
+    masterLayout?: MasterLayout | null;
 }
 
-// Seat status definition for visualization
 type VisSeatStatus = 'available' | 'blocked' | 'sold' | 'unknown' | 'gap';
 
-// Type guard to check if layout is in simple array format
+// Normalization Helpers
 function isSimpleFormat(layout: LayoutGrid | null): layout is SimpleLayoutGrid {
     if (!layout || layout.length === 0) return false;
     const firstItem = layout[0];
-    return Array.isArray(firstItem) && (typeof firstItem[0] === 'string' || firstItem.length === 2);
+    return Array.isArray(firstItem) && (typeof firstItem[0] === 'string');
 }
 
-// Normalize layout to a common format for processing
 interface NormalizedRow {
     rowName: string;
     seats: { index: number; status: number }[];
@@ -56,17 +64,14 @@ function normalizeLayout(layout: LayoutGrid | null): NormalizedRow[] {
     if (!layout || layout.length === 0) return [];
 
     if (isSimpleFormat(layout)) {
-        // Simple format: [[row_name, [status1, status2, ...]], ...]
         return layout.map(([rowName, statuses]) => ({
             rowName,
             seats: statuses.map((status, index) => ({ index, status }))
         }));
     } else {
-        // Object format: [{ row_name: "A", seats: [{ id: "A1", status: 0 }, ...] }]
         return (layout as ObjectLayoutGrid).map((row, rowIndex) => {
             const rowName = row.row_name || row.rowName || row.row || String.fromCharCode(65 + rowIndex);
             const seatsArray = (row.seats || row.seat || []) as (Seat | null)[];
-            
             return {
                 rowName,
                 seats: seatsArray
@@ -80,31 +85,58 @@ function normalizeLayout(layout: LayoutGrid | null): NormalizedRow[] {
     }
 }
 
-export function SeatMapVisualizer({ initialLayout, finalLayout }: SeatMapVisualizerProps) {
+export function SeatMapVisualizer({ initialLayout, finalLayout, masterLayout }: SeatMapVisualizerProps) {
     const [viewMode, setViewMode] = useState<'visual' | 'json'>('visual');
     
     const hasBaseline = initialLayout !== null && initialLayout.length > 0;
+    const hasMaster = !!masterLayout && masterLayout.length > 0;
 
-    // Normalize both layouts
     const normalizedInitial = useMemo(() => normalizeLayout(initialLayout), [initialLayout]);
     const normalizedFinal = useMemo(() => normalizeLayout(finalLayout), [finalLayout]);
 
-    // Build a map of initial seat states for O(1) lookup
-    // key: rowName_seatIndex -> status
+    // Build lookup maps for O(1) status checks
     const initialSeatMap = useMemo(() => {
         const map = new Map<string, number>();
-        if (!hasBaseline) return map;
-        
         normalizedInitial.forEach(row => {
-            row.seats.forEach(seat => {
-                map.set(`${row.rowName}_${seat.index}`, seat.status);
-            });
+            row.seats.forEach(seat => map.set(`${row.rowName}_${seat.index}`, seat.status));
         });
         return map;
-    }, [normalizedInitial, hasBaseline]);
+    }, [normalizedInitial]);
 
-    // Check if we have final data to visualize at all
-    if (!finalLayout || finalLayout.length === 0) {
+    const finalSeatMap = useMemo(() => {
+        const map = new Map<string, number>();
+        normalizedFinal.forEach(row => {
+            row.seats.forEach(seat => map.set(`${row.rowName}_${seat.index}`, seat.status));
+        });
+        return map;
+    }, [normalizedFinal]);
+
+    const determineStatus = (rowName: string, seatIndex: number): VisSeatStatus => {
+        const finalStatus = finalSeatMap.get(`${rowName}_${seatIndex}`);
+        const initialStatus = initialSeatMap.get(`${rowName}_${seatIndex}`);
+
+        // 1. If it's available in the latest scrape, it's available
+        if (finalStatus === 1) return 'available';
+
+        // 2. If it's unavailable in latest scrape
+        if (finalStatus === 0) {
+            // Check if it was already unavailable in the morning
+            if (initialStatus === 0) return 'blocked';
+            // It was available in the morning but not now -> Sold
+            if (initialStatus === 1) return 'sold';
+            // We have final data but no morning baseline
+            return 'unknown';
+        }
+
+        // 3. If we don't have final data (movie hasn't started/scraped yet)
+        if (initialStatus === 1) return 'available';
+        if (initialStatus === 0) return 'blocked';
+
+        // 4. Default if no data for this seat coordinate
+        return 'available'; 
+    };
+
+    if (!hasMaster && normalizedFinal.length === 0 && normalizedInitial.length === 0) {
         return (
             <Card className="w-full h-full flex items-center justify-center min-h-[200px] bg-muted/20">
                 <p className="text-muted-foreground text-sm italic">No layout data available for this showtime.</p>
@@ -112,182 +144,118 @@ export function SeatMapVisualizer({ initialLayout, finalLayout }: SeatMapVisuali
         );
     }
 
-    // Process the final layout to determine the true visual status of each seat
-    const determineSeatStatus = (rowName: string, seatIndex: number, finalStatus: number): VisSeatStatus => {
-        // Status: 1 = available, 0 = sold/blocked
-        const isFinalAvailable = finalStatus === 1;
-        
-        // If it's available now, it's just available
-        if (isFinalAvailable) return 'available';
-
-        // Seat is unavailable in final layout. We need to check the baseline.
-        if (!hasBaseline) {
-            // We don't have morning data, so we can't tell if it was blocked or actually sold.
-            return 'unknown';
-        }
-
-        const initialStatus = initialSeatMap.get(`${rowName}_${seatIndex}`);
-        
-        // If it was already unavailable in the morning, it's a blocked seat.
-        if (initialStatus === 0) {
-            return 'blocked';
-        }
-
-        // It was available in the morning, but unavailable now -> True Audience (Sold)
-        return 'sold';
-    };
-
     return (
-        <Card className="w-full flex flex-col h-full border">
-            <CardHeader className="py-3 px-4 border-b bg-muted/10">
-                <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                        Seat Layout Map
-                        {!hasBaseline && (
-                            <Badge variant="outline" className="text-[10px] h-5 bg-amber-500/10 text-amber-600 border-amber-500/20 ml-2">
-                                Baseline Missing
-                            </Badge>
-                        )}
-                    </CardTitle>
-                    <div className="flex items-center gap-4">
-                        {/* View mode toggle */}
-                        <div className="flex items-center gap-1 border rounded-md p-0.5">
-                            <Button
-                                variant={viewMode === 'visual' ? 'secondary' : 'ghost'}
-                                size="sm"
-                                className="h-6 px-2 text-xs"
-                                onClick={() => setViewMode('visual')}
-                            >
-                                <Table className="w-3 h-3 mr-1" />
-                                Visual
-                            </Button>
-                            <Button
-                                variant={viewMode === 'json' ? 'secondary' : 'ghost'}
-                                size="sm"
-                                className="h-6 px-2 text-xs"
-                                onClick={() => setViewMode('json')}
-                            >
-                                <Code className="w-3 h-3 mr-1" />
-                                JSON
-                            </Button>
-                        </div>
-                        
-                        {/* Legend - only show in visual mode */}
-                        {viewMode === 'visual' && (
-                            <div className="flex items-center gap-4 text-xs">
-                                <div className="flex items-center gap-1.5">
-                                    <div className="w-3 h-3 rounded-sm bg-muted border border-border" />
-                                    <span className="text-muted-foreground">Available</span>
-                                </div>
-                                {hasBaseline ? (
-                                    <>
-                                        <div className="flex items-center gap-1.5">
-                                            <div className="w-3 h-3 rounded-sm bg-green-500 border border-green-600" />
-                                            <span className="text-muted-foreground">Sold (Delta)</span>
-                                        </div>
-                                        <div className="flex items-center gap-1.5">
-                                            <div className="w-3 h-3 rounded-sm bg-red-500/20 border border-red-500/30" />
-                                            <span className="text-muted-foreground">Blocked</span>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="w-3 h-3 rounded-sm bg-amber-500 border border-amber-600" />
-                                        <span className="text-muted-foreground">Unavailable</span>
-                                    </div>
-                                )}
-                            </div>
-                        )}
+        <Card className="w-full flex flex-col h-full border bg-card">
+            <CardHeader className="py-3 px-4 border-b bg-muted/5 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm flex items-center gap-2 font-medium">
+                    {hasMaster ? 'Physical Room Layout' : 'Snapshot Seating Grid'}
+                    {hasMaster && (
+                        <Badge variant="outline" className="text-[10px] h-5 bg-purple-500/5 text-purple-600 border-purple-500/20">
+                            Master Template
+                        </Badge>
+                    )}
+                    {!hasBaseline && (
+                        <Badge variant="outline" className="text-[10px] h-5 bg-amber-500/5 text-amber-600 border-amber-500/20">
+                            No Baseline
+                        </Badge>
+                    )}
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 border rounded-md p-0.5 bg-background mr-2">
+                        <Button variant={viewMode === 'visual' ? 'secondary' : 'ghost'} size="sm" className="h-6 px-2 text-[10px]" onClick={() => setViewMode('visual')}>
+                            <Table className="w-3 h-3 mr-1" /> Visual
+                        </Button>
+                        <Button variant={viewMode === 'json' ? 'secondary' : 'ghost'} size="sm" className="h-6 px-2 text-[10px]" onClick={() => setViewMode('json')}>
+                            <Code className="w-3 h-3 mr-1" /> JSON
+                        </Button>
                     </div>
+                    {viewMode === 'visual' && (
+                        <div className="hidden sm:flex items-center gap-3 text-[10px]">
+                            <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-sm bg-muted border" /><span className="text-muted-foreground">Available</span></div>
+                            <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-sm bg-green-500" /><span className="text-muted-foreground">Sold</span></div>
+                            <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-sm bg-red-500/20 border border-red-500/30" /><span className="text-muted-foreground">Blocked</span></div>
+                        </div>
+                    )}
                 </div>
             </CardHeader>
             <CardContent className="p-4 flex-1 overflow-auto">
-                {!hasBaseline && viewMode === 'visual' && (
-                    <div className="mb-4 bg-amber-500/10 border border-amber-500/20 rounded-md p-2 flex items-start gap-2 text-amber-700 text-xs">
-                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                        <p>Missing 1:45 AM baseline data. We cannot visually differentiate between seats blocked by the cinema and actual tickets sold.</p>
-                    </div>
-                )}
-                
                 {viewMode === 'json' ? (
-                    /* JSON Debug View */
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        <div>
-                            <h4 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-2">
-                                Initial Layout (1:45 AM Baseline)
-                                {hasBaseline ? (
-                                    <Badge variant="outline" className="text-[10px] h-4 bg-green-500/10 text-green-600">Available</Badge>
-                                ) : (
-                                    <Badge variant="outline" className="text-[10px] h-4 bg-red-500/10 text-red-600">Missing</Badge>
-                                )}
-                            </h4>
-                            <pre className="text-[10px] bg-muted/50 p-2 rounded-md overflow-auto max-h-[400px] border font-mono">
-                                {initialLayout ? JSON.stringify(initialLayout, null, 2) : 'null'}
+                        <div className="space-y-2">
+                            <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Snapshots</h4>
+                            <pre className="text-[10px] bg-muted/30 p-2 rounded-md border font-mono max-h-[400px] overflow-auto">
+                                {JSON.stringify({ initialLayout, finalLayout }, null, 2)}
                             </pre>
                         </div>
-                        <div>
-                            <h4 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-2">
-                                Final Layout (Latest Scrape)
-                                <Badge variant="outline" className="text-[10px] h-4 bg-blue-500/10 text-blue-600">Available</Badge>
-                            </h4>
-                            <pre className="text-[10px] bg-muted/50 p-2 rounded-md overflow-auto max-h-[400px] border font-mono">
-                                {JSON.stringify(finalLayout, null, 2)}
+                        <div className="space-y-2">
+                            <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Master Layout</h4>
+                            <pre className="text-[10px] bg-muted/30 p-2 rounded-md border font-mono max-h-[400px] overflow-auto">
+                                {JSON.stringify(masterLayout, null, 2)}
                             </pre>
                         </div>
                     </div>
                 ) : (
-                    /* Visual Grid View */
-                    <div className="min-w-fit flex flex-col items-center">
-                        {/* Screen Indicator */}
-                        <div className="w-[80%] max-w-lg h-2 bg-gradient-to-b from-primary/20 to-transparent border-t-2 border-primary/40 rounded-t-[50%] mb-8 mx-auto mt-2" />
+                    <div className="min-w-fit flex flex-col items-center py-4">
+                        <div className="w-[70%] max-w-md h-1.5 bg-gradient-to-b from-primary/30 to-transparent border-t-2 border-primary/40 rounded-t-[50%] mb-10 mx-auto" />
                         
-                        {/* Seating Grid */}
-                        <div className="flex flex-col gap-1.5 pb-4">
-                            {normalizedFinal.map((row, i) => {
-                                return (
-                                    <div key={`row-${row.rowName}-${i}`} className="flex items-center gap-1.5 justify-center">
-                                        {/* Row Label Left */}
-                                        <div className="w-5 text-[10px] font-mono font-medium text-muted-foreground/50 text-right pr-1">
-                                            {row.rowName}
+                        <div className="flex flex-col gap-1.5">
+                            {hasMaster ? (
+                                masterLayout!.map((row, i) => {
+                                    let seatCounter = 0;
+                                    return (
+                                        <div key={`row-${row.row_name}-${i}`} className="flex items-center gap-2 justify-center">
+                                            <div className="w-6 text-[10px] font-mono font-bold text-muted-foreground/40 text-right">{row.row_name}</div>
+                                            <div className="flex gap-0.5">
+                                                {row.seats.map((seat, j) => {
+                                                    if (seat.type === 'aisle') return <div key={`a-${i}-${j}`} className="w-4 h-4 md:w-5 md:h-5" />;
+                                                    
+                                                    const status = determineStatus(row.row_name, seatCounter);
+                                                    seatCounter++;
+
+                                                    const colors = {
+                                                        available: 'bg-muted border border-border text-muted-foreground/30 hover:bg-muted/80',
+                                                        blocked: 'bg-red-500/10 border border-red-500/20 text-red-500/30',
+                                                        sold: 'bg-green-500 border border-green-600 text-white shadow-sm',
+                                                        unknown: 'bg-amber-500 border border-amber-600 text-white shadow-sm',
+                                                        gap: 'invisible'
+                                                    }[status];
+
+                                                    return (
+                                                        <div key={`s-${seat.id}-${i}-${j}`} className={cn('w-4 h-4 md:w-5 md:h-5 rounded-t-md rounded-b-sm flex items-center justify-center text-[8px] font-medium transition-colors', colors)} title={`Seat ${seat.id} (${status})`}>
+                                                            {seat.id ? seat.id.replace(row.row_name, '') : ''}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                            <div className="w-6 text-[10px] font-mono font-bold text-muted-foreground/40 text-left">{row.row_name}</div>
                                         </div>
-                                        
-                                        {/* Seats */}
+                                    );
+                                })
+                            ) : (
+                                (normalizedFinal.length > 0 ? normalizedFinal : normalizedInitial).map((row, i) => (
+                                    <div key={`row-snap-${row.rowName}-${i}`} className="flex items-center gap-2 justify-center">
+                                        <div className="w-6 text-[10px] font-mono font-bold text-muted-foreground/40 text-right">{row.rowName}</div>
                                         <div className="flex gap-0.5">
                                             {row.seats.map((seat) => {
-                                                const status = determineSeatStatus(row.rowName, seat.index, seat.status);
-                                                
-                                                // Colors mapped to status
-                                                const statusClasses: Record<VisSeatStatus, string> = {
-                                                    'available': 'bg-muted border border-border text-muted-foreground/30 hover:bg-muted/80',
-                                                    'blocked': 'bg-red-500/20 border border-red-500/30 text-red-500/40 cursor-not-allowed',
-                                                    'sold': 'bg-green-500 border border-green-600 text-white shadow-sm',
-                                                    'unknown': 'bg-amber-500 border border-amber-600 text-white shadow-sm',
-                                                    'gap': 'invisible pointer-events-none',
-                                                };
-                                                
+                                                const status = determineStatus(row.rowName, seat.index);
+                                                const colors = {
+                                                    available: 'bg-muted border border-border text-muted-foreground/30 hover:bg-muted/80',
+                                                    blocked: 'bg-red-500/10 border border-red-500/20 text-red-500/30',
+                                                    sold: 'bg-green-500 border border-green-600 text-white shadow-sm',
+                                                    unknown: 'bg-amber-500 border border-amber-600 text-white shadow-sm',
+                                                    gap: 'invisible'
+                                                }[status];
                                                 return (
-                                                    <div 
-                                                        key={`seat-${row.rowName}-${seat.index}`}
-                                                        className={cn(
-                                                            'w-4 h-4 md:w-5 md:h-5 rounded-t-md rounded-b-sm flex items-center justify-center',
-                                                            'text-[7px] md:text-[8px] font-medium transition-colors cursor-default',
-                                                            statusClasses[status]
-                                                        )}
-                                                        title={`Row ${row.rowName}, Seat ${seat.index + 1} - ${status.charAt(0).toUpperCase() + status.slice(1)}`}
-                                                    >
+                                                    <div key={`s-${row.rowName}-${seat.index}`} className={cn('w-4 h-4 md:w-5 md:h-5 rounded-t-md rounded-b-sm flex items-center justify-center text-[8px] font-medium transition-colors', colors)}>
                                                         {seat.index + 1}
                                                     </div>
                                                 );
                                             })}
                                         </div>
-                                        
-                                        {/* Row Label Right */}
-                                        <div className="w-5 text-[10px] font-mono font-medium text-muted-foreground/50 pl-1">
-                                            {row.rowName}
-                                        </div>
+                                        <div className="w-6 text-[10px] font-mono font-bold text-muted-foreground/40 text-left">{row.rowName}</div>
                                     </div>
-                                );
-                            })}
+                                ))
+                            )}
                         </div>
                     </div>
                 )}

@@ -334,6 +334,7 @@ async def load_showtimes_from_schedule(db: AsyncClient, date: str) -> list[dict[
                     for showtime_info in room.get("all_showtimes", []):
                         showtime_id = showtime_info.get("showtime_id")
                         showtime_time = showtime_info.get("time")
+                        studio_id = showtime_info.get("studio_id")
 
                         if showtime_id:
                             showtimes.append(
@@ -349,6 +350,7 @@ async def load_showtimes_from_schedule(db: AsyncClient, date: str) -> list[dict[
                                     "city": city_name,
                                     "date": date,
                                     "room_category": room_category,
+                                    "studio_id": studio_id,
                                 }
                             )
 
@@ -420,6 +422,7 @@ async def save_initial_layout_async(
         "city": showtime.get("city"),
         "merchant": showtime.get("merchant"),
         "room_category": showtime.get("room_category"),
+        "studio_id": showtime.get("studio_id"),
         "total_seats": total_seats,
         # Initial state (morning scrape)
         "initial_layout_compressed": layout_compressed,

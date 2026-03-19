@@ -90,7 +90,12 @@ interface FirestoreValue {
 
 function parseValue(value: FirestoreValue): unknown {
     if ('stringValue' in value) return value.stringValue;
-    if ('integerValue' in value) return parseInt(value.integerValue!);
+    if ('integerValue' in value) {
+        const val = value.integerValue!;
+        const num = parseInt(val);
+        // If the number is too large for JS to handle precisely, keep it as a string
+        return (num > Number.MAX_SAFE_INTEGER || num < Number.MIN_SAFE_INTEGER) ? val : num;
+    }
     if ('doubleValue' in value) return value.doubleValue;
     if ('booleanValue' in value) return value.booleanValue;
     if ('timestampValue' in value) return value.timestampValue;

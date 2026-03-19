@@ -33,6 +33,7 @@ export interface ShowtimeSnapshot {
     // Scrape details
     scrape_phase?: string;
     scraped_at?: string;
+    studio_id?: string;
 }
 
 type SortField = 'showtime' | 'occupancy' | 'theatre' | 'city';
@@ -553,6 +554,8 @@ interface RawDataResponse {
     initialLayout: any; // Used to cast to LayoutGrid
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     finalLayout: any; // Used to cast to LayoutGrid
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    masterLayout: any; 
     [key: string]: unknown;
 }
 
@@ -563,29 +566,37 @@ function ShowtimeRow({ showtime: st }: { showtime: ShowtimeSnapshot }) {
     const [rawData, setRawData] = useState<RawDataResponse | null>(null);
     const [isLoadingLayout, setIsLoadingLayout] = useState(false);
 
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
     // Fetch raw data when expanded
     const toggleExpand = async () => {
         const nextExpanded = !expanded;
         setExpanded(nextExpanded);
         
-        if (nextExpanded && !rawData && isScraped) {
+        const canFetch = !!st.studio_id || (st.sold_seats !== undefined && st.sold_seats > 0);
+        
+        if (nextExpanded && !rawData && canFetch) {
             setIsLoadingLayout(true);
+            setErrorMsg(null);
             try {
-                // Determine the parent component's movie context. For now, we assume the movie_id is in the showtime object, but in our domain model, the URL needs it. 
-                // We'll extract movie_id from the window location since we are in the /performances_v2/[movieId]/[date] page
                 const pathParts = window.location.pathname.split('/');
                 const movieId = pathParts[2];
                 const date = pathParts[3];
                 
                 if (movieId && date) {
-                    const res = await fetch(`/api/showtimes/${st.showtime_id}/raw?movieId=${movieId}&date=${date}`);
+                    const url = `/api/showtimes/${st.showtime_id}/raw?movieId=${movieId}&date=${date}`;
+                    const res = await fetch(url);
                     if (res.ok) {
                         const data = await res.json();
                         setRawData(data);
+                    } else {
+                        const err = await res.json();
+                        setErrorMsg(`API Error ${res.status}: ${err.error || 'Unknown'}\nEndpoint: ${url}`);
                     }
                 }
             } catch (e) {
                 console.error("Failed to load layout", e);
+                setErrorMsg(`Network Error: ${String(e)}`);
             } finally {
                 setIsLoadingLayout(false);
             }
@@ -595,6 +606,7 @@ function ShowtimeRow({ showtime: st }: { showtime: ShowtimeSnapshot }) {
     // Choose which metric to show: True Delta or Legacy Raw
     const isTrueDelta = st.audience_count !== undefined;
     const isScraped = st.sold_seats !== undefined && st.sold_seats > 0;
+    const canVisualize = !!st.studio_id || isScraped;
     const finalSold = isTrueDelta ? st.audience_count! : (st.sold_seats ?? 0);
     const finalPct = isTrueDelta ? st.audience_pct! : (st.occupancy_pct ?? 0);
     const initialBlocked = isTrueDelta ? (st.initial_unavailable ?? 0) : 0;
@@ -612,7 +624,14 @@ function ShowtimeRow({ showtime: st }: { showtime: ShowtimeSnapshot }) {
                 <td className="py-3 px-4">
                     <div className="flex items-center gap-2">
                         <div className={cn("w-1.5 h-4 rounded-full", merchantColor)} />
-                        <span className="font-medium">{st.theatre_name}</span>
+                        <div className="flex items-center gap-2">
+                            <span className="font-medium">{st.theatre_name}</span>
+                            {st.studio_id && (
+                                <span className="text-[10px] font-mono text-muted-foreground bg-muted/50 border px-1.5 py-0.5 rounded-md whitespace-nowrap">
+                                    Std {st.studio_id}
+                                </span>
+                            )}
+                        </div>
                     </div>
                 </td>
                 <td className="py-3 px-4 text-muted-foreground">{st.city}</td>
@@ -691,14 +710,27 @@ function ShowtimeRow({ showtime: st }: { showtime: ShowtimeSnapshot }) {
                                         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground mb-2" />
                                         <p className="text-sm text-muted-foreground">Loading cinema layout...</p>
                                     </Card>
-                                ) : rawData && (rawData.initialLayout || rawData.finalLayout) ? (
+                                ) : rawData && (rawData.initialLayout || rawData.finalLayout || rawData.masterLayout) ? (
                                     <SeatMapVisualizer 
                                         initialLayout={rawData.initialLayout} 
                                         finalLayout={rawData.finalLayout} 
+                                        masterLayout={rawData.masterLayout}
                                     />
+                                ) : errorMsg ? (
+                                    <Card className="w-full h-full border p-4 bg-red-500/5 border-red-500/20 flex flex-col items-center justify-center min-h-[300px]">
+                                        <p className="text-red-600 text-sm font-medium mb-2">Failed to load layout data</p>
+                                        <pre className="text-[10px] font-mono text-red-500/70 whitespace-pre-wrap max-w-full text-center px-4">
+                                            {errorMsg}
+                                        </pre>
+                                    </Card>
                                 ) : (
                                     <Card className="w-full h-full flex items-center justify-center min-h-[300px] bg-muted/20">
-                                        <p className="text-muted-foreground text-sm italic">Seat layout visualization not available for this showtime.</p>
+                                        <p className="text-muted-foreground text-sm italic">
+                                            {canVisualize 
+                                                ? "Seat layout visualization not yet available (it loads once the movie starts or if we have a master baseline)."
+                                                : "Seat layout visualization not available for this showtime (Legacy fallback with no layout)."
+                                            }
+                                        </p>
                                     </Card>
                                 )}
                             </div>

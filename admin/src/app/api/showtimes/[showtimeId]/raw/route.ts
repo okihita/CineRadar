@@ -43,6 +43,7 @@ interface RawShowtimeResponse {
     rawApiResponse: object | null;
     initialLayout: LayoutGrid | null;
     finalLayout: LayoutGrid | null;
+    masterLayout: unknown | null;
 }
 
 export async function GET(
@@ -90,6 +91,25 @@ export async function GET(
         const initialLayout = decompressLayout(data.initial_layout_compressed as string | undefined);
         const finalLayout = decompressLayout(data.layout_compressed as string | undefined);
 
+        // Fetch master layout
+        let masterLayout = null;
+        const theatreId = data.theatre_id ? String(data.theatre_id) : null;
+        const studioId = data.studio_id ? String(data.studio_id) : null;
+
+        if (theatreId && studioId) {
+            try {
+                const studioDoc = await firestoreRestClient.getDocument(
+                    `theatres/${theatreId}/studios`,
+                    studioId
+                );
+                if (studioDoc && studioDoc.layout) {
+                    masterLayout = studioDoc.layout;
+                }
+            } catch (err) {
+                console.error('Failed to fetch master layout:', err);
+            }
+        }
+
         const response: RawShowtimeResponse = {
             showtimeId: String(data.showtime_id),
             movieTitle: String(data.movie_title),
@@ -106,6 +126,7 @@ export async function GET(
             rawApiResponse: (data.raw_api_response as object | null) || null,
             initialLayout,
             finalLayout,
+            masterLayout,
         };
 
         return NextResponse.json(response);
