@@ -71,7 +71,7 @@ export async function DailyPerformanceDetail({
           ...perfDoc,
           id: movieId,
           movie_id: movieId,
-          title: (movieMeta.title as string) || "Unknown Title",
+          title: (movieMeta.name as string) || "Unknown Title",
           poster:
             (movieMeta.poster as string) ||
             (movieMeta.poster_path as string) ||

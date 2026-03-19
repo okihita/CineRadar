@@ -87,7 +87,7 @@ export async function GET() {
                             ...perfDoc, // Includes total_sold, etc.
                             id: perfDoc.id,
                             movie_id: perfDoc.id, // For compatibility with V1 components expecting movie_id
-                            title: metadata?.title ? (metadata.title as string) : `ID: ${perfDoc.id}`,
+                            title: metadata?.name ? (metadata.name as string) : `ID: ${perfDoc.id}`,
                             poster: metadata?.poster ? (metadata.poster as string) : (metadata?.poster_path ? (metadata.poster_path as string) : ''),
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             last_updated: (perfDoc as any).last_swept_at || '',

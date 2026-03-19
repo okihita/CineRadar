@@ -64,7 +64,7 @@ export async function GET(
             ...perfDoc,
             id: metadataId,
             movie_id: metadataId, // For compatibility
-            title: (metadata.title as string) || 'Unknown Title',
+            title: (metadata.name as string) || `ID: ${metadataId}`,
             poster: (metadata.poster as string) || (metadata.poster_path as string) || '',
             genres: formatMetadataField(metadata.genres),
             age_category: formatMetadataField(metadata.age_category),
