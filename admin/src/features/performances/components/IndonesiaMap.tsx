@@ -65,11 +65,18 @@ export function IndonesiaMap({ provinceStats }: IndonesiaMapProps) {
     const stat = provinceStats.find((p) => p.province === provName);
     if (!stat || stat.totalShows === 0) return "fill-muted/30 stroke-muted";
 
-    if (stat.occupancyPct >= 10)
-      return "fill-green-500/80 hover:fill-green-400 stroke-background";
-    if (stat.occupancyPct >= 5)
-      return "fill-amber-500/80 hover:fill-amber-400 stroke-background";
-    return "fill-red-500/80 hover:fill-red-400 stroke-background";
+    const pct = stat.occupancyPct;
+    const tierSize = 3.0; // 27% / 9 tiers
+
+    if (pct < tierSize) return "fill-red-700 hover:fill-red-600 stroke-background";
+    if (pct < tierSize * 2) return "fill-red-500 hover:fill-red-400 stroke-background";
+    if (pct < tierSize * 3) return "fill-red-300 hover:fill-red-200 stroke-background";
+    if (pct < tierSize * 4) return "fill-orange-400 hover:fill-orange-300 stroke-background";
+    if (pct < tierSize * 5) return "fill-amber-400 hover:fill-amber-300 stroke-background";
+    if (pct < tierSize * 6) return "fill-yellow-400 hover:fill-yellow-300 stroke-background";
+    if (pct < tierSize * 7) return "fill-lime-400 hover:fill-lime-300 stroke-background";
+    if (pct < tierSize * 8) return "fill-green-500 hover:fill-green-400 stroke-background";
+    return "fill-green-700 hover:fill-green-600 stroke-background";
   };
 
   const handleMouseEnter = (e: React.MouseEvent, provName: string) => {
@@ -135,9 +142,9 @@ export function IndonesiaMap({ provinceStats }: IndonesiaMapProps) {
                 <span className="text-muted-foreground">Occupancy:</span>
                 <span
                   className={`font-mono font-bold ${
-                    hoveredProvince.occupancyPct >= 10
+                    hoveredProvince.occupancyPct >= 18.0
                       ? "text-green-500"
-                      : hoveredProvince.occupancyPct < 5
+                      : hoveredProvince.occupancyPct < 9.0
                         ? "text-red-500"
                         : "text-amber-500"
                   }`}

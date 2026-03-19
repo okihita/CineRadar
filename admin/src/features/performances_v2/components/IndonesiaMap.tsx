@@ -68,18 +68,13 @@ export function IndonesiaMap({ provinceStats }: IndonesiaMapProps) {
     const pct = stat.occupancyPct;
     const tierSize = 3.0; // 27% / 9 tiers
 
-    // Tier 1-3: Red
-    if (pct < tierSize) return "fill-red-300 hover:fill-red-200 stroke-background";
+    if (pct < tierSize) return "fill-red-700 hover:fill-red-600 stroke-background";
     if (pct < tierSize * 2) return "fill-red-500 hover:fill-red-400 stroke-background";
-    if (pct < tierSize * 3) return "fill-red-700 hover:fill-red-600 stroke-background";
-
-    // Tier 4-6: Amber
-    if (pct < tierSize * 4) return "fill-amber-300 hover:fill-amber-200 stroke-background";
-    if (pct < tierSize * 5) return "fill-amber-500 hover:fill-amber-400 stroke-background";
-    if (pct < tierSize * 6) return "fill-amber-700 hover:fill-amber-600 stroke-background";
-
-    // Tier 7-9: Green
-    if (pct < tierSize * 7) return "fill-green-300 hover:fill-green-200 stroke-background";
+    if (pct < tierSize * 3) return "fill-red-300 hover:fill-red-200 stroke-background";
+    if (pct < tierSize * 4) return "fill-orange-400 hover:fill-orange-300 stroke-background";
+    if (pct < tierSize * 5) return "fill-amber-400 hover:fill-amber-300 stroke-background";
+    if (pct < tierSize * 6) return "fill-yellow-400 hover:fill-yellow-300 stroke-background";
+    if (pct < tierSize * 7) return "fill-lime-400 hover:fill-lime-300 stroke-background";
     if (pct < tierSize * 8) return "fill-green-500 hover:fill-green-400 stroke-background";
     return "fill-green-700 hover:fill-green-600 stroke-background";
   };

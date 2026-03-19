@@ -32,16 +32,20 @@ export function NationalSeatAllocation({
           <div className="w-full flex flex-col gap-2">
             <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
               <span>Choropleth Heatmap (Provincial)</span>
-              <div className="flex items-center gap-3">
-                <span className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-red-500 rounded-full" /> &lt;5%
-                </span>
-                <span className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-amber-500 rounded-full" /> 5-10%
-                </span>
-                <span className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-green-500 rounded-full" /> &gt;10%
-                </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[9px] text-muted-foreground font-mono">0%</span>
+                <div className="flex items-center gap-0.5">
+                  <div className="w-2.5 h-2.5 bg-red-700 rounded-sm" title="0-3%" />
+                  <div className="w-2.5 h-2.5 bg-red-500 rounded-sm" title="3-6%" />
+                  <div className="w-2.5 h-2.5 bg-red-300 rounded-sm" title="6-9%" />
+                  <div className="w-2.5 h-2.5 bg-orange-400 rounded-sm" title="9-12%" />
+                  <div className="w-2.5 h-2.5 bg-amber-400 rounded-sm" title="12-15%" />
+                  <div className="w-2.5 h-2.5 bg-yellow-400 rounded-sm" title="15-18%" />
+                  <div className="w-2.5 h-2.5 bg-lime-400 rounded-sm" title="18-21%" />
+                  <div className="w-2.5 h-2.5 bg-green-500 rounded-sm" title="21-24%" />
+                  <div className="w-2.5 h-2.5 bg-green-700 rounded-sm" title="24%+" />
+                </div>
+                <span className="text-[9px] text-muted-foreground font-mono">27%+</span>
               </div>
             </div>
             <IndonesiaMap provinceStats={provinceStats} />
