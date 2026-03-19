@@ -50,7 +50,7 @@ export async function GET() {
                         const metadata = await firestoreRestClient.getDocument('movies', perfDoc.id);
                         
                         if (!metadata) {
-                            return null; // Skip if no metadata found
+                            console.warn(`[API] Metadata not found for movie ID: ${perfDoc.id}`);
                         }
 
                         // 2. Fetch Today's Stats from `days` subcollection
@@ -59,20 +59,46 @@ export async function GET() {
                             today
                         );
 
+                        // 3. Fetch from schedules_v2 for "Showtimes Today" (Source of Truth for initial scheduling)
+                        const scheduleV2 = await firestoreRestClient.getDocument(
+                            `schedules_v2/${today}/movies`,
+                            perfDoc.id
+                        );
+
+                        let totalShowtimes = (todayStats?.total_showtimes as number) || 0;
+
+                        // If we have a schedule_v2 doc, calculate showtimes from the cities map
+                        if (scheduleV2 && scheduleV2.cities) {
+                            let count = 0;
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            const citiesMap = scheduleV2.cities as Record<string, any[]>;
+                            Object.values(citiesMap).forEach((theatres) => {
+                                theatres.forEach((theatre) => {
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                    (theatre.rooms || []).forEach((room: any) => {
+                                        count += (room.all_showtimes?.length || 0);
+                                    });
+                                });
+                            });
+                            totalShowtimes = count;
+                        }
+
                         return {
                             ...perfDoc, // Includes total_sold, etc.
-                            title: (metadata.title as string) || 'Unknown Title',
-                            poster: (metadata.poster_url as string) || '',
+                            id: perfDoc.id,
+                            movie_id: perfDoc.id, // For compatibility with V1 components expecting movie_id
+                            title: metadata?.title ? (metadata.title as string) : `ID: ${perfDoc.id}`,
+                            poster: metadata?.poster ? (metadata.poster as string) : (metadata?.poster_path ? (metadata.poster_path as string) : ''),
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             last_updated: (perfDoc as any).last_swept_at || '',
-                            today: todayStats ? {
-                                date: todayStats.date as string,
-                                total_showtimes: (todayStats.total_showtimes as number) || 0,
-                                total_showtimes_scraped: (todayStats.total_showtimes_scraped as number) || 0,
-                                avg_occupancy_pct: (todayStats.avg_occupancy_pct as number) || 0,
-                                total_seats: (todayStats.total_seats as number) || 0,
-                                total_sold: (todayStats.total_sold as number) || 0,
-                                cities: (todayStats.cities as string[]) || [],
+                            today: todayStats || scheduleV2 ? {
+                                date: (todayStats?.date as string) || today,
+                                total_showtimes: totalShowtimes,
+                                total_showtimes_scraped: (todayStats?.total_showtimes_scraped as number) || 0,
+                                avg_occupancy_pct: (todayStats?.avg_occupancy_pct as number) || 0,
+                                total_seats: (todayStats?.total_seats as number) || 0,
+                                total_sold: (todayStats?.total_sold as number) || 0,
+                                cities: (todayStats?.cities as string[]) || Object.keys(scheduleV2?.cities || {}),
                             } : undefined,
                         };
                     } catch (err) {

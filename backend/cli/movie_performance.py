@@ -235,9 +235,11 @@ def initialize_performance_data(aggregator: PerformanceAggregator) -> None:
     logger.info(f"📊 Found {len(docs)} movies in schedule")
 
     count = 0
+    v2_count = 0
     for doc in docs:
         data = doc.to_dict()
         movie_id = data.get("movie_id") or data.get("id")
+        metadata_id = data.get("tix_metadata_id") or data.get("metadata_id")
 
         if not movie_id:
             continue
@@ -282,7 +284,32 @@ def initialize_performance_data(aggregator: PerformanceAggregator) -> None:
             )
             count += 1
 
-    logger.info(f"\n✅ Successfully initialized {count} movies")
+        # V2 MIGRATION: Initialize movie_performance_v2 if metadata_id is available
+        if metadata_id:
+            try:
+                # We reuse the same DailyPerformance object but write to the V2 collection
+                v2_daily_ref = (
+                    db.collection("movie_performance_v2")
+                    .document(metadata_id)
+                    .collection("days")
+                    .document(date_str)
+                )
+                v2_daily_ref.set(daily.to_dict(), merge=True)
+
+                # Also ensure the root doc exists in V2 (even if metadata is in 'movies' collection,
+                # the dashboard lists from 'movie_performance_v2')
+                v2_root_ref = db.collection("movie_performance_v2").document(metadata_id)
+                v2_root_ref.set({
+                    "total_sold": 0,
+                    "total_seats": 0,
+                    "last_swept_at": datetime.now(JAKARTA_TZ).isoformat()
+                }, merge=True)
+                
+                v2_count += 1
+            except Exception as e:
+                logger.error(f"   ✗ Failed to initialize V2 stats for {metadata_id}: {e}")
+
+    logger.info(f"\n✅ Successfully initialized {count} movies (V1) and {v2_count} movies (V2)")
 
 
 def main() -> None:
