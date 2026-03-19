@@ -60,6 +60,7 @@ export function useFilteredTheatres(
     selectedRegion: string,
     sortByName: 'asc' | 'desc' | null,
     sortByCity: 'asc' | 'desc' | null,
+    sortByCapacity: 'asc' | 'desc' | null,
     getRegion: (city: string) => string
 ) {
     // Filter
@@ -95,6 +96,12 @@ export function useFilteredTheatres(
             sortByCity === 'asc'
                 ? a.city.localeCompare(b.city)
                 : b.city.localeCompare(a.city)
+        );
+    } else if (sortByCapacity) {
+        filtered = [...filtered].sort((a, b) =>
+            sortByCapacity === 'asc'
+                ? (a.total_capacity || 0) - (b.total_capacity || 0)
+                : (b.total_capacity || 0) - (a.total_capacity || 0)
         );
     }
 

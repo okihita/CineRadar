@@ -95,6 +95,7 @@ function CinemasPageContent() {
     store.selectedRegion,
     store.sortByName,
     store.sortByCity,
+    store.sortByCapacity,
     getRegion
   );
 
@@ -149,7 +150,7 @@ function CinemasPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20">
       {/* Page Header */}
       <div className="px-6 pt-6">
         <PageHeader
@@ -162,9 +163,9 @@ function CinemasPageContent() {
 
       <main className="px-6 pb-6 pt-4 space-y-4">
         {/* Map + KPI Cards Side by Side */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-4">
           {/* Map Card */}
-          <Card className="overflow-hidden py-0">
+          <Card className="overflow-hidden py-0 border shadow-sm rounded-xl">
             <IndonesiaMap
               theatres={mapTheatres}
               selectedTheatre={store.selectedTheatre}
@@ -204,8 +205,8 @@ function CinemasPageContent() {
         />
 
         {/* Table + Detail Panel */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div>
             <TheatreTable
               theatres={sortedTheatres}
               totalCount={sortedTheatres.length}
@@ -213,16 +214,18 @@ function CinemasPageContent() {
               searchTerm={store.searchTerm}
               sortByName={store.sortByName}
               sortByCity={store.sortByCity}
+              sortByCapacity={store.sortByCapacity}
               selectedTheatre={store.selectedTheatre}
               onPageChange={store.setCurrentPage}
               onSearchChange={store.setSearchTerm}
               onToggleNameSort={store.toggleNameSort}
               onToggleCitySort={store.toggleCitySort}
+              onToggleCapacitySort={store.toggleCapacitySort}
               onTheatreSelect={store.setSelectedTheatre}
               onClearFilters={store.clearFilters}
             />
           </div>
-          <div className="lg:col-span-1">
+          <div>
             <TheatreDetailPanel
               theatre={store.selectedTheatre}
               apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}

@@ -8,10 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ArrowUp, ArrowDown, X, Download } from 'lucide-react';
+import { ArrowUp, ArrowDown, X, Download, Users, Monitor, Search } from 'lucide-react';
 import { CHAIN_COLORS, CHAIN_COLORS_LIGHT, ITEMS_PER_PAGE } from '@/lib/constants';
 import { getRegion } from '@/lib/regions';
 import { highlightText } from '@/lib/mapUtils';
+import { Badge } from '@/components/ui/badge';
 import type { Theatre } from '../types';
 
 interface TheatreTableProps {
@@ -21,11 +22,13 @@ interface TheatreTableProps {
     searchTerm: string;
     sortByName: 'asc' | 'desc' | null;
     sortByCity: 'asc' | 'desc' | null;
+    sortByCapacity: 'asc' | 'desc' | null;
     selectedTheatre: Theatre | null;
     onPageChange: (page: number) => void;
     onSearchChange: (term: string) => void;
     onToggleNameSort: () => void;
     onToggleCitySort: () => void;
+    onToggleCapacitySort: () => void;
     onTheatreSelect: (theatre: Theatre) => void;
     onClearFilters: () => void;
 }
@@ -37,11 +40,13 @@ export function TheatreTable({
     searchTerm,
     sortByName,
     sortByCity,
+    sortByCapacity,
     selectedTheatre,
     onPageChange,
     onSearchChange,
     onToggleNameSort,
     onToggleCitySort,
+    onToggleCapacitySort,
     onTheatreSelect,
     onClearFilters,
 }: TheatreTableProps) {
@@ -69,12 +74,14 @@ export function TheatreTable({
 
     // Export to CSV
     const exportToCSV = useCallback(() => {
-        const headers = ['Name', 'Chain', 'City', 'Region', 'Address'];
+        const headers = ['Name', 'Chain', 'City', 'Region', 'Studios', 'Capacity', 'Address'];
         const rows = theatres.map((t) => [
             t.name,
             t.merchant,
             t.city,
             getRegion(t.city),
+            t.studio_count?.toString() || '0',
+            t.total_capacity?.toString() || '0',
             t.address || '',
         ]);
         const csv = [headers, ...rows]
@@ -113,17 +120,17 @@ export function TheatreTable({
 
     return (
         <Card>
-            <CardHeader className="py-3 px-4">
+            <CardHeader className="py-3 px-4 border-b bg-muted/10">
                 <div className="flex items-center justify-between gap-4">
-                    <CardTitle className="text-sm flex-shrink-0">
+                    <CardTitle className="text-sm flex-shrink-0 flex items-center gap-2">
                         Theatres
-                        <span className="font-normal text-muted-foreground ml-2">
-                            {totalCount} results
-                        </span>
+                        <Badge variant="secondary" className="font-normal text-[10px] h-4 px-1.5">
+                            {totalCount}
+                        </Badge>
                     </CardTitle>
 
                     {/* Search */}
-                    <div className="relative max-w-xs">
+                    <div className="relative max-w-xs flex-1">
                         <Input
                             placeholder="Search theatre, city..."
                             value={searchTerm}
@@ -156,35 +163,52 @@ export function TheatreTable({
             <CardContent className="p-0">
                 <div
                     ref={tableContainerRef}
-                    className="overflow-x-auto max-h-[500px] overflow-y-auto focus:outline-none"
+                    className="overflow-x-auto max-h-[600px] overflow-y-auto focus:outline-none custom-scrollbar"
                     tabIndex={0}
                     onKeyDown={handleKeyDown}
                 >
                     <Table>
-                        <TableHeader className="sticky top-0 bg-background z-10">
-                            <TableRow className="text-xs">
+                        <TableHeader className="sticky top-0 bg-background z-10 shadow-sm">
+                            <TableRow className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground bg-muted/5">
                                 <TableHead
-                                    className="pl-4 py-2 cursor-pointer hover:bg-muted/50 select-none"
+                                    className="pl-4 py-3 cursor-pointer hover:bg-muted/50 select-none w-[35%]"
                                     onClick={onToggleNameSort}
                                 >
                                     <span className="inline-flex items-center gap-1">
                                         Theatre
-                                        {sortByName === 'asc' && <ArrowUp className="w-3 h-3" />}
-                                        {sortByName === 'desc' && <ArrowDown className="w-3 h-3" />}
+                                        {sortByName === 'asc' && <ArrowUp className="w-3 h-3 text-primary" />}
+                                        {sortByName === 'desc' && <ArrowDown className="w-3 h-3 text-primary" />}
                                     </span>
                                 </TableHead>
-                                <TableHead className="py-2">Chain</TableHead>
+                                <TableHead className="py-3 w-[15%]">Chain</TableHead>
                                 <TableHead
-                                    className="cursor-pointer hover:bg-muted/50 select-none py-2"
+                                    className="cursor-pointer hover:bg-muted/50 select-none py-3 w-[20%]"
                                     onClick={onToggleCitySort}
                                 >
                                     <span className="inline-flex items-center gap-1">
-                                        City
-                                        {sortByCity === 'asc' && <ArrowUp className="w-3 h-3" />}
-                                        {sortByCity === 'desc' && <ArrowDown className="w-3 h-3" />}
+                                        Location
+                                        {sortByCity === 'asc' && <ArrowUp className="w-3 h-3 text-primary" />}
+                                        {sortByCity === 'desc' && <ArrowDown className="w-3 h-3 text-primary" />}
                                     </span>
                                 </TableHead>
-                                <TableHead className="text-right pr-4 py-2"></TableHead>
+                                <TableHead className="py-3 w-[10%] text-center hidden md:table-cell">
+                                    <span className="inline-flex items-center gap-1">
+                                        <Monitor className="w-3 h-3" />
+                                        Studios
+                                    </span>
+                                </TableHead>
+                                <TableHead 
+                                    className="py-3 w-[15%] text-right cursor-pointer hover:bg-muted/50 select-none hidden md:table-cell pr-4"
+                                    onClick={onToggleCapacitySort}
+                                >
+                                    <span className="inline-flex items-center gap-1 justify-end w-full">
+                                        <Users className="w-3 h-3" />
+                                        Capacity
+                                        {sortByCapacity === 'asc' && <ArrowUp className="w-3 h-3 text-primary" />}
+                                        {sortByCapacity === 'desc' && <ArrowDown className="w-3 h-3 text-primary" />}
+                                    </span>
+                                </TableHead>
+                                <TableHead className="w-10 md:hidden"></TableHead>
                             </TableRow>
                         </TableHeader>
 
@@ -194,22 +218,20 @@ export function TheatreTable({
                                     <TableRow
                                         key={theatre.theatre_id}
                                         data-theatre-id={theatre.theatre_id}
-                                        className={`cursor-pointer text-sm transition-colors ${selectedTheatre?.theatre_id === theatre.theatre_id
-                                                ? 'bg-primary/10 border-l-2 border-l-primary'
-                                                : index % 2 === 0
-                                                    ? 'bg-transparent hover:bg-muted/50'
-                                                    : 'bg-muted/20 hover:bg-muted/50'
+                                        className={`cursor-pointer text-sm transition-colors border-l-2 ${selectedTheatre?.theatre_id === theatre.theatre_id
+                                                ? 'bg-primary/10 border-l-primary'
+                                                : 'border-l-transparent hover:bg-muted/50'
                                             }`}
                                         onClick={() => onTheatreSelect(theatre)}
                                     >
-                                        <TableCell className="pl-4 py-2">
-                                            <p className="font-medium text-sm">
+                                        <TableCell className="pl-4 py-3">
+                                            <p className="font-semibold text-sm leading-tight">
                                                 {highlightText(theatre.name, searchTerm)}
                                             </p>
                                         </TableCell>
-                                        <TableCell className="py-2">
+                                        <TableCell className="py-3">
                                             <span
-                                                className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                                                className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tight"
                                                 style={{
                                                     backgroundColor:
                                                         CHAIN_COLORS_LIGHT[theatre.merchant as keyof typeof CHAIN_COLORS_LIGHT] ||
@@ -221,21 +243,38 @@ export function TheatreTable({
                                                 {theatre.merchant}
                                             </span>
                                         </TableCell>
-                                        <TableCell className="py-2">
-                                            <p className="text-sm">{highlightText(theatre.city, searchTerm)}</p>
-                                            <p className="text-xs text-muted-foreground">{getRegion(theatre.city)}</p>
+                                        <TableCell className="py-3">
+                                            <p className="text-sm font-medium">{highlightText(theatre.city, searchTerm)}</p>
+                                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{getRegion(theatre.city)}</p>
                                         </TableCell>
-                                        <TableCell className="text-right pr-4 py-2">
+                                        <TableCell className="py-3 text-center hidden md:table-cell">
+                                            <span className="text-sm font-mono font-medium">
+                                                {theatre.studio_count || 0}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell className="py-3 text-right hidden md:table-cell pr-4">
+                                            {theatre.total_capacity && theatre.total_capacity > 0 ? (
+                                                <span className="text-sm font-mono font-bold text-primary">
+                                                    {theatre.total_capacity.toLocaleString()}
+                                                </span>
+                                            ) : (
+                                                <Badge variant="outline" className="text-[9px] font-normal h-4 text-muted-foreground/60 border-muted/30">
+                                                    Indexing
+                                                </Badge>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-right pr-4 py-3 md:hidden">
                                             <span className="text-xs text-muted-foreground">→</span>
                                         </TableCell>
                                     </TableRow>
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="text-center py-12">
-                                        <div className="text-muted-foreground">
-                                            <p className="text-sm font-medium mb-2">No theatres found</p>
-                                            <p className="text-xs mb-4">Try adjusting your filters or search term</p>
+                                    <TableCell colSpan={6} className="text-center py-20">
+                                        <div className="flex flex-col items-center justify-center text-muted-foreground">
+                                            <Search className="w-10 h-10 mb-4 opacity-20" />
+                                            <p className="text-sm font-medium mb-1">No theatres found</p>
+                                            <p className="text-xs mb-6">Try adjusting your filters or search term</p>
                                             <Button variant="outline" size="sm" className="text-xs" onClick={onClearFilters}>
                                                 Clear all filters
                                             </Button>
@@ -249,28 +288,30 @@ export function TheatreTable({
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                    <div className="flex items-center justify-between px-4 py-2 border-t text-xs">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 text-xs"
-                            disabled={currentPage === 1}
-                            onClick={() => onPageChange(currentPage - 1)}
-                        >
-                            ←
-                        </Button>
-                        <span className="text-muted-foreground">
-                            {safePage} / {totalPages}
-                        </span>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 text-xs"
-                            disabled={currentPage === totalPages}
-                            onClick={() => onPageChange(currentPage + 1)}
-                        >
-                            →
-                        </Button>
+                    <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/5">
+                        <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                            Page {safePage} of {totalPages}
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 w-7 p-0"
+                                disabled={currentPage === 1}
+                                onClick={() => onPageChange(currentPage - 1)}
+                            >
+                                ←
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 w-7 p-0"
+                                disabled={currentPage === totalPages}
+                                onClick={() => onPageChange(currentPage + 1)}
+                            >
+                                →
+                            </Button>
+                        </div>
                     </div>
                 )}
             </CardContent>

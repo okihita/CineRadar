@@ -15,6 +15,7 @@ interface CinemasUIState {
     currentPage: number;
     sortByName: 'asc' | 'desc' | null;
     sortByCity: 'asc' | 'desc' | null;
+    sortByCapacity: 'asc' | 'desc' | null;
 
     // Selection state
     selectedTheatre: Theatre | null;
@@ -32,6 +33,7 @@ interface CinemasUIState {
     setCurrentPage: (page: number) => void;
     toggleNameSort: () => void;
     toggleCitySort: () => void;
+    toggleCapacitySort: () => void;
     setSelectedTheatre: (theatre: Theatre | null) => void;
     setMapCenter: (center: { lat: number; lng: number; zoom: number } | null) => void;
     setShowBackToTop: (show: boolean) => void;
@@ -46,6 +48,7 @@ export const useCinemasStore = create<CinemasUIState>((set) => ({
     currentPage: 1,
     sortByName: null,
     sortByCity: null,
+    sortByCapacity: null,
     selectedTheatre: null,
     mapCenter: null,
     showBackToTop: false,
@@ -60,12 +63,21 @@ export const useCinemasStore = create<CinemasUIState>((set) => ({
         set((state) => ({
             sortByName: state.sortByName === 'asc' ? 'desc' : state.sortByName === 'desc' ? null : 'asc',
             sortByCity: null,
+            sortByCapacity: null,
         })),
 
     toggleCitySort: () =>
         set((state) => ({
             sortByCity: state.sortByCity === 'asc' ? 'desc' : state.sortByCity === 'desc' ? null : 'asc',
             sortByName: null,
+            sortByCapacity: null,
+        })),
+
+    toggleCapacitySort: () =>
+        set((state) => ({
+            sortByCapacity: state.sortByCapacity === 'asc' ? 'desc' : state.sortByCapacity === 'desc' ? null : 'asc',
+            sortByName: null,
+            sortByCity: null,
         })),
 
     setSelectedTheatre: (theatre) => set({ selectedTheatre: theatre }),
@@ -80,5 +92,6 @@ export const useCinemasStore = create<CinemasUIState>((set) => ({
             currentPage: 1,
             sortByName: null,
             sortByCity: null,
+            sortByCapacity: null,
         }),
 }));
