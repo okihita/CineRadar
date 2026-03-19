@@ -304,7 +304,7 @@ def initialize_performance_data(aggregator: PerformanceAggregator) -> None:
                     "total_seats": 0,
                     "last_swept_at": datetime.now(JAKARTA_TZ).isoformat()
                 }, merge=True)
-                
+
                 v2_count += 1
             except Exception as e:
                 logger.error(f"   ✗ Failed to initialize V2 stats for {metadata_id}: {e}")
