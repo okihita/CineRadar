@@ -66,7 +66,7 @@ export function IndonesiaMap({ provinceStats }: IndonesiaMapProps) {
     if (!stat || stat.totalShows === 0) return "fill-muted/30 stroke-muted";
 
     const pct = stat.occupancyPct;
-    const tierSize = 1.33; // 12% / 9 tiers
+    const tierSize = 3.0; // 27% / 9 tiers
 
     // Tier 1-3: Red
     if (pct < tierSize) return "fill-red-300 hover:fill-red-200 stroke-background";
@@ -147,9 +147,9 @@ export function IndonesiaMap({ provinceStats }: IndonesiaMapProps) {
                 <span className="text-muted-foreground">Occupancy:</span>
                 <span
                   className={`font-mono font-bold ${
-                    hoveredProvince.occupancyPct >= 8.0
+                    hoveredProvince.occupancyPct >= 18.0
                       ? "text-green-500"
-                      : hoveredProvince.occupancyPct < 4.0
+                      : hoveredProvince.occupancyPct < 9.0
                         ? "text-red-500"
                         : "text-amber-500"
                   }`}
