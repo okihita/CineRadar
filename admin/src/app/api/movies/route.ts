@@ -19,7 +19,9 @@ interface FirestoreMovie {
     title?: string;
     poster_path?: string;
     scraped_at?: string;
+    release_date?: number;
     age_category?: string;
+    genres?: Array<{ id: string; name: string }>;
     rating_score?: {
         vote_average?: number;
         vote_count?: number;
@@ -38,8 +40,10 @@ export async function GET() {
             'title',
             'poster_path',
             'scraped_at',
+            'release_date',
             'age_category',
-            'rating_score'
+            'rating_score',
+            'genres'
         ])) as FirestoreMovie[];
 
         // 2. Fetch today's Metadata IDs from schedules_v2 to determine "Now Showing" status.
@@ -52,6 +56,9 @@ export async function GET() {
             const metadataId = String(m.movie_id || ''); 
             const isShowingToday = showingMetadataIds.has(metadataId);
             const ratingData = m.rating_score;
+            
+            // Map genre objects to simple string array
+            const genres = m.genres?.map((g) => g.name) || [];
 
             return {
                 id: metadataId,                               
@@ -61,7 +68,9 @@ export async function GET() {
                 poster: (m.poster_path as string) || '',
                 is_showing_today: isShowingToday,
                 last_updated: (m.scraped_at as string) || '',
+                release_date: m.release_date || 0,
                 age_category: (m.age_category as string) || '',
+                genres: genres,
                 rating: ratingData ? {
                     average: ratingData.vote_average || 0,
                     count: ratingData.vote_count || 0

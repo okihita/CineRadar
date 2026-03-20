@@ -10,10 +10,11 @@ import { useState, useMemo } from 'react';
 import useSWR from 'swr';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Loader2, Clapperboard, Film, AlertCircle, ArrowUpDown, Star } from 'lucide-react';
+import { Loader2, Clapperboard, Film, AlertCircle, ArrowUpDown, Star, Search } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -25,7 +26,9 @@ interface UnifiedMovie {
     poster: string;
     is_showing_today: boolean;
     last_updated: string;
+    release_date: number;
     age_category: string;
+    genres: string[];
     rating?: {
         average: number;
         count: number;
@@ -39,10 +42,12 @@ interface MovieDatabaseResponse {
     error?: string;
 }
 
-type SortField = 'title' | 'schedule_id' | 'metadata_id' | 'date' | 'status' | 'rating';
+type SortField = 'title' | 'schedule_id' | 'metadata_id' | 'date' | 'status' | 'rating' | 'release_date';
 type SortDirection = 'asc' | 'desc';
 
 export function MovieDatabaseList() {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
     const [sortField, setSortField] = useState<SortField>('status');
     const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
@@ -50,6 +55,16 @@ export function MovieDatabaseList() {
         '/api/movies',
         fetcher
     );
+
+    // Extract unique genres from data
+    const availableGenres = useMemo(() => {
+        if (!data?.movies) return [];
+        const genreSet = new Set<string>();
+        data.movies.forEach(m => {
+            m.genres.forEach(g => genreSet.add(g));
+        });
+        return Array.from(genreSet).sort();
+    }, [data]);
 
     const toggleSort = (field: SortField) => {
         if (sortField === field) {
@@ -63,7 +78,20 @@ export function MovieDatabaseList() {
     const sortedMovies = useMemo(() => {
         if (!data?.movies) return [];
         
-        return [...data.movies].sort((a, b) => {
+        let filtered = [...data.movies];
+        
+        // 1. Title Search Filter
+        if (searchTerm.trim()) {
+            const term = searchTerm.toLowerCase();
+            filtered = filtered.filter(m => m.title.toLowerCase().includes(term));
+        }
+
+        // 2. Genre Chip Filter
+        if (selectedGenre) {
+            filtered = filtered.filter(m => m.genres.includes(selectedGenre));
+        }
+
+        return filtered.sort((a, b) => {
             let comparison = 0;
             switch (sortField) {
                 case 'status':
@@ -86,13 +114,16 @@ export function MovieDatabaseList() {
                 case 'date':
                     comparison = (a.last_updated || '').localeCompare(b.last_updated || '');
                     break;
+                case 'release_date':
+                    comparison = (a.release_date || 0) - (b.release_date || 0);
+                    break;
                 case 'rating':
                     comparison = (a.rating?.average || 0) - (b.rating?.average || 0);
                     break;
             }
             return sortDirection === 'asc' ? comparison : -comparison;
         });
-    }, [data, sortField, sortDirection]);
+    }, [data, sortField, sortDirection, searchTerm, selectedGenre]);
 
     if (isLoading) {
         return (
@@ -117,17 +148,60 @@ export function MovieDatabaseList() {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                     <Clapperboard className="w-5 h-5 text-primary" />
                     <h2 className="text-xl font-bold tracking-tight">
                         Archive & Live Inventory
                     </h2>
                 </div>
-                <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded border border-border">
-                    {sortedMovies.length} total movies tracked
-                </span>
+                
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                    <div className="relative w-full sm:w-64">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search movie title..."
+                            className="pl-9"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded border border-border whitespace-nowrap">
+                        {sortedMovies.length} movies
+                    </span>
+                </div>
             </div>
+
+            {/* Genre Chips */}
+            {availableGenres.length > 0 && (
+                <div className="flex flex-wrap gap-2 py-1">
+                    <button
+                        onClick={() => setSelectedGenre(null)}
+                        className={cn(
+                            "px-3 py-1 rounded-full text-xs font-medium transition-all border",
+                            selectedGenre === null 
+                                ? "bg-primary text-primary-foreground border-primary shadow-sm" 
+                                : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
+                        )}
+                    >
+                        All Genres
+                    </button>
+                    {availableGenres.map(genre => (
+                        <button
+                            key={genre}
+                            onClick={() => setSelectedGenre(genre === selectedGenre ? null : genre)}
+                            className={cn(
+                                "px-3 py-1 rounded-full text-xs font-medium transition-all border",
+                                selectedGenre === genre 
+                                    ? "bg-primary text-primary-foreground border-primary shadow-sm" 
+                                    : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
+                            )}
+                        >
+                            {genre}
+                        </button>
+                    ))}
+                </div>
+            )}
 
             <Card className="overflow-hidden border border-border shadow-sm">
                 <div className="overflow-x-auto">
@@ -155,20 +229,20 @@ export function MovieDatabaseList() {
                                 </th>
                                 <th 
                                     className="py-2.5 px-3 font-medium cursor-pointer hover:bg-muted transition-colors w-48"
-                                    onClick={() => toggleSort('schedule_id')}
+                                    onClick={() => toggleSort('metadata_id')}
                                 >
                                     <div className="flex items-center gap-1">
-                                        Schedule ID (V1)
-                                        {sortField === 'schedule_id' && <ArrowUpDown className="w-3 h-3" />}
+                                        Metadata ID
+                                        {sortField === 'metadata_id' && <ArrowUpDown className="w-3 h-3" />}
                                     </div>
                                 </th>
                                 <th 
                                     className="py-2.5 px-3 font-medium cursor-pointer hover:bg-muted transition-colors w-48"
-                                    onClick={() => toggleSort('metadata_id')}
+                                    onClick={() => toggleSort('schedule_id')}
                                 >
                                     <div className="flex items-center gap-1">
-                                        Metadata ID (V2)
-                                        {sortField === 'metadata_id' && <ArrowUpDown className="w-3 h-3" />}
+                                        Schedule ID
+                                        {sortField === 'schedule_id' && <ArrowUpDown className="w-3 h-3" />}
                                     </div>
                                 </th>
                                 <th 
@@ -178,6 +252,15 @@ export function MovieDatabaseList() {
                                     <div className="flex items-center gap-1">
                                         Last Updated
                                         {sortField === 'date' && <ArrowUpDown className="w-3 h-3" />}
+                                    </div>
+                                </th>
+                                <th 
+                                    className="py-2.5 px-3 font-medium cursor-pointer hover:bg-muted transition-colors w-32"
+                                    onClick={() => toggleSort('release_date')}
+                                >
+                                    <div className="flex items-center gap-1">
+                                        Release Date
+                                        {sortField === 'release_date' && <ArrowUpDown className="w-3 h-3" />}
                                     </div>
                                 </th>
                                 <th 
@@ -234,20 +317,35 @@ export function MovieDatabaseList() {
                                             <Link href={targetLink} className="font-bold hover:text-primary transition-colors block text-base truncate max-w-[300px]">
                                                 {movie.title}
                                             </Link>
-                                            <div className="flex gap-2 mt-1">
+                                            <div className="flex flex-wrap gap-1.5 mt-1.5">
                                                 {movie.age_category && (
-                                                    <span className="text-[9px] font-bold bg-muted text-muted-foreground px-1.5 py-0.5 rounded">{movie.age_category}</span>
+                                                    <span className="text-[9px] font-black bg-muted text-muted-foreground px-1.5 py-0.5 rounded uppercase tracking-wider border border-border/50">{movie.age_category}</span>
+                                                )}
+                                                {movie.genres.slice(0, 2).map((genre, idx) => (
+                                                    <span key={idx} className="text-[9px] font-medium bg-primary/5 text-primary/70 px-1.5 py-0.5 rounded border border-primary/10">
+                                                        {genre}
+                                                    </span>
+                                                ))}
+                                                {movie.genres.length > 2 && (
+                                                    <span className="text-[9px] text-muted-foreground/50 self-center">+{movie.genres.length - 2}</span>
                                                 )}
                                             </div>
-                                        </td>
-                                        <td className="py-3 px-3 font-mono text-xs text-muted-foreground">
-                                            {movie.movie_id}
                                         </td>
                                         <td className="py-3 px-3 font-mono text-xs text-primary/80">
                                             {movie.id}
                                         </td>
+                                        <td className="py-3 px-3 font-mono text-xs text-muted-foreground">
+                                            {movie.movie_id}
+                                        </td>
                                         <td className="py-3 px-3 text-xs text-muted-foreground">
                                             {movie.last_updated ? new Date(movie.last_updated).toLocaleDateString('en-GB', {
+                                                day: '2-digit',
+                                                month: 'short',
+                                                year: 'numeric'
+                                            }) : 'N/A'}
+                                        </td>
+                                        <td className="py-3 px-3 text-xs text-muted-foreground">
+                                            {movie.release_date && movie.release_date > 0 ? new Date(movie.release_date * 1000).toLocaleDateString('en-GB', {
                                                 day: '2-digit',
                                                 month: 'short',
                                                 year: 'numeric'
