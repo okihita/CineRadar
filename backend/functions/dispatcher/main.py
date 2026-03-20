@@ -1,9 +1,10 @@
 """JIT Seat Scraper - Dispatcher Function.
 
 HTTP-triggered Cloud Function that:
-1. Queries Firestore for showtimes starting in exactly the [T+20, T+25) minute window
-2. Publishes each showtime to Pub/Sub for individual scraping
-3. Each 5-minute dispatch captures exactly one non-overlapping bucket
+1. Queries Firestore for showtimes starting in three non-overlapping 5-minute windows:
+   [T+30, T+35), [T+20, T+25), and [T+10, T+15) minutes from now.
+2. Publishes each showtime to Pub/Sub for individual scraping.
+3. Every 5 minutes, it captures these three distinct "time waves" for scraping.
 
 Triggered by Cloud Scheduler every 5 minutes.
 
@@ -119,7 +120,9 @@ def find_upcoming_showtimes(
             schedule_ids = movie.get("schedule_ids", [])
 
             if not schedule_ids:
-                logger.warning(f"No schedule_ids for metadata_id={metadata_id} ({movie_title}), skipping")
+                logger.warning(
+                    f"No schedule_ids for metadata_id={metadata_id} ({movie_title}), skipping"
+                )
                 continue
 
             # Use the first schedule_id for API calls
@@ -345,7 +348,9 @@ def dispatch_jobs(request: Any) -> Any:
             window_end = now + timedelta(minutes=float(window["end"]))
             phase_name = str(window["name"])
 
-            logger.info(f"Checking {phase_name} Window: {window_start.strftime('%H:%M')} - {window_end.strftime('%H:%M')}")
+            logger.info(
+                f"Checking {phase_name} Window: {window_start.strftime('%H:%M')} - {window_end.strftime('%H:%M')}"
+            )
 
             showtimes = find_upcoming_showtimes(db, window_start, window_end, phase=phase_name)
             all_showtimes.extend(showtimes)

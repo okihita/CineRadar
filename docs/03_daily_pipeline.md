@@ -7,11 +7,11 @@
 The pipeline runs in three main phases:
 
 1. **Morning Initialization** (1:15 AM - 4:30 AM WIB): Scrapes all movies, showtimes, and baseline layout data.
-2. **JIT Seat Scraping** (9:00 AM - 11:55 PM WIB): Scrapes seats precisely 30 minutes before each showtime.
+2. **JIT Seat Scraping** (9:00 AM - 11:55 PM WIB): Scrapes seats in three phases (`T-30`, `T-20`, `T-10`) before each showtime.
 3. **Data Sweeping** (10:00 AM - 11:30 PM WIB): Aggregates JIT snapshots into daily performance data every 30 minutes.
 
 > [!NOTE]
-> Seat data is scraped **just-in-time** (JIT) — each showtime is captured exactly 30 minutes before it starts, giving near-final occupancy.
+> Seat data is scraped **just-in-time** (JIT) — each showtime is captured at 30, 20, and 10 minutes before it starts, providing high-granularity occupancy tracking.
 
 ---
 
@@ -22,20 +22,21 @@ gantt
     title Daily Pipeline (WIB = UTC+7)
     dateFormat HH:mm
     axisFormat %H:%M
-    
+
     section Initial Data
     Movie Scrape         :active, 01:15, 20m
     Details Backfill     :active, 04:00, 15m
     Initial Layouts      :active, 04:15, 60m
 
-    section JIT Seats (Every 5 mins)
-    09:00 Dispatch       :active, 09:00, 2m
-    09:05 Dispatch       :active, 09:05, 2m
-    ...                  :done, 12:00, 1m
-    23:55 Dispatch       :active, 23:55, 2m
+    section JIT Seats (3 Phases)
+    09:00 Dispatch (T-30,20,10) :active, 09:00, 2m
+    09:05 Dispatch (T-30,20,10) :active, 09:05, 2m
+    ...                         :done, 12:00, 1m
+    23:55 Dispatch (T-30,20,10) :active, 23:55, 2m
+```
 
-    section Sweeper (Every 30 mins)
-    10:00 Sweeper        :active, 10:00, 5m
+All times are **WIB (UTC+7)**. GitHub Action schedules use UTC.
+
     10:30 Sweeper        :active, 10:30, 5m
     ...                  :done, 12:00, 1m
     23:30 Sweeper        :active, 23:30, 5m
@@ -108,7 +109,7 @@ Scrape a baseline seat map for every single showtime available that day. Used to
 ## Phase 5: JIT Seat Scraping (Live 9:00 AM - 11:55 PM WIB)
 
 ### Purpose
-Scrape seat availability exactly **30 minutes before** a showtime begins to capture final occupancy. 
+Scrape seat availability in three high-granularity phases (**30, 20, and 10 minutes before**) a showtime begins to capture final occupancy and sales velocity. 
 
 ### Architecture
 Runs on **Google Cloud Functions**.
@@ -118,7 +119,7 @@ graph TD
     Scheduler[Cloud Scheduler] -- "Every 5 min (9 AM-11:55 PM)" --> Dispatcher[Dispatcher Function]
     
     subgraph "Dispatcher Logic"
-        Dispatcher -- "Query schedules [T+30 to T+35 min)" --> Firestore[(Firestore)]
+        Dispatcher -- "Query schedules for T-30, T-20, T-10 windows" --> Firestore[(Firestore)]
         Dispatcher -- "Publish unique showtimes" --> PubSub{Pub/Sub Topic}
     end
     
@@ -134,7 +135,7 @@ graph TD
 ### Components (`backend/functions/`)
 1. **Dispatcher (`dispatch-jit-jobs`)**:
    - **Trigger**: Cloud Scheduler (`*/5 9-23 * * *` WIB).
-   - **Task**: Queries Firestore for showtimes starting exactly in the window `[T+30, T+35)` minutes from now.
+   - **Task**: Queries Firestore for showtimes starting in three non-overlapping 5-minute windows: `[T+30, T+35)`, `[T+20, T+25)`, and `[T+10, T+15)`.
 2. **Scraper (`scrape-seat-jit`)**:
    - **Trigger**: Pub/Sub Message.
    - **Task**: Handles its own token refresh lock, fetches layout, and saves to Firestore.
