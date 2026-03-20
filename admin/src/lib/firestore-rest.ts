@@ -355,9 +355,9 @@ export class FirestoreRestClient {
     }
 
     /**
-     * Get all documents from a sub-collection
+     * Get all documents from a sub-collection (with optional field masking)
      */
-    async getSubCollection(collectionPath: string): Promise<Record<string, unknown>[]> {
+    async getSubCollection(collectionPath: string, maskFields?: string[]): Promise<Record<string, unknown>[]> {
         try {
             const token = await getAccessToken();
             const allDocuments: Record<string, unknown>[] = [];
@@ -366,6 +366,13 @@ export class FirestoreRestClient {
             do {
                 const url = new URL(`${FIRESTORE_BASE_URL}/${collectionPath}`);
                 url.searchParams.set('pageSize', '500'); // Max allowed
+                
+                if (maskFields && maskFields.length > 0) {
+                    maskFields.forEach(field => {
+                        url.searchParams.append('mask.fieldPaths', field);
+                    });
+                }
+
                 if (pageToken) {
                     url.searchParams.set('pageToken', pageToken);
                 }

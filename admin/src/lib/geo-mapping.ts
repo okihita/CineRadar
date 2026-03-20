@@ -1,5 +1,5 @@
 /**
- * Maps TIX.id city names to standard Indonesian Province names matching `indonesia-provinces.json`
+ * Maps TIX.id city names to standard Indonesian Province names matching `indonesia-provinces.json` (34 Provinces)
  */
 export const CITY_TO_PROVINCE: Record<string, string> = {
   // Sumatera
@@ -14,7 +14,7 @@ export const CITY_TO_PROVINCE: Record<string, string> = {
   DUMAI: "RIAU",
   DURI: "RIAU",
   "ROKAN HILIR": "RIAU",
-  BATAM: "RIAU", // Technically Kepri, but might be grouped
+  BATAM: "RIAU", // Technically Kepri, but might be grouped in 34-prov version
   "TANJUNG PINANG": "RIAU", // Technically Kepri
   JAMBI: "JAMBI",
   PALEMBANG: "SUMATERA SELATAN",
@@ -26,9 +26,9 @@ export const CITY_TO_PROVINCE: Record<string, string> = {
 
   // Jawa
   JAKARTA: "DKI JAKARTA",
-  SERANG: "BANTEN",
-  CILEGON: "BANTEN",
-  TANGERANG: "BANTEN", // Tangerang is Banten, but sometimes TIX groups with JKT. Assuming Banten.
+  SERANG: "PROBANTEN",
+  CILEGON: "PROBANTEN",
+  TANGERANG: "PROBANTEN",
   BANDUNG: "JAWA BARAT",
   BEKASI: "JAWA BARAT",
   BOGOR: "JAWA BARAT",
@@ -64,7 +64,7 @@ export const CITY_TO_PROVINCE: Record<string, string> = {
 
   // Bali & Nusa Tenggara
   BALI: "BALI",
-  MATARAM: "NUSA TENGGARA BARAT",
+  MATARAM: "NUSATENGGARA BARAT",
   KUPANG: "NUSA TENGGARA TIMUR",
 
   // Kalimantan
@@ -79,7 +79,7 @@ export const CITY_TO_PROVINCE: Record<string, string> = {
   BALIKPAPAN: "KALIMANTAN TIMUR",
   BONTANG: "KALIMANTAN TIMUR",
   SAMARINDA: "KALIMANTAN TIMUR",
-  TARAKAN: "KALIMANTAN TIMUR", // Technically Kaltara, fallback to Kaltim if Kaltara is missing
+  TARAKAN: "KALIMANTAN TIMUR", // North Kalimantan fallback
 
   // Sulawesi
   MANADO: "SULAWESI UTARA",
@@ -88,15 +88,15 @@ export const CITY_TO_PROVINCE: Record<string, string> = {
   KENDARI: "SULAWESI TENGGARA",
   BAUBAU: "SULAWESI TENGGARA",
   GORONTALO: "GORONTALO",
-  MAMUJU: "SULAWESI SELATAN", // Technically Sulbar
+  MAMUJU: "SULAWESI SELATAN", // West Sulawesi fallback
 
   // Maluku & Papua
   AMBON: "MALUKU",
   TERNATE: "MALUKU UTARA",
-  JAYAPURA: "IRIAN JAYA TIMUR", // Note: Legacy map uses "IRIAN JAYA TIMUR" for Papua
-  SORONG: "IRIAN JAYA BARAT", // Papua Barat
+  JAYAPURA: "IRIAN JAYA TIMUR",
+  SORONG: "IRIAN JAYA BARAT",
   MANOKWARI: "IRIAN JAYA BARAT",
-  TIMIKA: "IRIAN JAYA TENGAH", // Papua Tengah
+  TIMIKA: "IRIAN JAYA TENGAH",
 };
 
 export function getProvinceForCity(city: string): string {
