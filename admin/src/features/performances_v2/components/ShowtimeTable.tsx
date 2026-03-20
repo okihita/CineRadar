@@ -23,6 +23,7 @@ export interface ShowtimeSnapshot {
     total_seats: number;
     sold_seats: number; // Legacy/fallback count
     occupancy_pct: number; // Legacy/fallback count
+    price?: number;
 
     // True Audience Metrics (Delta Calculation from Phase 2)
     initial_unavailable?: number;
@@ -109,7 +110,7 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
             result = result.filter(st => st.room_category === filterRoom);
         }
         if (filterHour !== 'all') {
-            result = result.filter(st => st.showtime.startsWith(filterHour));
+            result = result.filter(st => st.showtime && st.showtime.startsWith(filterHour));
         }
 
         // Apply sorting
@@ -117,7 +118,7 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
             let comparison = 0;
             switch (sortField) {
                 case 'showtime':
-                    comparison = a.showtime.localeCompare(b.showtime);
+                    comparison = (a.showtime || '').localeCompare(b.showtime || '');
                     break;
                 case 'occupancy':
                     const occA = a.audience_pct !== undefined ? a.audience_pct : a.occupancy_pct;
@@ -125,10 +126,10 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
                     comparison = occA - occB;
                     break;
                 case 'theatre':
-                    comparison = a.theatre_name.localeCompare(b.theatre_name);
+                    comparison = (a.theatre_name || '').localeCompare(b.theatre_name || '');
                     break;
                 case 'city':
-                    comparison = a.city.localeCompare(b.city);
+                    comparison = (a.city || '').localeCompare(b.city || '');
                     break;
             }
             return sortDirection === 'asc' ? comparison : -comparison;
@@ -464,6 +465,7 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
                                                 </div>
                                             </th>
                                             <th className="py-3 px-4 font-medium">Room</th>
+                                            <th className="py-3 px-4 font-medium">Price</th>
                                             <th
                                                 className="py-3 px-4 font-medium w-48 cursor-pointer hover:bg-muted"
                                                 onClick={() => toggleSort('occupancy')}
@@ -486,7 +488,7 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
                                     {/* Summary Row */}
                                     <tfoot>
                                         <tr className="bg-muted/30 border-t-2 font-medium">
-                                            <td className="py-3 px-4" colSpan={4}>
+                                            <td className="py-3 px-4" colSpan={5}>
                                                 Total ({summaryStats.totalShowtimes} showtimes)
                                             </td>
                                             <td className="py-3 px-4">
@@ -640,6 +642,15 @@ function ShowtimeRow({ showtime: st }: { showtime: ShowtimeSnapshot }) {
                         {st.room_category}
                     </Badge>
                 </td>
+                <td className="py-3 px-4 text-xs font-mono">
+                    {st.price ? (
+                        <span className="text-foreground font-medium">
+                            Rp {st.price.toLocaleString('id-ID')}
+                        </span>
+                    ) : (
+                        <span className="text-muted-foreground opacity-50">-</span>
+                    )}
+                </td>
                 <td className="py-3 px-4">
                     {/* Use SeatProgressBar component for stacked visualization */}
                     <SeatProgressBar
@@ -671,7 +682,7 @@ function ShowtimeRow({ showtime: st }: { showtime: ShowtimeSnapshot }) {
             {/* Expanded Detail Row */}
             {expanded && (
                 <tr className="border-b bg-muted/5">
-                    <td colSpan={6} className="p-4">
+                    <td colSpan={7} className="p-4">
                         {(st.scrape_phase || st.scraped_at) && (
                             <div className="flex items-center gap-2 mb-4 text-xs text-muted-foreground">
                                 <Clock className="w-3 h-3" />
@@ -805,6 +816,7 @@ function GroupedSection({
                                 <th className="py-2 px-4 font-medium">Theatre</th>
                                 <th className="py-2 px-4 font-medium">City</th>
                                 <th className="py-2 px-4 font-medium">Room</th>
+                                <th className="py-2 px-4 font-medium">Price</th>
                                 <th className="py-2 px-4 font-medium w-48">Occupancy</th>
                                 <th className="py-2 px-4 font-medium text-right w-24">Seats</th>
                             </tr>

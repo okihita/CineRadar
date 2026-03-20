@@ -299,11 +299,14 @@ def initialize_performance_data(aggregator: PerformanceAggregator) -> None:
                 # Also ensure the root doc exists in V2 (even if metadata is in 'movies' collection,
                 # the dashboard lists from 'movie_performance_v2')
                 v2_root_ref = db.collection("movie_performance_v2").document(metadata_id)
-                v2_root_ref.set({
-                    "total_sold": 0,
-                    "total_seats": 0,
-                    "last_swept_at": datetime.now(JAKARTA_TZ).isoformat()
-                }, merge=True)
+                v2_root_ref.set(
+                    {
+                        "total_sold": 0,
+                        "total_seats": 0,
+                        "last_swept_at": datetime.now(JAKARTA_TZ).isoformat(),
+                    },
+                    merge=True,
+                )
 
                 v2_count += 1
             except Exception as e:

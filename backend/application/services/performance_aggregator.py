@@ -111,6 +111,7 @@ class PerformanceAggregator:
         total_seats = sum(st.total_seats for st in showtimes)
 
         total_sold = 0
+        total_revenue = 0
         occupancy_sum = 0.0
         scraped_showtimes_count = 0
 
@@ -122,12 +123,18 @@ class PerformanceAggregator:
                 st_sold = st.audience_count if st.audience_count is not None else st.sold_seats
                 total_sold += st_sold
 
+                # Calculate revenue for this showtime
+                if st.price and st_sold > 0:
+                    total_revenue += st_sold * st.price
+
                 # True Audience Delta: Try to use audience_pct first, fallback to raw occupancy_pct
                 st_occ = st.audience_pct if st.audience_pct is not None else st.occupancy_pct
                 occupancy_sum += st_occ
 
         # Calculate average occupancy
-        avg_occupancy = (occupancy_sum / scraped_showtimes_count) if scraped_showtimes_count > 0 else 0.0
+        avg_occupancy = (
+            (occupancy_sum / scraped_showtimes_count) if scraped_showtimes_count > 0 else 0.0
+        )
 
         return DailyPerformance(
             date=date,
@@ -136,16 +143,63 @@ class PerformanceAggregator:
             avg_occupancy_pct=round(avg_occupancy, 1),
             total_seats=total_seats,
             total_sold=total_sold,
+            total_revenue=total_revenue,
             cities=cities,
             last_updated=datetime.now(UTC).isoformat(),
         )
 
     def recalculate_all(self, movie_ids: list[str] | None = None) -> None:
-        """Recalculate summaries for all or specific movies.
+        """Recalculate daily summaries for all movies for today (V2).
 
-        Note: Recalculating across ALL dates is expensive and complex with this schema.
-        For now, this might just log a warning or be removed, as 'get_all_showtimes' is gone.
-
-        To implement correctly, we'd need to list all 'days' subcollections for each movie.
+        This is used to populate new fields (like revenue) for existing data.
         """
-        logger.warning("recalculate_all is not fully implemented for date-sharded schema yet.")
+        from backend.domain.time import get_jakarta_date_str
+        from backend.infrastructure.firestore_collections import MOVIE_PERFORMANCE_V2
+
+        date_str = get_jakarta_date_str()
+        db = self.repo.db
+
+        logger.info(f"🔄 Recalculating summaries for {date_str} (V2)...")
+
+        # 1. Get list of movies to recalculate
+        if movie_ids:
+            target_ids = movie_ids
+        else:
+            # Get all movies from V2 collection
+            movies_ref = db.collection(MOVIE_PERFORMANCE_V2)
+            target_ids = [doc.id for doc in movies_ref.stream()]
+
+        logger.info(f"   Found {len(target_ids)} movies to process")
+
+        for movie_id in target_ids:
+            try:
+                # 2. Get all showtimes for this movie ON THIS DATE
+                daily_showtimes = self.repo.get_daily_showtimes(movie_id, date_str)
+
+                if not daily_showtimes:
+                    continue
+
+                # 3. Aggregate into DailyPerformance
+                daily_summary = self._aggregate_daily(
+                    date=date_str,
+                    showtimes=daily_showtimes,
+                )
+
+                # 4. Update Daily Stats in Firestore (V2)
+                # We write directly to V2 path
+                v2_daily_ref = (
+                    db.collection(MOVIE_PERFORMANCE_V2)
+                    .document(movie_id)
+                    .collection("days")
+                    .document(date_str)
+                )
+                v2_daily_ref.set(daily_summary.to_dict(), merge=True)
+
+                logger.info(
+                    f"   ✓ {movie_id}: {daily_summary.total_showtimes_scraped} showtimes, "
+                    f"Rev: Rp {daily_summary.total_revenue:,}"
+                )
+            except Exception as e:
+                logger.error(f"   ✗ Failed recalculating {movie_id}: {e}")
+
+        logger.info("✅ Recalculation complete")

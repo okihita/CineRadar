@@ -144,13 +144,17 @@ class TokenManager:
                     new_token = data.get("data", {}).get("token")
                     if new_token:
                         # Update Firestore
-                        await self._db.collection("auth_tokens").document("tix_jwt").set(
-                            {
-                                "access_token": new_token,
-                                "refresh_token": refresh_token,
-                                "updated_at": datetime.now(UTC).isoformat(),
-                            },
-                            merge=True,
+                        await (
+                            self._db.collection("auth_tokens")
+                            .document("tix_jwt")
+                            .set(
+                                {
+                                    "access_token": new_token,
+                                    "refresh_token": refresh_token,
+                                    "updated_at": datetime.now(UTC).isoformat(),
+                                },
+                                merge=True,
+                            )
                         )
                         logger.info("✅ Token refreshed successfully")
                         return str(new_token)
@@ -302,7 +306,9 @@ async def load_showtimes_from_schedule(db: AsyncClient, date: str) -> list[dict[
         movie_docs = [doc async for doc in movies_ref_v1.stream()]
         use_v2_schema = False
 
-    logger.info(f"📥 Loading showtimes from {SCHEDULES_V2 if use_v2_schema else SCHEDULES}/{date}/{MOVIES}/...")
+    logger.info(
+        f"📥 Loading showtimes from {SCHEDULES_V2 if use_v2_schema else SCHEDULES}/{date}/{MOVIES}/..."
+    )
 
     showtimes = []
 
@@ -364,8 +370,12 @@ async def check_checkpoint_async(
     movie_id: str,
     date: str,
     showtime_id: str,
+    force: bool = False,
 ) -> bool:
     """Check if showtime already has baseline data (async)."""
+    if force:
+        return False
+
     # Try V2 first if metadata_id available
     if metadata_id:
         doc_ref_v2 = (
@@ -399,8 +409,12 @@ async def save_initial_layout_async(
     total_seats: int,
     unavailable: int,
     layout_grid: list[Any],
+    price: int | None = None,
 ) -> bool:
-    """Save initial layout to Firestore (dual-write to v1 and V2) - async."""
+    """Save initial layout to Firestore (dual-write to v1 and V2) - async.
+
+    Uses 'Surgical Merge' logic: if doc exists, preserve sold_seats/occupancy_pct.
+    """
     movie_id = showtime["movie_id"]
     metadata_id = showtime.get("metadata_id")  # V2: immutable movie entity ID
     date = showtime["date"]
@@ -424,18 +438,16 @@ async def save_initial_layout_async(
         "room_category": showtime.get("room_category"),
         "studio_id": showtime.get("studio_id"),
         "total_seats": total_seats,
+        "price": price,
         # Initial state (morning scrape)
         "initial_layout_compressed": layout_compressed,
         "initial_unavailable": unavailable,
         "initial_available": total_seats - unavailable,
         "initial_scraped_at": datetime.now(JAKARTA_TZ).isoformat(),
-        # Placeholder values for dashboard compatibility (will be updated by JIT scraper)
-        "sold_seats": 0,
-        "occupancy_pct": 0.0,
     }
 
     try:
-        # V1 write (existing - keep for backward compatibility)
+        # V1 write
         doc_ref_v1 = (
             db.collection(MOVIE_PERFORMANCE)
             .document(movie_id)
@@ -444,6 +456,13 @@ async def save_initial_layout_async(
             .collection("showtimes")
             .document(showtime_id)
         )
+
+        # Surgical Merge: Only set placeholders if doc doesn't exist
+        doc_v1 = await doc_ref_v1.get()
+        if not doc_v1.exists:
+            doc_data["sold_seats"] = 0
+            doc_data["occupancy_pct"] = 0.0
+
         await doc_ref_v1.set(doc_data, merge=True)
 
         # V2 write (new - only if metadata_id available)
@@ -456,8 +475,14 @@ async def save_initial_layout_async(
                 .collection("showtimes")
                 .document(showtime_id)
             )
-            # Include schedule_id for V2 reference
+
+            # Same surgical check for V2
+            doc_v2 = await doc_ref_v2.get()
             v2_doc_data = {**doc_data, "schedule_id": movie_id}
+            if not doc_v2.exists:
+                v2_doc_data["sold_seats"] = 0
+                v2_doc_data["occupancy_pct"] = 0.0
+
             await doc_ref_v2.set(v2_doc_data, merge=True)
 
         return True
@@ -474,6 +499,7 @@ class ScraperContext:
         db: AsyncClient,
         rate_limit: int = RATE_LIMIT,
         max_concurrent: int = MAX_CONCURRENT,
+        force: bool = False,
     ) -> None:
         self._db = db
         self.rate_limiter = AsyncLimiter(rate_limit, 1)
@@ -481,6 +507,7 @@ class ScraperContext:
         self.token_manager = TokenManager()
         self.stats = {"total": 0, "success": 0, "failed": 0, "no_layout": 0, "skipped": 0}
         self.stats_lock = asyncio.Lock()
+        self.force = force
         self.http_client = httpx.AsyncClient(
             timeout=httpx.Timeout(15.0, connect=5.0),
             limits=httpx.Limits(max_keepalive_connections=10, max_connections=20),
@@ -497,8 +524,10 @@ class ScraperContext:
         movie_id = showtime["movie_id"]
         date = showtime["date"]
 
-        # 1. Async checkpoint check
-        if await check_checkpoint_async(self._db, metadata_id, movie_id, date, showtime_id):
+        # 1. Async checkpoint check (with force override)
+        if await check_checkpoint_async(
+            self._db, metadata_id, movie_id, date, showtime_id, self.force
+        ):
             await self.increment_stat("skipped")
             return
 
@@ -527,8 +556,35 @@ class ScraperContext:
                 await self.increment_stat("failed")
                 return
 
-            # 5. Calculate occupancy
-            seat_map = layout_data.get("data", {}).get("seat_map", [])
+            # 5. Extract Price and Calculate occupancy
+            data_payload = layout_data.get("data", {})
+
+            # Price Extraction Logic (Meticulous Version)
+            price = None
+            if showtime["merchant"] == "XXI":
+                # XXI usually has a single root price
+                price = data_payload.get("price")
+            else:
+                # CGV/Cinépolis: Handle multiple price groups (Regular, Sweetbox, Preferred, etc.)
+                price_groups = data_payload.get("price_group", [])
+                if price_groups:
+                    # 1. Search for 'REGULAR' (most common)
+                    regular_price = next(
+                        (
+                            pg.get("seat_grd_price")
+                            for pg in price_groups
+                            if pg.get("seat_grd_nm") == "REGULAR"
+                        ),
+                        None,
+                    )
+                    # 2. Fallback to first available if 'REGULAR' is missing (e.g. VELVET, GOLD CLASS only rooms)
+                    price = (
+                        regular_price
+                        if regular_price is not None
+                        else price_groups[0].get("seat_grd_price")
+                    )
+
+            seat_map = data_payload.get("seat_map", [])
             total_seats, unavailable, layout_grid = calculate_occupancy(seat_map)
 
             if total_seats == 0:
@@ -536,7 +592,9 @@ class ScraperContext:
                 return
 
             # 6. Async Firestore save (V1 + V2)
-            if await save_initial_layout_async(self._db, showtime, total_seats, unavailable, layout_grid):
+            if await save_initial_layout_async(
+                self._db, showtime, total_seats, unavailable, layout_grid, price
+            ):
                 await self.increment_stat("success")
             else:
                 await self.increment_stat("failed")
@@ -545,7 +603,12 @@ class ScraperContext:
         """Report progress periodically."""
         while True:
             await asyncio.sleep(30)
-            done = self.stats["success"] + self.stats["skipped"] + self.stats["failed"] + self.stats["no_layout"]
+            done = (
+                self.stats["success"]
+                + self.stats["skipped"]
+                + self.stats["failed"]
+                + self.stats["no_layout"]
+            )
             logger.info(
                 f"Progress: {done}/{self.stats['total']} "
                 f"({self.stats['success']} ok, {self.stats['skipped']} skip, {self.stats['failed']} fail, {self.stats['no_layout']} empty)"
@@ -557,9 +620,10 @@ async def scrape_showtimes_concurrent(
     showtimes: list[dict[str, Any]],
     rate_limit: int = RATE_LIMIT,
     max_concurrent: int = MAX_CONCURRENT,
+    force: bool = False,
 ) -> dict[str, int]:
     """Scrape all showtimes with rate limiting, token refresh, and checkpointing."""
-    ctx = ScraperContext(db, rate_limit, max_concurrent)
+    ctx = ScraperContext(db, rate_limit, max_concurrent, force)
     ctx.stats["total"] = len(showtimes)
 
     # Progress reporter (runs in background)
@@ -591,7 +655,12 @@ async def async_main() -> None:
     parser.add_argument("--date", type=str, help="Date in YYYY-MM-DD format (default: today)")
     parser.add_argument("--limit", type=int, help="Limit number of showtimes to scrape")
     parser.add_argument("--rate-limit", type=int, default=RATE_LIMIT, help="Requests per second")
-    parser.add_argument("--max-concurrent", type=int, default=MAX_CONCURRENT, help="Max concurrent tasks")
+    parser.add_argument(
+        "--max-concurrent", type=int, default=MAX_CONCURRENT, help="Max concurrent tasks"
+    )
+    parser.add_argument(
+        "--force", action="store_true", help="Force scrape even if checkpoint exists"
+    )
     args = parser.parse_args()
 
     logger.info("=" * 60)
@@ -604,6 +673,8 @@ async def async_main() -> None:
     logger.info(f"📅 Date: {date}")
     logger.info(f"⏱️ Rate limit: {args.rate_limit} req/sec")
     logger.info(f"🔄 Max concurrent: {args.max_concurrent} tasks")
+    if args.force:
+        logger.info("🔥 Force mode enabled - bypassing checkpoints")
 
     # Initialize async Firestore
     db = await get_firestore_async_client()
@@ -626,7 +697,9 @@ async def async_main() -> None:
 
     # Run scraper
     start = time.time()
-    stats = await scrape_showtimes_concurrent(db, showtimes, args.rate_limit, args.max_concurrent)
+    stats = await scrape_showtimes_concurrent(
+        db, showtimes, args.rate_limit, args.max_concurrent, args.force
+    )
     elapsed = time.time() - start
 
     logger.info("=" * 60)

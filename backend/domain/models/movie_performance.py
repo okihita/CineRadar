@@ -49,6 +49,7 @@ class ShowtimeSnapshot:
     total_seats: int
     sold_seats: int
     occupancy_pct: float
+    price: int | None = None
 
     # True Audience Metrics (Delta Calculation from Phase 2)
     initial_unavailable: int = 0
@@ -90,6 +91,7 @@ class ShowtimeSnapshot:
             "total_seats": self.total_seats,
             "sold_seats": self.sold_seats,
             "occupancy_pct": self.occupancy_pct,
+            "price": self.price,
             # True Audience Metrics
             "initial_unavailable": self.initial_unavailable,
             "final_unavailable": self.final_unavailable,
@@ -137,6 +139,7 @@ class ShowtimeSnapshot:
             total_seats=data.get("total_seats", 0),
             sold_seats=data.get("sold_seats", 0),
             occupancy_pct=data.get("occupancy_pct", 0.0),
+            price=data.get("price"),
             # True Audience Metrics
             initial_unavailable=data.get("initial_unavailable", 0),
             final_unavailable=data.get("final_unavailable", 0),

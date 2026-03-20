@@ -172,10 +172,7 @@ class StudioLayout:
     def validate_seat_count(self) -> bool:
         """Check that total_seats matches the actual seat count in layout."""
         actual = sum(
-            1
-            for row in self.layout
-            for seat in row.get("seats", [])
-            if seat.get("type") == "seat"
+            1 for row in self.layout for seat in row.get("seats", []) if seat.get("type") == "seat"
         )
         return self.total_seats == actual
 

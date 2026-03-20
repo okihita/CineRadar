@@ -171,7 +171,9 @@ def aggregate_daily_stats(
                 .document(date_str)
             )
             daily_ref_v2.set(update_data, merge=True)
-            logger.debug(f"Daily Update V2 {metadata_id} ({date_str}): {total_sold}/{total_seats} seats")
+            logger.debug(
+                f"Daily Update V2 {metadata_id} ({date_str}): {total_sold}/{total_seats} seats"
+            )
 
         logger.debug(f"Daily Update {movie_id} ({date_str}): {total_sold}/{total_seats} seats")
         return True
@@ -200,9 +202,7 @@ def aggregate_all_time_stats(
 
         if metadata_id:
             days_ref_v2 = (
-                db.collection("movie_performance_v2")
-                .document(metadata_id)
-                .collection("days")
+                db.collection("movie_performance_v2").document(metadata_id).collection("days")
             )
             # Check if V2 has data
             v2_daily_docs = list(days_ref_v2.limit(1).stream())

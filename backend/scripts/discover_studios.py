@@ -97,13 +97,17 @@ def generate_default_name(studio_id: str, category: str) -> str:
     return base_name
 
 
-async def populate_studios(db: AsyncClient, studios: dict[tuple[str, str], str], dry_run: bool) -> None:
+async def populate_studios(
+    db: AsyncClient, studios: dict[tuple[str, str], str], dry_run: bool
+) -> None:
     """Write basic metadata to Firestore if document does not exist."""
     new_count = 0
     existing_count = 0
 
     for (theatre_id, studio_id), category in studios.items():
-        doc_ref = db.collection(THEATRES).document(theatre_id).collection("studios").document(studio_id)
+        doc_ref = (
+            db.collection(THEATRES).document(theatre_id).collection("studios").document(studio_id)
+        )
 
         doc = await doc_ref.get(["studio_id"])
         if doc.exists:
@@ -118,7 +122,9 @@ async def populate_studios(db: AsyncClient, studios: dict[tuple[str, str], str],
             await doc_ref.set(layout.to_dict())
             logger.info(f"Created [Theatre: {theatre_id}] Studio: {studio_id} '{name}'")
         else:
-            logger.info(f"[DRY RUN] Would create [Theatre: {theatre_id}] Studio: {studio_id} '{name}'")
+            logger.info(
+                f"[DRY RUN] Would create [Theatre: {theatre_id}] Studio: {studio_id} '{name}'"
+            )
 
     logger.info(f"Summary: {new_count} newly created, {existing_count} already existed.")
 

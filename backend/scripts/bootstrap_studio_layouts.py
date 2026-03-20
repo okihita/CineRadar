@@ -31,6 +31,7 @@ from backend.infrastructure.repositories import FirestoreTokenRepository
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 logger = logging.getLogger(__name__)
 
+
 def parse_to_master_layout(seat_map: list[dict[str, Any]]) -> tuple[int, list[dict[str, Any]]]:
     """Convert any chain's seat_map into CineRadar Unified Grid format."""
     total_seats = 0
@@ -78,7 +79,9 @@ def parse_to_master_layout(seat_map: list[dict[str, Any]]) -> tuple[int, list[di
     return total_seats, unified_layout
 
 
-def merge_layouts_logical_or(existing_layout: list[dict[str, Any]], new_layout: list[dict[str, Any]]) -> tuple[int, list[dict[str, Any]]]:
+def merge_layouts_logical_or(
+    existing_layout: list[dict[str, Any]], new_layout: list[dict[str, Any]]
+) -> tuple[int, list[dict[str, Any]]]:
     """Merge two unified layouts using Logical OR. If a seat exists in either, it exists in merged."""
     if not existing_layout:
         total = sum(1 for r in new_layout for s in r.get("seats", []) if s.get("type") == "seat")
@@ -125,7 +128,12 @@ def merge_layouts_logical_or(existing_layout: list[dict[str, Any]], new_layout: 
             ordered_layout.append({"row_name": rn, "seats": merged_rows[rn]})
             seen.add(rn)
 
-    total = sum(1 for r in ordered_layout for s in (r.get("seats", []) or []) if isinstance(s, dict) and s.get("type") == "seat")
+    total = sum(
+        1
+        for r in ordered_layout
+        for s in (r.get("seats", []) or [])
+        if isinstance(s, dict) and s.get("type") == "seat"
+    )
     return total, ordered_layout
 
 
@@ -139,7 +147,9 @@ async def get_firestore_client() -> AsyncClient:
     return AsyncClient()
 
 
-async def find_showtimes_for_theatres(db: AsyncClient, theatre_ids: list[str] | None) -> dict[str, dict[str, list[dict[str, Any]]]]:
+async def find_showtimes_for_theatres(
+    db: AsyncClient, theatre_ids: list[str] | None
+) -> dict[str, dict[str, list[dict[str, Any]]]]:
     """Find showtimes for the given theatres (or all if None) to use for layout scraping.
     Returns: {theatre_id: {studio_id: [{"showtime_id": x, "merchant": y}, ...]}}
     """
@@ -180,8 +190,10 @@ async def find_showtimes_for_theatres(db: AsyncClient, theatre_ids: list[str] | 
                                 # If today, ensure showtime is safely in the future (> 1 hour)
                                 if is_today:
                                     try:
-                                        st_hour, st_minute = map(int, showtime_str.split(':'))
-                                        st_time = target_date.replace(hour=st_hour, minute=st_minute, second=0, microsecond=0)
+                                        st_hour, st_minute = map(int, showtime_str.split(":"))
+                                        st_time = target_date.replace(
+                                            hour=st_hour, minute=st_minute, second=0, microsecond=0
+                                        )
 
                                         # Skip if the showtime has already passed
                                         if st_time <= now_jkt:
@@ -192,11 +204,16 @@ async def find_showtimes_for_theatres(db: AsyncClient, theatre_ids: list[str] | 
 
                                 # Keep up to 3 showtimes per studio to merge
                                 if len(targets[tid][studio_id]) < 3:
-                                    targets[tid][studio_id].append({"showtime_id": st_id, "merchant": merchant})
+                                    targets[tid][studio_id].append(
+                                        {"showtime_id": st_id, "merchant": merchant}
+                                    )
 
     return targets
 
-async def bootstrap_theatre_layouts(db: AsyncClient, scraper: SeatScraper, theatre_ids: list[str] | None) -> None:
+
+async def bootstrap_theatre_layouts(
+    db: AsyncClient, scraper: SeatScraper, theatre_ids: list[str] | None
+) -> None:
     targets = await find_showtimes_for_theatres(db, theatre_ids)
 
     for theatre_id, studios in targets.items():
@@ -206,7 +223,12 @@ async def bootstrap_theatre_layouts(db: AsyncClient, scraper: SeatScraper, theat
 
         logger.info(f"Processing theatre {theatre_id} with {len(studios)} studios")
         for studio_id, showtimes in studios.items():
-            studio_ref = db.collection(THEATRES).document(theatre_id).collection("studios").document(studio_id)
+            studio_ref = (
+                db.collection(THEATRES)
+                .document(theatre_id)
+                .collection("studios")
+                .document(studio_id)
+            )
             doc = await studio_ref.get()
 
             existing_data = doc.to_dict() if doc.exists else {}
@@ -215,13 +237,17 @@ async def bootstrap_theatre_layouts(db: AsyncClient, scraper: SeatScraper, theat
                 continue
 
             if existing_data.get("total_seats", 0) > 0 and existing_data.get("layout"):
-                logger.info(f"  Skipping Studio {studio_id} - Already mapped ({existing_data['total_seats']} seats)")
+                logger.info(
+                    f"  Skipping Studio {studio_id} - Already mapped ({existing_data['total_seats']} seats)"
+                )
                 continue
 
             merged_layout = existing_data.get("layout", [])
 
             for st in showtimes:
-                logger.info(f"  Fetching layout for Studio {studio_id} via showtime {st['showtime_id']}")
+                logger.info(
+                    f"  Fetching layout for Studio {studio_id} via showtime {st['showtime_id']}"
+                )
                 raw_data = await scraper._fetch_seat_layout_api(st["showtime_id"], st["merchant"])
 
                 # Enforce rate limit (max 5 RPS) immediately after the call to prevent runaway loops
@@ -236,12 +262,14 @@ async def bootstrap_theatre_layouts(db: AsyncClient, scraper: SeatScraper, theat
                 _, merged_layout = merge_layouts_logical_or(merged_layout, unified)
 
             if merged_layout:
-                total_seats = sum(1 for r in merged_layout for s in r.get("seats", []) if s.get("type") == "seat")
+                total_seats = sum(
+                    1 for r in merged_layout for s in r.get("seats", []) if s.get("type") == "seat"
+                )
 
                 update_data = {
                     "layout": merged_layout,
                     "total_seats": total_seats,
-                    "last_updated": datetime.now(JAKARTA_TZ).isoformat()
+                    "last_updated": datetime.now(JAKARTA_TZ).isoformat(),
                 }
 
                 if doc.exists:
@@ -256,10 +284,15 @@ async def bootstrap_theatre_layouts(db: AsyncClient, scraper: SeatScraper, theat
 
                 logger.info(f"  Saved Studio {studio_id}: {total_seats} seats")
 
+
 async def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--theatre-ids", type=str, required=False, help="Comma-separated theatre IDs")
-    parser.add_argument("--all", action="store_true", help="Process all theatres found in schedules")
+    parser.add_argument(
+        "--theatre-ids", type=str, required=False, help="Comma-separated theatre IDs"
+    )
+    parser.add_argument(
+        "--all", action="store_true", help="Process all theatres found in schedules"
+    )
     args = parser.parse_args()
 
     if not args.theatre_ids and not args.all:
@@ -285,6 +318,7 @@ async def main() -> None:
         await bootstrap_theatre_layouts(db, scraper, t_ids)
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

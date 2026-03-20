@@ -527,14 +527,21 @@ class CineRadarScraper:
             }
 
             # V1: Write to schedules/{date}/movies/{schedule_id}
-            doc_ref = db.collection(SCHEDULES).document(date).collection(MOVIES).document(schedule_id)
+            doc_ref = (
+                db.collection(SCHEDULES).document(date).collection(MOVIES).document(schedule_id)
+            )
             doc_ref.set(doc)
             uploaded += 1
 
             # V2: Write to schedules_v2/{date}/movies/{metadata_id}
             # Uses metadata_id as document ID, accumulates schedule_ids
             if metadata_id:
-                v2_doc_ref = db.collection(SCHEDULES_V2).document(date).collection(MOVIES).document(metadata_id)
+                v2_doc_ref = (
+                    db.collection(SCHEDULES_V2)
+                    .document(date)
+                    .collection(MOVIES)
+                    .document(metadata_id)
+                )
 
                 # Check if document exists to merge schedule_ids
                 existing_doc = v2_doc_ref.get()

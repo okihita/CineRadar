@@ -1152,7 +1152,9 @@ def save_snapshot(
                     if candidate > 0:
                         studio_total_seats = candidate
                         is_locked = bool(studio_data.get("is_locked"))
-                        baseline_source = "master_studio_locked" if is_locked else "master_studio_auto"
+                        baseline_source = (
+                            "master_studio_locked" if is_locked else "master_studio_auto"
+                        )
 
                         # 3. Populate the global cache to save Firestore reads on subsequent requests
                         # This simple cache saves ~890k Firestore reads per month across the JIT pipeline.
@@ -1198,12 +1200,12 @@ def save_snapshot(
         "scraped_at": datetime.now(JAKARTA_TZ).isoformat(),
         "scrape_phase": showtime_data.get("scrape_phase", "T-30"),
         # True Audience Metrics
-        "initial_unavailable": 0,                        # Deprecated: Kept at 0 for schema backward compatibility
+        "initial_unavailable": 0,  # Deprecated: Kept at 0 for schema backward compatibility
         "final_unavailable": sold_seats,
         "audience_count": audience_count,
         "audience_pct": round(audience_pct, 1),
-        "master_total_seats": master_total_seats,        # The raw capacity from the Master Layout
-        "baseline_source": baseline_source,              # Indicates if we used 'master_studio_X' or 'jit_fallback'
+        "master_total_seats": master_total_seats,  # The raw capacity from the Master Layout
+        "baseline_source": baseline_source,  # Indicates if we used 'master_studio_X' or 'jit_fallback'
     }
 
     try:
@@ -1279,7 +1281,9 @@ def scrape_seat(cloud_event: Any) -> None:
                 )
                 existing = doc_ref_v2.get(["is_closed"])
                 if existing.exists and existing.to_dict().get("is_closed"):
-                    logger.info(f"[{scrape_phase} SKIP] Showtime {showtime_id} was already marked closed by a previous phase. Skipping API call.")
+                    logger.info(
+                        f"[{scrape_phase} SKIP] Showtime {showtime_id} was already marked closed by a previous phase. Skipping API call."
+                    )
                     if job_logger:
                         job_logger.log_success()
                     if batch_id:
@@ -1326,7 +1330,9 @@ def scrape_seat(cloud_event: Any) -> None:
     if not raw_api_response:
         # Graceful fallback for closed showtimes in later phases
         if scrape_phase in ("T-20", "T-15", "T-10") and status_code in (400, 404):
-            logger.info(f"[{scrape_phase} SKIP] Showtime closed/passed (HTTP {status_code}). Preserving previous data for {showtime_id}.")
+            logger.info(
+                f"[{scrape_phase} SKIP] Showtime closed/passed (HTTP {status_code}). Preserving previous data for {showtime_id}."
+            )
 
             # Mark as closed in Firestore to prevent future phases from attempting
             try:
@@ -1346,7 +1352,7 @@ def scrape_seat(cloud_event: Any) -> None:
                 logger.warning(f"Failed to mark showtime as closed in Firestore: {e}")
 
             if job_logger:
-                job_logger.log_success() # Treat as success so queue doesn't retry
+                job_logger.log_success()  # Treat as success so queue doesn't retry
             if batch_id:
                 log_success_to_firestore(batch_id)
             return
