@@ -198,6 +198,7 @@ class DailyPerformance:
     total_showtimes_scraped: int = 0
     total_seats: int = 0
     total_sold: int = 0
+    total_revenue: int = 0
     avg_occupancy_pct: float = 0.0
     cities: list[str] = field(default_factory=list)
     last_updated: str = field(default_factory=lambda: get_now_iso())
@@ -209,6 +210,7 @@ class DailyPerformance:
             "total_showtimes_scraped": self.total_showtimes_scraped,
             "total_seats": self.total_seats,
             "total_sold": self.total_sold,
+            "total_revenue": self.total_revenue,
             "avg_occupancy_pct": self.avg_occupancy_pct,
             "cities": self.cities,
             "last_updated": self.last_updated,
@@ -222,6 +224,7 @@ class DailyPerformance:
             total_showtimes_scraped=data.get("total_showtimes_scraped", 0),
             total_seats=data.get("total_seats", 0),
             total_sold=data.get("total_sold", 0),
+            total_revenue=data.get("total_revenue", 0),
             avg_occupancy_pct=data.get("avg_occupancy_pct", 0.0),
             cities=data.get("cities", []),
             last_updated=data.get("last_updated", ""),
