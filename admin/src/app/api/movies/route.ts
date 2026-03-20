@@ -1,9 +1,9 @@
 /**
- * Movie Database API - List
+ * Movie Database API - Unified List
  *
  * GET /api/movies
- *   → Returns "now showing" movies from today's schedules
- *     AND "past movies" from movie_performance that aren't showing today
+ *   → Returns all movies from the master root `movies` collection.
+ *   → Flags movies as "showing today" based on existence in `schedules_v2`.
  */
 import { NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
@@ -12,69 +12,78 @@ function getTodayJakarta(): string {
     return new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Jakarta' });
 }
 
+interface FirestoreMovie {
+    id?: string;
+    movie_id?: string;
+    name?: string;
+    title?: string;
+    poster_path?: string;
+    scraped_at?: string;
+    age_category?: string;
+    rating_score?: {
+        vote_average?: number;
+        vote_count?: number;
+    };
+}
+
 export async function GET() {
     try {
         const today = getTodayJakarta();
 
-        // 1. Preload root `movies` metadata collection to build a Schedule ID -> Metadata ID lookup map.
-        // This is necessary because historical V1 documents in `schedules` and `movie_performance` 
-        // lack a `tix_metadata_id` field, causing the frontend UI to build broken links.
-        const rootMovies = await firestoreRestClient.getCollectionWithQuery(
-            'movies',
-            'release_date',
-            300 // fetch enough history to resolve
-        );
-        const scheduleToMetadataMap = new Map();
-        for (const rm of rootMovies) {
-            // inside root movies schema: `rm.id` is the schedule ID, `rm.movie_id` is the metadata ID
-            if (rm.id && rm.movie_id) {
-                scheduleToMetadataMap.set(String(rm.id), String(rm.movie_id));
+        // 1. Fetch all movies from the master root collection with field masking for performance.
+        const allMovies = (await firestoreRestClient.getCollection('movies', [
+            'movie_id',
+            'id',
+            'name',
+            'title',
+            'poster_path',
+            'scraped_at',
+            'age_category',
+            'rating_score'
+        ])) as FirestoreMovie[];
+
+        // 2. Fetch today's Metadata IDs from schedules_v2 to determine "Now Showing" status.
+        const scheduleV2Path = `schedules_v2/${today}/movies`;
+        const scheduleMoviesV2 = await firestoreRestClient.getSubCollection(scheduleV2Path, ['id']);
+        const showingMetadataIds = new Set(scheduleMoviesV2.map(m => String(m.id)));
+
+        // 3. Map into the UnifiedMovie format expected by the UI
+        const unifiedMovies = allMovies.map((m) => {
+            const metadataId = String(m.movie_id || ''); 
+            const isShowingToday = showingMetadataIds.has(metadataId);
+            const ratingData = m.rating_score;
+
+            return {
+                id: metadataId,                               
+                movie_id: (m.id as string),     
+                tix_metadata_id: metadataId,
+                title: (m.name as string) || (m.title as string) || `ID: ${metadataId}`,
+                poster: (m.poster_path as string) || '',
+                is_showing_today: isShowingToday,
+                last_updated: (m.scraped_at as string) || '',
+                age_category: (m.age_category as string) || '',
+                rating: ratingData ? {
+                    average: ratingData.vote_average || 0,
+                    count: ratingData.vote_count || 0
+                } : undefined
+            };
+        });
+
+        // Sort by LIVE status first, then by date DESC
+        unifiedMovies.sort((a, b) => {
+            if (a.is_showing_today !== b.is_showing_today) {
+                return a.is_showing_today ? -1 : 1;
             }
-        }
-
-        // 2. Get today's schedule movies
-        const schedulePath = `schedules/${today}/movies`;
-        const scheduleMovies = await firestoreRestClient.getSubCollection(schedulePath);
-
-        // 3. Get all movies from movie_performance (for past movies)
-        const performanceMovies = await firestoreRestClient.getCollectionWithQuery(
-            'movie_performance',
-            'last_updated',
-            200
-        );
-
-        // 4. Build a set of movie_ids currently showing (these are schedule IDs historically)
-        const nowShowingIds = new Set(
-            scheduleMovies.map((m) => String(m.id || m.movie_id))
-        );
-
-        // 5. Past movies = in movie_performance but NOT in today's schedules
-        const pastMovies = performanceMovies.filter(
-            (m) => !nowShowingIds.has(String(m.id || m.movie_id))
-        );
-
-        // 6. Enrich all records with the true metadata ID from the root collection lookup
-        for (const m of scheduleMovies) {
-            if (!m.tix_metadata_id) {
-                const schedId = String(m.id || m.movie_id);
-                m.tix_metadata_id = scheduleToMetadataMap.get(schedId) || schedId;
-            }
-        }
-        for (const m of pastMovies) {
-            if (!m.tix_metadata_id) {
-                const schedId = String(m.id || m.movie_id);
-                m.tix_metadata_id = scheduleToMetadataMap.get(schedId) || schedId;
-            }
-        }
+            return (b.last_updated || '').localeCompare(a.last_updated || '');
+        });
 
         return NextResponse.json({
             success: true,
             date: today,
-            now_showing: scheduleMovies,
-            past_movies: pastMovies,
+            movies: unifiedMovies
         });
     } catch (error) {
-        console.error('Error fetching movie database:', error);
+        console.error('Error fetching unified movie database:', error);
         return NextResponse.json(
             { success: false, error: String(error) },
             { status: 500 }
