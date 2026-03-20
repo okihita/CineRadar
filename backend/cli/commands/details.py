@@ -6,9 +6,6 @@ from typing import Any
 
 from backend.application.use_cases.scrape_movie_details import ScrapeMovieDetailsUseCase
 from backend.infrastructure.repositories.firestore_movie import FirestoreMovieRepository
-from backend.infrastructure.repositories.firestore_movie_performance import (
-    FirestoreMoviePerformanceRepository,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -43,18 +40,25 @@ def run_movie_details_scrape(
             movie_ids = [movie_id]
             logger.info(f"📋 Fetching details for movie: {movie_id}")
         elif from_performance:
-            # Get all movie IDs from movie_performance collection
-            perf_repo = FirestoreMoviePerformanceRepository()
-            movies = perf_repo.list_movies(limit=500)
+            # FIX: Pull from V2 collection which uses correct Metadata IDs.
+            # Schema: movie_performance_v2/{metadata_id}
+            # Each document ID in this collection is a stable TIX Metadata ID.
+            from backend.infrastructure.firestore_collections import MOVIE_PERFORMANCE_V2
+            from backend.infrastructure.repositories.firestore_utils import get_firestore_client
 
-            if not movies:
-                logger.error("❌ No movies found in movie_performance collection")
+            db = get_firestore_client()
+            docs = db.collection(MOVIE_PERFORMANCE_V2).stream()
+            movie_ids = [doc.id for doc in docs]
+
+            if not movie_ids:
+                logger.error("❌ No movies found in movie_performance_v2 collection")
                 return None
 
-            movie_ids = [m.movie_id for m in movies]
-            logger.info(f"📋 Found {len(movie_ids)} movies in movie_performance")
+            logger.info(f"📋 Found {len(movie_ids)} movies in movie_performance_v2")
         elif all_movies:
-            # Get all movie IDs from latest snapshot
+            # Get all movie IDs from latest snapshot.
+            # Schema: snapshots/latest -> movies: [{ tix_metadata_id, ... }]
+            # We must only use tix_metadata_id to avoid creating ghost documents.
             movie_repo = FirestoreMovieRepository()
             snapshot = movie_repo.get_latest_snapshot()
 
@@ -62,8 +66,14 @@ def run_movie_details_scrape(
                 logger.error("❌ No movies found in latest snapshot")
                 return None
 
-            movie_ids = [m.tix_metadata_id or m.id for m in snapshot.movies]
-            logger.info(f"📋 Found {len(movie_ids)} movies in latest snapshot")
+            # FIX: ONLY use tix_metadata_id. Ignore the schedule 'id' (Schedule ID).
+            movie_ids = [m.tix_metadata_id for m in snapshot.movies if m.tix_metadata_id]
+
+            if not movie_ids:
+                logger.warning("⚠️ No movies with valid Metadata IDs found in snapshot.")
+                return None
+
+            logger.info(f"📋 Found {len(movie_ids)} movies with Metadata IDs in latest snapshot")
         else:
             logger.error("❌ Specify --movie-id, --all, or --from-performance")
             return None

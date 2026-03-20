@@ -4,6 +4,7 @@ Orchestrates fetching movie details for discovered movies and saving to Firestor
 Designed to run as part of daily morning scrape for new movies.
 """
 
+import logging
 from dataclasses import dataclass
 
 from backend.domain.models import MovieDetails
@@ -11,6 +12,8 @@ from backend.infrastructure.repositories.firestore_movie_details import (
     FirestoreMovieDetailsRepository,
 )
 from backend.infrastructure.scrapers.movie_details_client import MovieDetailsClient
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -89,7 +92,9 @@ class ScrapeMovieDetailsUseCase:
                     error="Failed to load authentication token from Firestore",
                 )
 
-            # Get existing movie IDs if skipping
+            # Get existing movie IDs if skipping.
+            # Schema: movies/{movie_id}
+            # We fetch existing IDs to avoid redundant API calls and potential ghosting.
             existing_ids = set()
             if skip_existing and not update_ratings:
                 existing_ids = self.repository.get_existing_ids()
@@ -109,9 +114,14 @@ class ScrapeMovieDetailsUseCase:
                 # Convert to domain model
                 movie_details = MovieDetails.from_api_response(data)
 
-                # The API sometimes returns deleted/expired movies with blank string IDs.
-                # Force the ID to match what we requested so we can log it properly.
-                movie_details.movie_id = movie_details.movie_id or movie_id
+                # FIX: If the API returned a blank ID, it means the ID we requested
+                # was likely not a stable Metadata ID (or the movie is expired).
+                # We should NOT force it to use the requested ID, as that's how
+                # "ghost" documents with Schedule IDs are created.
+                if not movie_details.movie_id:
+                    logger.warning(f"⚠️ API returned no Metadata ID for requested ID {movie_id}. Skipping save.")
+                    failed += 1
+                    continue
 
                 # Save to Firestore
                 if self.repository.save(movie_details):
