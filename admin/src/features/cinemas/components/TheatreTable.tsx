@@ -214,7 +214,7 @@ export function TheatreTable({
 
                         <TableBody>
                             {paginatedTheatres.length > 0 ? (
-                                paginatedTheatres.map((theatre, index) => (
+                                paginatedTheatres.map((theatre) => (
                                     <TableRow
                                         key={theatre.theatre_id}
                                         data-theatre-id={theatre.theatre_id}

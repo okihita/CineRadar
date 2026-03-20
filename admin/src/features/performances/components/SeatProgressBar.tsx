@@ -27,7 +27,6 @@ export function SeatProgressBar({
   // Calculate percentages
   const blockedPct = totalSeats > 0 ? (blockedSeats / totalSeats) * 100 : 0;
   const soldPct = totalSeats > 0 ? (soldSeats / totalSeats) * 100 : 0;
-  const availablePct = totalSeats > 0 ? (availableSeats / totalSeats) * 100 : 0;
 
   // Size classes
   const heightClass = {

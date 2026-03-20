@@ -20,7 +20,6 @@ export function SeatBreakdownCard({
   totalSeats,
   blockedSeats,
   soldSeats,
-  audienceCount,
   trueOccupancyPct,
   rawOccupancyPct,
   baselineCapturedAt,

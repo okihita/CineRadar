@@ -289,7 +289,7 @@ export default function ExecutiveDashboard() {
                                 </div>
                             ))}
                         </div>
-                        <Link href="/performances" className="block mt-4">
+                        <Link href="/movies" className="block mt-4">
                             <Badge variant="outline" className="w-full justify-center py-1.5 hover:bg-muted cursor-pointer">
                                 View All Movies <ArrowRight className="w-3 h-3 ml-1" />
                             </Badge>
