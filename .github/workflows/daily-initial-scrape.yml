@@ -5,6 +5,7 @@ name: Scrape National Movies & Showtimes
 on:
   schedule:
     - cron: '15 18 * * *'  # 01:15 WIB (18:15 UTC) to avoid top-of-hour congestion
+    - cron: '30 22 * * *'  # 05:30 WIB (22:30 UTC) to catch late XXI schedule uploads
   workflow_dispatch:
 
 jobs:
