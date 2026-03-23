@@ -25,8 +25,9 @@ Start here to understand the system.
 - **[03 Daily Pipeline](./docs/03_daily_pipeline.md)**: How data flows from 6 AM to Midnight (T+0).
 - **[04 API Reference](./docs/04_api_reference.md)**: CLI commands & data contracts.
 - **[05 Frontend Guidelines](./docs/05_frontend_guidelines.md)**: Design system & regional config.
-- **[06 Troubleshooting (Strategic)](./docs/06_troubleshooting.md)**: Architecture failure modes & recovery.
-- **[07 Product Roadmap](./docs/07_product_roadmap.md)**: Future vision & engineering "Why".
+- [06 Troubleshooting (Strategic)](./docs/06_troubleshooting.md): Architecture failure modes & recovery.
+- [07 Product Roadmap](./docs/07_product_roadmap.md): Future vision & engineering "Why".
+- [09 Head-to-Head Comparison](./docs/09_feature_movie_comparison.md): Movie performance comparison feature.
 
 ### 📦 Component Guides
 

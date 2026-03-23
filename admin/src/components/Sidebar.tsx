@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, MapPin, Film, ChevronLeft, ChevronRight, Database, Calendar, Clapperboard, Sun, Moon, Monitor } from 'lucide-react';
+import { LayoutDashboard, MapPin, Film, ChevronLeft, ChevronRight, Database, Calendar, Clapperboard, Sun, Moon, Monitor, BarChart2 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useDarkModeContext } from '@/hooks';
@@ -13,6 +13,12 @@ const menuItems = [
     description: 'Overview & insights',
     href: '/',
     icon: LayoutDashboard,
+  },
+  {
+    title: 'Head-to-Head Compare',
+    description: 'Movie performance comparison',
+    href: '/compare',
+    icon: BarChart2,
   },
   {
     title: 'Cinema Intelligence',
