@@ -10,8 +10,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { Search, X, Calendar as CalendarIcon, Loader2, GitCompare, Users, MonitorPlay, Percent } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
+import { format, subDays, parseISO, isAfter, startOfDay } from 'date-fns';
+import { DateRange } from 'react-day-picker';
+import { cn } from '@/lib/utils';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
@@ -41,8 +46,15 @@ function CompareDashboard() {
     // URL State
     const urlMovies = searchParams.get('m');
     const selectedMovieIds = useMemo(() => urlMovies ? urlMovies.split(',') : [], [urlMovies]);
-    const startDate = searchParams.get('start') || '';
-    const endDate = searchParams.get('end') || '';
+    const startDateStr = searchParams.get('start');
+    const endDateStr = searchParams.get('end');
+
+    // Initialize date range from URL or default to last 7 days
+    const dateRange = useMemo<DateRange>(() => {
+        const end = endDateStr ? parseISO(endDateStr) : new Date();
+        const start = startDateStr ? parseISO(startDateStr) : subDays(end, 7);
+        return { from: start, to: end };
+    }, [startDateStr, endDateStr]);
 
     // Local State for Search
     const [searchQuery, setSearchQuery] = useState('');
@@ -57,7 +69,7 @@ function CompareDashboard() {
 
     // Fetch comparison data if movies selected
     const compareUrl = selectedMovieIds.length > 0
-        ? `/api/compare?movies=${selectedMovieIds.join(',')}${startDate ? `&startDate=${startDate}` : ''}${endDate ? `&endDate=${endDate}` : ''}`
+        ? `/api/compare?movies=${selectedMovieIds.join(',')}${dateRange.from ? `&startDate=${format(dateRange.from, 'yyyy-MM-dd')}` : ''}${dateRange.to ? `&endDate=${format(dateRange.to, 'yyyy-MM-dd')}` : ''}`
         : null;
 
     const { data: compareData, isLoading, isValidating } = useSWR(compareUrl, fetcher);
@@ -134,12 +146,20 @@ function CompareDashboard() {
     }, [compareData, selectedMovieIds]);
 
     // Handlers for URL updates
-    const updateUrl = (newIds: string[]) => {
+    const updateUrl = (newIds: string[], range?: DateRange) => {
         const params = new URLSearchParams(searchParams.toString());
+        
         if (newIds.length > 0) {
             params.set('m', newIds.join(','));
         } else {
             params.delete('m');
+        }
+
+        if (range?.from) {
+            params.set('start', format(range.from, 'yyyy-MM-dd'));
+        }
+        if (range?.to) {
+            params.set('end', format(range.to, 'yyyy-MM-dd'));
         }
         
         // Next.js router.push will automatically encode commas into %2C if we just pass the URL string.
@@ -151,13 +171,19 @@ function CompareDashboard() {
     const handleAddMovie = (movie: Movie) => {
         if (selectedMovieIds.length >= 6) return;
         if (selectedMovieIds.includes(movie.id)) return;
-        updateUrl([...selectedMovieIds, movie.id]);
+        updateUrl([...selectedMovieIds, movie.id], dateRange);
         setSearchQuery('');
         setIsSearchOpen(false);
     };
 
     const handleRemoveMovie = (id: string) => {
-        updateUrl(selectedMovieIds.filter(mId => mId !== id));
+        updateUrl(selectedMovieIds.filter(mId => mId !== id), dateRange);
+    };
+
+    const handleDateRangeChange = (range: DateRange | undefined) => {
+        if (range) {
+            updateUrl(selectedMovieIds, range);
+        }
     };
 
     return (
@@ -241,12 +267,73 @@ function CompareDashboard() {
                             </div>
                         </div>
 
-                        {/* Date Pickers Placeholder */}
-                        <div className="flex gap-2 w-full md:w-auto">
-                            <Button variant="outline" className="w-full md:w-auto flex items-center gap-2" disabled>
-                                <CalendarIcon className="w-4 h-4" />
-                                Last 7 Days
-                            </Button>
+                        {/* Date Pickers */}
+                        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-xs font-medium text-muted-foreground ml-1">Start Date</label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant={"outline"}
+                                            className={cn(
+                                                "w-full sm:w-[180px] justify-start text-left font-normal",
+                                                !dateRange?.from && "text-muted-foreground"
+                                            )}
+                                        >
+                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                            {dateRange?.from ? format(dateRange.from, "PPP") : <span>Pick a date</span>}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar
+                                            mode="single"
+                                            selected={dateRange?.from}
+                                            onSelect={(date) => {
+                                                if (date) {
+                                                    handleDateRangeChange({ from: date, to: dateRange?.to });
+                                                }
+                                            }}
+                                            disabled={(date) =>
+                                                isAfter(date, startOfDay(new Date()))
+                                            }
+                                            initialFocus
+                                        />
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-xs font-medium text-muted-foreground ml-1">End Date</label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant={"outline"}
+                                            className={cn(
+                                                "w-full sm:w-[180px] justify-start text-left font-normal",
+                                                !dateRange?.to && "text-muted-foreground"
+                                            )}
+                                        >
+                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                            {dateRange?.to ? format(dateRange.to, "PPP") : <span>Pick a date</span>}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar
+                                            mode="single"
+                                            selected={dateRange?.to}
+                                            onSelect={(date) => {
+                                                if (date) {
+                                                    handleDateRangeChange({ from: dateRange?.from, to: date });
+                                                }
+                                            }}
+                                            disabled={(date) =>
+                                                isAfter(date, startOfDay(new Date())) || (dateRange?.from ? date < startOfDay(dateRange.from) : false)
+                                            }
+                                            initialFocus
+                                        />
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
                         </div>
                     </div>
                 </CardContent>
