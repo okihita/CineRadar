@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { DarkModeProvider } from "@/hooks";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -53,9 +54,11 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <DarkModeProvider>
-          <DashboardLayout>
-            {children}
-          </DashboardLayout>
+          <TooltipProvider>
+            <DashboardLayout>
+              {children}
+            </DashboardLayout>
+          </TooltipProvider>
         </DarkModeProvider>
       </body>
     </html>
