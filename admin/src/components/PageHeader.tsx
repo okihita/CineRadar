@@ -10,7 +10,6 @@ interface PageHeaderProps {
     lastUpdated?: string;
     onRefresh?: () => void;
     isRefreshing?: boolean;
-    showMockBadge?: boolean;
 }
 
 export function PageHeader({
@@ -20,7 +19,6 @@ export function PageHeader({
     lastUpdated,
     onRefresh,
     isRefreshing,
-    showMockBadge = true,
 }: PageHeaderProps) {
     return (
         <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -30,11 +28,6 @@ export function PageHeader({
                 <div>
                     <div className="flex items-center gap-2 flex-wrap">
                         <h1 className="text-2xl font-bold">{title}</h1>
-                        {showMockBadge && (
-                            <span className="px-2 py-0.5 text-xs font-medium rounded border bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400">
-                                Mock Data
-                            </span>
-                        )}
                     </div>
                     {description && (
                         <p className="text-muted-foreground text-sm mt-0.5">{description}</p>

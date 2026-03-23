@@ -108,7 +108,6 @@ export default function ExecutiveDashboard() {
                     lastUpdated={lastUpdated.toLocaleTimeString()}
                     onRefresh={fetchData}
                     isRefreshing={loading}
-                    showMockBadge={false}
                 />
             </div>
 

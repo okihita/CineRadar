@@ -165,7 +165,6 @@ function CompareDashboard() {
             <PageHeader
                 title="Head-to-Head Compare"
                 description="Compare admissions and showtime performance across multiple movies."
-                showMockBadge={false}
             />
 
             {/* Control Panel */}

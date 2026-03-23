@@ -157,7 +157,6 @@ function CinemasPageContent() {
           title="Cinema Intelligence"
           description="Theatre locations, chains, and coverage across Indonesia"
           icon={<MapPin className="w-6 h-6 text-primary" />}
-          showMockBadge={false}
         />
       </div>
 

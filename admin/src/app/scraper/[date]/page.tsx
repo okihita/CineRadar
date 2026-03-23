@@ -131,7 +131,6 @@ export default function ScraperDatePage({ params }: PageProps) {
                 lastUpdated={stats.lastRunTime}
                 onRefresh={handleRefresh}
                 isRefreshing={refreshing}
-                showMockBadge={false}
             />
 
             {/* Date Navigator */}
