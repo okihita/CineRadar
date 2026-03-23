@@ -39,6 +39,13 @@ export interface MorningScrape {
     theatres: number;
 }
 
+export interface WaveStats {
+    found: number;
+    success: number;
+    error: number;
+    rate: number;
+}
+
 export interface JITSummary {
     totalRuns: number;
     totalShowtimesFound: number;
@@ -50,11 +57,18 @@ export interface JITSummary {
     lastDispatch: string;
     totalSchedules: number;
     availableSchedules: number;
+    waveMultiplier: number;
     coveragePercent: number;
     errorBreakdown: {
         auth: number;      // 401 - token/auth issues (CRITICAL)
         closed: number;    // 400 - seating closed/passed (expected)
         other: number;     // Other errors (network, schema, etc.)
+    };
+    // New normalized wave breakdown
+    waveBreakdown?: {
+        t30: WaveStats;
+        t20: WaveStats;
+        t10: WaveStats;
     };
 }
 
@@ -116,6 +130,18 @@ export interface DispatchEntry {
     total_successes: number;
     error?: string;
     error_counts?: ErrorCounts;  // Breakdown by HTTP status (fetched on demand)
+    // Phase-specific counts (Found)
+    t30_found?: number;
+    t20_found?: number;
+    t10_found?: number;
+    // Phase-specific counters (Successes)
+    t30_success?: number;
+    t20_success?: number;
+    t10_success?: number;
+    // Phase-specific counters (Errors)
+    t30_error?: number;
+    t20_error?: number;
+    t10_error?: number;
 }
 
 /**

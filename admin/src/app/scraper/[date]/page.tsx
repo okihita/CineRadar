@@ -20,6 +20,7 @@ import {
     DispatchTimeline,
     MorningScrapeCard,
     DailyStatsCards,
+    WaveBreakdown,
 } from '@/features/scraper';
 
 // Helper to get today's date in YYYY-MM-DD format using Jakarta timezone
@@ -85,6 +86,7 @@ export default function ScraperDatePage({ params }: PageProps) {
         dispatches,
         morningRun,
         dayStats,
+        jitSummary,
         isLoading,
         isError,
         notFound,
@@ -148,12 +150,18 @@ export default function ScraperDatePage({ params }: PageProps) {
                 <DailyStatsCards
                     totalSchedules={dayStats.totalSchedules}
                     availableSchedules={dayStats.availableSchedules}
+                    waveMultiplier={jitSummary?.waveMultiplier ?? 1}
                     coveragePercent={dayStats.coveragePercent}
                     totalDispatches={dayStats.totalDispatches}
                     totalSuccesses={dayStats.totalSuccesses}
                     totalErrors={dayStats.totalErrors}
                     errorBreakdown={dayStats.errorBreakdown}
                 />
+            </div>
+
+            {/* Wave Performance Breakdown */}
+            <div className="mb-6">
+                <WaveBreakdown summary={jitSummary} />
             </div>
 
             {/* Morning Scrape Card */}

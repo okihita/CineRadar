@@ -6,6 +6,7 @@ import { Activity, Calendar, AlertTriangle, CheckCircle } from 'lucide-react';
 interface DailyStatsCardsProps {
     totalSchedules: number;
     availableSchedules: number;
+    waveMultiplier: number;
     coveragePercent: number;
     totalDispatches: number;
     totalSuccesses: number;
@@ -20,14 +21,16 @@ interface DailyStatsCardsProps {
 export const DailyStatsCards: React.FC<DailyStatsCardsProps> = ({
     totalSchedules,
     availableSchedules,
+    waveMultiplier = 1,
     totalDispatches,
     totalSuccesses,
     totalErrors,
     errorBreakdown
 }) => {
-    // Calculate actual scrape success rate (successes / dispatched jobs)
-    const scrapeSuccessRate = availableSchedules > 0
-        ? Math.round((totalSuccesses / availableSchedules) * 100)
+    // Calculate actual scrape success rate (successes / (available schedules * multiplier))
+    const totalExpectedScrapes = availableSchedules * waveMultiplier;
+    const scrapeSuccessRate = totalExpectedScrapes > 0
+        ? Math.round((totalSuccesses / totalExpectedScrapes) * 100)
         : 0;
 
     // Calculate error percentages
@@ -102,16 +105,18 @@ export const DailyStatsCards: React.FC<DailyStatsCardsProps> = ({
                     key={label}
                     className="bg-card border border-border rounded-xl p-4"
                 >
-                    <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${bgColor}`}>
-                            <Icon className={`w-4 h-4 ${color}`} />
+                    <div className="flex flex-col gap-3">
+                        <div className="flex items-center gap-2">
+                            <div className={`p-2 rounded-lg ${bgColor}`}>
+                                <Icon className={`w-4 h-4 ${color}`} />
+                            </div>
+                            <div className="text-xs font-medium text-muted-foreground">{label}</div>
                         </div>
                         <div>
                             <div className="text-2xl font-bold text-foreground">
                                 {value}
-                                {sublabel}
                             </div>
-                            <div className="text-xs text-muted-foreground">{label}</div>
+                            {sublabel && <div className="mt-1">{sublabel}</div>}
                         </div>
                     </div>
                 </div>

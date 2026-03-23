@@ -1,25 +1,6 @@
 import useSWR from 'swr';
-import type { ScraperLog, DispatchEntry, MorningRunLog } from '../types';
+import type { ScraperLog, DispatchEntry, MorningRunLog, JITSummary } from '../types';
 import { REFRESH_INTERVALS } from '@/lib/constants';
-
-interface JITSummary {
-    totalRuns: number;
-    totalShowtimesFound: number;
-    totalJobsPublished: number;
-    totalErrors: number;
-    totalSuccesses: number;
-    errorCount: number;
-    firstDispatch?: string;
-    lastDispatch?: string;
-    totalSchedules: number;
-    availableSchedules: number;
-    coveragePercent: number;
-    errorBreakdown: {
-        auth: number;      // 401 - token/auth issues (CRITICAL)
-        closed: number;    // 400 - seating closed/passed (expected)
-        other: number;     // Other errors (network, schema, etc.)
-    };
-}
 
 interface DayResponse {
     log: ScraperLog | null;
@@ -88,5 +69,5 @@ export function useScraperDay(date: string) {
     };
 }
 
-export type { DayResponse, JITSummary };
+export type { DayResponse };
 

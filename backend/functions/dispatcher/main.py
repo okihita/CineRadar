@@ -212,6 +212,7 @@ def log_jit_dispatch_to_firestore(
     jobs_published: int,
     window_start_str: str,
     window_end_str: str,
+    phase_counts: dict[str, int],
     status: str = "ok",
     error: str | None = None,
 ) -> None:
@@ -236,6 +237,17 @@ def log_jit_dispatch_to_firestore(
         "status": status,
         "total_errors": 0,
         "total_successes": 0,
+        # Phase-specific counts (Found)
+        "t30_found": phase_counts.get("T-30", 0),
+        "t20_found": phase_counts.get("T-20", 0),
+        "t10_found": phase_counts.get("T-10", 0),
+        # Phase-specific counters (initialized to 0, incremented by scraper)
+        "t30_success": 0,
+        "t20_success": 0,
+        "t10_success": 0,
+        "t30_error": 0,
+        "t20_error": 0,
+        "t10_error": 0,
     }
     if error:
         dispatch_entry["error"] = error
@@ -255,7 +267,7 @@ def log_jit_dispatch_to_firestore(
     dispatch_ref.set(dispatch_entry)
 
     logger.info(
-        f"Logged dispatch ({time_slot}) to scraper_logs/{today_str}/dispatches/{dispatch_slot}"
+        f"Logged dispatch ({time_slot}) to scraper_logs/{today_str}/dispatches/{dispatch_slot} (T-30: {phase_counts.get('T-30', 0)}, T-20: {phase_counts.get('T-20', 0)}, T-10: {phase_counts.get('T-10', 0)})"
     )
 
 
@@ -341,6 +353,7 @@ def dispatch_jobs(request: Any) -> Any:
         publisher = get_pubsub_publisher()
 
         all_showtimes = []
+        phase_counts = {}
 
         # Evaluate each configured window (e.g., T-30, T-15)
         for window in WINDOWS:
@@ -354,6 +367,7 @@ def dispatch_jobs(request: Any) -> Any:
 
             showtimes = find_upcoming_showtimes(db, window_start, window_end, phase=phase_name)
             all_showtimes.extend(showtimes)
+            phase_counts[phase_name] = len(showtimes)
 
             logger.info(f"Found {len(showtimes)} showtimes in {window['name']} window")
 
@@ -389,8 +403,9 @@ def dispatch_jobs(request: Any) -> Any:
                 time_slot=time_slot,
                 showtimes_found=len(all_showtimes),
                 jobs_published=count,
-                window_start_str="T-30/T-15 Combo",
-                window_end_str="T-30/T-15 Combo",
+                window_start_str="T-30/T-20/T-10 Wave",
+                window_end_str="T-30/T-20/T-10 Wave",
+                phase_counts=phase_counts,
                 status="ok",
             )
 
@@ -403,8 +418,9 @@ def dispatch_jobs(request: Any) -> Any:
                 time_slot=time_slot,
                 showtimes_found=0,
                 jobs_published=0,
-                window_start_str="T-30/T-15 Combo",
-                window_end_str="T-30/T-15 Combo",
+                window_start_str="T-30/T-20/T-10 Wave",
+                window_end_str="T-30/T-20/T-10 Wave",
+                phase_counts=phase_counts,
                 status="ok",
             )
             return {"status": "ok", "published": 0, "message": "No showtimes in windows"}, 200
@@ -419,8 +435,9 @@ def dispatch_jobs(request: Any) -> Any:
                 time_slot=time_slot,
                 showtimes_found=0,
                 jobs_published=0,
-                window_start_str=window_start.strftime("%H:%M"),
-                window_end_str=window_end.strftime("%H:%M"),
+                window_start_str="ERROR",
+                window_end_str="ERROR",
+                phase_counts={},
                 status="error",
                 error=str(e),
             )

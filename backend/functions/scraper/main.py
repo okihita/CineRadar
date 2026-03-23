@@ -106,7 +106,9 @@ def _get_dispatch_ref(db: firestore.Client, date_str: str, dispatch_slot: str) -
     )
 
 
-def log_error_to_firestore(severity: str, message: str, context: dict[str, Any]) -> None:
+def log_error_to_firestore(
+    severity: str, message: str, context: dict[str, Any], scrape_phase: str = "T-30"
+) -> None:
     """Log error to scraper_logs/{date}/dispatches/{HH-MM}/errors/{auto-id}.
 
     Also atomically increments total_errors on the dispatch summary doc.
@@ -121,8 +123,14 @@ def log_error_to_firestore(severity: str, message: str, context: dict[str, Any])
         dispatch_ref = _get_dispatch_ref(db, date_str, dispatch_slot)
 
         # Atomically increment total_errors on the dispatch summary doc
+        phase_key = scrape_phase.lower().replace("-", "")
+        error_field = f"{phase_key}_error"
+
         dispatch_ref.set(
-            {"total_errors": firestore.Increment(1)},
+            {
+                "total_errors": firestore.Increment(1),
+                error_field: firestore.Increment(1),
+            },
             merge=True,
         )
 
@@ -138,6 +146,7 @@ def log_error_to_firestore(severity: str, message: str, context: dict[str, Any])
             "http_status": context.get("http_status", 0),
             "api_error": context.get("api_error", ""),
             "error_type": context.get("error_type", ""),
+            "scrape_phase": scrape_phase,
             "resolved": False,
         }
         dispatch_ref.collection("errors").add(error_doc)
@@ -146,7 +155,7 @@ def log_error_to_firestore(severity: str, message: str, context: dict[str, Any])
         logger.error(f"Failed to log error to Firestore: {e}")
 
 
-def log_success_to_firestore(batch_id: str) -> None:
+def log_success_to_firestore(batch_id: str, scrape_phase: str = "T-30") -> None:
     """Atomically increment total_successes on scraper_logs/{date}/dispatches/{HH-MM}.
 
     Called after a successful scrape to track completion rate per dispatch batch.
@@ -156,8 +165,15 @@ def log_success_to_firestore(batch_id: str) -> None:
         date_str, dispatch_slot = _parse_batch_id(batch_id)
         dispatch_ref = _get_dispatch_ref(db, date_str, dispatch_slot)
 
+        # Mapping phase to field name
+        phase_key = scrape_phase.lower().replace("-", "")
+        success_field = f"{phase_key}_success"
+
         dispatch_ref.set(
-            {"total_successes": firestore.Increment(1)},
+            {
+                "total_successes": firestore.Increment(1),
+                success_field: firestore.Increment(1),
+            },
             merge=True,
         )
     except Exception as e:
@@ -472,18 +488,18 @@ class JobLogger:
         return timing
 
 
-def log_critical(message: str, context: dict[str, Any]) -> None:
+def log_critical(message: str, context: dict[str, Any], scrape_phase: str = "T-30") -> None:
     """Log critical error with context for alerting."""
     logger.critical(f"🚨 CRITICAL: {message} | Context: {context}")
-    log_error_to_firestore("CRITICAL", message, context)
+    log_error_to_firestore("CRITICAL", message, context, scrape_phase=scrape_phase)
 
 
-def log_warning(message: str, context: dict[str, Any]) -> None:
+def log_warning(message: str, context: dict[str, Any], scrape_phase: str = "T-30") -> None:
     """Log warning with context for alerting."""
     logger.warning(f"⚠️ WARNING: {message} | Context: {context}")
     # Optional: We can choose to log specific warnings to Firestore too
     # For now, let's log them to keep track of schema drifts
-    log_error_to_firestore("WARNING", message, context)
+    log_error_to_firestore("WARNING", message, context, scrape_phase=scrape_phase)
 
 
 def log_info(message: str) -> None:
@@ -1287,7 +1303,7 @@ def scrape_seat(cloud_event: Any) -> None:
                     if job_logger:
                         job_logger.log_success()
                     if batch_id:
-                        log_success_to_firestore(batch_id)
+                        log_success_to_firestore(batch_id, scrape_phase=scrape_phase)
                     return
         except Exception as e:
             logger.warning(f"Failed to check is_closed flag: {e}")
@@ -1307,6 +1323,7 @@ def scrape_seat(cloud_event: Any) -> None:
                 "theatre": theatre_name,
                 "time": showtime_time,
             },
+            scrape_phase=scrape_phase,
         )
         return  # Pub/Sub will retry
 
@@ -1354,7 +1371,7 @@ def scrape_seat(cloud_event: Any) -> None:
             if job_logger:
                 job_logger.log_success()  # Treat as success so queue doesn't retry
             if batch_id:
-                log_success_to_firestore(batch_id)
+                log_success_to_firestore(batch_id, scrape_phase=scrape_phase)
             return
 
         if job_logger:
@@ -1378,6 +1395,7 @@ def scrape_seat(cloud_event: Any) -> None:
                 "http_status": status_code,
                 "api_error": error_detail,
             },
+            scrape_phase=scrape_phase,
         )
         return  # Pub/Sub will retry
 
@@ -1404,6 +1422,7 @@ def scrape_seat(cloud_event: Any) -> None:
                         "severity": "CRITICAL",
                         "impact": "all_scrapes_affected",
                     },
+                    scrape_phase=scrape_phase,
                 )
                 # Store anyway for debugging
             else:
@@ -1416,6 +1435,7 @@ def scrape_seat(cloud_event: Any) -> None:
                         "theatre": theatre_name,
                         "severity": severity,
                     },
+                    scrape_phase=scrape_phase,
                 )
         else:
             log_info(f"Schema validation passed for {showtime_id}")
@@ -1455,4 +1475,4 @@ def scrape_seat(cloud_event: Any) -> None:
 
         # Log success to dispatch summary
         if batch_id:
-            log_success_to_firestore(batch_id)
+            log_success_to_firestore(batch_id, scrape_phase=scrape_phase)

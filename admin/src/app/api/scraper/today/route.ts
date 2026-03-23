@@ -103,6 +103,16 @@ export async function GET(request: NextRequest) {
                 total_errors: (d.total_errors as number) || 0,
                 total_successes: (d.total_successes as number) || 0,
                 error: d.error as string | undefined,
+                // Phase-specific fields
+                t30_found: (d.t30_found as number) || 0,
+                t20_found: (d.t20_found as number) || 0,
+                t10_found: (d.t10_found as number) || 0,
+                t30_success: (d.t30_success as number) || 0,
+                t20_success: (d.t20_success as number) || 0,
+                t10_success: (d.t10_success as number) || 0,
+                t30_error: (d.t30_error as number) || 0,
+                t20_error: (d.t20_error as number) || 0,
+                t10_error: (d.t10_error as number) || 0,
             };
         }
 
@@ -118,6 +128,33 @@ export async function GET(request: NextRequest) {
         const dispatchEntries = Object.entries(dispatches);
         const totalShowtimesScraped = dispatchEntries.reduce((sum, [, entry]) => sum + (entry.showtimes_found || 0), 0);
         const totalErrors = dispatchEntries.reduce((sum, [, entry]) => sum + (entry.total_errors || 0), 0);
+
+        // Aggregate wave-specific stats
+        const waveBreakdown = {
+            t30: { found: 0, success: 0, error: 0, rate: 0 },
+            t20: { found: 0, success: 0, error: 0, rate: 0 },
+            t10: { found: 0, success: 0, error: 0, rate: 0 },
+        };
+
+        dispatchEntries.forEach(([, entry]) => {
+            waveBreakdown.t30.found += entry.t30_found || 0;
+            waveBreakdown.t30.success += entry.t30_success || 0;
+            waveBreakdown.t30.error += entry.t30_error || 0;
+
+            waveBreakdown.t20.found += entry.t20_found || 0;
+            waveBreakdown.t20.success += entry.t20_success || 0;
+            waveBreakdown.t20.error += entry.t20_error || 0;
+
+            waveBreakdown.t10.found += entry.t10_found || 0;
+            waveBreakdown.t10.success += entry.t10_success || 0;
+            waveBreakdown.t10.error += entry.t10_error || 0;
+        });
+
+        // Calculate rates
+        const calcRate = (success: number, found: number) => found > 0 ? Math.round((success / found) * 100) : 0;
+        waveBreakdown.t30.rate = calcRate(waveBreakdown.t30.success, waveBreakdown.t30.found);
+        waveBreakdown.t20.rate = calcRate(waveBreakdown.t20.success, waveBreakdown.t20.found);
+        waveBreakdown.t10.rate = calcRate(waveBreakdown.t10.success, waveBreakdown.t10.found);
 
         // Aggregate error counts by HTTP status from errors subcollections
         const errorBreakdown = {
@@ -149,6 +186,18 @@ export async function GET(request: NextRequest) {
             }
         }
 
+        // Determine how many waves are active in this log (backward compatibility)
+        let waveMultiplier = 1;
+        if (waveBreakdown.t30.found > 0 || waveBreakdown.t20.found > 0 || waveBreakdown.t10.found > 0) {
+            // Count distinct waves that have data
+            waveMultiplier = (waveBreakdown.t30.found > 0 ? 1 : 0) + 
+                             (waveBreakdown.t20.found > 0 ? 1 : 0) + 
+                             (waveBreakdown.t10.found > 0 ? 1 : 0);
+        } else if (totalShowtimesScraped > availableSchedules * 1.5) {
+            // Fallback for older logs: if scraped > 1.5x schedules, it's likely a 3-wave run
+            waveMultiplier = 3;
+        }
+
         const jitSummary = {
             totalRuns: dispatchEntries.length,
             totalShowtimesFound: totalShowtimesScraped,
@@ -165,9 +214,11 @@ export async function GET(request: NextRequest) {
             // Schedule coverage metrics - use availableSchedules for accurate coverage
             totalSchedules,
             availableSchedules,
-            coveragePercent: availableSchedules > 0 ? Math.round((totalShowtimesScraped / availableSchedules) * 100) : 0,
+            waveMultiplier,
+            coveragePercent: availableSchedules > 0 ? Math.round((totalShowtimesScraped / (availableSchedules * waveMultiplier)) * 100) : 0,
             // Error breakdown by type
             errorBreakdown,
+            waveBreakdown,
         };
 
         return NextResponse.json({
