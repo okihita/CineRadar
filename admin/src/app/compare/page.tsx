@@ -37,6 +37,34 @@ const CHART_COLORS = [
     '#dc2626', // Red 600
 ];
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-background border border-border p-3 rounded-lg shadow-lg">
+                <p className="font-bold mb-2 text-sm">{label}</p>
+                <div className="space-y-1.5">
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                    {payload.map((entry: any, index: number) => (
+                        <div key={index} className="flex items-center justify-between gap-6" style={{ color: entry.stroke || entry.color }}>
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.stroke || entry.color }} />
+                                <span className="text-xs font-medium">{entry.name}:</span>
+                            </div>
+                            <span className="text-xs font-bold text-right">
+                                {entry.dataKey.includes('occupancy') 
+                                    ? `${entry.value.toFixed(1)}%` 
+                                    : entry.value.toLocaleString()}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+    return null;
+};
+
 // Separate component for useSearchParams to wrap in Suspense
 function CompareDashboard() {
     const router = useRouter();
@@ -46,8 +74,21 @@ function CompareDashboard() {
     // URL State
     const urlMovies = searchParams.get('m');
     const selectedMovieIds = useMemo(() => urlMovies ? urlMovies.split(',') : [], [urlMovies]);
+    const urlColors = searchParams.get('c');
+    
     const startDateStr = searchParams.get('start');
     const endDateStr = searchParams.get('end');
+
+    // Map of movieId -> hex color
+    const movieColorsMap = useMemo(() => {
+        const colors = urlColors ? urlColors.split(',') : [];
+        const map: Record<string, string> = {};
+        selectedMovieIds.forEach((id, index) => {
+            // Use URL color if exists, otherwise fallback to default palette
+            map[id] = colors[index] ? `#${colors[index]}` : CHART_COLORS[index % CHART_COLORS.length];
+        });
+        return map;
+    }, [selectedMovieIds, urlColors]);
 
     // Initialize date range from URL or default to last 7 days
     const dateRange = useMemo<DateRange>(() => {
@@ -146,13 +187,21 @@ function CompareDashboard() {
     }, [compareData, selectedMovieIds]);
 
     // Handlers for URL updates
-    const updateUrl = (newIds: string[], range?: DateRange) => {
+    const updateUrl = (newIds: string[], range?: DateRange, customColorsMap?: Record<string, string>) => {
         const params = new URLSearchParams(searchParams.toString());
         
         if (newIds.length > 0) {
             params.set('m', newIds.join(','));
+            
+            // Sync colors
+            const colorsArray = newIds.map(id => {
+                const color = customColorsMap ? customColorsMap[id] : movieColorsMap[id];
+                return color ? color.replace('#', '') : CHART_COLORS[newIds.indexOf(id) % CHART_COLORS.length].replace('#', '');
+            });
+            params.set('c', colorsArray.join(','));
         } else {
             params.delete('m');
+            params.delete('c');
         }
 
         if (range?.from) {
@@ -178,6 +227,11 @@ function CompareDashboard() {
 
     const handleRemoveMovie = (id: string) => {
         updateUrl(selectedMovieIds.filter(mId => mId !== id), dateRange);
+    };
+
+    const handleColorChange = (id: string, newColor: string) => {
+        const newMap = { ...movieColorsMap, [id]: newColor };
+        updateUrl(selectedMovieIds, dateRange, newMap);
     };
 
     const handleDateRangeChange = (range: DateRange | undefined) => {
@@ -220,27 +274,27 @@ function CompareDashboard() {
                             
                             {/* Search Dropdown */}
                             {isSearchOpen && searchQuery && (
-                                <div className="absolute z-50 w-full mt-1 bg-background border rounded-md shadow-lg max-h-[300px] overflow-auto">
+                                <div className="absolute z-50 w-full mt-1 bg-background border rounded-md shadow-lg max-h-[600px] overflow-auto">
                                     {filteredMovies.length === 0 ? (
                                         <div className="p-3 text-sm text-muted-foreground text-center">No movies found.</div>
                                     ) : (
                                         filteredMovies.map(movie => (
                                             <div
                                                 key={movie.id}
-                                                className="flex items-center gap-3 p-2 hover:bg-muted cursor-pointer border-b last:border-0"
+                                                className="flex items-center gap-4 p-3 hover:bg-muted cursor-pointer border-b last:border-0"
                                                 onClick={() => handleAddMovie(movie)}
                                             >
                                                 {movie.poster ? (
                                                     // eslint-disable-next-line @next/next/no-img-element
-                                                    <img src={movie.poster} alt="" className="w-8 h-12 object-cover rounded" />
+                                                    <img src={movie.poster} alt="" className="w-16 h-24 object-cover rounded shadow-sm border" />
                                                 ) : (
-                                                    <div className="w-8 h-12 bg-muted rounded flex items-center justify-center">
-                                                        <span className="text-xs">No img</span>
+                                                    <div className="w-16 h-24 bg-muted rounded flex items-center justify-center border border-dashed">
+                                                        <span className="text-xs text-muted-foreground">No poster</span>
                                                     </div>
                                                 )}
                                                 <div className="flex-1 overflow-hidden">
-                                                    <div className="font-medium text-sm truncate">{movie.title}</div>
-                                                    <div className="text-xs text-muted-foreground">ID: {movie.id}</div>
+                                                    <div className="font-bold text-base mb-1 truncate">{movie.title}</div>
+                                                    <div className="text-xs text-muted-foreground font-mono">ID: {movie.id}</div>
                                                 </div>
                                             </div>
                                         ))
@@ -249,9 +303,41 @@ function CompareDashboard() {
                             )}
                             
                             <div className="mt-3 flex flex-wrap gap-2">
-                                {selectedMoviesDetails.map((movie, index) => (
+                                {selectedMoviesDetails.map((movie) => (
                                     <Badge key={movie.id} variant="secondary" className="px-3 py-1.5 flex items-center gap-2 text-sm border-2">
-                                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: CHART_COLORS[index] }} />
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <button 
+                                                    className="w-3 h-3 rounded-full flex-shrink-0 hover:scale-125 transition-transform cursor-pointer shadow-sm border border-black/10" 
+                                                    style={{ backgroundColor: movieColorsMap[movie.id] }}
+                                                    title="Change color"
+                                                />
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-3" align="start">
+                                                <div className="space-y-3">
+                                                    <p className="text-xs font-medium">Pick a color for {movie.title}</p>
+                                                    <div className="grid grid-cols-6 gap-1">
+                                                        {CHART_COLORS.map(color => (
+                                                            <button
+                                                                key={color}
+                                                                className="w-5 h-5 rounded-full border border-black/10 hover:scale-110 transition-transform"
+                                                                style={{ backgroundColor: color }}
+                                                                onClick={() => handleColorChange(movie.id, color)}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                    <div className="flex items-center gap-2 pt-2 border-t">
+                                                        <label className="text-[10px] uppercase text-muted-foreground font-bold">Custom</label>
+                                                        <input 
+                                                            type="color" 
+                                                            value={movieColorsMap[movie.id]} 
+                                                            onChange={(e) => handleColorChange(movie.id, e.target.value)}
+                                                            className="w-full h-6 rounded cursor-pointer bg-transparent"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </PopoverContent>
+                                        </Popover>
                                         <span className="max-w-[150px] truncate" title={movie.title}>{movie.title}</span>
                                         <button
                                             onClick={() => handleRemoveMovie(movie.id)}
@@ -359,10 +445,10 @@ function CompareDashboard() {
                                     </CardHeader>
                                     <CardContent>
                                         <div className="space-y-2">
-                                            {selectedMovieIds.map((id, index) => (
+                                            {selectedMovieIds.map((id) => (
                                                 <div key={id} className="flex justify-between items-center text-sm">
                                                     <div className="flex items-center gap-2 truncate max-w-[120px]">
-                                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: CHART_COLORS[index] }} />
+                                                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: movieColorsMap[id] }} />
                                                         <span className="truncate" title={compareData?.movies?.[id]?.title || id}>
                                                             {compareData?.movies?.[id]?.title || 'Unknown'}
                                                         </span>
@@ -384,10 +470,10 @@ function CompareDashboard() {
                                     </CardHeader>
                                     <CardContent>
                                         <div className="space-y-2">
-                                            {selectedMovieIds.map((id, index) => (
+                                            {selectedMovieIds.map((id) => (
                                                 <div key={id} className="flex justify-between items-center text-sm">
                                                     <div className="flex items-center gap-2 truncate max-w-[120px]">
-                                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: CHART_COLORS[index] }} />
+                                                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: movieColorsMap[id] }} />
                                                         <span className="truncate" title={compareData?.movies?.[id]?.title || id}>
                                                             {compareData?.movies?.[id]?.title || 'Unknown'}
                                                         </span>
@@ -409,10 +495,10 @@ function CompareDashboard() {
                                     </CardHeader>
                                     <CardContent>
                                         <div className="space-y-2">
-                                            {selectedMovieIds.map((id, index) => (
+                                            {selectedMovieIds.map((id) => (
                                                 <div key={id} className="flex justify-between items-center text-sm">
                                                     <div className="flex items-center gap-2 truncate max-w-[120px]">
-                                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: CHART_COLORS[index] }} />
+                                                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: movieColorsMap[id] }} />
                                                         <span className="truncate" title={compareData?.movies?.[id]?.title || id}>
                                                             {compareData?.movies?.[id]?.title || 'Unknown'}
                                                         </span>
@@ -434,10 +520,10 @@ function CompareDashboard() {
                                     </CardHeader>
                                     <CardContent>
                                         <div className="space-y-2">
-                                            {selectedMovieIds.map((id, index) => (
+                                            {selectedMovieIds.map((id) => (
                                                 <div key={id} className="flex justify-between items-center text-sm">
                                                     <div className="flex items-center gap-2 truncate max-w-[120px]">
-                                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: CHART_COLORS[index] }} />
+                                                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: movieColorsMap[id] }} />
                                                         <span className="truncate" title={compareData?.movies?.[id]?.title || id}>
                                                             {compareData?.movies?.[id]?.title || 'Unknown'}
                                                         </span>
@@ -452,6 +538,103 @@ function CompareDashboard() {
                                 </Card>
                             </div>
 
+                            {/* Chart Area */}
+                            <Card className="col-span-full">
+                                <CardHeader>
+                                    <CardTitle>Performance Timelines</CardTitle>
+                                    <CardDescription>
+                                        Daily trends for selected metrics over the chosen period.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <Tabs defaultValue="admissions" className="w-full">
+                                        <TabsList className="mb-4">
+                                            <TabsTrigger value="admissions">Admissions</TabsTrigger>
+                                            <TabsTrigger value="showtimes">Showtimes</TabsTrigger>
+                                            <TabsTrigger value="occupancy">Occupancy %</TabsTrigger>
+                                        </TabsList>
+                                        
+                                        <TabsContent value="admissions" className="mt-4 border rounded-md p-4 bg-card">
+                                            <div style={{ width: '100%', height: 600 }}>
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                                        <XAxis dataKey="date" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
+                                                        <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => val >= 1000 ? `${(val/1000).toFixed(1)}k` : val} />
+                                                        <RechartsTooltip content={<CustomTooltip />} />
+                                                        <Legend />
+                                                        {selectedMovieIds.map((id) => (
+                                                            <Line 
+                                                                key={id}
+                                                                type="linear" 
+                                                                dataKey={`${id}_admissions`} 
+                                                                name={compareData?.movies?.[id]?.title || id} 
+                                                                stroke={movieColorsMap[id]} 
+                                                                strokeWidth={4}
+                                                                dot={{ r: 4, strokeWidth: 2 }}
+                                                                activeDot={{ r: 6 }}
+                                                            />
+                                                        ))}
+                                                    </LineChart>
+                                                </ResponsiveContainer>
+                                            </div>
+                                        </TabsContent>
+                                        
+                                        <TabsContent value="showtimes" className="mt-4 border rounded-md p-4 bg-card">
+                                            <div style={{ width: '100%', height: 600 }}>
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                                        <XAxis dataKey="date" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
+                                                        <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
+                                                        <RechartsTooltip content={<CustomTooltip />} />
+                                                        <Legend />
+                                                        {selectedMovieIds.map((id) => (
+                                                            <Line 
+                                                                key={id}
+                                                                type="linear" 
+                                                                dataKey={`${id}_showtimes`} 
+                                                                name={compareData?.movies?.[id]?.title || id} 
+                                                                stroke={movieColorsMap[id]} 
+                                                                strokeWidth={4}
+                                                                dot={{ r: 4, strokeWidth: 2 }}
+                                                                activeDot={{ r: 6 }}
+                                                            />
+                                                        ))}
+                                                    </LineChart>
+                                                </ResponsiveContainer>
+                                            </div>
+                                        </TabsContent>
+                                        
+                                        <TabsContent value="occupancy" className="mt-4 border rounded-md p-4 bg-card">
+                                            <div style={{ width: '100%', height: 600 }}>
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                                        <XAxis dataKey="date" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
+                                                        <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `${val}%`} />
+                                                        <RechartsTooltip content={<CustomTooltip />} />
+                                                        <Legend />
+                                                        {selectedMovieIds.map((id) => (
+                                                            <Line 
+                                                                key={id}
+                                                                type="linear" 
+                                                                dataKey={`${id}_occupancy`} 
+                                                                name={compareData?.movies?.[id]?.title || id} 
+                                                                stroke={movieColorsMap[id]} 
+                                                                strokeWidth={4}
+                                                                dot={{ r: 4, strokeWidth: 2 }}
+                                                                activeDot={{ r: 6 }}
+                                                            />
+                                                        ))}
+                                                    </LineChart>
+                                                </ResponsiveContainer>
+                                            </div>
+                                        </TabsContent>
+                                    </Tabs>
+                                </CardContent>
+                            </Card>
+
                             {/* Table Area - Day by Day Progression */}
                             <Card className="col-span-full">
                                 <CardHeader>
@@ -465,11 +648,11 @@ function CompareDashboard() {
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead>Date</TableHead>
-                                                {selectedMoviesDetails.map((movie, index) => (
+                                                {selectedMoviesDetails.map((movie) => (
                                                     <TableHead key={movie.id} className="text-right">
                                                         <div className="flex flex-col items-end gap-1">
                                                             <div className="flex items-center justify-end gap-2">
-                                                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: CHART_COLORS[index] }} />
+                                                                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: movieColorsMap[movie.id] }} />
                                                                 <span className="font-bold truncate max-w-[150px] text-foreground">{movie.title}</span>
                                                             </div>
                                                             <span className="text-xs text-muted-foreground">Adm / Shows</span>
@@ -499,119 +682,6 @@ function CompareDashboard() {
                                             ))}
                                         </TableBody>
                                     </Table>
-                                </CardContent>
-                            </Card>
-
-                            {/* Chart Area */}
-                            <Card className="col-span-full">
-                                <CardHeader>
-                                    <CardTitle>Performance Timelines</CardTitle>
-                                    <CardDescription>
-                                        Daily trends for selected metrics over the chosen period.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <Tabs defaultValue="admissions" className="w-full">
-                                        <TabsList className="mb-4">
-                                            <TabsTrigger value="admissions">Admissions</TabsTrigger>
-                                            <TabsTrigger value="showtimes">Showtimes</TabsTrigger>
-                                            <TabsTrigger value="occupancy">Occupancy %</TabsTrigger>
-                                        </TabsList>
-                                        
-                                        <TabsContent value="admissions" className="mt-4 border rounded-md p-4 bg-card">
-                                            <div style={{ width: '100%', height: 400 }}>
-                                                <ResponsiveContainer width="100%" height="100%">
-                                                    <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                                                        <XAxis dataKey="date" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
-                                                        <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => val >= 1000 ? `${(val/1000).toFixed(1)}k` : val} />
-                                                        <RechartsTooltip 
-                                                            contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e5e7eb', borderRadius: '8px', color: '#111827' }}
-                                                            itemStyle={{ color: '#111827' }}
-                                                        />
-                                                        <Legend />
-                                                        {selectedMovieIds.map((id, index) => (
-                                                            <Line 
-                                                                key={id}
-                                                                type="linear" 
-                                                                dataKey={`${id}_admissions`} 
-                                                                name={compareData?.movies?.[id]?.title || id} 
-                                                                stroke={CHART_COLORS[index]} 
-                                                                strokeWidth={4}
-                                                                dot={{ r: 4, strokeWidth: 2 }}
-                                                                activeDot={{ r: 6 }}
-                                                            />
-                                                        ))}
-                                                    </LineChart>
-                                                </ResponsiveContainer>
-                                            </div>
-                                        </TabsContent>
-                                        
-                                        <TabsContent value="showtimes" className="mt-4 border rounded-md p-4 bg-card">
-                                            <div style={{ width: '100%', height: 400 }}>
-                                                <ResponsiveContainer width="100%" height="100%">
-                                                    <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                                                        <XAxis dataKey="date" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
-                                                        <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
-                                                        <RechartsTooltip 
-                                                            contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e5e7eb', borderRadius: '8px', color: '#111827' }}
-                                                            itemStyle={{ color: '#111827' }}
-                                                        />
-                                                        <Legend />
-                                                        {selectedMovieIds.map((id, index) => (
-                                                            <Line 
-                                                                key={id}
-                                                                type="linear" 
-                                                                dataKey={`${id}_showtimes`} 
-                                                                name={compareData?.movies?.[id]?.title || id} 
-                                                                stroke={CHART_COLORS[index]} 
-                                                                strokeWidth={4}
-                                                                dot={{ r: 4, strokeWidth: 2 }}
-                                                                activeDot={{ r: 6 }}
-                                                            />
-                                                        ))}
-                                                    </LineChart>
-                                                </ResponsiveContainer>
-                                            </div>
-                                        </TabsContent>
-                                        
-                                        <TabsContent value="occupancy" className="mt-4 border rounded-md p-4 bg-card">
-                                            <div style={{ width: '100%', height: 400 }}>
-                                                <ResponsiveContainer width="100%" height="100%">
-                                                    <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                                                        <XAxis dataKey="date" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
-                                                        <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `${val}%`} />
-                                                        <RechartsTooltip 
-                                                            contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e5e7eb', borderRadius: '8px', color: '#111827' }}
-                                                            itemStyle={{ color: '#111827' }}
-                                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                            formatter={(value: any) => {
-                                                                if (typeof value === 'number') {
-                                                                    return [`${value.toFixed(1)}%`, 'Occupancy'];
-                                                                }
-                                                                return [value, 'Occupancy'];
-                                                            }}
-                                                        />
-                                                        <Legend />
-                                                        {selectedMovieIds.map((id, index) => (
-                                                            <Line 
-                                                                key={id}
-                                                                type="linear" 
-                                                                dataKey={`${id}_occupancy`} 
-                                                                name={compareData?.movies?.[id]?.title || id} 
-                                                                stroke={CHART_COLORS[index]} 
-                                                                strokeWidth={4}
-                                                                dot={{ r: 4, strokeWidth: 2 }}
-                                                                activeDot={{ r: 6 }}
-                                                            />
-                                                        ))}
-                                                    </LineChart>
-                                                </ResponsiveContainer>
-                                            </div>
-                                        </TabsContent>
-                                    </Tabs>
                                 </CardContent>
                             </Card>
                         </>
