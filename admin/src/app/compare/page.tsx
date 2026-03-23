@@ -13,12 +13,31 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Search, X, Calendar as CalendarIcon, Loader2, GitCompare, Users, MonitorPlay, Percent } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { format, subDays, parseISO, isAfter, startOfDay } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { cn } from '@/lib/utils';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
+
+const abbreviateTitle = (title: string) => {
+    // 1. Colon rule: If it has a colon, use the part before it
+    if (title.includes(':')) {
+        return title.split(':')[0].trim();
+    }
+    
+    // 2. Length rule: If no colon and > 20 chars, use initials
+    if (title.length > 20) {
+        return title
+            .split(/\s+/)
+            .map(word => word.charAt(0))
+            .join('')
+            .toUpperCase();
+    }
+    
+    // 3. Otherwise return as is
+    return title;
+};
 
 interface Movie {
     id: string;
@@ -49,7 +68,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
                         <div key={index} className="flex items-center justify-between gap-6" style={{ color: entry.stroke || entry.color }}>
                             <div className="flex items-center gap-2">
                                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.stroke || entry.color }} />
-                                <span className="text-xs font-medium">{entry.name}:</span>
+                                <span className="text-xs font-medium">{abbreviateTitle(entry.name)}:</span>
                             </div>
                             <span className="text-xs font-bold text-right">
                                 {entry.dataKey.includes('occupancy') 
@@ -185,6 +204,24 @@ function CompareDashboard() {
             return formattedDay;
         });
     }, [compareData, selectedMovieIds]);
+
+    const pieData = useMemo(() => {
+        if (!summaryMetrics || selectedMovieIds.length === 0) return { admissions: [], showtimes: [] };
+
+        const admissions = selectedMovieIds.map(id => ({
+            name: abbreviateTitle(compareData?.movies?.[id]?.title || id),
+            value: summaryMetrics[id]?.totalAdmissions || 0,
+            color: movieColorsMap[id]
+        })).filter(d => d.value > 0);
+
+        const showtimes = selectedMovieIds.map(id => ({
+            name: abbreviateTitle(compareData?.movies?.[id]?.title || id),
+            value: summaryMetrics[id]?.totalShowtimes || 0,
+            color: movieColorsMap[id]
+        })).filter(d => d.value > 0);
+
+        return { admissions, showtimes };
+    }, [summaryMetrics, selectedMovieIds, compareData, movieColorsMap]);
 
     // Handlers for URL updates
     const updateUrl = (newIds: string[], range?: DateRange, customColorsMap?: Record<string, string>) => {
@@ -338,7 +375,12 @@ function CompareDashboard() {
                                                 </div>
                                             </PopoverContent>
                                         </Popover>
-                                        <span className="max-w-[150px] truncate" title={movie.title}>{movie.title}</span>
+                                        <span 
+                                            className="font-bold whitespace-nowrap" 
+                                            style={{ color: movieColorsMap[movie.id] }}
+                                        >
+                                            {movie.title}{abbreviateTitle(movie.title) !== movie.title ? ` (${abbreviateTitle(movie.title)})` : ''}
+                                        </span>
                                         <button
                                             onClick={() => handleRemoveMovie(movie.id)}
                                             className="ml-1 text-muted-foreground hover:text-foreground p-0.5 rounded-full hover:bg-muted"
@@ -446,11 +488,11 @@ function CompareDashboard() {
                                     <CardContent>
                                         <div className="space-y-2">
                                             {selectedMovieIds.map((id) => (
-                                                <div key={id} className="flex justify-between items-center text-sm">
-                                                    <div className="flex items-center gap-2 truncate max-w-[120px]">
+                                                <div key={id} className="flex justify-between items-center text-sm gap-2">
+                                                    <div className="flex items-center gap-2 min-w-0">
                                                         <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: movieColorsMap[id] }} />
-                                                        <span className="truncate" title={compareData?.movies?.[id]?.title || id}>
-                                                            {compareData?.movies?.[id]?.title || 'Unknown'}
+                                                        <span className="font-medium whitespace-nowrap" title={compareData?.movies?.[id]?.title || id}>
+                                                            {abbreviateTitle(compareData?.movies?.[id]?.title || id)}
                                                         </span>
                                                     </div>
                                                     <span className="font-bold">
@@ -471,11 +513,11 @@ function CompareDashboard() {
                                     <CardContent>
                                         <div className="space-y-2">
                                             {selectedMovieIds.map((id) => (
-                                                <div key={id} className="flex justify-between items-center text-sm">
-                                                    <div className="flex items-center gap-2 truncate max-w-[120px]">
+                                                <div key={id} className="flex justify-between items-center text-sm gap-2">
+                                                    <div className="flex items-center gap-2 min-w-0">
                                                         <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: movieColorsMap[id] }} />
-                                                        <span className="truncate" title={compareData?.movies?.[id]?.title || id}>
-                                                            {compareData?.movies?.[id]?.title || 'Unknown'}
+                                                        <span className="font-medium whitespace-nowrap" title={compareData?.movies?.[id]?.title || id}>
+                                                            {abbreviateTitle(compareData?.movies?.[id]?.title || id)}
                                                         </span>
                                                     </div>
                                                     <span className="font-bold">
@@ -496,11 +538,11 @@ function CompareDashboard() {
                                     <CardContent>
                                         <div className="space-y-2">
                                             {selectedMovieIds.map((id) => (
-                                                <div key={id} className="flex justify-between items-center text-sm">
-                                                    <div className="flex items-center gap-2 truncate max-w-[120px]">
+                                                <div key={id} className="flex justify-between items-center text-sm gap-2">
+                                                    <div className="flex items-center gap-2 min-w-0">
                                                         <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: movieColorsMap[id] }} />
-                                                        <span className="truncate" title={compareData?.movies?.[id]?.title || id}>
-                                                            {compareData?.movies?.[id]?.title || 'Unknown'}
+                                                        <span className="font-medium whitespace-nowrap" title={compareData?.movies?.[id]?.title || id}>
+                                                            {abbreviateTitle(compareData?.movies?.[id]?.title || id)}
                                                         </span>
                                                     </div>
                                                     <span className="font-bold">
@@ -521,11 +563,11 @@ function CompareDashboard() {
                                     <CardContent>
                                         <div className="space-y-2">
                                             {selectedMovieIds.map((id) => (
-                                                <div key={id} className="flex justify-between items-center text-sm">
-                                                    <div className="flex items-center gap-2 truncate max-w-[120px]">
+                                                <div key={id} className="flex justify-between items-center text-sm gap-2">
+                                                    <div className="flex items-center gap-2 min-w-0">
                                                         <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: movieColorsMap[id] }} />
-                                                        <span className="truncate" title={compareData?.movies?.[id]?.title || id}>
-                                                            {compareData?.movies?.[id]?.title || 'Unknown'}
+                                                        <span className="font-medium whitespace-nowrap" title={compareData?.movies?.[id]?.title || id}>
+                                                            {abbreviateTitle(compareData?.movies?.[id]?.title || id)}
                                                         </span>
                                                     </div>
                                                     <span className="font-bold">
@@ -533,6 +575,91 @@ function CompareDashboard() {
                                                     </span>
                                                 </div>
                                             ))}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+
+                            {/* Share Distribution (Pie Charts) */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <Card>
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="text-base">Share of Admissions</CardTitle>
+                                        <CardDescription>Total distribution of tickets sold</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="h-[300px] w-full">
+                                            {pieData.admissions.length > 0 ? (
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <PieChart>
+                                                        <Pie
+                                                            data={pieData.admissions}
+                                                            cx="50%"
+                                                            cy="50%"
+                                                            innerRadius={60}
+                                                            outerRadius={80}
+                                                            paddingAngle={5}
+                                                            dataKey="value"
+                                                            stroke="none"
+                                                        >
+                                                            {pieData.admissions.map((entry, index) => (
+                                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                                            ))}
+                                                        </Pie>
+                                                        <RechartsTooltip 
+                                                            contentStyle={{ backgroundColor: 'hsl(var(--background))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
+                                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                            formatter={(value: any) => [value.toLocaleString(), 'Admissions']}
+                                                        />
+                                                        <Legend verticalAlign="bottom" align="center" iconType="circle" />
+                                                    </PieChart>
+                                                </ResponsiveContainer>
+                                            ) : (
+                                                <div className="h-full flex items-center justify-center text-muted-foreground text-sm italic">
+                                                    No admission data available
+                                                </div>
+                                            )}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                <Card>
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="text-base">Share of Showtimes</CardTitle>
+                                        <CardDescription>Total distribution of screen allocations</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="h-[300px] w-full">
+                                            {pieData.showtimes.length > 0 ? (
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <PieChart>
+                                                        <Pie
+                                                            data={pieData.showtimes}
+                                                            cx="50%"
+                                                            cy="50%"
+                                                            innerRadius={60}
+                                                            outerRadius={80}
+                                                            paddingAngle={5}
+                                                            dataKey="value"
+                                                            stroke="none"
+                                                        >
+                                                            {pieData.showtimes.map((entry, index) => (
+                                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                                            ))}
+                                                        </Pie>
+                                                        <RechartsTooltip 
+                                                            contentStyle={{ backgroundColor: 'hsl(var(--background))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
+                                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                            formatter={(value: any) => [value.toLocaleString(), 'Showtimes']}
+                                                        />
+                                                        <Legend verticalAlign="bottom" align="center" iconType="circle" />
+                                                    </PieChart>
+                                                </ResponsiveContainer>
+                                            ) : (
+                                                <div className="h-full flex items-center justify-center text-muted-foreground text-sm italic">
+                                                    No showtime data available
+                                                </div>
+                                            )}
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -568,7 +695,7 @@ function CompareDashboard() {
                                                                 key={id}
                                                                 type="linear" 
                                                                 dataKey={`${id}_admissions`} 
-                                                                name={compareData?.movies?.[id]?.title || id} 
+                                                                name={abbreviateTitle(compareData?.movies?.[id]?.title || id)} 
                                                                 stroke={movieColorsMap[id]} 
                                                                 strokeWidth={4}
                                                                 dot={{ r: 4, strokeWidth: 2 }}
@@ -594,7 +721,7 @@ function CompareDashboard() {
                                                                 key={id}
                                                                 type="linear" 
                                                                 dataKey={`${id}_showtimes`} 
-                                                                name={compareData?.movies?.[id]?.title || id} 
+                                                                name={abbreviateTitle(compareData?.movies?.[id]?.title || id)} 
                                                                 stroke={movieColorsMap[id]} 
                                                                 strokeWidth={4}
                                                                 dot={{ r: 4, strokeWidth: 2 }}
@@ -620,7 +747,7 @@ function CompareDashboard() {
                                                                 key={id}
                                                                 type="linear" 
                                                                 dataKey={`${id}_occupancy`} 
-                                                                name={compareData?.movies?.[id]?.title || id} 
+                                                                name={abbreviateTitle(compareData?.movies?.[id]?.title || id)} 
                                                                 stroke={movieColorsMap[id]} 
                                                                 strokeWidth={4}
                                                                 dot={{ r: 4, strokeWidth: 2 }}
@@ -653,7 +780,9 @@ function CompareDashboard() {
                                                         <div className="flex flex-col items-end gap-1">
                                                             <div className="flex items-center justify-end gap-2">
                                                                 <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: movieColorsMap[movie.id] }} />
-                                                                <span className="font-bold truncate max-w-[150px] text-foreground">{movie.title}</span>
+                                                                <span className="font-bold truncate max-w-[150px] text-foreground">
+                                                                    {abbreviateTitle(movie.title)}
+                                                                </span>
                                                             </div>
                                                             <span className="text-xs text-muted-foreground">Adm / Shows</span>
                                                         </div>
