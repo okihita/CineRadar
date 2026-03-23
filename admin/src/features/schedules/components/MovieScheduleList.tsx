@@ -57,6 +57,7 @@ export function MovieScheduleList({ movies, isLoading }: MovieScheduleListProps)
                                         fill
                                         className="object-cover"
                                         sizes="64px"
+                                        priority={movies.indexOf(movie) < 4}
                                     />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">No Img</div>

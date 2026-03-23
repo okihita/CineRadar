@@ -2,18 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, MapPin, Film, ChevronLeft, ChevronRight, Database, Calendar, Clapperboard, Sun, Moon, Monitor, BarChart2 } from 'lucide-react';
+import { MapPin, Film, ChevronLeft, ChevronRight, Database, Calendar, Clapperboard, Sun, Moon, Monitor, BarChart2 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useDarkModeContext } from '@/hooks';
 
 const menuItems = [
-  {
-    title: 'Executive Dashboard',
-    description: 'Overview & insights',
-    href: '/',
-    icon: LayoutDashboard,
-  },
   {
     title: 'Head-to-Head Compare',
     description: 'Movie performance comparison',
@@ -94,9 +88,7 @@ export function Sidebar() {
       <nav className="flex-1 p-2 space-y-1">
         {menuItems.map((item) => {
           let isActive = false;
-          if (item.href === '/') {
-            isActive = pathname === '/';
-          } else if (item.href === '/performances') {
+          if (item.href === '/performances') {
              // Exact match for /performances or starts with /performances/ but not /performances_v2
             isActive = pathname === '/performances' || pathname.startsWith('/performances/');
           } else if (item.href === '/schedules') {

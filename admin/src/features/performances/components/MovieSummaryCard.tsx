@@ -45,6 +45,7 @@ export function MovieSummaryCard({ movie, onMarketingUpdate }: MovieSummaryCardP
                             fill
                             className="object-cover"
                             sizes="100px"
+                            priority
                         />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center text-muted-foreground">

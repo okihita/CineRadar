@@ -4,7 +4,6 @@ The professional intelligence and monitoring dashboard for CineRadar. Designed f
 
 ## Key Modules
 
-- **Executive Dashboard** (`/`) - High-level KPIs for movie releases, theatre coverage, and regional performance.
 - **Cinema Intelligence** (`/cinemas`) - Interactive Google Maps visualization of all 496+ theatres in Indonesia with chain-specific filtering and clustering.
 - **Movie Intelligence** (`/movies`) - Deep dives into movie showtimes, schedule density, and market penetration.
 - **Scraper Monitor** (`/scraper`) - Mission control for the data pipeline. Tracks daily scrape status, JIT seat scraping success, and TIX.id auth token health.

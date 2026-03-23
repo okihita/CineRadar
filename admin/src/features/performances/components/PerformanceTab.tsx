@@ -137,6 +137,7 @@ export function PerformanceTab() {
                                             fill
                                             className="object-cover transition-transform duration-500 group-hover:scale-110"
                                             sizes="200px"
+                                            priority={idx < 4}
                                         />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-muted-foreground">
