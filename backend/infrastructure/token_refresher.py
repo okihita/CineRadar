@@ -16,15 +16,17 @@ import asyncio
 import logging
 import os
 import time
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import httpx
 
-from backend.domain.models import Token
 from backend.infrastructure.repositories.firestore_token import (
     FirestoreTokenRepository,
     store_token,
 )
+
+if TYPE_CHECKING:
+    from backend.domain.models import Token
 
 logger = logging.getLogger(__name__)
 

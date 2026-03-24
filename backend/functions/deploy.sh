@@ -27,7 +27,7 @@ deploy_dispatcher() {
     cd dispatcher
     gcloud functions deploy dispatch-jit-jobs \
         --gen2 \
-        --runtime=python312 \
+        --runtime=python314 \
         --region=$REGION \
         --source=. \
         --entry-point=dispatch_jobs \
@@ -60,7 +60,7 @@ deploy_scraper() {
     # =========================================================================
     gcloud functions deploy scrape-seat-jit \
         --gen2 \
-        --runtime=python312 \
+        --runtime=python314 \
         --region=$REGION \
         --source=. \
         --entry-point=scrape_seat \
@@ -114,7 +114,7 @@ deploy_sweeper() {
     cd sweeper
     gcloud functions deploy sweeper \
         --gen2 \
-        --runtime=python312 \
+        --runtime=python314 \
         --region=$REGION \
         --source=. \
         --entry-point=run_sweeper \

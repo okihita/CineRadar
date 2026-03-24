@@ -5,8 +5,10 @@ Infrastructure layer must provide concrete implementations.
 """
 
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
-from backend.domain.models import Movie, SeatOccupancy
+if TYPE_CHECKING:
+    from backend.domain.models import Movie, SeatOccupancy
 
 
 class IMovieScraper(ABC):

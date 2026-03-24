@@ -99,7 +99,7 @@ class Token:
         return data
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Token":
+    def from_dict(cls, data: dict[str, Any]) -> Token:
         """Create from dictionary."""
         return cls(
             token=data.get("token", ""),
@@ -114,7 +114,7 @@ class Token:
         token: str,
         phone: str | None = None,
         refresh_token: str | None = None,
-    ) -> "Token":
+    ) -> Token:
         """Create a new token.
 
         Args:

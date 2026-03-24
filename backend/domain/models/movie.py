@@ -63,7 +63,7 @@ class Showtime:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Showtime":
+    def from_dict(cls, data: dict[str, Any]) -> Showtime:
         """Create from dictionary."""
         return cls(
             time=data.get("time", ""),
@@ -111,7 +111,7 @@ class Room:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Room":
+    def from_dict(cls, data: dict[str, Any]) -> Room:
         """Create from dictionary."""
         # Handle both 'all_showtimes' and legacy 'showtimes' formats
         all_showtimes = data.get("all_showtimes", [])
@@ -171,7 +171,7 @@ class TheatreSchedule:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "TheatreSchedule":
+    def from_dict(cls, data: dict[str, Any]) -> TheatreSchedule:
         """Create from dictionary."""
         return cls(
             theatre_id=data.get("theatre_id", ""),
@@ -288,7 +288,7 @@ class MovieSchedule:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "MovieSchedule":
+    def from_dict(cls, data: dict[str, Any]) -> MovieSchedule:
         """Create from dictionary.
 
         Accepts both new field names and legacy field names for backward compatibility.

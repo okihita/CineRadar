@@ -136,7 +136,7 @@ class SeatOccupancy:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "SeatOccupancy":
+    def from_dict(cls, data: dict[str, Any]) -> SeatOccupancy:
         """Create from dictionary."""
         seat_grades = {}
         for name, stats in data.get("seat_grades", {}).items():

@@ -29,7 +29,7 @@ class Trailer:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Trailer":
+    def from_dict(cls, data: dict[str, Any]) -> Trailer:
         return cls(
             type=data.get("type", ""),
             key=data.get("key", ""),
@@ -56,7 +56,7 @@ class Cast:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Cast":
+    def from_dict(cls, data: dict[str, Any]) -> Cast:
         return cls(
             name=data.get("name", ""),
             profile_photo=data.get("profile_photo", ""),
@@ -87,7 +87,7 @@ class Video:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Video":
+    def from_dict(cls, data: dict[str, Any]) -> Video:
         return cls(
             id=data.get("id", ""),
             type=data.get("type", ""),
@@ -109,7 +109,7 @@ class Genre:
         return {"id": self.id, "name": self.name}
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Genre":
+    def from_dict(cls, data: dict[str, Any]) -> Genre:
         return cls(id=data.get("id", ""), name=data.get("name", ""))
 
 
@@ -131,7 +131,7 @@ class RatingScore:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "RatingScore":
+    def from_dict(cls, data: dict[str, Any]) -> RatingScore:
         return cls(
             vote_average=data.get("vote_average", 0.0),
             vote_count=data.get("vote_count", 0),
@@ -238,7 +238,7 @@ class MovieDetails:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "MovieDetails":
+    def from_dict(cls, data: dict[str, Any]) -> MovieDetails:
         """Create from dictionary (Firestore document)."""
         trailer_data = data.get("trailer")
         rating_data = data.get("rating_score")
@@ -273,7 +273,7 @@ class MovieDetails:
         )
 
     @classmethod
-    def from_api_response(cls, data: dict[str, Any]) -> "MovieDetails":
+    def from_api_response(cls, data: dict[str, Any]) -> MovieDetails:
         """Create from TIX.id API response.
 
         Args:

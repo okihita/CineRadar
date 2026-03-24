@@ -103,7 +103,7 @@ class ShowtimeSnapshot:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "ShowtimeSnapshot":
+    def from_dict(cls, data: dict[str, Any]) -> ShowtimeSnapshot:
         """Create from Firestore document.
 
         Supports both new compressed format and legacy layout_json.
@@ -175,7 +175,7 @@ class MovieMetadata:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "MovieMetadata":
+    def from_dict(cls, data: dict[str, Any]) -> MovieMetadata:
         return cls(
             movie_id=data.get("movie_id", ""),
             title=data.get("title", ""),
@@ -217,7 +217,7 @@ class DailyPerformance:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "DailyPerformance":
+    def from_dict(cls, data: dict[str, Any]) -> DailyPerformance:
         return cls(
             date=data.get("date", ""),
             total_showtimes=data.get("total_showtimes", 0),
