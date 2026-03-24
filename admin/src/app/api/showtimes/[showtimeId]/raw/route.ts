@@ -15,6 +15,25 @@ function decompressLayout(base64Data?: string | null): LayoutGrid | null {
     }
 }
 
+function extractLayoutFromRaw(raw: unknown): LayoutGrid | null {
+    if (!raw || typeof raw !== 'object') return null;
+    const rawObj = raw as { data?: { seat_map?: { seat_code: string; seat_rows: { seat_row: string; status: number }[] }[] } };
+    if (!rawObj.data || !rawObj.data.seat_map) return null;
+    try {
+        const tixSeatMap = rawObj.data.seat_map;
+        return tixSeatMap.map((row) => ({
+            row_name: row.seat_code,
+            seats: (row.seat_rows || []).map((s) => ({
+                id: s.seat_row,
+                status: s.status
+            }))
+        }));
+    } catch (e) {
+        console.error('Failed to extract layout from raw API response:', e);
+        return null;
+    }
+}
+
 interface Seat {
     id: string;
     status: number;
@@ -44,6 +63,8 @@ interface RawShowtimeResponse {
     initialLayout: LayoutGrid | null;
     finalLayout: LayoutGrid | null;
     masterLayout: unknown | null;
+    isInferred: boolean;
+    inferredStudioId?: string;
 }
 
 export async function GET(
@@ -86,24 +107,48 @@ export async function GET(
         }
 
         const data = doc as Record<string, unknown>;
+        const rawApiResponse = data.raw_api_response || null;
 
         // Decode layout data
         const initialLayout = decompressLayout(data.initial_layout_compressed as string | undefined);
-        const finalLayout = decompressLayout(data.layout_compressed as string | undefined);
+        
+        // Prioritize Raw API Response for the Final Layout (preserves TIX ID status codes like 5, 6)
+        // Fallback to the compressed layout if raw is missing
+        const finalLayout = extractLayoutFromRaw(rawApiResponse) || decompressLayout(data.layout_compressed as string | undefined);
 
         // Fetch master layout
         let masterLayout = null;
+        let isInferred = false;
+        let inferredStudioId: string | undefined = undefined;
+        
         const theatreId = data.theatre_id ? String(data.theatre_id) : null;
         const studioId = data.studio_id ? String(data.studio_id) : null;
+        const totalSeats = Number(data.total_seats);
 
-        if (theatreId && studioId) {
+        if (theatreId) {
             try {
-                const studioDoc = await firestoreRestClient.getDocument(
-                    `theatres/${theatreId}/studios`,
-                    studioId
-                );
-                if (studioDoc && studioDoc.layout) {
-                    masterLayout = studioDoc.layout;
+                if (studioId) {
+                    // Modern data: Exact lookup
+                    const studioDoc = await firestoreRestClient.getDocument(
+                        `theatres/${theatreId}/studios`,
+                        studioId
+                    );
+                    if (studioDoc && studioDoc.layout) {
+                        masterLayout = studioDoc.layout;
+                    }
+                } else {
+                    // Legacy data: JIT Inference by capacity
+                    const studios = await firestoreRestClient.getCollection(
+                        `theatres/${theatreId}/studios`
+                    );
+                    // Find a studio with the exact same capacity
+                    const matchingStudio = studios.find(s => Number(s.total_seats) === totalSeats);
+                    if (matchingStudio && matchingStudio.layout) {
+                        masterLayout = matchingStudio.layout;
+                        isInferred = true;
+                        inferredStudioId = String(matchingStudio.id);
+                        console.log(`[JIT Inference] Matched legacy showtime (seats: ${totalSeats}) to studio ID: ${matchingStudio.id}`);
+                    }
                 }
             } catch (err) {
                 console.error('Failed to fetch master layout:', err);
@@ -127,6 +172,8 @@ export async function GET(
             initialLayout,
             finalLayout,
             masterLayout,
+            isInferred,
+            inferredStudioId,
         };
 
         return NextResponse.json(response);

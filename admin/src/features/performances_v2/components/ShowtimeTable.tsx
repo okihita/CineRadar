@@ -558,11 +558,13 @@ interface RawDataResponse {
     finalLayout: any; // Used to cast to LayoutGrid
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     masterLayout: any; 
+    isInferred?: boolean;
+    inferredStudioId?: string;
     [key: string]: unknown;
 }
 
 // Showtime Row Component
-function ShowtimeRow({ showtime: st }: { showtime: ShowtimeSnapshot }) {
+export function ShowtimeRow({ showtime: st }: { showtime: ShowtimeSnapshot }) {
     const merchantColor = MERCHANT_COLORS[st.merchant] || 'bg-gray-500'
     const [expanded, setExpanded] = useState(false);
     const [rawData, setRawData] = useState<RawDataResponse | null>(null);
@@ -631,6 +633,11 @@ function ShowtimeRow({ showtime: st }: { showtime: ShowtimeSnapshot }) {
                             {st.studio_id && (
                                 <span className="text-[10px] font-mono text-muted-foreground bg-muted/50 border px-1.5 py-0.5 rounded-md whitespace-nowrap">
                                     Std {st.studio_id}
+                                </span>
+                            )}
+                            {(!st.studio_id && rawData?.inferredStudioId) && (
+                                <span className="text-[10px] font-mono text-amber-600 bg-amber-500/5 border border-amber-500/20 px-1.5 py-0.5 rounded-md whitespace-nowrap" title="Historical guess based on capacity match">
+                                    Std {rawData.inferredStudioId}*
                                 </span>
                             )}
                         </div>
@@ -726,6 +733,8 @@ function ShowtimeRow({ showtime: st }: { showtime: ShowtimeSnapshot }) {
                                         initialLayout={rawData.initialLayout} 
                                         finalLayout={rawData.finalLayout} 
                                         masterLayout={rawData.masterLayout}
+                                        isInferred={rawData.isInferred as boolean}
+                                        inferredStudioId={rawData.inferredStudioId as string}
                                     />
                                 ) : errorMsg ? (
                                     <Card className="w-full h-full border p-4 bg-red-500/5 border-red-500/20 flex flex-col items-center justify-center min-h-[300px]">

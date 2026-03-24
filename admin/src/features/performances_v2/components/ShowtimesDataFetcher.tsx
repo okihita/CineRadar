@@ -1,5 +1,7 @@
 import { firestoreRestClient } from "@/lib/firestore-rest";
 import { ShowtimeSnapshot, ShowtimeTable } from "./ShowtimeTable";
+import { CinemaPerformanceTable } from "./CinemaPerformanceTable";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NationalSeatAllocation } from "./NationalSeatAllocation";
 
 interface ShowtimesDataFetcherProps {
@@ -31,8 +33,19 @@ export async function ShowtimesDataFetcher({
       {/* National Allocation & Core Markets */}
       <NationalSeatAllocation showtimes={showtimes} />
 
-      {/* Showtime Table */}
-      <ShowtimeTable showtimes={showtimes} loading={false} />
+      {/* Interactive Tabs for Showtimes */}
+      <Tabs defaultValue="cinema" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 md:w-[400px]">
+          <TabsTrigger value="cinema">By Cinema / Mall</TabsTrigger>
+          <TabsTrigger value="showtime">All Showtimes</TabsTrigger>
+        </TabsList>
+        <TabsContent value="cinema" className="mt-4">
+            <CinemaPerformanceTable showtimes={showtimes} />
+        </TabsContent>
+        <TabsContent value="showtime" className="mt-4">
+            <ShowtimeTable showtimes={showtimes} loading={false} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

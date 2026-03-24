@@ -44,6 +44,8 @@ interface SeatMapVisualizerProps {
     initialLayout: LayoutGrid | null;
     finalLayout: LayoutGrid | null;
     masterLayout?: MasterLayout | null;
+    isInferred?: boolean;
+    inferredStudioId?: string;
 }
 
 type VisSeatStatus = 'available' | 'blocked' | 'sold' | 'unknown' | 'gap';
@@ -57,7 +59,7 @@ function isSimpleFormat(layout: LayoutGrid | null): layout is SimpleLayoutGrid {
 
 interface NormalizedRow {
     rowName: string;
-    seats: { index: number; status: number }[];
+    seats: { index: number; status: number; id: string }[];
 }
 
 function normalizeLayout(layout: LayoutGrid | null): NormalizedRow[] {
@@ -66,7 +68,11 @@ function normalizeLayout(layout: LayoutGrid | null): NormalizedRow[] {
     if (isSimpleFormat(layout)) {
         return layout.map(([rowName, statuses]) => ({
             rowName,
-            seats: statuses.map((status, index) => ({ index, status }))
+            seats: statuses.map((status, index) => ({ 
+                index, 
+                status,
+                id: `${rowName}${index + 1}` // Fallback ID for simple format
+            }))
         }));
     } else {
         return (layout as ObjectLayoutGrid).map((row, rowIndex) => {
@@ -78,14 +84,15 @@ function normalizeLayout(layout: LayoutGrid | null): NormalizedRow[] {
                     .filter(seat => seat !== null)
                     .map((seat, index) => ({
                         index,
-                        status: seat?.status ?? 0
+                        status: seat?.status ?? 0,
+                        id: seat?.id || `${rowName}${index + 1}`
                     }))
             };
         });
     }
 }
 
-export function SeatMapVisualizer({ initialLayout, finalLayout, masterLayout }: SeatMapVisualizerProps) {
+export function SeatMapVisualizer({ initialLayout, finalLayout, masterLayout, isInferred, inferredStudioId }: SeatMapVisualizerProps) {
     const [viewMode, setViewMode] = useState<'visual' | 'json'>('visual');
     
     const hasBaseline = initialLayout !== null && initialLayout.length > 0;
@@ -94,11 +101,14 @@ export function SeatMapVisualizer({ initialLayout, finalLayout, masterLayout }: 
     const normalizedInitial = useMemo(() => normalizeLayout(initialLayout), [initialLayout]);
     const normalizedFinal = useMemo(() => normalizeLayout(finalLayout), [finalLayout]);
 
-    // Build lookup maps for O(1) status checks
+    // Build lookup maps using ID as primary key, fallback to coordinate
     const initialSeatMap = useMemo(() => {
         const map = new Map<string, number>();
         normalizedInitial.forEach(row => {
-            row.seats.forEach(seat => map.set(`${row.rowName}_${seat.index}`, seat.status));
+            row.seats.forEach(seat => {
+                map.set(seat.id, seat.status);
+                map.set(`${row.rowName}_${seat.index}`, seat.status);
+            });
         });
         return map;
     }, [normalizedInitial]);
@@ -106,33 +116,39 @@ export function SeatMapVisualizer({ initialLayout, finalLayout, masterLayout }: 
     const finalSeatMap = useMemo(() => {
         const map = new Map<string, number>();
         normalizedFinal.forEach(row => {
-            row.seats.forEach(seat => map.set(`${row.rowName}_${seat.index}`, seat.status));
+            row.seats.forEach(seat => {
+                map.set(seat.id, seat.status);
+                map.set(`${row.rowName}_${seat.index}`, seat.status);
+            });
         });
         return map;
     }, [normalizedFinal]);
 
-    const determineStatus = (rowName: string, seatIndex: number): VisSeatStatus => {
-        const finalStatus = finalSeatMap.get(`${rowName}_${seatIndex}`);
-        const initialStatus = initialSeatMap.get(`${rowName}_${seatIndex}`);
+    const determineStatus = (rowName: string, seatIndex: number, seatId?: string): VisSeatStatus => {
+        // Try lookup by ID first, then fallback to coordinate
+        const finalStatus = (seatId ? finalSeatMap.get(seatId) : undefined) ?? finalSeatMap.get(`${rowName}_${seatIndex}`);
+        const initialStatus = (seatId ? initialSeatMap.get(seatId) : undefined) ?? initialSeatMap.get(`${rowName}_${seatIndex}`);
 
         // 1. If it's available in the latest scrape, it's available
         if (finalStatus === 1) return 'available';
 
-        // 2. If it's unavailable in latest scrape
-        if (finalStatus === 0) {
+        // 2. TIX ID specific occupied statuses (5, 6)
+        if (finalStatus === 5 || finalStatus === 6) return 'sold';
+
+        // 3. If it's unavailable in latest scrape (0 or other)
+        if (finalStatus === 0 || finalStatus !== undefined) {
             // Check if it was already unavailable in the morning
             if (initialStatus === 0) return 'blocked';
             // It was available in the morning but not now -> Sold
             if (initialStatus === 1) return 'sold';
-            // We have final data but no morning baseline
+            
+            // If there's no baseline, we must assume that any unavailable seat is SOLD.
+            if (initialStatus === undefined) return 'sold';
+            
             return 'unknown';
         }
 
-        // 3. If we don't have final data (movie hasn't started/scraped yet)
-        if (initialStatus === 1) return 'available';
-        if (initialStatus === 0) return 'blocked';
-
-        // 4. Default if no data for this seat coordinate
+        // Default if no data for this seat coordinate
         return 'available'; 
     };
 
@@ -149,9 +165,14 @@ export function SeatMapVisualizer({ initialLayout, finalLayout, masterLayout }: 
             <CardHeader className="py-3 px-4 border-b bg-muted/5 flex flex-row items-center justify-between">
                 <CardTitle className="text-sm flex items-center gap-2 font-medium">
                     {hasMaster ? 'Physical Room Layout' : 'Snapshot Seating Grid'}
-                    {hasMaster && (
+                    {(hasMaster && !isInferred) && (
                         <Badge variant="outline" className="text-[10px] h-5 bg-purple-500/5 text-purple-600 border-purple-500/20">
                             Master Template
+                        </Badge>
+                    )}
+                    {isInferred && (
+                        <Badge variant="outline" className="text-[10px] h-5 bg-amber-500/5 text-amber-600 border-amber-500/20" title={`Inferred studio ID: ${inferredStudioId}`}>
+                            Historical Guess (Std {inferredStudioId})
                         </Badge>
                     )}
                     {!hasBaseline && (
@@ -209,7 +230,7 @@ export function SeatMapVisualizer({ initialLayout, finalLayout, masterLayout }: 
                                                 {row.seats.map((seat, j) => {
                                                     if (seat.type === 'aisle') return <div key={`a-${i}-${j}`} className="w-4 h-4 md:w-5 md:h-5" />;
                                                     
-                                                    const status = determineStatus(row.row_name, seatCounter);
+                                                    const status = determineStatus(row.row_name, seatCounter, seat.id);
                                                     seatCounter++;
 
                                                     const colors = {
