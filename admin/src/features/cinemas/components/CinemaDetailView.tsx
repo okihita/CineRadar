@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { useCinemaDetails } from '../hooks/useCinemaDetails';
 import { CinemaPerformanceTable } from '@/features/performances_v2/components/CinemaPerformanceTable';
 import { getRegion } from '@/lib/regions';
+import { TheatreDetailPanel } from './TheatreDetailPanel';
 
 interface CinemaDetailViewProps {
     theatreId: string;
@@ -19,6 +20,7 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
     const [selectedDate, setSelectedDate] = useState(today);
     
     const { theatre, showtimes, loading, error } = useCinemaDetails(theatreId, selectedDate);
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
     if (loading && !theatre) {
         return (
@@ -89,19 +91,25 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
             </div>
 
             {/* Main Content */}
-            <div className="grid grid-cols-1 gap-6">
-                {loading ? (
-                    <div className="flex items-center justify-center py-20">
-                        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                    </div>
-                ) : showtimes.length > 0 ? (
-                    <CinemaPerformanceTable showtimes={showtimes} />
-                ) : (
-                    <div className="text-center py-20 bg-muted/10 rounded-xl border border-dashed">
-                        <Info className="w-8 h-8 text-muted-foreground mx-auto mb-2 opacity-50" />
-                        <p className="text-muted-foreground">No showtimes found for {selectedDate}.</p>
-                    </div>
-                )}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-6">
+                    {loading ? (
+                        <div className="flex items-center justify-center py-20">
+                            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                        </div>
+                    ) : showtimes.length > 0 ? (
+                        <CinemaPerformanceTable showtimes={showtimes} />
+                    ) : (
+                        <div className="text-center py-20 bg-muted/10 rounded-xl border border-dashed">
+                            <Info className="w-8 h-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                            <p className="text-muted-foreground">No showtimes found for {selectedDate}.</p>
+                        </div>
+                    )}
+                </div>
+
+                <div className="space-y-6">
+                    <TheatreDetailPanel theatre={theatre} apiKey={apiKey} showIntelligenceLink={false} />
+                </div>
             </div>
         </div>
     );

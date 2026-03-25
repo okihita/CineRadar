@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { Theatre } from '../types';
+import { ShowtimeSnapshot } from '@/features/performances_v2/components/ShowtimeTable';
 
 export function useCinemaDetails(theatreId: string, date: string) {
     const [theatre, setTheatre] = useState<Theatre | null>(null);
-    const [showtimes, setShowtimes] = useState<any[]>([]);
+    const [showtimes, setShowtimes] = useState<ShowtimeSnapshot[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
