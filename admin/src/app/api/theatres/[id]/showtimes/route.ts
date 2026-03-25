@@ -20,26 +20,27 @@ export async function GET(
         // Sub-collection path: schedules_v2/{date}/movies
         const moviesRaw = await firestoreRestClient.getSubCollection(`schedules_v2/${date}/movies`);
         
-        const showtimes: any[] = [];
+        const showtimes: Record<string, unknown>[] = [];
 
         for (const movie of moviesRaw) {
             const metadataId = movie.id as string;
-            const cities = (movie.cities as Record<string, any[]>) || {};
+            const cities = (movie.cities as Record<string, unknown[]>) || {};
             
             for (const [cityName, theatres] of Object.entries(cities)) {
                 if (!Array.isArray(theatres)) continue;
                 
-                for (const theatre of theatres) {
+                for (const theatreItem of theatres) {
+                    const theatre = theatreItem as Record<string, unknown>;
                     if (theatre.theatre_id === theatreId) {
-                        const rooms = theatre.rooms || [];
+                        const rooms = (theatre.rooms as Record<string, unknown>[]) || [];
                         for (const room of rooms) {
-                            const roomShowtimes = room.all_showtimes || [];
+                            const roomShowtimes = (room.all_showtimes as Record<string, unknown>[]) || [];
                             for (const showtime of roomShowtimes) {
                                 showtimes.push({
                                     ...showtime,
                                     metadata_id: metadataId,
-                                    movie_title: movie.title,
-                                    movie_poster: movie.poster,
+                                    movie_title: movie.title as string,
+                                    movie_poster: movie.poster as string,
                                     room_category: room.category,
                                     city: cityName,
                                     merchant: theatre.merchant,
@@ -54,7 +55,11 @@ export async function GET(
         }
 
         // Sort by showtime hour:minute
-        showtimes.sort((a, b) => (a.showtime || '').localeCompare(b.showtime || ''));
+        showtimes.sort((a, b) => {
+            const timeA = (a as Record<string, string>).showtime || '';
+            const timeB = (b as Record<string, string>).showtime || '';
+            return timeA.localeCompare(timeB);
+        });
 
         return NextResponse.json(showtimes);
     } catch (error) {

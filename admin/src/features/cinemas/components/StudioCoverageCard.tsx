@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useStudioCoverage } from '../hooks/useStudioCoverage';
-import { Database, AlertTriangle, CheckCircle2, Search } from 'lucide-react';
+import { Database, AlertTriangle, CheckCircle2, Search, Zap, ShieldCheck, Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -47,107 +47,203 @@ export function StudioCoverageCard() {
     );
 
     return (
-        <Card className="flex flex-col">
-            <CardHeader className="pb-2 border-b bg-muted/20">
+        <Card className="flex flex-col border-primary/20 shadow-md">
+            <CardHeader className="pb-3 border-b bg-muted/30">
                 <div className="flex items-center justify-between">
                     <div>
-                        <CardTitle className="text-sm font-medium flex items-center gap-2">
-                            <Database className="w-4 h-4 text-primary" />
-                            Master Layout Coverage
+                        <CardTitle className="text-base font-bold flex items-center gap-2">
+                            <Database className="w-5 h-5 text-primary" />
+                            Master Layout Intelligence
                         </CardTitle>
                         <CardDescription className="text-xs mt-1">
-                            Physical seating capacity mapped via API
+                            Tracking physical seating capacity and layout accuracy
                         </CardDescription>
                     </div>
                     {isCompleted ? (
                         <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
                             <CheckCircle2 className="w-3 h-3 mr-1" />
-                            Complete
+                            Sync Complete
                         </Badge>
                     ) : (
                         <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20">
-                            <AlertTriangle className="w-3 h-3 mr-1" />
-                            Indexing
+                            <Clock className="w-3 h-3 mr-1 animate-pulse" />
+                            Partial Sync
                         </Badge>
                     )}
                 </div>
             </CardHeader>
-            <CardContent className="pt-4 flex-1 flex flex-col">
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <p className="text-xs text-muted-foreground mb-1">Studios</p>
-                        <div className="flex items-baseline gap-1">
-                            <span className="text-2xl font-bold">{studio_progress.percentage.toFixed(1)}%</span>
+            <CardContent className="pt-6 flex-1 flex flex-col">
+                {/* Main Progress */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm font-semibold">Overall Studio Progress</span>
+                            <span className="text-2xl font-black text-primary">{studio_progress.percentage.toFixed(1)}%</span>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            {studio_progress.scraped} / {studio_progress.total} mapped
+                        <div className="w-full h-3 bg-muted rounded-full overflow-hidden border">
+                            <div 
+                                className={`h-full transition-all duration-1000 ${isCompleted ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'bg-primary shadow-[0_0_10px_rgba(var(--primary),0.5)]'}`} 
+                                style={{ width: `${studio_progress.percentage}%` }}
+                            />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            {studio_progress.scraped.toLocaleString()} / {studio_progress.total.toLocaleString()} total studios mapped across the network.
                         </p>
                     </div>
-                    <div>
-                        <p className="text-xs text-muted-foreground mb-1">Theatres</p>
-                        <div className="flex items-baseline gap-1">
-                            <span className="text-2xl font-bold">{theatre_progress.percentage.toFixed(1)}%</span>
+
+                    <div className="space-y-3 text-right md:text-left">
+                        <div className="flex items-center justify-between md:flex-row-reverse">
+                            <span className="text-sm font-semibold">Theatre Saturation</span>
+                            <span className="text-2xl font-black text-primary">{theatre_progress.percentage.toFixed(1)}%</span>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            {theatre_progress.fully_scraped} fully mapped
+                        <div className="w-full h-3 bg-muted rounded-full overflow-hidden border">
+                            <div 
+                                className="h-full bg-blue-500 transition-all duration-1000" 
+                                style={{ width: `${theatre_progress.percentage}%` }}
+                            />
+                        </div>
+                        <p className="text-xs text-muted-foreground md:text-right">
+                            {theatre_progress.fully_scraped} / {theatre_progress.total} theatres have 100% studio coverage.
                         </p>
                     </div>
                 </div>
 
-                {/* Progress bar */}
-                <div className="w-full h-2 bg-muted rounded-full overflow-hidden mb-4">
-                    <div 
-                        className={`h-full ${isCompleted ? 'bg-green-500' : 'bg-primary'}`} 
-                        style={{ width: `${studio_progress.percentage}%` }}
-                    />
+                {/* Detailed Audit Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                    <Card className="bg-secondary/5 border-dashed">
+                        <CardContent className="p-4">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+                                <Zap className="w-3.5 h-3.5 text-blue-500" />
+                                Data Fidelity (V3 vs V2)
+                            </h4>
+                            <div className="space-y-4">
+                                <div>
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <span className="text-xs font-medium">Ground Truth (V3)</span>
+                                        <Badge variant="secondary" className="text-[10px] font-mono h-4">
+                                            {((studio_progress.v3_count / studio_progress.scraped) * 100).toFixed(1)}%
+                                        </Badge>
+                                    </div>
+                                    <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                                        <div 
+                                            className="h-full bg-blue-500" 
+                                            style={{ width: `${(studio_progress.v3_count / studio_progress.scraped) * 100}%` }}
+                                        />
+                                    </div>
+                                    <p className="text-[10px] text-muted-foreground mt-1.5">
+                                        <span className="font-bold text-foreground">{studio_progress.v3_count}</span> studios derived from raw API layouts.
+                                    </p>
+                                </div>
+                                <div>
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <span className="text-xs font-medium opacity-70">Guessed Snapshots (V2)</span>
+                                        <span className="text-[10px] font-mono">{studio_progress.v2_count}</span>
+                                    </div>
+                                    <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                                        <div 
+                                            className="h-full bg-amber-500 opacity-50" 
+                                            style={{ width: `${(studio_progress.v2_count / studio_progress.scraped) * 100}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="bg-secondary/5 border-dashed">
+                        <CardContent className="p-4">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+                                <ShieldCheck className="w-3.5 h-3.5 text-green-500" />
+                                Verification Status
+                            </h4>
+                            <div className="space-y-4">
+                                <div>
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <span className="text-xs font-medium">Manually Confirmed</span>
+                                        <Badge variant="secondary" className="text-[10px] font-mono h-4 bg-green-500/10 text-green-600 border-green-500/20">
+                                            {((studio_progress.confirmed_count / studio_progress.scraped) * 100).toFixed(1)}%
+                                        </Badge>
+                                    </div>
+                                    <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                                        <div 
+                                            className="h-full bg-green-500" 
+                                            style={{ width: `${(studio_progress.confirmed_count / studio_progress.scraped) * 100}%` }}
+                                        />
+                                    </div>
+                                    <p className="text-[10px] text-muted-foreground mt-1.5">
+                                        <span className="font-bold text-foreground">{studio_progress.confirmed_count}</span> layouts verified and locked by admin.
+                                    </p>
+                                </div>
+                                <div>
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <span className="text-xs font-medium opacity-70">Pending Verification</span>
+                                        <span className="text-[10px] font-mono">{studio_progress.pending_count}</span>
+                                    </div>
+                                    <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                                        <div 
+                                            className="h-full bg-slate-400 opacity-30" 
+                                            style={{ width: `${(studio_progress.pending_count / studio_progress.scraped) * 100}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
 
                 {missing_list.length > 0 && (
-                    <div className="mt-auto border-t pt-4">
-                        <div className="flex items-center justify-between mb-3">
-                            <h4 className="text-xs font-semibold text-muted-foreground">
-                                Missing Studios ({missing_list.length} Theatres)
-                            </h4>
+                    <div className="mt-auto border-t pt-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="space-y-0.5">
+                                <h4 className="text-sm font-bold text-foreground">
+                                    Remaining Gaps
+                                </h4>
+                                <p className="text-xs text-muted-foreground">
+                                    {missing_list.length} theatres still have unmapped studios.
+                                </p>
+                            </div>
                             <Button 
-                                variant="ghost" 
+                                variant="outline" 
                                 size="sm" 
-                                className="h-6 text-[10px] px-2"
+                                className="h-8 text-xs font-medium"
                                 onClick={() => setShowMissing(!showMissing)}
                             >
-                                {showMissing ? 'Hide' : 'View Details'}
+                                {showMissing ? 'Hide Details' : 'View Target List'}
                             </Button>
                         </div>
 
                         {showMissing && (
-                            <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+                            <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
                                 <div className="relative">
-                                    <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-muted-foreground" />
+                                    <Search className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
                                     <Input
                                         type="text"
-                                        placeholder="Search missing theatres..."
-                                        className="h-8 pl-8 text-xs"
+                                        placeholder="Search by theatre name or ID..."
+                                        className="h-10 pl-10 text-sm"
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                     />
                                 </div>
-                                <div className="max-h-[250px] overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                                     {filteredMissing.length === 0 ? (
-                                        <p className="text-xs text-center text-muted-foreground py-4">No missing theatres found.</p>
+                                        <div className="col-span-full text-center py-12 bg-muted/10 rounded-xl border border-dashed">
+                                            <p className="text-sm text-muted-foreground">No matching theatres found.</p>
+                                        </div>
                                     ) : (
                                         filteredMissing.map(theatre => (
-                                            <div key={theatre.theatre_id} className="bg-secondary/20 border rounded-md p-2 text-xs">
-                                                <div className="flex items-start justify-between">
-                                                    <span className="font-medium truncate max-w-[150px]" title={theatre.name}>
+                                            <div key={theatre.theatre_id} className="bg-secondary/10 border border-border/50 rounded-xl p-3 hover:border-primary/30 transition-all group">
+                                                <div className="flex items-start justify-between mb-2">
+                                                    <span className="font-bold text-xs truncate mr-2" title={theatre.name}>
                                                         {theatre.name}
                                                     </span>
-                                                    <Badge variant="secondary" className="text-[9px] h-4 font-mono px-1">
+                                                    <Badge variant="secondary" className="text-[10px] font-mono px-1.5 py-0 h-5 shrink-0">
                                                         {theatre.scraped}/{theatre.total}
                                                     </Badge>
                                                 </div>
-                                                <div className="mt-1.5 flex flex-wrap gap-1">
+                                                <div className="flex flex-wrap gap-1.5">
                                                     {theatre.missing_studios.map(s => (
-                                                        <span key={s} className="bg-red-500/10 text-red-600 border border-red-500/20 rounded px-1.5 py-0.5 text-[9px] font-mono">
-                                                            {s}
+                                                        <span key={s} className="bg-red-500/5 text-red-600 border border-red-500/10 rounded-md px-2 py-0.5 text-[10px] font-bold font-mono">
+                                                            S-{s}
                                                         </span>
                                                     ))}
                                                 </div>

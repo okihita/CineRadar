@@ -19,28 +19,28 @@ from backend.infrastructure.repositories.firestore_utils import get_firestore_as
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 logger = logging.getLogger(__name__)
 
-async def audit_all_studios():
+async def audit_all_studios() -> None:
     db = await get_firestore_async_client()
     theatre_docs = await db.collection(THEATRES).get()
-    
+
     total_studios = 0
     updated = 0
-    
+
     logger.info(f"📋 Starting audit of {len(theatre_docs)} theatres...")
-    
+
     for t_doc in theatre_docs:
         studios = await t_doc.reference.collection("studios").get()
         for s_doc in studios:
             total_studios += 1
             data = s_doc.to_dict()
-            
+
             # Skip if audit already exists and is locked/confirmed
             existing_audit = data.get("audit", {})
             if existing_audit.get("is_confirmed"):
                 continue
-                
+
             version = data.get("version", 0)
-            
+
             # Determine source and confidence
             if version >= 3:
                 source = "raw_initial_layout"
@@ -48,7 +48,7 @@ async def audit_all_studios():
             else:
                 source = "guessed_compressed_layout"
                 method = "snapshot_inference"
-                
+
             audit_data = {
                 "source": source,
                 "method": method,
@@ -57,7 +57,7 @@ async def audit_all_studios():
                 "version": version,
                 "audited_at": datetime.now(JAKARTA_TZ).isoformat()
             }
-            
+
             # Keep sample count if it was there (V3)
             if "sample_count" in existing_audit:
                 audit_data["sample_count"] = existing_audit["sample_count"]
@@ -67,7 +67,7 @@ async def audit_all_studios():
 
             await s_doc.reference.update({"audit": audit_data})
             updated += 1
-            
+
         if updated % 100 == 0 and updated > 0:
             logger.info(f"   Processed {updated} studios...")
 

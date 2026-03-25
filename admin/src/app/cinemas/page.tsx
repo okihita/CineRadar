@@ -177,7 +177,6 @@ function CinemasPageContent() {
 
           {/* KPI Cards - Vertical Stack */}
           <div className="flex flex-col gap-3">
-            <StudioCoverageCard />
             <RegionBreakdownCard
               regionBreakdown={regionBreakdown}
               totalTheatres={theatres.length}
@@ -230,6 +229,11 @@ function CinemasPageContent() {
               apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}
             />
           </div>
+        </div>
+
+        {/* Bottom Coverage Stats */}
+        <div className="pt-4">
+          <StudioCoverageCard />
         </div>
       </main>
 

@@ -21,13 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_firestore_client() -> Any:
-    """Get Firestore client with proper credentials.
-
-    Supports:
-    - FIREBASE_SERVICE_ACCOUNT env var (JSON string) for CI/CD
-    - GOOGLE_APPLICATION_CREDENTIALS file path
-    - Default application credentials (local dev)
-    """
+    """Get Firestore client with proper credentials."""
     from google.cloud import firestore
 
     # Check for service account JSON in env (for GitHub Actions)
@@ -56,7 +50,7 @@ async def get_firestore_async_client() -> Any:
         # AsyncClient handles credentials slightly differently but supports from_service_account_info
         from google.oauth2 import service_account
 
-        credentials = service_account.Credentials.from_service_account_info(creds_data)
+        credentials = service_account.Credentials.from_service_account_info(creds_data)  # type: ignore[no-untyped-call]
         return AsyncClient(
             credentials=credentials, project=creds_data.get("project_id", "cineradar-481014")
         )

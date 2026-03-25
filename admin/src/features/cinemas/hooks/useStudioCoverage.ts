@@ -5,6 +5,10 @@ export interface StudioCoverageData {
         total: number;
         scraped: number;
         percentage: number;
+        v3_count: number;
+        v2_count: number;
+        confirmed_count: number;
+        pending_count: number;
     };
     theatre_progress: {
         total: number;
@@ -22,9 +26,9 @@ export interface StudioCoverageData {
     }>;
 }
 
-const fetcher = (url: string) => fetch(url).then(res => {
+const fetcher = (url: string): Promise<StudioCoverageData> => fetch(url).then(res => {
     if (!res.ok) throw new Error('Failed to fetch coverage');
-    return res.json();
+    return res.json() as Promise<StudioCoverageData>;
 });
 
 export function useStudioCoverage() {

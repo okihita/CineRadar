@@ -261,28 +261,26 @@ export class FirestoreRestClient {
         }
     }
 
-    /**
-     * Get all documents from a collection group (allDescendants: true)
-     */
     async getCollectionGroup(collectionId: string): Promise<Record<string, unknown>[]> {
         try {
             const token = await getAccessToken();
             const allDocuments: Record<string, unknown>[] = [];
             let lastDocName: string | undefined;
+            const PAGE_SIZE = 1000;
 
             while (true) {
                 const query: Record<string, unknown> = {
                     structuredQuery: {
                         from: [{ collectionId: collectionId, allDescendants: true }],
                         orderBy: [{ field: { fieldPath: '__name__' }, direction: 'ASCENDING' }],
-                        limit: 1000,
+                        limit: PAGE_SIZE,
                     },
                 };
 
                 if (lastDocName) {
                     (query.structuredQuery as Record<string, unknown>).startAt = {
                         values: [{ referenceValue: lastDocName }],
-                        exclusive: true
+                        before: false
                     };
                 }
 
@@ -296,17 +294,20 @@ export class FirestoreRestClient {
                 });
 
                 if (!response.ok) {
-                    console.error(`Collection group query failed for ${collectionId}: ${response.status}`);
+                    const errText = await response.text();
+                    console.error(`Collection group query failed: ${response.status} - ${errText}`);
                     break;
                 }
 
                 const results = await response.json();
+                if (!Array.isArray(results) || results.length === 0) {
+                    break;
+                }
                 
-                let count = 0;
+                const resultsInPage = results.length;
                 for (const r of results) {
                     if (r.document) {
                         const parsed = parseDocument(r.document);
-                        // Extract parent IDs from the path: projects/.../databases/(default)/documents/theatres/THEATRE_ID/studios/STUDIO_ID
                         const pathParts = r.document.name.split('/');
                         if (pathParts.length >= 4) {
                             parsed._parent_id = pathParts[pathParts.length - 3];
@@ -314,12 +315,12 @@ export class FirestoreRestClient {
                         }
                         allDocuments.push(parsed);
                         lastDocName = r.document.name;
-                        count++;
                     }
                 }
 
-                if (count < 1000) {
-                    break; // No more pages
+                // If we got fewer results than requested, we've reached the end
+                if (resultsInPage < PAGE_SIZE) {
+                    break;
                 }
             }
 

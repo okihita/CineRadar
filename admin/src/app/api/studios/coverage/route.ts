@@ -19,6 +19,10 @@ export async function GET() {
 
         let totalStudios = 0;
         let scrapedStudios = 0;
+        let v3Count = 0;
+        let v2Count = 0;
+        let confirmedCount = 0;
+        let pendingCount = 0;
         
         const theatreStats = new Map<string, {
             id: string;
@@ -32,6 +36,9 @@ export async function GET() {
             const theatreId = studio._parent_id as string;
             const studioId = studio.id as string;
             const totalSeats = (studio.total_seats as number) || 0;
+            const version = (studio.version as number) || 0;
+            const audit = (studio.audit as { source?: string; is_confirmed?: boolean }) || {};
+            const isLocked = (studio.is_locked as boolean) || false;
 
             if (!theatreStats.has(theatreId)) {
                 theatreStats.set(theatreId, {
@@ -50,6 +57,16 @@ export async function GET() {
             if (totalSeats > 0) {
                 stats.scraped += 1;
                 scrapedStudios += 1;
+
+                // Audit Stats
+                const isV3 = version === 3 || audit.source === 'raw_initial_layout';
+                const isConfirmed = audit.is_confirmed === true || isLocked === true;
+
+                if (isV3) v3Count += 1;
+                else v2Count += 1;
+
+                if (isConfirmed) confirmedCount += 1;
+                else pendingCount += 1;
             } else {
                 stats.missingStudios.push(studioId);
             }
@@ -96,7 +113,11 @@ export async function GET() {
             studio_progress: {
                 total: totalStudios,
                 scraped: scrapedStudios,
-                percentage: totalStudios > 0 ? (scrapedStudios / totalStudios) * 100 : 0
+                percentage: totalStudios > 0 ? (scrapedStudios / totalStudios) * 100 : 0,
+                v3_count: v3Count,
+                v2_count: v2Count,
+                confirmed_count: confirmedCount,
+                pending_count: pendingCount
             },
             theatre_progress: {
                 total: totalTheatres,

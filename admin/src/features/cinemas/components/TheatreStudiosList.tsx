@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTheatreStudios, Studio } from '../hooks/useTheatreStudios';
+import { useTheatreStudios } from '../hooks/useTheatreStudios';
 import { StudioLayoutViewer } from './StudioLayoutViewer';
 import { ChevronDown, ChevronRight, CheckCircle2, AlertCircle, Database, Zap, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';

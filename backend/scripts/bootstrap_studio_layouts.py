@@ -13,16 +13,16 @@ Logic:
 import argparse
 import asyncio
 import logging
-import os
 import re
 import sys
 from collections import defaultdict
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 sys.path.insert(0, ".")
 
-from google.cloud.firestore import AsyncClient
+
+import contextlib
 
 from backend.domain.time import JAKARTA_TZ
 from backend.infrastructure.firestore_collections import (
@@ -31,6 +31,9 @@ from backend.infrastructure.firestore_collections import (
     THEATRES,
 )
 from backend.infrastructure.repositories.firestore_utils import get_firestore_async_client
+
+if TYPE_CHECKING:
+    from google.cloud.firestore import AsyncClient
 
 logging.basicConfig(
     level=logging.INFO,
@@ -44,7 +47,7 @@ def parse_to_master_layout(
     raw_data: dict[str, Any], merchant: str
 ) -> list[dict[str, Any]]:
     """Convert raw API data into CineRadar Unified Grid format.
-    
+
     This version is 'Aisle-Aware' and respects XXI vertical lane rules.
     Returns a unified layout grid.
     """
@@ -66,7 +69,7 @@ def parse_to_master_layout(
             for seat in item.get("seat_rows", []):
                 seat_id = seat.get("seat_row", "")
                 status = seat.get("status", 0)
-                
+
                 # Initially, everything that isn't status 0 is a candidate
                 if seat_id and status != 0:
                     # We store the status temporarily to help the consensus logic later
@@ -74,17 +77,19 @@ def parse_to_master_layout(
                 else:
                     row_data["seats"].append({"id": "", "type": "aisle"})
             unified_layout.append(row_data)
-            
+
         # Handle XXI Vertical Lanes
         if merchant == "XXI":
             vertical_lanes = (data_payload.get("seat_rules", {}) or {}).get("vertical_lane") or []
             for lane in vertical_lanes:
                 start_row, end_row, before_col = lane.get("start"), lane.get("end"), lane.get("before_seat_column")
-                if not before_col: continue
-                    
+                if not before_col:
+                    continue
+
                 in_range = False
                 for row in unified_layout:
-                    if row["row_name"] == start_row: in_range = True
+                    if row["row_name"] == start_row:
+                        in_range = True
                     if in_range:
                         # Find the seat where the numeric column matches before_col
                         target_idx = -1
@@ -95,7 +100,8 @@ def parse_to_master_layout(
                                 break
                         if target_idx != -1:
                             row["seats"].insert(target_idx, {"id": "", "type": "aisle", "_is_rule_aisle": True})
-                    if row["row_name"] == end_row: in_range = False
+                    if row["row_name"] == end_row:
+                        in_range = False
     else:
         # Cinépolis / Flat
         rows_dict: defaultdict[str, list[dict[str, Any]]] = defaultdict(list)
@@ -118,11 +124,12 @@ def parse_to_master_layout(
 
 def merge_consensus(layouts: list[list[dict[str, Any]]]) -> list[dict[str, Any]]:
     """Merge multiple layouts using ID-aware consensus.
-    
+
     If a seat ID is ever status 1 or 2 across ANY layout, it is a real seat.
     If it is always 5 or 6, it is a permanent block (aisle).
     """
-    if not layouts: return []
+    if not layouts:
+        return []
     if len(layouts) == 1:
         # Even with one layout, we must clean the temporary _raw_status
         base = layouts[0]
@@ -138,11 +145,11 @@ def merge_consensus(layouts: list[list[dict[str, Any]]]) -> list[dict[str, Any]]
     # 1. Map all possible seats found across all layouts
     # We use the first layout as the template for structure
     base_layout = layouts[0]
-    
+
     # 2. Track global status for every seat ID discovered
     seat_status_history = defaultdict(list)
-    for l in layouts:
-        for row in l:
+    for layout in layouts:
+        for row in layout:
             for s in row["seats"]:
                 if s.get("id"):
                     seat_status_history[s["id"]].append(s.get("_raw_status"))
@@ -158,18 +165,18 @@ def merge_consensus(layouts: list[list[dict[str, Any]]]) -> list[dict[str, Any]]
                 s.pop("_is_rule_aisle", None)
                 new_seats.append(s)
                 continue
-            
+
             statuses = seat_status_history.get(sid, [])
-            # Consensus Rule: 
+            # Consensus Rule:
             # If it's ever 1 (Available) or 2 (Sold) -> It's a REAL seat.
             # Otherwise -> It's a PHYSICAL aisle/permanent block.
             is_real_seat = any(st in (1, 2) for st in statuses)
-            
+
             if is_real_seat:
                 new_seats.append({"id": sid, "type": "seat"})
             else:
                 new_seats.append({"id": "", "type": "aisle"})
-        
+
         row["seats"] = new_seats
 
     return base_layout
@@ -181,8 +188,8 @@ async def discover_studios_from_performance(
     """Find unique studios and their sampled raw layouts from Firestore."""
     logger.info(f"🔍 Discovering studios with raw layouts for {date}...")
     movie_docs = await db.collection(SCHEDULES_V2).document(date).collection("movies").get()
-    
-    studio_samples = defaultdict(list)
+
+    studio_samples: dict[str, list[dict[str, Any]]] = defaultdict(list)
     processed_movies = 0
     # Very conservative concurrency to prevent Firestore timeouts
     semaphore = asyncio.Semaphore(5)
@@ -193,7 +200,7 @@ async def discover_studios_from_performance(
         async with semaphore:
             # Small jittered sleep to stagger the bursts
             await asyncio.sleep(random.random() * 2.0)
-            
+
             st_ref = db.collection(MOVIE_PERFORMANCE_V2).document(m.id).collection("days").document(date).collection("showtimes")
             try:
                 # Use stream() instead of get() for better stability
@@ -201,7 +208,7 @@ async def discover_studios_from_performance(
                     data = doc.to_dict()
                     raw = data.get("initial_raw_layout")
                     tid, sid, merchant = data.get("theatre_id"), data.get("studio_id"), data.get("merchant")
-                    
+
                     if raw and tid and sid and (not theatre_ids or tid in theatre_ids):
                         key = f"{tid}:{sid}"
                         if len(studio_samples[key]) < 5:
@@ -209,7 +216,7 @@ async def discover_studios_from_performance(
                             studio_samples[key].append(raw)
             except Exception as e:
                 logger.error(f"   ⚠️ Error movie {m.id}: {e}")
-        
+
         processed_movies += 1
         if processed_movies % 2 == 0:
             logger.info(f"   Processed {processed_movies}/{len(movie_docs)} movies...")
@@ -228,26 +235,28 @@ async def bootstrap_theatre_layouts(db: AsyncClient, studio_samples: dict[str, l
         current += 1
         theatre_id, studio_id = key.split(":")
         merchant = samples[0]["__metadata"]["merchant"]
-        
+
         # Skip if already migrated to V3
         studio_ref = db.collection(THEATRES).document(theatre_id).collection("studios").document(studio_id)
         existing = await studio_ref.get()
         if existing.exists:
             data = existing.to_dict()
-            if data.get("is_locked"): continue
-            if not force and data.get("version") == 3: continue
+            if data.get("is_locked"):
+                continue
+            if not force and data.get("version") == 3:
+                continue
 
         logger.info(f"[{current}/{total_studios}] Ground Truth Mapping: {merchant} | {theatre_id} | Studio {studio_id}")
-        
+
         # 1. Parse all samples to Unified format (preserving status)
         parsed_layouts = [parse_to_master_layout(s, merchant) for s in samples]
-        
+
         # 2. Merge via consensus
         final_layout = merge_consensus(parsed_layouts)
 
         if final_layout:
             total_seats = sum(1 for r in final_layout for s in r.get("seats", []) if s.get("type") == "seat")
-            
+
             # Preserve existing audit data (especially manual confirmation)
             audit_data = {
                 "source": "raw_initial_layout",
@@ -257,7 +266,7 @@ async def bootstrap_theatre_layouts(db: AsyncClient, studio_samples: dict[str, l
                 "confirmed_at": None,
                 "version": 3
             }
-            
+
             if existing.exists:
                 old_data = existing.to_dict()
                 old_audit = old_data.get("audit", {})
@@ -294,15 +303,15 @@ async def main() -> None:
 
     t_ids = [tid.strip() for tid in args.theatre_ids.split(",")] if args.theatre_ids else None
     date = args.date or datetime.now(JAKARTA_TZ).strftime("%Y-%m-%d")
-    
+
     db = await get_firestore_async_client()
     try:
         studio_samples = await discover_studios_from_performance(db, date, t_ids, args.force)
         if studio_samples:
             await bootstrap_theatre_layouts(db, studio_samples, args.force)
     finally:
-        try: db.close()
-        except: pass
+        with contextlib.suppress(BaseException):
+            db.close()
 
 if __name__ == "__main__":
     asyncio.run(main())
