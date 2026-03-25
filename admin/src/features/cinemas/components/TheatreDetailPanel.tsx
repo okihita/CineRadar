@@ -4,6 +4,7 @@
  */
 'use client';
 
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { getRegion } from '@/lib/regions';
@@ -81,9 +82,16 @@ export function TheatreDetailPanel({ theatre, apiKey }: TheatreDetailPanelProps)
                             </div>
                         </div>
 
-                        <Button size="sm" className="w-full text-xs" onClick={handleOpenInMaps}>
-                            Open in Maps →
-                        </Button>
+                        <div className="grid grid-cols-2 gap-2">
+                            <Button variant="outline" size="sm" className="text-xs" onClick={handleOpenInMaps}>
+                                Open in Maps →
+                            </Button>
+                            <Link href={`/cinemas/${theatre.theatre_id}`} className="block">
+                                <Button size="sm" className="w-full text-xs bg-primary hover:bg-primary/90">
+                                    Full Intelligence →
+                                </Button>
+                            </Link>
+                        </div>
                         
                         <TheatreStudiosList theatreId={theatre.theatre_id} />
                     </div>

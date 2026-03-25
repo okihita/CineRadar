@@ -291,7 +291,12 @@ export function CinemaPerformanceTable({ showtimes }: CinemaPerformanceTableProp
                                                         <table className="w-full text-sm">
                                                             <tbody className="divide-y">
                                                                 {loc.showtimes.map(st => (
-                                                                    <ShowtimeRow key={st.showtime_id} showtime={st} />
+                                                                    <ShowtimeRow 
+                                                                        key={st.showtime_id} 
+                                                                        showtime={st} 
+                                                                        movieId={st.metadata_id}
+                                                                        date={st.date}
+                                                                    />
                                                                 ))}
                                                             </tbody>
                                                         </table>

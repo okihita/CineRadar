@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * SWR hook for fetching cinemas data (theatres + scraper runs)
  * Handles server state with caching and revalidation

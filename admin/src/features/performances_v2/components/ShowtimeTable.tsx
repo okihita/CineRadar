@@ -35,6 +35,10 @@ export interface ShowtimeSnapshot {
     scrape_phase?: string;
     scraped_at?: string;
     studio_id?: string;
+
+    // Context for layout fetching
+    metadata_id?: string;
+    date?: string;
 }
 
 type SortField = 'showtime' | 'occupancy' | 'theatre' | 'city';
@@ -563,8 +567,14 @@ interface RawDataResponse {
     [key: string]: unknown;
 }
 
+interface ShowtimeRowProps {
+    showtime: ShowtimeSnapshot;
+    movieId?: string;
+    date?: string;
+}
+
 // Showtime Row Component
-export function ShowtimeRow({ showtime: st }: { showtime: ShowtimeSnapshot }) {
+export function ShowtimeRow({ showtime: st, movieId: propMovieId, date: propDate }: ShowtimeRowProps) {
     const merchantColor = MERCHANT_COLORS[st.merchant] || 'bg-gray-500'
     const [expanded, setExpanded] = useState(false);
     const [rawData, setRawData] = useState<RawDataResponse | null>(null);
@@ -583,9 +593,16 @@ export function ShowtimeRow({ showtime: st }: { showtime: ShowtimeSnapshot }) {
             setIsLoadingLayout(true);
             setErrorMsg(null);
             try {
-                const pathParts = window.location.pathname.split('/');
-                const movieId = pathParts[2];
-                const date = pathParts[3];
+                // Try props first, then fallback to URL parsing
+                let movieId = propMovieId;
+                let date = propDate;
+
+                if (!movieId || !date) {
+                    const pathParts = window.location.pathname.split('/');
+                    // URL is usually /performances_v2/[metadataId]/[date]
+                    movieId = pathParts[2];
+                    date = pathParts[3];
+                }
                 
                 if (movieId && date) {
                     const url = `/api/showtimes/${st.showtime_id}/raw?movieId=${movieId}&date=${date}`;
