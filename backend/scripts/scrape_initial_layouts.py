@@ -399,92 +399,93 @@ class LayoutScraper:
 
     async def process_showtime(self, showtime: dict[str, Any]) -> None:
         """Process a single showtime with rate limiting and concurrency control."""
-        showtime_id = showtime["showtime_id"]
-        metadata_id = showtime.get("metadata_id")
-        movie_id = showtime["movie_id"]
-        date = showtime["date"]
+        async with self.semaphore:
+            showtime_id = showtime["showtime_id"]
+            metadata_id = showtime.get("metadata_id")
+            movie_id = showtime["movie_id"]
+            date = showtime["date"]
 
-        # 1. Async checkpoint check (with force override)
-        if await check_checkpoint_async(
-            self._db, metadata_id, movie_id, date, showtime_id, self.force
-        ):
-            await self.increment_stat("skipped")
-            return
-
-        # 2. Get valid token (with distributed lock protection)
-        try:
-            token_obj = await ensure_valid_token()
-            token = token_obj.token
-        except Exception as e:
-            logger.error(f"Failed to get valid token: {e}")
-            await self.increment_stat("failed")
-            return
-
-        # 3. Rate-limited async HTTP fetch
-        async with self.rate_limiter:
-            layout_data = await fetch_seat_layout_async(
-                self.http_client, showtime_id, showtime["merchant"], token
-            )
-
-            # 4. Handle auth failure with retry
-            if layout_data and layout_data.get("__auth_failure"):
-                logger.info("Auth failure detected, forcing token refresh...")
-                try:
-                    token_obj = await ensure_valid_token(force_refresh=True)
-                    token = token_obj.token
-                    async with self.rate_limiter:
-                        layout_data = await fetch_seat_layout_async(
-                            self.http_client, showtime_id, showtime["merchant"], token
-                        )
-                except Exception as e:
-                    logger.error(f"Force token refresh failed: {e}")
-
-            if not layout_data or layout_data.get("__auth_failure"):
-                await self.increment_stat("failed")
-                return
-
-            # 5. Extract Price and Calculate occupancy
-            data_payload = layout_data.get("data", {})
-
-            # Price Extraction Logic (Meticulous Version)
-            price = None
-            if showtime["merchant"] == "XXI":
-                # XXI usually has a single root price
-                price = data_payload.get("price")
-            else:
-                # CGV/Cinépolis: Handle multiple price groups (Regular, Sweetbox, Preferred, etc.)
-                price_groups = data_payload.get("price_group", [])
-                if price_groups:
-                    # 1. Search for 'REGULAR' (most common)
-                    regular_price = next(
-                        (
-                            pg.get("seat_grd_price")
-                            for pg in price_groups
-                            if pg.get("seat_grd_nm") == "REGULAR"
-                        ),
-                        None,
-                    )
-                    # 2. Fallback to first available if 'REGULAR' is missing (e.g. VELVET, GOLD CLASS only rooms)
-                    price = (
-                        regular_price
-                        if regular_price is not None
-                        else price_groups[0].get("seat_grd_price")
-                    )
-
-            seat_map = data_payload.get("seat_map", [])
-            total_seats, unavailable, layout_grid = calculate_occupancy(seat_map)
-
-            if total_seats == 0:
-                await self.increment_stat("no_layout")
-                return
-
-            # 6. Async Firestore save (V1 + V2)
-            if await save_initial_layout_async(
-                self._db, showtime, total_seats, unavailable, layout_grid, price, layout_data
+            # 1. Async checkpoint check (with force override)
+            if await check_checkpoint_async(
+                self._db, metadata_id, movie_id, date, showtime_id, self.force
             ):
-                await self.increment_stat("success")
-            else:
+                await self.increment_stat("skipped")
+                return
+
+            # 2. Get valid token (with distributed lock protection)
+            try:
+                token_obj = await ensure_valid_token()
+                token = token_obj.token
+            except Exception as e:
+                logger.error(f"Failed to get valid token: {e}")
                 await self.increment_stat("failed")
+                return
+
+            # 3. Rate-limited async HTTP fetch
+            async with self.rate_limiter:
+                layout_data = await fetch_seat_layout_async(
+                    self.http_client, showtime_id, showtime["merchant"], token
+                )
+
+                # 4. Handle auth failure with retry
+                if layout_data and layout_data.get("__auth_failure"):
+                    logger.info("Auth failure detected, forcing token refresh...")
+                    try:
+                        token_obj = await ensure_valid_token(force_refresh=True)
+                        token = token_obj.token
+                        async with self.rate_limiter:
+                            layout_data = await fetch_seat_layout_async(
+                                self.http_client, showtime_id, showtime["merchant"], token
+                            )
+                    except Exception as e:
+                        logger.error(f"Force token refresh failed: {e}")
+
+                if not layout_data or layout_data.get("__auth_failure"):
+                    await self.increment_stat("failed")
+                    return
+
+                # 5. Extract Price and Calculate occupancy
+                data_payload = layout_data.get("data", {})
+
+                # Price Extraction Logic (Meticulous Version)
+                price = None
+                if showtime["merchant"] == "XXI":
+                    # XXI usually has a single root price
+                    price = data_payload.get("price")
+                else:
+                    # CGV/Cinépolis: Handle multiple price groups (Regular, Sweetbox, Preferred, etc.)
+                    price_groups = data_payload.get("price_group", [])
+                    if price_groups:
+                        # 1. Search for 'REGULAR' (most common)
+                        regular_price = next(
+                            (
+                                pg.get("seat_grd_price")
+                                for pg in price_groups
+                                if pg.get("seat_grd_nm") == "REGULAR"
+                            ),
+                            None,
+                        )
+                        # 2. Fallback to first available if 'REGULAR' is missing (e.g. VELVET, GOLD CLASS only rooms)
+                        price = (
+                            regular_price
+                            if regular_price is not None
+                            else price_groups[0].get("seat_grd_price")
+                        )
+
+                seat_map = data_payload.get("seat_map", [])
+                total_seats, unavailable, layout_grid = calculate_occupancy(seat_map)
+
+                if total_seats == 0:
+                    await self.increment_stat("no_layout")
+                    return
+
+                # 6. Async Firestore save (V1 + V2)
+                if await save_initial_layout_async(
+                    self._db, showtime, total_seats, unavailable, layout_grid, price, layout_data
+                ):
+                    await self.increment_stat("success")
+                else:
+                    await self.increment_stat("failed")
 
     async def report_progress(self) -> None:
         """Report progress periodically."""

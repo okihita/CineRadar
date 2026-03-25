@@ -250,7 +250,9 @@ class TokenRefresher:
         instance_id = f"worker-{uuid.uuid4().hex[:8]}"
         lock = AsyncTokenRefreshLock(db)
 
-        max_retries = 20
+        import random
+
+        max_retries = 30
         acquired = False
         for i in range(max_retries):
             # Check if someone else refreshed while we were waiting
@@ -263,8 +265,12 @@ class TokenRefresher:
                 acquired = True
                 break
 
-            logger.info(f"Another instance is refreshing, waiting... ({i + 1}/{max_retries})")
-            await asyncio.sleep(2.0)
+            # Increase sleep time and add jitter (5-10 seconds)
+            sleep_time = 5.0 + (random.random() * 5.0)
+            logger.info(
+                f"Another instance is refreshing, waiting {sleep_time:.1f}s... ({i + 1}/{max_retries})"
+            )
+            await asyncio.sleep(sleep_time)
 
         if not acquired:
             # Fallback: just return what's in Firestore
