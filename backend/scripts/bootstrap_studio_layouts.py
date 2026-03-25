@@ -1,324 +1,308 @@
 #!/usr/bin/env python3
-"""Bootstrap Studio Layouts — Tier 2 Capacity Learning.
+"""Bootstrap Studio Layouts — Ground Truth Migration.
 
-Fetches layout data for showtimes, parses to unified grid, and merges using "Logical OR"
-to progressively learn the true physical layout over time.
+Migrates Master Layouts from "guessed snapshots" to "raw ground truth" derived from
+TIX.id API responses. Handles XXI vertical lanes and uses multi-movie consensus.
 
-Usage:
-    PYTHONPATH=. uv run python backend/scripts/bootstrap_studio_layouts.py --theatre-ids ID1,ID2
+Logic:
+    - Anchors seats by their ID (e.g., 'A1', 'D15').
+    - Anchors aisles by the API's 'before_seat_column' rules.
+    - Resolves 'Ghost Seats' (status 5/6) by checking if they are ever status 1/2.
 """
 
 import argparse
 import asyncio
-import json
 import logging
 import os
+import re
 import sys
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 
 sys.path.insert(0, ".")
 
 from google.cloud.firestore import AsyncClient
-from google.oauth2 import service_account
 
 from backend.domain.time import JAKARTA_TZ
-from backend.infrastructure.core.seat_scraper import SeatScraper
-from backend.infrastructure.firestore_collections import MOVIES, SCHEDULES_V2, THEATRES
-from backend.infrastructure.repositories import FirestoreTokenRepository
+from backend.infrastructure.firestore_collections import (
+    MOVIE_PERFORMANCE_V2,
+    SCHEDULES_V2,
+    THEATRES,
+)
+from backend.infrastructure.repositories.firestore_utils import get_firestore_async_client
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s",
+    datefmt="%H:%M:%S",
+)
 logger = logging.getLogger(__name__)
 
 
-def parse_to_master_layout(seat_map: list[dict[str, Any]]) -> tuple[int, list[dict[str, Any]]]:
-    """Convert any chain's seat_map into CineRadar Unified Grid format."""
-    total_seats = 0
-    unified_layout: list[dict[str, Any]] = []
+def parse_to_master_layout(
+    raw_data: dict[str, Any], merchant: str
+) -> list[dict[str, Any]]:
+    """Convert raw API data into CineRadar Unified Grid format.
+    
+    This version is 'Aisle-Aware' and respects XXI vertical lane rules.
+    Returns a unified layout grid.
+    """
+    data_payload = raw_data.get("data", {})
+    seat_map = data_payload.get("seat_map", [])
 
-    # Check format
     if not seat_map:
-        return 0, []
+        return []
 
     is_nested = any("seat_rows" in item for item in seat_map)
+    unified_layout: list[dict[str, Any]] = []
 
     if is_nested:
         # XXI / CGV (Nested)
         for item in seat_map:
-            row_name = item.get("row_name", item.get("seat_code", ""))
+            row_name = item.get("seat_code", "")
             row_data: dict[str, Any] = {"row_name": row_name, "seats": []}
 
             for seat in item.get("seat_rows", []):
                 seat_id = seat.get("seat_row", "")
-                if not seat_id:
-                    # Treat as gap/aisle if no seat_id
-                    row_data["seats"].append({"id": "", "type": "aisle"})
+                status = seat.get("status", 0)
+                
+                # Initially, everything that isn't status 0 is a candidate
+                if seat_id and status != 0:
+                    # We store the status temporarily to help the consensus logic later
+                    row_data["seats"].append({"id": seat_id, "type": "seat", "_raw_status": status})
                 else:
-                    row_data["seats"].append({"id": seat_id, "type": "seat"})
-                    total_seats += 1
+                    row_data["seats"].append({"id": "", "type": "aisle"})
             unified_layout.append(row_data)
+            
+        # Handle XXI Vertical Lanes
+        if merchant == "XXI":
+            vertical_lanes = (data_payload.get("seat_rules", {}) or {}).get("vertical_lane") or []
+            for lane in vertical_lanes:
+                start_row, end_row, before_col = lane.get("start"), lane.get("end"), lane.get("before_seat_column")
+                if not before_col: continue
+                    
+                in_range = False
+                for row in unified_layout:
+                    if row["row_name"] == start_row: in_range = True
+                    if in_range:
+                        # Find the seat where the numeric column matches before_col
+                        target_idx = -1
+                        for idx, s in enumerate(row["seats"]):
+                            match = re.search(r"(\d+)$", s.get("id", ""))
+                            if match and int(match.group(1)) == before_col:
+                                target_idx = idx
+                                break
+                        if target_idx != -1:
+                            row["seats"].insert(target_idx, {"id": "", "type": "aisle", "_is_rule_aisle": True})
+                    if row["row_name"] == end_row: in_range = False
     else:
-        # Cinépolis / CGV B2B (Flat)
-        # Group by row
+        # Cinépolis / Flat
         rows_dict: defaultdict[str, list[dict[str, Any]]] = defaultdict(list)
         for item in seat_map:
             row_name = item.get("row_name", "ALL")
             seat_id = item.get("seat_no", "")
             seat_yn = str(item.get("seat_yn", "1"))
+            status = item.get("status", 1)
 
-            if seat_yn == "0" or not seat_id:
-                rows_dict[row_name].append({"id": "", "type": "aisle"})
+            if seat_id and seat_yn == "1":
+                rows_dict[row_name].append({"id": seat_id, "type": "seat", "_raw_status": status})
             else:
-                rows_dict[row_name].append({"id": seat_id, "type": "seat"})
-                total_seats += 1
+                rows_dict[row_name].append({"id": "", "type": "aisle"})
 
         for row_name, seats in rows_dict.items():
             unified_layout.append({"row_name": row_name, "seats": seats})
 
-    return total_seats, unified_layout
+    return unified_layout
 
 
-def merge_layouts_logical_or(
-    existing_layout: list[dict[str, Any]], new_layout: list[dict[str, Any]]
-) -> tuple[int, list[dict[str, Any]]]:
-    """Merge two unified layouts using Logical OR. If a seat exists in either, it exists in merged."""
-    if not existing_layout:
-        total = sum(1 for r in new_layout for s in r.get("seats", []) if s.get("type") == "seat")
-        return total, new_layout
-
-    merged_rows: dict[str, list[dict[str, Any]]] = {}
-
-    for row in existing_layout + new_layout:
-        row_name = str(row.get("row_name", ""))
-        if row_name not in merged_rows:
-            merged_rows[row_name] = []
-
-        # Merge seats based on max length
-        current_seats = merged_rows[row_name]
-        incoming_seats: list[dict[str, Any]] = row.get("seats", [])
-
-        merged_seats: list[dict[str, Any]] = []
-        max_len = max(len(current_seats), len(incoming_seats))
-        for i in range(max_len):
-            curr = current_seats[i] if i < len(current_seats) else {"id": "", "type": "aisle"}
-            inc = incoming_seats[i] if i < len(incoming_seats) else {"id": "", "type": "aisle"}
-
-            # Logical OR: If either is a seat, it's a seat
-            if curr.get("type") == "seat" or inc.get("type") == "seat":
-                seat_id = curr.get("id") or inc.get("id")
-                merged_seats.append({"id": seat_id, "type": "seat"})
-            else:
-                merged_seats.append({"id": "", "type": "aisle"})
-
-        merged_rows[row_name] = merged_seats
-
-    # Sort roughly by row name if needed, but dict maintains insertion order (which might be okay)
-    # usually it's better to trust the existing_layout's order. We'll reconstruct in order:
-    ordered_layout: list[dict[str, Any]] = []
-    seen = set()
-    for row in existing_layout:
-        rn = str(row.get("row_name", ""))
-        if rn not in seen:
-            ordered_layout.append({"row_name": rn, "seats": merged_rows[rn]})
-            seen.add(rn)
-    for row in new_layout:
-        rn = str(row.get("row_name", ""))
-        if rn not in seen:
-            ordered_layout.append({"row_name": rn, "seats": merged_rows[rn]})
-            seen.add(rn)
-
-    total = sum(
-        1
-        for r in ordered_layout
-        for s in (r.get("seats", []) or [])
-        if isinstance(s, dict) and s.get("type") == "seat"
-    )
-    return total, ordered_layout
-
-
-async def get_firestore_client() -> AsyncClient:
-    """Initialize async Firestore client from env or ADC."""
-    sa_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
-    if sa_json:
-        sa_info = json.loads(sa_json)
-        credentials = service_account.Credentials.from_service_account_info(sa_info)  # type: ignore[no-untyped-call]
-        return AsyncClient(credentials=credentials, project=sa_info["project_id"])
-    return AsyncClient()
-
-
-async def find_showtimes_for_theatres(
-    db: AsyncClient, theatre_ids: list[str] | None
-) -> dict[str, dict[str, list[dict[str, Any]]]]:
-    """Find showtimes for the given theatres (or all if None) to use for layout scraping.
-    Returns: {theatre_id: {studio_id: [{"showtime_id": x, "merchant": y}, ...]}}
+def merge_consensus(layouts: list[list[dict[str, Any]]]) -> list[dict[str, Any]]:
+    """Merge multiple layouts using ID-aware consensus.
+    
+    If a seat ID is ever status 1 or 2 across ANY layout, it is a real seat.
+    If it is always 5 or 6, it is a permanent block (aisle).
     """
-    targets: dict[str, dict[str, list[dict[str, Any]]]] = {}
-    if theatre_ids is not None:
-        targets = {tid: defaultdict(list) for tid in theatre_ids}
-    now_jkt = datetime.now(JAKARTA_TZ)
+    if not layouts: return []
+    if len(layouts) == 1:
+        # Even with one layout, we must clean the temporary _raw_status
+        base = layouts[0]
+        for row in base:
+            for s in row["seats"]:
+                if s.get("type") == "seat" and s.get("_raw_status") in (5, 6):
+                    s["type"] = "aisle"
+                    s["id"] = ""
+                s.pop("_raw_status", None)
+                s.pop("_is_rule_aisle", None)
+        return base
 
-    # Check next 7 days
-    for i in range(7):
-        target_date = now_jkt + timedelta(days=i)
-        date_str = target_date.strftime("%Y-%m-%d")
-        is_today = i == 0
+    # 1. Map all possible seats found across all layouts
+    # We use the first layout as the template for structure
+    base_layout = layouts[0]
+    
+    # 2. Track global status for every seat ID discovered
+    seat_status_history = defaultdict(list)
+    for l in layouts:
+        for row in l:
+            for s in row["seats"]:
+                if s.get("id"):
+                    seat_status_history[s["id"]].append(s.get("_raw_status"))
 
-        movies_ref = db.collection(SCHEDULES_V2).document(date_str).collection(MOVIES)
-
-        movie_docs = [doc async for doc in movies_ref.stream()]
-        for doc in movie_docs:
-            data = doc.to_dict() or {}
-            for _city, theatres in data.get("cities", {}).items():
-                for theatre in theatres:
-                    tid = theatre.get("theatre_id", "")
-                    if not tid:
-                        continue
-                    if theatre_ids is not None and tid not in targets:
-                        continue
-                    if tid not in targets:
-                        targets[tid] = defaultdict(list)
-
-                    merchant = theatre.get("merchant", "")
-                    for room in theatre.get("rooms", []):
-                        for st in room.get("all_showtimes", []):
-                            studio_id = st.get("studio_id")
-                            st_id = st.get("showtime_id")
-                            showtime_str = st.get("time") or st.get("showtime")
-
-                            if studio_id and st_id and showtime_str:
-                                # If today, ensure showtime is safely in the future (> 1 hour)
-                                if is_today:
-                                    try:
-                                        st_hour, st_minute = map(int, showtime_str.split(":"))
-                                        st_time = target_date.replace(
-                                            hour=st_hour, minute=st_minute, second=0, microsecond=0
-                                        )
-
-                                        # Skip if the showtime has already passed
-                                        if st_time <= now_jkt:
-                                            continue
-                                    except ValueError:
-                                        # If we can't parse the time, be safe and skip if it's today
-                                        continue
-
-                                # Keep up to 3 showtimes per studio to merge
-                                if len(targets[tid][studio_id]) < 3:
-                                    targets[tid][studio_id].append(
-                                        {"showtime_id": st_id, "merchant": merchant}
-                                    )
-
-    return targets
-
-
-async def bootstrap_theatre_layouts(
-    db: AsyncClient, scraper: SeatScraper, theatre_ids: list[str] | None
-) -> None:
-    targets = await find_showtimes_for_theatres(db, theatre_ids)
-
-    for theatre_id, studios in targets.items():
-        if not studios:
-            logger.warning(f"No showtimes found for theatre {theatre_id}")
-            continue
-
-        logger.info(f"Processing theatre {theatre_id} with {len(studios)} studios")
-        for studio_id, showtimes in studios.items():
-            studio_ref = (
-                db.collection(THEATRES)
-                .document(theatre_id)
-                .collection("studios")
-                .document(studio_id)
-            )
-            doc = await studio_ref.get()
-
-            existing_data = doc.to_dict() if doc.exists else {}
-            if existing_data.get("is_locked"):
-                logger.info(f"  Skipping Studio {studio_id} - Locked")
+    # 3. Apply consensus to the template
+    for row in base_layout:
+        new_seats = []
+        for s in row["seats"]:
+            sid = s.get("id")
+            if not sid:
+                # Keep aisles as aisles
+                s.pop("_raw_status", None)
+                s.pop("_is_rule_aisle", None)
+                new_seats.append(s)
                 continue
+            
+            statuses = seat_status_history.get(sid, [])
+            # Consensus Rule: 
+            # If it's ever 1 (Available) or 2 (Sold) -> It's a REAL seat.
+            # Otherwise -> It's a PHYSICAL aisle/permanent block.
+            is_real_seat = any(st in (1, 2) for st in statuses)
+            
+            if is_real_seat:
+                new_seats.append({"id": sid, "type": "seat"})
+            else:
+                new_seats.append({"id": "", "type": "aisle"})
+        
+        row["seats"] = new_seats
 
-            if existing_data.get("total_seats", 0) > 0 and existing_data.get("layout"):
-                logger.info(
-                    f"  Skipping Studio {studio_id} - Already mapped ({existing_data['total_seats']} seats)"
-                )
-                continue
+    return base_layout
 
-            merged_layout = existing_data.get("layout", [])
 
-            for st in showtimes:
-                logger.info(
-                    f"  Fetching layout for Studio {studio_id} via showtime {st['showtime_id']}"
-                )
-                raw_data = await scraper._fetch_seat_layout_api(st["showtime_id"], st["merchant"])
+async def discover_studios_from_performance(
+    db: AsyncClient, date: str, theatre_ids: list[str] | None = None, force: bool = False
+) -> dict[str, list[dict[str, Any]]]:
+    """Find unique studios and their sampled raw layouts from Firestore."""
+    logger.info(f"🔍 Discovering studios with raw layouts for {date}...")
+    movie_docs = await db.collection(SCHEDULES_V2).document(date).collection("movies").get()
+    
+    studio_samples = defaultdict(list)
+    processed_movies = 0
+    # Very conservative concurrency to prevent Firestore timeouts
+    semaphore = asyncio.Semaphore(5)
+    import random
 
-                # Enforce rate limit (max 5 RPS) immediately after the call to prevent runaway loops
-                await asyncio.sleep(0.2)
+    async def process_movie(m: Any) -> None:
+        nonlocal processed_movies
+        async with semaphore:
+            # Small jittered sleep to stagger the bursts
+            await asyncio.sleep(random.random() * 2.0)
+            
+            st_ref = db.collection(MOVIE_PERFORMANCE_V2).document(m.id).collection("days").document(date).collection("showtimes")
+            try:
+                # Use stream() instead of get() for better stability
+                async for doc in st_ref.stream():
+                    data = doc.to_dict()
+                    raw = data.get("initial_raw_layout")
+                    tid, sid, merchant = data.get("theatre_id"), data.get("studio_id"), data.get("merchant")
+                    
+                    if raw and tid and sid and (not theatre_ids or tid in theatre_ids):
+                        key = f"{tid}:{sid}"
+                        if len(studio_samples[key]) < 5:
+                            raw["__metadata"] = {"merchant": merchant, "theatre_id": tid, "studio_id": sid}
+                            studio_samples[key].append(raw)
+            except Exception as e:
+                logger.error(f"   ⚠️ Error movie {m.id}: {e}")
+        
+        processed_movies += 1
+        if processed_movies % 2 == 0:
+            logger.info(f"   Processed {processed_movies}/{len(movie_docs)} movies...")
 
-                if not raw_data:
-                    logger.warning(f"   Failed to fetch layout for showtime {st['showtime_id']}")
-                    continue
+    await asyncio.gather(*(process_movie(m) for m in movie_docs))
+    logger.info(f"✅ Discovered {len(studio_samples)} unique studios with data.")
+    return studio_samples
 
-                seat_map = raw_data.get("data", {}).get("seat_map", [])
-                _, unified = parse_to_master_layout(seat_map)
-                _, merged_layout = merge_layouts_logical_or(merged_layout, unified)
 
-            if merged_layout:
-                total_seats = sum(
-                    1 for r in merged_layout for s in r.get("seats", []) if s.get("type") == "seat"
-                )
+async def bootstrap_theatre_layouts(db: AsyncClient, studio_samples: dict[str, list[dict[str, Any]]], force: bool = False) -> None:
+    """Migrate layouts to version 3 (Ground Truth)."""
+    total_studios = len(studio_samples)
+    current = 0
 
-                update_data = {
-                    "layout": merged_layout,
-                    "total_seats": total_seats,
-                    "last_updated": datetime.now(JAKARTA_TZ).isoformat(),
-                }
+    for key, samples in studio_samples.items():
+        current += 1
+        theatre_id, studio_id = key.split(":")
+        merchant = samples[0]["__metadata"]["merchant"]
+        
+        # Skip if already migrated to V3
+        studio_ref = db.collection(THEATRES).document(theatre_id).collection("studios").document(studio_id)
+        existing = await studio_ref.get()
+        if existing.exists:
+            data = existing.to_dict()
+            if data.get("is_locked"): continue
+            if not force and data.get("version") == 3: continue
 
-                if doc.exists:
-                    await studio_ref.update(update_data)
-                else:
-                    # Should exist if discover_studios ran, but just in case
-                    update_data["studio_id"] = studio_id
-                    update_data["name"] = f"Studio {studio_id}"
-                    update_data["is_locked"] = False
-                    update_data["version"] = 1
-                    await studio_ref.set(update_data)
+        logger.info(f"[{current}/{total_studios}] Ground Truth Mapping: {merchant} | {theatre_id} | Studio {studio_id}")
+        
+        # 1. Parse all samples to Unified format (preserving status)
+        parsed_layouts = [parse_to_master_layout(s, merchant) for s in samples]
+        
+        # 2. Merge via consensus
+        final_layout = merge_consensus(parsed_layouts)
 
-                logger.info(f"  Saved Studio {studio_id}: {total_seats} seats")
+        if final_layout:
+            total_seats = sum(1 for r in final_layout for s in r.get("seats", []) if s.get("type") == "seat")
+            
+            # Preserve existing audit data (especially manual confirmation)
+            audit_data = {
+                "source": "raw_initial_layout",
+                "method": "multi_movie_consensus",
+                "sample_count": len(samples),
+                "is_confirmed": False,
+                "confirmed_at": None,
+                "version": 3
+            }
+            
+            if existing.exists:
+                old_data = existing.to_dict()
+                old_audit = old_data.get("audit", {})
+                if old_audit.get("is_confirmed"):
+                    audit_data["is_confirmed"] = True
+                    audit_data["confirmed_at"] = old_audit.get("confirmed_at")
+                    audit_data["confirmed_by"] = old_audit.get("confirmed_by")
+
+            update_data = {
+                "studio_id": studio_id,
+                "layout": final_layout,
+                "total_seats": total_seats,
+                "last_updated": datetime.now(JAKARTA_TZ).isoformat(),
+                "version": 3,
+                "audit": audit_data,
+                "is_locked": audit_data["is_confirmed"], # Lock if confirmed
+                "name": f"Studio {studio_id}"
+            }
+            await studio_ref.set(update_data, merge=True)
+            logger.info(f"   ✅ Saved V3 with Audit: {total_seats} seats (Consensus from {len(samples)} showtimes)")
 
 
 async def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--theatre-ids", type=str, required=False, help="Comma-separated theatre IDs"
-    )
-    parser.add_argument(
-        "--all", action="store_true", help="Process all theatres found in schedules"
-    )
+    parser.add_argument("--theatre-ids", type=str, help="Comma-separated theatre IDs")
+    parser.add_argument("--all", action="store_true", help="Process all")
+    parser.add_argument("--date", type=str, help="Date (YYYY-MM-DD)")
+    parser.add_argument("--force", action="store_true", help="Force re-migration")
     args = parser.parse_args()
 
     if not args.theatre_ids and not args.all:
-        logger.error("Must provide either --theatre-ids or --all")
+        logger.error("Usage: --all or --theatre-ids ID1,ID2")
         return
 
-    t_ids = None
-    if args.theatre_ids:
-        t_ids = [tid.strip() for tid in args.theatre_ids.split(",") if tid.strip()]
-
-    # Setup scraper
-    repo = FirestoreTokenRepository()
-    token = repo.get_current()
-    if not token or token.is_expired:
-        logger.error("No valid token found in Firestore. Please run login script.")
-        return
-
-    scraper = SeatScraper()
-    scraper.auth_token = token.token.strip('"')
-
-    db = await get_firestore_client()
+    t_ids = [tid.strip() for tid in args.theatre_ids.split(",")] if args.theatre_ids else None
+    date = args.date or datetime.now(JAKARTA_TZ).strftime("%Y-%m-%d")
+    
+    db = await get_firestore_async_client()
     try:
-        await bootstrap_theatre_layouts(db, scraper, t_ids)
+        studio_samples = await discover_studios_from_performance(db, date, t_ids, args.force)
+        if studio_samples:
+            await bootstrap_theatre_layouts(db, studio_samples, args.force)
     finally:
-        db.close()
-
+        try: db.close()
+        except: pass
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -11,6 +11,17 @@ export interface LayoutRow {
     seats: Seat[];
 }
 
+export interface Audit {
+    source: 'raw_initial_layout' | 'guessed_compressed_layout';
+    method: 'multi_movie_consensus' | 'snapshot_inference';
+    is_confirmed: boolean;
+    confirmed_at?: string;
+    confirmed_by?: string;
+    version: number;
+    sample_count?: number;
+    audited_at?: string;
+}
+
 export interface Studio {
     studio_id: string;
     name: string;
@@ -18,6 +29,8 @@ export interface Studio {
     is_locked?: boolean;
     last_updated?: string;
     layout?: LayoutRow[];
+    audit?: Audit;
+    version?: number;
 }
 
 const fetcher = (url: string) => fetch(url).then(res => {
