@@ -36,6 +36,7 @@ from backend.infrastructure.firestore_collections import (
     SCHEDULES,
     SCHEDULES_V2,
 )
+from backend.infrastructure.token_refresher import ensure_valid_token
 
 # Configure logging
 logging.basicConfig(
@@ -48,7 +49,6 @@ logger = logging.getLogger(__name__)
 # Constants
 RATE_LIMIT = 5  # requests per second (conservative to avoid rate limiting)
 MAX_CONCURRENT = 20  # max concurrent tasks
-TOKEN_REFRESH_THRESHOLD = 25 * 60  # 25 minutes in seconds
 MERCHANT_PATHS = {
     "CGV": "cgv",
     "XXI": "xxi",
@@ -64,132 +64,11 @@ def get_merchant_path(merchant: str) -> str:
 
 async def get_firestore_async_client() -> AsyncClient:
     """Initialize async Firestore client from service account."""
-    sa_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
-    if sa_json:
-        sa_info = json.loads(sa_json)
-        credentials = service_account.Credentials.from_service_account_info(sa_info)  # type: ignore[no-untyped-call]
-        return AsyncClient(credentials=credentials, project=sa_info["project_id"])
-    return AsyncClient()
+    from backend.infrastructure.repositories.firestore_utils import (
+        get_firestore_async_client as get_client,
+    )
 
-
-class TokenManager:
-    """Manages TIX API token with lock-protected refresh."""
-
-    def __init__(self) -> None:
-        self.token: str | None = None
-        self.token_acquired_at: float = 0
-        self.lock = asyncio.Lock()
-        self._db: AsyncClient | None = None
-
-    async def initialize(self, db: AsyncClient) -> str | None:
-        """Initialize token with forced refresh.
-
-        Always refreshes the token at startup since the stored token is likely
-        expired (access tokens expire in ~30 min, but daily scrapes run 24h apart).
-        This avoids the race condition where the first API calls fail with 401.
-        """
-        self._db = db
-        # Force refresh - don't trust stored token's age
-        new_token = await self._refresh_token_via_api()
-        if new_token:
-            self.token = new_token
-            self.token_acquired_at = time.time()
-            logger.info("✅ Token refreshed at startup")
-        else:
-            # Fallback: try to use stored token (may be expired)
-            logger.warning("⚠️ Token refresh failed, trying stored token...")
-            self.token = await self._fetch_token_from_firestore()
-            self.token_acquired_at = time.time()
-        return self.token
-
-    async def _fetch_token_from_firestore(self) -> str | None:
-        """Get current token from Firestore."""
-        if self._db is None:
-            return None
-        doc = await self._db.collection("auth_tokens").document("tix_jwt").get()
-        if not doc.exists:
-            return None
-
-        data = doc.to_dict()
-        token = data.get("token") or data.get("access_token")
-        return str(token) if token else None
-
-    async def _refresh_token_via_api(self) -> str | None:
-        """Refresh access token via API."""
-        if self._db is None:
-            return None
-        doc = await self._db.collection("auth_tokens").document("tix_jwt").get()
-        if not doc.exists:
-            return None
-
-        refresh_token = doc.to_dict().get("refresh_token")
-        if not refresh_token:
-            return None
-
-        url = "https://api-b2b.tix.id/v1/users/refresh"
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    url,
-                    headers={
-                        "Authorization": f"Bearer {refresh_token}",
-                        "Content-Type": "application/json",
-                        "platform": "web",
-                    },
-                    timeout=30,
-                )
-
-                if response.status_code == 200:
-                    data = response.json()
-                    new_token = data.get("data", {}).get("token")
-                    if new_token:
-                        # Update Firestore
-                        await (
-                            self._db.collection("auth_tokens")
-                            .document("tix_jwt")
-                            .set(
-                                {
-                                    "access_token": new_token,
-                                    "refresh_token": refresh_token,
-                                    "updated_at": datetime.now(UTC).isoformat(),
-                                },
-                                merge=True,
-                            )
-                        )
-                        logger.info("✅ Token refreshed successfully")
-                        return str(new_token)
-        except Exception as e:
-            logger.error(f"Token refresh failed: {e}")
-
-        return None
-
-    async def get_valid_token(self) -> str | None:
-        """Get a valid token, refreshing if necessary (thread-safe)."""
-        async with self.lock:
-            elapsed = time.time() - self.token_acquired_at
-
-            if elapsed > TOKEN_REFRESH_THRESHOLD or self.token is None:
-                logger.info(f"🔄 Token age {elapsed / 60:.1f}min, refreshing...")
-                new_token = await self._refresh_token_via_api()
-                if new_token:
-                    self.token = new_token
-                    self.token_acquired_at = time.time()
-                else:
-                    logger.critical("🚨 REFRESH TOKEN IS DEAD! 🚨")
-                    logger.critical("Manual intervention required!")
-                    return None
-
-            return self.token
-
-    async def force_refresh(self) -> str | None:
-        """Force token refresh (called on 401 errors)."""
-        async with self.lock:
-            self.token = None
-            new_token = await self._refresh_token_via_api()
-            if new_token:
-                self.token = new_token
-                self.token_acquired_at = time.time()
-            return new_token
+    return await get_client()
 
 
 async def fetch_seat_layout_async(
@@ -493,7 +372,7 @@ async def save_initial_layout_async(
         return False
 
 
-class ScraperContext:
+class LayoutScraper:
     """Shared context for concurrent scraping."""
 
     def __init__(
@@ -506,7 +385,6 @@ class ScraperContext:
         self._db = db
         self.rate_limiter = AsyncLimiter(rate_limit, 1)
         self.semaphore = asyncio.Semaphore(max_concurrent)
-        self.token_manager = TokenManager()
         self.stats = {"total": 0, "success": 0, "failed": 0, "no_layout": 0, "skipped": 0}
         self.stats_lock = asyncio.Lock()
         self.force = force
@@ -533,9 +411,12 @@ class ScraperContext:
             await self.increment_stat("skipped")
             return
 
-        # 2. Get valid token (with lock-protected refresh)
-        token = await self.token_manager.get_valid_token()
-        if not token:
+        # 2. Get valid token (with distributed lock protection)
+        try:
+            token_obj = await ensure_valid_token()
+            token = token_obj.token
+        except Exception as e:
+            logger.error(f"Failed to get valid token: {e}")
             await self.increment_stat("failed")
             return
 
@@ -547,12 +428,16 @@ class ScraperContext:
 
             # 4. Handle auth failure with retry
             if layout_data and layout_data.get("__auth_failure"):
-                token = await self.token_manager.force_refresh()
-                if token:
+                logger.info("Auth failure detected, forcing token refresh...")
+                try:
+                    token_obj = await ensure_valid_token(force_refresh=True)
+                    token = token_obj.token
                     async with self.rate_limiter:
                         layout_data = await fetch_seat_layout_async(
                             self.http_client, showtime_id, showtime["merchant"], token
                         )
+                except Exception as e:
+                    logger.error(f"Force token refresh failed: {e}")
 
             if not layout_data or layout_data.get("__auth_failure"):
                 await self.increment_stat("failed")
@@ -625,20 +510,20 @@ async def scrape_showtimes_concurrent(
     force: bool = False,
 ) -> dict[str, int]:
     """Scrape all showtimes with rate limiting, token refresh, and checkpointing."""
-    ctx = ScraperContext(db, rate_limit, max_concurrent, force)
+    ctx = LayoutScraper(db, rate_limit, max_concurrent, force)
     ctx.stats["total"] = len(showtimes)
 
     # Progress reporter (runs in background)
     progress_task = asyncio.create_task(ctx.report_progress())
 
     try:
-        # Initialize token
-        await ctx.token_manager.initialize(db)
-        if not ctx.token_manager.token:
-            logger.error("❌ No valid token - aborting")
+        # Pre-verify token
+        try:
+            await ensure_valid_token()
+            logger.info("🔑 Token verified, starting concurrent scrape...")
+        except Exception as e:
+            logger.error(f"❌ Initial token verification failed: {e}")
             return ctx.stats
-
-        logger.info("🔑 Token acquired, starting concurrent scrape...")
 
         # Spawn all tasks - semaphore and rate_limiter control concurrency
         async with asyncio.TaskGroup() as tg:

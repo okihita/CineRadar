@@ -45,6 +45,26 @@ def get_firestore_client() -> Any:
     return firestore.Client(project=os.environ.get("FIREBASE_PROJECT_ID", "cineradar-481014"))
 
 
+async def get_firestore_async_client() -> Any:
+    """Get async Firestore client with proper credentials."""
+    from google.cloud.firestore import AsyncClient
+
+    # Check for service account JSON in env (for GitHub Actions)
+    service_account_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
+    if service_account_json:
+        creds_data = json.loads(service_account_json)
+        # AsyncClient handles credentials slightly differently but supports from_service_account_info
+        from google.oauth2 import service_account
+
+        credentials = service_account.Credentials.from_service_account_info(creds_data)
+        return AsyncClient(
+            credentials=credentials, project=creds_data.get("project_id", "cineradar-481014")
+        )
+
+    # Default: use ADC
+    return AsyncClient(project=os.environ.get("FIREBASE_PROJECT_ID", "cineradar-481014"))
+
+
 def prepare_theatre_upsert(
     theatre_data: dict[str, Any], validate: bool = True
 ) -> tuple[str, dict[str, Any]] | None:
