@@ -1216,7 +1216,6 @@ def save_snapshot(
         "scraped_at": datetime.now(JAKARTA_TZ).isoformat(),
         "scrape_phase": showtime_data.get("scrape_phase", "T-30"),
         # True Audience Metrics
-        "initial_unavailable": 0,  # Deprecated: Kept at 0 for schema backward compatibility
         "final_unavailable": sold_seats,
         "audience_count": audience_count,
         "audience_pct": round(audience_pct, 1),

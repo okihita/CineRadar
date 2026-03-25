@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: '45 18 * * *'  # 1:45 AM WIB (18:45 UTC previous day) to avoid top-of-hour congestion
   workflow_dispatch:
+    inputs:
+      force:
+        description: 'Force scrape even if checkpoints exist'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   scrape-baseline:
@@ -23,7 +29,12 @@ jobs:
         run: uv sync
 
       - name: Scrape Initial Seat Layouts (Baseline)
-        run: PYTHONPATH=. uv run python backend/scripts/scrape_initial_layouts.py
+        run: |
+          FORCE_FLAG=""
+          if [ "${{ inputs.force }}" == "true" ]; then
+            FORCE_FLAG="--force"
+          fi
+          PYTHONPATH=. uv run python backend/scripts/scrape_initial_layouts.py $FORCE_FLAG
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 

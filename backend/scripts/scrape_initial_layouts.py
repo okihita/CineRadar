@@ -410,6 +410,7 @@ async def save_initial_layout_async(
     unavailable: int,
     layout_grid: list[Any],
     price: int | None = None,
+    raw_layout: dict[str, Any] | None = None,
 ) -> bool:
     """Save initial layout to Firestore (dual-write to v1 and V2) - async.
 
@@ -441,6 +442,7 @@ async def save_initial_layout_async(
         "price": price,
         # Initial state (morning scrape)
         "initial_layout_compressed": layout_compressed,
+        "initial_raw_layout": raw_layout,
         "initial_unavailable": unavailable,
         "initial_available": total_seats - unavailable,
         "initial_scraped_at": datetime.now(JAKARTA_TZ).isoformat(),
@@ -593,7 +595,7 @@ class ScraperContext:
 
             # 6. Async Firestore save (V1 + V2)
             if await save_initial_layout_async(
-                self._db, showtime, total_seats, unavailable, layout_grid, price
+                self._db, showtime, total_seats, unavailable, layout_grid, price, layout_data
             ):
                 await self.increment_stat("success")
             else:
