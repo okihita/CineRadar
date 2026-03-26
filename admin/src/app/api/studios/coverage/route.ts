@@ -24,6 +24,9 @@ export async function GET() {
         let confirmedCount = 0;
         let pendingCount = 0;
         
+        const v2List: Array<{ theatre_name: string, theatre_id: string, studio_id: string }> = [];
+        const pendingList: Array<{ theatre_name: string, theatre_id: string, studio_id: string }> = [];
+
         const theatreStats = new Map<string, {
             id: string;
             name: string;
@@ -39,11 +42,12 @@ export async function GET() {
             const version = (studio.version as number) || 0;
             const audit = (studio.audit as { source?: string; is_confirmed?: boolean }) || {};
             const isLocked = (studio.is_locked as boolean) || false;
+            const theatreName = theatreNames.get(theatreId) || `Unknown (${theatreId})`;
 
             if (!theatreStats.has(theatreId)) {
                 theatreStats.set(theatreId, {
                     id: theatreId,
-                    name: theatreNames.get(theatreId) || `Unknown (${theatreId})`,
+                    name: theatreName,
                     total: 0,
                     scraped: 0,
                     missingStudios: []
@@ -62,11 +66,19 @@ export async function GET() {
                 const isV3 = version === 3 || audit.source === 'raw_initial_layout';
                 const isConfirmed = audit.is_confirmed === true || isLocked === true;
 
-                if (isV3) v3Count += 1;
-                else v2Count += 1;
+                if (isV3) {
+                    v3Count += 1;
+                } else {
+                    v2Count += 1;
+                    v2List.push({ theatre_name: theatreName, theatre_id: theatreId, studio_id: studioId });
+                }
 
-                if (isConfirmed) confirmedCount += 1;
-                else pendingCount += 1;
+                if (isConfirmed) {
+                    confirmedCount += 1;
+                } else {
+                    pendingCount += 1;
+                    pendingList.push({ theatre_name: theatreName, theatre_id: theatreId, studio_id: studioId });
+                }
             } else {
                 stats.missingStudios.push(studioId);
             }
@@ -116,8 +128,10 @@ export async function GET() {
                 percentage: totalStudios > 0 ? (scrapedStudios / totalStudios) * 100 : 0,
                 v3_count: v3Count,
                 v2_count: v2Count,
+                v2_list: v2List,
                 confirmed_count: confirmedCount,
-                pending_count: pendingCount
+                pending_count: pendingCount,
+                pending_list: pendingList
             },
             theatre_progress: {
                 total: totalTheatres,

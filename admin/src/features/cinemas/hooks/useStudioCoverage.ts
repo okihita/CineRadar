@@ -7,8 +7,10 @@ export interface StudioCoverageData {
         percentage: number;
         v3_count: number;
         v2_count: number;
+        v2_list: Array<{ theatre_name: string, theatre_id: string, studio_id: string }>;
         confirmed_count: number;
         pending_count: number;
+        pending_list: Array<{ theatre_name: string, theatre_id: string, studio_id: string }>;
     };
     theatre_progress: {
         total: number;

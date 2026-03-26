@@ -3,10 +3,63 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useStudioCoverage } from '../hooks/useStudioCoverage';
-import { Database, AlertTriangle, CheckCircle2, Search, Zap, ShieldCheck, Clock } from 'lucide-react';
+import { Database, AlertTriangle, CheckCircle2, Search, Zap, ShieldCheck, Clock, ExternalLink } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { 
+    Dialog, 
+    DialogContent, 
+    DialogHeader, 
+    DialogTitle, 
+    DialogTrigger,
+    DialogDescription
+} from '@/components/ui/dialog';
+
+function StudioListDialog({ 
+    title, 
+    description, 
+    list, 
+    trigger 
+}: { 
+    title: string, 
+    description: string, 
+    list: Array<{ theatre_name: string, theatre_id: string, studio_id: string }>,
+    trigger: React.ReactNode
+}) {
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                {trigger}
+            </DialogTrigger>
+            <DialogContent className="max-w-md max-h-[80vh] flex flex-col p-0 overflow-hidden">
+                <DialogHeader className="p-6 pb-2">
+                    <DialogTitle>{title}</DialogTitle>
+                    <DialogDescription>{description}</DialogDescription>
+                </DialogHeader>
+                <div className="flex-1 overflow-y-auto px-6 pb-6 mt-2">
+                    <div className="space-y-2">
+                        {list.length === 0 ? (
+                            <p className="text-center py-8 text-muted-foreground text-sm italic">No studios in this category.</p>
+                        ) : (
+                            [...list].sort((a, b) => a.theatre_name.localeCompare(b.theatre_name)).map((s, idx) => (
+                                <div key={`${s.theatre_id}-${s.studio_id}-${idx}`} className="flex items-center justify-between p-2 rounded-md border bg-muted/20 hover:bg-muted/40 transition-colors">
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="text-[11px] font-bold truncate leading-tight">{s.theatre_name}</span>
+                                        <span className="text-[10px] text-muted-foreground font-mono leading-tight">Studio {s.studio_id}</span>
+                                    </div>
+                                    <Badge variant="outline" className="text-[9px] font-mono shrink-0 ml-2 px-1.5 py-0 h-4 bg-background">
+                                        {s.theatre_id.slice(0, 8)}
+                                    </Badge>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+}
 
 export function StudioCoverageCard() {
     const { coverage, isLoading, isError } = useStudioCoverage();
@@ -136,9 +189,20 @@ export function StudioCoverageCard() {
                                 </div>
                                 <div>
                                     <div className="flex items-center justify-between mb-1.5">
-                                        <span className="text-xs font-medium opacity-70">Guessed Snapshots (V2)</span>
+                                        <StudioListDialog 
+                                           title="Guessed Snapshots (V2)"
+                                           description={`${studio_progress.v2_count} studios still using legacy V2 guessed layouts.`}
+                                           list={studio_progress.v2_list || []}
+                                           trigger={
+                                               <span className="text-xs font-medium opacity-70 hover:opacity-100 hover:text-primary cursor-pointer transition-all flex items-center gap-1 group">
+                                                   Guessed Snapshots (V2)
+                                                   <ExternalLink className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                               </span>
+                                           }
+                                        />
                                         <span className="text-[10px] font-mono">{studio_progress.v2_count}</span>
                                     </div>
+
                                     <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
                                         <div 
                                             className="h-full bg-amber-500 opacity-50" 
@@ -176,9 +240,20 @@ export function StudioCoverageCard() {
                                 </div>
                                 <div>
                                     <div className="flex items-center justify-between mb-1.5">
-                                        <span className="text-xs font-medium opacity-70">Pending Verification</span>
+                                        <StudioListDialog 
+                                           title="Pending Verification"
+                                           description={`${studio_progress.pending_count} studios with unconfirmed physical layouts.`}
+                                           list={studio_progress.pending_list || []}
+                                           trigger={
+                                               <span className="text-xs font-medium opacity-70 hover:opacity-100 hover:text-primary cursor-pointer transition-all flex items-center gap-1 group">
+                                                   Pending Verification
+                                                   <ExternalLink className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                               </span>
+                                           }
+                                        />
                                         <span className="text-[10px] font-mono">{studio_progress.pending_count}</span>
                                     </div>
+
                                     <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
                                         <div 
                                             className="h-full bg-slate-400 opacity-30" 
