@@ -94,19 +94,20 @@ deploy_scheduler() {
         --location=$REGION \
         --project=$PROJECT_ID \
         --quiet 2>/dev/null || true
-    
-    # Create new scheduler job (every 5 minutes, 09:00 AM - 11:59 PM Jakarta)
+    # Create new scheduler job (every 5 minutes, 08:00 AM - 11:59 PM Jakarta)
     # NOTE: Hours are in Jakarta time because --time-zone is set to Asia/Jakarta
-    # Changed to 9-23 to catch earliest showtimes (e.g. 10:00 AM needs 09:50 trigger)
+    # Changed to 8-23 to catch 09:00 AM showtimes (needs 08:30 trigger for T-30)
     gcloud scheduler jobs create http jit-dispatcher \
         --location=$REGION \
-        --schedule="*/5 9-23 * * *" \
+        --project=$PROJECT_ID \
+        --schedule="*/5 8-23 * * *" \
         --time-zone="Asia/Jakarta" \
         --uri="$DISPATCHER_URL" \
         --http-method=POST \
         --project=$PROJECT_ID
-    
-    echo "   ✓ Scheduler: every 5 min (09:00-23:55 WIB)"
+
+    echo "   ✓ Scheduler: every 5 min (08:00-23:55 WIB)"
+
 }
 
 deploy_sweeper() {
