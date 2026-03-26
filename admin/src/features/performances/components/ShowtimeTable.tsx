@@ -33,6 +33,10 @@ export interface ShowtimeSnapshot {
     // Scrape details
     scrape_phase?: string;
     scraped_at?: string;
+
+    // Studio and pricing info
+    studio_id?: string;
+    price?: number;
 }
 
 type SortField = 'showtime' | 'occupancy' | 'theatre' | 'city';
@@ -673,6 +677,23 @@ function ShowtimeRow({ showtime: st }: { showtime: ShowtimeSnapshot }) {
                                 <span className="ml-4 font-mono text-[10px] opacity-50">ID: {st.showtime_id}</span>
                             </div>
                         )}
+                        {/* Studio and Price Info */}
+                        <div className="flex items-center gap-4 mb-4">
+                            {st.studio_id && (
+                                <div className="flex items-center gap-2">
+                                    <Layers className="w-4 h-4 text-muted-foreground" />
+                                    <span className="text-sm font-medium">Studio {st.studio_id}</span>
+                                </div>
+                            )}
+                            {st.price !== undefined && st.price !== null && (
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm text-muted-foreground">Ticket:</span>
+                                    <span className="text-sm font-semibold text-foreground">
+                                        Rp{st.price.toLocaleString('id-ID')}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
                         <div className="flex flex-col lg:flex-row gap-4">
                             <div className="w-full lg:w-1/3">
                                 <SeatBreakdownCard

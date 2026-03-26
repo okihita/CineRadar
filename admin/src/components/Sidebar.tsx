@@ -20,15 +20,17 @@ const menuItems = [
     href: '/cinemas',
     icon: MapPin,
   },
+  // V1 Performance menu hidden - has field name mismatch bug (last_updated vs last_swept_at)
+  // See: plans/v1-performance-debug-analysis.md
+  // {
+  //   title: 'Performance Intelligence',
+  //   description: 'Box office tracking',
+  //   href: '/performances',
+  //   icon: Film,
+  // },
   {
-    title: 'Performance Intelligence',
+    title: 'Performance',
     description: 'Box office tracking',
-    href: '/performances',
-    icon: Film,
-  },
-  {
-    title: 'Performance V2',
-    description: 'V2 Data architecture',
     href: '/performances_v2',
     icon: Film,
   },
