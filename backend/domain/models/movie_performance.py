@@ -4,6 +4,8 @@ Represents aggregated movie performance data and individual showtime snapshots.
 Used for tracking occupancy across all cities/theatres for a specific movie.
 """
 
+from __future__ import annotations
+
 import gzip
 import json
 from dataclasses import dataclass, field

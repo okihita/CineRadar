@@ -5,10 +5,8 @@ Follows the Repository pattern - abstracts storage details from business logic.
 """
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from backend.domain.models import ScrapeResult, Theatre, Token
+from backend.domain.models import ScrapeResult, Theatre, Token
 
 
 class IMovieRepository(ABC):

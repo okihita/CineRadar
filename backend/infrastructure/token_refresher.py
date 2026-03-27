@@ -5,17 +5,15 @@ import os
 import time
 import uuid
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any, cast
 
 import httpx
 
+from backend.domain.models import Token
 from backend.infrastructure.repositories.firestore_token import (
     FirestoreTokenRepository,
     store_token_async,
 )
-
-if TYPE_CHECKING:
-    from backend.domain.models import Token
 
 logger = logging.getLogger(__name__)
 
@@ -288,7 +286,9 @@ class TokenRefresher:
 
             # Try API refresh first
             if token and token.refresh_token:
-                new_access_token, new_refresh_token = await self.try_api_refresh(token.refresh_token)
+                new_access_token, new_refresh_token = await self.try_api_refresh(
+                    token.refresh_token
+                )
                 if new_access_token:
                     await store_token_async(
                         new_access_token,

@@ -17,12 +17,14 @@ import re
 import sys
 from collections import defaultdict
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 sys.path.insert(0, ".")
 
 
 import contextlib
+
+from google.cloud.firestore import AsyncClient
 
 from backend.domain.time import JAKARTA_TZ
 from backend.infrastructure.firestore_collections import (
@@ -32,9 +34,6 @@ from backend.infrastructure.firestore_collections import (
 )
 from backend.infrastructure.repositories.firestore_utils import get_firestore_async_client
 
-if TYPE_CHECKING:
-    from google.cloud.firestore import AsyncClient
-
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
@@ -43,9 +42,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def parse_to_master_layout(
-    raw_data: dict[str, Any], merchant: str
-) -> list[dict[str, Any]]:
+def parse_to_master_layout(raw_data: dict[str, Any], merchant: str) -> list[dict[str, Any]]:
     """Convert raw API data into CineRadar Unified Grid format.
 
     This version is 'Aisle-Aware' and respects XXI vertical lane rules.
@@ -82,7 +79,11 @@ def parse_to_master_layout(
         if merchant == "XXI":
             vertical_lanes = (data_payload.get("seat_rules", {}) or {}).get("vertical_lane") or []
             for lane in vertical_lanes:
-                start_row, end_row, before_col = lane.get("start"), lane.get("end"), lane.get("before_seat_column")
+                start_row, end_row, before_col = (
+                    lane.get("start"),
+                    lane.get("end"),
+                    lane.get("before_seat_column"),
+                )
                 if not before_col:
                     continue
 
@@ -99,7 +100,9 @@ def parse_to_master_layout(
                                 target_idx = idx
                                 break
                         if target_idx != -1:
-                            row["seats"].insert(target_idx, {"id": "", "type": "aisle", "_is_rule_aisle": True})
+                            row["seats"].insert(
+                                target_idx, {"id": "", "type": "aisle", "_is_rule_aisle": True}
+                            )
                     if row["row_name"] == end_row:
                         in_range = False
     else:
@@ -201,18 +204,32 @@ async def discover_studios_from_performance(
             # Small jittered sleep to stagger the bursts
             await asyncio.sleep(random.random() * 2.0)
 
-            st_ref = db.collection(MOVIE_PERFORMANCE_V2).document(m.id).collection("days").document(date).collection("showtimes")
+            st_ref = (
+                db.collection(MOVIE_PERFORMANCE_V2)
+                .document(m.id)
+                .collection("days")
+                .document(date)
+                .collection("showtimes")
+            )
             try:
                 # Use stream() instead of get() for better stability
                 async for doc in st_ref.stream():
                     data = doc.to_dict()
                     raw = data.get("initial_raw_layout")
-                    tid, sid, merchant = data.get("theatre_id"), data.get("studio_id"), data.get("merchant")
+                    tid, sid, merchant = (
+                        data.get("theatre_id"),
+                        data.get("studio_id"),
+                        data.get("merchant"),
+                    )
 
                     if raw and tid and sid and (not theatre_ids or tid in theatre_ids):
                         key = f"{tid}:{sid}"
                         if len(studio_samples[key]) < 5:
-                            raw["__metadata"] = {"merchant": merchant, "theatre_id": tid, "studio_id": sid}
+                            raw["__metadata"] = {
+                                "merchant": merchant,
+                                "theatre_id": tid,
+                                "studio_id": sid,
+                            }
                             studio_samples[key].append(raw)
             except Exception as e:
                 logger.error(f"   ⚠️ Error movie {m.id}: {e}")
@@ -226,7 +243,9 @@ async def discover_studios_from_performance(
     return studio_samples
 
 
-async def bootstrap_theatre_layouts(db: AsyncClient, studio_samples: dict[str, list[dict[str, Any]]], force: bool = False) -> None:
+async def bootstrap_theatre_layouts(
+    db: AsyncClient, studio_samples: dict[str, list[dict[str, Any]]], force: bool = False
+) -> None:
     """Migrate layouts to version 3 (Ground Truth)."""
     total_studios = len(studio_samples)
     current = 0
@@ -237,7 +256,9 @@ async def bootstrap_theatre_layouts(db: AsyncClient, studio_samples: dict[str, l
         merchant = samples[0]["__metadata"]["merchant"]
 
         # Skip if already migrated to V3
-        studio_ref = db.collection(THEATRES).document(theatre_id).collection("studios").document(studio_id)
+        studio_ref = (
+            db.collection(THEATRES).document(theatre_id).collection("studios").document(studio_id)
+        )
         existing = await studio_ref.get()
         if existing.exists:
             data = existing.to_dict()
@@ -246,7 +267,9 @@ async def bootstrap_theatre_layouts(db: AsyncClient, studio_samples: dict[str, l
             if not force and data.get("version") == 3:
                 continue
 
-        logger.info(f"[{current}/{total_studios}] Ground Truth Mapping: {merchant} | {theatre_id} | Studio {studio_id}")
+        logger.info(
+            f"[{current}/{total_studios}] Ground Truth Mapping: {merchant} | {theatre_id} | Studio {studio_id}"
+        )
 
         # 1. Parse all samples to Unified format (preserving status)
         parsed_layouts = [parse_to_master_layout(s, merchant) for s in samples]
@@ -255,7 +278,9 @@ async def bootstrap_theatre_layouts(db: AsyncClient, studio_samples: dict[str, l
         final_layout = merge_consensus(parsed_layouts)
 
         if final_layout:
-            total_seats = sum(1 for r in final_layout for s in r.get("seats", []) if s.get("type") == "seat")
+            total_seats = sum(
+                1 for r in final_layout for s in r.get("seats", []) if s.get("type") == "seat"
+            )
 
             # Preserve existing audit data (especially manual confirmation)
             audit_data = {
@@ -264,7 +289,7 @@ async def bootstrap_theatre_layouts(db: AsyncClient, studio_samples: dict[str, l
                 "sample_count": len(samples),
                 "is_confirmed": False,
                 "confirmed_at": None,
-                "version": 3
+                "version": 3,
             }
 
             if existing.exists:
@@ -282,11 +307,13 @@ async def bootstrap_theatre_layouts(db: AsyncClient, studio_samples: dict[str, l
                 "last_updated": datetime.now(JAKARTA_TZ).isoformat(),
                 "version": 3,
                 "audit": audit_data,
-                "is_locked": audit_data["is_confirmed"], # Lock if confirmed
-                "name": f"Studio {studio_id}"
+                "is_locked": audit_data["is_confirmed"],  # Lock if confirmed
+                "name": f"Studio {studio_id}",
             }
             await studio_ref.set(update_data, merge=True)
-            logger.info(f"   ✅ Saved V3 with Audit: {total_seats} seats (Consensus from {len(samples)} showtimes)")
+            logger.info(
+                f"   ✅ Saved V3 with Audit: {total_seats} seats (Consensus from {len(samples)} showtimes)"
+            )
 
 
 async def main() -> None:
@@ -312,6 +339,7 @@ async def main() -> None:
     finally:
         with contextlib.suppress(BaseException):
             db.close()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

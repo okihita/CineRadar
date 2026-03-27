@@ -4,6 +4,8 @@ Represents detailed movie information from the TIX.id movie details API.
 This is enriched data beyond the basic movie scraped during daily runs.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any

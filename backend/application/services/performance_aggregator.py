@@ -6,12 +6,9 @@ Runs in real-time after each showtime is scraped.
 
 import logging
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
 
 from backend.domain.models import DailyPerformance, MovieMetadata, ShowtimeSnapshot
-
-if TYPE_CHECKING:
-    from backend.infrastructure.repositories import FirestoreMoviePerformanceRepository
+from backend.infrastructure.repositories import FirestoreMoviePerformanceRepository
 
 logger = logging.getLogger(__name__)
 

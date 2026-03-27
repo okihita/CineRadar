@@ -18,12 +18,13 @@ import logging
 import sys
 import time
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 sys.path.insert(0, ".")
 
 import httpx
 from aiolimiter import AsyncLimiter
+from google.cloud.firestore import AsyncClient
 
 from backend.domain.time import JAKARTA_TZ
 from backend.infrastructure.firestore_collections import (
@@ -34,9 +35,6 @@ from backend.infrastructure.firestore_collections import (
     SCHEDULES_V2,
 )
 from backend.infrastructure.token_refresher import ensure_valid_token
-
-if TYPE_CHECKING:
-    from google.cloud.firestore import AsyncClient
 
 # Configure logging
 logging.basicConfig(

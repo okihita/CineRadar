@@ -18,7 +18,8 @@ sys.path.insert(0, ".")
 
 
 import contextlib
-from typing import TYPE_CHECKING
+
+from google.cloud.firestore import AsyncClient
 
 from backend.domain.time import JAKARTA_TZ
 from backend.infrastructure.firestore_collections import (
@@ -28,9 +29,6 @@ from backend.infrastructure.firestore_collections import (
 )
 from backend.infrastructure.repositories.firestore_utils import get_firestore_async_client
 from backend.scripts.bootstrap_studio_layouts import merge_consensus, parse_to_master_layout
-
-if TYPE_CHECKING:
-    from google.cloud.firestore import AsyncClient
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 logger = logging.getLogger(__name__)
@@ -131,7 +129,11 @@ async def recover_v2_studios(db: AsyncClient, v2_map: dict[str, list[str]], date
                     raw = data.get("initial_raw_layout")
                     if raw:
                         merchant = data.get("merchant")
-                        raw["__metadata"] = {"merchant": merchant, "theatre_id": tid, "studio_id": sid}
+                        raw["__metadata"] = {
+                            "merchant": merchant,
+                            "theatre_id": tid,
+                            "studio_id": sid,
+                        }
                         samples.append(raw)
             except Exception as e:
                 logger.error(f"   ⚠️ Error fetching exact showtime {st_id}: {e}")
@@ -142,7 +144,9 @@ async def recover_v2_studios(db: AsyncClient, v2_map: dict[str, list[str]], date
             final_layout = merge_consensus(parsed_layouts)
 
             if final_layout:
-                total_seats = sum(1 for r in final_layout for s in r.get("seats", []) if s.get("type") == "seat")
+                total_seats = sum(
+                    1 for r in final_layout for s in r.get("seats", []) if s.get("type") == "seat"
+                )
                 update_data = {
                     "layout": final_layout,
                     "total_seats": total_seats,
@@ -153,11 +157,17 @@ async def recover_v2_studios(db: AsyncClient, v2_map: dict[str, list[str]], date
                         "method": "multi_movie_consensus_recovery",
                         "sample_count": len(samples),
                         "is_confirmed": False,
-                        "version": 3
-                    }
+                        "version": 3,
+                    },
                 }
 
-                await db.collection(THEATRES).document(tid).collection("studios").document(sid).set(update_data, merge=True)
+                await (
+                    db.collection(THEATRES)
+                    .document(tid)
+                    .collection("studios")
+                    .document(sid)
+                    .set(update_data, merge=True)
+                )
                 logger.info(f"   ✅ Recovered V3! {total_seats} seats from {len(samples)} samples.")
                 recovered_count += 1
         else:
@@ -176,6 +186,7 @@ async def main() -> None:
     finally:
         with contextlib.suppress(BaseException):
             db.close()
+
 
 if __name__ == "__main__":
     asyncio.run(main())
