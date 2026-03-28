@@ -72,7 +72,6 @@ def aggregate_daily_stats(
     try:
         # V2 Migration: Try movie_performance_v2 first if metadata_id available
         showtimes_ref = None
-        use_v2 = False
 
         if metadata_id:
             showtimes_ref_v2 = (
@@ -86,7 +85,6 @@ def aggregate_daily_stats(
             v2_snapshots = list(showtimes_ref_v2.limit(1).stream())
             if v2_snapshots:
                 showtimes_ref = showtimes_ref_v2
-                use_v2 = True
                 logger.debug(f"Using V2 performance data for {metadata_id}")
 
         # Fallback to V1 if V2 not available
@@ -138,10 +136,8 @@ def aggregate_daily_stats(
             if s_city:
                 cities.add(s_city)
 
-        # Calculate averages
-        avg_occupancy = (
-            (occupancy_sum / total_showtimes_scraped) if total_showtimes_scraped > 0 else 0.0
-        )
+        # Weighted average: total sold / total seats (same as all-time calc)
+        avg_occupancy = (total_sold / total_seats * 100) if total_seats > 0 else 0.0
 
         # Update DailyPerformance (dual-write to V1 and V2)
         update_data = {
@@ -162,8 +158,8 @@ def aggregate_daily_stats(
         )
         daily_ref_v1.set(update_data, merge=True)
 
-        # V2 write (new - only if metadata_id available and using V2 data)
-        if metadata_id and use_v2:
+        # V2 write (always write if metadata_id available, even when using V1 data)
+        if metadata_id:
             daily_ref_v2 = (
                 db.collection("movie_performance_v2")
                 .document(metadata_id)
@@ -198,7 +194,6 @@ def aggregate_all_time_stats(
     try:
         # V2 Migration: Try movie_performance_v2 first if metadata_id available
         days_ref = None
-        use_v2 = False
 
         if metadata_id:
             days_ref_v2 = (
@@ -208,7 +203,6 @@ def aggregate_all_time_stats(
             v2_daily_docs = list(days_ref_v2.limit(1).stream())
             if v2_daily_docs:
                 days_ref = days_ref_v2
-                use_v2 = True
                 logger.debug(f"Using V2 performance data for all-time stats: {metadata_id}")
 
         # Fallback to V1 if V2 not available
@@ -257,8 +251,8 @@ def aggregate_all_time_stats(
         root_ref_v1 = db.collection("movie_performance").document(movie_id)
         root_ref_v1.set(root_update, merge=True)
 
-        # V2 write (new - only if metadata_id available and using V2 data)
-        if metadata_id and use_v2:
+        # V2 write (always write if metadata_id available, even when using V1 data)
+        if metadata_id:
             root_ref_v2 = db.collection("movie_performance_v2").document(metadata_id)
             root_ref_v2.set(root_update, merge=True)
 
