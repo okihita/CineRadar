@@ -1,4 +1,4 @@
-#!/usr/env python3
+#!/usr/bin/env python3
 """Run national scrape with API scraper.
 
 This is the entry point for the daily initial scrape.

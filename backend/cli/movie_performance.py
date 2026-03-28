@@ -149,9 +149,7 @@ def scrape_movie_performance(movie_id: str, aggregator: PerformanceAggregator) -
         logger.error("❌ Failed to load auth token - run token-refresh workflow first")
         return
 
-    results = asyncio.run(
-        scraper.scrape_all_showtimes_api_only(showtimes[:10])
-    )  # Limit for testing
+    results = asyncio.run(scraper.scrape_all_showtimes_api_only(showtimes))
 
     logger.info(f"\n✅ Scraped {len(results)} showtimes")
 

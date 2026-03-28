@@ -30,6 +30,19 @@ data/jit_granular/
 data/live_seat_snapshot.json
 !data/.gitkeep
 
+# Secrets and credentials
+*.pem
+*.key
+*.p12
+*.p8
+*.jks
+*service-account*.json
+*credentials*.json
+.env.production
+.env.staging
+.env.*.backup
+.env.*.bak
+
 # Keep env example
 !.env.example
 apk_analysis/
