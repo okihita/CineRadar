@@ -68,6 +68,9 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
                             </Badge>
                         </div>
                         <div className="flex items-center gap-4 text-muted-foreground text-sm">
+                            <div className="flex items-center gap-1 font-mono text-[10px] bg-muted/50 px-1.5 py-0.5 rounded border border-border/50">
+                                ID: {theatre.theatre_id}
+                            </div>
                             <div className="flex items-center gap-1">
                                 <MapPin className="w-3.5 h-3.5" />
                                 {theatre.city} ({getRegion(theatre.city)})

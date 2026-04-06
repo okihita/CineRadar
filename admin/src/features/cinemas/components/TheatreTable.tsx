@@ -284,6 +284,9 @@ export function TheatreTable({
                                             <p className="font-semibold text-sm leading-tight">
                                                 {highlightText(theatre.name, searchTerm)}
                                             </p>
+                                            <p className="text-[10px] font-mono text-muted-foreground/60 mt-0.5 selection:bg-primary/20">
+                                                {theatre.theatre_id}
+                                            </p>
                                         </TableCell>
                                         <TableCell className="py-3">
                                             <span
