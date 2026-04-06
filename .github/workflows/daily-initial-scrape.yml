@@ -37,6 +37,9 @@ jobs:
         run: PYTHONPATH=. uv run python backend/scripts/post_process.py
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          NOTIFICATION_EMAIL: ${{ secrets.NOTIFICATION_EMAIL }}
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
 
       - name: Initialize Performance Data
         run: uv run python -m backend.cli.movie_performance --init-only

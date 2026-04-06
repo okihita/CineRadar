@@ -25,6 +25,7 @@ from google.oauth2 import service_account
 
 from backend.domain.models.theatre import StudioLayout
 from backend.domain.time import JAKARTA_TZ
+from backend.infrastructure.core.resend_notification_service import ResendNotificationService
 from backend.infrastructure.firestore_collections import MOVIES, SCHEDULES_V2, THEATRES
 
 # Configure logging
@@ -103,8 +104,15 @@ async def populate_studios(
     """Write basic metadata to Firestore if document does not exist."""
     new_count = 0
     existing_count = 0
+    new_entries = []
+
+    notification_service = ResendNotificationService()
 
     for (theatre_id, studio_id), category in studios.items():
+        # Check if theatre doc exists to get name for notification
+        theatre_doc = await db.collection(THEATRES).document(theatre_id).get(["name"])
+        theatre_name = theatre_doc.to_dict().get("name", theatre_id) if theatre_doc.exists else theatre_id
+
         doc_ref = (
             db.collection(THEATRES).document(theatre_id).collection("studios").document(studio_id)
         )
@@ -117,6 +125,7 @@ async def populate_studios(
         new_count += 1
         name = generate_default_name(studio_id, category)
         layout = StudioLayout(studio_id=studio_id, name=name)
+        new_entries.append(f"{theatre_name}: {name} ({category})")
 
         if not dry_run:
             await doc_ref.set(layout.to_dict())
@@ -125,6 +134,14 @@ async def populate_studios(
             logger.info(
                 f"[DRY RUN] Would create [Theatre: {theatre_id}] Studio: {studio_id} '{name}'"
             )
+
+    if new_count > 0 and not dry_run:
+        subject = f"[CineRadar] {new_count} New Studios Discovered"
+        body = "The following new studios were discovered during the daily scan:\n\n"
+        body += "\n".join([f"- {entry}" for entry in new_entries])
+        body += "\n\nPlease review and bootstrap layouts if needed."
+
+        await notification_service.send_alert(subject, body)
 
     logger.info(f"Summary: {new_count} newly created, {existing_count} already existed.")
 

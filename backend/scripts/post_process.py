@@ -15,7 +15,7 @@ import logging
 import os
 import sys
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
 
 sys.path.insert(0, ".")
 
@@ -23,12 +23,14 @@ from google.cloud import firestore
 from google.oauth2 import service_account
 
 from backend.domain.time import JAKARTA_TZ
+from backend.infrastructure.core.resend_notification_service import ResendNotificationService
 from backend.infrastructure.firestore_collections import MOVIES, SCHEDULES
 from backend.infrastructure.repositories.firestore_utils import (
     log_morning_scrape,
     save_daily_snapshot,
     sync_theatres_from_scrape,
 )
+from backend.scripts.discover_studios import discover_studios, populate_studios
 
 logging.basicConfig(
     level=logging.INFO,
@@ -111,13 +113,43 @@ def update_snapshots(db: firestore.Client, date: str, movies: list[dict[str, Any
 
     save_daily_snapshot(data)
     logger.info("   ✓ Snapshots updated")
-
-
-def sync_theatres(movies: list[dict[str, Any]]) -> None:
-    """Sync theatres from scraped data."""
+def sync_theatres(movies: list[dict[str, Any]]) -> list[str]:
+    """Sync theatres from scraped data. Returns list of new theatre names."""
     logger.info("🎭 Syncing theatres...")
     result = sync_theatres_from_scrape(movies)
-    logger.info(f"   ✓ Theatres: {result['success']}/{result['total']} synced")
+    logger.info(
+        f"   ✓ Theatres: {result['success']}/{result['total']} synced ({len(result['new_theatres'])} new)"
+    )
+    return cast("list[str]", result.get("new_theatres", []))
+
+
+
+async def run_studio_discovery(db: firestore.Client, date: str) -> None:
+    """Automatically discover and populate new studios from schedules."""
+    logger.info("🔍 Running automatic studio discovery...")
+    from google.cloud.firestore import AsyncClient
+
+    # Initialize an async client for the discovery part
+    # Post-process usually runs in a context where credentials are available via env
+    async_db = AsyncClient(project=db.project)
+    try:
+        studios = await discover_studios(async_db, date)
+        if studios:
+            await populate_studios(async_db, studios, dry_run=False)
+    finally:
+        await async_db.close()
+
+
+async def send_discovery_alerts(new_theatres: list[str]) -> None:
+    """Send notifications for new theatre discoveries."""
+    if new_theatres:
+        notification_service = ResendNotificationService()
+        subject = f"[CineRadar] {len(new_theatres)} New Theatres Discovered"
+        body = "The following new theatres were discovered and added to the registry:\n\n"
+        body += "\n".join([f"- {name}" for name in new_theatres])
+        body += "\n\nPlease review theatre details and geocoding."
+
+        await notification_service.send_alert(subject, body)
 
 
 def log_scrape_status(movies: list[dict[str, Any]], city_stats: dict[str, int]) -> None:
@@ -139,7 +171,7 @@ def log_scrape_status(movies: list[dict[str, Any]], city_stats: dict[str, int]) 
     logger.info("   ✓ Scrape logged")
 
 
-def main() -> None:
+async def async_main() -> None:
     logger.info("=" * 60)
     logger.info("CineRadar Post-Processing")
     logger.info("=" * 60)
@@ -166,7 +198,12 @@ def main() -> None:
 
     # Run post-processing steps
     update_snapshots(db, today, movies)
-    sync_theatres(movies)
+    new_theatres = sync_theatres(movies)
+
+    # Run discovery and alerts
+    await run_studio_discovery(db, today)
+    await send_discovery_alerts(new_theatres)
+
     log_scrape_status(movies, city_stats)
 
     logger.info("=" * 60)
@@ -177,4 +214,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import asyncio
+    asyncio.run(async_main())

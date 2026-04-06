@@ -10,12 +10,14 @@ In Clean Architecture (and Hexagonal Architecture), "Ports" are the **Interfaces
 This allows us to write and test our business logic without needing a running database or browser. We can simply mock the Port interface.
 """
 
+from backend.application.ports.notification import INotificationService
 from backend.application.ports.scraper import IMovieScraper, ISeatScraper
 from backend.application.ports.storage import IMovieRepository, ITheatreRepository, ITokenRepository
 
 __all__ = [
     "IMovieRepository",
     "IMovieScraper",
+    "INotificationService",
     "ISeatScraper",
     "ITheatreRepository",
     "ITokenRepository",

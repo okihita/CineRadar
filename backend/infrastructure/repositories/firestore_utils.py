@@ -190,7 +190,7 @@ def sync_theatres_from_scrape(movies: list[dict[str, Any]]) -> dict[str, Any]:
         movies: List of movie dicts with schedules
 
     Returns:
-        Summary dict with counts
+        Summary dict with counts and list of new theatres
 
     """
     seen_theatres: dict[str, dict[str, Any]] = {}
@@ -227,14 +227,20 @@ def sync_theatres_from_scrape(movies: list[dict[str, Any]]) -> dict[str, Any]:
     db = get_firestore_client()
     success = 0
     failed = 0
+    new_theatres = []
 
     # Firestore allows max 500 writes per batch
     BATCH_LIMIT = 500
     current_batch = db.batch()
     operations_in_batch = 0
 
-    for _theatre_id, data in seen_theatres.items():
+    for theatre_id, data in seen_theatres.items():
         data["room_types"] = list(set(data["room_types"]))
+
+        # Check if theatre is new (cannot be done easily in batch, so we check existence)
+        doc_ref = db.collection(THEATRES).document(theatre_id)
+        doc = doc_ref.get(["theatre_id"])
+        is_new = not doc.exists
 
         # Prepare data purely without network connection
         result = prepare_theatre_upsert(data, validate=False)
@@ -244,14 +250,10 @@ def sync_theatres_from_scrape(movies: list[dict[str, Any]]) -> dict[str, Any]:
 
         theatre_id, upsert_data = result
 
-        # NOTE: Batched writes don't elegantly support "read-then-update OR set" inline
-        # for our nested lists without client-side reads first.
-        # But for theatres, we can safely overwrite the root document because it rebuilds
-        # from our master schedule list every day.
-        # We use merge=True so we don't accidentally wipe lat/lng if we didn't scrape it today.
+        if is_new:
+            upsert_data["created_at"] = upsert_data["updated_at"]
+            new_theatres.append(f"{upsert_data['name']} ({upsert_data['merchant']})")
 
-        upsert_data["created_at"] = upsert_data["updated_at"]
-        doc_ref = db.collection(THEATRES).document(theatre_id)
         current_batch.set(doc_ref, upsert_data, merge=True)
 
         operations_in_batch += 1
@@ -266,7 +268,12 @@ def sync_theatres_from_scrape(movies: list[dict[str, Any]]) -> dict[str, Any]:
     if operations_in_batch > 0:
         current_batch.commit()
 
-    return {"total": len(seen_theatres), "success": success, "failed": failed}
+    return {
+        "total": len(seen_theatres),
+        "success": success,
+        "failed": failed,
+        "new_theatres": new_theatres
+    }
 
 
 # ============================================================================
