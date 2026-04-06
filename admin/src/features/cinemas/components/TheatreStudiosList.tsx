@@ -138,7 +138,7 @@ export function TheatreStudiosList({ theatreId }: TheatreStudiosListProps) {
                                             </Button>
                                         )}
                                     </div>
-                                    <StudioLayoutViewer layout={studio.layout || []} totalSeats={studio.total_seats || 0} />
+                                    <StudioLayoutViewer studio={studio} />
                                 </div>
                             )}
                         </div>

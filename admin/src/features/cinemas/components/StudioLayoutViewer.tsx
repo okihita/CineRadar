@@ -6,34 +6,18 @@ import { Button } from '@/components/ui/button';
 import { Code, Table } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-
-interface Seat {
-    id: string;
-    type: string;
-    grade?: string;
-}
-
-interface LayoutRow {
-    row_name: string;
-    seats: Seat[];
-}
+import type { Studio } from '../hooks/useTheatreStudios';
 
 interface StudioLayoutViewerProps {
-    layout: LayoutRow[];
-    totalSeats: number;
+    studio: Studio;
 }
 
-export function StudioLayoutViewer({ layout, totalSeats }: StudioLayoutViewerProps) {
+export function StudioLayoutViewer({ studio }: StudioLayoutViewerProps) {
     const [viewMode, setViewMode] = useState<'visual' | 'json'>('visual');
+    const layout = studio.layout || [];
+    const totalSeats = studio.total_seats || 0;
 
-    if (!layout || layout.length === 0) {
-        return (
-            <div className="w-full h-full flex flex-col items-center justify-center p-4 min-h-[150px] bg-muted/20 border rounded-md mt-2">
-                <p className="text-muted-foreground text-sm italic">No layout data available yet.</p>
-                <p className="text-xs text-muted-foreground/70 mt-1">Wait for the bootstrap scraper to populate this studio.</p>
-            </div>
-        );
-    }
+    const hasLayout = layout.length > 0;
 
     return (
         <Card className="w-full flex flex-col mt-3 border bg-card/50">
@@ -50,6 +34,7 @@ export function StudioLayoutViewer({ layout, totalSeats }: StudioLayoutViewerPro
                         size="sm"
                         className="h-5 px-2 text-[10px]"
                         onClick={() => setViewMode('visual')}
+                        disabled={!hasLayout}
                     >
                         <Table className="w-3 h-3 mr-1" />
                         Visual
@@ -67,9 +52,14 @@ export function StudioLayoutViewer({ layout, totalSeats }: StudioLayoutViewerPro
             </CardHeader>
             <CardContent className="p-3 overflow-auto">
                 {viewMode === 'json' ? (
-                    <pre className="text-[10px] bg-muted/50 p-2 rounded-md overflow-auto max-h-[300px] border font-mono">
-                        {JSON.stringify(layout, null, 2)}
+                    <pre className="text-[10px] bg-muted/50 p-2 rounded-md overflow-auto max-h-[400px] border font-mono">
+                        {JSON.stringify(studio, null, 2)}
                     </pre>
+                ) : !hasLayout ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center p-4 min-h-[150px] bg-muted/20 border rounded-md">
+                        <p className="text-muted-foreground text-sm italic">No visual layout available yet.</p>
+                        <p className="text-xs text-muted-foreground/70 mt-1">Switch to JSON mode to see raw data or wait for bootstrap.</p>
+                    </div>
                 ) : (
                     <div className="min-w-fit flex flex-col items-center py-2">
                         {/* Screen Indicator */}
@@ -99,7 +89,6 @@ export function StudioLayoutViewer({ layout, totalSeats }: StudioLayoutViewerPro
                                                     )}
                                                     title={`Seat ${seat.id}`}
                                                 >
-                                                    {/* Optional: extract seat number if needed, usually seat.id is like A1, A2 */}
                                                     {seat.id ? seat.id.replace(/^[A-Z]+/, '') : ''}
                                                 </div>
                                             );

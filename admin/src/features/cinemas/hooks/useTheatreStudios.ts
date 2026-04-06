@@ -31,6 +31,10 @@ export interface Studio {
     layout?: LayoutRow[];
     audit?: Audit;
     version?: number;
+    room_category?: string;
+    initial_layout_compressed?: unknown;
+    created_at?: string;
+    updated_at?: string;
 }
 
 const fetcher = (url: string) => fetch(url).then(res => {
