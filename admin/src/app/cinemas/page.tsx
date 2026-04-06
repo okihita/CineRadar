@@ -12,6 +12,7 @@
 'use client';
 
 import { useEffect, useMemo, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { ChevronUp, MapPin } from 'lucide-react';
 import { IndonesiaMap } from '@/components/indonesia-map';
@@ -29,12 +30,12 @@ import {
   ChainDistributionCard,
   TheatreFilters,
   TheatreTable,
-  TheatreDetailPanel,
   StudioCoverageCard,
   type Theatre,
 } from '@/features/cinemas';
 
 function CinemasPageContent() {
+  const router = useRouter();
   // Server state (existing hook with caching)
   const { theatres, runs, loading: isLoading } = useTheatres();
 
@@ -169,6 +170,7 @@ function CinemasPageContent() {
               theatres={mapTheatres}
               selectedTheatre={store.selectedTheatre}
               onTheatreSelect={store.setSelectedTheatre}
+              onViewDetails={(theatre) => router.push(`/cinemas/${theatre.theatre_id}`)}
               apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}
               lastUpdated={lastUpdated}
               center={store.mapCenter}
@@ -202,33 +204,26 @@ function CinemasPageContent() {
           onClearFilters={store.clearFilters}
         />
 
-        {/* Table + Detail Panel */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div>
-            <TheatreTable
-              theatres={sortedTheatres}
-              totalCount={sortedTheatres.length}
-              currentPage={store.currentPage}
-              searchTerm={store.searchTerm}
-              sortByName={store.sortByName}
-              sortByCity={store.sortByCity}
-              sortByCapacity={store.sortByCapacity}
-              selectedTheatre={store.selectedTheatre}
-              onPageChange={store.setCurrentPage}
-              onSearchChange={store.setSearchTerm}
-              onToggleNameSort={store.toggleNameSort}
-              onToggleCitySort={store.toggleCitySort}
-              onToggleCapacitySort={store.toggleCapacitySort}
-              onTheatreSelect={store.setSelectedTheatre}
-              onClearFilters={store.clearFilters}
-            />
-          </div>
-          <div>
-            <TheatreDetailPanel
-              theatre={store.selectedTheatre}
-              apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}
-            />
-          </div>
+        {/* Table */}
+        <div className="grid grid-cols-1 gap-4">
+          <TheatreTable
+            theatres={sortedTheatres}
+            totalCount={sortedTheatres.length}
+            currentPage={store.currentPage}
+            searchTerm={store.searchTerm}
+            sortByName={store.sortByName}
+            sortByCity={store.sortByCity}
+            sortByCapacity={store.sortByCapacity}
+            selectedTheatre={store.selectedTheatre}
+            onPageChange={store.setCurrentPage}
+            onSearchChange={store.setSearchTerm}
+            onToggleNameSort={store.toggleNameSort}
+            onToggleCitySort={store.toggleCitySort}
+            onToggleCapacitySort={store.toggleCapacitySort}
+            onTheatreSelect={store.setSelectedTheatre}
+            onViewDetails={(theatre) => router.push(`/cinemas/${theatre.theatre_id}`)}
+            onClearFilters={store.clearFilters}
+          />
         </div>
 
         {/* Bottom Coverage Stats */}

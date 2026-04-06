@@ -18,6 +18,5 @@ export { ChainDistributionCard } from './components/ChainDistributionCard';
 export { RegionBreakdownCard } from './components/RegionBreakdownCard';
 export { TheatreFilters } from './components/TheatreFilters';
 export { TheatreTable } from './components/TheatreTable';
-export { TheatreDetailPanel } from './components/TheatreDetailPanel';
 export { StudioCoverageCard } from './components/StudioCoverageCard';
 export { CinemaDetailView } from './components/CinemaDetailView';

@@ -2,13 +2,14 @@
 
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, MapPin, Building2, Calendar, Loader2, Info } from 'lucide-react';
+import { ChevronLeft, MapPin, Building2, Calendar, Loader2, Info, Map as MapIcon, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCinemaDetails } from '../hooks/useCinemaDetails';
 import { CinemaPerformanceTable } from '@/features/performances_v2/components/CinemaPerformanceTable';
 import { getRegion } from '@/lib/regions';
-import { TheatreDetailPanel } from './TheatreDetailPanel';
+import { TheatreStudiosList } from './TheatreStudiosList';
 
 interface CinemaDetailViewProps {
     theatreId: string;
@@ -79,37 +80,126 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2 bg-muted/30 p-1 rounded-lg border">
-                    <Calendar className="w-4 h-4 ml-2 text-muted-foreground" />
-                    <input 
-                        type="date" 
-                        value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
-                        className="bg-transparent text-sm font-medium focus:outline-none p-1.5"
-                    />
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 bg-muted/30 p-1 rounded-lg border">
+                        <Calendar className="w-4 h-4 ml-2 text-muted-foreground" />
+                        <input 
+                            type="date" 
+                            value={selectedDate}
+                            onChange={(e) => setSelectedDate(e.target.value)}
+                            className="bg-transparent text-sm font-medium focus:outline-none p-1.5"
+                        />
+                    </div>
                 </div>
             </div>
 
-            {/* Main Content */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="space-y-6">
-                    {loading ? (
-                        <div className="flex items-center justify-center py-20">
-                            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                        </div>
-                    ) : showtimes.length > 0 ? (
-                        <CinemaPerformanceTable showtimes={showtimes} />
-                    ) : (
-                        <div className="text-center py-20 bg-muted/10 rounded-xl border border-dashed">
-                            <Info className="w-8 h-8 text-muted-foreground mx-auto mb-2 opacity-50" />
-                            <p className="text-muted-foreground">No showtimes found for {selectedDate}.</p>
-                        </div>
-                    )}
-                </div>
+            {/* Top Section: Map & Key Info */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <Card className="lg:col-span-2 overflow-hidden border-none shadow-sm ring-1 ring-border">
+                    <CardHeader className="py-3 px-4 bg-muted/10 border-b flex flex-row items-center justify-between space-y-0">
+                        <CardTitle className="text-sm font-medium flex items-center gap-2">
+                            <MapIcon className="w-4 h-4 text-primary" />
+                            Location
+                        </CardTitle>
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-7 text-[10px] uppercase tracking-wider font-bold"
+                            onClick={() => {
+                                const url = theatre.place_id
+                                    ? `https://www.google.com/maps/place/?q=place_id:${theatre.place_id}`
+                                    : `https://www.google.com/maps?q=${theatre.lat},${theatre.lng}`;
+                                window.open(url, '_blank');
+                            }}
+                        >
+                            Open in Google Maps
+                        </Button>
+                    </CardHeader>
+                    <div className="aspect-[21/9] w-full bg-muted/20">
+                        <iframe
+                            width="100%"
+                            height="100%"
+                            style={{ border: 0 }}
+                            loading="lazy"
+                            allowFullScreen
+                            referrerPolicy="no-referrer-when-downgrade"
+                            src={`https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${encodeURIComponent(
+                                theatre.name + ' ' + theatre.city + ' Indonesia'
+                            )}`}
+                        />
+                    </div>
+                </Card>
 
-                <div className="space-y-6">
-                    <TheatreDetailPanel theatre={theatre} apiKey={apiKey} showIntelligenceLink={false} />
-                </div>
+                <Card className="border-none shadow-sm ring-1 ring-border">
+                    <CardHeader className="py-3 px-4 bg-muted/10 border-b">
+                        <CardTitle className="text-sm font-medium flex items-center gap-2">
+                            <Info className="w-4 h-4 text-primary" />
+                            Theatre Info
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 space-y-4">
+                        <div>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold mb-1">Address</p>
+                            <p className="text-sm leading-relaxed">{theatre.address || 'Address not available'}</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 pt-2">
+                            <div>
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold mb-1">City</p>
+                                <p className="text-sm font-medium">{theatre.city}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold mb-1">Region</p>
+                                <p className="text-sm font-medium">{getRegion(theatre.city)}</p>
+                            </div>
+                        </div>
+                        <div className="pt-2 border-t mt-2">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs text-muted-foreground">Total Capacity</span>
+                                <span className="text-sm font-mono font-bold text-primary">{theatre.total_capacity?.toLocaleString() || '0'} seats</span>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Main Content: Performance and Studio Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card className="border-none shadow-sm ring-1 ring-border">
+                    <CardHeader className="py-3 px-4 bg-muted/10 border-b">
+                        <CardTitle className="text-sm font-medium flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-primary" />
+                            Performance Data - {selectedDate}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <div className="p-4">
+                            {loading ? (
+                                <div className="flex items-center justify-center py-20">
+                                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                                </div>
+                            ) : showtimes.length > 0 ? (
+                                <CinemaPerformanceTable showtimes={showtimes} />
+                            ) : (
+                                <div className="text-center py-20 bg-muted/5 rounded-xl border border-dashed">
+                                    <Info className="w-8 h-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                                    <p className="text-muted-foreground">No showtimes found for {selectedDate}.</p>
+                                </div>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="border-none shadow-sm ring-1 ring-border">
+                    <CardHeader className="py-3 px-4 bg-muted/10 border-b">
+                        <CardTitle className="text-sm font-medium flex items-center gap-2">
+                            <Layers className="w-4 h-4 text-primary" />
+                            Studio Layouts
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                        <TheatreStudiosList theatreId={theatreId} />
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );

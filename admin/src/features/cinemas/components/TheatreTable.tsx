@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ArrowUp, ArrowDown, X, Download, Users, Monitor, Search } from 'lucide-react';
+import { ArrowUp, ArrowDown, X, Download, Users, Monitor, Search, ExternalLink } from 'lucide-react';
 import { CHAIN_COLORS, CHAIN_COLORS_LIGHT, ITEMS_PER_PAGE } from '@/lib/constants';
 import { getRegion } from '@/lib/regions';
 import { highlightText } from '@/lib/mapUtils';
@@ -30,6 +30,7 @@ interface TheatreTableProps {
     onToggleCitySort: () => void;
     onToggleCapacitySort: () => void;
     onTheatreSelect: (theatre: Theatre) => void;
+    onViewDetails?: (theatre: Theatre) => void;
     onClearFilters: () => void;
 }
 
@@ -48,6 +49,7 @@ export function TheatreTable({
     onToggleCitySort,
     onToggleCapacitySort,
     onTheatreSelect,
+    onViewDetails,
     onClearFilters,
 }: TheatreTableProps) {
     const tableContainerRef = useRef<HTMLDivElement>(null);
@@ -118,52 +120,106 @@ export function TheatreTable({
         [paginatedTheatres, selectedTheatre, onTheatreSelect]
     );
 
+    const renderPagination = () => {
+        if (totalPages <= 1) return null;
+
+        const pages = [];
+        // Show all pages if totalPages is small, or use a more complex logic if needed.
+        // For now, let's show all as requested.
+        for (let i = 1; i <= totalPages; i++) {
+            pages.push(
+                <Button
+                    key={i}
+                    variant={safePage === i ? "default" : "outline"}
+                    size="sm"
+                    className={`h-7 min-w-[28px] p-0 text-[10px] font-bold ${
+                        safePage === i ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                    onClick={() => onPageChange(i)}
+                >
+                    {i}
+                </Button>
+            );
+        }
+
+        return (
+            <div className="flex items-center gap-1.5 bg-muted/20 p-1 rounded-lg border border-border/50">
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 hover:bg-background"
+                    disabled={safePage === 1}
+                    onClick={() => onPageChange(safePage - 1)}
+                >
+                    ←
+                </Button>
+                <div className="flex items-center flex-wrap gap-1 max-w-[400px]">
+                    {pages}
+                </div>
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 hover:bg-background"
+                    disabled={safePage === totalPages}
+                    onClick={() => onPageChange(safePage + 1)}
+                >
+                    →
+                </Button>
+            </div>
+        );
+    };
+
     return (
         <Card>
             <CardHeader className="py-3 px-4 border-b bg-muted/10">
-                <div className="flex items-center justify-between gap-4">
-                    <CardTitle className="text-sm flex-shrink-0 flex items-center gap-2">
-                        Theatres
-                        <Badge variant="secondary" className="font-normal text-[10px] h-4 px-1.5">
-                            {totalCount}
-                        </Badge>
-                    </CardTitle>
-
-                    {/* Search */}
-                    <div className="relative max-w-xs flex-1">
-                        <Input
-                            placeholder="Search theatre, city..."
-                            value={searchTerm}
-                            onChange={(e) => onSearchChange(e.target.value)}
-                            className="h-8 text-sm pr-8"
-                        />
-                        {searchTerm && (
-                            <button
-                                onClick={() => onSearchChange('')}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                            >
-                                <X className="w-4 h-4" />
-                            </button>
-                        )}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <CardTitle className="text-sm flex-shrink-0 flex items-center gap-2">
+                            Theatres
+                            <Badge variant="secondary" className="font-normal text-[10px] h-4 px-1.5">
+                                {totalCount}
+                            </Badge>
+                        </CardTitle>
+                        {renderPagination()}
                     </div>
 
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 text-xs gap-1"
-                        onClick={exportToCSV}
-                        title="Export filtered results to CSV"
-                    >
-                        <Download className="w-3 h-3" />
-                        Export
-                    </Button>
+                    <div className="flex items-center gap-2 flex-1 justify-end">
+                        {/* Search */}
+                        <div className="relative max-w-xs flex-1">
+                            <Input
+                                placeholder="Search theatre, city..."
+                                value={searchTerm}
+                                onChange={(e) => onSearchChange(e.target.value)}
+                                className="h-8 text-sm pr-8"
+                            />
+                            {searchTerm && (
+                                <button
+                                    onClick={() => onSearchChange('')}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            )}
+                        </div>
+
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 text-xs gap-1"
+                            onClick={exportToCSV}
+                            title="Export filtered results to CSV"
+                        >
+                            <Download className="w-3 h-3" />
+                            Export
+                        </Button>
+                    </div>
                 </div>
             </CardHeader>
 
             <CardContent className="p-0">
                 <div
                     ref={tableContainerRef}
-                    className="overflow-x-auto max-h-[600px] overflow-y-auto focus:outline-none custom-scrollbar"
+                    className="overflow-x-auto focus:outline-none"
                     tabIndex={0}
                     onKeyDown={handleKeyDown}
                 >
@@ -208,7 +264,7 @@ export function TheatreTable({
                                         {sortByCapacity === 'desc' && <ArrowDown className="w-3 h-3 text-primary" />}
                                     </span>
                                 </TableHead>
-                                <TableHead className="w-10 md:hidden"></TableHead>
+                                <TableHead className="py-3 w-[10%] text-right pr-4">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
 
@@ -263,8 +319,19 @@ export function TheatreTable({
                                                 </Badge>
                                             )}
                                         </TableCell>
-                                        <TableCell className="text-right pr-4 py-3 md:hidden">
-                                            <span className="text-xs text-muted-foreground">→</span>
+                                        <TableCell className="py-3 text-right pr-4">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="h-7 text-[10px] px-2 gap-1 bg-primary/5 hover:bg-primary/10 border-primary/20 text-primary font-bold uppercase tracking-tight"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onViewDetails?.(theatre);
+                                                }}
+                                            >
+                                                Intelligence
+                                                <ExternalLink className="w-3 h-3" />
+                                            </Button>
                                         </TableCell>
                                     </TableRow>
                                 ))
@@ -286,34 +353,6 @@ export function TheatreTable({
                     </Table>
                 </div>
 
-                {/* Pagination */}
-                {totalPages > 1 && (
-                    <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/5">
-                        <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                            Page {safePage} of {totalPages}
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-7 w-7 p-0"
-                                disabled={currentPage === 1}
-                                onClick={() => onPageChange(currentPage - 1)}
-                            >
-                                ←
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-7 w-7 p-0"
-                                disabled={currentPage === totalPages}
-                                onClick={() => onPageChange(currentPage + 1)}
-                            >
-                                →
-                            </Button>
-                        </div>
-                    </div>
-                )}
             </CardContent>
         </Card>
     );

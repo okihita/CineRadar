@@ -10,6 +10,7 @@ interface IndonesiaMapProps {
     theatres: Theatre[];
     selectedTheatre: Theatre | null;
     onTheatreSelect: (theatre: Theatre) => void;
+    onViewDetails?: (theatre: Theatre) => void;
     apiKey: string;
     lastUpdated?: string | null;
     center?: { lat: number; lng: number; zoom: number } | null;
@@ -305,7 +306,7 @@ function MapController({ center }: { center?: { lat: number; lng: number; zoom: 
     return null;
 }
 
-export function IndonesiaMap({ theatres, selectedTheatre, onTheatreSelect, apiKey, lastUpdated, center }: IndonesiaMapProps) {
+export function IndonesiaMap({ theatres, selectedTheatre, onTheatreSelect, onViewDetails, apiKey, lastUpdated, center }: IndonesiaMapProps) {
     const [isDarkMode, setIsDarkMode] = useState(false);
 
     useEffect(() => {
@@ -405,6 +406,13 @@ export function IndonesiaMap({ theatres, selectedTheatre, onTheatreSelect, apiKe
 
                                 {/* Compact Action Buttons */}
                                 <div className="flex gap-1">
+                                    <button
+                                        onClick={() => onViewDetails?.(selectedTheatre)}
+                                        className="flex-[1.5] flex items-center justify-center gap-1 px-2 py-1 text-[11px] font-bold bg-primary text-white rounded hover:bg-primary/90 transition-colors uppercase tracking-tight"
+                                    >
+                                        <ExternalLink className="w-3 h-3" />
+                                        Intelligence
+                                    </button>
                                     <button
                                         onClick={() => handleGetDirections(selectedTheatre)}
                                         className="flex-1 flex items-center justify-center gap-1 px-2 py-1 text-[11px] font-medium bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
