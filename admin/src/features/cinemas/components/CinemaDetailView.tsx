@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, MapPin, Building2, Calendar, Loader2, Info, Map as MapIcon, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,17 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
     const router = useRouter();
     const today = useMemo(() => new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Jakarta' }), []);
     const [selectedDate, setSelectedDate] = useState(today);
+    const [isDarkMode, setIsDarkMode] = useState(false);
+
+    useEffect(() => {
+        const checkDarkMode = () => {
+            setIsDarkMode(document.documentElement.classList.contains('dark'));
+        };
+        checkDarkMode();
+        const observer = new MutationObserver(checkDarkMode);
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        return () => observer.disconnect();
+    }, []);
     
     const { theatre, showtimes, loading, error } = useCinemaDetails(theatreId, selectedDate);
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
@@ -122,7 +133,7 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
                         <iframe
                             width="100%"
                             height="100%"
-                            style={{ border: 0 }}
+                            style={{ border: 0, filter: isDarkMode ? 'invert(90%) hue-rotate(180deg) brightness(95%) contrast(90%)' : 'none' }}
                             loading="lazy"
                             allowFullScreen
                             referrerPolicy="no-referrer-when-downgrade"
