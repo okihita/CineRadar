@@ -99,39 +99,46 @@ export function StudioLayoutViewer({ studio }: StudioLayoutViewerProps) {
                         
                         {/* Seating Grid */}
                         <div className="flex flex-col gap-1">
-                            {layout.map((row, i) => (
-                                <div key={`row-${row.row_name}-${i}`} className="flex items-center gap-1 justify-center">
-                                    <div className="w-4 text-[9px] font-mono font-medium text-muted-foreground/50 text-right pr-0.5">
-                                        {row.row_name}
+                            {layout.map((row, i) => {
+                                // Skip rendering padding rows (no name and no real seats)
+                                // to prevent horizontal scroll issues from API noise.
+                                const isPaddingRow = !row.row_name.trim() && !row.seats.some(s => s.type === 'seat');
+                                if (isPaddingRow) return null;
+
+                                return (
+                                    <div key={`row-${row.row_name}-${i}`} className="flex items-center gap-1 justify-center">
+                                        <div className="w-4 text-[9px] font-mono font-medium text-muted-foreground/50 text-right pr-0.5">
+                                            {row.row_name}
+                                        </div>
+                                        
+                                        <div className="flex gap-0.5">
+                                            {row.seats.map((seat, j) => {
+                                                if (seat.type === 'aisle') {
+                                                    return <div key={`aisle-${i}-${j}`} className="w-3 h-3 md:w-4 md:h-4 invisible" />;
+                                                }
+                                                
+                                                return (
+                                                    <div 
+                                                        key={`seat-${seat.id || `${i}-${j}`}`}
+                                                        className={cn(
+                                                            'w-3 h-3 md:w-4 md:h-4 rounded-t-sm rounded-b-[2px] flex items-center justify-center',
+                                                            'text-[6px] md:text-[7px] font-medium transition-colors cursor-default',
+                                                            'bg-muted border border-border text-muted-foreground hover:bg-muted/80'
+                                                        )}
+                                                        title={`Seat ${seat.id}`}
+                                                    >
+                                                        {seat.id ? seat.id.replace(/^[A-Z]+/, '') : ''}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                        
+                                        <div className="w-4 text-[9px] font-mono font-medium text-muted-foreground/50 pl-0.5">
+                                            {row.row_name}
+                                        </div>
                                     </div>
-                                    
-                                    <div className="flex gap-0.5">
-                                        {row.seats.map((seat, j) => {
-                                            if (seat.type === 'aisle') {
-                                                return <div key={`aisle-${i}-${j}`} className="w-3 h-3 md:w-4 md:h-4 invisible" />;
-                                            }
-                                            
-                                            return (
-                                                <div 
-                                                    key={`seat-${seat.id || `${i}-${j}`}`}
-                                                    className={cn(
-                                                        'w-3 h-3 md:w-4 md:h-4 rounded-t-sm rounded-b-[2px] flex items-center justify-center',
-                                                        'text-[6px] md:text-[7px] font-medium transition-colors cursor-default',
-                                                        'bg-muted border border-border text-muted-foreground hover:bg-muted/80'
-                                                    )}
-                                                    title={`Seat ${seat.id}`}
-                                                >
-                                                    {seat.id ? seat.id.replace(/^[A-Z]+/, '') : ''}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                    
-                                    <div className="w-4 text-[9px] font-mono font-medium text-muted-foreground/50 pl-0.5">
-                                        {row.row_name}
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 )}

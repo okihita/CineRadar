@@ -187,7 +187,7 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="p-6">
-                        <TheatreStudiosList theatreId={theatreId} />
+                        <TheatreStudiosList theatreId={theatreId} merchant={theatre.merchant} />
                     </CardContent>
                 </Card>
 

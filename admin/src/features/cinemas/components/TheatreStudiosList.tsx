@@ -7,11 +7,14 @@ import { CheckCircle2, AlertCircle, Database, Zap, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
+import { getStudioDisplayName } from '../utils';
+
 interface TheatreStudiosListProps {
     theatreId: string;
+    merchant?: string;
 }
 
-export function TheatreStudiosList({ theatreId }: TheatreStudiosListProps) {
+export function TheatreStudiosList({ theatreId, merchant }: TheatreStudiosListProps) {
     const { studios, isLoading, isError, refresh } = useTheatreStudios(theatreId);
     const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
@@ -72,7 +75,9 @@ export function TheatreStudiosList({ theatreId }: TheatreStudiosListProps) {
                                 <div className="flex items-center gap-3">
                                     <div className="flex flex-col">
                                         <div className="flex items-center gap-2">
-                                            <span className="font-bold text-foreground text-sm uppercase tracking-tight">{studio.name}</span>
+                                            <span className="font-bold text-foreground text-sm uppercase tracking-tight">
+                                                {getStudioDisplayName(studio, merchant)}
+                                            </span>
                                             {isRaw ? (
                                                 <span title="Ground Truth">
                                                     <Zap className="w-3.5 h-3.5 text-blue-500" />

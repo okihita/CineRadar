@@ -270,34 +270,40 @@ export function SeatMapVisualizer({ initialLayout, finalLayout, masterLayout, is
                                     );
                                 })
                             ) : (
-                                (normalizedFinal.length > 0 ? normalizedFinal : normalizedInitial).map((row, i) => (
-                                    <div key={`row-snap-${row.rowName}-${i}`} className="flex items-center gap-2 justify-center">
-                                        <div className="w-6 text-[10px] font-mono font-bold text-muted-foreground/40 text-right">{row.rowName}</div>
-                                        <div className="flex gap-0.5">
-                                            {row.seats.map((seat) => {
-                                                const status = determineStatus(row.rowName, seat.index);
-                                                const colors = {
-                                                    available: 'bg-muted border border-border text-muted-foreground/30 hover:bg-muted/80',
-                                                    blocked: 'bg-red-500/10 border border-red-500/20 text-red-500/30',
-                                                    sold: 'bg-green-500 border border-green-600 text-white shadow-sm',
-                                                    unknown: 'bg-amber-500 border border-amber-600 text-white shadow-sm',
-                                                    gap: 'invisible'
-                                                }[seat.status === -1 ? 'gap' : status];
-                                                
-                                                if (seat.status === -1) {
-                                                    return <div key={`s-${row.rowName}-${seat.index}`} className="w-4 h-4 md:w-5 md:h-5 invisible" />;
-                                                }
+                                (normalizedFinal.length > 0 ? normalizedFinal : normalizedInitial).map((row, i) => {
+                                    // Skip padding rows (no name and no real seats)
+                                    const isPaddingRow = !row.rowName.trim() && !row.seats.some(s => s.status !== -1);
+                                    if (isPaddingRow) return null;
 
-                                                return (
-                                                    <div key={`s-${row.rowName}-${seat.index}`} className={cn('w-4 h-4 md:w-5 md:h-5 rounded-t-md rounded-b-sm flex items-center justify-center text-[8px] font-medium transition-colors', colors)}>
-                                                        {seat.index + 1}
-                                                    </div>
-                                                );
-                                            })}
+                                    return (
+                                        <div key={`row-snap-${row.rowName}-${i}`} className="flex items-center gap-2 justify-center">
+                                            <div className="w-6 text-[10px] font-mono font-bold text-muted-foreground/40 text-right">{row.rowName}</div>
+                                            <div className="flex gap-0.5">
+                                                {row.seats.map((seat) => {
+                                                    const status = determineStatus(row.rowName, seat.index);
+                                                    const colors = {
+                                                        available: 'bg-muted border border-border text-muted-foreground/30 hover:bg-muted/80',
+                                                        blocked: 'bg-red-500/10 border border-red-500/20 text-red-500/30',
+                                                        sold: 'bg-green-500 border border-green-600 text-white shadow-sm',
+                                                        unknown: 'bg-amber-500 border border-amber-600 text-white shadow-sm',
+                                                        gap: 'invisible'
+                                                    }[seat.status === -1 ? 'gap' : status];
+                                                    
+                                                    if (seat.status === -1) {
+                                                        return <div key={`s-${row.rowName}-${seat.index}`} className="w-4 h-4 md:w-5 md:h-5 invisible" />;
+                                                    }
+
+                                                    return (
+                                                        <div key={`s-${row.rowName}-${seat.index}`} className={cn('w-4 h-4 md:w-5 md:h-5 rounded-t-md rounded-b-sm flex items-center justify-center text-[8px] font-medium transition-colors', colors)}>
+                                                            {seat.index + 1}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                            <div className="w-6 text-[10px] font-mono font-bold text-muted-foreground/40 text-left">{row.rowName}</div>
                                         </div>
-                                        <div className="w-6 text-[10px] font-mono font-bold text-muted-foreground/40 text-left">{row.rowName}</div>
-                                    </div>
-                                ))
+                                    );
+                                })
                             )}
                         </div>
                     </div>

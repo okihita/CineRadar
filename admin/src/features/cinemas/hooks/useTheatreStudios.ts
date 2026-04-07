@@ -24,7 +24,6 @@ export interface Audit {
 
 export interface Studio {
     studio_id: string;
-    name: string;
     total_seats?: number;
     is_locked?: boolean;
     last_updated?: string;
