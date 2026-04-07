@@ -171,6 +171,7 @@ def find_upcoming_showtimes(
                                     "room_category": room_category,
                                     "merchant": merchant,
                                     "showtime": time_str,
+                                    "studio_id": showtime_obj.get("studio_id"),
                                     "date": today,
                                     "scrape_phase": phase,
                                 }
@@ -316,6 +317,7 @@ def log_job_creation(db: firestore.Client, batch_id: str, showtime: dict[str, An
                     "city": showtime.get("city"),
                     "merchant": showtime.get("merchant"),
                     "showtime": showtime.get("showtime"),
+                    "studio_id": showtime.get("studio_id"),
                     "scrape_phase": showtime.get("scrape_phase"),
                 },
                 "lifecycle": {
