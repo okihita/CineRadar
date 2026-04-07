@@ -1,13 +1,7 @@
 #!/usr/bin/env python3
-"""Bootstrap Studio Layouts — Ground Truth Migration.
+"""Bootstrap Studio Layouts — High Performance Edition.
 
-Migrates Master Layouts from "guessed snapshots" to "raw ground truth" derived from
-TIX.id API responses. Handles XXI vertical lanes and uses multi-movie consensus.
-
-Logic:
-    - Anchors seats by their ID (e.g., 'A1', 'D15').
-    - Anchors aisles by the API's 'before_seat_column' rules.
-    - Resolves 'Ghost Seats' (status 5/6) by checking if they are ever status 1/2.
+Uses direct Point Lookups to resolve layouts, preventing Firestore timeouts.
 """
 
 import argparse
@@ -53,11 +47,9 @@ def parse_to_master_layout(raw_data: dict[str, Any], merchant: str) -> list[dict
     unified_layout: list[dict[str, Any]] = []
 
     if is_nested:
-        # XXI / CGV (Nested)
         for item in seat_map:
             row_name = item.get("seat_code", "")
             row_data: dict[str, Any] = {"row_name": row_name, "seats": []}
-
             for seat in item.get("seat_rows", []):
                 seat_id = seat.get("seat_row", "")
                 status = seat.get("status", 0)
@@ -89,14 +81,12 @@ def parse_to_master_layout(raw_data: dict[str, Any], merchant: str) -> list[dict
                     if row["row_name"] == end_row:
                         in_range = False
     else:
-        # Flat Structure (Cinépolis / FLIX)
         rows_dict = defaultdict(list)
         for item in seat_map:
             row_name = item.get("row_name", "ALL")
             seat_no = item.get("seat_no")
             seat_yn = str(item.get("seat_yn", "1"))
             status = item.get("status", 1)
-
             if seat_yn == "1":
                 if seat_no:
                     rows_dict[row_name].append({"id": f"{row_name}{seat_no}", "type": "seat", "_raw_status": status})
@@ -104,7 +94,6 @@ def parse_to_master_layout(raw_data: dict[str, Any], merchant: str) -> list[dict
                     rows_dict[row_name].append({"id": "", "type": "aisle"})
             else:
                 rows_dict[row_name].append({"id": "", "type": "aisle"})
-
         for row_name, seats in rows_dict.items():
             unified_layout.append({"row_name": row_name, "seats": seats})
 
@@ -153,54 +142,61 @@ def merge_consensus(layouts: list[list[dict[str, Any]]]) -> list[dict[str, Any]]
     return base_layout
 
 
-async def extract_studio_id_map(db: AsyncClient, date: str) -> dict[str, str]:
-    """Map showtime_id -> studio_id from schedules."""
-    mapping = {}
-    docs = await db.collection(SCHEDULES_V2).document(date).collection("movies").get()
-    for m in docs:
-        d = m.to_dict()
-        for _city, theatres in d.get("cities", {}).items():
-            for t in theatres:
-                for room in t.get("rooms", []):
-                    for st in room.get("all_showtimes", []):
-                        if st.get("showtime_id") and st.get("studio_id"):
-                            mapping[st["showtime_id"]] = str(st["studio_id"])
-    return mapping
-
-
-async def discover_studios_from_performance(
-    db: AsyncClient, date: str, theatre_ids: list[str] | None = None, force: bool = False
+async def discover_studios_point_lookup(
+    db: AsyncClient, date: str, theatre_ids: list[str] | None = None
 ) -> dict[str, list[dict[str, Any]]]:
-    """Find unique studios and their sampled raw layouts."""
-    st_to_studio_map = await extract_studio_id_map(db, date)
-    logger.info(f"🔍 Discovering studios from performance for {date}...")
+    """Efficiently find studios using specific showtime lookups."""
+    logger.info("📋 Phase 1: Identifying target showtimes from schedules...")
+
+    # theatre_id -> [ (metadata_id, showtime_id, studio_id, merchant) ]
+    targets = defaultdict(list)
     movie_docs = await db.collection(SCHEDULES_V2).document(date).collection("movies").get()
 
-    studio_samples: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    processed_count = 0
-    semaphore = asyncio.Semaphore(10)
+    for m in movie_docs:
+        data = m.to_dict()
+        metadata_id = m.id
+        for _city, theatres in data.get("cities", {}).items():
+            for t in theatres:
+                tid = t.get("theatre_id")
+                merchant = t.get("merchant")
+                if theatre_ids and tid not in theatre_ids:
+                    continue
 
-    async def process_movie(m: Any) -> None:
-        nonlocal processed_count
+                for room in t.get("rooms", []):
+                    for st in room.get("all_showtimes", []):
+                        sid = st.get("showtime_id")
+                        studio = st.get("studio_id")
+                        if sid and studio:
+                            targets[tid].append((metadata_id, sid, str(studio), merchant))
+
+    logger.info(f"📋 Phase 2: Fetching specific snapshots for {len(targets)} theatres...")
+    studio_samples: dict[str, list[dict[str, Any]]] = defaultdict(list)
+
+    semaphore = asyncio.Semaphore(20) # Can be higher for point lookups
+
+    async def fetch_snapshot(
+        metadata_id: str, showtime_id: str, studio_id: str, merchant: str, tid: str
+    ) -> None:
         async with semaphore:
-            st_ref = db.collection(MOVIE_PERFORMANCE_V2).document(m.id).collection("days").document(date).collection("showtimes")
-            async for doc in st_ref.stream():
+            doc = await db.collection(MOVIE_PERFORMANCE_V2).document(metadata_id).collection("days").document(date).collection("showtimes").document(showtime_id).get()
+            if doc.exists:
                 d = doc.to_dict()
                 raw = d.get("raw_api_response") or d.get("initial_raw_layout")
-                tid, sid, merchant = d.get("theatre_id"), d.get("studio_id"), d.get("merchant")
-                if not sid and doc.id in st_to_studio_map:
-                    sid = st_to_studio_map[doc.id]
-
-                if raw and tid and sid and (not theatre_ids or tid in theatre_ids):
+                if raw:
                     if "data" not in raw:
                         raw = {"data": raw, "success": True}
-                    key = f"{tid}:{sid}"
-                    if len(studio_samples[key]) < 5:
-                        raw["__metadata"] = {"merchant": merchant, "theatre_id": tid, "studio_id": sid}
+                    key = f"{tid}:{studio_id}"
+                    if len(studio_samples[key]) < 3:
+                        raw["__metadata"] = {"merchant": merchant, "theatre_id": tid, "studio_id": studio_id}
                         studio_samples[key].append(raw)
-        processed_count += 1
 
-    await asyncio.gather(*(process_movie(m) for m in movie_docs))
+    tasks = []
+    for tid, target_list in targets.items():
+        # Just take a few samples per theater to be fast
+        for m_id, s_id, studio_id, merchant in target_list[:10]:
+            tasks.append(fetch_snapshot(m_id, s_id, studio_id, merchant, tid))
+
+    await asyncio.gather(*tasks)
     return studio_samples
 
 
@@ -212,17 +208,14 @@ async def bootstrap_theatre_layouts(
     for i, (key, samples) in enumerate(studio_samples.items(), 1):
         theatre_id, studio_id = key.split(":")
         merchant = samples[0]["__metadata"]["merchant"]
-
         studio_ref = db.collection(THEATRES).document(theatre_id).collection("studios").document(studio_id)
         existing = await studio_ref.get()
-
         if existing.exists and not force:
             data = existing.to_dict()
             if data.get("is_locked") or data.get("version") == 3:
                 continue
 
         logger.info(f"[{i}/{total}] Bootstrapping {merchant} | {theatre_id} | Studio {studio_id}")
-
         parsed_layouts = [parse_to_master_layout(s, merchant) for s in samples]
         final_layout = merge_consensus(parsed_layouts)
 
@@ -232,14 +225,12 @@ async def bootstrap_theatre_layouts(
             if isinstance(raw_payload, dict):
                 raw_payload.pop("__metadata", None)
 
-            # Extract Room Category from Price Group if available
             discovered_category = None
             if isinstance(raw_payload, dict) and "price_group" in raw_payload:
                 pgs = raw_payload.get("price_group", [])
                 if pgs and isinstance(pgs, list):
                     discovered_category = pgs[0].get("seat_grd_nm")
 
-            # Core Update Data
             update_data = {
                 "studio_id": studio_id,
                 "layout": final_layout,
@@ -250,18 +241,15 @@ async def bootstrap_theatre_layouts(
                 "is_locked": True,
                 "name": firestore.DELETE_FIELD,
             }
-
             if discovered_category:
                 update_data["room_category"] = discovered_category
-
-            # Preserve metadata if needed
             if existing.exists:
                 old_data = existing.to_dict()
                 if old_data.get("room_category") and not discovered_category:
                     update_data["room_category"] = old_data["room_category"]
 
             await studio_ref.set(update_data, merge=True)
-            logger.info(f"   ✅ Saved: {total_seats} seats ({update_data.get('room_category')})")
+            logger.info(f"   ✅ Saved: {total_seats} seats")
 
 
 async def main() -> None:
@@ -272,12 +260,15 @@ async def main() -> None:
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args()
 
+    if not args.theatre_ids and not args.all:
+        return
+
     t_ids = [tid.strip() for tid in args.theatre_ids.split(",")] if args.theatre_ids else None
     date = args.date or datetime.now(JAKARTA_TZ).strftime("%Y-%m-%d")
 
     db = await get_firestore_async_client()
     try:
-        samples = await discover_studios_from_performance(db, date, t_ids, args.force)
+        samples = await discover_studios_point_lookup(db, date, t_ids)
         if samples:
             await bootstrap_theatre_layouts(db, samples, args.force)
     finally:
