@@ -35,6 +35,19 @@ export async function GET() {
             missingStudios: string[];
         }>();
 
+        // Initialize with all theatres
+        for (const doc of theatresDocs) {
+            const theatreId = doc.id as string;
+            theatreStats.set(theatreId, {
+                id: theatreId,
+                name: (doc.name as string) || 'Unknown',
+                total: 0,
+                scraped: 0,
+                missingStudios: []
+            });
+        }
+
+        // Process all studios
         for (const studio of studios) {
             const theatreId = studio._parent_id as string;
             const studioId = studio.id as string;
@@ -42,12 +55,12 @@ export async function GET() {
             const version = (studio.version as number) || 0;
             const audit = (studio.audit as { source?: string; is_confirmed?: boolean }) || {};
             const isLocked = (studio.is_locked as boolean) || false;
-            const theatreName = theatreNames.get(theatreId) || `Unknown (${theatreId})`;
 
             if (!theatreStats.has(theatreId)) {
+                // This shouldn't happen if registry is consistent, but for safety:
                 theatreStats.set(theatreId, {
                     id: theatreId,
-                    name: theatreName,
+                    name: `Unknown (${theatreId})`,
                     total: 0,
                     scraped: 0,
                     missingStudios: []
@@ -55,6 +68,7 @@ export async function GET() {
             }
 
             const stats = theatreStats.get(theatreId)!;
+            const theatreName = stats.name;
             stats.total += 1;
             totalStudios += 1;
 
