@@ -14,20 +14,47 @@ interface StudioLayoutViewerProps {
 
 export function StudioLayoutViewer({ studio }: StudioLayoutViewerProps) {
     const [viewMode, setViewMode] = useState<'visual' | 'json'>('visual');
+    const [jsonMode, setJsonMode] = useState<'unified' | 'raw'>('unified');
     const layout = studio.layout || [];
     const totalSeats = studio.total_seats || 0;
 
     const hasLayout = layout.length > 0;
+    const hasRawLayout = !!studio.raw_initial_layout;
 
     return (
         <Card className="w-full flex flex-col mt-3 border bg-card/50">
             <CardHeader className="py-2 px-3 border-b bg-muted/10 flex flex-row items-center justify-between">
-                <CardTitle className="text-xs flex items-center gap-2 font-medium text-muted-foreground">
-                    Physical Master Layout
-                    <Badge variant="outline" className="text-[10px] h-4 bg-primary/5 text-primary border-primary/20">
-                        {totalSeats} Seats
-                    </Badge>
-                </CardTitle>
+                <div className="flex items-center gap-4">
+                    <CardTitle className="text-xs flex items-center gap-2 font-medium text-muted-foreground">
+                        Physical Master Layout
+                        <Badge variant="outline" className="text-[10px] h-4 bg-primary/5 text-primary border-primary/20">
+                            {totalSeats} Seats
+                        </Badge>
+                    </CardTitle>
+                    
+                    {viewMode === 'json' && (
+                        <div className="flex items-center gap-1 bg-background/50 p-0.5 rounded border border-border/50">
+                            <Button
+                                variant={jsonMode === 'unified' ? 'secondary' : 'ghost'}
+                                size="sm"
+                                className="h-4 px-1.5 text-[9px] font-bold"
+                                onClick={() => setJsonMode('unified')}
+                            >
+                                Unified
+                            </Button>
+                            <Button
+                                variant={jsonMode === 'raw' ? 'secondary' : 'ghost'}
+                                size="sm"
+                                className="h-4 px-1.5 text-[9px] font-bold"
+                                onClick={() => setJsonMode('raw')}
+                                disabled={!hasRawLayout}
+                            >
+                                Raw API
+                            </Button>
+                        </div>
+                    )}
+                </div>
+                
                 <div className="flex items-center gap-1 border rounded-md p-0.5 bg-background">
                     <Button
                         variant={viewMode === 'visual' ? 'secondary' : 'ghost'}
@@ -52,9 +79,14 @@ export function StudioLayoutViewer({ studio }: StudioLayoutViewerProps) {
             </CardHeader>
             <CardContent className="p-3 overflow-auto">
                 {viewMode === 'json' ? (
-                    <pre className="text-[10px] bg-muted/50 p-2 rounded-md overflow-auto max-h-[400px] border font-mono">
-                        {JSON.stringify(studio, null, 2)}
-                    </pre>
+                    <div className="space-y-2">
+                        <pre className="text-[10px] bg-muted/50 p-2 rounded-md overflow-auto max-h-[400px] border font-mono">
+                            {jsonMode === 'unified' 
+                                ? JSON.stringify(studio, null, 2)
+                                : JSON.stringify(studio.raw_initial_layout, null, 2)
+                            }
+                        </pre>
+                    </div>
                 ) : !hasLayout ? (
                     <div className="w-full h-full flex flex-col items-center justify-center p-4 min-h-[150px] bg-muted/20 border rounded-md">
                         <p className="text-muted-foreground text-sm italic">No visual layout available yet.</p>

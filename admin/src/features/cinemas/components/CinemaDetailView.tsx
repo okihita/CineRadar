@@ -176,13 +176,27 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
                 </Card>
             </div>
 
-            {/* Main Content: Performance and Studio Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Main Content: Registry and Performance */}
+            <div className="space-y-6">
+                {/* Studio Layout Registry (Full Width) */}
+                <Card className="border-none shadow-sm ring-1 ring-border">
+                    <CardHeader className="py-3 px-4 bg-muted/10 border-b">
+                        <CardTitle className="text-sm font-medium flex items-center gap-2">
+                            <Layers className="w-4 h-4 text-primary" />
+                            Physical Asset Registry
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                        <TheatreStudiosList theatreId={theatreId} />
+                    </CardContent>
+                </Card>
+
+                {/* Performance Data (Full Width) */}
                 <Card className="border-none shadow-sm ring-1 ring-border">
                     <CardHeader className="py-3 px-4 bg-muted/10 border-b">
                         <CardTitle className="text-sm font-medium flex items-center gap-2">
                             <Calendar className="w-4 h-4 text-primary" />
-                            Performance Data - {selectedDate}
+                            Daily Performance - {selectedDate}
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="p-0">
@@ -200,18 +214,6 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
                                 </div>
                             )}
                         </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="border-none shadow-sm ring-1 ring-border">
-                    <CardHeader className="py-3 px-4 bg-muted/10 border-b">
-                        <CardTitle className="text-sm font-medium flex items-center gap-2">
-                            <Layers className="w-4 h-4 text-primary" />
-                            Studio Layouts
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-4">
-                        <TheatreStudiosList theatreId={theatreId} />
                     </CardContent>
                 </Card>
             </div>

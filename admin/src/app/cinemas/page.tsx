@@ -35,7 +35,6 @@ import {
 } from '@/features/cinemas';
 
 function CinemasPageContent() {
-  const router = useRouter();
   // Server state (existing hook with caching)
   const { theatres, runs, loading: isLoading } = useTheatres();
 
@@ -170,7 +169,7 @@ function CinemasPageContent() {
               theatres={mapTheatres}
               selectedTheatre={store.selectedTheatre}
               onTheatreSelect={store.setSelectedTheatre}
-              onViewDetails={(theatre) => router.push(`/cinemas/${theatre.theatre_id}`)}
+              onViewDetails={(theatre) => window.open(`/cinemas/${theatre.theatre_id}`, '_blank')}
               apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}
               lastUpdated={lastUpdated}
               center={store.mapCenter}
@@ -221,7 +220,7 @@ function CinemasPageContent() {
             onToggleCitySort={store.toggleCitySort}
             onToggleCapacitySort={store.toggleCapacitySort}
             onTheatreSelect={store.setSelectedTheatre}
-            onViewDetails={(theatre) => router.push(`/cinemas/${theatre.theatre_id}`)}
+            onViewDetails={(theatre) => window.open(`/cinemas/${theatre.theatre_id}`, '_blank')}
             onClearFilters={store.clearFilters}
           />
         </div>

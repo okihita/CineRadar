@@ -33,6 +33,7 @@ export interface Studio {
     version?: number;
     room_category?: string;
     initial_layout_compressed?: unknown;
+    raw_initial_layout?: unknown;
     created_at?: string;
     updated_at?: string;
 }

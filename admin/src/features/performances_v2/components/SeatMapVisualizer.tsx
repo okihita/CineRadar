@@ -66,27 +66,41 @@ function normalizeLayout(layout: LayoutGrid | null): NormalizedRow[] {
     if (!layout || layout.length === 0) return [];
 
     if (isSimpleFormat(layout)) {
-        return layout.map(([rowName, statuses]) => ({
-            rowName,
-            seats: statuses.map((status, index) => ({ 
-                index, 
-                status,
-                id: `${rowName}${index + 1}` // Fallback ID for simple format
-            }))
-        }));
+        return layout.map(([rowName, statuses]) => {
+            let seatCounter = 0;
+            return {
+                rowName,
+                seats: statuses.map((status) => {
+                    const isAisle = status === -1;
+                    const seatInfo = {
+                        index: isAisle ? -1 : seatCounter,
+                        status,
+                        id: isAisle ? `aisle_${rowName}` : `${rowName}${seatCounter + 1}`
+                    };
+                    if (!isAisle) seatCounter++;
+                    return seatInfo;
+                })
+            };
+        });
     } else {
         return (layout as ObjectLayoutGrid).map((row, rowIndex) => {
             const rowName = row.row_name || row.rowName || row.row || String.fromCharCode(65 + rowIndex);
             const seatsArray = (row.seats || row.seat || []) as (Seat | null)[];
+            let seatCounter = 0;
             return {
                 rowName,
                 seats: seatsArray
                     .filter(seat => seat !== null)
-                    .map((seat, index) => ({
-                        index,
-                        status: seat?.status ?? 0,
-                        id: seat?.id || `${rowName}${index + 1}`
-                    }))
+                    .map((seat) => {
+                        const isAisle = seat?.status === -1;
+                        const seatInfo = {
+                            index: isAisle ? -1 : seatCounter,
+                            status: seat?.status ?? 0,
+                            id: seat?.id || (isAisle ? `aisle_${rowName}` : `${rowName}${seatCounter + 1}`)
+                        };
+                        if (!isAisle) seatCounter++;
+                        return seatInfo;
+                    })
             };
         });
     }
@@ -128,6 +142,9 @@ export function SeatMapVisualizer({ initialLayout, finalLayout, masterLayout, is
         // Try lookup by ID first, then fallback to coordinate
         const finalStatus = (seatId ? finalSeatMap.get(seatId) : undefined) ?? finalSeatMap.get(`${rowName}_${seatIndex}`);
         const initialStatus = (seatId ? initialSeatMap.get(seatId) : undefined) ?? initialSeatMap.get(`${rowName}_${seatIndex}`);
+
+        // 0. Physical Aisle
+        if (finalStatus === -1) return 'gap';
 
         // 1. If it's available in the latest scrape, it's available
         if (finalStatus === 1) return 'available';
@@ -265,7 +282,12 @@ export function SeatMapVisualizer({ initialLayout, finalLayout, masterLayout, is
                                                     sold: 'bg-green-500 border border-green-600 text-white shadow-sm',
                                                     unknown: 'bg-amber-500 border border-amber-600 text-white shadow-sm',
                                                     gap: 'invisible'
-                                                }[status];
+                                                }[seat.status === -1 ? 'gap' : status];
+                                                
+                                                if (seat.status === -1) {
+                                                    return <div key={`s-${row.rowName}-${seat.index}`} className="w-4 h-4 md:w-5 md:h-5 invisible" />;
+                                                }
+
                                                 return (
                                                     <div key={`s-${row.rowName}-${seat.index}`} className={cn('w-4 h-4 md:w-5 md:h-5 rounded-t-md rounded-b-sm flex items-center justify-center text-[8px] font-medium transition-colors', colors)}>
                                                         {seat.index + 1}
