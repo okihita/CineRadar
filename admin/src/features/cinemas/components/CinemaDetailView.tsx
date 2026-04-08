@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, ChevronRight, MapPin, Building2, Calendar, Loader2, Info, Map as MapIcon, Layers, Zap, Database, Copy, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin, Building2, Loader2, Info, Map as MapIcon, Layers, Zap, Database, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -10,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCinemaDetails } from '../hooks/useCinemaDetails';
 import { useTheatres } from '@/hooks/useTheatres';
 import { useCinemasStore } from '../stores/useCinemasStore';
-import { CinemaPerformanceTable } from '@/features/performances_v2/components/CinemaPerformanceTable';
 import { getRegion } from '@/lib/regions';
 import { TheatreStudiosList } from './TheatreStudiosList';
 
@@ -21,18 +20,14 @@ interface CinemaDetailViewProps {
 export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
     const router = useRouter();
     const { filteredTheatreIds } = useCinemasStore();
-    const { theatres: allTheatres } = useTheatres(); // Correct hook for fallback
+    const { theatres: allTheatres } = useTheatres();
     
-    const today = useMemo(() => new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Jakarta' }), []);
-    const [selectedDate, setSelectedDate] = useState(today);
     const [isDarkMode, setIsDarkMode] = useState(false);
     const [copied, setCopied] = useState(false);
 
     // Navigation logic with fallback
     const { currentIndex, prevId, nextId, totalCount, isUsingFiltered } = useMemo(() => {
-        // Use filtered IDs from store if available, otherwise use all theatres
         const isFilteredAvailable = filteredTheatreIds && filteredTheatreIds.length > 0;
-        
         const sourceIds = isFilteredAvailable
             ? filteredTheatreIds.map(id => String(id).trim())
             : allTheatres.map(t => String(t.theatre_id).trim()).sort();
@@ -40,14 +35,8 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
         const currentId = String(theatreId).trim();
         const index = sourceIds.indexOf(currentId);
 
-        if (index === -1) return { 
-            currentIndex: -1, 
-            prevId: null, 
-            nextId: null, 
-            totalCount: sourceIds.length,
-            isUsingFiltered: isFilteredAvailable 
-        };
-
+        if (index === -1) return { currentIndex: -1, prevId: null, nextId: null, totalCount: sourceIds.length, isUsingFiltered: isFilteredAvailable };
+        
         return {
             currentIndex: index,
             prevId: index > 0 ? sourceIds[index - 1] : null,
@@ -56,7 +45,6 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
             isUsingFiltered: isFilteredAvailable
         };
     }, [filteredTheatreIds, allTheatres, theatreId]);
-
 
     const navigateTo = useCallback((id: string | null) => {
         if (id) router.push(`/cinemas/${id}`);
@@ -71,31 +59,23 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
     // Keyboard navigation
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            // Ignore if focus is in an input/textarea
             if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-
-            if (e.key === 'ArrowLeft' && prevId) {
-                navigateTo(prevId);
-            } else if (e.key === 'ArrowRight' && nextId) {
-                navigateTo(nextId);
-            }
+            if (e.key === 'ArrowLeft' && prevId) navigateTo(prevId);
+            else if (e.key === 'ArrowRight' && nextId) navigateTo(nextId);
         };
-
         window.addEventListener('keydown', handleKeyDown, true);
         return () => window.removeEventListener('keydown', handleKeyDown, true);
     }, [prevId, nextId, navigateTo]);
 
     useEffect(() => {
-        const checkDarkMode = () => {
-            setIsDarkMode(document.documentElement.classList.contains('dark'));
-        };
+        const checkDarkMode = () => setIsDarkMode(document.documentElement.classList.contains('dark'));
         checkDarkMode();
         const observer = new MutationObserver(checkDarkMode);
         observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
         return () => observer.disconnect();
     }, []);
     
-    const { theatre, showtimes, loading, error } = useCinemaDetails(theatreId, selectedDate);
+    const { theatre, loading, error } = useCinemaDetails(theatreId);
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
     if (loading && !theatre) {
@@ -123,37 +103,20 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-start gap-4">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => router.push('/cinemas')}
-                        className="mt-1"
-                    >
+                    <Button variant="ghost" size="icon" onClick={() => router.push('/cinemas')} className="mt-1">
                         <ChevronLeft className="w-6 h-6" />
                     </Button>
                     <div>
                         <div className="flex items-center gap-2 mb-1">
                             <h1 className="text-2xl font-bold tracking-tight">{theatre.name}</h1>
-                            <Badge className={
-                                theatre.merchant === 'XXI' ? 'bg-amber-500 hover:bg-amber-600' :
-                                theatre.merchant === 'CGV' ? 'bg-red-600 hover:bg-red-700' :
-                                'bg-blue-600 hover:bg-blue-700'
-                            }>
+                            <Badge className={theatre.merchant === 'XXI' ? 'bg-amber-500 hover:bg-amber-600' : theatre.merchant === 'CGV' ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'}>
                                 {theatre.merchant}
                             </Badge>
                         </div>
                         <div className="flex items-center gap-4 text-muted-foreground text-sm">
-                            <div 
-                                className="flex items-center gap-1.5 font-mono text-[10px] bg-muted/50 px-1.5 py-0.5 rounded border border-border/50 cursor-pointer hover:bg-muted transition-colors group"
-                                onClick={() => copyToClipboard(theatre.theatre_id)}
-                                title="Copy Theatre ID"
-                            >
+                            <div className="flex items-center gap-1.5 font-mono text-[10px] bg-muted/50 px-1.5 py-0.5 rounded border border-border/50 cursor-pointer hover:bg-muted transition-colors group" onClick={() => copyToClipboard(theatre.theatre_id)} title="Copy Theatre ID">
                                 ID: {theatre.theatre_id}
-                                {copied ? (
-                                    <Check className="w-3 h-3 text-green-500 animate-in zoom-in duration-200" />
-                                ) : (
-                                    <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-all duration-200" />
-                                )}
+                                {copied ? <Check className="w-3 h-3 text-green-500 animate-in zoom-in duration-200" /> : <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-all duration-200" />}
                             </div>
                             <div className="flex items-center gap-1">
                                 <MapPin className="w-3.5 h-3.5" />
@@ -168,64 +131,32 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
                 </div>
 
                 <div className="flex items-center gap-4">
-                    {/* Navigation Controls */}
                     {currentIndex !== -1 && (
-                        <div className="flex items-center gap-1 bg-muted/30 p-1 rounded-lg border mr-2 shadow-sm">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 hover:bg-background"
-                                disabled={!prevId}
-                                onClick={() => navigateTo(prevId)}
-                                title="Previous Theatre (ArrowLeft)"
-                            >
+                        <div className="flex items-center gap-1 bg-muted/30 p-1 rounded-lg border shadow-sm">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-background" disabled={!prevId} onClick={() => navigateTo(prevId)} title="Previous Theatre (ArrowLeft)">
                                 <ChevronLeft className="w-4 h-4" />
                             </Button>
                             <div className="flex flex-col items-center px-3 min-w-[90px]">
-                                <span className="text-[10px] font-mono font-bold text-foreground leading-none">
-                                    {currentIndex + 1} / {totalCount}
-                                </span>
-                                <span className={cn(
-                                    "text-[7px] uppercase tracking-wider font-bold mt-1 px-1 rounded-[2px]",
-                                    isUsingFiltered ? "bg-blue-500/10 text-blue-600" : "bg-muted text-muted-foreground"
-                                )}>
+                                <span className="text-[10px] font-mono font-bold text-foreground leading-none">{currentIndex + 1} / {totalCount}</span>
+                                <span className={cn("text-[7px] uppercase tracking-wider font-bold mt-1 px-1 rounded-[2px]", isUsingFiltered ? "bg-blue-500/10 text-blue-600" : "bg-muted text-muted-foreground")}>
                                     {isUsingFiltered ? 'Filtered' : 'Full List'}
                                 </span>
                             </div>
-
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 hover:bg-background"
-                                disabled={!nextId}
-                                onClick={() => navigateTo(nextId)}
-                                title="Next Theatre (ArrowRight)"
-                            >
+                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-background" disabled={!nextId} onClick={() => navigateTo(nextId)} title="Next Theatre (ArrowRight)">
                                 <ChevronRight className="w-4 h-4" />
                             </Button>
                         </div>
                     )}
-
-                    <div className="flex items-center gap-2 bg-muted/30 p-1 rounded-lg border">
-                        <Calendar className="w-4 h-4 ml-2 text-muted-foreground" />
-                        <input 
-                            type="date" 
-                            value={selectedDate}
-                            onChange={(e) => setSelectedDate(e.target.value)}
-                            className="bg-transparent text-sm font-medium focus:outline-none p-1.5"
-                        />
-                    </div>
                 </div>
             </div>
 
-            {/* Section 1: Physical Asset Registry (The Priority) */}
+            {/* Section 1: Physical Asset Registry */}
             <Card className="border-none shadow-sm ring-1 ring-border">
                 <CardHeader className="py-2.5 px-4 bg-muted/10 border-b flex flex-row items-center justify-between space-y-0">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <Layers className="w-4 h-4 text-primary" />
                         Physical Asset Registry
                     </CardTitle>
-                    
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
                             <Zap className="w-3.5 h-3.5 text-blue-500" /> Ground Truth
@@ -248,32 +179,15 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
                             <MapIcon className="w-4 h-4 text-primary" />
                             Location
                         </CardTitle>
-                        <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-7 text-[10px] uppercase tracking-wider font-bold"
-                            onClick={() => {
-                                const url = theatre.place_id
-                                    ? `https://www.google.com/maps/place/?q=place_id:${theatre.place_id}`
-                                    : `https://www.google.com/maps?q=${theatre.lat},${theatre.lng}`;
-                                window.open(url, '_blank');
-                            }}
-                        >
+                        <Button variant="ghost" size="sm" className="h-7 text-[10px] uppercase tracking-wider font-bold" onClick={() => {
+                            const url = theatre.place_id ? `https://www.google.com/maps/place/?q=place_id:${theatre.place_id}` : `https://www.google.com/maps?q=${theatre.lat},${theatre.lng}`;
+                            window.open(url, '_blank');
+                        }}>
                             Open in Google Maps
                         </Button>
                     </CardHeader>
                     <div className="aspect-[21/9] w-full bg-muted/20">
-                        <iframe
-                            width="100%"
-                            height="100%"
-                            style={{ border: 0, filter: isDarkMode ? 'invert(90%) hue-rotate(180deg) brightness(95%) contrast(90%)' : 'none' }}
-                            loading="lazy"
-                            allowFullScreen
-                            referrerPolicy="no-referrer-when-downgrade"
-                            src={`https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${encodeURIComponent(
-                                theatre.name + ' ' + theatre.city + ' Indonesia'
-                            )}`}
-                        />
+                        <iframe width="100%" height="100%" style={{ border: 0, filter: isDarkMode ? 'invert(90%) hue-rotate(180deg) brightness(95%) contrast(90%)' : 'none' }} loading="lazy" allowFullScreen referrerPolicy="no-referrer-when-downgrade" src={`https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${encodeURIComponent(theatre.name + ' ' + theatre.city + ' Indonesia')}`} />
                     </div>
                 </Card>
 
@@ -308,32 +222,6 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
                     </CardContent>
                 </Card>
             </div>
-
-            {/* Section 3: Performance Data */}
-            <Card className="border-none shadow-sm ring-1 ring-border">
-                <CardHeader className="py-3 px-4 bg-muted/10 border-b">
-                    <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-primary" />
-                        Daily Performance - {selectedDate}
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                    <div className="p-4">
-                        {loading ? (
-                            <div className="flex items-center justify-center py-20">
-                                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                            </div>
-                        ) : showtimes.length > 0 ? (
-                            <CinemaPerformanceTable showtimes={showtimes} />
-                        ) : (
-                            <div className="text-center py-20 bg-muted/5 rounded-xl border border-dashed">
-                                <Info className="w-8 h-8 text-muted-foreground mx-auto mb-2 opacity-50" />
-                                <p className="text-muted-foreground">No showtimes found for {selectedDate}.</p>
-                            </div>
-                        )}
-                    </div>
-                </CardContent>
-            </Card>
         </div>
     );
 }

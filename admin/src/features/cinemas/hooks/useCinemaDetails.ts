@@ -2,11 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { Theatre } from '../types';
-import { ShowtimeSnapshot } from '@/features/performances_v2/components/ShowtimeTable';
 
-export function useCinemaDetails(theatreId: string, date: string) {
+export function useCinemaDetails(theatreId: string) {
     const [theatre, setTheatre] = useState<Theatre | null>(null);
-    const [showtimes, setShowtimes] = useState<ShowtimeSnapshot[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -14,22 +12,15 @@ export function useCinemaDetails(theatreId: string, date: string) {
         async function fetchData() {
             setLoading(true);
             try {
-                const [theatreRes, showtimesRes] = await Promise.all([
-                    fetch(`/api/theatres/${theatreId}`),
-                    fetch(`/api/theatres/${theatreId}/showtimes?date=${date}`)
-                ]);
+                const res = await fetch(`/api/theatres/${theatreId}`);
 
-                if (!theatreRes.ok) {
-                    if (theatreRes.status === 404) throw new Error('Cinema not found');
+                if (!res.ok) {
+                    if (res.status === 404) throw new Error('Cinema not found');
                     throw new Error('Failed to fetch cinema details');
                 }
-                if (!showtimesRes.ok) throw new Error('Failed to fetch showtimes');
 
-                const theatreData = await theatreRes.json();
-                const showtimesData = await showtimesRes.json();
-
+                const theatreData = await res.json();
                 setTheatre(theatreData);
-                setShowtimes(showtimesData);
             } catch (err: unknown) {
                 setError(err instanceof Error ? err.message : 'An unknown error occurred');
             } finally {
@@ -37,10 +28,10 @@ export function useCinemaDetails(theatreId: string, date: string) {
             }
         }
 
-        if (theatreId && date) {
+        if (theatreId) {
             fetchData();
         }
-    }, [theatreId, date]);
+    }, [theatreId]);
 
-    return { theatre, showtimes, loading, error };
+    return { theatre, loading, error };
 }
