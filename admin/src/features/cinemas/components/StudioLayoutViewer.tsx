@@ -91,51 +91,53 @@ export function StudioLayoutViewer({ studio }: StudioLayoutViewerProps) {
                         <p className="text-xs text-muted-foreground/60 mt-1">Switch to JSON mode to inspect raw data.</p>
                     </div>
                 ) : (
-                    <div className="min-w-fit flex flex-col items-center py-4 bg-muted/5 rounded-xl border border-border/30">
-                        {/* Screen Indicator */}
-                        <div className="w-[70%] max-w-[280px] h-1.5 bg-gradient-to-b from-primary/30 to-transparent border-t border-primary/40 rounded-t-[50%] mb-8 mx-auto opacity-80" />
+                    <div className="w-full overflow-x-auto custom-scrollbar bg-muted/5 rounded-xl border border-border/30">
+                        <div className="min-w-fit flex flex-col items-center py-4 px-6">
+                            {/* Screen Indicator */}
+                            <div className="w-[70%] max-w-[280px] h-1.5 bg-gradient-to-b from-primary/30 to-transparent border-t border-primary/40 rounded-t-[50%] mb-8 mx-auto opacity-80" />
+                            
+                            {/* Seating Grid */}
+                            <div className="flex flex-col gap-1.5">
+                                {layout.map((row, i) => {
+                                    // Skip rendering padding rows (no name and no real seats)
+                                    const isPaddingRow = !row.row_name.trim() && !row.seats.some(s => s.type === 'seat');
+                                    if (isPaddingRow) return null;
 
-                        {/* Seating Grid */}
-                        <div className="flex flex-col gap-1.5">
-                            {layout.map((row, i) => {
-                                // Skip rendering padding rows (no name and no real seats)
-                                const isPaddingRow = !row.row_name.trim() && !row.seats.some(s => s.type === 'seat');
-                                if (isPaddingRow) return null;
-
-                                return (
-                                    <div key={`row-${row.row_name}-${i}`} className="flex items-center gap-1.5 justify-center">
-                                        <div className="w-5 text-[9px] font-mono font-bold text-muted-foreground/40 text-right pr-1">
-                                            {row.row_name}
+                                    return (
+                                        <div key={`row-${row.row_name}-${i}`} className="flex items-center gap-1.5 justify-center">
+                                            <div className="w-5 text-[9px] font-mono font-bold text-muted-foreground/40 text-right pr-1">
+                                                {row.row_name}
+                                            </div>
+                                            
+                                            <div className="flex gap-1">
+                                                {row.seats.map((seat, j) => {
+                                                    if (seat.type === 'aisle') {
+                                                        return <div key={`aisle-${i}-${j}`} className="w-3.5 h-3.5 md:w-4 md:h-4 invisible" />;
+                                                    }
+                                                    
+                                                    return (
+                                                        <div 
+                                                            key={`seat-${i}-${j}-${seat.id || 'void'}`}
+                                                            className={cn(
+                                                                'w-3.5 h-3.5 md:w-4 md:h-4 rounded-t-sm rounded-b-[2px] flex items-center justify-center',
+                                                                'text-[7px] font-bold transition-all cursor-default select-none',
+                                                                'bg-background border border-border text-muted-foreground/70 hover:border-primary/40 hover:text-primary'
+                                                            )}
+                                                            title={`Seat ${seat.id}`}
+                                                        >
+                                                            {seat.id ? seat.id.replace(/^[A-Z]+/, '') : ''}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                            
+                                            <div className="w-5 text-[9px] font-mono font-bold text-muted-foreground/40 pl-1">
+                                                {row.row_name}
+                                            </div>
                                         </div>
-                                        
-                                        <div className="flex gap-1">
-                                            {row.seats.map((seat, j) => {
-                                                if (seat.type === 'aisle') {
-                                                    return <div key={`aisle-${i}-${j}`} className="w-3.5 h-3.5 md:w-4 md:h-4 invisible" />;
-                                                }
-                                                
-                                                return (
-                                                    <div 
-                                                        key={`seat-${i}-${j}-${seat.id || 'void'}`}
-                                                        className={cn(
-                                                            'w-3.5 h-3.5 md:w-4 md:h-4 rounded-t-sm rounded-b-[2px] flex items-center justify-center',
-                                                            'text-[7px] font-bold transition-all cursor-default select-none',
-                                                            'bg-background border border-border text-muted-foreground/70 hover:border-primary/40 hover:text-primary'
-                                                        )}
-                                                        title={`Seat ${seat.id}`}
-                                                    >
-                                                        {seat.id ? seat.id.replace(/^[A-Z]+/, '') : ''}
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                        
-                                        <div className="w-5 text-[9px] font-mono font-bold text-muted-foreground/40 pl-1">
-                                            {row.row_name}
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                                    );
+                                })}
+                            </div>
                         </div>
                     </div>
                 )}

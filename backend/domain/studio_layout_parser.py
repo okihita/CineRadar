@@ -16,21 +16,28 @@ logger = logging.getLogger(__name__)
 
 
 def parse_to_master_layout(
-    seat_map: list[dict[str, Any]],
+    seat_map: Any,
 ) -> tuple[int, list[dict[str, Any]]]:
     """Convert any chain's seat_map into CineRadar Unified Grid format.
 
     Args:
-        seat_map: Raw seat_map array from TIX API response.
+        seat_map: Raw seat_map array or full TIX API response object.
 
     Returns:
         (total_seats, unified_layout) where unified_layout is:
         [{"row_name": "A", "seats": [{"id": "A1", "type": "seat"}, ...]}, ...]
-
-    Key principle: We care about EXISTENCE, not availability.
-    Every node with a valid seat_id is a seat, even if currently sold/blocked.
     """
     if not seat_map:
+        return 0, []
+
+    # Handle full response wrapper
+    if isinstance(seat_map, dict):
+        if "data" in seat_map and isinstance(seat_map["data"], dict):
+            seat_map = seat_map["data"].get("seat_map", [])
+        elif "data" in seat_map and isinstance(seat_map["data"], list):
+            seat_map = seat_map["data"]
+
+    if not isinstance(seat_map, list) or not seat_map:
         return 0, []
 
     # Detect format: nested (XXI/CGV) vs flat (Cinépolis/CGV B2B)
@@ -41,11 +48,7 @@ def parse_to_master_layout(
 
 
 def _parse_nested(seat_map: list[dict[str, Any]]) -> tuple[int, list[dict[str, Any]]]:
-    """Parse XXI/CGV nested format.
-
-    Input shape:
-    [{"seat_code": "A", "seat_rows": [{"seat_row": "A1", "status": 1}, ...]}, ...]
-    """
+    """Parse XXI/CGV nested format."""
     total_seats = 0
     layout: list[dict[str, Any]] = []
 
@@ -56,7 +59,6 @@ def _parse_nested(seat_map: list[dict[str, Any]]) -> tuple[int, list[dict[str, A
         for seat in item.get("seat_rows", []):
             seat_id = seat.get("seat_row", "")
             if not seat_id:
-                # No seat_id → likely a gap/spacer in the API response
                 seats.append({"id": "", "type": "aisle"})
                 continue
 
@@ -70,32 +72,33 @@ def _parse_nested(seat_map: list[dict[str, Any]]) -> tuple[int, list[dict[str, A
 
 
 def _parse_flat(seat_map: list[dict[str, Any]]) -> tuple[int, list[dict[str, Any]]]:
-    """Parse Cinépolis/CGV B2B flat format.
-
-    Input shape:
-    [{"row_name": "A", "seat_no": "A1", "seat_yn": "1", "seat_status": 0}, ...]
-    """
+    """Parse Cinépolis/CGV B2B/Flix flat format."""
     total_seats = 0
-    # Preserve insertion order with dict
     rows: dict[str, list[dict[str, str]]] = {}
+    row_order: list[str] = []
 
     for item in seat_map:
-        row_name = item.get("row_name", "ALL")
-        seat_id = item.get("seat_no", "")
-        seat_yn = item.get("seat_yn", "1")
+        row_name = item.get("row_name", "")
+        seat_no = item.get("seat_no", "")
+        seat_yn = str(item.get("seat_yn", "1"))
+
+        # Skip technical padding rows that have no row name AND no seat
+        if not row_name and seat_yn == "0":
+            continue
 
         if row_name not in rows:
             rows[row_name] = []
+            row_order.append(row_name)
 
-        if seat_yn == "0" or not seat_id:
-            # Aisle / void
+        if seat_yn == "0" or not seat_no:
             rows[row_name].append({"id": "", "type": "aisle"})
         else:
-            # Physical seat exists (regardless of seat_status)
+            # Construct standard ID like A1, B2
+            seat_id = f"{row_name}{seat_no}"
             rows[row_name].append({"id": seat_id, "type": "seat"})
             total_seats += 1
 
-    layout = [{"row_name": rn, "seats": ss} for rn, ss in rows.items()]
+    layout = [{"row_name": rn, "seats": rows[rn]} for rn in row_order if rn or any(s["type"] == "seat" for s in rows[rn])]
     return total_seats, layout
 
 

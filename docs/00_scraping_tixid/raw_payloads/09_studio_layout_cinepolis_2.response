@@ -1,0 +1,588 @@
+{
+    "success": true,
+    "data": {
+        "user_seat_purchased": 0,
+        "user_seat_daily_limit": 10,
+        "user_seat_transaction_limit": 6,
+        "max_horizontal_seat": 9,
+        "max_vertical_seat": 7,
+        "price_group": [
+            {
+                "seat_grd_cd": "0000000001",
+                "seat_grd_nm": "VIP",
+                "seat_grd_price": 75000,
+                "seat_color": "#B6822C",
+                "separator_color": "#fbfbfb"
+            }
+        ],
+        "seat_map": [
+            {
+                "seat_id": "1-0-0-0",
+                "row_name": "A",
+                "seat_no": "1",
+                "seat_group": null,
+                "seat_yn": "1",
+                "seat_grd_cd": "0000000001",
+                "seat_status": 0
+            },
+            {
+                "seat_id": "1-0-1-0",
+                "row_name": "A",
+                "seat_no": "2",
+                "seat_group": null,
+                "seat_yn": "1",
+                "seat_grd_cd": "0000000001",
+                "seat_status": 0
+            },
+            {
+                "seat_id": "2-2",
+                "row_name": "A",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "3-2",
+                "row_name": "A",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "4-2",
+                "row_name": "A",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "5-2",
+                "row_name": "A",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "6-2",
+                "row_name": "A",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "7-2",
+                "row_name": "A",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "8-2",
+                "row_name": "A",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "0-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "1-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "2-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "3-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "4-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "5-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "6-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "7-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "8-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "1-2-0-0",
+                "row_name": "A",
+                "seat_no": "3",
+                "seat_group": null,
+                "seat_yn": "1",
+                "seat_grd_cd": "0000000001",
+                "seat_status": 0
+            },
+            {
+                "seat_id": "1-2-1-0",
+                "row_name": "A",
+                "seat_no": "4",
+                "seat_group": null,
+                "seat_yn": "1",
+                "seat_grd_cd": "0000000001",
+                "seat_status": 0
+            },
+            {
+                "seat_id": "2-2",
+                "row_name": "A",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "1-2-3-0",
+                "row_name": "A",
+                "seat_no": "5",
+                "seat_group": null,
+                "seat_yn": "1",
+                "seat_grd_cd": "0000000001",
+                "seat_status": 0
+            },
+            {
+                "seat_id": "1-2-4-0",
+                "row_name": "A",
+                "seat_no": "6",
+                "seat_group": null,
+                "seat_yn": "1",
+                "seat_grd_cd": "0000000001",
+                "seat_status": 0
+            },
+            {
+                "seat_id": "5-4",
+                "row_name": "A",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "6-4",
+                "row_name": "A",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "1-2-7-0",
+                "row_name": "A",
+                "seat_no": "7",
+                "seat_group": null,
+                "seat_yn": "1",
+                "seat_grd_cd": "0000000001",
+                "seat_status": 0
+            },
+            {
+                "seat_id": "1-2-8-0",
+                "row_name": "A",
+                "seat_no": "8",
+                "seat_group": null,
+                "seat_yn": "1",
+                "seat_grd_cd": "0000000001",
+                "seat_status": 0
+            },
+            {
+                "seat_id": "0-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "1-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "2-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "3-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "4-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "5-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "6-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "7-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "8-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "1-4-0-0",
+                "row_name": "B",
+                "seat_no": "1",
+                "seat_group": null,
+                "seat_yn": "1",
+                "seat_grd_cd": "0000000001",
+                "seat_status": 0
+            },
+            {
+                "seat_id": "1-4-1-0",
+                "row_name": "B",
+                "seat_no": "2",
+                "seat_group": null,
+                "seat_yn": "1",
+                "seat_grd_cd": "0000000001",
+                "seat_status": 0
+            },
+            {
+                "seat_id": "2-2",
+                "row_name": "B",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "1-4-3-0",
+                "row_name": "B",
+                "seat_no": "3",
+                "seat_group": null,
+                "seat_yn": "1",
+                "seat_grd_cd": "0000000001",
+                "seat_status": 1
+            },
+            {
+                "seat_id": "1-4-4-0",
+                "row_name": "B",
+                "seat_no": "4",
+                "seat_group": null,
+                "seat_yn": "1",
+                "seat_grd_cd": "0000000001",
+                "seat_status": 0
+            },
+            {
+                "seat_id": "5-4",
+                "row_name": "B",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "6-4",
+                "row_name": "B",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "1-4-7-0",
+                "row_name": "B",
+                "seat_no": "5",
+                "seat_group": null,
+                "seat_yn": "1",
+                "seat_grd_cd": "0000000001",
+                "seat_status": 0
+            },
+            {
+                "seat_id": "1-4-8-0",
+                "row_name": "B",
+                "seat_no": "6",
+                "seat_group": null,
+                "seat_yn": "1",
+                "seat_grd_cd": "0000000001",
+                "seat_status": 0
+            },
+            {
+                "seat_id": "0-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "1-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "2-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "3-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "4-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "5-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "6-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "7-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "8-0",
+                "row_name": "",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "1-6-0-0",
+                "row_name": "C",
+                "seat_no": "1",
+                "seat_group": null,
+                "seat_yn": "1",
+                "seat_grd_cd": "0000000001",
+                "seat_status": 1
+            },
+            {
+                "seat_id": "1-6-1-0",
+                "row_name": "C",
+                "seat_no": "2",
+                "seat_group": null,
+                "seat_yn": "1",
+                "seat_grd_cd": "0000000001",
+                "seat_status": 0
+            },
+            {
+                "seat_id": "2-2",
+                "row_name": "C",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "1-6-3-0",
+                "row_name": "C",
+                "seat_no": "3",
+                "seat_group": null,
+                "seat_yn": "1",
+                "seat_grd_cd": "0000000001",
+                "seat_status": 0
+            },
+            {
+                "seat_id": "1-6-4-0",
+                "row_name": "C",
+                "seat_no": "4",
+                "seat_group": null,
+                "seat_yn": "1",
+                "seat_grd_cd": "0000000001",
+                "seat_status": 0
+            },
+            {
+                "seat_id": "5-4",
+                "row_name": "C",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "6-4",
+                "row_name": "C",
+                "seat_no": null,
+                "seat_group": null,
+                "seat_yn": "0",
+                "seat_grd_cd": null,
+                "seat_status": 0
+            },
+            {
+                "seat_id": "1-6-7-0",
+                "row_name": "C",
+                "seat_no": "5",
+                "seat_group": null,
+                "seat_yn": "1",
+                "seat_grd_cd": "0000000001",
+                "seat_status": 0
+            },
+            {
+                "seat_id": "1-6-8-0",
+                "row_name": "C",
+                "seat_no": "6",
+                "seat_group": null,
+                "seat_yn": "1",
+                "seat_grd_cd": "0000000001",
+                "seat_status": 0
+            }
+        ]
+    }
+}
