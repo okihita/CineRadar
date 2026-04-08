@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Code, Table } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { JsonViewer, sortObjectKeys } from '@/components/JsonViewer';
 import type { Studio } from '../hooks/useTheatreStudios';
 
 interface StudioLayoutViewerProps {
@@ -20,6 +21,9 @@ export function StudioLayoutViewer({ studio }: StudioLayoutViewerProps) {
 
     const hasLayout = layout.length > 0;
     const hasRawLayout = !!studio.raw_initial_layout;
+
+    const displayJson = jsonMode === 'unified' ? studio : studio.raw_initial_layout;
+    const sortedJson = sortObjectKeys(displayJson);
 
     return (
         <Card className="w-full flex flex-col mt-3 border bg-card/50">
@@ -80,12 +84,9 @@ export function StudioLayoutViewer({ studio }: StudioLayoutViewerProps) {
             <CardContent className="p-3 overflow-auto">
                 {viewMode === 'json' ? (
                     <div className="space-y-2">
-                        <pre className="text-[10px] bg-muted/50 p-2 rounded-md overflow-auto max-h-[400px] border font-mono">
-                            {jsonMode === 'unified' 
-                                ? JSON.stringify(studio, null, 2)
-                                : JSON.stringify(studio.raw_initial_layout, null, 2)
-                            }
-                        </pre>
+                        <div className="bg-muted/50 p-3 rounded-md overflow-auto max-h-[500px] border font-mono">
+                            <JsonViewer data={sortedJson} />
+                        </div>
                     </div>
                 ) : !hasLayout ? (
                     <div className="w-full h-full flex flex-col items-center justify-center p-4 min-h-[150px] bg-muted/20 border rounded-md">
