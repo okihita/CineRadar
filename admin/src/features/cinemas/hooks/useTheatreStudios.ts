@@ -31,10 +31,7 @@ export interface Studio {
     audit?: Audit;
     version?: number;
     room_category?: string;
-    initial_layout_compressed?: unknown;
-    raw_initial_layout?: unknown;
-    created_at?: string;
-    updated_at?: string;
+    raw_initial_layout?: Record<string, unknown> | null;
 }
 
 const fetcher = (url: string) => fetch(url).then(res => {

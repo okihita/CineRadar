@@ -12,7 +12,6 @@
 'use client';
 
 import { useEffect, useMemo, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { ChevronUp, MapPin } from 'lucide-react';
 import { IndonesiaMap } from '@/components/indonesia-map';
