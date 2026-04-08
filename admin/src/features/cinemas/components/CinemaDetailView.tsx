@@ -1,12 +1,15 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, MapPin, Building2, Calendar, Loader2, Info, Map as MapIcon, Layers, Zap, Database } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin, Building2, Calendar, Loader2, Info, Map as MapIcon, Layers, Zap, Database, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCinemaDetails } from '../hooks/useCinemaDetails';
+import { useTheatres } from '@/hooks/useTheatres';
+import { useCinemasStore } from '../stores/useCinemasStore';
 import { CinemaPerformanceTable } from '@/features/performances_v2/components/CinemaPerformanceTable';
 import { getRegion } from '@/lib/regions';
 import { TheatreStudiosList } from './TheatreStudiosList';
@@ -17,9 +20,70 @@ interface CinemaDetailViewProps {
 
 export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
     const router = useRouter();
+    const { filteredTheatreIds } = useCinemasStore();
+    const { theatres: allTheatres } = useTheatres(); // Correct hook for fallback
+    
     const today = useMemo(() => new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Jakarta' }), []);
     const [selectedDate, setSelectedDate] = useState(today);
     const [isDarkMode, setIsDarkMode] = useState(false);
+    const [copied, setCopied] = useState(false);
+
+    // Navigation logic with fallback
+    const { currentIndex, prevId, nextId, totalCount, isUsingFiltered } = useMemo(() => {
+        // Use filtered IDs from store if available, otherwise use all theatres
+        const isFilteredAvailable = filteredTheatreIds && filteredTheatreIds.length > 0;
+        
+        const sourceIds = isFilteredAvailable
+            ? filteredTheatreIds.map(id => String(id).trim())
+            : allTheatres.map(t => String(t.theatre_id).trim()).sort();
+
+        const currentId = String(theatreId).trim();
+        const index = sourceIds.indexOf(currentId);
+
+        if (index === -1) return { 
+            currentIndex: -1, 
+            prevId: null, 
+            nextId: null, 
+            totalCount: sourceIds.length,
+            isUsingFiltered: isFilteredAvailable 
+        };
+
+        return {
+            currentIndex: index,
+            prevId: index > 0 ? sourceIds[index - 1] : null,
+            nextId: index < sourceIds.length - 1 ? sourceIds[index + 1] : null,
+            totalCount: sourceIds.length,
+            isUsingFiltered: isFilteredAvailable
+        };
+    }, [filteredTheatreIds, allTheatres, theatreId]);
+
+
+    const navigateTo = useCallback((id: string | null) => {
+        if (id) router.push(`/cinemas/${id}`);
+    }, [router]);
+
+    const copyToClipboard = useCallback((text: string) => {
+        navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    }, []);
+
+    // Keyboard navigation
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Ignore if focus is in an input/textarea
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+            if (e.key === 'ArrowLeft' && prevId) {
+                navigateTo(prevId);
+            } else if (e.key === 'ArrowRight' && nextId) {
+                navigateTo(nextId);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown, true);
+        return () => window.removeEventListener('keydown', handleKeyDown, true);
+    }, [prevId, nextId, navigateTo]);
 
     useEffect(() => {
         const checkDarkMode = () => {
@@ -79,8 +143,17 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
                             </Badge>
                         </div>
                         <div className="flex items-center gap-4 text-muted-foreground text-sm">
-                            <div className="flex items-center gap-1 font-mono text-[10px] bg-muted/50 px-1.5 py-0.5 rounded border border-border/50">
+                            <div 
+                                className="flex items-center gap-1.5 font-mono text-[10px] bg-muted/50 px-1.5 py-0.5 rounded border border-border/50 cursor-pointer hover:bg-muted transition-colors group"
+                                onClick={() => copyToClipboard(theatre.theatre_id)}
+                                title="Copy Theatre ID"
+                            >
                                 ID: {theatre.theatre_id}
+                                {copied ? (
+                                    <Check className="w-3 h-3 text-green-500 animate-in zoom-in duration-200" />
+                                ) : (
+                                    <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-all duration-200" />
+                                )}
                             </div>
                             <div className="flex items-center gap-1">
                                 <MapPin className="w-3.5 h-3.5" />
@@ -95,6 +168,44 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
                 </div>
 
                 <div className="flex items-center gap-4">
+                    {/* Navigation Controls */}
+                    {currentIndex !== -1 && (
+                        <div className="flex items-center gap-1 bg-muted/30 p-1 rounded-lg border mr-2 shadow-sm">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 hover:bg-background"
+                                disabled={!prevId}
+                                onClick={() => navigateTo(prevId)}
+                                title="Previous Theatre (ArrowLeft)"
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                            </Button>
+                            <div className="flex flex-col items-center px-3 min-w-[90px]">
+                                <span className="text-[10px] font-mono font-bold text-foreground leading-none">
+                                    {currentIndex + 1} / {totalCount}
+                                </span>
+                                <span className={cn(
+                                    "text-[7px] uppercase tracking-wider font-bold mt-1 px-1 rounded-[2px]",
+                                    isUsingFiltered ? "bg-blue-500/10 text-blue-600" : "bg-muted text-muted-foreground"
+                                )}>
+                                    {isUsingFiltered ? 'Filtered' : 'Full List'}
+                                </span>
+                            </div>
+
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 hover:bg-background"
+                                disabled={!nextId}
+                                onClick={() => navigateTo(nextId)}
+                                title="Next Theatre (ArrowRight)"
+                            >
+                                <ChevronRight className="w-4 h-4" />
+                            </Button>
+                        </div>
+                    )}
+
                     <div className="flex items-center gap-2 bg-muted/30 p-1 rounded-lg border">
                         <Calendar className="w-4 h-4 ml-2 text-muted-foreground" />
                         <input 

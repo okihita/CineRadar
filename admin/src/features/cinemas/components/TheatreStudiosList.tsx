@@ -73,39 +73,40 @@ export function TheatreStudiosList({ theatreId, merchant }: TheatreStudiosListPr
                                                 </span>
                                             )}
                                         </div>
-                                        <span className="text-[10px] text-muted-foreground font-mono">
-                                            ID: {studio.studio_id} • {studio.total_seats || 0} seats
+                                        <span className="text-[10px] text-muted-foreground font-mono uppercase">
+                                            ID: {studio.studio_id} • {studio.room_category || 'REGULAR'}
                                         </span>
                                     </div>
                                 </div>
                                 
-                                {isConfirmed ? (
-                                    <Badge variant="outline" className="bg-green-500/5 text-green-600 border-green-500/20 gap-1 px-2 py-0 text-[9px] font-bold">
-                                        <CheckCircle2 className="w-3 h-3" /> VERIFIED
-                                    </Badge>
-                                ) : (
-                                    <Button 
-                                        size="sm" 
-                                        variant="outline" 
-                                        className="h-6 text-[9px] font-bold bg-amber-500/5 hover:bg-amber-500/10 text-amber-600 border-amber-500/20"
-                                        onClick={(e) => handleConfirm(e, studio.studio_id)}
-                                        disabled={confirmingId === studio.studio_id}
-                                    >
-                                        {confirmingId === studio.studio_id ? (
-                                            <Loader2 className="w-2.5 h-2.5 animate-spin mr-1" />
-                                        ) : (
-                                            <AlertCircle className="w-2.5 h-2.5 mr-1" />
-                                        )}
-                                        CONFIRM
-                                    </Button>
-                                )}
+                                <div className="flex flex-col items-end gap-1">
+                                    {isConfirmed ? (
+                                        <Badge variant="outline" className="bg-green-500/5 text-green-600 border-green-500/20 gap-1 px-2 py-0 text-[9px] font-bold">
+                                            <CheckCircle2 className="w-3 h-3" /> VERIFIED
+                                        </Badge>
+                                    ) : (
+                                        <Button 
+                                            size="sm" 
+                                            variant="outline" 
+                                            className="h-6 text-[9px] font-bold bg-amber-500/5 hover:bg-amber-500/10 text-amber-600 border-amber-500/20"
+                                            onClick={(e) => handleConfirm(e, studio.studio_id)}
+                                            disabled={confirmingId === studio.studio_id}
+                                        >
+                                            {confirmingId === studio.studio_id ? (
+                                                <Loader2 className="w-2.5 h-2.5 animate-spin mr-1" />
+                                            ) : (
+                                                <AlertCircle className="w-2.5 h-2.5 mr-1" />
+                                            )}
+                                            CONFIRM
+                                        </Button>
+                                    )}
+                                    <span className="text-[8px] text-muted-foreground font-medium uppercase tracking-tighter">
+                                        Updated: {studio.last_updated ? new Date(studio.last_updated).toLocaleDateString() : 'Never'}
+                                    </span>
+                                </div>
                             </div>
                             
                             <div className="p-4 bg-background/20 flex-1">
-                                <div className="text-[9px] text-muted-foreground italic mb-3 flex items-center justify-between">
-                                    <span>{studio.room_category || 'REGULAR'}</span>
-                                    <span>Updated: {studio.last_updated ? new Date(studio.last_updated).toLocaleDateString() : 'Never'}</span>
-                                </div>
                                 <StudioLayoutViewer studio={studio} />
                             </div>
                         </div>

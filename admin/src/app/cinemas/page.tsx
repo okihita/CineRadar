@@ -107,6 +107,12 @@ function CinemasPageContent() {
     [sortedTheatres]
   );
 
+  // Sync filtered IDs to store for detail page navigation
+  const theatreIds = useMemo(() => sortedTheatres.map((t) => t.theatre_id), [sortedTheatres]);
+  useEffect(() => {
+    store.setFilteredTheatreIds(theatreIds);
+  }, [theatreIds, store]);
+
   // Last updated timestamp (WIB)
   const lastUpdated = runs[0]?.timestamp ? formatWIBShort(runs[0].timestamp) : null;
 
