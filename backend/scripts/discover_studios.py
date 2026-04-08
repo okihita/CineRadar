@@ -111,7 +111,8 @@ async def populate_studios(
     for (theatre_id, studio_id), category in studios.items():
         # Check if theatre doc exists to get name for notification
         theatre_doc = await db.collection(THEATRES).document(theatre_id).get(["name"])
-        theatre_name = theatre_doc.to_dict().get("name", theatre_id) if theatre_doc.exists else theatre_id
+        t_dict = theatre_doc.to_dict()
+        theatre_name = t_dict.get("name", theatre_id) if theatre_doc.exists and t_dict else theatre_id
 
         doc_ref = (
             db.collection(THEATRES).document(theatre_id).collection("studios").document(studio_id)
@@ -163,7 +164,7 @@ async def main() -> None:
         if studios:
             await populate_studios(db, studios, args.dry_run)
     finally:
-        db.close()
+        db.close()  # type: ignore[no-untyped-call]
 
 
 if __name__ == "__main__":

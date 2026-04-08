@@ -35,7 +35,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 import functions_framework
-from google.cloud import firestore
+import google.cloud.firestore as firestore
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

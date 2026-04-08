@@ -34,7 +34,7 @@ class FirestoreTheatreRepository(ITheatreRepository):
     COLLECTION = "theatres"
 
     def __init__(self) -> None:
-        self._db = None
+        self._db: Any = None
 
     @property
     def db(self) -> Any:

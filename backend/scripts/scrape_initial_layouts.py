@@ -18,7 +18,7 @@ import logging
 import sys
 import time
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 sys.path.insert(0, ".")
 
@@ -66,7 +66,7 @@ async def get_firestore_async_client() -> AsyncClient:
         get_firestore_async_client as get_client,
     )
 
-    return await get_client()
+    return cast("AsyncClient", await get_client())
 
 
 async def fetch_seat_layout_async(

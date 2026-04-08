@@ -9,6 +9,9 @@ import tempfile
 from datetime import UTC, datetime
 from typing import Any, cast
 
+from google.cloud import firestore
+from google.cloud.firestore import AsyncClient
+
 from backend.domain.time import JAKARTA_TZ
 from backend.infrastructure.firestore_collections import (
     DISPATCHES,
@@ -22,8 +25,6 @@ logger = logging.getLogger(__name__)
 
 def get_firestore_client() -> Any:
     """Get Firestore client with proper credentials."""
-    from google.cloud import firestore
-
     # Check for service account JSON in env (for GitHub Actions)
     service_account_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
     if service_account_json:
@@ -41,8 +42,6 @@ def get_firestore_client() -> Any:
 
 async def get_firestore_async_client() -> Any:
     """Get async Firestore client with proper credentials."""
-    from google.cloud.firestore import AsyncClient
-
     # Check for service account JSON in env (for GitHub Actions)
     service_account_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
     if service_account_json:

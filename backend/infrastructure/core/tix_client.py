@@ -495,7 +495,7 @@ class CineRadarScraper:
             return 0
 
         # Lazy import to avoid dependency issues in tests
-        from google.cloud import firestore
+        import google.cloud.firestore as firestore
         from google.oauth2 import service_account
 
         # Initialize Firestore client

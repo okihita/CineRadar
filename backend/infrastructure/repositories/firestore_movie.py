@@ -34,7 +34,7 @@ class FirestoreMovieRepository(IMovieRepository):
     LATEST_DOC = "latest"
 
     def __init__(self) -> None:
-        self._db = None
+        self._db: Any = None
 
     @property
     def db(self) -> Any:

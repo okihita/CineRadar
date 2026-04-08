@@ -28,7 +28,7 @@ class FirestoreMoviePerformanceRepository:
 
     def __init__(self) -> None:
         """Initialize repository."""
-        self._db = None
+        self._db: Any = None
 
     @property
     def db(self) -> Any:

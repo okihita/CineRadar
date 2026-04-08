@@ -39,8 +39,8 @@ class FirestoreTokenRepository(ITokenRepository):
 
     def __init__(self) -> None:
         """Initialize repository."""
-        self._db = None
-        self._async_db = None
+        self._db: Any = None
+        self._async_db: Any = None
 
     @property
     def db(self) -> Any:

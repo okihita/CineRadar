@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
 
-from google.cloud import firestore
+import google.cloud.firestore as firestore
 from google.oauth2 import service_account
 
 from backend.infrastructure.firestore_collections import MOVIES, SCHEDULES

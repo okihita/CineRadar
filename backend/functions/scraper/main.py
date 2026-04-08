@@ -40,8 +40,8 @@ from typing import Any, cast
 from zoneinfo import ZoneInfo
 
 import functions_framework
+import google.cloud.firestore as firestore
 import httpx
-from google.cloud import firestore
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -223,7 +223,7 @@ class JobLogger:
         now = datetime.now(JAKARTA_TZ)
         return now.strftime("%Y-%m-%d"), "_unbatched"
 
-    def _get_job_ref(self) -> firestore.DocumentReference:
+    def _get_job_ref(self) -> Any:
         """Get Firestore reference to job document."""
         return (
             self.db.collection("scraper_logs")
@@ -515,8 +515,8 @@ def load_token_data(db: firestore.Client) -> dict[str, Any] | None:
     """
     try:
         doc = db.collection("auth_tokens").document("tix_jwt").get()
-        if doc.exists:
-            data = doc.to_dict()
+        if doc.exists:  # type: ignore[union-attr]
+            data = doc.to_dict()  # type: ignore[union-attr]
             if not data:
                 return None
 
@@ -549,10 +549,13 @@ class TokenRefreshLock:
         except Exception:
             # Already exists, check if stale
             doc = self.lock_ref.get()
-            if not doc.exists:
+            if not doc.exists:  # type: ignore[union-attr]
                 return self.acquire(instance_id)  # Race condition handled
 
-            data = doc.to_dict()
+            data = doc.to_dict()  # type: ignore[union-attr]
+            if not data:
+                return self.acquire(instance_id)
+
             locked_at_str = data.get("locked_at", "")
             try:
                 locked_at = datetime.fromisoformat(locked_at_str)

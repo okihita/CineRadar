@@ -137,7 +137,7 @@ async def run_studio_discovery(db: firestore.Client, date: str) -> None:
         if studios:
             await populate_studios(async_db, studios, dry_run=False)
     finally:
-        async_db.close()
+        async_db.close()  # type: ignore[no-untyped-call]
 
 
 async def send_discovery_alerts(new_theatres: list[str]) -> None:
