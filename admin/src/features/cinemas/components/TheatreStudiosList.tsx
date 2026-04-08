@@ -49,21 +49,6 @@ export function TheatreStudiosList({ theatreId, merchant }: TheatreStudiosListPr
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between border-b pb-3">
-                <h4 className="font-bold text-base text-foreground flex items-center gap-2">
-                    Studio Layout Registry
-                    <Badge variant="secondary" className="font-mono">{studios.length}</Badge>
-                </h4>
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
-                        <Zap className="w-3 h-3 text-blue-500" /> Ground Truth
-                    </div>
-                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
-                        <Database className="w-3 h-3 text-amber-500" /> Guessed
-                    </div>
-                </div>
-            </div>
-            
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {studios.map(studio => {
                     const isConfirmed = studio.audit?.is_confirmed || studio.is_locked;

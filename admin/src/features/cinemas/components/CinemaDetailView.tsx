@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, MapPin, Building2, Calendar, Loader2, Info, Map as MapIcon, Layers } from 'lucide-react';
+import { ChevronLeft, MapPin, Building2, Calendar, Loader2, Info, Map as MapIcon, Layers, Zap, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -107,7 +107,29 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
                 </div>
             </div>
 
-            {/* Top Section: Map & Key Info */}
+            {/* Section 1: Physical Asset Registry (The Priority) */}
+            <Card className="border-none shadow-sm ring-1 ring-border">
+                <CardHeader className="py-2.5 px-4 bg-muted/10 border-b flex flex-row items-center justify-between space-y-0">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <Layers className="w-4 h-4 text-primary" />
+                        Physical Asset Registry
+                    </CardTitle>
+                    
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
+                            <Zap className="w-3.5 h-3.5 text-blue-500" /> Ground Truth
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
+                            <Database className="w-3.5 h-3.5 text-amber-500" /> Guessed
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent className="p-6">
+                    <TheatreStudiosList theatreId={theatreId} merchant={theatre.merchant} />
+                </CardContent>
+            </Card>
+
+            {/* Section 2: Map & Theatre Details */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <Card className="lg:col-span-2 overflow-hidden border-none shadow-sm ring-1 ring-border">
                     <CardHeader className="py-3 px-4 bg-muted/10 border-b flex flex-row items-center justify-between space-y-0">
@@ -176,47 +198,31 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
                 </Card>
             </div>
 
-            {/* Main Content: Registry and Performance */}
-            <div className="space-y-6">
-                {/* Studio Layout Registry (Full Width) */}
-                <Card className="border-none shadow-sm ring-1 ring-border">
-                    <CardHeader className="py-3 px-4 bg-muted/10 border-b">
-                        <CardTitle className="text-sm font-medium flex items-center gap-2">
-                            <Layers className="w-4 h-4 text-primary" />
-                            Physical Asset Registry
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-6">
-                        <TheatreStudiosList theatreId={theatreId} merchant={theatre.merchant} />
-                    </CardContent>
-                </Card>
-
-                {/* Performance Data (Full Width) */}
-                <Card className="border-none shadow-sm ring-1 ring-border">
-                    <CardHeader className="py-3 px-4 bg-muted/10 border-b">
-                        <CardTitle className="text-sm font-medium flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-primary" />
-                            Daily Performance - {selectedDate}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <div className="p-4">
-                            {loading ? (
-                                <div className="flex items-center justify-center py-20">
-                                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                                </div>
-                            ) : showtimes.length > 0 ? (
-                                <CinemaPerformanceTable showtimes={showtimes} />
-                            ) : (
-                                <div className="text-center py-20 bg-muted/5 rounded-xl border border-dashed">
-                                    <Info className="w-8 h-8 text-muted-foreground mx-auto mb-2 opacity-50" />
-                                    <p className="text-muted-foreground">No showtimes found for {selectedDate}.</p>
-                                </div>
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+            {/* Section 3: Performance Data */}
+            <Card className="border-none shadow-sm ring-1 ring-border">
+                <CardHeader className="py-3 px-4 bg-muted/10 border-b">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-primary" />
+                        Daily Performance - {selectedDate}
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <div className="p-4">
+                        {loading ? (
+                            <div className="flex items-center justify-center py-20">
+                                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                            </div>
+                        ) : showtimes.length > 0 ? (
+                            <CinemaPerformanceTable showtimes={showtimes} />
+                        ) : (
+                            <div className="text-center py-20 bg-muted/5 rounded-xl border border-dashed">
+                                <Info className="w-8 h-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                                <p className="text-muted-foreground">No showtimes found for {selectedDate}.</p>
+                            </div>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }

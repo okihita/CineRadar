@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Code, Table } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -26,22 +25,20 @@ export function StudioLayoutViewer({ studio }: StudioLayoutViewerProps) {
     const sortedJson = sortObjectKeys(displayJson);
 
     return (
-        <Card className="w-full flex flex-col mt-3 border bg-card/50">
-            <CardHeader className="py-2 px-3 border-b bg-muted/10 flex flex-row items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <CardTitle className="text-xs flex items-center gap-2 font-medium text-muted-foreground">
-                        Physical Master Layout
-                        <Badge variant="outline" className="text-[10px] h-4 bg-primary/5 text-primary border-primary/20">
-                            {totalSeats} Seats
-                        </Badge>
-                    </CardTitle>
+        <div className="w-full flex flex-col mt-2">
+            {/* Control Toolbar */}
+            <div className="flex items-center justify-between mb-4 px-1">
+                <div className="flex items-center gap-3">
+                    <Badge variant="outline" className="text-[10px] h-5 bg-primary/5 text-primary border-primary/20 font-mono">
+                        {totalSeats} Seats
+                    </Badge>
                     
                     {viewMode === 'json' && (
-                        <div className="flex items-center gap-1 bg-background/50 p-0.5 rounded border border-border/50">
+                        <div className="flex items-center gap-1 bg-muted/30 p-0.5 rounded-md border border-border/50">
                             <Button
                                 variant={jsonMode === 'unified' ? 'secondary' : 'ghost'}
                                 size="sm"
-                                className="h-4 px-1.5 text-[9px] font-bold"
+                                className="h-5 px-2 text-[9px] font-bold"
                                 onClick={() => setJsonMode('unified')}
                             >
                                 Unified
@@ -49,7 +46,7 @@ export function StudioLayoutViewer({ studio }: StudioLayoutViewerProps) {
                             <Button
                                 variant={jsonMode === 'raw' ? 'secondary' : 'ghost'}
                                 size="sm"
-                                className="h-4 px-1.5 text-[9px] font-bold"
+                                className="h-5 px-2 text-[9px] font-bold"
                                 onClick={() => setJsonMode('raw')}
                                 disabled={!hasRawLayout}
                             >
@@ -59,72 +56,71 @@ export function StudioLayoutViewer({ studio }: StudioLayoutViewerProps) {
                     )}
                 </div>
                 
-                <div className="flex items-center gap-1 border rounded-md p-0.5 bg-background">
+                <div className="flex items-center gap-1 border rounded-lg p-0.5 bg-background shadow-sm">
                     <Button
                         variant={viewMode === 'visual' ? 'secondary' : 'ghost'}
                         size="sm"
-                        className="h-5 px-2 text-[10px]"
+                        className="h-6 px-2.5 text-[10px] font-medium"
                         onClick={() => setViewMode('visual')}
                         disabled={!hasLayout}
                     >
-                        <Table className="w-3 h-3 mr-1" />
+                        <Table className="w-3.5 h-3.5 mr-1.5" />
                         Visual
                     </Button>
                     <Button
                         variant={viewMode === 'json' ? 'secondary' : 'ghost'}
                         size="sm"
-                        className="h-5 px-2 text-[10px]"
+                        className="h-6 px-2.5 text-[10px] font-medium"
                         onClick={() => setViewMode('json')}
                     >
-                        <Code className="w-3 h-3 mr-1" />
+                        <Code className="w-3.5 h-3.5 mr-1.5" />
                         JSON
                     </Button>
                 </div>
-            </CardHeader>
-            <CardContent className="p-3 overflow-auto">
+            </div>
+
+            {/* Content Area */}
+            <div className="relative">
                 {viewMode === 'json' ? (
-                    <div className="space-y-2">
-                        <div className="bg-muted/50 p-3 rounded-md overflow-auto max-h-[500px] border font-mono">
-                            <JsonViewer data={sortedJson} />
-                        </div>
+                    <div className="bg-muted/50 p-3 rounded-xl overflow-auto max-h-[500px] border border-border/40 font-mono">
+                        <JsonViewer data={sortedJson} />
                     </div>
                 ) : !hasLayout ? (
-                    <div className="w-full h-full flex flex-col items-center justify-center p-4 min-h-[150px] bg-muted/20 border rounded-md">
+                    <div className="w-full flex flex-col items-center justify-center p-8 min-h-[200px] bg-muted/10 border border-dashed rounded-xl">
                         <p className="text-muted-foreground text-sm italic">No visual layout available yet.</p>
-                        <p className="text-xs text-muted-foreground/70 mt-1">Switch to JSON mode to see raw data or wait for bootstrap.</p>
+                        <p className="text-xs text-muted-foreground/60 mt-1">Switch to JSON mode to inspect raw data.</p>
                     </div>
                 ) : (
-                    <div className="min-w-fit flex flex-col items-center py-2">
+                    <div className="min-w-fit flex flex-col items-center py-4 bg-muted/5 rounded-xl border border-border/30">
                         {/* Screen Indicator */}
-                        <div className="w-[80%] max-w-sm h-1.5 bg-gradient-to-b from-primary/20 to-transparent border-t border-primary/40 rounded-t-[50%] mb-6 mx-auto" />
+                        <div className="w-[70%] max-w-[280px] h-1.5 bg-gradient-to-b from-primary/30 to-transparent border-t border-primary/40 rounded-t-[50%] mb-8 mx-auto opacity-80" />
                         
                         {/* Seating Grid */}
-                        <div className="flex flex-col gap-1">
+                        <div className="flex flex-col gap-1.5">
                             {layout.map((row, i) => {
                                 // Skip rendering padding rows (no name and no real seats)
-                                // to prevent horizontal scroll issues from API noise.
                                 const isPaddingRow = !row.row_name.trim() && !row.seats.some(s => s.type === 'seat');
                                 if (isPaddingRow) return null;
 
                                 return (
-                                    <div key={`row-${row.row_name}-${i}`} className="flex items-center gap-1 justify-center">
-                                        <div className="w-4 text-[9px] font-mono font-medium text-muted-foreground/50 text-right pr-0.5">
+                                    <div key={`row-${row.row_name}-${i}`} className="flex items-center gap-1.5 justify-center">
+                                        <div className="w-5 text-[9px] font-mono font-bold text-muted-foreground/40 text-right pr-1">
                                             {row.row_name}
                                         </div>
                                         
-                                        <div className="flex gap-0.5">
+                                        <div className="flex gap-1">
                                             {row.seats.map((seat, j) => {
                                                 if (seat.type === 'aisle') {
-                                                    return <div key={`aisle-${i}-${j}`} className="w-3 h-3 md:w-4 md:h-4 invisible" />;
+                                                    return <div key={`aisle-${i}-${j}`} className="w-3.5 h-3.5 md:w-4 md:h-4 invisible" />;
                                                 }
                                                 
                                                 return (
                                                     <div 
                                                         key={`seat-${seat.id || `${i}-${j}`}`}
                                                         className={cn(
-                                                            'w-3 h-3 md:w-4 md:h-4 rounded-t-sm rounded-b-[2px] flex items-center justify-center',
-                                                            'text-[6px] md:text-[7px] font-medium transition-colors cursor-default',
-                                                            'bg-muted border border-border text-muted-foreground hover:bg-muted/80'
+                                                            'w-3.5 h-3.5 md:w-4 md:h-4 rounded-t-sm rounded-b-[2px] flex items-center justify-center',
+                                                            'text-[7px] font-bold transition-all cursor-default select-none',
+                                                            'bg-background border border-border text-muted-foreground/70 hover:border-primary/40 hover:text-primary'
                                                         )}
                                                         title={`Seat ${seat.id}`}
                                                     >
@@ -134,7 +130,7 @@ export function StudioLayoutViewer({ studio }: StudioLayoutViewerProps) {
                                             })}
                                         </div>
                                         
-                                        <div className="w-4 text-[9px] font-mono font-medium text-muted-foreground/50 pl-0.5">
+                                        <div className="w-5 text-[9px] font-mono font-bold text-muted-foreground/40 pl-1">
                                             {row.row_name}
                                         </div>
                                     </div>
@@ -143,7 +139,7 @@ export function StudioLayoutViewer({ studio }: StudioLayoutViewerProps) {
                         </div>
                     </div>
                 )}
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 }
