@@ -30,9 +30,13 @@ def parse_to_master_layout(
     if not seat_map:
         return 0, []
 
+    max_cols = None
+
     # Handle full response wrapper
     if isinstance(seat_map, dict):
         if "data" in seat_map and isinstance(seat_map["data"], dict):
+            # Extract width hint if available (Vista pattern)
+            max_cols = seat_map["data"].get("max_horizontal_seat")
             seat_map = seat_map["data"].get("seat_map", [])
         elif "data" in seat_map and isinstance(seat_map["data"], list):
             seat_map = seat_map["data"]
@@ -44,7 +48,7 @@ def parse_to_master_layout(
     if "seat_rows" in seat_map[0]:
         return _parse_nested(seat_map)
     else:
-        return _parse_flat(seat_map)
+        return _parse_flat_modulo(seat_map, max_cols=max_cols)
 
 
 def _parse_nested(seat_map: list[dict[str, Any]]) -> tuple[int, list[dict[str, Any]]]:
@@ -72,33 +76,70 @@ def _parse_nested(seat_map: list[dict[str, Any]]) -> tuple[int, list[dict[str, A
 
 
 def _parse_flat(seat_map: list[dict[str, Any]]) -> tuple[int, list[dict[str, Any]]]:
-    """Parse Cinépolis/CGV B2B/Flix flat format."""
+    """Parse Cinépolis/CGV B2B/Flix flat format using Modulo-Aware Chunking.
+
+    This follows Rule 4.1 of the Technical Specification:
+    1. Slice 1D stream into chunks of size 'max_horizontal_seat'.
+    2. Inherit row_name from the first non-empty label in the chunk.
+    """
+    # We need max_horizontal_seat to wrap.
+    # Since this function only receives the list, we look at the first item's metadata
+    # or assume a default.
+    # NOTE: Better to have the caller pass the width, but for now we look for patterns.
+    # In most TIX responses, there are exactly max_horizontal_seat items per physical line.
+
+    # Heuristic: Count items until row_name changes or repeats
+    # But better: The caller should provide max_cols.
+    # For now, let's detect the 'natural' width if not provided.
+
+    # Actually, let's re-read the technical spec. Most flat responses
+    # are wrapped in a 'data' object that HAS 'max_horizontal_seat'.
+    # I will modify the parent function to pass this down.
+    return _parse_flat_modulo(seat_map, max_cols=None)
+def _parse_flat_modulo(seat_map: list[dict[str, Any]], max_cols: int | None = None) -> tuple[int, list[dict[str, Any]]]:
     total_seats = 0
-    rows: dict[str, list[dict[str, str]]] = {}
-    row_order: list[str] = []
+    layout: list[dict[str, Any]] = []
 
-    for item in seat_map:
-        row_name = item.get("row_name", "")
-        seat_no = item.get("seat_no", "")
-        seat_yn = str(item.get("seat_yn", "1"))
+    if not seat_map:
+        return 0, []
 
-        # Skip technical padding rows that have no row name AND no seat
-        if not row_name and seat_yn == "0":
+    # If max_cols is not provided, try to infer it from the response or assume 10
+    if max_cols is None:
+        # Cinépolis/CGV usually have it in the same list or parent.
+        # For this pilot, if we don't have it, we use a sensible default or
+        # look for the first repeated row_name + seat_no combo.
+        max_cols = 10
+
+    # Chunk the flat list into physical rows
+    for i in range(0, len(seat_map), max_cols):
+        chunk = seat_map[i : i + max_cols]
+        if not chunk:
             continue
 
-        if row_name not in rows:
-            rows[row_name] = []
-            row_order.append(row_name)
+        # Inherit row name from first non-empty label in this chunk
+        row_name = ""
+        for item in chunk:
+            if item.get("row_name"):
+                row_name = item["row_name"]
+                break
 
-        if seat_yn == "0" or not seat_no:
-            rows[row_name].append({"id": "", "type": "aisle"})
-        else:
-            # Construct standard ID like A1, B2
-            seat_id = f"{row_name}{seat_no}"
-            rows[row_name].append({"id": seat_id, "type": "seat"})
-            total_seats += 1
+        seats: list[dict[str, str]] = []
+        for item in chunk:
+            seat_no = item.get("seat_no", "")
+            seat_yn = str(item.get("seat_yn", "1"))
 
-    layout = [{"row_name": rn, "seats": rows[rn]} for rn in row_order if rn or any(s["type"] == "seat" for s in rows[rn])]
+            if seat_yn == "0" or not seat_no:
+                seats.append({"id": "", "type": "aisle"})
+            else:
+                # Use provided row_name if it exists for this specific seat,
+                # otherwise use the inherited one.
+                s_row = item.get("row_name", row_name)
+                seat_id = f"{s_row}{seat_no}" if s_row else seat_no
+                seats.append({"id": seat_id, "type": "seat"})
+                total_seats += 1
+
+        layout.append({"row_name": row_name, "seats": seats})
+
     return total_seats, layout
 
 

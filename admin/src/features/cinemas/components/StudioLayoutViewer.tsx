@@ -1,28 +1,109 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Code, Table } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { JsonViewer, sortObjectKeys } from '@/components/JsonViewer';
-import type { Studio } from '../hooks/useTheatreStudios';
+import type { Studio, LayoutRow, Seat } from '../hooks/useTheatreStudios';
+
+interface TixRawSeat {
+    seat_row?: string;
+    seat_code?: string;
+    seat_no?: string;
+    seat_yn?: string;
+    seat_rows?: TixRawSeat[];
+    row_name?: string;
+}
+
+interface TixRawData {
+    seat_map?: TixRawSeat[];
+    max_horizontal_seat?: number;
+}
+
+interface TixRawPayload {
+    data?: TixRawData | TixRawSeat[];
+}
 
 interface StudioLayoutViewerProps {
     studio: Studio;
 }
 
+/**
+ * Normalizes different TIX ID raw response patterns into a unified LayoutRow array.
+ * This is the Frontend Virtual Grid Engine.
+ */
+function parseRawToLayout(studio: Studio): LayoutRow[] {
+    const raw = studio.raw_initial_layout as TixRawPayload | null;
+    if (!raw) return studio.layout || [];
+
+    // Extract the data part (TIX ID wrapper)
+    const data = (raw.data || raw) as TixRawData | TixRawSeat[];
+    const isArray = Array.isArray(data);
+    const seatMap = isArray ? data : (data as TixRawData).seat_map;
+
+    if (!Array.isArray(seatMap) || seatMap.length === 0) {
+        return studio.layout || [];
+    }
+
+    // Pattern A: Nested (XXI / some CGV)
+    if (seatMap[0].seat_rows) {
+        return seatMap.map((row: TixRawSeat) => ({
+            row_name: row.seat_code || row.row_name || '',
+            seats: (row.seat_rows || []).map((s: TixRawSeat) => ({
+                id: s.seat_row || '',
+                type: s.seat_row ? 'seat' : 'aisle'
+            }))
+        }));
+    }
+
+    // Pattern B: Flat (Cinépolis / Vista / CGV / Flix)
+    const maxCols = (!isArray && (data as TixRawData).max_horizontal_seat) || 10;
+    const layout: LayoutRow[] = [];
+
+    for (let i = 0; i < seatMap.length; i += maxCols) {
+        const chunk = seatMap.slice(i, i + maxCols);
+        
+        // Inherit row name from first non-empty label in this chunk
+        let inheritedRowName = '';
+        for (const item of chunk) {
+            if (item.row_name) {
+                inheritedRowName = item.row_name;
+                break;
+            }
+        }
+
+        const seats: Seat[] = chunk.map((item: TixRawSeat) => {
+            const isPhysical = item.seat_yn === '1' && item.seat_no;
+            return {
+                id: isPhysical ? `${item.row_name || inheritedRowName}${item.seat_no}` : '',
+                type: isPhysical ? 'seat' : 'aisle'
+            };
+        });
+
+        layout.push({
+            row_name: inheritedRowName,
+            seats
+        });
+    }
+
+    return layout;
+}
+
 export function StudioLayoutViewer({ studio }: StudioLayoutViewerProps) {
     const [viewMode, setViewMode] = useState<'visual' | 'json'>('visual');
     const [jsonMode, setJsonMode] = useState<'unified' | 'raw'>('unified');
-    const layout = studio.layout || [];
+    
+    // Compute the visual layout using the Virtual Grid Engine
+    const visualLayout = useMemo(() => parseRawToLayout(studio), [studio]);
     const totalSeats = studio.total_seats || 0;
 
-    const hasLayout = layout.length > 0;
+    const hasLayout = visualLayout.length > 0;
     const hasRawLayout = !!studio.raw_initial_layout;
 
     const displayJson = jsonMode === 'unified' ? studio : studio.raw_initial_layout;
-    const sortedJson = sortObjectKeys(displayJson);
+    const sortedJson = sortObjectKeys(displayJson as Record<string, unknown>);
 
     return (
         <div className="w-full flex flex-col mt-2">
@@ -98,7 +179,7 @@ export function StudioLayoutViewer({ studio }: StudioLayoutViewerProps) {
                             
                             {/* Seating Grid */}
                             <div className="flex flex-col gap-1.5">
-                                {layout.map((row, i) => {
+                                {visualLayout.map((row, i) => {
                                     // Skip rendering padding rows (no name and no real seats)
                                     const isPaddingRow = !row.row_name.trim() && !row.seats.some(s => s.type === 'seat');
                                     if (isPaddingRow) return null;
