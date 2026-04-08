@@ -49,7 +49,7 @@ export function TheatreStudiosList({ theatreId, merchant }: TheatreStudiosListPr
 
     return (
         <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {studios.map(studio => {
                     const isConfirmed = studio.audit?.is_confirmed || studio.is_locked;
                     const isRaw = studio.audit?.source === 'raw_initial_layout' || studio.version === 3;

@@ -94,7 +94,7 @@ export function StudioLayoutViewer({ studio }: StudioLayoutViewerProps) {
                     <div className="min-w-fit flex flex-col items-center py-4 bg-muted/5 rounded-xl border border-border/30">
                         {/* Screen Indicator */}
                         <div className="w-[70%] max-w-[280px] h-1.5 bg-gradient-to-b from-primary/30 to-transparent border-t border-primary/40 rounded-t-[50%] mb-8 mx-auto opacity-80" />
-                        
+
                         {/* Seating Grid */}
                         <div className="flex flex-col gap-1.5">
                             {layout.map((row, i) => {
@@ -116,7 +116,7 @@ export function StudioLayoutViewer({ studio }: StudioLayoutViewerProps) {
                                                 
                                                 return (
                                                     <div 
-                                                        key={`seat-${seat.id || `${i}-${j}`}`}
+                                                        key={`seat-${i}-${j}-${seat.id || 'void'}`}
                                                         className={cn(
                                                             'w-3.5 h-3.5 md:w-4 md:h-4 rounded-t-sm rounded-b-[2px] flex items-center justify-center',
                                                             'text-[7px] font-bold transition-all cursor-default select-none',
