@@ -1,168 +1,128 @@
 # Technical Specification: Studio Layout & Occupancy Engine
 
 ## 1. Introduction
-This document serves as the architectural "Ground Truth" for CineRadar's studio layout visualization and real-time occupancy calculation engine. It defines how raw API responses from TIX ID (XXI, CGV, Cinépolis, FLIX) are normalized into a unified virtual grid.
+This document serves as the architectural "Ground Truth" for CineRadar's studio layout visualization and real-time occupancy calculation engine. It defines the **"Theater Digital Twin"** model, where raw API responses are normalized into a physical template with a separate metadata registry for pricing and styling.
 
 ---
 
-## 2. Source Architecture Analysis
-Based on empirical audits of the TIX ID API, two primary structural patterns exist.
+## 2. The Theater Digital Twin Model (V3.3)
+To ensure maximum maintainability, CineRadar separates the **Physical Structure** from its **Metadata Registry** and its **Real-time Occupancy**.
 
-### 2.1 Pattern A: The "Nested" Model (XXI / CGV)
-Used by XXI (Regular, IMAX, Premiere) and some CGV locations.
-- **Specimens:** 
-  - `docs/00_scraping_tixid/raw_payloads/11_studio_layout_xxi_imax.response`
-  - `docs/00_scraping_tixid/raw_payloads/11_studio_layout_xxi_premiere.response`
-- **Data Structure:** A nested list of `seat_rows`, where each row object contains its own `seat_rows` (seats).
-- **Coordinate System:** Independent of array index. Spacing is defined by:
-  - `vertical_lane`: Metadata describing where "aisles" should be inserted between columns (e.g., "before column 5").
-  - `null` entries in the `seat_rows` array.
-- **Seat Grading:** Usually a single global `price` field at the studio level.
+### 2.1 The Master Template (`physical_layout`)
+Every studio has a permanent physical template derived via 5-day multi-showtime consensus. 
 
-### 2.2 Pattern B: The "Flat-Modulo" Model (Cinépolis / CGV / FLIX)
-Used by Cinépolis, most CGV, and FLIX.
-- **Specimens:**
-  - `docs/00_scraping_tixid/raw_payloads/09_studio_layout_cinepolis.response`
-  - `docs/00_scraping_tixid/raw_payloads/09_studio_layout_cinepolis_2.response`
-  - `docs/00_scraping_tixid/raw_payloads/10_studio_layout_cgv_regular.response`
-  - `docs/00_scraping_tixid/raw_payloads/08_studio_layout_flix.response`
-- **Data Structure:** A 1D flattened array (`seat_map`) of all coordinates (seats and aisles).
-- **Coordinate System:** **Index-Dependent**. The frontend must wrap the 1D array into 2D rows based on:
-  - `max_horizontal_seat`: The fixed "modulo" or width of the theater.
-  - `max_vertical_seat`: The total height.
-- **Anomalies:** Non-contiguous rows. The same `row_name` (e.g., "A") may appear in index 0-8 and then again in index 18-26, separated by a row of empty spacers.
-- **Seat Grading:** Managed via `price_group` metadata and `seat_grd_cd` on each seat object.
-
-### 2.3 Inferred Provider Context
-The bifurcation of these patterns is likely due to the underlying Cinema Management System (CMS) used by each chain.
-
-#### 2.3.1 The "VISTA" Pattern (Flat / Boolean)
-Most international chains (Cinépolis, CGV) use **Vista Entertainment Solutions**. 
-- **Philosophy:** Data is treated as a **Coordinate Grid**. 
-- **Logic:** Status is a **Boolean Availability Flag**. `1` (True) means "Available for Sale", while `0` (False) means "Not Available/Taken".
-- **Export:** Typically exported as a linear stream that requires "Modulo-Wrapping" based on a fixed width (`max_horizontal_seat`).
-
-#### 2.3.2 The "Legacy/Proprietary" Pattern (Nested / Additive)
-Local or independent chains like XXI often use proprietary or older systems (e.g., NCR/Retalix).
-- **Philosophy:** Data is structured around **Physical Rows**.
-- **Logic:** Status is an **Additive Event Flag**. `0` is the neutral "Ready" state, and `1` is the "Sold" flag added to the seat record.
-- **Export:** Naturally hierarchical (Row -> Seats), making it easier to parse but harder to map to a strict geometric grid without `vertical_lane` metadata.
-
----
-
-## 3. Unified CineRadar Schema (V3)
-
-To unify these patterns, CineRadar uses a **Virtual Grid** abstraction.
-
-### 3.1 `UnifiedSeat` Object
-Standardized representation of a single coordinate point.
+#### 2.1.1 `UnifiedSeat` Object (Normalized)
+The seat object contains only the immutable physical properties and a reference to its category.
 ```typescript
 interface UnifiedSeat {
-  id: string;        // Display ID (e.g., "A1"). Empty string if type is "aisle".
+  id: string;        // Coordinate-based ID (e.g., "A1", "B2")
   type: "seat" | "aisle";
-  grade?: string;    // Label (e.g., "REGULAR", "GOLD", "SWEETBOX")
-  price_code?: string; // Original 'seat_grd_cd' for lookup
+  grade: string;     // Primary Key: Must match 'seat_grd_cd' in the metadata registry.
 }
 ```
 
-### 3.2 `Studio` Firestore Document
-Stored at `theatres/{theatreId}/studios/{studioId}`.
+#### 2.1.2 Metadata Registry (`price_groups`)
+A lookup table keyed by `seat_grd_cd` that maps grade IDs to their visual and financial properties.
+```typescript
+interface PriceGroups {
+  [seat_grd_cd: string]: {
+    name: string;      // Label (e.g., "SWEETBOX", "GOLD")
+    color: string;     // Official HEX code from provider
+    prices: {          // Temporal Price Cycle Map
+      mon_thu: number; // Weekday price
+      fri: number;     // Friday premium
+      sat_sun: number; // Weekend/Holiday peak
+    }
+  }
+}
+```
+
+#### 2.1.3 `Studio` Firestore Schema (V3.3.3 Atomic)
 ```json
 {
-  "studio_id": "34",
-  "version": 3,
-  "max_columns": 9,
-  "layout": [
-    {
-      "row_name": "A",
-      "seats": [
-        { "id": "A1", "type": "seat", "grade": "REGULAR" },
-        { "id": "", "type": "aisle" }
-      ]
-    }
+  "id": "34",
+  "version": 3.3,
+  "price_groups": {
+    "01": { "name": "REGULAR", "color": "#71717a" }
+  },
+  "evidence": [
+    { "date": "2026-04-09", "movie_title": "...", "showtime_id": "..." }
   ],
-  "raw_initial_layout": { ... } // Most complete raw TIX ID payload
+  "physical_layout": {
+    "total_capacity": 150,
+    "grid": [...]
+  }
 }
 ```
 
 ---
 
-## 4. Visualization & Normalization Logic
+### 3. The Evidence-Based Verification Standard
+To ensure the "Ever-Available" rule is auditable, every studio promotion MUST record its **Temporal Proof**. 
 
-### 4.1 Modulo-Aware Parsing (Flat Layouts)
-For Cinépolis/FLIX/CGV, the parser MUST follow these rules:
-1. **Chunking:** Slice the 1D `seat_map` into arrays of size `max_horizontal_seat`.
-2. **Row Inheritance:** The `row_name` for a chunk is derived from the first non-empty `row_name` found within those 9 (or X) items.
-3. **Ghost Filtering:** Completely empty chunks (9 aisles in a row) are preserved as vertical spacers to maintain the theater's physical aspect ratio.
+- **Implicit Verification:** A studio is considered **"VERIFIED"** if it contains a root-level `evidence` array. Manual "Confirmation" booleans and `last_updated` timestamps are deprecated and removed.
+- **The 7-Day Contiguous Ideal:** The gold standard for consensus is **7 consecutive days** scanning backwards from Yesterday.
+- **The Robustness Rule:** The engine MUST accept **any number of available days** (Best Effort).
+- **The Freshness Rule:** Freshness is derived **exclusively** from the `date` of the latest object in the `evidence` array. Consensus SHOULD be refreshed every **90 days**.
+- **Schema Versioning:** The root-level `version` field tracks the document structure version (e.g., 3.3). Nested `version` fields (e.g., inside `physical_layout`) are prohibited and MUST be removed during promotion.
+- **Metadata Purity:** The `price_groups` registry MUST only store temporal pricing via the `prices` object. Legacy single-value `price` fields are deprecated and removed.
+- **Storage Strategy (Lean Audit):** To prevent Firestore document bloat, the `evidence` array MUST only store metadata (IDs, Date, Time, Price). The full raw layout for an evidence sample MUST be fetched on-demand.
+- **Audit Fields:** Showtime ID (`showtime_id`), Movie ID (`movie_id`), Date, Exact Time, Movie Title, Price.
 
-### 4.2 Vertical Lane Injection (Nested Layouts)
-For XXI, the parser MUST:
-1. Iterate through `seat_rows`.
-2. For each seat index, check against `vertical_lane` config.
-3. Inject a `type: "aisle"` object into the `UnifiedSeat` array if the index matches a lane boundary.
+---
+
+## 4. Source Architecture & Normalization logic
+The **Consensus Engine** generates the `physical_layout` using the following rules:
+
+### 4. Source Architecture & Normalization logic
+The **Consensus Engine** generates the `physical_layout` using the following rules:
+
+- **Clean Room Specimen Priority:** The engine MUST prioritize the **`initial_raw_layout` (2 AM Snapshot)** as the primary source for establishing the Physical Master Template. This ensures the template is built before operational seat-blocking or dynamic row hiding occurs. The `raw_api_response` (Just-In-Time) SHOULD only be used as a fallback if the 2 AM snapshot is missing.
+
+### 4.1 Pattern A: The "Nested" Model (XXI / Legacy)
+- **Physicality:** A coordinate is a seat only if it is found with **Status 1 (Available)** in at least one sample. Consistently "Blocked" (Status 6) nodes are converted to aisles.
+- **Spacing:** Injected via `seat_rules.vertical_lane` metadata.
+- **Pricing:** XXI uses a global **`price`** field at the studio root level (e.g., `data.price`). Individual seats lack `price_group` metadata. 
+- **Weekend Awareness:** The consensus MUST scan 7 days to record both **Weekday** and **Weekend/Holiday** price points. The metadata registry SHOULD store these as distinct values (e.g., `price_weekday`, `price_weekend`) if variations are detected.
+- **Strict Normalization:** The consensus engine MUST extract the price from the sampled showtime. If no price metadata is found, the engine MUST record an error state in the registry. "Default" or "Fallback" price groups are strictly prohibited.
+- **Graceful Degradation:** In cases of missing metadata, the UI MUST still render the physical layout but should display a warning banner and use neutral styling for affected seats.
+
+### 4.2 Pattern B: The "Flat-Modulo" Model (Cinépolis / CGV / FLIX / VISTA)
+- **Logic:** Sliced into rows using `max_horizontal_seat` (The Modulo Rule).
+- **Consensus:** Identifies "Ghost Rows" and "Split Rows" by observing patterns over the 7-day window.
+- **Pricing:** Price groups are extracted from the `price_group` array. Similar to Pattern A, the engine MUST capture the price variation across the 7-day week.
 
 ---
 
 ## 5. Real-Time Occupancy Engine
+Calculations are performed by **overlaying** live status codes onto the template.
 
-Calculations are performed "Just-In-Time" by comparing the **Live Performance Payload** against the **Master Virtual Grid**.
-
-### 5.1 Standardized Status Mapping
-| CineRadar Status | TIX ID Code (XXI) | TIX ID Code (Cinépolis) | Description |
+### 5.1 Standardized Status Map
+| CineRadar Status | VISTA (Ciné/CGV/FLIX) | Legacy (XXI) | Description |
 | :--- | :--- | :--- | :--- |
 | **Available** | `1` | `1` | For sale / Vacant |
-| **Sold / Booked** | `6` | `0` | Occupied or in Checkout |
-| **Aisle / Blocked**| `5` | `N/A` | Physical gap or Maintenance |
-
-### 5.2 The Calculation Algorithm
-1. **Total Capacity:** Count of all `type: "seat"` items in the Master Virtual Grid.
-2. **Sold Count:** Count of items in the live payload matching the "Sold" status code for that merchant.
-3. **Occupancy %:** `(Sold Count / Total Capacity) * 100`.
+| **Booked** | `N/A` | `5` | Reserved / Pending Payment (Physically Real) |
+| **Sold / Dead** | `0` | `6` | Paid or Structural/Aisle/Maintenance |
 
 ---
 
-## 7. Appendix: Predicted TIX ID Internal Database Schema
+## 6. Visualization Rules (Semi-Smart UI)
+The Frontend Visualizer uses a simple hash-map lookup for rendering:
+1. It loops through `physical_layout.grid`.
+2. It looks up styling via `price_groups[seat.grade]`.
+3. It draws the square using the retrieved `color` and `name`.
+4. It overlays the live occupancy state.
 
-Based on the response patterns, TIX ID likely operates as a "Pass-Through Aggregator" with two distinct internal schemas for their providers.
-
-### 7.1 Provider Schema 1 (Nested / XXI)
-*Likely an older, row-centric relational model.*
-
-**Table: `Studio_Master`**
-- `studio_id`: PK
-- `max_columns`: Integer
-- `layout_json`: [ { `row_label`, `seats`: [ { `id`, `default_status` } ] } ]
-
-**Table: `Showtime_Performance`**
-- `session_id`: PK
-- `studio_id`: FK
-- `realtime_map`: (Overlay of `status` codes onto the `Studio_Master` template)
-- **Logic:** "Status 1" is an additive flag (Sold).
-
-### 7.2 Provider Schema 2 (Flat / Cinépolis / Vista-based)
-*Likely a modern, coordinate-based grid model.*
-
-**Table: `Studio_Grid`**
-- `studio_id`: PK
-- `width` (`max_horizontal_seat`): Integer
-- `height` (`max_vertical_seat`): Integer
-
-**Table: `Studio_Seats` (The 1D Stream)**
-- `id`: Unique coordinate (e.g., `row-col-index`)
-- `row_name`: String (Floating label)
-- `seat_no`: String
-- `is_physical` (`seat_yn`): Boolean
-- `grade_code`: String (FK to `Price_Groups`)
-
-**Table: `Showtime_Availability`**
-- `session_id`: PK
-- `seat_id`: FK
-- `is_available` (`seat_status`): Boolean
-- **Logic:** "Status 1" is a boolean "True" (Available), "Status 0" is "False" (Taken).
+### 6.1 Audit Legend (Proof Mode)
+- **Green (Status 1):** Available for purchase.
+- **Amber (Status 5):** Reserved/Booked (Physical seat confirmed).
+- **Red (Status 6):** Occupied or blocked (Ambiguous until consensus).
+- **Gray:** Structural aisle or consistently blocked node.
 
 ---
 
-## 8. Known Edge Cases
-- **The "Split Row A" (Cinépolis):** Row A may be physically split by an aisle. The Modulo-Aware parser handles this by keeping them in separate chunks but preserving their "A" label.
-- **Asymmetric Grids:** Some TIX responses provide a `max_horizontal_seat` that does not perfectly divide the `seat_map` length. In these cases, the final chunk is padded with virtual aisles to complete the grid.
-- **Alphabetical Skips (Missing Row I/O):** Many theaters skip letters like "I" or "O" to avoid confusion with numbers (1 or 0). Our Modulo-Aware parser is immune to this because it relies on index-based chunking rather than alphabetical sequence. (Specimen: `docs/00_scraping_tixid/raw_payloads/10_studio_layout_cgv_grand_indonesia_anomaly.response`)
+## 7. Known Anomaly Handling
+- **Alphabetical Skips:** Many theaters skip letters like "I" or "O" to avoid confusion with numbers. Our Modulo-Aware parser handles this via index-based chunking.
+- **Dead Seat Consensus:** Solves the XXI "Aisle vs Sold" ambiguity by empirically observing seat availability across multiple movies.
+- **Split Rows:** Some VISTA layouts split a single row name across physical lines (e.g., Row A separated by an aisle). These are preserved as vertical gaps in the grid.
+- **Theatre-Studio Collision Anomaly:** When scanning performance data, the engine MUST verify BOTH `theatre_id` AND `studio_id`. Because Studio IDs (e.g., "1", "IMAX") are not globally unique across a movie's showtimes, failing to verify the theatre ID will result in data corruption from unrelated locations (e.g., using Ambon layouts for a Jakarta theater). This was discovered during the Cijantung XXI pilot.

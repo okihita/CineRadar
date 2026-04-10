@@ -12,6 +12,7 @@ import { useTheatres } from '@/hooks/useTheatres';
 import { useCinemasStore } from '../stores/useCinemasStore';
 import { getRegion } from '@/lib/regions';
 import { TheatreStudiosList } from './TheatreStudiosList';
+import type { PerformanceMetrics } from '../hooks/useTheatreStudios';
 
 interface CinemaDetailViewProps {
     theatreId: string;
@@ -24,6 +25,7 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
     
     const [isDarkMode, setIsDarkMode] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null);
 
     // Navigation logic with fallback
     const { currentIndex, prevId, nextId, totalCount, isUsingFiltered } = useMemo(() => {
@@ -100,7 +102,7 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
 
     return (
         <div className="min-h-screen bg-background text-foreground p-6 space-y-6 animate-in fade-in duration-500">
-            {/* Header */}
+            {/* Navigation Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-start gap-4">
                     <Button variant="ghost" size="icon" onClick={() => router.push('/cinemas')} className="mt-1">
@@ -157,17 +159,32 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
                         <Layers className="w-4 h-4 text-primary" />
                         Physical Asset Registry
                     </CardTitle>
+                    
                     <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
-                            <Zap className="w-3.5 h-3.5 text-blue-500" /> Ground Truth
+                        <div className="flex items-center gap-4 border-r pr-4 border-border/50">
+                            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
+                                <Zap className="w-3.5 h-3.5 text-blue-500" /> Ground Truth
+                            </div>
+                            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
+                                <Database className="w-3.5 h-3.5 text-amber-500" /> Guessed
+                            </div>
                         </div>
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
-                            <Database className="w-3.5 h-3.5 text-amber-500" /> Guessed
-                        </div>
+                        
+                        {metrics && (
+                            <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground/50">
+                                <span>{metrics.latencyMs}ms</span>
+                                <span className="opacity-30">|</span>
+                                <span>{metrics.sizeMB} MB</span>
+                            </div>
+                        )}
                     </div>
                 </CardHeader>
                 <CardContent className="p-6">
-                    <TheatreStudiosList theatreId={theatreId} merchant={theatre.merchant} />
+                    <TheatreStudiosList 
+                        theatreId={theatreId} 
+                        merchant={theatre.merchant} 
+                        onMetricsLoad={setMetrics}
+                    />
                 </CardContent>
             </Card>
 

@@ -7,7 +7,7 @@ import type { Studio } from './hooks/useTheatreStudios';
  * Derives a display name for a studio based on merchant-specific rules.
  */
 export function getStudioDisplayName(studio: Studio, merchant?: string): string {
-    const id = studio.studio_id;
+    const id = studio.id;
     const category = studio.room_category || '';
     
     // Normalize merchant to uppercase for comparison
