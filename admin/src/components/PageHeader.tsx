@@ -1,7 +1,12 @@
 'use client';
 
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Gauge, HardDrive } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+interface PerformanceMetrics {
+    latencyMs: number;
+    sizeKB: number;
+}
 
 interface PageHeaderProps {
     title: string;
@@ -10,6 +15,7 @@ interface PageHeaderProps {
     lastUpdated?: string;
     onRefresh?: () => void;
     isRefreshing?: boolean;
+    metrics?: PerformanceMetrics | null;
 }
 
 export function PageHeader({
@@ -19,6 +25,7 @@ export function PageHeader({
     lastUpdated,
     onRefresh,
     isRefreshing,
+    metrics,
 }: PageHeaderProps) {
     return (
         <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -28,6 +35,19 @@ export function PageHeader({
                 <div>
                     <div className="flex items-center gap-2 flex-wrap">
                         <h1 className="text-2xl font-bold">{title}</h1>
+                        {metrics && (
+                            <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground/40 ml-2 bg-muted/30 px-2 py-0.5 rounded-full border border-border/50">
+                                <div className="flex items-center gap-1">
+                                    <Gauge className="w-2.5 h-2.5" />
+                                    <span>{metrics.latencyMs}ms</span>
+                                </div>
+                                <span className="opacity-20">|</span>
+                                <div className="flex items-center gap-1">
+                                    <HardDrive className="w-2.5 h-2.5" />
+                                    <span>{metrics.sizeKB} KB</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                     {description && (
                         <p className="text-muted-foreground text-sm mt-0.5">{description}</p>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useTheatreStudios, type PerformanceMetrics } from '../hooks/useTheatreStudios';
+import { useTheatreStudios, type PerformanceMetrics, type Studio } from '../hooks/useTheatreStudios';
 import { StudioLayoutViewer } from './StudioLayoutViewer';
 import { CheckCircle2, AlertCircle, Zap, Search, Star, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,34 @@ interface TheatreStudiosListProps {
     theatreId: string;
     merchant?: string;
     onMetricsLoad?: (metrics: PerformanceMetrics) => void;
+}
+
+/**
+ * Derives a price summary string from the temporal prices map.
+ */
+function getPriceSummary(studio: Studio): string | null {
+    // Collect all unique prices from all groups (Regular, Sweetbox, etc.)
+    const allPrices: number[] = [];
+    if (studio.price_groups) {
+        Object.values(studio.price_groups).forEach(pg => {
+            if (pg.prices) {
+                if (pg.prices.mon_thu > 0) allPrices.push(pg.prices.mon_thu);
+                if (pg.prices.fri > 0) allPrices.push(pg.prices.fri);
+                if (pg.prices.sat_sun > 0) allPrices.push(pg.prices.sat_sun);
+            }
+        });
+    }
+
+    if (allPrices.length === 0) return null;
+
+    const min = Math.min(...allPrices);
+    const max = Math.max(...allPrices);
+
+    if (min === max) return `Rp ${min.toLocaleString('id-ID')}`;
+    
+    // For ranges, use a shorter "k" format if they are large numbers to save space
+    const format = (val: number) => val >= 1000 ? `${(val / 1000)}k` : val.toString();
+    return `Rp ${format(min)} - ${format(max)}`;
 }
 
 export function TheatreStudiosList({ theatreId, merchant, onMetricsLoad }: TheatreStudiosListProps) {
@@ -64,6 +92,7 @@ export function TheatreStudiosList({ theatreId, merchant, onMetricsLoad }: Theat
                     const isVerified = sampleCount > 0;
                     const isIdeal = sampleCount >= 7;
                     const isV3 = (studio.version || 0) >= 3.2;
+                    const priceRange = getPriceSummary(studio);
                     
                     // Derive freshness from the latest evidence date
                     const latestEvidenceDate = evidence.length > 0 
@@ -89,35 +118,49 @@ export function TheatreStudiosList({ theatreId, merchant, onMetricsLoad }: Theat
                                                 </span>
                                             )}
                                         </div>
-                                        <span className="text-[10px] text-muted-foreground font-mono uppercase">
-                                            ID: {studio.id} • {studio.room_category || 'REGULAR'}
-                                        </span>
+                                        <div className="flex items-center gap-2 mt-0.5">
+                                            <span className="text-[10px] text-muted-foreground font-mono uppercase">
+                                                ID: {studio.id}
+                                            </span>
+                                            <span className="text-[10px] text-muted-foreground opacity-30">|</span>
+                                            <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">
+                                                Room Category: {studio.room_category || 'REGULAR'}
+                                            </span>
+                                            {priceRange && (
+                                                <>
+                                                    <span className="text-[10px] text-muted-foreground opacity-30">|</span>
+                                                    <span className="text-[10px] text-primary font-mono font-bold">
+                                                        {priceRange}
+                                                    </span>
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                                 
-                                <div className="flex flex-col items-end gap-1">
+                                <div className="flex flex-col items-end gap-1.5">
                                     <div className="flex items-center gap-2">
                                         <Link href={`/cinemas/${theatreId}/studios/${studio.id}/audit`}>
                                             <Button 
                                                 size="sm" 
                                                 variant="outline" 
-                                                className="h-6 px-2 text-[9px] font-bold gap-1.5 bg-blue-500/5 hover:bg-blue-500/10 text-blue-600 border-blue-500/20 shadow-sm transition-all"
+                                                className="h-7 px-2.5 text-[10px] font-bold gap-1.5 bg-blue-500/5 hover:bg-blue-500/10 text-blue-600 border-blue-500/20 shadow-sm transition-all"
                                             >
-                                                <Search className="w-3 h-3" />
+                                                <Search className="w-3.5 h-3.5" />
                                                 AUDIT
                                             </Button>
                                         </Link>
 
                                         {isIdeal ? (
-                                            <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30 gap-1 px-2 py-0 text-[9px] font-bold shadow-sm">
-                                                <Star className="w-3 h-3 fill-amber-500" /> GOLD VERIFIED
+                                            <Badge variant="outline" className="h-7 bg-amber-500/10 text-amber-600 border-amber-500/30 gap-1.5 px-2.5 py-0 text-[10px] font-bold shadow-sm">
+                                                <Star className="w-3.5 h-3.5 fill-amber-500" /> GOLD VERIFIED
                                             </Badge>
                                         ) : isVerified ? (
-                                            <Badge variant="outline" className="bg-green-500/5 text-green-600 border-green-500/20 gap-1 px-2 py-0 text-[9px] font-bold">
-                                                <CheckCircle2 className="w-3 h-3" /> VERIFIED ({sampleCount}d)
+                                            <Badge variant="outline" className="h-7 bg-green-500/5 text-green-600 border-green-500/20 gap-1.5 px-2.5 py-0 text-[10px] font-bold">
+                                                <CheckCircle2 className="w-3.5 h-3.5" /> VERIFIED ({sampleCount}d)
                                             </Badge>
                                         ) : (
-                                            <Badge variant="outline" className="bg-muted text-muted-foreground border-border gap-1 px-2 py-0 text-[9px] font-bold">
+                                            <Badge variant="outline" className="h-7 bg-muted text-muted-foreground border-border gap-1.5 px-2.5 py-0 text-[10px] font-bold">
                                                 UNVERIFIED
                                             </Badge>
                                         )}

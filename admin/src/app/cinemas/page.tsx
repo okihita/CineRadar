@@ -35,7 +35,7 @@ import {
 
 function CinemasPageContent() {
   // Server state (existing hook with caching)
-  const { theatres, runs, loading: isLoading } = useTheatres();
+  const { theatres, runs, loading: isLoading, refetch, metrics } = useTheatres();
 
   // UI state (Zustand)
   const store = useCinemasStore();
@@ -130,7 +130,7 @@ function CinemasPageContent() {
   }, []);
 
   // Loading skeleton
-  if (isLoading) {
+  if (isLoading && theatres.length === 0) {
     return (
       <div className="min-h-screen bg-background text-foreground animate-pulse">
         <div className="bg-muted/50 border-b h-10" />
@@ -162,6 +162,9 @@ function CinemasPageContent() {
           title="Cinema Intelligence"
           description="Theatre locations, chains, and coverage across Indonesia"
           icon={<MapPin className="w-6 h-6 text-primary" />}
+          metrics={metrics}
+          onRefresh={refetch}
+          isRefreshing={isLoading}
         />
       </div>
 

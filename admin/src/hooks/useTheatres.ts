@@ -39,6 +39,11 @@ function setCache(data: CacheData): void {
     }
 }
 
+interface PerformanceMetrics {
+    latencyMs: number;
+    sizeKB: number;
+}
+
 interface UseTheatresReturn {
     theatres: Theatre[];
     runs: ScraperRun[];
@@ -46,6 +51,7 @@ interface UseTheatresReturn {
     error: Error | null;
     refetch: () => Promise<void>;
     isStale: boolean;
+    metrics: PerformanceMetrics | null;
 }
 
 export function useTheatres(): UseTheatresReturn {
@@ -54,6 +60,7 @@ export function useTheatres(): UseTheatresReturn {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
     const [isStale, setIsStale] = useState(false);
+    const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null);
 
     const fetchData = useCallback(async (useCache = true) => {
         try {
@@ -65,29 +72,34 @@ export function useTheatres(): UseTheatresReturn {
                     setRuns(cached.runs);
                     setLoading(false);
 
-                    // Check if cache is stale
                     const isExpired = Date.now() - cached.timestamp > CACHE_TTL;
-                    if (!isExpired) {
-                        return; // Cache is fresh, no need to refetch
-                    }
+                    if (!isExpired) return;
                     setIsStale(true);
-                    // Continue to fetch fresh data in background
                 }
             }
 
             setError(null);
             if (!theatres.length) setLoading(true);
 
+            const start = performance.now();
             const [theatreData, runData] = await Promise.all([
                 theatreService.getTheatres(),
                 theatreService.getScraperRuns(10)
             ]);
+            const end = performance.now();
+
+            const combinedData = { theatreData, runData };
+            const sizeBytes = new TextEncoder().encode(JSON.stringify(combinedData)).length;
+
+            setMetrics({
+                latencyMs: Math.round(end - start),
+                sizeKB: parseFloat((sizeBytes / 1024).toFixed(2))
+            });
 
             setTheatres(theatreData);
             setRuns(runData);
             setIsStale(false);
 
-            // Update cache
             setCache({
                 theatres: theatreData,
                 runs: runData,
@@ -102,9 +114,9 @@ export function useTheatres(): UseTheatresReturn {
 
     useEffect(() => {
         fetchData(true);
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [fetchData]);
 
-    return { theatres, runs, loading, error, refetch: () => fetchData(false), isStale };
+    return { theatres, runs, loading, error, refetch: () => fetchData(false), isStale, metrics };
 }
 
 export default useTheatres;

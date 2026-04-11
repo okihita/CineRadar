@@ -56,7 +56,7 @@ export interface Studio {
 
 export interface PerformanceMetrics {
     latencyMs: number;
-    sizeMB: number;
+    sizeKB: number;
 }
 
 export function useTheatreStudios(theatreId: string | null) {
@@ -69,13 +69,11 @@ export function useTheatreStudios(theatreId: string | null) {
         
         const data = await response.json();
         
-        // Calculate size: Convert JSON to string length as a proxy for download size
-        // (Since Content-Length might be missing in some environments)
         const sizeBytes = new TextEncoder().encode(JSON.stringify(data)).length;
         
         setMetrics({
             latencyMs: Math.round(end - start),
-            sizeMB: parseFloat((sizeBytes / (1024 * 1024)).toFixed(3))
+            sizeKB: parseFloat((sizeBytes / 1024).toFixed(2))
         });
         
         return data;

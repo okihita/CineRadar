@@ -174,7 +174,7 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
                             <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground/50">
                                 <span>{metrics.latencyMs}ms</span>
                                 <span className="opacity-30">|</span>
-                                <span>{metrics.sizeMB} MB</span>
+                                <span>{metrics.sizeKB} KB</span>
                             </div>
                         )}
                     </div>

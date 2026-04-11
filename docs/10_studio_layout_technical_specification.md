@@ -72,12 +72,11 @@ To ensure the "Ever-Available" rule is auditable, every studio promotion MUST re
 ---
 
 ## 4. Source Architecture & Normalization logic
-The **Consensus Engine** generates the `physical_layout` using the following rules:
-
-### 4. Source Architecture & Normalization logic
-The **Consensus Engine** generates the `physical_layout` using the following rules:
+The **Consensus Engine** and **Frontend Visualizer** use a unified normalization logic to handle data across different cinema chains:
 
 - **Clean Room Specimen Priority:** The engine MUST prioritize the **`initial_raw_layout` (2 AM Snapshot)** as the primary source for establishing the Physical Master Template. This ensures the template is built before operational seat-blocking or dynamic row hiding occurs. The `raw_api_response` (Just-In-Time) SHOULD only be used as a fallback if the 2 AM snapshot is missing.
+- **Automatic Wrapper Detection (Smart Parsing):** To ensure forensic compatibility, the parsing engine MUST intelligently detect and "dig" into Firestore document wrappers. It should look for core seating data within `initial_raw_layout.data`, `raw_api_response.data`, or root-level `.data` fields automatically.
+- **Identity Integrity:** The `studio_id` used in the path MUST be verified against the internal `studio_id` (or `id`) within the document. Discrepancies should be flagged as anomalies.
 
 ### 4.1 Pattern A: The "Nested" Model (XXI / Legacy)
 - **Physicality:** A coordinate is a seat only if it is found with **Status 1 (Available)** in at least one sample. Consistently "Blocked" (Status 6) nodes are converted to aisles.
@@ -126,3 +125,12 @@ The Frontend Visualizer uses a simple hash-map lookup for rendering:
 - **Dead Seat Consensus:** Solves the XXI "Aisle vs Sold" ambiguity by empirically observing seat availability across multiple movies.
 - **Split Rows:** Some VISTA layouts split a single row name across physical lines (e.g., Row A separated by an aisle). These are preserved as vertical gaps in the grid.
 - **Theatre-Studio Collision Anomaly:** When scanning performance data, the engine MUST verify BOTH `theatre_id` AND `studio_id`. Because Studio IDs (e.g., "1", "IMAX") are not globally unique across a movie's showtimes, failing to verify the theatre ID will result in data corruption from unrelated locations (e.g., using Ambon layouts for a Jakarta theater). This was discovered during the Cijantung XXI pilot.
+
+---
+
+## 8. Financial & Revenue Logic
+To ensure accuracy in multi-chain environments where pricing can be dynamic per movie or showtime, CineRadar implements a strict **Financial Separation of Concerns**:
+
+- **The Studio Registry (Market Guide):** The `price_groups` object in the Studio document represents the **Typical Market Guide** (Peak Potential). The `prices` temporal map (`mon_thu`, `fri`, `sat_sun`) stores the maximum observed price for those tiers. It serves as a reference for UI labels and room categorization.
+- **The Performance Document (Actual Transaction):** The individual showtime performance document (`movie_performance_v2`) is the **Exclusive Source of Truth** for financial auditing. 
+- **Revenue Calculation:** All revenue and occupancy value engines MUST use the `price` found in the specific showtime's payload. The Studio template's price MUST NOT be used for revenue calculations as it may not reflect movie-specific discounts or premium surges.
