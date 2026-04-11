@@ -20,7 +20,12 @@ export async function GET(
 
         const stats = {
             count: studiosDocs.length,
-            capacity: studiosDocs.reduce((acc, studio) => acc + ((studio.total_seats as number) || 0), 0)
+            capacity: studiosDocs.reduce((acc, studio) => {
+                const s = studio as Record<string, unknown>;
+                const physLayout = s.physical_layout as Record<string, unknown> | undefined;
+                const cap = (physLayout?.total_capacity as number) || (s.total_seats as number) || 0;
+                return acc + cap;
+            }, 0)
         };
 
         const theatre = {

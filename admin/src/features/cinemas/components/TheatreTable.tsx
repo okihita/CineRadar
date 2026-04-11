@@ -1,362 +1,303 @@
-/**
- * Theatre Table component with pagination and sorting
- */
 'use client';
 
-import { useRef, useCallback, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
+import React from 'react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
+  ExternalLink,
+  Search,
+  Building2,
+  Users,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ArrowUp, ArrowDown, X, Download, Users, Monitor, Search, ExternalLink } from 'lucide-react';
-import { CHAIN_COLORS, CHAIN_COLORS_LIGHT, ITEMS_PER_PAGE } from '@/lib/constants';
-import { getRegion } from '@/lib/regions';
-import { highlightText } from '@/lib/mapUtils';
 import { Badge } from '@/components/ui/badge';
-import type { Theatre } from '../types';
+import { cn } from '@/lib/utils';
+import type { Theatre } from '../';
 
 interface TheatreTableProps {
-    theatres: Theatre[];
-    totalCount: number;
-    currentPage: number;
-    searchTerm: string;
-    sortByName: 'asc' | 'desc' | null;
-    sortByCity: 'asc' | 'desc' | null;
-    sortByCapacity: 'asc' | 'desc' | null;
-    selectedTheatre: Theatre | null;
-    onPageChange: (page: number) => void;
-    onSearchChange: (term: string) => void;
-    onToggleNameSort: () => void;
-    onToggleCitySort: () => void;
-    onToggleCapacitySort: () => void;
-    onTheatreSelect: (theatre: Theatre) => void;
-    onViewDetails?: (theatre: Theatre) => void;
-    onClearFilters: () => void;
+  theatres: Theatre[];
+  totalCount: number;
+  currentPage: number;
+  searchTerm: string;
+  sortByName: 'asc' | 'desc' | null;
+  sortByCity: 'asc' | 'desc' | null;
+  sortByCapacity: 'asc' | 'desc' | null;
+  selectedTheatre: Theatre | null;
+  onPageChange: (page: number) => void;
+  onSearchChange: (term: string) => void;
+  onToggleNameSort: () => void;
+  onToggleCitySort: () => void;
+  onToggleCapacitySort: () => void;
+  onTheatreSelect: (theatre: Theatre) => void;
+  onViewDetails: (theatre: Theatre) => void;
+  onClearFilters: () => void;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export function TheatreTable({
-    theatres,
-    totalCount,
-    currentPage,
-    searchTerm,
-    sortByName,
-    sortByCity,
-    sortByCapacity,
-    selectedTheatre,
-    onPageChange,
-    onSearchChange,
-    onToggleNameSort,
-    onToggleCitySort,
-    onToggleCapacitySort,
-    onTheatreSelect,
-    onViewDetails,
-    onClearFilters,
+  theatres,
+  totalCount,
+  currentPage,
+  searchTerm,
+  sortByName,
+  sortByCity,
+  sortByCapacity,
+  selectedTheatre,
+  onPageChange,
+  onSearchChange,
+  onToggleNameSort,
+  onToggleCitySort,
+  onToggleCapacitySort,
+  onTheatreSelect,
+  onViewDetails,
+  onClearFilters,
 }: TheatreTableProps) {
-    const tableContainerRef = useRef<HTMLDivElement>(null);
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const currentTheatres = theatres.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-    // Pagination
-    const totalPages = Math.ceil(theatres.length / ITEMS_PER_PAGE);
-    const safePage = Math.min(currentPage, Math.max(1, totalPages));
-    const paginatedTheatres = theatres.slice(
-        (safePage - 1) * ITEMS_PER_PAGE,
-        safePage * ITEMS_PER_PAGE
-    );
-
-    // Scroll to selected theatre row
-    useEffect(() => {
-        if (selectedTheatre && tableContainerRef.current) {
-            const row = tableContainerRef.current.querySelector(
-                `[data-theatre-id="${selectedTheatre.theatre_id}"]`
-            );
-            if (row) {
-                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        }
-    }, [selectedTheatre]);
-
-    // Export to CSV
-    const exportToCSV = useCallback(() => {
-        const headers = ['Name', 'Chain', 'City', 'Region', 'Studios', 'Capacity', 'Address'];
-        const rows = theatres.map((t) => [
-            t.name,
-            t.merchant,
-            t.city,
-            getRegion(t.city),
-            t.studio_count?.toString() || '0',
-            t.total_capacity?.toString() || '0',
-            t.address || '',
-        ]);
-        const csv = [headers, ...rows]
-            .map((row) => row.map((cell) => `"${cell}"`).join(','))
-            .join('\n');
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `theatres-${new Date().toISOString().split('T')[0]}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
-    }, [theatres]);
-
-    // Keyboard navigation
-    const handleKeyDown = useCallback(
-        (e: React.KeyboardEvent) => {
-            if (!paginatedTheatres.length) return;
-
-            const currentIndex = selectedTheatre
-                ? paginatedTheatres.findIndex((t) => t.theatre_id === selectedTheatre.theatre_id)
-                : -1;
-
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                const nextIndex = currentIndex < paginatedTheatres.length - 1 ? currentIndex + 1 : 0;
-                onTheatreSelect(paginatedTheatres[nextIndex]);
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                const prevIndex = currentIndex > 0 ? currentIndex - 1 : paginatedTheatres.length - 1;
-                onTheatreSelect(paginatedTheatres[prevIndex]);
-            }
-        },
-        [paginatedTheatres, selectedTheatre, onTheatreSelect]
-    );
-
-    const renderPagination = () => {
-        if (totalPages <= 1) return null;
-
-        const pages = [];
-        // Show all pages if totalPages is small, or use a more complex logic if needed.
-        // For now, let's show all as requested.
-        for (let i = 1; i <= totalPages; i++) {
-            pages.push(
-                <Button
-                    key={i}
-                    variant={safePage === i ? "default" : "outline"}
-                    size="sm"
-                    className={`h-7 min-w-[28px] p-0 text-[10px] font-bold ${
-                        safePage === i ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                    }`}
-                    onClick={() => onPageChange(i)}
-                >
-                    {i}
-                </Button>
-            );
-        }
-
-        return (
-            <div className="flex items-center gap-1.5 bg-muted/20 p-1 rounded-lg border border-border/50">
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 hover:bg-background"
-                    disabled={safePage === 1}
-                    onClick={() => onPageChange(safePage - 1)}
-                >
-                    ←
-                </Button>
-                <div className="flex items-center flex-wrap gap-1 max-w-[400px]">
-                    {pages}
-                </div>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 hover:bg-background"
-                    disabled={safePage === totalPages}
-                    onClick={() => onPageChange(safePage + 1)}
-                >
-                    →
-                </Button>
-            </div>
-        );
-    };
-
+  const highlightText = (text: string, highlight: string) => {
+    if (!highlight.trim()) return text;
+    const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
     return (
-        <Card>
-            <CardHeader className="py-3 px-4 border-b bg-muted/10">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                        <CardTitle className="text-sm flex-shrink-0 flex items-center gap-2">
-                            Theatres
-                            <Badge variant="secondary" className="font-normal text-[10px] h-4 px-1.5">
-                                {totalCount}
-                            </Badge>
-                        </CardTitle>
-                        {renderPagination()}
-                    </div>
-
-                    <div className="flex items-center gap-2 flex-1 justify-end">
-                        {/* Search */}
-                        <div className="relative max-w-xs flex-1">
-                            <Input
-                                placeholder="Search theatre, city..."
-                                value={searchTerm}
-                                onChange={(e) => onSearchChange(e.target.value)}
-                                className="h-8 text-sm pr-8"
-                            />
-                            {searchTerm && (
-                                <button
-                                    onClick={() => onSearchChange('')}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                                >
-                                    <X className="w-4 h-4" />
-                                </button>
-                            )}
-                        </div>
-
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8 text-xs gap-1"
-                            onClick={exportToCSV}
-                            title="Export filtered results to CSV"
-                        >
-                            <Download className="w-3 h-3" />
-                            Export
-                        </Button>
-                    </div>
-                </div>
-            </CardHeader>
-
-            <CardContent className="p-0">
-                <div
-                    ref={tableContainerRef}
-                    className="overflow-x-auto focus:outline-none"
-                    tabIndex={0}
-                    onKeyDown={handleKeyDown}
-                >
-                    <Table>
-                        <TableHeader className="sticky top-0 bg-background z-10 shadow-sm">
-                            <TableRow className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground bg-muted/5">
-                                <TableHead
-                                    className="pl-4 py-3 cursor-pointer hover:bg-muted/50 select-none w-[35%]"
-                                    onClick={onToggleNameSort}
-                                >
-                                    <span className="inline-flex items-center gap-1">
-                                        Theatre
-                                        {sortByName === 'asc' && <ArrowUp className="w-3 h-3 text-primary" />}
-                                        {sortByName === 'desc' && <ArrowDown className="w-3 h-3 text-primary" />}
-                                    </span>
-                                </TableHead>
-                                <TableHead className="py-3 w-[15%]">Chain</TableHead>
-                                <TableHead
-                                    className="cursor-pointer hover:bg-muted/50 select-none py-3 w-[20%]"
-                                    onClick={onToggleCitySort}
-                                >
-                                    <span className="inline-flex items-center gap-1">
-                                        Location
-                                        {sortByCity === 'asc' && <ArrowUp className="w-3 h-3 text-primary" />}
-                                        {sortByCity === 'desc' && <ArrowDown className="w-3 h-3 text-primary" />}
-                                    </span>
-                                </TableHead>
-                                <TableHead className="py-3 w-[10%] text-center hidden md:table-cell">
-                                    <span className="inline-flex items-center gap-1">
-                                        <Monitor className="w-3 h-3" />
-                                        Studios
-                                    </span>
-                                </TableHead>
-                                <TableHead 
-                                    className="py-3 w-[15%] text-right cursor-pointer hover:bg-muted/50 select-none hidden md:table-cell pr-4"
-                                    onClick={onToggleCapacitySort}
-                                >
-                                    <span className="inline-flex items-center gap-1 justify-end w-full">
-                                        <Users className="w-3 h-3" />
-                                        Capacity
-                                        {sortByCapacity === 'asc' && <ArrowUp className="w-3 h-3 text-primary" />}
-                                        {sortByCapacity === 'desc' && <ArrowDown className="w-3 h-3 text-primary" />}
-                                    </span>
-                                </TableHead>
-                                <TableHead className="py-3 w-[10%] text-right pr-4">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-
-                        <TableBody>
-                            {paginatedTheatres.length > 0 ? (
-                                paginatedTheatres.map((theatre) => (
-                                    <TableRow
-                                        key={theatre.theatre_id}
-                                        data-theatre-id={theatre.theatre_id}
-                                        className={`cursor-pointer text-sm transition-colors border-l-2 ${selectedTheatre?.theatre_id === theatre.theatre_id
-                                                ? 'bg-primary/10 border-l-primary'
-                                                : 'border-l-transparent hover:bg-muted/50'
-                                            }`}
-                                        onClick={() => onTheatreSelect(theatre)}
-                                    >
-                                        <TableCell className="pl-4 py-3">
-                                            <p className="font-semibold text-sm leading-tight">
-                                                {highlightText(theatre.name, searchTerm)}
-                                            </p>
-                                            <p className="text-[10px] font-mono text-muted-foreground/60 mt-0.5 selection:bg-primary/20">
-                                                {theatre.theatre_id}
-                                            </p>
-                                        </TableCell>
-                                        <TableCell className="py-3">
-                                            <span
-                                                className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tight"
-                                                style={{
-                                                    backgroundColor:
-                                                        CHAIN_COLORS_LIGHT[theatre.merchant as keyof typeof CHAIN_COLORS_LIGHT] ||
-                                                        'rgba(102, 102, 102, 0.2)',
-                                                    color:
-                                                        CHAIN_COLORS[theatre.merchant as keyof typeof CHAIN_COLORS] || '#666',
-                                                }}
-                                            >
-                                                {theatre.merchant}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell className="py-3">
-                                            <p className="text-sm font-medium">{highlightText(theatre.city, searchTerm)}</p>
-                                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{getRegion(theatre.city)}</p>
-                                        </TableCell>
-                                        <TableCell className="py-3 text-center hidden md:table-cell">
-                                            <span className="text-sm font-mono font-medium">
-                                                {theatre.studio_count || 0}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell className="py-3 text-right hidden md:table-cell pr-4">
-                                            {theatre.total_capacity && theatre.total_capacity > 0 ? (
-                                                <span className="text-sm font-mono font-bold text-primary">
-                                                    {theatre.total_capacity.toLocaleString()}
-                                                </span>
-                                            ) : (
-                                                <Badge variant="outline" className="text-[9px] font-normal h-4 text-muted-foreground/60 border-muted/30">
-                                                    Indexing
-                                                </Badge>
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="py-3 text-right pr-4">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="h-7 text-[10px] px-2 gap-1 bg-primary/5 hover:bg-primary/10 border-primary/20 text-primary font-bold uppercase tracking-tight"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onViewDetails?.(theatre);
-                                                }}
-                                            >
-                                                Intelligence
-                                                <ExternalLink className="w-3 h-3" />
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-20">
-                                        <div className="flex flex-col items-center justify-center text-muted-foreground">
-                                            <Search className="w-10 h-10 mb-4 opacity-20" />
-                                            <p className="text-sm font-medium mb-1">No theatres found</p>
-                                            <p className="text-xs mb-6">Try adjusting your filters or search term</p>
-                                            <Button variant="outline" size="sm" className="text-xs" onClick={onClearFilters}>
-                                                Clear all filters
-                                            </Button>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-
-            </CardContent>
-        </Card>
+      <>
+        {parts.map((part, i) =>
+          part.toLowerCase() === highlight.toLowerCase() ? (
+            <mark key={i} className="bg-primary/20 text-primary-foreground rounded-sm px-0.5">
+              {part}
+            </mark>
+          ) : (
+            part
+          )
+        )}
+      </>
     );
+  };
+
+  const getMerchantStyles = (merchant: string) => {
+    const m = merchant.toUpperCase();
+    if (m.includes('XXI')) return 'border-orange-200 bg-orange-50 text-orange-700 dark:bg-orange-950/30 dark:border-orange-900/50 dark:text-orange-400';
+    if (m.includes('CGV')) return 'border-red-200 bg-red-50 text-red-700 dark:bg-red-950/30 dark:border-red-900/50 dark:text-red-400';
+    if (m.includes('CINEPOLIS')) return 'border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:border-blue-900/50 dark:text-blue-400';
+    if (m.includes('FLIX')) return 'border-zinc-300 bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300';
+    return 'border-zinc-200 bg-zinc-50 text-zinc-600 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400';
+  };
+
+  if (totalCount === 0 && searchTerm) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 border rounded-xl bg-muted/10">
+        <Search className="w-10 h-10 text-muted-foreground/30 mb-4" />
+        <h3 className="text-lg font-medium">No theatres found for &quot;{searchTerm}&quot;</h3>
+        <p className="text-muted-foreground mb-6">Try adjusting your search or filters</p>
+        <Button variant="outline" onClick={onClearFilters}>
+          Clear All Filters
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="relative group max-w-md">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <Search className="h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
+        </div>
+        <input
+          type="text"
+          placeholder="Search theatre by name or city..."
+          className="block w-full pl-10 pr-3 py-2 border border-border rounded-lg bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
+          value={searchTerm}
+          onChange={(e) => onSearchChange(e.target.value)}
+        />
+      </div>
+
+      <div className="border rounded-xl bg-card overflow-hidden shadow-sm">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/30 hover:bg-muted/30">
+              <TableHead className="w-[30%]">
+                <button
+                  onClick={onToggleNameSort}
+                  className="flex items-center gap-1 hover:text-primary transition-colors font-bold uppercase tracking-wider text-[10px]"
+                >
+                  <Building2 className="w-3 h-3" />
+                  Theatre Name
+                  <span className="text-[8px] opacity-50 ml-1">
+                    {sortByName === 'asc' ? '↑' : '↓'}
+                  </span>
+                </button>
+              </TableHead>
+              <TableHead className="w-[20%]">
+                <button
+                  onClick={onToggleCitySort}
+                  className="flex items-center gap-1 hover:text-primary transition-colors font-bold uppercase tracking-wider text-[10px]"
+                >
+                  <MapPin className="w-3 h-3" />
+                  Location
+                  <span className="text-[8px] opacity-50 ml-1">
+                    {sortByCity === 'asc' ? '↑' : '↓'}
+                  </span>
+                </button>
+              </TableHead>
+              <TableHead className="w-[15%] font-bold uppercase tracking-wider text-[10px]">Merchant</TableHead>
+              <TableHead className="w-[15%]">
+                <button
+                  onClick={onToggleCapacitySort}
+                  className="flex items-center gap-1 hover:text-primary transition-colors font-bold uppercase tracking-wider text-[10px]"
+                >
+                  <Users className="w-3 h-3" />
+                  Capacity
+                  <span className="text-[8px] opacity-50 ml-1">
+                    {sortByCapacity === 'asc' ? '↑' : '↓'}
+                  </span>
+                </button>
+              </TableHead>
+              <TableHead className="text-right font-bold uppercase tracking-wider text-[10px]">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {currentTheatres.map((theatre) => {
+              const isSelected = selectedTheatre?.theatre_id === theatre.theatre_id;
+              const hasCapacity = theatre.total_capacity && theatre.total_capacity > 0;
+
+              return (
+                <TableRow
+                  key={theatre.theatre_id}
+                  className={cn(
+                    'group cursor-pointer transition-colors',
+                    isSelected ? 'bg-primary/5' : 'hover:bg-muted/20'
+                  )}
+                  onClick={() => onTheatreSelect(theatre)}
+                >
+                  <TableCell className="py-4">
+                    <div className="flex flex-col">
+                      <p className="font-bold text-sm tracking-tight group-hover:text-primary transition-colors uppercase">
+                        {highlightText(theatre.name, searchTerm)}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] text-muted-foreground font-mono">
+                          {theatre.theatre_id}
+                        </span>
+                        {theatre.version && (
+                          <Badge variant="outline" className="text-[8px] h-4 px-1 bg-primary/5 text-primary border-primary/20">
+                            V{theatre.version}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <span className="text-xs font-medium">{highlightText(theatre.city, searchTerm)}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant="outline"
+                      className={cn('text-[10px] font-bold uppercase tracking-tighter', getMerchantStyles(theatre.merchant))}
+                    >
+                      {theatre.merchant}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {hasCapacity ? (
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold font-mono">
+                          {theatre.total_capacity?.toLocaleString()}
+                        </span>
+                        <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-tighter">
+                          Across {theatre.studio_count || 0} Studios
+                        </span>
+                      </div>
+                    ) : (
+                      <Badge variant="secondary" className="text-[9px] font-bold uppercase opacity-40 animate-pulse">
+                        Indexing...
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-2 text-muted-foreground hover:text-primary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onViewDetails(theatre);
+                        }}
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex items-center justify-between px-2 py-4">
+        <div className="text-xs text-muted-foreground">
+          Showing <span className="font-bold text-foreground">{startIndex + 1}</span> to{' '}
+          <span className="font-bold text-foreground">
+            {Math.min(startIndex + ITEMS_PER_PAGE, totalCount)}
+          </span>{' '}
+          of <span className="font-bold text-foreground">{totalCount}</span> theatres
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="h-8 w-8 p-0"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <div className="flex items-center gap-1">
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNum = i + 1;
+              if (totalPages > 5 && currentPage > 3) {
+                pageNum = currentPage - 3 + i;
+              }
+              if (pageNum > totalPages) return null;
+
+              return (
+                <Button
+                  key={pageNum}
+                  variant={currentPage === pageNum ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => onPageChange(pageNum)}
+                  className="h-8 w-8 p-0 text-xs"
+                >
+                  {pageNum}
+                </Button>
+              );
+            })}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="h-8 w-8 p-0"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
 }

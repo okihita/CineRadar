@@ -13,6 +13,8 @@ export interface Theatre {
     updated_at: string;
     studio_count?: number;
     total_capacity?: number;
+    version?: number;
+    last_sync?: string;
 }
 
 export interface ScraperRun {

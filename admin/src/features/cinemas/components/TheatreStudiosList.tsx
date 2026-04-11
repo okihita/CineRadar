@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useTheatreStudios, type PerformanceMetrics, type Studio } from '../hooks/useTheatreStudios';
+import { useTheatreStudios, type PerformanceMetrics } from '../hooks/useTheatreStudios';
 import { StudioLayoutViewer } from './StudioLayoutViewer';
-import { CheckCircle2, AlertCircle, Zap, Search, Star, Loader2 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { AlertCircle, Search, Star, Loader2, Calendar, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
@@ -16,38 +15,9 @@ interface TheatreStudiosListProps {
     onMetricsLoad?: (metrics: PerformanceMetrics) => void;
 }
 
-/**
- * Derives a price summary string from the temporal prices map.
- */
-function getPriceSummary(studio: Studio): string | null {
-    // Collect all unique prices from all groups (Regular, Sweetbox, etc.)
-    const allPrices: number[] = [];
-    if (studio.price_groups) {
-        Object.values(studio.price_groups).forEach(pg => {
-            if (pg.prices) {
-                if (pg.prices.mon_thu > 0) allPrices.push(pg.prices.mon_thu);
-                if (pg.prices.fri > 0) allPrices.push(pg.prices.fri);
-                if (pg.prices.sat_sun > 0) allPrices.push(pg.prices.sat_sun);
-            }
-        });
-    }
-
-    if (allPrices.length === 0) return null;
-
-    const min = Math.min(...allPrices);
-    const max = Math.max(...allPrices);
-
-    if (min === max) return `Rp ${min.toLocaleString('id-ID')}`;
-    
-    // For ranges, use a shorter "k" format if they are large numbers to save space
-    const format = (val: number) => val >= 1000 ? `${(val / 1000)}k` : val.toString();
-    return `Rp ${format(min)} - ${format(max)}`;
-}
-
 export function TheatreStudiosList({ theatreId, merchant, onMetricsLoad }: TheatreStudiosListProps) {
     const { studios, isLoading, isError, metrics } = useTheatreStudios(theatreId);
 
-    // Bubble up metrics to parent header
     useEffect(() => {
         if (metrics && onMetricsLoad) {
             onMetricsLoad(metrics);
@@ -92,82 +62,81 @@ export function TheatreStudiosList({ theatreId, merchant, onMetricsLoad }: Theat
                     const isVerified = sampleCount > 0;
                     const isIdeal = sampleCount >= 7;
                     const isV3 = (studio.version || 0) >= 3.2;
-                    const priceRange = getPriceSummary(studio);
+                    const totalCapacity = studio.physical_layout?.total_capacity || 0;
                     
-                    // Derive freshness from the latest evidence date
-                    const latestEvidenceDate = evidence.length > 0 
-                        ? [...evidence].sort((a, b) => b.date.localeCompare(a.date))[0].date 
-                        : null;
+                    let evidenceSpan = 'No history recorded';
+                    if (evidence.length > 0) {
+                        const dates = evidence.map(e => e.date).sort();
+                        const first = new Date(dates[0]).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        const last = new Date(dates[dates.length - 1]).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        evidenceSpan = `${first} — ${last}`;
+                    }
                     
                     return (
-                        <div key={studio.id} className="flex flex-col h-full border rounded-xl overflow-hidden bg-card/30 shadow-sm hover:shadow-md transition-shadow">
-                            <div className="flex items-center justify-between p-4 bg-muted/10 border-b">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex flex-col">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-bold text-foreground text-sm uppercase tracking-tight">
-                                                {getStudioDisplayName(studio, merchant)}
-                                            </span>
-                                            {isV3 ? (
-                                                <span title="Digital Twin (V3.2+)">
-                                                    <Zap className="w-3.5 h-3.5 text-blue-500 shadow-sm" />
-                                                </span>
-                                            ) : (
-                                                <span title="Legacy Layout">
-                                                    <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
-                                                </span>
+                        <div key={studio.id} className="group flex flex-col h-full border rounded-xl overflow-hidden bg-card/30 shadow-sm hover:shadow-md transition-all">
+                            <div className="flex items-start justify-between p-4 bg-muted/10 border-b min-h-[72px]">
+                                {/* LEFT SIDE: Operational Context (High Contrast) */}
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-black text-foreground text-sm uppercase tracking-tight">
+                                            {getStudioDisplayName(studio, merchant)}
+                                            {totalCapacity > 0 && (
+                                                <span className="ml-2 text-muted-foreground/60 font-medium">({totalCapacity} seats)</span>
                                             )}
-                                        </div>
-                                        <div className="flex items-center gap-2 mt-0.5">
-                                            <span className="text-[10px] text-muted-foreground font-mono uppercase">
-                                                ID: {studio.id}
+                                        </span>
+                                        {!isV3 && (
+                                            <span title="Legacy V2 Layout">
+                                                <AlertCircle className="w-3.5 h-3.5 text-amber-500/50" />
                                             </span>
-                                            <span className="text-[10px] text-muted-foreground opacity-30">|</span>
-                                            <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">
-                                                Room Category: {studio.room_category || 'REGULAR'}
-                                            </span>
-                                            {priceRange && (
-                                                <>
-                                                    <span className="text-[10px] text-muted-foreground opacity-30">|</span>
-                                                    <span className="text-[10px] text-primary font-mono font-bold">
-                                                        {priceRange}
-                                                    </span>
-                                                </>
-                                            )}
-                                        </div>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest opacity-40">
+                                            {studio.room_category || 'REGULAR'}
+                                        </span>
+                                        <span className="text-[10px] text-muted-foreground opacity-20">|</span>
+                                        <span className="text-[10px] text-muted-foreground font-mono opacity-40 uppercase">ID: {studio.id}</span>
                                     </div>
                                 </div>
                                 
-                                <div className="flex flex-col items-end gap-1.5">
-                                    <div className="flex items-center gap-2">
+                                {/* RIGHT SIDE: Technical Context (Low Contrast / Subdued) */}
+                                <div className="flex flex-col items-end gap-1 text-right">
+                                    <div className="flex items-center gap-3">
+                                        {/* Verification Seal */}
+                                        <div className="flex items-center gap-1.5 py-0.5">
+                                            {isIdeal ? (
+                                                <div className="flex items-center gap-1 text-amber-600/60" title="Gold Standard Verification">
+                                                    <span className="text-[9px] font-black uppercase tracking-tighter">7d+</span>
+                                                    <Star className="w-3.5 h-3.5 fill-amber-500/40 border-none" />
+                                                </div>
+                                            ) : isVerified ? (
+                                                <div className="flex items-center gap-1 text-green-600/40" title="Baseline Verified">
+                                                    <span className="text-[9px] font-black uppercase tracking-tighter">{sampleCount}d</span>
+                                                    <CheckCircle2 className="w-3 h-3" />
+                                                </div>
+                                            ) : (
+                                                <span className="text-[9px] font-bold uppercase tracking-tighter text-muted-foreground/30 italic">Unverified</span>
+                                            )}
+                                        </div>
+
+                                        {/* Stealth Audit Trigger */}
                                         <Link href={`/cinemas/${theatreId}/studios/${studio.id}/audit`}>
                                             <Button 
+                                                variant="ghost" 
                                                 size="sm" 
-                                                variant="outline" 
-                                                className="h-7 px-2.5 text-[10px] font-bold gap-1.5 bg-blue-500/5 hover:bg-blue-500/10 text-blue-600 border-blue-500/20 shadow-sm transition-all"
+                                                className="h-7 w-7 p-0 text-muted-foreground/30 group-hover:text-primary/60 hover:bg-primary/5 transition-all"
+                                                title="Forensic Audit"
                                             >
-                                                <Search className="w-3.5 h-3.5" />
-                                                AUDIT
+                                                <Search className="w-4 h-4" />
                                             </Button>
                                         </Link>
-
-                                        {isIdeal ? (
-                                            <Badge variant="outline" className="h-7 bg-amber-500/10 text-amber-600 border-amber-500/30 gap-1.5 px-2.5 py-0 text-[10px] font-bold shadow-sm">
-                                                <Star className="w-3.5 h-3.5 fill-amber-500" /> GOLD VERIFIED
-                                            </Badge>
-                                        ) : isVerified ? (
-                                            <Badge variant="outline" className="h-7 bg-green-500/5 text-green-600 border-green-500/20 gap-1.5 px-2.5 py-0 text-[10px] font-bold">
-                                                <CheckCircle2 className="w-3.5 h-3.5" /> VERIFIED ({sampleCount}d)
-                                            </Badge>
-                                        ) : (
-                                            <Badge variant="outline" className="h-7 bg-muted text-muted-foreground border-border gap-1.5 px-2.5 py-0 text-[10px] font-bold">
-                                                UNVERIFIED
-                                            </Badge>
-                                        )}
                                     </div>
-                                    <span className="text-[8px] text-muted-foreground font-medium uppercase tracking-tighter">
-                                        Refreshed: {latestEvidenceDate ? new Date(latestEvidenceDate).toLocaleDateString() : 'Never'}
-                                    </span>
+
+                                    {/* Temporal Evidence Badge */}
+                                    <div className="flex items-center gap-1 text-[8px] font-bold text-muted-foreground/40 uppercase tracking-tight">
+                                        <Calendar className="w-2.5 h-2.5 opacity-40" />
+                                        {evidenceSpan}
+                                    </div>
                                 </div>
                             </div>
                             
