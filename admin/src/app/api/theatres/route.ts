@@ -32,7 +32,13 @@ export async function GET() {
 
             const stats = theatreStats.get(theatreId)!;
             stats.count += 1;
-            stats.capacity += (studio.total_seats as number) || 0;
+            
+            // Atomic V3.3+ Support: check physical_layout.total_capacity
+            // Legacy V1/V2 Fallback: check total_seats
+            const studioData = studio as Record<string, unknown>;
+            const physLayout = studioData.physical_layout as Record<string, unknown> | undefined;
+            const capacity = (physLayout?.total_capacity as number) || (studio.total_seats as number) || 0;
+            stats.capacity += capacity;
         }
 
         // Augment theatre docs with stats
