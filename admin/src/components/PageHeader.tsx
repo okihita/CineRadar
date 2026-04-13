@@ -16,6 +16,7 @@ interface PageHeaderProps {
     onRefresh?: () => void;
     isRefreshing?: boolean;
     metrics?: PerformanceMetrics | null;
+    children?: React.ReactNode;
 }
 
 export function PageHeader({
@@ -26,6 +27,7 @@ export function PageHeader({
     onRefresh,
     isRefreshing,
     metrics,
+    children,
 }: PageHeaderProps) {
     return (
         <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -60,21 +62,23 @@ export function PageHeader({
                 </div>
             </div>
 
-            {/* Right: Refresh only (theme toggle is in sidebar) */}
-            {onRefresh && (
-                <button
-                    onClick={onRefresh}
-                    disabled={isRefreshing}
-                    className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-                    title="Refresh data"
-                >
-                    <RefreshCw className={cn('w-4 h-4', isRefreshing && 'animate-spin')} />
-                </button>
-            )}
+            {/* Right: Actions */}
+            <div className="flex items-center gap-3">
+                {children}
+                {onRefresh && (
+                    <button
+                        onClick={onRefresh}
+                        disabled={isRefreshing}
+                        className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 border border-transparent hover:border-border"
+                        title="Refresh data"
+                    >
+                        <RefreshCw className={cn('w-4 h-4', isRefreshing && 'animate-spin')} />
+                    </button>
+                )}
+            </div>
         </div>
     );
 }
 
 // Re-export time utilities for backward compatibility
 export { formatRelativeWIB as formatRelativeTime, formatWIB, formatWIBShort, formatWIBDate } from '@/lib/timeUtils';
-

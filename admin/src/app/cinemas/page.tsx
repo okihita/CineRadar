@@ -32,6 +32,9 @@ import {
   StudioCoverageCard,
   type Theatre,
 } from '@/features/cinemas';
+import { BarChart3 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 function CinemasPageContent() {
   // Server state (existing hook with caching)
@@ -165,7 +168,14 @@ function CinemasPageContent() {
           metrics={metrics}
           onRefresh={refetch}
           isRefreshing={isLoading}
-        />
+        >
+          <Link href="/cinemas/insights">
+            <Button variant="outline" size="sm" className="h-9 gap-2 font-bold uppercase tracking-widest text-[10px] border-primary/20 hover:bg-primary/5 shadow-sm">
+              <BarChart3 className="w-3.5 h-3.5" />
+              View Market Insights
+            </Button>
+          </Link>
+        </PageHeader>
       </div>
 
       <main className="px-6 pb-6 pt-4 space-y-4">
