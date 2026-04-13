@@ -124,6 +124,19 @@ The Frontend Visualizer uses a simple hash-map lookup for rendering:
 - **Alphabetical Skips:** Many theaters skip letters like "I" or "O" to avoid confusion with numbers. Our Modulo-Aware parser handles this via index-based chunking.
 - **Dead Seat Consensus:** Solves the XXI "Aisle vs Sold" ambiguity by empirically observing seat availability across multiple movies.
 - **Split Rows:** Some VISTA layouts split a single row name across physical lines (e.g., Row A separated by an aisle). These are preserved as vertical gaps in the grid.
+- **Temporal Category Drift (Identity Collision):** In some VISTA-based chains (CGV), a single `studio_id` may be reused for different `room_category` types across different days (or even the same day). This can lead to "Shape-Shifting" layouts. See `docs/audits/2026-04-11-cgv-identity-collision.md` for forensic details.
+
+### 7.1 The Physical Fingerprint Rule
+To ensure identity integrity in multi-category environments, CineRadar uses **Physical Fingerprinting**:
+- **Definition:** A fingerprint is the immutable physical dimension of a room: `(Row Count) x (Max Column Count)`.
+- **Capability Sets:** A single physical room (one fingerprint) may be utilized for multiple operational formats (e.g., `REGULAR 2D`, `REGULAR 3D`, `ATMOS`).
+- **Data Structure:** All unique categories encountered within the 14-day window that share the same fingerprint are stored in the **`all_categories`** array.
+- **Identity Lock:** The primary `room_category` is derived from the most frequently occurring label in the evidence set.
+- **Quarantine:** If a single `studio_id` exhibits multiple Physical Fingerprints within a 14-day window, it is flagged as a **Hard Collision**.
+- **Auto-Resolution (The Majority Rule):** If one fingerprint accounts for $\ge 70\%$ of the evidence (e.g., 6/7 days), the engine may automatically promote that dominant dimension and discard outliers as transient noise.
+
+
+
 - **Theatre-Studio Collision Anomaly:** When scanning performance data, the engine MUST verify BOTH `theatre_id` AND `studio_id`. Because Studio IDs (e.g., "1", "IMAX") are not globally unique across a movie's showtimes, failing to verify the theatre ID will result in data corruption from unrelated locations (e.g., using Ambon layouts for a Jakarta theater). This was discovered during the Cijantung XXI pilot.
 
 ---

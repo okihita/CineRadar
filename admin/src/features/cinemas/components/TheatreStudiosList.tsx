@@ -71,11 +71,13 @@ export function TheatreStudiosList({ theatreId, merchant, onMetricsLoad }: Theat
                         const last = new Date(dates[dates.length - 1]).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                         evidenceSpan = `${first} — ${last}`;
                     }
+
+                    // Capability Set (all_categories)
+                    const categories = studio.all_categories || (studio.room_category ? [studio.room_category] : []);
                     
                     return (
                         <div key={studio.id} className="group flex flex-col h-full border rounded-xl overflow-hidden bg-card/30 shadow-sm hover:shadow-md transition-all">
                             <div className="flex items-start justify-between p-4 bg-muted/10 border-b min-h-[72px]">
-                                {/* LEFT SIDE: Operational Context (High Contrast) */}
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-2">
                                         <span className="font-black text-foreground text-sm uppercase tracking-tight">
@@ -90,19 +92,21 @@ export function TheatreStudiosList({ theatreId, merchant, onMetricsLoad }: Theat
                                             </span>
                                         )}
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest opacity-40">
-                                            {studio.room_category || 'REGULAR'}
-                                        </span>
-                                        <span className="text-[10px] text-muted-foreground opacity-20">|</span>
+                                    
+                                    {/* Capability Set: Badge Stacking */}
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                        {categories.map((cat, idx) => (
+                                            <div key={idx} className="px-1.5 py-0.5 rounded bg-muted/30 border border-border/50 text-[8px] font-black uppercase text-muted-foreground/60 tracking-wider">
+                                                {cat}
+                                            </div>
+                                        ))}
+                                        {categories.length > 0 && <span className="text-[10px] text-muted-foreground opacity-20">|</span>}
                                         <span className="text-[10px] text-muted-foreground font-mono opacity-40 uppercase">ID: {studio.id}</span>
                                     </div>
                                 </div>
                                 
-                                {/* RIGHT SIDE: Technical Context (Low Contrast / Subdued) */}
                                 <div className="flex flex-col items-end gap-1 text-right">
                                     <div className="flex items-center gap-3">
-                                        {/* Verification Seal */}
                                         <div className="flex items-center gap-1.5 py-0.5">
                                             {isIdeal ? (
                                                 <div className="flex items-center gap-1 text-amber-600/60" title="Gold Standard Verification">
@@ -119,7 +123,6 @@ export function TheatreStudiosList({ theatreId, merchant, onMetricsLoad }: Theat
                                             )}
                                         </div>
 
-                                        {/* Stealth Audit Trigger */}
                                         <Link href={`/cinemas/${theatreId}/studios/${studio.id}/audit`}>
                                             <Button 
                                                 variant="ghost" 
@@ -132,7 +135,6 @@ export function TheatreStudiosList({ theatreId, merchant, onMetricsLoad }: Theat
                                         </Link>
                                     </div>
 
-                                    {/* Temporal Evidence Badge */}
                                     <div className="flex items-center gap-1 text-[8px] font-bold text-muted-foreground/40 uppercase tracking-tight">
                                         <Calendar className="w-2.5 h-2.5 opacity-40" />
                                         {evidenceSpan}

@@ -93,7 +93,6 @@ export function StudioLayoutViewer({ studio, showLegend = false, proofData, isLo
                         <div className="min-w-fit flex flex-col items-center py-4 px-6">
                             <div className="flex flex-col gap-1.5 mb-10">
                                 {visualLayout.map((row: LayoutRow, i: number) => {
-                                    if (!row.seats.some(s => s.type === 'seat')) return null;
                                     return (
                                         <div key={i} className="flex items-center gap-1.5 justify-center">
                                             <div className="w-5 text-[9px] font-mono font-bold text-muted-foreground/40 text-right pr-1">{row.row_name}</div>

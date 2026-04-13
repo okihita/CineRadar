@@ -45,6 +45,7 @@ export interface PhysicalLayout {
 export interface Studio {
     id: string;
     room_category?: string;
+    all_categories?: string[]; // V3.3+ Capability Set
     layout?: LayoutRow[]; // Legacy V1/V2 fallback
     physical_layout?: PhysicalLayout; // V3.2+ Single Source of Truth
     price_groups?: PriceGroups; // V3.3+ Normalized Metadata
