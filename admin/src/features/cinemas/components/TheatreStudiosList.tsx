@@ -3,8 +3,9 @@
 import { useEffect } from 'react';
 import { useTheatreStudios, type PerformanceMetrics } from '../hooks/useTheatreStudios';
 import { StudioLayoutViewer } from './StudioLayoutViewer';
-import { AlertCircle, Search, Star, Loader2, Calendar, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, Search, Star, Calendar, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { StudioCardSkeleton } from './CinemaSkeletons';
 import Link from 'next/link';
 
 import { getStudioDisplayName } from '../utils';
@@ -12,10 +13,16 @@ import { getStudioDisplayName } from '../utils';
 interface TheatreStudiosListProps {
     theatreId: string;
     merchant?: string;
+    expectedCount?: number;
     onMetricsLoad?: (metrics: PerformanceMetrics) => void;
 }
 
-export function TheatreStudiosList({ theatreId, merchant, onMetricsLoad }: TheatreStudiosListProps) {
+export function TheatreStudiosList({ 
+    theatreId, 
+    merchant, 
+    expectedCount = 4, 
+    onMetricsLoad 
+}: TheatreStudiosListProps) {
     const { studios, isLoading, isError, metrics } = useTheatreStudios(theatreId);
 
     useEffect(() => {
@@ -26,12 +33,10 @@ export function TheatreStudiosList({ theatreId, merchant, onMetricsLoad }: Theat
 
     if (isLoading) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 bg-muted/5 border border-dashed rounded-2xl gap-4">
-                <Loader2 className="w-8 h-8 animate-spin text-primary/40" />
-                <div className="text-center">
-                    <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Scanning Physical Registry</p>
-                    <p className="text-[10px] text-muted-foreground/60 italic mt-1 font-mono">Querying Firestore collection group...</p>
-                </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {Array.from({ length: expectedCount }).map((_, i) => (
+                    <StudioCardSkeleton key={i} />
+                ))}
             </div>
         );
     }
@@ -72,7 +77,6 @@ export function TheatreStudiosList({ theatreId, merchant, onMetricsLoad }: Theat
                         evidenceSpan = `${first} — ${last}`;
                     }
 
-                    // Capability Set (all_categories)
                     const categories = studio.all_categories || (studio.room_category ? [studio.room_category] : []);
                     
                     return (
@@ -93,7 +97,6 @@ export function TheatreStudiosList({ theatreId, merchant, onMetricsLoad }: Theat
                                         )}
                                     </div>
                                     
-                                    {/* Capability Set: Badge Stacking */}
                                     <div className="flex items-center gap-1.5 flex-wrap">
                                         {categories.map((cat, idx) => (
                                             <div key={idx} className="px-1.5 py-0.5 rounded bg-muted/30 border border-border/50 text-[8px] font-black uppercase text-muted-foreground/60 tracking-wider">

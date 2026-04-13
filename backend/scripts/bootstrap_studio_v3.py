@@ -5,6 +5,7 @@ import time
 from collections import Counter
 from contextlib import suppress
 from datetime import datetime, timedelta
+from typing import Any
 
 from google.cloud import firestore
 
@@ -26,7 +27,7 @@ THEATRE_BATCH_SIZE = 10
 COLLISION_LOG = "detected_collisions.txt"
 
 
-def get_price_category(date_str):
+def get_price_category(date_str: str) -> str:
     dt = datetime.strptime(date_str, "%Y-%m-%d")
     wd = dt.weekday()
     if wd <= 3:
@@ -36,7 +37,7 @@ def get_price_category(date_str):
     return "sat_sun"
 
 
-def get_branding_color(name):
+def get_branding_color(name: str) -> str:
     """Map physical grade names to official branding colors."""
     n = name.upper()
     if any(x in n for x in ["IMAX", "MACRO XE", "ULTRA XD"]):
@@ -50,7 +51,7 @@ def get_branding_color(name):
     return "#71717a"
 
 
-def get_fingerprint(raw_data):
+def get_fingerprint(raw_data: dict[str, Any]) -> str:
     """Generate a physical dimension fingerprint for a layout."""
     sm = raw_data.get("seat_map", [])
     if not sm:
@@ -59,12 +60,14 @@ def get_fingerprint(raw_data):
         rows = len(sm)
         cols = max(len(r.get("seat_rows", [])) for r in sm)
     else:  # Pattern B
-        cols = raw_data.get("max_horizontal_seat", 10) or 10
+        cols = int(raw_data.get("max_horizontal_seat", 10) or 10)
         rows = len(sm) // cols if cols > 0 else 0
     return f"{rows}x{cols}"
 
 
-async def fetch_one_sample_for_day_stable(db, tid, sid, date_str):
+async def fetch_one_sample_for_day_stable(
+    db: firestore.AsyncClient, tid: str, sid: str, date_str: str
+) -> dict[str, Any] | None:
     with suppress(Exception):
         m_docs = await db.collection(SCHEDULES_V2).document(date_str).collection("movies").get()
         for m in m_docs:
@@ -79,7 +82,7 @@ async def fetch_one_sample_for_day_stable(db, tid, sid, date_str):
                     break
 
             if t_entry:
-                target_ids = set()
+                target_ids: set[tuple[str, str]] = set()
                 for room in t_entry.get("rooms", []):
                     room_sid = str(room.get("studio_id"))
                     category = room.get("category", "UNKNOWN")
@@ -103,6 +106,8 @@ async def fetch_one_sample_for_day_stable(db, tid, sid, date_str):
                     st_doc = await st_ref.get()
                     if st_doc.exists:
                         data = st_doc.to_dict()
+                        if not data:
+                            continue
                         raw_payload = data.get("initial_raw_layout") or data.get(
                             "raw_api_response"
                         )
@@ -133,11 +138,13 @@ async def fetch_one_sample_for_day_stable(db, tid, sid, date_str):
     return None
 
 
-async def build_twin_v3_3_autonomous(db, theatre_name, tid, sid, merchant):
+async def build_twin_v3_3_autonomous(
+    db: firestore.AsyncClient, theatre_name: str, tid: str, sid: str, merchant: str
+) -> int:
     today = datetime.now(JAKARTA_TZ)
-    valid_samples = []
-    cat_counts = Counter()
-    fp_counts = Counter()
+    valid_samples: list[dict[str, Any]] = []
+    cat_counts: Counter[str] = Counter()
+    fp_counts: Counter[str] = Counter()
 
     for i in range(1, 15):
         date_str = (today - timedelta(days=i)).strftime("%Y-%m-%d")
@@ -164,7 +171,7 @@ async def build_twin_v3_3_autonomous(db, theatre_name, tid, sid, merchant):
     samples_data = [s["raw"] for s in valid_samples]
     evidence = [s["meta"] for s in valid_samples]
 
-    price_groups = {}
+    price_groups: dict[str, Any] = {}
     if merchant.upper() == "XXI":
         price_map = {"mon_thu": 0, "fri": 0, "sat_sun": 0}
         for s in valid_samples:
@@ -178,7 +185,7 @@ async def build_twin_v3_3_autonomous(db, theatre_name, tid, sid, merchant):
             "prices": price_map,
         }
     else:
-        all_grade_ids = set()
+        all_grade_ids: set[str] = set()
         for samp in samples_data:
             for pg in samp.get("price_group", []):
                 all_grade_ids.add(pg.get("seat_grd_cd"))
@@ -201,7 +208,7 @@ async def build_twin_v3_3_autonomous(db, theatre_name, tid, sid, merchant):
                 "prices": p_map,
             }
 
-    grid = []
+    grid: list[dict[str, Any]] = []
     total = 0
     master = max(samples_data, key=lambda x: len(x.get("seat_map", [])))
     seat_map = master.get("seat_map", [])
@@ -241,7 +248,7 @@ async def build_twin_v3_3_autonomous(db, theatre_name, tid, sid, merchant):
                     total += 1
             grid.append(new_row)
     else:
-        max_cols = master.get("max_horizontal_seat", 10) or 10
+        max_cols = int(master.get("max_horizontal_seat", 10) or 10)
         for i in range(0, len(seat_map), max_cols):
             chunk = seat_map[i : i + max_cols]
             r_label = next((x.get("row_name") for x in chunk if x.get("row_name")), "")
@@ -304,7 +311,7 @@ async def build_twin_v3_3_autonomous(db, theatre_name, tid, sid, merchant):
     return total
 
 
-async def process_theatre_nitro(db, theatre):
+async def process_theatre_nitro(db: firestore.AsyncClient, theatre: Any) -> str:
     tid = theatre.id
     t_data = theatre.to_dict()
     merchant = t_data.get("merchant", "UNKNOWN")
@@ -347,26 +354,26 @@ async def process_theatre_nitro(db, theatre):
     return f"NONE: {name}"
 
 
-def format_duration(seconds):
+def format_duration(seconds: float) -> str:
     return str(timedelta(seconds=int(seconds)))
 
 
-async def main():
+async def main() -> None:
     db = await get_firestore_async_client()
-    print(f"\n🚀 STARTING NATIONAL REBOOT (Parallel Batch: {THEATRE_BATCH_SIZE})")
+    print(f"\n🚀 STARTING NATIONAL REBOOT (Parallel Batch: {THEATRE_BATCH_SIZE})")  # noqa: T201
     if os.path.exists(COLLISION_LOG):
         os.remove(COLLISION_LOG)
 
     theatre_docs = await db.collection(THEATRES).get()
     total_theatres = len(theatre_docs)
-    print(f"==> Targeting {total_theatres} theatres...")
+    print(f"==> Targeting {total_theatres} theatres...")  # noqa: T201
 
     start_time = time.time()
 
     # Chunking into batches of 10
     for i in range(0, total_theatres, THEATRE_BATCH_SIZE):
         batch = theatre_docs[i : i + THEATRE_BATCH_SIZE]
-        print(
+        print(  # noqa: T201
             f"\n🎬 Processing Batch {i//THEATRE_BATCH_SIZE + 1} ({len(batch)} theatres)..."
         )
 
@@ -374,7 +381,7 @@ async def main():
         batch_results = await asyncio.gather(*batch_tasks)
 
         for res in batch_results:
-            print(f"   -> {res}")
+            print(f"   -> {res}")  # noqa: T201
 
         # Telemetry
         processed = i + len(batch)
@@ -382,12 +389,12 @@ async def main():
         avg_time = current_elapsed / processed
         remaining = (total_theatres - processed) * avg_time
 
-        print(
+        print(  # noqa: T201
             f"⏱️  ELAPSED: {format_duration(current_elapsed)} | ⏳ REMAINING: {format_duration(remaining)} (Avg: {avg_time:.1f}s/theatre)"
         )
         sys.stdout.flush()
 
-    print("\n🏁 NATIONAL REBOOT COMPLETE.")
+    print("\n🏁 NATIONAL REBOOT COMPLETE.")  # noqa: T201
 
 
 if __name__ == "__main__":
