@@ -2,17 +2,15 @@
 
 import { useEffect, useMemo, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
-import { ChevronUp, MapPin, BarChart3 } from 'lucide-react';
+import { ChevronUp, MapPin } from 'lucide-react';
 import { IndonesiaMap } from '@/components/indonesia-map';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { PageHeader } from '@/components/PageHeader';
 import { REGION_CITIES, getRegion } from '@/lib/regions';
 import { formatWIBShort } from '@/lib/timeUtils';
 import { useTheatres } from '@/hooks/useTheatres';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 
-// DIRECT CLIENT IMPORTS (Prevents index.ts leakage)
+// DIRECT CLIENT IMPORTS
 import { useCinemasStore } from '@/features/cinemas/stores/useCinemasStore';
 import { useFilteredTheatres } from '@/features/cinemas/hooks/useCinemasData';
 import { RegionBreakdownCard } from '@/features/cinemas/components/RegionBreakdownCard';
@@ -23,13 +21,9 @@ import { TheatreTable } from '@/features/cinemas/components/TheatreTable';
 import type { Theatre } from '@/features/cinemas/types';
 
 function CinemasPageContent() {
-  // Server state
   const { theatres, runs, loading: isLoading, refetch, metrics } = useTheatres();
-
-  // UI state (Zustand)
   const store = useCinemasStore();
 
-  // Derived data for sidebar facets
   const merchants = useMemo(
     () => [...new Set(theatres.map((t) => t.merchant))].filter(Boolean).sort(),
     [theatres]
@@ -46,7 +40,6 @@ function CinemasPageContent() {
     [merchants, theatres]
   );
 
-  // Filter theatres by merchant first (for region count calculation)
   const merchantFilteredTheatres = useMemo(
     () =>
       store.selectedMerchant === 'all'
@@ -55,7 +48,6 @@ function CinemasPageContent() {
     [theatres, store.selectedMerchant]
   );
 
-  // Region breakdown facets
   const regionBreakdown = useMemo(() => {
     const breakdown = Object.keys(REGION_CITIES)
       .map((region) => ({
@@ -75,7 +67,6 @@ function CinemasPageContent() {
     return breakdown;
   }, [merchantFilteredTheatres]);
 
-  // Filtered and sorted theatres
   const sortedTheatres = useFilteredTheatres(
     theatres,
     store.searchTerm,
@@ -87,7 +78,6 @@ function CinemasPageContent() {
     getRegion
   );
 
-  // Map theatres (filtered for display)
   const mapTheatres = useMemo(
     () =>
       sortedTheatres.filter(
@@ -96,16 +86,18 @@ function CinemasPageContent() {
     [sortedTheatres]
   );
 
-  // Sync filtered IDs to store for detail page navigation
   const theatreIds = useMemo(() => sortedTheatres.map((t: Theatre) => t.theatre_id), [sortedTheatres]);
   useEffect(() => {
     store.setFilteredTheatreIds(theatreIds);
   }, [theatreIds, store]);
 
-  // Last updated timestamp (WIB)
+  // Reset selected theatre (map popup) when filters change
+  useEffect(() => {
+    store.setSelectedTheatre(null);
+  }, [store.selectedMerchant, store.selectedRegion, store.searchTerm, store]);
+
   const lastUpdated = runs[0]?.timestamp ? formatWIBShort(runs[0].timestamp) : null;
 
-  // Scroll listener for back-to-top button
   useEffect(() => {
     const handleScroll = () => {
       store.setShowBackToTop(window.scrollY > 400);
@@ -118,7 +110,6 @@ function CinemasPageContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
-  // Loading skeleton
   if (isLoading && theatres.length === 0) {
     return (
       <div className="min-h-screen bg-background text-foreground animate-pulse">
@@ -138,7 +129,7 @@ function CinemasPageContent() {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20">
-      {/* Page Header */}
+      {/* Page Header (Static) */}
       <div className="px-6 pt-6">
         <PageHeader
           title="Cinema Intelligence"
@@ -147,20 +138,12 @@ function CinemasPageContent() {
           metrics={metrics}
           onRefresh={refetch}
           isRefreshing={isLoading}
-        >
-          <Link href="/cinemas/insights">
-            <Button variant="outline" size="sm" className="h-9 gap-2 font-bold uppercase tracking-widest text-[10px] border-primary/20 hover:bg-primary/5 shadow-sm">
-              <BarChart3 className="w-3.5 h-3.5" />
-              View Market Insights
-            </Button>
-          </Link>
-        </PageHeader>
+        />
       </div>
 
       <main className="px-6 pb-10 pt-2">
         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-10 items-start">
           
-          {/* LEFT: FACETED SIDEBAR - Fixed height sticky */}
           <aside className="sticky top-6 h-[calc(100vh-3rem)] overflow-y-auto no-scrollbar">
             <TheatreSidebar 
                 totalCount={theatres.length}
@@ -170,54 +153,64 @@ function CinemasPageContent() {
                 selectedRegion={store.selectedRegion}
                 onMerchantChange={store.setSelectedMerchant}
                 onRegionChange={store.setSelectedRegion}
+                onMapCenter={store.setMapCenter}
                 onClearFilters={store.clearFilters}
             />
           </aside>
 
-          {/* RIGHT: MAIN CONTENT AREA */}
           <div className="space-y-6">
             
-            {/* STICKY ACTION BAR: Global Search */}
+            {/* UNIFIED STICKY ACTION BAR */}
             <div className="sticky top-0 z-20 py-4 bg-background/95 backdrop-blur-md border-b border-border/50 -mx-2 px-2">
-                <GlobalTheatreSearch 
-                    value={store.searchTerm}
-                    onChange={store.setSearchTerm}
-                    isLoading={isLoading}
-                    resultsCount={sortedTheatres.length}
-                />
-            </div>
-
-            {/* Map & Distribution Section */}
-            <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-6">
-                <Card className="overflow-hidden py-0 border shadow-sm rounded-xl min-h-[450px]">
-                    <IndonesiaMap
-                        theatres={mapTheatres}
-                        selectedTheatre={store.selectedTheatre}
-                        onTheatreSelect={store.setSelectedTheatre}
-                        onViewDetails={(theatre) => window.open(`/cinemas/${theatre.theatre_id}`, '_blank')}
-                        apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}
-                        lastUpdated={lastUpdated}
-                        center={store.mapCenter}
-                    />
-                </Card>
-
-                <div className="flex flex-col gap-4">
-                    <RegionBreakdownCard
-                        regionBreakdown={regionBreakdown}
-                        totalTheatres={theatres.length}
-                    />
-                    <ChainDistributionCard
-                        theatres={theatres}
-                        regionBreakdown={regionBreakdown}
+                <div className="flex flex-col md:flex-row md:items-center gap-6">
+                    <div className="hidden xl:flex flex-col shrink-0">
+                        <h2 className="text-sm font-black uppercase tracking-tighter leading-none">Cinema Intelligence</h2>
+                        <span className="text-[8px] font-bold uppercase tracking-widest text-muted-foreground mt-1">Registry Control</span>
+                    </div>
+                    <GlobalTheatreSearch 
+                        value={store.searchTerm}
+                        onChange={store.setSearchTerm}
+                        isLoading={isLoading}
+                        resultsCount={sortedTheatres.length}
                     />
                 </div>
             </div>
 
-            {/* Theatre Registry Table */}
-            <div className="pt-2">
-                <div className="flex items-center gap-3 mb-4 px-1">
+            {/* IMMERSIVE MAP CANVAS */}
+            <Card className="overflow-hidden border shadow-lg rounded-2xl aspect-[21/9] min-h-[500px] relative group">
+                <IndonesiaMap
+                    theatres={mapTheatres}
+                    selectedTheatre={store.selectedTheatre}
+                    onTheatreSelect={store.setSelectedTheatre}
+                    onViewDetails={(theatre) => window.open(`/cinemas/${theatre.theatre_id}`, '_blank')}
+                    apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}
+                    lastUpdated={lastUpdated}
+                    center={store.mapCenter}
+                >
+                    <div className="absolute top-4 right-4 z-10 w-64 pointer-events-none">
+                        <div className="pointer-events-auto bg-background/60 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-right-4 duration-700">
+                            <ChainDistributionCard
+                                theatres={theatres}
+                                regionBreakdown={regionBreakdown}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="absolute bottom-4 right-4 z-10 w-64 pointer-events-none">
+                        <div className="pointer-events-auto bg-background/60 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                            <RegionBreakdownCard
+                                regionBreakdown={regionBreakdown}
+                                totalTheatres={theatres.length}
+                            />
+                        </div>
+                    </div>
+                </IndonesiaMap>
+            </Card>
+
+            <div className="pt-4">
+                <div className="flex items-center gap-3 mb-6 px-1">
                     <div className="h-4 w-1 bg-primary rounded-full shadow-sm" />
-                    <h2 className="text-sm font-black uppercase tracking-[0.2em] text-foreground/80">Theatre Registry</h2>
+                    <h2 className="text-sm font-black uppercase tracking-[0.2em] text-foreground/80">Physical Asset Registry</h2>
                 </div>
                 <TheatreTable
                     theatres={sortedTheatres}
@@ -240,7 +233,6 @@ function CinemasPageContent() {
         </div>
       </main>
 
-      {/* Back to Top Button */}
       {store.showBackToTop && (
         <button
           onClick={scrollToTop}
@@ -254,7 +246,6 @@ function CinemasPageContent() {
   );
 }
 
-// Default export with ErrorBoundary wrapper
 export default function CinemasPage() {
   return (
     <ErrorBoundary>

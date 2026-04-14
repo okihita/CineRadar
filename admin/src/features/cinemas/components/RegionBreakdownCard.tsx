@@ -1,52 +1,39 @@
-/**
- * Region Breakdown Card component
- * Shows theatres by region with donut chart
- */
 'use client';
 
-import { Card } from '@/components/ui/card';
-import { REGION_COLORS } from '@/lib/constants';
-import { DonutChart } from './DonutChart';
-import type { RegionBreakdown } from '../types';
+import React from 'react';
+import { MapPin } from 'lucide-react';
 
-interface RegionBreakdownCardProps {
-    regionBreakdown: RegionBreakdown[];
-    totalTheatres: number;
+interface RegionBreakdownProps {
+  regionBreakdown: { name: string; count: number }[];
+  totalTheatres: number;
 }
 
-export function RegionBreakdownCard({ regionBreakdown, totalTheatres }: RegionBreakdownCardProps) {
-    return (
-        <Card className="p-3">
-            <div className="flex items-center justify-between mb-2">
-                <p className="text-xs text-muted-foreground">THEATRES BY REGION</p>
-                <p className="text-lg font-bold font-mono">{totalTheatres}</p>
+export function RegionBreakdownCard({ regionBreakdown }: RegionBreakdownProps) {
+  return (
+    <div className="flex flex-col h-full space-y-3 p-4">
+      <div className="flex items-center gap-2 text-muted-foreground/80">
+        <MapPin className="w-3 h-3" />
+        <span className="text-[9px] font-black uppercase tracking-widest">Regional Density</span>
+      </div>
+      
+      <div className="space-y-2 overflow-y-auto no-scrollbar max-h-[240px] pr-1">
+        {regionBreakdown.map((region) => (
+          <div key={region.name} className="space-y-1 group">
+            <div className="flex justify-between items-end text-[10px]">
+              <span className="font-bold text-foreground/80 group-hover:text-primary transition-colors">
+                {region.name}
+              </span>
+              <span className="font-mono text-muted-foreground/60">{region.count}</span>
             </div>
-
-            {/* Donut Chart */}
-            <div className="flex justify-center mb-3">
-                <DonutChart data={regionBreakdown} total={totalTheatres} />
+            <div className="h-1 w-full bg-muted/30 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-primary/40 rounded-full group-hover:bg-primary/60 transition-all"
+                style={{ width: `${(region.count / regionBreakdown[0].count) * 100}%` }}
+              />
             </div>
-
-            {/* Legend */}
-            <div className="space-y-1 text-xs">
-                {regionBreakdown.map((r, i) => {
-                    const percentage = Math.round((r.count / (totalTheatres || 1)) * 100);
-                    return (
-                        <div key={r.name} className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <span
-                                    className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
-                                    style={{ backgroundColor: REGION_COLORS[i] }}
-                                />
-                                <span className="text-muted-foreground">{r.name}</span>
-                            </div>
-                            <span className="font-mono text-foreground">
-                                {r.count} <span className="text-muted-foreground">({percentage}%)</span>
-                            </span>
-                        </div>
-                    );
-                })}
-            </div>
-        </Card>
-    );
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }

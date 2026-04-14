@@ -212,12 +212,12 @@ export function TheatreTable({
                     <div className="flex items-center justify-end gap-2">
                       <Link href={`/cinemas/${theatre.theatre_id}`}>
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
-                          className="h-8 px-2 text-muted-foreground hover:text-primary"
-                          title="View Details"
+                          className="h-8 gap-2 px-3 text-[10px] font-bold uppercase tracking-tight border-primary/20 hover:bg-primary/5 text-muted-foreground hover:text-primary transition-all shadow-sm"
                         >
-                          <ExternalLink className="w-4 h-4" />
+                          Intelligence
+                          <ExternalLink className="w-3 h-3 opacity-50" />
                         </Button>
                       </Link>
                     </div>

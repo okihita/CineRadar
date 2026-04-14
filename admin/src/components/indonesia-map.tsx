@@ -14,6 +14,7 @@ interface IndonesiaMapProps {
     apiKey: string;
     lastUpdated?: string | null;
     center?: { lat: number; lng: number; zoom: number } | null;
+    children?: React.ReactNode;
 }
 
 // Pie chart SVG generator for cluster markers (donut style)
@@ -308,7 +309,7 @@ function MapController({ center }: { center?: { lat: number; lng: number; zoom: 
     return null;
 }
 
-export function IndonesiaMap({ theatres, selectedTheatre, onTheatreSelect, onViewDetails, apiKey, lastUpdated, center }: IndonesiaMapProps) {
+export function IndonesiaMap({ theatres, selectedTheatre, onTheatreSelect, onViewDetails, apiKey, lastUpdated, center, children }: IndonesiaMapProps) {
     const [isDarkMode, setIsDarkMode] = useState(false);
 
     useEffect(() => {
@@ -362,6 +363,9 @@ export function IndonesiaMap({ theatres, selectedTheatre, onTheatreSelect, onVie
                     />
                     <MapOverlay lastUpdated={lastUpdated} />
                     <MapController center={center} />
+                    
+                    {/* Floating Overlays */}
+                    {children}
 
                     {/* Info Window with Quick Actions */}
                     {selectedTheatre && selectedTheatre.lat && selectedTheatre.lng && (
