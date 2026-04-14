@@ -259,9 +259,11 @@ function createPinContent(color: string, isSelected: boolean, markerLib: any): H
         background: color,
         borderColor: '#ffffff',
         glyphColor: 'white',
-        glyph: glyphSvg,
         scale: isSelected ? 1.3 : 1.0,
     });
+
+    // Modern way to set the glyph to avoid deprecation warning
+    pin.glyph = glyphSvg;
 
     return pin.element;
 }
