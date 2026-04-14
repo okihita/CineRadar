@@ -1,18 +1,19 @@
 'use client';
 
-import { useEffect, useMemo, useCallback } from 'react';
+import { useEffect, useCallback, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { ChevronUp, MapPin } from 'lucide-react';
 import { IndonesiaMap } from '@/components/indonesia-map';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { PageHeader } from '@/components/PageHeader';
-import { REGION_CITIES, getRegion } from '@/lib/regions';
+import { getRegion } from '@/lib/regions';
 import { formatWIBShort } from '@/lib/timeUtils';
 import { useTheatres } from '@/hooks/useTheatres';
 
 // DIRECT CLIENT IMPORTS
 import { useCinemasStore } from '@/features/cinemas/stores/useCinemasStore';
 import { useFilteredTheatres } from '@/features/cinemas/hooks/useCinemasData';
+import { useCinemaAnalytics } from '@/features/cinemas/hooks/useCinemaAnalytics';
 import { RegionBreakdownCard } from '@/features/cinemas/components/RegionBreakdownCard';
 import { ChainDistributionCard } from '@/features/cinemas/components/ChainDistributionCard';
 import { TheatreSidebar } from '@/features/cinemas/components/TheatreSidebar';
@@ -21,52 +22,14 @@ import { TheatreTable } from '@/features/cinemas/components/TheatreTable';
 import type { Theatre } from '@/features/cinemas/types';
 
 function CinemasPageContent() {
+  // 1. DATA LAYER
   const { theatres, runs, loading: isLoading, refetch, metrics } = useTheatres();
   const store = useCinemasStore();
 
-  const merchants = useMemo(
-    () => [...new Set(theatres.map((t) => t.merchant))].filter(Boolean).sort(),
-    [theatres]
-  );
+  // 2. ANALYTICS LAYER (Refactored to Hook)
+  const { merchantBreakdown, regionBreakdown } = useCinemaAnalytics(theatres, store.selectedMerchant);
 
-  const merchantBreakdown = useMemo(
-    () =>
-      merchants
-        .map((m) => ({
-          name: m,
-          count: theatres.filter((t) => t.merchant === m).length,
-        }))
-        .sort((a, b) => b.count - a.count),
-    [merchants, theatres]
-  );
-
-  const merchantFilteredTheatres = useMemo(
-    () =>
-      store.selectedMerchant === 'all'
-        ? theatres
-        : theatres.filter((t) => t.merchant === store.selectedMerchant),
-    [theatres, store.selectedMerchant]
-  );
-
-  const regionBreakdown = useMemo(() => {
-    const breakdown = Object.keys(REGION_CITIES)
-      .map((region) => ({
-        name: region,
-        count: merchantFilteredTheatres.filter((t) => getRegion(t.city) === region).length,
-      }))
-      .filter((r) => r.count > 0)
-      .sort((a, b) => b.count - a.count);
-
-    const othersCount = merchantFilteredTheatres.filter(
-      (t) => getRegion(t.city) === 'Others'
-    ).length;
-    if (othersCount > 0) {
-      breakdown.push({ name: 'Others', count: othersCount });
-    }
-
-    return breakdown;
-  }, [merchantFilteredTheatres]);
-
+  // 3. FILTER & SYNC LAYER (Refactored to Hook with Auto-Sync)
   const sortedTheatres = useFilteredTheatres(
     theatres,
     store.searchTerm,
@@ -75,61 +38,44 @@ function CinemasPageContent() {
     store.sortByName,
     store.sortByCity,
     store.sortByCapacity,
-    getRegion
+    getRegion,
+    store.setFilteredTheatreIds
   );
 
+  // 4. PRESENTATION LOGIC
   const mapTheatres = useMemo(
-    () =>
-      sortedTheatres.filter(
-        (t: Theatre) => t.lat && t.lng && !isNaN(t.lat) && !isNaN(t.lng)
-      ) as Theatre[],
+    () => sortedTheatres.filter((t: Theatre) => t.lat && t.lng && !isNaN(t.lat) && !isNaN(t.lng)),
     [sortedTheatres]
   );
 
-  const theatreIds = useMemo(() => sortedTheatres.map((t: Theatre) => t.theatre_id), [sortedTheatres]);
-  useEffect(() => {
-    store.setFilteredTheatreIds(theatreIds);
-  }, [theatreIds, store]);
-
-  // Reset selected theatre (map popup) when filters change
-  useEffect(() => {
-    store.setSelectedTheatre(null);
-  }, [store.selectedMerchant, store.selectedRegion, store.searchTerm, store]);
-
   const lastUpdated = runs[0]?.timestamp ? formatWIBShort(runs[0].timestamp) : null;
 
+  // Scroll visibility
   useEffect(() => {
-    const handleScroll = () => {
-      store.setShowBackToTop(window.scrollY > 400);
-    };
+    const handleScroll = () => store.setShowBackToTop(window.scrollY > 400);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [store]);
 
-  const scrollToTop = useCallback(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
+  const scrollToTop = useCallback(() => window.scrollTo({ top: 0, behavior: 'smooth' }), []);
 
+  // Loading skeleton
   if (isLoading && theatres.length === 0) {
     return (
-      <div className="min-h-screen bg-background text-foreground animate-pulse">
-        <header className="border-b h-14" />
-        <main className="container mx-auto px-6 py-10">
-            <div className="grid grid-cols-[280px_1fr] gap-10">
-                <div className="bg-muted/20 h-[600px] rounded-xl" />
-                <div className="space-y-6">
-                    <div className="bg-muted/20 h-12 rounded-xl" />
-                    <div className="bg-muted/20 h-[400px] rounded-xl" />
-                </div>
+      <div className="min-h-screen bg-background text-foreground animate-pulse p-10">
+        <div className="grid grid-cols-[280px_1fr] gap-10">
+            <div className="bg-muted/20 h-[600px] rounded-xl" />
+            <div className="space-y-6">
+                <div className="bg-muted/20 h-12 rounded-xl w-64" />
+                <div className="bg-muted/20 h-[450px] rounded-2xl" />
             </div>
-        </main>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20">
-      {/* Page Header (Static) */}
       <div className="px-6 pt-6">
         <PageHeader
           title="Cinema Intelligence"
@@ -144,6 +90,7 @@ function CinemasPageContent() {
       <main className="px-6 pb-10 pt-2">
         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-10 items-start">
           
+          {/* CONTROL RAIL */}
           <aside className="sticky top-6 h-[calc(100vh-3rem)] overflow-y-auto no-scrollbar">
             <TheatreSidebar 
                 totalCount={theatres.length}
@@ -158,9 +105,8 @@ function CinemasPageContent() {
             />
           </aside>
 
+          {/* ASSET REGISTRY */}
           <div className="space-y-6">
-            
-            {/* UNIFIED STICKY ACTION BAR */}
             <div className="sticky top-0 z-20 py-4 bg-background/95 backdrop-blur-md border-b border-border/50 -mx-2 px-2">
                 <div className="flex flex-col md:flex-row md:items-center gap-6">
                     <div className="hidden xl:flex flex-col shrink-0">
@@ -176,32 +122,24 @@ function CinemasPageContent() {
                 </div>
             </div>
 
-            {/* IMMERSIVE MAP CANVAS */}
             <Card className="overflow-hidden border shadow-lg rounded-2xl aspect-[21/9] min-h-[500px] relative group">
                 <IndonesiaMap
                     theatres={mapTheatres}
                     selectedTheatre={store.selectedTheatre}
                     onTheatreSelect={store.setSelectedTheatre}
-                    onViewDetails={(theatre) => window.open(`/cinemas/${theatre.theatre_id}`, '_blank')}
+                    onViewDetails={(theatre: Theatre) => window.open(`/cinemas/${theatre.theatre_id}`, '_blank')}
                     apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}
                     lastUpdated={lastUpdated}
                     center={store.mapCenter}
                 >
                     <div className="absolute top-4 right-4 z-10 w-64 pointer-events-none">
                         <div className="pointer-events-auto bg-background/60 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-right-4 duration-700">
-                            <ChainDistributionCard
-                                theatres={theatres}
-                                regionBreakdown={regionBreakdown}
-                            />
+                            <ChainDistributionCard theatres={theatres} regionBreakdown={regionBreakdown} />
                         </div>
                     </div>
-
                     <div className="absolute bottom-4 right-4 z-10 w-64 pointer-events-none">
                         <div className="pointer-events-auto bg-background/60 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-1000">
-                            <RegionBreakdownCard
-                                regionBreakdown={regionBreakdown}
-                                totalTheatres={theatres.length}
-                            />
+                            <RegionBreakdownCard regionBreakdown={regionBreakdown} totalTheatres={theatres.length} />
                         </div>
                     </div>
                 </IndonesiaMap>

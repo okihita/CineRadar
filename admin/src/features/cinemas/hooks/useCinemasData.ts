@@ -4,6 +4,7 @@
  * SWR hook for fetching cinemas data (theatres + scraper runs)
  * Handles server state with caching and revalidation
  */
+import { useMemo, useEffect } from 'react';
 import useSWR from 'swr';
 import type { Theatre, ScraperRun } from '../types';
 import { REFRESH_INTERVALS } from '@/lib/constants';
@@ -14,7 +15,6 @@ interface CinemasAPIResponse {
 }
 
 const fetcher = async (): Promise<CinemasAPIResponse> => {
-    // Fetch theatres and runs in parallel
     const [theatresRes, runsRes] = await Promise.all([
         fetch('/api/scraper'),
         fetch('/api/scraper/stats'),
@@ -40,7 +40,7 @@ export function useCinemasData() {
         {
             revalidateOnFocus: false,
             revalidateOnReconnect: true,
-            dedupingInterval: REFRESH_INTERVALS.MODERATE, // 1 minute
+            dedupingInterval: REFRESH_INTERVALS.MODERATE,
         }
     );
 
@@ -54,7 +54,10 @@ export function useCinemasData() {
     };
 }
 
-// Derived data hooks
+/**
+ * High-performance filtered and sorted theatre list.
+ * Automatically synchronizes filtered IDs to the store for snappy navigation.
+ */
 export function useFilteredTheatres(
     theatres: Theatre[],
     searchTerm: string,
@@ -63,49 +66,59 @@ export function useFilteredTheatres(
     sortByName: 'asc' | 'desc' | null,
     sortByCity: 'asc' | 'desc' | null,
     sortByCapacity: 'asc' | 'desc' | null,
-    getRegion: (city: string) => string
+    getRegion: (city: string) => string,
+    setFilteredIds: (ids: string[]) => void
 ) {
-    // Filter
-    let filtered = theatres;
+    // 1. Filtering & Sorting Logic
+    const filtered = useMemo(() => {
+        let result = theatres;
 
-    if (selectedMerchant !== 'all') {
-        filtered = filtered.filter((t) => t.merchant === selectedMerchant);
-    }
+        if (selectedMerchant !== 'all') {
+            result = result.filter((t) => t.merchant === selectedMerchant);
+        }
 
-    if (selectedRegion !== 'all') {
-        filtered = filtered.filter((t) => getRegion(t.city) === selectedRegion);
-    }
+        if (selectedRegion !== 'all') {
+            result = result.filter((t) => getRegion(t.city) === selectedRegion);
+        }
 
-    if (searchTerm.trim()) {
-        const term = searchTerm.toLowerCase();
-        filtered = filtered.filter(
-            (t) =>
-                t.name.toLowerCase().includes(term) ||
-                t.city.toLowerCase().includes(term) ||
-                t.address?.toLowerCase().includes(term)
-        );
-    }
+        if (searchTerm.trim()) {
+            const term = searchTerm.toLowerCase();
+            result = result.filter(
+                (t) =>
+                    t.name.toLowerCase().includes(term) ||
+                    t.city.toLowerCase().includes(term) ||
+                    t.address?.toLowerCase().includes(term)
+            );
+        }
 
-    // Sort
-    if (sortByName) {
-        filtered = [...filtered].sort((a, b) =>
-            sortByName === 'asc'
-                ? a.name.localeCompare(b.name)
-                : b.name.localeCompare(a.name)
-        );
-    } else if (sortByCity) {
-        filtered = [...filtered].sort((a, b) =>
-            sortByCity === 'asc'
-                ? a.city.localeCompare(b.city)
-                : b.city.localeCompare(a.city)
-        );
-    } else if (sortByCapacity) {
-        filtered = [...filtered].sort((a, b) =>
-            sortByCapacity === 'asc'
-                ? (a.total_capacity || 0) - (b.total_capacity || 0)
-                : (b.total_capacity || 0) - (a.total_capacity || 0)
-        );
-    }
+        // Sort
+        if (sortByName) {
+            result = [...result].sort((a, b) =>
+                sortByName === 'asc'
+                    ? a.name.localeCompare(b.name)
+                    : b.name.localeCompare(a.name)
+            );
+        } else if (sortByCity) {
+            result = [...result].sort((a, b) =>
+                sortByCity === 'asc'
+                    ? a.city.localeCompare(b.city)
+                    : b.city.localeCompare(a.city)
+            );
+        } else if (sortByCapacity) {
+            result = [...result].sort((a, b) =>
+                sortByCapacity === 'asc'
+                    ? (a.total_capacity || 0) - (b.total_capacity || 0)
+                    : (b.total_capacity || 0) - (a.total_capacity || 0)
+            );
+        }
+
+        return result;
+    }, [theatres, searchTerm, selectedMerchant, selectedRegion, sortByName, sortByCity, sortByCapacity, getRegion]);
+
+    // 2. Side Effect: Sync IDs to Store
+    useEffect(() => {
+        setFilteredIds(filtered.map(t => t.theatre_id));
+    }, [filtered, setFilteredIds]);
 
     return filtered;
 }
