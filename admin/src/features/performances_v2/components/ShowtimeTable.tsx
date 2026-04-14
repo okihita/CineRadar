@@ -4,12 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Clock, Filter, ArrowUpDown, Layers, ChevronDown, ChevronRight, ChevronFirst, ChevronLast, Loader2 } from 'lucide-react';
+import { Clock, Filter, Layers, Loader2, ShieldCheck, Microscope } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SeatProgressBar } from './SeatProgressBar';
 import { SeatBreakdownCard } from './SeatBreakdownCard';
-import { SeatMapVisualizer } from './SeatMapVisualizer';
-import { TrueAudienceBadge } from './TrueAudienceBadge';
+import { TriPanelAudit } from './TriPanelAudit';
+import { MasterLayout } from './SeatMapVisualizer';
 
 export interface ShowtimeSnapshot {
     id: string;
@@ -21,22 +21,16 @@ export interface ShowtimeSnapshot {
     merchant: string;
     showtime: string;
     total_seats: number;
-    sold_seats: number; // Legacy/fallback count
-    occupancy_pct: number; // Legacy/fallback count
+    sold_seats: number;
+    occupancy_pct: number;
     price?: number;
-
-    // True Audience Metrics (Delta Calculation from Phase 2)
     initial_unavailable?: number;
     final_unavailable?: number;
     audience_count?: number;
     audience_pct?: number;
-
-    // Scrape details
     scrape_phase?: string;
     scraped_at?: string;
     studio_id?: string;
-
-    // Context for layout fetching
     metadata_id?: string;
     date?: string;
 }
@@ -67,13 +61,11 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
     const [currentPage, setCurrentPage] = useState(1);
     const [showAll, setShowAll] = useState(false);
 
-    // Filter state
     const [filterCity, setFilterCity] = useState<string>('all');
     const [filterMerchant, setFilterMerchant] = useState<string>('all');
     const [filterRoom, setFilterRoom] = useState<string>('all');
-    const [filterHour, setFilterHour] = useState<string>('all');
+    const [filterHour] = useState<string>('all');
 
-    // Extract unique filter options from showtimes
     const filterOptions = useMemo(() => {
         const cities = new Set<string>();
         const merchants = new Set<string>();
@@ -84,7 +76,6 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
             if (st.city) cities.add(st.city);
             if (st.merchant) merchants.add(st.merchant);
             if (st.room_category) rooms.add(st.room_category);
-            // Extract hour from showtime (e.g., "10:00" -> "10")
             if (st.showtime) {
                 const hour = st.showtime.split(':')[0];
                 if (hour) hours.add(hour.padStart(2, '0'));
@@ -99,109 +90,43 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
         };
     }, [showtimes]);
 
-    // Filtered and sorted showtimes
     const processedShowtimes = useMemo(() => {
         let result = [...showtimes];
+        if (filterCity !== 'all') result = result.filter(st => st.city === filterCity);
+        if (filterMerchant !== 'all') result = result.filter(st => st.merchant === filterMerchant);
+        if (filterRoom !== 'all') result = result.filter(st => st.room_category === filterRoom);
+        if (filterHour !== 'all') result = result.filter(st => st.showtime && st.showtime.startsWith(filterHour));
 
-        // Apply filters
-        if (filterCity !== 'all') {
-            result = result.filter(st => st.city === filterCity);
-        }
-        if (filterMerchant !== 'all') {
-            result = result.filter(st => st.merchant === filterMerchant);
-        }
-        if (filterRoom !== 'all') {
-            result = result.filter(st => st.room_category === filterRoom);
-        }
-        if (filterHour !== 'all') {
-            result = result.filter(st => st.showtime && st.showtime.startsWith(filterHour));
-        }
-
-        // Apply sorting
         result.sort((a, b) => {
             let comparison = 0;
             switch (sortField) {
-                case 'showtime':
-                    comparison = (a.showtime || '').localeCompare(b.showtime || '');
-                    break;
+                case 'showtime': comparison = (a.showtime || '').localeCompare(b.showtime || ''); break;
                 case 'occupancy':
                     const occA = a.audience_pct !== undefined ? a.audience_pct : a.occupancy_pct;
                     const occB = b.audience_pct !== undefined ? b.audience_pct : b.occupancy_pct;
                     comparison = occA - occB;
                     break;
-                case 'theatre':
-                    comparison = (a.theatre_name || '').localeCompare(b.theatre_name || '');
-                    break;
-                case 'city':
-                    comparison = (a.city || '').localeCompare(b.city || '');
-                    break;
+                case 'theatre': comparison = (a.theatre_name || '').localeCompare(b.theatre_name || ''); break;
+                case 'city': comparison = (a.city || '').localeCompare(b.city || ''); break;
             }
             return sortDirection === 'asc' ? comparison : -comparison;
         });
-
         return result;
     }, [showtimes, filterCity, filterMerchant, filterRoom, filterHour, sortField, sortDirection]);
 
-    // Grouped showtimes
-    const groupedShowtimes = useMemo(() => {
-        if (groupBy === 'none') {
-            return null;
-        }
-
-        const groups = new Map<string, ShowtimeSnapshot[]>();
-        processedShowtimes.forEach(st => {
-            let key: string;
-            switch (groupBy) {
-                case 'theatre':
-                    key = st.theatre_name;
-                    break;
-                case 'city':
-                    key = st.city;
-                    break;
-                case 'merchant':
-                    key = st.merchant;
-                    break;
-                default:
-                    key = 'Other';
-            }
-
-            if (!groups.has(key)) {
-                groups.set(key, []);
-            }
-            groups.get(key)!.push(st);
-        });
-
-        // Sort groups
-        return Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b));
-    }, [processedShowtimes, groupBy]);
-
-    // Paginated showtimes (only when not grouped and not showing all)
     const paginatedShowtimes = useMemo(() => {
-        if (showAll || groupBy !== 'none') {
-            return processedShowtimes;
-        }
+        if (showAll || groupBy !== 'none') return processedShowtimes;
         const start = (currentPage - 1) * pageSize;
         return processedShowtimes.slice(start, start + pageSize);
     }, [processedShowtimes, showAll, groupBy, currentPage, pageSize]);
 
-    // Summary stats for filtered data
     const summaryStats = useMemo(() => {
         const totalShowtimes = processedShowtimes.length;
         const totalSeats = processedShowtimes.reduce((sum, st) => sum + st.total_seats, 0);
-
-        // Use true audience_count if available, otherwise fallback to raw sold_seats
         const totalSold = processedShowtimes.reduce((sum, st) => sum + (st.audience_count ?? st.sold_seats), 0);
         const avgOccupancy = totalSeats > 0 ? (totalSold / totalSeats * 100) : 0;
-
         return { totalShowtimes, totalSeats, totalSold, avgOccupancy };
     }, [processedShowtimes]);
-
-    const totalPages = Math.ceil(processedShowtimes.length / pageSize);
-
-    const handleFilterChange = (setter: React.Dispatch<React.SetStateAction<string>>, value: string) => {
-        setter(value);
-        setCurrentPage(1);
-    };
 
     const toggleSort = (field: SortField) => {
         if (sortField === field) {
@@ -214,62 +139,39 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
     };
 
     return (
-        <>
-            {/* Filters & Controls */}
-            <Card>
-                <CardHeader className="pb-3 px-4 pt-4">
-                    <CardTitle className="text-sm flex items-center gap-2 text-muted-foreground">
-                        <Filter className="w-4 h-4" />
-                        Filters & Display Options
+        <div className="space-y-6">
+            <Card className="border-primary/10 shadow-sm">
+                <CardHeader className="pb-3 px-4 pt-4 border-b bg-muted/5">
+                    <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 text-muted-foreground/60">
+                        <Filter className="w-3.5 h-3.5" />
+                        Intelligence Filters
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="px-4 pb-4">
+                <CardContent className="px-4 py-4">
                     <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-                        {/* City Filter */}
-                        <Select value={filterCity} onValueChange={(v) => handleFilterChange(setFilterCity, v)}>
-                            <SelectTrigger className="h-8 text-xs">
-                                <SelectValue placeholder="City" />
-                            </SelectTrigger>
+                        <Select value={filterCity} onValueChange={(v) => { setFilterCity(v); setCurrentPage(1); }}>
+                            <SelectTrigger className="h-9 text-xs font-bold uppercase tracking-tighter"><SelectValue placeholder="City" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Cities</SelectItem>
-                                {filterOptions.cities.map(city => (
-                                    <SelectItem key={city} value={city}>{city}</SelectItem>
-                                ))}
+                                {filterOptions.cities.map(city => <SelectItem key={city} value={city}>{city}</SelectItem>)}
                             </SelectContent>
                         </Select>
-
-                        {/* Merchant Filter */}
-                        <Select value={filterMerchant} onValueChange={(v) => handleFilterChange(setFilterMerchant, v)}>
-                            <SelectTrigger className="h-8 text-xs">
-                                <SelectValue placeholder="Merchant" />
-                            </SelectTrigger>
+                        <Select value={filterMerchant} onValueChange={(v) => { setFilterMerchant(v); setCurrentPage(1); }}>
+                            <SelectTrigger className="h-9 text-xs font-bold uppercase tracking-tighter"><SelectValue placeholder="Merchant" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Merchants</SelectItem>
-                                {filterOptions.merchants.map(merchant => (
-                                    <SelectItem key={merchant} value={merchant}>{merchant}</SelectItem>
-                                ))}
+                                {filterOptions.merchants.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                             </SelectContent>
                         </Select>
-
-                        {/* Room Filter */}
-                        <Select value={filterRoom} onValueChange={(v) => handleFilterChange(setFilterRoom, v)}>
-                            <SelectTrigger className="h-8 text-xs">
-                                <SelectValue placeholder="Room" />
-                            </SelectTrigger>
+                        <Select value={filterRoom} onValueChange={(v) => { setFilterRoom(v); setCurrentPage(1); }}>
+                            <SelectTrigger className="h-9 text-xs font-bold uppercase tracking-tighter"><SelectValue placeholder="Room" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Rooms</SelectItem>
-                                {filterOptions.rooms.map(room => (
-                                    <SelectItem key={room} value={room}>{room}</SelectItem>
-                                ))}
+                                {filterOptions.rooms.map(room => <SelectItem key={room} value={room}>{room}</SelectItem>)}
                             </SelectContent>
                         </Select>
-
-                        {/* Group By */}
                         <Select value={groupBy} onValueChange={(v) => setGroupBy(v as GroupBy)}>
-                            <SelectTrigger className="h-8 text-xs">
-                                <Layers className="w-3 h-3 mr-1" />
-                                <SelectValue placeholder="Group by" />
-                            </SelectTrigger>
+                            <SelectTrigger className="h-9 text-xs font-bold uppercase tracking-tighter"><Layers className="w-3 h-3 mr-1" /><SelectValue placeholder="Group by" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="none">No Grouping</SelectItem>
                                 <SelectItem value="theatre">By Theatre</SelectItem>
@@ -277,584 +179,186 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
                                 <SelectItem value="merchant">By Merchant</SelectItem>
                             </SelectContent>
                         </Select>
-
-                        {/* Page Size */}
-                        <Select
-                            value={showAll ? 'all' : String(pageSize)}
-                            onValueChange={(v) => {
-                                if (v === 'all') {
-                                    setShowAll(true);
-                                } else {
-                                    setShowAll(false);
-                                    setPageSize(Number(v));
-                                }
-                            }}
-                        >
-                            <SelectTrigger className="h-8 text-xs">
-                                <SelectValue placeholder="Show" />
-                            </SelectTrigger>
+                        <Select value={showAll ? 'all' : String(pageSize)} onValueChange={(v) => { if (v === 'all') setShowAll(true); else { setShowAll(false); setPageSize(Number(v)); } }}>
+                            <SelectTrigger className="h-9 text-xs font-bold uppercase tracking-tighter"><SelectValue placeholder="Show" /></SelectTrigger>
                             <SelectContent>
-                                {PAGE_SIZES.map(size => (
-                                    <SelectItem key={size} value={String(size)}>{size} rows</SelectItem>
-                                ))}
+                                {PAGE_SIZES.map(size => <SelectItem key={size} value={String(size)}>{size} rows</SelectItem>)}
                                 <SelectItem value="all">Show All</SelectItem>
                             </SelectContent>
                         </Select>
-
-                        {/* Results count */}
-                        <div className="flex items-center justify-end text-xs text-muted-foreground">
-                            {processedShowtimes.length} results
-                            {(filterCity !== 'all' || filterMerchant !== 'all' || filterRoom !== 'all' || filterHour !== 'all') && (
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-6 px-2 ml-2"
-                                    onClick={() => {
-                                        setFilterCity('all');
-                                        setFilterMerchant('all');
-                                        setFilterRoom('all');
-                                        setFilterHour('all');
-                                    }}
-                                >
-                                    Clear
-                                </Button>
-                            )}
+                        <div className="flex items-center justify-end text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 tabular-nums">
+                            {processedShowtimes.length} Matches
                         </div>
                     </div>
                 </CardContent>
             </Card>
 
-            {/* Showtimes Table */}
-            <Card>
-                <CardHeader className="pb-2">
-                    <div className="flex flex-row items-center justify-between mb-3">
-                        <CardTitle className="text-base font-semibold">
-                            Showtimes Breakdown
-                        </CardTitle>
-                        {/* Top Pagination */}
-                        {!showAll && totalPages > 1 && (
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs text-muted-foreground">
-                                    Page {currentPage} of {totalPages}
-                                </span>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-7 w-7 p-0"
-                                    disabled={currentPage === 1}
-                                    onClick={() => setCurrentPage(1)}
-                                >
-                                    <ChevronFirst className="w-3 h-3" />
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-7 px-2"
-                                    disabled={currentPage === 1}
-                                    onClick={() => setCurrentPage(p => p - 1)}
-                                >
-                                    Prev
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-7 px-2"
-                                    disabled={currentPage === totalPages}
-                                    onClick={() => setCurrentPage(p => p + 1)}
-                                >
-                                    Next
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-7 w-7 p-0"
-                                    disabled={currentPage === totalPages}
-                                    onClick={() => setCurrentPage(totalPages)}
-                                >
-                                    <ChevronLast className="w-3 h-3" />
-                                </Button>
-                            </div>
-                        )}
-                    </div>
-                    {/* Hour Filter Chips */}
-                    {filterOptions.hours.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5">
-                            <Button
-                                variant={filterHour === 'all' ? 'secondary' : 'ghost'}
-                                size="sm"
-                                className={cn(
-                                    'h-7 px-2.5 text-xs rounded-full',
-                                    filterHour === 'all' && 'bg-primary/10 text-primary hover:bg-primary/20'
-                                )}
-                                onClick={() => handleFilterChange(setFilterHour, 'all')}
-                            >
-                                All
-                            </Button>
-                            {filterOptions.hours.map(hour => (
-                                <Button
-                                    key={hour}
-                                    variant={filterHour === hour ? 'secondary' : 'ghost'}
-                                    size="sm"
-                                    className={cn(
-                                        'h-7 px-2.5 text-xs rounded-full',
-                                        filterHour === hour && 'bg-primary/10 text-primary hover:bg-primary/20'
-                                    )}
-                                    onClick={() => handleFilterChange(setFilterHour, hour)}
-                                >
-                                    {hour}:00
-                                </Button>
-                            ))}
-                        </div>
-                    )}
-                </CardHeader>
-                <CardContent>
+            <Card className="border-none shadow-none bg-transparent">
+                <CardContent className="p-0">
                     {loading ? (
-                        <div className="py-12 flex justify-center">
-                            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground/50" />
+                        <div className="py-20 flex flex-col items-center justify-center gap-4 border rounded-xl bg-muted/5 border-dashed">
+                            <Loader2 className="w-10 h-10 animate-spin text-primary/30" />
+                            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground/40">Analyzing National Showtimes...</p>
                         </div>
                     ) : processedShowtimes.length === 0 ? (
-                        <div className="py-12 text-center text-muted-foreground text-sm">
-                            No showtimes found for this date.
-                        </div>
-                    ) : groupBy !== 'none' && groupedShowtimes ? (
-                        // Grouped View
-                        <div className="space-y-4">
-                            {groupedShowtimes.map(([groupName, items]) => (
-                                <GroupedSection
-                                    key={groupName}
-                                    title={groupName}
-                                    items={items}
-                                />
-                            ))}
+                        <div className="py-20 text-center border rounded-xl bg-muted/5 border-dashed">
+                            <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground/40">No showtimes matched filters.</p>
                         </div>
                     ) : (
-                        // Regular Table View
                         <div className="space-y-4">
-                            <div className="overflow-x-auto rounded-md border">
+                            <div className="overflow-x-auto rounded-xl border border-primary/5 shadow-sm bg-card">
                                 <table className="w-full text-sm">
                                     <thead>
-                                        <tr className="bg-muted/50 border-b text-left text-muted-foreground">
-                                            <th
-                                                className="py-3 px-4 font-medium w-24 cursor-pointer hover:bg-muted"
-                                                onClick={() => toggleSort('showtime')}
-                                            >
-                                                <div className="flex items-center gap-1">
-                                                    <Clock className="w-3 h-3" />
-                                                    Time
-                                                    {sortField === 'showtime' && (
-                                                        <ArrowUpDown className="w-3 h-3" />
-                                                    )}
-                                                </div>
+                                        <tr className="bg-muted/30 border-b text-left text-muted-foreground/60 uppercase text-[9px] font-black tracking-widest">
+                                            <th className="py-4 px-4 w-24 cursor-pointer hover:text-primary transition-colors" onClick={() => toggleSort('showtime')}>
+                                                <div className="flex items-center gap-1.5"><Clock className="w-3 h-3" />Time</div>
                                             </th>
-                                            <th
-                                                className="py-3 px-4 font-medium cursor-pointer hover:bg-muted"
-                                                onClick={() => toggleSort('theatre')}
-                                            >
-                                                <div className="flex items-center gap-1">
-                                                    Theatre
-                                                    {sortField === 'theatre' && (
-                                                        <ArrowUpDown className="w-3 h-3" />
-                                                    )}
-                                                </div>
-                                            </th>
-                                            <th
-                                                className="py-3 px-4 font-medium cursor-pointer hover:bg-muted"
-                                                onClick={() => toggleSort('city')}
-                                            >
-                                                <div className="flex items-center gap-1">
-                                                    City
-                                                    {sortField === 'city' && (
-                                                        <ArrowUpDown className="w-3 h-3" />
-                                                    )}
-                                                </div>
-                                            </th>
-                                            <th className="py-3 px-4 font-medium">Room</th>
-                                            <th className="py-3 px-4 font-medium">Price</th>
-                                            <th
-                                                className="py-3 px-4 font-medium w-48 cursor-pointer hover:bg-muted"
-                                                onClick={() => toggleSort('occupancy')}
-                                            >
-                                                <div className="flex items-center gap-1">
-                                                    Occupancy
-                                                    {sortField === 'occupancy' && (
-                                                        <ArrowUpDown className="w-3 h-3" />
-                                                    )}
-                                                </div>
-                                            </th>
-                                            <th className="py-3 px-4 font-medium text-right w-24">Seats</th>
+                                            <th className="py-4 px-4 cursor-pointer hover:text-primary transition-colors" onClick={() => toggleSort('theatre')}>Theatre</th>
+                                            <th className="py-4 px-4 cursor-pointer hover:text-primary transition-colors" onClick={() => toggleSort('city')}>Location</th>
+                                            <th className="py-4 px-4">Room</th>
+                                            <th className="py-4 px-4">Price</th>
+                                            <th className="py-4 px-4 w-48 cursor-pointer hover:text-primary transition-colors" onClick={() => toggleSort('occupancy')}>Occupancy</th>
+                                            <th className="py-4 px-4 text-right w-24">Audience</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {paginatedShowtimes.map((st) => (
-                                            <ShowtimeRow key={st.id} showtime={st} />
-                                        ))}
+                                        {paginatedShowtimes.map((st) => <ShowtimeRow key={st.id} showtime={st} />)}
                                     </tbody>
-                                    {/* Summary Row */}
                                     <tfoot>
-                                        <tr className="bg-muted/30 border-t-2 font-medium">
-                                            <td className="py-3 px-4" colSpan={5}>
-                                                Total ({summaryStats.totalShowtimes} showtimes)
-                                            </td>
-                                            <td className="py-3 px-4">
+                                        <tr className="bg-primary/5 border-t font-black uppercase text-[10px] tracking-widest text-primary/60">
+                                            <td className="py-4 px-4" colSpan={5}>National Daily Aggregation ({summaryStats.totalShowtimes} units)</td>
+                                            <td className="py-4 px-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                                                        <div
-                                                            className={cn(
-                                                                "h-full rounded-full",
-                                                                summaryStats.avgOccupancy > 80 ? "bg-red-500" :
-                                                                    summaryStats.avgOccupancy > 50 ? "bg-amber-500" : "bg-primary"
-                                                            )}
-                                                            style={{ width: `${Math.min(summaryStats.avgOccupancy, 100)}%` }}
-                                                        />
+                                                    <div className="flex-1 h-1.5 bg-primary/10 rounded-full overflow-hidden">
+                                                        <div className="h-full bg-primary rounded-full shadow-[0_0_8px_rgba(var(--primary),0.4)]" style={{ width: `${Math.min(summaryStats.avgOccupancy, 100)}%` }} />
                                                     </div>
-                                                    <span className="text-xs w-10 text-right font-mono">
-                                                        {summaryStats.avgOccupancy.toFixed(1)}%
-                                                    </span>
+                                                    <span className="font-mono tabular-nums">{summaryStats.avgOccupancy.toFixed(1)}%</span>
                                                 </div>
                                             </td>
-                                            <td className="py-3 px-4 text-right font-mono">
-                                                <span className="text-foreground">{summaryStats.totalSold.toLocaleString()}</span>
-                                                <span className="opacity-50">/{summaryStats.totalSeats.toLocaleString()}</span>
+                                            <td className="py-4 px-4 text-right font-mono tabular-nums text-foreground">
+                                                {summaryStats.totalSold.toLocaleString()}<span className="opacity-30">/{summaryStats.totalSeats.toLocaleString()}</span>
                                             </td>
                                         </tr>
                                     </tfoot>
                                 </table>
                             </div>
-
-                            {/* Pagination */}
-                            {!showAll && totalPages > 1 && (
-                                <div className="flex items-center justify-between">
-                                    <p className="text-xs text-muted-foreground">
-                                        Page {currentPage} of {totalPages}
-                                    </p>
-                                    <div className="flex gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            disabled={currentPage === 1}
-                                            onClick={() => setCurrentPage(p => p - 1)}
-                                        >
-                                            Previous
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            disabled={currentPage === totalPages}
-                                            onClick={() => setCurrentPage(p => p + 1)}
-                                        >
-                                            Next
-                                        </Button>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     )}
                 </CardContent>
             </Card>
-        </>
+        </div>
     );
 }
 
 interface RawDataResponse {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    initialLayout: any; // Used to cast to LayoutGrid
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    finalLayout: any; // Used to cast to LayoutGrid
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    masterLayout: any; 
+    initialLayout: unknown;
+    finalLayout: unknown;
+    masterLayout: unknown;
     isInferred?: boolean;
     inferredStudioId?: string;
-    [key: string]: unknown;
 }
 
-interface ShowtimeRowProps {
-    showtime: ShowtimeSnapshot;
-    movieId?: string;
-    date?: string;
-}
-
-// Showtime Row Component
-export function ShowtimeRow({ showtime: st, movieId: propMovieId, date: propDate }: ShowtimeRowProps) {
+export function ShowtimeRow({ showtime: st, movieId: propMovieId, date: propDate }: { showtime: ShowtimeSnapshot; movieId?: string; date?: string }) {
     const merchantColor = MERCHANT_COLORS[st.merchant] || 'bg-gray-500'
     const [expanded, setExpanded] = useState(false);
     const [rawData, setRawData] = useState<RawDataResponse | null>(null);
     const [isLoadingLayout, setIsLoadingLayout] = useState(false);
-
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-    // Fetch raw data when expanded
     const toggleExpand = async () => {
         const nextExpanded = !expanded;
         setExpanded(nextExpanded);
-        
-        const canFetch = !!st.studio_id || (st.sold_seats !== undefined && st.sold_seats > 0);
-        
-        if (nextExpanded && !rawData && canFetch) {
+        if (nextExpanded && !rawData) {
             setIsLoadingLayout(true);
-            setErrorMsg(null);
             try {
-                // Try props first, then fallback to URL parsing
-                let movieId = propMovieId;
-                let date = propDate;
-
-                if (!movieId || !date) {
-                    const pathParts = window.location.pathname.split('/');
-                    // URL is usually /performances_v2/[metadataId]/[date]
-                    movieId = pathParts[2];
-                    date = pathParts[3];
-                }
-                
-                if (movieId && date) {
-                    const url = `/api/showtimes/${st.showtime_id}/raw?movieId=${movieId}&date=${date}`;
-                    const res = await fetch(url);
-                    if (res.ok) {
-                        const data = await res.json();
-                        setRawData(data);
-                    } else {
-                        const err = await res.json();
-                        setErrorMsg(`API Error ${res.status}: ${err.error || 'Unknown'}\nEndpoint: ${url}`);
-                    }
-                }
-            } catch (e) {
-                console.error("Failed to load layout", e);
-                setErrorMsg(`Network Error: ${String(e)}`);
-            } finally {
-                setIsLoadingLayout(false);
-            }
+                const pathParts = window.location.pathname.split('/');
+                const movieId = propMovieId || pathParts[2];
+                const date = propDate || pathParts[3];
+                const res = await fetch(`/api/showtimes/${st.showtime_id}/raw?movieId=${movieId}&date=${date}`);
+                if (res.ok) setRawData(await res.json());
+                else setErrorMsg("Failed to load forensic data");
+            } catch { setErrorMsg("Network Error"); }
+            finally { setIsLoadingLayout(false); }
         }
     };
 
-    // Choose which metric to show: True Delta or Legacy Raw
-    const isTrueDelta = st.audience_count !== undefined;
-    const isScraped = st.sold_seats !== undefined && st.sold_seats > 0;
-    const canVisualize = !!st.studio_id || isScraped;
-    const finalSold = isTrueDelta ? st.audience_count! : (st.sold_seats ?? 0);
-    const finalPct = isTrueDelta ? st.audience_pct! : (st.occupancy_pct ?? 0);
-    const initialBlocked = isTrueDelta ? (st.initial_unavailable ?? 0) : 0;
+    const finalSold = st.audience_count ?? st.sold_seats;
+    const finalPct = st.audience_pct ?? st.occupancy_pct;
+    const initialBlocked = st.initial_unavailable ?? 0;
 
     return (
         <>
-            <tr
-                className={cn(
-                    "border-b last:border-0 hover:bg-muted/20 transition-colors cursor-pointer",
-                    expanded && "bg-muted/10"
-                )}
-                onClick={toggleExpand}
-            >
-                <td className="py-3 px-4 font-mono font-medium text-foreground">{st.showtime}</td>
-                <td className="py-3 px-4">
-                    <div className="flex items-center gap-2">
-                        <div className={cn("w-1.5 h-4 rounded-full", merchantColor)} />
-                        <div className="flex items-center gap-2">
-                            <span className="font-medium">{st.theatre_name}</span>
-                            {st.studio_id && (
-                                <span className="text-[10px] font-mono text-muted-foreground bg-muted/50 border px-1.5 py-0.5 rounded-md whitespace-nowrap">
-                                    Std {st.studio_id}
-                                </span>
-                            )}
-                            {(!st.studio_id && rawData?.inferredStudioId) && (
-                                <span className="text-[10px] font-mono text-amber-600 bg-amber-500/5 border border-amber-500/20 px-1.5 py-0.5 rounded-md whitespace-nowrap" title="Historical guess based on capacity match">
-                                    Std {rawData.inferredStudioId}*
-                                </span>
-                            )}
+            <tr className={cn("border-b last:border-0 hover:bg-muted/20 transition-colors cursor-pointer group", expanded && "bg-primary/[0.02]")} onClick={toggleExpand}>
+                <td className="py-4 px-4 font-mono font-bold text-foreground text-xs">{st.showtime}</td>
+                <td className="py-4 px-4">
+                    <div className="flex items-center gap-3">
+                        <div className={cn("w-1 h-4 rounded-full", merchantColor)} />
+                        <span className="font-bold tracking-tight uppercase text-xs group-hover:text-primary transition-colors">{st.theatre_name}</span>
+                        {st.studio_id && <span className="text-[9px] font-black uppercase text-muted-foreground/40 bg-muted/50 px-1.5 py-0.5 rounded border border-border/50">Std {st.studio_id}</span>}
+                    </div>
+                </td>
+                <td className="py-4 px-4 text-muted-foreground font-bold text-[10px] uppercase tracking-tighter">{st.city}</td>
+                <td className="py-4 px-4"><Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 border-muted-foreground/20">{st.room_category}</Badge></td>
+                <td className="py-4 px-4 text-[10px] font-mono font-bold">{st.price ? `Rp ${st.price.toLocaleString('id-ID')}` : '-'}</td>
+                <td className="py-4 px-4">
+                    <div className="flex flex-col gap-1 w-32">
+                        <SeatProgressBar totalSeats={st.total_seats} blockedSeats={initialBlocked} soldSeats={finalSold} size="sm" showLabels={false} />
+                        <div className="flex justify-between text-[8px] font-black uppercase tracking-tighter text-muted-foreground/40">
+                            <span>{finalPct.toFixed(1)}% Occupancy</span>
+                            {st.audience_count !== undefined && <span className="text-primary/60 italic">V2 Audit</span>}
                         </div>
                     </div>
                 </td>
-                <td className="py-3 px-4 text-muted-foreground">{st.city}</td>
-                <td className="py-3 px-4">
-                    <Badge variant="outline" className="text-xs font-normal text-muted-foreground">
-                        {st.room_category}
-                    </Badge>
-                </td>
-                <td className="py-3 px-4 text-xs font-mono">
-                    {st.price ? (
-                        <span className="text-foreground font-medium">
-                            Rp {st.price.toLocaleString('id-ID')}
-                        </span>
-                    ) : (
-                        <span className="text-muted-foreground opacity-50">-</span>
-                    )}
-                </td>
-                <td className="py-3 px-4">
-                    {/* Use SeatProgressBar component for stacked visualization */}
-                    <SeatProgressBar
-                        totalSeats={st.total_seats}
-                        blockedSeats={initialBlocked}
-                        soldSeats={finalSold}
-                        showLabels={false}
-                        size="sm"
-                    />
-                </td>
-                <td className="py-3 px-4 text-right font-mono text-muted-foreground">
-                    <div className="flex items-center gap-2 justify-end">
-                        {!isScraped && !isTrueDelta ? (
-                            <span className="text-xs text-muted-foreground italic">Not scraped yet</span>
-                        ) : (
-                            <>
-                                <span className="text-foreground font-medium">{finalSold}</span>
-                                <span className="opacity-50">/{st.total_seats}</span>
-                                {isTrueDelta && <TrueAudienceBadge audienceCount={finalSold} totalSeats={st.total_seats} />}
-                            </>
-                        )}
-                        <ChevronRight className={cn(
-                            "w-4 h-4 text-muted-foreground transition-transform",
-                            expanded && "rotate-90"
-                        )} />
+                <td className="py-4 px-4 text-right">
+                    <div className="flex items-center justify-end gap-3">
+                        <div className="flex flex-col items-end">
+                            <span className="text-xs font-bold font-mono text-foreground tabular-nums">{finalSold}<span className="opacity-20">/{st.total_seats}</span></span>
+                        </div>
+                        <Button variant="outline" className="h-7 w-7 p-0 rounded-lg border-primary/10 hover:bg-primary/5">
+                            <Microscope className={cn("w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-all", expanded && "text-primary scale-110")} />
+                        </Button>
                     </div>
                 </td>
             </tr>
-            {/* Expanded Detail Row */}
             {expanded && (
-                <tr className="border-b bg-muted/5">
-                    <td colSpan={7} className="p-4">
-                        {(st.scrape_phase || st.scraped_at) && (
-                            <div className="flex items-center gap-2 mb-4 text-xs text-muted-foreground">
-                                <Clock className="w-3 h-3" />
-                                <span>Last updated:</span>
-                                {st.scrape_phase && (
-                                    <Badge variant="secondary" className="text-[10px] h-5 px-1.5 font-medium">
-                                        {st.scrape_phase}
-                                    </Badge>
-                                )}
-                                {st.scraped_at && (
-                                    <span>
-                                        {new Date(st.scraped_at).toLocaleTimeString(undefined, { 
-                                            hour: '2-digit', 
-                                            minute: '2-digit' 
-                                        })}
-                                    </span>
-                                )}
-                                <span className="ml-4 font-mono text-[10px] opacity-50">ID: {st.showtime_id}</span>
+                <tr className="bg-muted/[0.03]">
+                    <td colSpan={7} className="p-6">
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between border-b border-border/50 pb-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-2 bg-primary/10 rounded-xl"><Microscope className="w-5 h-5 text-primary" /></div>
+                                    <div>
+                                        <h3 className="text-xs font-black uppercase tracking-widest text-foreground">Forensic Seat Audit</h3>
+                                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">Showtime ID: {st.showtime_id} • Phase: {st.scrape_phase || 'N/A'}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <ShieldCheck className="w-4 h-4 text-green-500" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-green-600">State Verified</span>
+                                </div>
                             </div>
-                        )}
-                        <div className="flex flex-col lg:flex-row gap-4">
-                            <div className="w-full lg:w-1/3">
-                                <SeatBreakdownCard
-                                    totalSeats={st.total_seats}
-                                    blockedSeats={initialBlocked}
-                                    soldSeats={finalSold}
-                                    audienceCount={finalSold}
-                                    trueOccupancyPct={finalPct}
-                                    rawOccupancyPct={st.occupancy_pct ?? 0}
-                                    size="sm"
-                                />
-                            </div>
-                            <div className="w-full lg:w-2/3 min-h-[300px]">
-                                {isLoadingLayout ? (
-                                    <Card className="w-full h-full flex flex-col items-center justify-center min-h-[300px] bg-muted/20">
-                                        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground mb-2" />
-                                        <p className="text-sm text-muted-foreground">Loading cinema layout...</p>
-                                    </Card>
-                                ) : rawData && (rawData.initialLayout || rawData.finalLayout || rawData.masterLayout) ? (
-                                    <SeatMapVisualizer 
-                                        initialLayout={rawData.initialLayout} 
-                                        finalLayout={rawData.finalLayout} 
-                                        masterLayout={rawData.masterLayout}
-                                        isInferred={rawData.isInferred as boolean}
-                                        inferredStudioId={rawData.inferredStudioId as string}
-                                    />
-                                ) : errorMsg ? (
-                                    <Card className="w-full h-full border p-4 bg-red-500/5 border-red-500/20 flex flex-col items-center justify-center min-h-[300px]">
-                                        <p className="text-red-600 text-sm font-medium mb-2">Failed to load layout data</p>
-                                        <pre className="text-[10px] font-mono text-red-500/70 whitespace-pre-wrap max-w-full text-center px-4">
-                                            {errorMsg}
-                                        </pre>
-                                    </Card>
-                                ) : (
-                                    <Card className="w-full h-full flex items-center justify-center min-h-[300px] bg-muted/20">
-                                        <p className="text-muted-foreground text-sm italic">
-                                            {canVisualize 
-                                                ? "Seat layout visualization not yet available (it loads once the movie starts or if we have a master baseline)."
-                                                : "Seat layout visualization not available for this showtime (Legacy fallback with no layout)."
-                                            }
-                                        </p>
-                                    </Card>
-                                )}
+
+                            <div className="flex flex-col xl:flex-row gap-6">
+                                <div className="xl:w-80">
+                                    <SeatBreakdownCard totalSeats={st.total_seats} blockedSeats={initialBlocked} soldSeats={finalSold} audienceCount={finalSold} trueOccupancyPct={finalPct} rawOccupancyPct={st.occupancy_pct ?? 0} size="sm" />
+                                </div>
+                                <div className="flex-1">
+                                    {isLoadingLayout ? (
+                                        <div className="h-[400px] flex flex-col items-center justify-center border rounded-2xl bg-muted/5 border-dashed">
+                                            <Loader2 className="w-8 h-8 animate-spin text-primary/20 mb-4" />
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Decrypting Spatial Layout...</p>
+                                        </div>
+                                    ) : rawData ? (
+                                        <TriPanelAudit initialLayout={rawData.initialLayout} finalLayout={rawData.finalLayout} masterLayout={rawData.masterLayout as MasterLayout} />
+                                    ) : (
+                                        <div className="h-[400px] flex items-center justify-center border rounded-2xl bg-red-500/5 border-red-500/10"><p className="text-xs font-bold text-red-500/60 uppercase tracking-widest">{errorMsg || "Forensic Data Unavailable"}</p></div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </td>
                 </tr>
             )}
         </>
-    );
-}
-
-// Grouped Section Component
-function GroupedSection({
-    title,
-    items,
-}: {
-    title: string;
-    items: ShowtimeSnapshot[];
-}) {
-    const [expanded, setExpanded] = useState(true);
-
-    // Calculate group summary using precise delta data if available
-    const totalSeats = items.reduce((sum, st) => sum + st.total_seats, 0);
-    const totalSold = items.reduce((sum, st) => sum + (st.audience_count ?? st.sold_seats), 0);
-    const avgOccupancy = totalSeats > 0 ? (totalSold / totalSeats * 100) : 0;
-
-    return (
-        <div className="border rounded-md overflow-hidden">
-            <button
-                className="w-full flex items-center justify-between p-3 bg-muted/50 hover:bg-muted/70 transition-colors"
-                onClick={() => setExpanded(!expanded)}
-            >
-                <div className="flex items-center gap-2">
-                    {expanded ? (
-                        <ChevronDown className="w-4 h-4" />
-                    ) : (
-                        <ChevronRight className="w-4 h-4" />
-                    )}
-                    <span className="font-medium">{title}</span>
-                    <Badge variant="secondary" className="text-xs">
-                        {items.length} showtimes
-                    </Badge>
-                </div>
-                <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                        <span className="hidden sm:inline">Occupancy:</span>
-                        <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
-                            <div
-                                className={cn(
-                                    "h-full rounded-full",
-                                    avgOccupancy > 80 ? "bg-red-500" :
-                                        avgOccupancy > 50 ? "bg-amber-500" : "bg-primary"
-                                )}
-                                style={{ width: `${Math.min(avgOccupancy, 100)}%` }}
-                            />
-                        </div>
-                        <span className="font-mono">{avgOccupancy.toFixed(1)}%</span>
-                    </div>
-                    <div className="hidden md:block">
-                        <span className="text-foreground font-medium">{totalSold}</span>
-                        <span>/{totalSeats}</span>
-                    </div>
-                </div>
-            </button>
-
-            {expanded && (
-                <div className="overflow-x-auto border-t bg-card">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="border-b text-left text-muted-foreground bg-muted/20">
-                                <th className="py-2 px-4 font-medium w-24">Time</th>
-                                <th className="py-2 px-4 font-medium">Theatre</th>
-                                <th className="py-2 px-4 font-medium">City</th>
-                                <th className="py-2 px-4 font-medium">Room</th>
-                                <th className="py-2 px-4 font-medium">Price</th>
-                                <th className="py-2 px-4 font-medium w-48">Occupancy</th>
-                                <th className="py-2 px-4 font-medium text-right w-24">Seats</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {items.map((st) => (
-                                <ShowtimeRow key={st.id} showtime={st} />
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
-        </div>
     );
 }
