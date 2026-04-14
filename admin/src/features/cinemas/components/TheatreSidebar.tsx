@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { CHAIN_COLORS } from '@/lib/constants';
 import type { MerchantBreakdown, RegionBreakdown } from '../types';
+import { StudioCoverageCard } from './StudioCoverageCard';
 
 interface TheatreSidebarProps {
     totalCount: number;
@@ -140,6 +141,9 @@ export function TheatreSidebar({
                     })}
                 </div>
             </div>
+
+            {/* Market Performance KPIs */}
+            <StudioCoverageCard />
 
             {/* Help/Support info at bottom */}
             <div className="mt-auto pt-8">

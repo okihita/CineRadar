@@ -20,7 +20,6 @@ import { ChainDistributionCard } from '@/features/cinemas/components/ChainDistri
 import { TheatreSidebar } from '@/features/cinemas/components/TheatreSidebar';
 import { GlobalTheatreSearch } from '@/features/cinemas/components/GlobalTheatreSearch';
 import { TheatreTable } from '@/features/cinemas/components/TheatreTable';
-import { StudioCoverageCard } from '@/features/cinemas/components/StudioCoverageCard';
 import type { Theatre } from '@/features/cinemas/types';
 
 function CinemasPageContent() {
@@ -161,8 +160,8 @@ function CinemasPageContent() {
       <main className="px-6 pb-10 pt-2">
         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-10 items-start">
           
-          {/* LEFT: FACETED SIDEBAR */}
-          <aside className="sticky top-6">
+          {/* LEFT: FACETED SIDEBAR - Fixed height sticky */}
+          <aside className="sticky top-6 h-[calc(100vh-3rem)] overflow-y-auto no-scrollbar">
             <TheatreSidebar 
                 totalCount={theatres.length}
                 merchantBreakdown={merchantBreakdown}
@@ -178,13 +177,15 @@ function CinemasPageContent() {
           {/* RIGHT: MAIN CONTENT AREA */}
           <div className="space-y-6">
             
-            {/* Top Search Row */}
-            <GlobalTheatreSearch 
-                value={store.searchTerm}
-                onChange={store.setSearchTerm}
-                isLoading={isLoading}
-                resultsCount={sortedTheatres.length}
-            />
+            {/* STICKY ACTION BAR: Global Search */}
+            <div className="sticky top-0 z-20 py-4 bg-background/95 backdrop-blur-md border-b border-border/50 -mx-2 px-2">
+                <GlobalTheatreSearch 
+                    value={store.searchTerm}
+                    onChange={store.setSearchTerm}
+                    isLoading={isLoading}
+                    resultsCount={sortedTheatres.length}
+                />
+            </div>
 
             {/* Map & Distribution Section */}
             <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-6">
@@ -228,19 +229,12 @@ function CinemasPageContent() {
                     sortByCapacity={store.sortByCapacity}
                     selectedTheatre={store.selectedTheatre}
                     onPageChange={store.setCurrentPage}
-                    onSearchChange={store.setSearchTerm}
                     onToggleNameSort={store.toggleNameSort}
                     onToggleCitySort={store.toggleCitySort}
                     onToggleCapacitySort={store.toggleCapacitySort}
                     onTheatreSelect={store.setSelectedTheatre}
-                    onViewDetails={(theatre) => window.open(`/cinemas/${theatre.theatre_id}`, '_blank')}
                     onClearFilters={store.clearFilters}
                 />
-            </div>
-
-            {/* Summary KPI at bottom */}
-            <div className="pt-6 border-t border-border/50">
-                <StudioCoverageCard />
             </div>
           </div>
         </div>

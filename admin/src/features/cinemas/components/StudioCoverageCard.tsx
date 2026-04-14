@@ -1,13 +1,12 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTheatres } from '@/hooks/useTheatres';
 import { ShieldCheck, Zap, Activity } from 'lucide-react';
 
 /**
- * Modernized Studio Coverage Dashboard
- * Focuses on V3.3 Atomic "Digital Twin" verification.
+ * Compact Sidebar KPIs
+ * Provides national stats within the Faceted Side-Rail.
  */
 export function StudioCoverageCard() {
   const { theatres, loading: loadingTheatres } = useTheatres();
@@ -31,79 +30,52 @@ export function StudioCoverageCard() {
 
   if (loadingTheatres || !stats) {
     return (
-      <Card className="border-primary/10 shadow-sm animate-pulse bg-muted/5">
-        <CardContent className="h-32" />
-      </Card>
+      <div className="space-y-3 animate-pulse opacity-50">
+        <div className="h-12 bg-muted/20 rounded-lg" />
+        <div className="h-12 bg-muted/20 rounded-lg" />
+        <div className="h-12 bg-muted/20 rounded-lg" />
+      </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {/* 1. National Twin Coverage */}
-      <Card className="border-primary/10 shadow-sm bg-card/50 overflow-hidden relative group">
-        <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity">
-          <Zap className="w-12 h-12 text-primary" />
-        </div>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-            <Zap className="w-3 h-3 text-primary" />
-            Digital Twin Coverage
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold tracking-tighter">{stats.promotedPercentage}%</span>
-            <span className="text-xs text-muted-foreground font-medium uppercase">of National Chain</span>
+    <div className="space-y-4 pt-4 border-t border-border/50">
+      <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">Market Performance</h2>
+      
+      <div className="space-y-3">
+        {/* 1. National Twin Coverage */}
+        <div className="flex items-center gap-3 group">
+          <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+            <Zap className="w-3.5 h-3.5 text-primary" />
           </div>
-          <p className="text-[10px] text-muted-foreground mt-2 font-medium uppercase tracking-tight">
-            {stats.promotedTheatres} of {stats.totalTheatres} theatres migrated to V3.3
-          </p>
-        </CardContent>
-      </Card>
+          <div className="flex flex-col">
+            <span className="text-sm font-black tracking-tight">{stats.promotedPercentage}%</span>
+            <span className="text-[9px] font-bold uppercase tracking-tighter text-muted-foreground">Digital Twin Coverage</span>
+          </div>
+        </div>
 
-      {/* 2. Physical Asset Inventory */}
-      <Card className="border-primary/10 shadow-sm bg-card/50 overflow-hidden relative group">
-        <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity">
-          <Activity className="w-12 h-12 text-blue-500" />
-        </div>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-            <Activity className="w-3 h-3 text-blue-500" />
-            Verified Asset Registry
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold tracking-tighter">{stats.totalStudios.toLocaleString()}</span>
-            <span className="text-xs text-muted-foreground font-medium uppercase">Active Studios</span>
+        {/* 2. Physical Asset Inventory */}
+        <div className="flex items-center gap-3 group">
+          <div className="p-2 bg-blue-500/10 rounded-lg group-hover:bg-blue-500/20 transition-colors">
+            <Activity className="w-3.5 h-3.5 text-blue-500" />
           </div>
-          <p className="text-[10px] text-muted-foreground mt-2 font-medium uppercase tracking-tight">
-            Consensus-Driven Physical Ground Truth
-          </p>
-        </CardContent>
-      </Card>
+          <div className="flex flex-col">
+            <span className="text-sm font-black tracking-tight">{stats.totalStudios.toLocaleString()}</span>
+            <span className="text-[9px] font-bold uppercase tracking-tighter text-muted-foreground">Verified Studios</span>
+          </div>
+        </div>
 
-      {/* 3. National Capacity */}
-      <Card className="border-primary/10 shadow-sm bg-card/50 overflow-hidden relative group">
-        <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity">
-          <ShieldCheck className="w-12 h-12 text-green-500" />
-        </div>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-            <ShieldCheck className="w-3 h-3 text-green-500" />
-            Total Seating Capacity
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold tracking-tighter">{(stats.totalPhysicalSeats / 1000).toFixed(1)}k</span>
-            <span className="text-xs text-muted-foreground font-medium uppercase">Seats Verified</span>
+        {/* 3. National Capacity */}
+        <div className="flex items-center gap-3 group">
+          <div className="p-2 bg-green-500/10 rounded-lg group-hover:bg-green-500/20 transition-colors">
+            <ShieldCheck className="w-3.5 h-3.5 text-green-500" />
           </div>
-          <p className="text-[10px] text-muted-foreground mt-2 font-medium uppercase tracking-tight">
-            Across {stats.promotedTheatres} migrated locations
-          </p>
-        </CardContent>
-      </Card>
+          <div className="flex flex-col">
+            <span className="text-sm font-black tracking-tight">{(stats.totalPhysicalSeats / 1000).toFixed(1)}k</span>
+            <span className="text-[9px] font-bold uppercase tracking-tighter text-muted-foreground">Seating Capacity</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

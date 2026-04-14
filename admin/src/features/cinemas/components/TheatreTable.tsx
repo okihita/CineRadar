@@ -14,13 +14,13 @@ import {
   ChevronRight,
   MapPin,
   ExternalLink,
-  Search,
   Building2,
   Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 import type { Theatre } from '../';
 
 interface TheatreTableProps {
@@ -33,12 +33,10 @@ interface TheatreTableProps {
   sortByCapacity: 'asc' | 'desc' | null;
   selectedTheatre: Theatre | null;
   onPageChange: (page: number) => void;
-  onSearchChange: (term: string) => void;
   onToggleNameSort: () => void;
   onToggleCitySort: () => void;
   onToggleCapacitySort: () => void;
   onTheatreSelect: (theatre: Theatre) => void;
-  onViewDetails: (theatre: Theatre) => void;
   onClearFilters: () => void;
 }
 
@@ -54,12 +52,10 @@ export function TheatreTable({
   sortByCapacity,
   selectedTheatre,
   onPageChange,
-  onSearchChange,
   onToggleNameSort,
   onToggleCitySort,
   onToggleCapacitySort,
   onTheatreSelect,
-  onViewDetails,
   onClearFilters,
 }: TheatreTableProps) {
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
@@ -96,7 +92,7 @@ export function TheatreTable({
   if (totalCount === 0 && searchTerm) {
     return (
       <div className="flex flex-col items-center justify-center py-20 border rounded-xl bg-muted/10">
-        <Search className="w-10 h-10 text-muted-foreground/30 mb-4" />
+        <Building2 className="w-10 h-10 text-muted-foreground/30 mb-4" />
         <h3 className="text-lg font-medium">No theatres found for &quot;{searchTerm}&quot;</h3>
         <p className="text-muted-foreground mb-6">Try adjusting your search or filters</p>
         <Button variant="outline" onClick={onClearFilters}>
@@ -108,19 +104,6 @@ export function TheatreTable({
 
   return (
     <div className="space-y-4">
-      <div className="relative group max-w-md">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
-        </div>
-        <input
-          type="text"
-          placeholder="Search theatre by name or city..."
-          className="block w-full pl-10 pr-3 py-2 border border-border rounded-lg bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
-          value={searchTerm}
-          onChange={(e) => onSearchChange(e.target.value)}
-        />
-      </div>
-
       <div className="border rounded-xl bg-card overflow-hidden shadow-sm">
         <Table>
           <TableHeader>
@@ -227,17 +210,16 @@ export function TheatreTable({
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 px-2 text-muted-foreground hover:text-primary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onViewDetails(theatre);
-                        }}
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </Button>
+                      <Link href={`/cinemas/${theatre.theatre_id}`}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 text-muted-foreground hover:text-primary"
+                          title="View Details"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </Button>
+                      </Link>
                     </div>
                   </TableCell>
                 </TableRow>
