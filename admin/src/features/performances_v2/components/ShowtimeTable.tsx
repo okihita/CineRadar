@@ -4,18 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Clock, Filter, Layers, Loader2, ShieldCheck, Microscope } from 'lucide-react';
+import { Clock, Filter, Layers, Loader2, ShieldCheck, Microscope, Users, Ban, CheckCircle2, Percent, Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SeatProgressBar } from './SeatProgressBar';
-import { SeatBreakdownCard } from './SeatBreakdownCard';
 import { TriPanelAudit } from './TriPanelAudit';
-import { MasterLayout } from './SeatMapVisualizer';
 
 export interface ShowtimeSnapshot {
     id: string;
     showtime_id: string;
     movie_title: string;
     theatre_name: string;
+    theatre_id: string;
     city: string;
     room_category: string;
     merchant: string;
@@ -64,7 +63,6 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
     const [filterCity, setFilterCity] = useState<string>('all');
     const [filterMerchant, setFilterMerchant] = useState<string>('all');
     const [filterRoom, setFilterRoom] = useState<string>('all');
-    const [filterHour] = useState<string>('all');
 
     const filterOptions = useMemo(() => {
         const cities = new Set<string>();
@@ -95,7 +93,6 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
         if (filterCity !== 'all') result = result.filter(st => st.city === filterCity);
         if (filterMerchant !== 'all') result = result.filter(st => st.merchant === filterMerchant);
         if (filterRoom !== 'all') result = result.filter(st => st.room_category === filterRoom);
-        if (filterHour !== 'all') result = result.filter(st => st.showtime && st.showtime.startsWith(filterHour));
 
         result.sort((a, b) => {
             let comparison = 0;
@@ -112,7 +109,7 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
             return sortDirection === 'asc' ? comparison : -comparison;
         });
         return result;
-    }, [showtimes, filterCity, filterMerchant, filterRoom, filterHour, sortField, sortDirection]);
+    }, [showtimes, filterCity, filterMerchant, filterRoom, sortField, sortDirection]);
 
     const paginatedShowtimes = useMemo(() => {
         if (showAll || groupBy !== 'none') return processedShowtimes;
@@ -264,6 +261,7 @@ export function ShowtimeRow({ showtime: st, movieId: propMovieId, date: propDate
     const [rawData, setRawData] = useState<RawDataResponse | null>(null);
     const [isLoadingLayout, setIsLoadingLayout] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const [copied, setCopied] = useState(false);
 
     const toggleExpand = async () => {
         const nextExpanded = !expanded;
@@ -282,9 +280,17 @@ export function ShowtimeRow({ showtime: st, movieId: propMovieId, date: propDate
         }
     };
 
+    const copyId = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(st.showtime_id);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
     const finalSold = st.audience_count ?? st.sold_seats;
     const finalPct = st.audience_pct ?? st.occupancy_pct;
     const initialBlocked = st.initial_unavailable ?? 0;
+    const availableSeats = Math.max(0, st.total_seats - initialBlocked - finalSold);
 
     return (
         <>
@@ -324,36 +330,85 @@ export function ShowtimeRow({ showtime: st, movieId: propMovieId, date: propDate
                 <tr className="bg-muted/[0.03]">
                     <td colSpan={7} className="p-6">
                         <div className="space-y-6">
-                            <div className="flex items-center justify-between border-b border-border/50 pb-4">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-border/50 pb-6 gap-6">
                                 <div className="flex items-center gap-4">
-                                    <div className="p-2 bg-primary/10 rounded-xl"><Microscope className="w-5 h-5 text-primary" /></div>
+                                    <div className="p-2.5 bg-primary/10 rounded-2xl shadow-sm border border-primary/10"><Microscope className="w-5 h-5 text-primary" /></div>
                                     <div>
                                         <h3 className="text-xs font-black uppercase tracking-widest text-foreground">Forensic Seat Audit</h3>
-                                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">Showtime ID: {st.showtime_id} • Phase: {st.scrape_phase || 'N/A'}</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <div className="flex items-center gap-1.5">
+                                                <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">Showtime ID: {st.showtime_id}</p>
+                                                <button 
+                                                    onClick={copyId}
+                                                    className="p-1 hover:bg-muted rounded transition-colors"
+                                                    title="Copy Showtime ID"
+                                                >
+                                                    {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3 text-muted-foreground/40" />}
+                                                </button>
+                                            </div>
+                                            <span className="text-[10px] text-muted-foreground/40">•</span>
+                                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">Phase: {st.scrape_phase || 'N/A'}</p>
+                                            <a 
+                                                href={`https://console.firebase.google.com/project/cineradar-481014/firestore/databases/-default-/data/~2Fmovie_performance_v2~2F${propMovieId || window.location.pathname.split('/')[2]}~2Fdays~2F${propDate || window.location.pathname.split('/')[3]}~2Fshowtimes~2F${st.showtime_id}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-1.5 text-[9px] font-black uppercase text-primary hover:bg-primary/10 bg-primary/5 px-2 py-0.5 rounded-full border border-primary/10 transition-all shadow-sm"
+                                            >
+                                                <Layers className="w-2.5 h-2.5" />
+                                                View In Firestore
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <ShieldCheck className="w-4 h-4 text-green-500" />
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-green-600">State Verified</span>
+
+                                <div className="flex flex-wrap items-center gap-3 md:gap-4">
+                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-green-500/5 border border-green-500/10 shadow-sm transition-all hover:bg-green-500/10 group">
+                                        <Users className="w-3 h-3 text-green-500" />
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-black text-green-600 leading-none">{finalSold}</span>
+                                            <span className="text-[8px] font-bold text-green-600/60 uppercase tracking-tighter mt-0.5">Tickets Sold</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-red-500/5 border border-red-500/10 shadow-sm transition-all hover:bg-red-500/10 group">
+                                        <Ban className="w-3 h-3 text-red-500" />
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-black text-red-600 leading-none">{initialBlocked}</span>
+                                            <span className="text-[8px] font-bold text-red-600/60 uppercase tracking-tighter mt-0.5">Static Block</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-500/5 border border-zinc-500/10 shadow-sm transition-all hover:bg-zinc-500/10 group">
+                                        <CheckCircle2 className="w-3 h-3 text-zinc-500" />
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-black text-zinc-600 leading-none">{availableSeats}</span>
+                                            <span className="text-[8px] font-bold text-zinc-600/60 uppercase tracking-tighter mt-0.5">Available</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/5 border border-primary/10 shadow-sm transition-all hover:bg-primary/10 group">
+                                        <Percent className="w-3 h-3 text-primary" />
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-black text-primary leading-none">{finalPct.toFixed(1)}%</span>
+                                            <span className="text-[8px] font-bold text-primary/60 uppercase tracking-tighter mt-0.5">True Occ</span>
+                                        </div>
+                                    </div>
+                                    <div className="h-8 w-px bg-border/50 mx-1 hidden md:block" />
+                                    <div className="flex items-center gap-2.5 pl-1">
+                                        <ShieldCheck className="w-4 h-4 text-green-500 drop-shadow-sm" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-green-600">State Verified</span>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="flex flex-col xl:flex-row gap-6">
-                                <div className="xl:w-80">
-                                    <SeatBreakdownCard totalSeats={st.total_seats} blockedSeats={initialBlocked} soldSeats={finalSold} audienceCount={finalSold} trueOccupancyPct={finalPct} rawOccupancyPct={st.occupancy_pct ?? 0} size="sm" />
-                                </div>
-                                <div className="flex-1">
-                                    {isLoadingLayout ? (
-                                        <div className="h-[400px] flex flex-col items-center justify-center border rounded-2xl bg-muted/5 border-dashed">
-                                            <Loader2 className="w-8 h-8 animate-spin text-primary/20 mb-4" />
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Decrypting Spatial Layout...</p>
-                                        </div>
-                                    ) : rawData ? (
-                                        <TriPanelAudit initialLayout={rawData.initialLayout} finalLayout={rawData.finalLayout} masterLayout={rawData.masterLayout as MasterLayout} />
-                                    ) : (
-                                        <div className="h-[400px] flex items-center justify-center border rounded-2xl bg-red-500/5 border-red-500/10"><p className="text-xs font-bold text-red-500/60 uppercase tracking-widest">{errorMsg || "Forensic Data Unavailable"}</p></div>
-                                    )}
-                                </div>
+                            <div className="w-full">
+                                {isLoadingLayout ? (
+                                    <div className="h-[450px] flex flex-col items-center justify-center border rounded-2xl bg-muted/5 border-dashed">
+                                        <Loader2 className="w-8 h-8 animate-spin text-primary/20 mb-4" />
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Decrypting Spatial Layout...</p>
+                                    </div>
+                                ) : rawData ? (
+                                    <TriPanelAudit initialLayout={rawData.initialLayout} finalLayout={rawData.finalLayout} masterLayout={rawData.masterLayout} theatreId={st.theatre_id} />
+                                ) : (
+                                    <div className="h-[450px] flex items-center justify-center border rounded-2xl bg-red-500/5 border-red-500/10"><p className="text-xs font-bold text-red-500/60 uppercase tracking-widest">{errorMsg || "Forensic Data Unavailable"}</p></div>
+                                )}
                             </div>
                         </div>
                     </td>

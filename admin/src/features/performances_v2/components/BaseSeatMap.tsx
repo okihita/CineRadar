@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { ExternalLink } from 'lucide-react';
+import Link from 'next/link';
 
 // Shared types from the existing visualizer logic
 type VisSeatStatus = 'available' | 'blocked' | 'sold' | 'gap' | 'master';
@@ -18,12 +20,13 @@ interface BaseSeatMapProps {
         }>;
     }>;
     type: 'baseline' | 'showtime' | 'master';
+    href?: string;
 }
 
 /**
  * Low-level seat map renderer for side-by-side auditing.
  */
-export function BaseSeatMap({ title, subtitle, rows, type }: BaseSeatMapProps) {
+export function BaseSeatMap({ title, subtitle, rows, type, href }: BaseSeatMapProps) {
     const getSeatStyles = (status: VisSeatStatus) => {
         switch (status) {
             case 'available':
@@ -46,14 +49,26 @@ export function BaseSeatMap({ title, subtitle, rows, type }: BaseSeatMapProps) {
             {/* Header */}
             <div className="p-3 border-b bg-muted/10">
                 <div className="flex items-center justify-between">
-                    <h3 className={cn(
-                        "text-[10px] font-black uppercase tracking-widest",
-                        type === 'baseline' && "text-orange-600",
-                        type === 'showtime' && "text-green-600",
-                        type === 'master' && "text-purple-600"
-                    )}>
-                        {title}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                        <h3 className={cn(
+                            "text-[10px] font-black uppercase tracking-widest",
+                            type === 'baseline' && "text-orange-600",
+                            type === 'showtime' && "text-green-600",
+                            type === 'master' && "text-purple-600"
+                        )}>
+                            {title}
+                        </h3>
+                        {href && (
+                            <Link 
+                                href={href} 
+                                target="_blank"
+                                className="p-1 hover:bg-primary/10 rounded-full text-primary transition-colors"
+                                title="Open Asset Registry"
+                            >
+                                <ExternalLink className="w-2.5 h-2.5" />
+                            </Link>
+                        )}
+                    </div>
                     <div className={cn(
                         "w-2 h-2 rounded-full",
                         type === 'baseline' && "bg-orange-500 animate-pulse",
