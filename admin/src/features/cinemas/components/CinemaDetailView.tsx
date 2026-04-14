@@ -21,7 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { TheatreStudiosList } from './TheatreStudiosList';
 import { useCinemaDetails } from '../hooks/useCinemaDetails';
-import { useCinemasStore } from '../';
+import { useCinemasStore } from '../stores/useCinemasStore';
 import type { PerformanceMetrics } from '../hooks/useTheatreStudios';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';

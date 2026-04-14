@@ -1,4 +1,4 @@
-import { CinemaDetailView } from '@/features/cinemas';
+import { CinemaDetailView } from '@/features/cinemas/components/CinemaDetailView';
 
 export default async function CinemaDetailsPage({
     params,

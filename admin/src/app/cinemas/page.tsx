@@ -1,49 +1,36 @@
-/**
- * Cinema Intelligence Page
- * Theatre locations, chains, and coverage across Indonesia
- *
- * Refactored: 759 lines → ~150 lines
- * - Feature-based folder structure (/features/cinemas/)
- * - Zustand for UI state only (useCinemasStore)
- * - useTheatres() for server state (existing hook with caching)
- * - Extracted components: DonutChart, ChainDistributionCard, RegionBreakdownCard,
- *   TheatreFilters, TheatreTable, TheatreDetailPanel
- */
 'use client';
 
 import { useEffect, useMemo, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
-import { ChevronUp, MapPin } from 'lucide-react';
+import { ChevronUp, MapPin, BarChart3 } from 'lucide-react';
 import { IndonesiaMap } from '@/components/indonesia-map';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { PageHeader } from '@/components/PageHeader';
 import { REGION_CITIES, getRegion } from '@/lib/regions';
 import { formatWIBShort } from '@/lib/timeUtils';
 import { useTheatres } from '@/hooks/useTheatres';
-
-// Feature imports
-import {
-  useCinemasStore,
-  useFilteredTheatres,
-  RegionBreakdownCard,
-  ChainDistributionCard,
-  TheatreFilters,
-  TheatreTable,
-  StudioCoverageCard,
-  type Theatre,
-} from '@/features/cinemas';
-import { BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
+// DIRECT CLIENT IMPORTS (Prevents index.ts leakage)
+import { useCinemasStore } from '@/features/cinemas/stores/useCinemasStore';
+import { useFilteredTheatres } from '@/features/cinemas/hooks/useCinemasData';
+import { RegionBreakdownCard } from '@/features/cinemas/components/RegionBreakdownCard';
+import { ChainDistributionCard } from '@/features/cinemas/components/ChainDistributionCard';
+import { TheatreSidebar } from '@/features/cinemas/components/TheatreSidebar';
+import { GlobalTheatreSearch } from '@/features/cinemas/components/GlobalTheatreSearch';
+import { TheatreTable } from '@/features/cinemas/components/TheatreTable';
+import { StudioCoverageCard } from '@/features/cinemas/components/StudioCoverageCard';
+import type { Theatre } from '@/features/cinemas/types';
+
 function CinemasPageContent() {
-  // Server state (existing hook with caching)
+  // Server state
   const { theatres, runs, loading: isLoading, refetch, metrics } = useTheatres();
 
   // UI state (Zustand)
   const store = useCinemasStore();
 
-  // Derived data
+  // Derived data for sidebar facets
   const merchants = useMemo(
     () => [...new Set(theatres.map((t) => t.merchant))].filter(Boolean).sort(),
     [theatres]
@@ -69,7 +56,7 @@ function CinemasPageContent() {
     [theatres, store.selectedMerchant]
   );
 
-  // Region breakdown
+  // Region breakdown facets
   const regionBreakdown = useMemo(() => {
     const breakdown = Object.keys(REGION_CITIES)
       .map((region) => ({
@@ -105,13 +92,13 @@ function CinemasPageContent() {
   const mapTheatres = useMemo(
     () =>
       sortedTheatres.filter(
-        (t) => t.lat && t.lng && !isNaN(t.lat) && !isNaN(t.lng)
+        (t: Theatre) => t.lat && t.lng && !isNaN(t.lat) && !isNaN(t.lng)
       ) as Theatre[],
     [sortedTheatres]
   );
 
   // Sync filtered IDs to store for detail page navigation
-  const theatreIds = useMemo(() => sortedTheatres.map((t) => t.theatre_id), [sortedTheatres]);
+  const theatreIds = useMemo(() => sortedTheatres.map((t: Theatre) => t.theatre_id), [sortedTheatres]);
   useEffect(() => {
     store.setFilteredTheatreIds(theatreIds);
   }, [theatreIds, store]);
@@ -136,22 +123,15 @@ function CinemasPageContent() {
   if (isLoading && theatres.length === 0) {
     return (
       <div className="min-h-screen bg-background text-foreground animate-pulse">
-        <div className="bg-muted/50 border-b h-10" />
         <header className="border-b h-14" />
-        <main className="container mx-auto px-4 py-4 space-y-4">
-          <div className="rounded-lg border bg-card">
-            <div className="py-3 px-4 border-b">
-              <div className="h-4 w-24 bg-muted rounded" />
-            </div>
-            <div className="p-4">
-              <div className="h-[300px] bg-muted rounded-lg flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                  <span className="text-sm text-muted-foreground">Loading map...</span>
+        <main className="container mx-auto px-6 py-10">
+            <div className="grid grid-cols-[280px_1fr] gap-10">
+                <div className="bg-muted/20 h-[600px] rounded-xl" />
+                <div className="space-y-6">
+                    <div className="bg-muted/20 h-12 rounded-xl" />
+                    <div className="bg-muted/20 h-[400px] rounded-xl" />
                 </div>
-              </div>
             </div>
-          </div>
         </main>
       </div>
     );
@@ -163,7 +143,7 @@ function CinemasPageContent() {
       <div className="px-6 pt-6">
         <PageHeader
           title="Cinema Intelligence"
-          description="Theatre locations, chains, and coverage across Indonesia"
+          description="National Physical Asset Registry & Market Coverage"
           icon={<MapPin className="w-6 h-6 text-primary" />}
           metrics={metrics}
           onRefresh={refetch}
@@ -178,74 +158,91 @@ function CinemasPageContent() {
         </PageHeader>
       </div>
 
-      <main className="px-6 pb-6 pt-4 space-y-4">
-        {/* Map + KPI Cards Side by Side */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-4">
-          {/* Map Card */}
-          <Card className="overflow-hidden py-0 border shadow-sm rounded-xl">
-            <IndonesiaMap
-              theatres={mapTheatres}
-              selectedTheatre={store.selectedTheatre}
-              onTheatreSelect={store.setSelectedTheatre}
-              onViewDetails={(theatre) => window.open(`/cinemas/${theatre.theatre_id}`, '_blank')}
-              apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}
-              lastUpdated={lastUpdated}
-              center={store.mapCenter}
+      <main className="px-6 pb-10 pt-2">
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-10 items-start">
+          
+          {/* LEFT: FACETED SIDEBAR */}
+          <aside className="sticky top-6">
+            <TheatreSidebar 
+                totalCount={theatres.length}
+                merchantBreakdown={merchantBreakdown}
+                regionBreakdown={regionBreakdown}
+                selectedMerchant={store.selectedMerchant}
+                selectedRegion={store.selectedRegion}
+                onMerchantChange={store.setSelectedMerchant}
+                onRegionChange={store.setSelectedRegion}
+                onClearFilters={store.clearFilters}
             />
-          </Card>
+          </aside>
 
-          {/* KPI Cards - Vertical Stack */}
-          <div className="flex flex-col gap-3">
-            <RegionBreakdownCard
-              regionBreakdown={regionBreakdown}
-              totalTheatres={theatres.length}
+          {/* RIGHT: MAIN CONTENT AREA */}
+          <div className="space-y-6">
+            
+            {/* Top Search Row */}
+            <GlobalTheatreSearch 
+                value={store.searchTerm}
+                onChange={store.setSearchTerm}
+                isLoading={isLoading}
+                resultsCount={sortedTheatres.length}
             />
-            <ChainDistributionCard
-              theatres={theatres}
-              regionBreakdown={regionBreakdown}
-            />
+
+            {/* Map & Distribution Section */}
+            <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-6">
+                <Card className="overflow-hidden py-0 border shadow-sm rounded-xl min-h-[450px]">
+                    <IndonesiaMap
+                        theatres={mapTheatres}
+                        selectedTheatre={store.selectedTheatre}
+                        onTheatreSelect={store.setSelectedTheatre}
+                        onViewDetails={(theatre) => window.open(`/cinemas/${theatre.theatre_id}`, '_blank')}
+                        apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}
+                        lastUpdated={lastUpdated}
+                        center={store.mapCenter}
+                    />
+                </Card>
+
+                <div className="flex flex-col gap-4">
+                    <RegionBreakdownCard
+                        regionBreakdown={regionBreakdown}
+                        totalTheatres={theatres.length}
+                    />
+                    <ChainDistributionCard
+                        theatres={theatres}
+                        regionBreakdown={regionBreakdown}
+                    />
+                </div>
+            </div>
+
+            {/* Theatre Registry Table */}
+            <div className="pt-2">
+                <div className="flex items-center gap-3 mb-4 px-1">
+                    <div className="h-4 w-1 bg-primary rounded-full shadow-sm" />
+                    <h2 className="text-sm font-black uppercase tracking-[0.2em] text-foreground/80">Theatre Registry</h2>
+                </div>
+                <TheatreTable
+                    theatres={sortedTheatres}
+                    totalCount={sortedTheatres.length}
+                    currentPage={store.currentPage}
+                    searchTerm={store.searchTerm}
+                    sortByName={store.sortByName}
+                    sortByCity={store.sortByCity}
+                    sortByCapacity={store.sortByCapacity}
+                    selectedTheatre={store.selectedTheatre}
+                    onPageChange={store.setCurrentPage}
+                    onSearchChange={store.setSearchTerm}
+                    onToggleNameSort={store.toggleNameSort}
+                    onToggleCitySort={store.toggleCitySort}
+                    onToggleCapacitySort={store.toggleCapacitySort}
+                    onTheatreSelect={store.setSelectedTheatre}
+                    onViewDetails={(theatre) => window.open(`/cinemas/${theatre.theatre_id}`, '_blank')}
+                    onClearFilters={store.clearFilters}
+                />
+            </div>
+
+            {/* Summary KPI at bottom */}
+            <div className="pt-6 border-t border-border/50">
+                <StudioCoverageCard />
+            </div>
           </div>
-        </div>
-
-        {/* Filters */}
-        <TheatreFilters
-          totalCount={theatres.length}
-          merchantBreakdown={merchantBreakdown}
-          regionBreakdown={regionBreakdown}
-          selectedMerchant={store.selectedMerchant}
-          selectedRegion={store.selectedRegion}
-          searchTerm={store.searchTerm}
-          onMerchantChange={store.setSelectedMerchant}
-          onRegionChange={store.setSelectedRegion}
-          onMapCenter={store.setMapCenter}
-          onClearFilters={store.clearFilters}
-        />
-
-        {/* Table */}
-        <div className="grid grid-cols-1 gap-4">
-          <TheatreTable
-            theatres={sortedTheatres}
-            totalCount={sortedTheatres.length}
-            currentPage={store.currentPage}
-            searchTerm={store.searchTerm}
-            sortByName={store.sortByName}
-            sortByCity={store.sortByCity}
-            sortByCapacity={store.sortByCapacity}
-            selectedTheatre={store.selectedTheatre}
-            onPageChange={store.setCurrentPage}
-            onSearchChange={store.setSearchTerm}
-            onToggleNameSort={store.toggleNameSort}
-            onToggleCitySort={store.toggleCitySort}
-            onToggleCapacitySort={store.toggleCapacitySort}
-            onTheatreSelect={store.setSelectedTheatre}
-            onViewDetails={(theatre) => window.open(`/cinemas/${theatre.theatre_id}`, '_blank')}
-            onClearFilters={store.clearFilters}
-          />
-        </div>
-
-        {/* Bottom Coverage Stats */}
-        <div className="pt-4">
-          <StudioCoverageCard />
         </div>
       </main>
 

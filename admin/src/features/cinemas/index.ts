@@ -1,22 +1,16 @@
 /**
  * Cinemas feature barrel export
+ * 
+ * DESIGN PATTERN: Only export types and server-safe utilities here.
+ * Client hooks and components should be imported directly from their files
+ * to avoid "use client" leakage into server components.
  */
 
 // Types
 export * from './types';
 
-// Stores
-export { useCinemasStore } from './stores/useCinemasStore';
+// Utils
+export { getStudioDisplayName } from './utils';
 
-// Hooks
-export { useCinemasData, useFilteredTheatres } from './hooks/useCinemasData';
-export { useCinemaDetails } from './hooks/useCinemaDetails';
-
-// Components
-export { DonutChart } from './components/DonutChart';
-export { ChainDistributionCard } from './components/ChainDistributionCard';
-export { RegionBreakdownCard } from './components/RegionBreakdownCard';
-export { TheatreFilters } from './components/TheatreFilters';
-export { TheatreTable } from './components/TheatreTable';
-export { StudioCoverageCard } from './components/StudioCoverageCard';
-export { CinemaDetailView } from './components/CinemaDetailView';
+// NOTE: DO NOT export client components or hooks here if they are imported by Server Components.
+// Server components like app/cinemas/[id]/page.tsx should import components directly.
