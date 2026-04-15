@@ -31,7 +31,7 @@ const menuItems = [
   {
     title: 'Performance',
     description: 'Box office tracking',
-    href: '/performances_v2',
+    href: '/performances',
     icon: Film,
   },
   {
@@ -91,7 +91,7 @@ export function Sidebar() {
         {menuItems.map((item) => {
           let isActive = false;
           if (item.href === '/performances') {
-             // Exact match for /performances or starts with /performances/ but not /performances_v2
+             // Exact match for /performances or starts with /performances/ but not /performances
             isActive = pathname === '/performances' || pathname.startsWith('/performances/');
           } else if (item.href === '/schedules') {
              // Same for /schedules to avoid matching /schedules_v2

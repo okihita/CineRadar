@@ -17,18 +17,18 @@ interface SeatBreakdownCardProps {
 }
 
 export function SeatBreakdownCard({
-  totalSeats,
-  blockedSeats,
-  soldSeats,
-  trueOccupancyPct,
-  rawOccupancyPct,
+  totalSeats = 0,
+  blockedSeats = 0,
+  soldSeats = 0,
+  trueOccupancyPct = 0,
+  rawOccupancyPct = 0,
   baselineCapturedAt,
   lastScrapedAt,
   size = 'md',
 }: SeatBreakdownCardProps) {
-  const availableSeats = totalSeats - blockedSeats - soldSeats;
+  const availableSeats = Math.max(0, (totalSeats || 0) - (blockedSeats || 0) - (soldSeats || 0));
   const hasBaseline = baselineCapturedAt !== undefined;
-  const blockedPct = totalSeats > 0 ? (blockedSeats / totalSeats) * 100 : 0;
+  const blockedPct = totalSeats > 0 ? ((blockedSeats || 0) / totalSeats) * 100 : 0;
   const availablePct = totalSeats > 0 ? (availableSeats / totalSeats) * 100 : 0;
 
   const sizeClasses = {

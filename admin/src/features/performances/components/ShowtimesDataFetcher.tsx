@@ -1,29 +1,45 @@
 import { firestoreRestClient } from "@/lib/firestore-rest";
-import { ShowtimeSnapshot, ShowtimeTable } from "./ShowtimeTable";
+import { ForensicPerformanceHub } from "./ForensicPerformanceHub";
 import { NationalSeatAllocation } from "./NationalSeatAllocation";
+import { TelemetryUpdater } from "./TelemetryUpdater";
+import { ShowtimeSnapshot } from "../types/performance";
 
 interface ShowtimesDataFetcherProps {
   movieId: string;
   date: string;
 }
 
-// Fields needed for the map and the table list view (Excludes layouts/logs)
-const TABLE_METADATA_FIELDS = [
-  "showtime_id", "movie_title", "theatre_name", "city", "room_category", 
-  "merchant", "showtime", "date", "total_seats", "sold_seats", "occupancy_pct",
-  "initial_unavailable", "final_unavailable", "audience_count", "audience_pct",
-  "scrape_phase", "scraped_at"
+// DEFINITIVE METADATA MASK: Excludes heavy layout blobs for 10x faster national crunching.
+const PERFORMANCE_METADATA_MASK = [
+    "showtime_id", "showtime", "theatre_name", "theatre_id", "city", 
+    "room_category", "merchant", "price", "total_seats", "sold_seats", 
+    "occupancy_pct", "audience_count", "audience_pct", "initial_unavailable",
+    "scrape_phase", "metadata_id", "date", "studio_id"
 ];
 
 export async function ShowtimesDataFetcher({
   movieId,
   date,
 }: ShowtimesDataFetcherProps) {
-  // 90% faster fetch thanks to Field Masking
-  const showtimesData = await firestoreRestClient.getSubCollection(
-    `movie_performance/${movieId}/days/${date}/showtimes`,
-    TABLE_METADATA_FIELDS
-  );
+  
+  const getTelemetryData = async () => {
+    // eslint-disable-next-line react-hooks/purity
+    const start = Date.now();
+    const data = await firestoreRestClient.getSubCollection(
+        `movie_performance_v2/${movieId}/days/${date}/showtimes`,
+        PERFORMANCE_METADATA_MASK
+    );
+    // eslint-disable-next-line react-hooks/purity
+    const end = Date.now();
+    const json = JSON.stringify(data);
+    return {
+        showtimesData: data,
+        elapsedSeconds: (end - start) / 1000,
+        sizeKB: Buffer.byteLength(json, 'utf8') / 1024
+    };
+  };
+
+  const { showtimesData, elapsedSeconds, sizeKB } = await getTelemetryData();
 
   const showtimes = (showtimesData || []) as unknown as ShowtimeSnapshot[];
 
@@ -37,11 +53,15 @@ export async function ShowtimesDataFetcher({
 
   return (
     <div className="space-y-6 mt-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      {/* National Allocation & Core Markets - Now loads 10x faster */}
+      
+      {/* Client-side Telemetry Link */}
+      <TelemetryUpdater latency={elapsedSeconds} payloadSize={sizeKB} />
+
+      {/* National Allocation & Core Markets */}
       <NationalSeatAllocation showtimes={showtimes} />
 
-      {/* Showtime Table */}
-      <ShowtimeTable showtimes={showtimes} loading={false} />
+      {/* Forensic Intelligence Hub (Drill-Down + Feed) */}
+      <ForensicPerformanceHub showtimes={showtimes} movieId={movieId} date={date} />
     </div>
   );
 }

@@ -1,6 +1,6 @@
-import { PerformanceDetail } from '@/features/performances_v2';
+import { PerformanceDetail } from '@/features/performances';
 
-export default async function MovieDetailPageV2({
+export default async function MovieDetailPage({
     params,
 }: {
     params: Promise<{ metadataId: string }>;

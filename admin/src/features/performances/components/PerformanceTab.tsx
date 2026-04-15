@@ -63,21 +63,39 @@ export function PerformanceTab() {
     // Tiered Logic
     // -------------------------------------------------------------------------
     const hasTodayStats = (m: MovieWithStats) => !!m.today && m.today.total_showtimes > 0;
+    
+    // For V2 migration transition: if NO movies have today's stats, let's treat any movie with a recent update as active
+    const hasAnyStats = (m: MovieWithStats) => {
+        const todayActive = hasTodayStats(m);
+        if (todayActive) return true;
+        
+        // Fallback: If it was updated in the last 48 hours, consider it active for the UI
+        if (!m.last_updated) return false;
+        const lastUpdated = new Date(m.last_updated).getTime();
+        const fortyEightHoursAgo = Date.now() - (48 * 60 * 60 * 1000);
+        return lastUpdated > fortyEightHoursAgo;
+    };
 
-    // Sort all by total_showtimes (desc) for meaningful start-of-day ranking
+    // Sort all by total_sold (desc) for box office ranking
     const sortedMovies = [...movies].sort((a, b) => {
+        const soldA = a.today?.total_sold || 0;
+        const soldB = b.today?.total_sold || 0;
+        
+        if (soldB !== soldA) return soldB - soldA;
+        
+        // Fallback to total_showtimes if sold counts are equal (e.g., start of day)
         const showsA = a.today?.total_showtimes || 0;
         const showsB = b.today?.total_showtimes || 0;
         return showsB - showsA;
     });
 
     // 1. Box Office Leaders (Top 5 active)
-    const activeMovies = sortedMovies.filter(hasTodayStats);
+    const activeMovies = sortedMovies.filter(hasAnyStats);
     const leaders = activeMovies.slice(0, 5);
     const othersActive = activeMovies.slice(5);
 
-    // 2. Archive (No shows today)
-    const archiveMovies = sortedMovies.filter(m => !hasTodayStats(m));
+    // 2. Archive (No shows recently)
+    const archiveMovies = sortedMovies.filter(m => !hasAnyStats(m));
 
     // Loading state
     if (loadingMovies) {
@@ -155,15 +173,15 @@ export function PerformanceTab() {
                                     <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
                                         {/* Row 1: Scheduled vs Scraped */}
                                         <div className="flex flex-col">
-                                            <span className="text-[10px] uppercase text-muted-foreground tracking-wider">Scheduled</span>
-                                            <span className="font-mono font-medium">{movie.today?.total_showtimes}</span>
+                                            <span className="text-[10px] uppercase text-muted-foreground tracking-wider">Showtimes Today</span>
+                                            <span className="font-mono font-medium">{movie.today?.total_showtimes ?? 0}</span>
                                         </div>
                                         <div className="flex flex-col text-right">
                                             <span className="text-[10px] uppercase text-muted-foreground tracking-wider">Scraped</span>
                                             <span className={cn("font-mono font-medium",
                                                 (movie.today?.total_showtimes_scraped || 0) < (movie.today?.total_showtimes || 0) ? "text-amber-600" : "text-green-600"
                                             )}>
-                                                {movie.today?.total_showtimes_scraped}
+                                                {movie.today?.total_showtimes_scraped ?? 0}
                                             </span>
                                         </div>
 
@@ -171,7 +189,7 @@ export function PerformanceTab() {
                                         <div className="col-span-2 flex flex-col pt-1 border-t border-border/50 mt-1">
                                             <div className="flex justify-between items-center">
                                                 <span className="text-[10px] uppercase text-muted-foreground tracking-wider">Tickets Sold</span>
-                                                <span className="font-mono font-bold">{movie.today?.total_sold.toLocaleString()}</span>
+                                                <span className="font-mono font-bold">{(movie.today?.total_sold ?? 0).toLocaleString()}</span>
                                             </div>
                                         </div>
                                     </div>

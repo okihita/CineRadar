@@ -85,7 +85,7 @@ export async function GET(
     }
 
     try {
-        // V2 collection only (V1 sunset)
+        // performance collection only (V1 sunset)
         const doc = await firestoreRestClient.getDocument(
             `movie_performance_v2/${movieId}/days/${date}/showtimes`,
             showtimeId

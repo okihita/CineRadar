@@ -1,12 +1,15 @@
-import { Target, ChevronLeft, Calendar } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
-import { MovieSummaryCard } from "./MovieSummaryCard";
-import { DailyStatsBanner } from "./DailyStatsBanner";
+import { MovieSummaryCardWrapper } from "./MovieSummaryCardWrapper";
+import { DailyStatsBannerWrapper } from "./DailyStatsBannerWrapper";
 import { ShowtimesDataFetcher } from "./ShowtimesDataFetcher";
 import { ShowtimesSkeleton } from "./skeletons/ShowtimesSkeleton";
+import { TelemetryHeader } from "./TelemetryHeader";
 import { firestoreRestClient } from "@/lib/firestore-rest";
+import { MarketingMetadata } from "../types/social";
+import { Target, Users, Armchair, MapPin, ChevronLeft, Calendar } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface MovieSummary {
   id: string;
@@ -16,6 +19,32 @@ interface MovieSummary {
   last_updated: string;
   genres?: string;
   age_category?: string;
+  director?: string;
+  production_house?: string;
+  actors?: string[];
+  marketing?: MarketingMetadata;
+}
+
+/**
+ * Formats genres or age_category into a string.
+ * Handles strings, arrays of strings, and arrays of objects { name: string }.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function formatMetadataField(field: any): string {
+  if (!field) return "";
+  if (typeof field === "string") return field;
+  if (Array.isArray(field)) {
+    return field
+      .map((item) => {
+        if (typeof item === "string") return item;
+        if (item && typeof item === "object" && "name" in item) return item.name;
+        return "";
+      })
+      .filter(Boolean)
+      .join(", ");
+  }
+  if (typeof field === "object" && "name" in field) return field.name;
+  return String(field);
 }
 
 interface DailyPerformance {
@@ -32,17 +61,48 @@ interface DailyPerformanceDetailProps {
   date: string;
 }
 
+interface CastMember {
+  cast_type: string;
+  name?: string;
+  actor_name?: string;
+}
+
 export async function DailyPerformanceDetail({
   movieId,
   date,
 }: DailyPerformanceDetailProps) {
   // 1. Fetch only the fast, small documents so the page shell renders instantly
-  const [movieDoc, daysSubCollection] = await Promise.all([
-    firestoreRestClient.getDocument("movie_performance", movieId),
-    firestoreRestClient.getSubCollection(`movie_performance/${movieId}/days`),
+  const [movieMeta, perfDoc, daysSubCollection] = await Promise.all([
+    firestoreRestClient.getDocument("movies", movieId),
+    firestoreRestClient.getDocument("movie_performance_v2", movieId),
+    firestoreRestClient.getSubCollection(`movie_performance_v2/${movieId}/days`),
   ]);
 
-  const movie = movieDoc as MovieSummary | null;
+  const movie =
+    movieMeta && perfDoc
+      ? ({
+          ...perfDoc,
+          id: movieId,
+          movie_id: movieId,
+          title: (movieMeta.name as string) || "Unknown Title",
+          poster:
+            (movieMeta.poster as string) ||
+            (movieMeta.poster_path as string) ||
+            "",
+          genres: formatMetadataField(movieMeta.genres),
+          age_category: formatMetadataField(movieMeta.age_category),
+          director: formatMetadataField(movieMeta.director),
+          production_house: formatMetadataField(movieMeta.production_company),
+          actors: Array.isArray(movieMeta.casts)
+            ? (movieMeta.casts as CastMember[])
+                .filter((c) => c.cast_type === "Actor")
+                .map((c) => c.name || c.actor_name)
+                .filter(Boolean) as string[]
+            : [],
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          last_updated: (perfDoc as any).last_swept_at || "",
+        } as unknown as MovieSummary)
+      : null;
   const dailyStats =
     (daysSubCollection as unknown as DailyPerformance[]).find((d) => d.date === date) ||
     null;
@@ -62,34 +122,104 @@ export async function DailyPerformanceDetail({
   return (
     <div className="min-h-screen bg-background text-foreground p-6 animate-in fade-in duration-500">
       <div className="space-y-6">
-        {/* Header / Nav */}
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-4">
+        <div className="flex items-center justify-between gap-6 bg-muted/20 p-2 rounded-2xl border border-border/40 shadow-sm">
+          {/* 1. LEFT: Movie Identity */}
+          <div className="flex items-center gap-4 pl-2">
             <Link href={`/performances/${movieId}`}>
-              <Button variant="ghost" size="icon" className="mt-1">
-                <ChevronLeft className="w-6 h-6" />
+              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-background">
+                <ChevronLeft className="w-5 h-5" />
               </Button>
             </Link>
-            <MovieSummaryCard movie={movie} />
+            <MovieSummaryCardWrapper movie={movie} />
           </div>
 
-          {/* Date Highlight */}
-          <div className="hidden md:flex flex-col items-end bg-muted/30 px-6 py-3 rounded-lg border">
-            <div className="flex items-center gap-2 text-muted-foreground mb-1">
-              <Calendar className="w-4 h-4" />
-              <span className="text-xs font-semibold uppercase tracking-wider">
-                Viewing Details For
-              </span>
+          {/* 2. CENTER: Performance HUD (The "What") */}
+          {dailyStats && (
+            <div className="hidden lg:flex items-center gap-8 px-8 py-2 border-x border-border/30">
+                {/* Occupancy */}
+                <div className="flex flex-col items-center">
+                    <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
+                        <Target className="w-3 h-3" />
+                        OCR
+                    </div>
+                    <div className="flex items-baseline gap-0.5">
+                        <span className={cn(
+                            "text-xl font-black font-mono tracking-tighter",
+                            dailyStats.avg_occupancy_pct >= 50 ? "text-green-600" : 
+                            dailyStats.avg_occupancy_pct >= 20 ? "text-amber-600" : "text-red-600"
+                        )}>
+                            {dailyStats.avg_occupancy_pct.toFixed(1)}
+                        </span>
+                        <span className="text-[10px] font-bold opacity-40 uppercase">%</span>
+                    </div>
+                </div>
+
+                {/* Audience */}
+                <div className="flex flex-col items-center">
+                    <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
+                        <Users className="w-3 h-3" />
+                        Audience
+                    </div>
+                    <span className="text-xl font-black font-mono tracking-tighter tabular-nums text-foreground">
+                        {(dailyStats.total_sold / 1000).toFixed(1)}
+                        <span className="text-[10px] font-bold opacity-40 uppercase ml-0.5">k</span>
+                    </span>
+                </div>
+
+                {/* Capacity */}
+                <div className="flex flex-col items-center">
+                    <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
+                        <Armchair className="w-3 h-3" />
+                        Inventory
+                    </div>
+                    <span className="text-xl font-black font-mono tracking-tighter tabular-nums text-foreground">
+                        {(dailyStats.total_seats / 1000).toFixed(1)}
+                        <span className="text-[10px] font-bold opacity-40 uppercase ml-0.5">k</span>
+                    </span>
+                </div>
+
+                {/* Markets */}
+                <div className="flex flex-col items-center">
+                    <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
+                        <MapPin className="w-3 h-3" />
+                        Markets
+                    </div>
+                    <span className="text-xl font-black font-mono tracking-tighter text-foreground">
+                        {dailyStats.cities?.length || 0}
+                    </span>
+                </div>
             </div>
-            <span className="text-2xl font-bold font-mono tracking-tight text-primary">
-              {date}
-            </span>
+          )}
+
+          {/* 3. RIGHT: Unified Intelligence Pill (Date + Telemetry) */}
+          <div className="hidden md:flex items-stretch bg-background/50 rounded-xl border border-border/50 overflow-hidden">
+            <TelemetryHeader />
+            <div className="w-px bg-border/50 my-3" /> 
+            <div className="flex flex-col items-end px-6 py-2.5 bg-zinc-900/5 dark:bg-white/5">
+                <div className="flex items-center gap-2 text-muted-foreground mb-0.5">
+                    <Calendar className="w-3.5 h-3.5" />
+                    <span className="text-[9px] font-black uppercase tracking-widest">
+                        Intelligence For
+                    </span>
+                </div>
+                <span className="text-xl font-black font-mono tracking-tighter text-primary">
+                    {date}
+                </span>
+            </div>
           </div>
         </div>
 
         {/* Daily Stats Banner */}
         {dailyStats ? (
-          <DailyStatsBanner stats={dailyStats} />
+          <DailyStatsBannerWrapper 
+            stats={{ 
+                ...dailyStats, 
+                id: movie.id, 
+                movie_id: movie.movie_id,
+                title: movie.title, 
+                marketing: movie.marketing 
+            }} 
+          />
         ) : (
           <div className="p-4 border rounded-md bg-muted/50 text-center text-sm text-muted-foreground">
             No summary stats found for this date.

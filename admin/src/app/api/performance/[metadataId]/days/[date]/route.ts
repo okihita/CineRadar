@@ -1,7 +1,7 @@
 /**
- * Movie Daily Performance V2 & Showtimes API
+ * Movie Daily Performance & Showtimes API
  * 
- * GET /api/performance_v2/[metadataId]/days/[date]
+ * GET /api/performance/[metadataId]/days/[date]
  *   → Get daily list of showtimes for that day (V2)
  */
 import { NextResponse } from 'next/server';

@@ -1,7 +1,7 @@
 /**
  * Fetch specific showtime raw layout for audit
  * 
- * GET /api/performance_v2/[metadataId]/days/[date]/showtimes/[showtimeId]
+ * GET /api/performance/[metadataId]/days/[date]/showtimes/[showtimeId]
  */
 import { NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';

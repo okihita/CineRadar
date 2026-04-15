@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ShowtimeSnapshot } from '../components/ShowtimeTable';
+import { ShowtimeSnapshot } from '../types/performance';
 import { getProvinceForCity } from '@/lib/geo-mapping';
 
 export interface CityPerformance {

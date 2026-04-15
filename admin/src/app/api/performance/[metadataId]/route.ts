@@ -1,12 +1,12 @@
 /**
- * Movie Performance V2 Detail API
+ * Movie Performance Detail API
  * 
- * GET /api/performance_v2/[metadataId]
+ * GET /api/performance/[metadataId]
  *   → Get specific movie with aggregate stats from V2
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
-import { MarketingMetadata } from '@/features/performances_v2/types/social';
+import { MarketingMetadata } from '@/features/performances/types/social';
 
 export const revalidate = 300; // Cache for 5 minutes
 
@@ -102,7 +102,7 @@ export async function GET(
 }
 
 /**
- * PATCH /api/performance_v2/[metadataId]
+ * PATCH /api/performance/[metadataId]
  * Update movie document with partial data (e.g., marketing metadata)
  *
  * Request body: { marketing: MarketingMetadata }

@@ -1,6 +1,6 @@
-import { DailyPerformanceDetail } from '@/features/performances_v2';
+import { DailyPerformanceDetail } from '@/features/performances';
 
-export default async function DailyPerformanceDetailV2({
+export default async function DailyPerformancePage({
     params,
 }: {
     params: Promise<{ metadataId: string; date: string }>;

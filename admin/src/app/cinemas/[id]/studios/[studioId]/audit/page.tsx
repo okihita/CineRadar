@@ -180,7 +180,7 @@ export default function StudioAuditPage({ params }: PageProps) {
         const fetchProof = async () => {
             setIsLoadingProof(true);
             try {
-                const res = await fetch(`/api/performance_v2/${ev.movie_id}/days/${ev.date}/showtimes/${ev.showtime_id}`);
+                const res = await fetch(`/api/performance/${ev.movie_id}/days/${ev.date}/showtimes/${ev.showtime_id}`);
                 if (res.ok) {
                     const data = await res.json();
                     setProofCache(prev => ({ ...prev, [activeDay]: data }));

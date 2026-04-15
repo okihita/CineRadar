@@ -17,6 +17,10 @@ interface HistoryGridProps {
 }
 
 function parseDate(dateStr: string) {
+    if (!dateStr || typeof dateStr !== 'string') {
+        console.error('Invalid date string passed to parseDate:', dateStr);
+        return new Date();
+    }
     const [y, m, d] = dateStr.split('-');
     return new Date(Number(y), Number(m) - 1, Number(d));
 }
@@ -28,7 +32,10 @@ function formatDate(d: Date) {
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export function HistoryGrid({ movieId, history }: HistoryGridProps) {
-    if (history.length === 0) {
+    // Filter history to only include items with a valid date
+    const validHistory = (history || []).filter(h => h && h.date && typeof h.date === 'string');
+
+    if (validHistory.length === 0) {
         return (
             <div className="py-12 text-center text-muted-foreground border rounded-lg bg-card mt-6">
                 <Calendar className="w-12 h-12 mx-auto mb-3 opacity-20" />
@@ -37,10 +44,10 @@ export function HistoryGrid({ movieId, history }: HistoryGridProps) {
         );
     }
 
-    const historyMap = new Map(history.map(h => [h.date, h]));
+    const historyMap = new Map(validHistory.map(h => [h.date, h]));
 
     // Find absolute min and max dates
-    const dates = history.map(h => h.date).sort();
+    const dates = validHistory.map(h => h.date).sort();
     const minDateStr = dates[0];
     const maxDateStr = dates[dates.length - 1];
 
