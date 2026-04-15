@@ -181,12 +181,22 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
                 </div>
 
                 {/* 3. RIGHT: Unified Context Pill */}
-                <div className="hidden md:flex items-center px-6 py-2.5 bg-zinc-900/5 dark:bg-white/5 rounded-xl border border-border/50">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                        <Globe className="w-3.5 h-3.5 opacity-60" />
-                        <span className="text-[10px] font-black uppercase tracking-widest opacity-60">
-                            National Aggregated View
-                        </span>
+                <div className="hidden md:flex items-center gap-4 px-6 py-2.5 bg-zinc-900/5 dark:bg-white/5 rounded-xl border border-border/50">
+                    <div className="flex flex-col items-end">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                            <Globe className="w-3.5 h-3.5 opacity-60" />
+                            <span className="text-[10px] font-black uppercase tracking-widest opacity-60">
+                                National Aggregated View
+                            </span>
+                        </div>
+                        <a 
+                            href={`https://console.firebase.google.com/project/cineradar-481014/firestore/databases/-default-/data/~2Fmovie_performance_v2~2F${movieId}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[8px] font-black uppercase text-primary hover:underline mt-0.5"
+                        >
+                            View in Firestore
+                        </a>
                     </div>
                 </div>
             </div>
