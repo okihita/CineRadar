@@ -20,16 +20,16 @@ export function NationalSeatAllocation({
   if (showtimes.length === 0) return null;
 
   return (
-    <Card className="mb-6 overflow-hidden">
-      <CardHeader className="pb-4 border-b bg-muted/10 py-3">
+    <Card className="mb-6 overflow-hidden border-border/50">
+      <CardHeader className="pb-4 border-b bg-muted/5 py-2.5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
-                <MapIcon className="w-4 h-4 text-primary" />
+            <CardTitle className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 text-muted-foreground">
+                <MapIcon className="w-3.5 h-3.5 opacity-70" />
                 National Allocation
             </CardTitle>
             
-            <div className="hidden xl:flex items-center gap-2 text-sm font-black uppercase tracking-widest opacity-60">
-                <Trophy className="w-4 h-4 text-amber-500" />
+            <div className="hidden xl:flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                <Trophy className="w-3.5 h-3.5 text-amber-500 opacity-50" />
                 Top 15 Core Markets
             </div>
         </div>

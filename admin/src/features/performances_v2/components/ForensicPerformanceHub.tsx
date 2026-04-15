@@ -80,24 +80,24 @@ export function ForensicPerformanceHub({ showtimes, movieId, date }: ForensicPer
     return (
         <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'HIERARCHY' | 'FEED')} className="w-full">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                <TabsList className="grid w-full grid-cols-2 md:w-[400px]">
-                    <TabsTrigger value="HIERARCHY">By Market / City</TabsTrigger>
-                    <TabsTrigger value="FEED">Global Audit Feed</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 md:w-[400px] h-10 bg-muted/20 border border-border/50">
+                    <TabsTrigger value="HIERARCHY" className="text-[10px] font-bold uppercase tracking-wider">By Market / City</TabsTrigger>
+                    <TabsTrigger value="FEED" className="text-[10px] font-bold uppercase tracking-wider">Global Audit Feed</TabsTrigger>
                 </TabsList>
 
                 {viewMode === 'HIERARCHY' && (
-                    <div className="flex items-center gap-2 px-1 text-sm overflow-x-auto no-scrollbar py-1 bg-muted/20 rounded-lg border border-border/40">
+                    <div className="flex items-center gap-2 px-1 text-sm overflow-x-auto no-scrollbar py-1 bg-muted/10 rounded-lg border border-border/40">
                         <Button 
                             variant="ghost" 
                             size="sm" 
                             className={cn(
                                 "h-7 gap-1.5 hover:bg-background/50 px-2",
-                                viewLevel === 'MARKET' ? "text-primary font-black" : "text-muted-foreground"
+                                viewLevel === 'MARKET' ? "text-primary font-bold" : "text-muted-foreground"
                             )}
                             onClick={resetToNational}
                         >
-                            <Home className="w-3.5 h-3.5" />
-                            <span className="text-[10px] font-black uppercase tracking-widest">National</span>
+                            <Home className="w-3.5 h-3.5 opacity-70" />
+                            <span className="text-[10px] font-bold uppercase tracking-wider">National</span>
                         </Button>
 
                         {breadcrumbs.slice(1).map((bc, idx) => (
@@ -108,15 +108,15 @@ export function ForensicPerformanceHub({ showtimes, movieId, date }: ForensicPer
                                     size="sm" 
                                     className={cn(
                                         "h-7 gap-1.5 hover:bg-background/50 px-2",
-                                        idx === breadcrumbs.length - 2 ? "text-primary font-black" : "text-muted-foreground"
+                                        idx === breadcrumbs.length - 2 ? "text-primary font-bold" : "text-muted-foreground"
                                     )}
                                     onClick={() => {
                                         setViewLevel(bc.level);
                                         if (bc.level === 'CITY') setSelectedCinema(null);
                                     }}
                                 >
-                                    {bc.level === 'CITY' ? <MapPin className="w-3 h-3" /> : <Building2 className="w-3 h-3" />}
-                                    <span className="text-[10px] font-black uppercase tracking-widest">{bc.label}</span>
+                                    {bc.level === 'CITY' ? <MapPin className="w-3 h-3 opacity-70" /> : <Building2 className="w-3 h-3 opacity-70" />}
+                                    <span className="text-[10px] font-bold uppercase tracking-wider">{bc.label}</span>
                                 </Button>
                             </React.Fragment>
                         ))}
