@@ -7,7 +7,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Loader2, Hash, Plus, X } from 'lucide-react';
+import { Loader2, Plus, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { cn } from '@/lib/utils';
 import {
   MarketingFormData,
   DEFAULT_MARKETING_FORM,
@@ -70,7 +71,15 @@ export function EditMarketingModal({
 
   // Update form field
   const updateField = (field: keyof MarketingFormData, value: string): void => {
-    setFormData((prev: MarketingFormData) => ({ ...prev, [field]: value }));
+    // Strip prefixes if user manually types them
+    let cleanValue = value;
+    if (field === 'primary_hashtag') {
+        cleanValue = value.replace(/^#+/, '');
+    } else if (field.endsWith('_handle')) {
+        cleanValue = value.replace(/^@+/, '');
+    }
+
+    setFormData((prev: MarketingFormData) => ({ ...prev, [field]: cleanValue }));
     // Clear validation error for this field
     if (validationErrors[field]) {
       setValidationErrors((prev: Record<string, string>) => {
@@ -83,7 +92,8 @@ export function EditMarketingModal({
 
   // Add secondary hashtag
   const addSecondaryHashtag = (): void => {
-    const normalized = normalizeHashtag(newSecondaryHashtag);
+    const cleanTag = newSecondaryHashtag.replace(/^#+/, '');
+    const normalized = normalizeHashtag(cleanTag);
     if (!normalized) return;
     
     if (!isValidHashtag(normalized)) {
@@ -203,13 +213,16 @@ export function EditMarketingModal({
               <Label htmlFor="primary_hashtag">
                 Primary Hashtag <span className="text-destructive">*</span>
               </Label>
-              <Input
-                id="primary_hashtag"
-                placeholder="#MovieTitle"
-                value={formData.primary_hashtag}
-                onChange={e => updateField('primary_hashtag', e.target.value)}
-                className={validationErrors.primary_hashtag ? 'border-destructive' : ''}
-              />
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold select-none">#</span>
+                <Input
+                    id="primary_hashtag"
+                    placeholder="MovieTitle"
+                    value={formData.primary_hashtag.replace(/^#+/, '')}
+                    onChange={e => updateField('primary_hashtag', e.target.value)}
+                    className={cn("pl-7", validationErrors.primary_hashtag ? 'border-destructive' : '')}
+                />
+              </div>
               {validationErrors.primary_hashtag && (
                 <p className="text-xs text-destructive">{validationErrors.primary_hashtag}</p>
               )}
@@ -222,9 +235,8 @@ export function EditMarketingModal({
                 {formData.secondary_hashtags.map((tag: string) => (
                   <span
                     key={tag}
-                    className="inline-flex items-center gap-1 px-2 py-1 bg-secondary text-secondary-foreground rounded-md text-sm"
+                    className="inline-flex items-center gap-1 px-2 py-1 bg-secondary text-secondary-foreground rounded-md text-sm font-medium"
                   >
-                    <Hash className="w-3 h-3" />
                     {tag}
                     <button
                       type="button"
@@ -237,18 +249,21 @@ export function EditMarketingModal({
                 ))}
               </div>
               <div className="flex gap-2">
-                <Input
-                  placeholder="#AnotherTag"
-                  value={newSecondaryHashtag}
-                  onChange={e => setNewSecondaryHashtag(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      addSecondaryHashtag();
-                    }
-                  }}
-                  className={validationErrors.secondary_hashtags ? 'border-destructive' : ''}
-                />
+                <div className="relative flex-1">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold select-none">#</span>
+                    <Input
+                        placeholder="AnotherTag"
+                        value={newSecondaryHashtag.replace(/^#+/, '')}
+                        onChange={e => setNewSecondaryHashtag(e.target.value)}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                            e.preventDefault();
+                            addSecondaryHashtag();
+                            }
+                        }}
+                        className={cn("pl-7", validationErrors.secondary_hashtags ? 'border-destructive' : '')}
+                    />
+                </div>
                 <Button
                   type="button"
                   variant="outline"
@@ -270,29 +285,41 @@ export function EditMarketingModal({
               
               <div className="grid grid-cols-[80px_1fr] items-center gap-2">
                 <span className="text-sm text-muted-foreground">TikTok</span>
-                <Input
-                  placeholder="@username"
-                  value={formData.tiktok_handle}
-                  onChange={e => updateField('tiktok_handle', e.target.value)}
-                />
+                <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold select-none">@</span>
+                    <Input
+                        placeholder="username"
+                        value={formData.tiktok_handle.replace(/^@+/, '')}
+                        onChange={e => updateField('tiktok_handle', e.target.value)}
+                        className="pl-7"
+                    />
+                </div>
               </div>
               
               <div className="grid grid-cols-[80px_1fr] items-center gap-2">
                 <span className="text-sm text-muted-foreground">Instagram</span>
-                <Input
-                  placeholder="@username"
-                  value={formData.instagram_handle}
-                  onChange={e => updateField('instagram_handle', e.target.value)}
-                />
+                <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold select-none">@</span>
+                    <Input
+                        placeholder="username"
+                        value={formData.instagram_handle.replace(/^@+/, '')}
+                        onChange={e => updateField('instagram_handle', e.target.value)}
+                        className="pl-7"
+                    />
+                </div>
               </div>
               
               <div className="grid grid-cols-[80px_1fr] items-center gap-2">
                 <span className="text-sm text-muted-foreground">X (Twitter)</span>
-                <Input
-                  placeholder="@username"
-                  value={formData.x_handle}
-                  onChange={e => updateField('x_handle', e.target.value)}
-                />
+                <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold select-none">@</span>
+                    <Input
+                        placeholder="username"
+                        value={formData.x_handle.replace(/^@+/, '')}
+                        onChange={e => updateField('x_handle', e.target.value)}
+                        className="pl-7"
+                    />
+                </div>
               </div>
             </div>
             

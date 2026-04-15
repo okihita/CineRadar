@@ -6,12 +6,10 @@
  */
 'use client';
 
-import { useState } from 'react';
-import { Target, Pencil, Film, User, Link as LinkIcon } from 'lucide-react';
+import { Target, Film, User, Link as LinkIcon, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import Link from 'next/link';
-import { SocialHandleBadges, EditMarketingModal } from './social';
 import { MarketingMetadata } from '../types/social';
 
 interface MovieSummary {
@@ -30,13 +28,9 @@ interface MovieSummary {
 
 interface MovieSummaryCardProps {
     movie: MovieSummary;
-    /** Callback when marketing data is updated */
-    onMarketingUpdate?: () => void;
 }
 
-export function MovieSummaryCard({ movie, onMarketingUpdate }: MovieSummaryCardProps) {
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
+export function MovieSummaryCard({ movie }: MovieSummaryCardProps) {
     return (
         <>
             <div className="flex gap-4">
@@ -70,16 +64,6 @@ export function MovieSummaryCard({ movie, onMarketingUpdate }: MovieSummaryCardP
                                     View in Database
                                 </Link>
                             </Button>
-
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setIsEditModalOpen(true)}
-                                className="text-muted-foreground hover:text-foreground"
-                            >
-                                <Pencil className="w-4 h-4 mr-1" />
-                                Edit Marketing
-                            </Button>
                         </div>
                     </div>
                     <div className="text-sm text-muted-foreground/80 mt-1 flex items-center gap-2 divide-x">
@@ -99,28 +83,21 @@ export function MovieSummaryCard({ movie, onMarketingUpdate }: MovieSummaryCardP
                             <span className="font-semibold text-muted-foreground">Director:</span>
                             <span className="font-bold">{movie.director || 'N/A'}</span>
                         </div>
+                        {movie.actors && movie.actors.length > 0 && (
+                            <div className="flex items-center gap-2">
+                                <Users className="w-3.5 h-3.5 text-muted-foreground/70" />
+                                <span className="font-semibold text-muted-foreground">Stars:</span>
+                                <span className="font-bold truncate max-w-[200px]">
+                                    {movie.actors.slice(0, 3).join(", ")}
+                                    {movie.actors.length > 3 && "..."}
+                                </span>
+                            </div>
+                        )}
                     </div>
                     
-                    {/* Social Handle Badges */}
-                    {movie.marketing && (
-                        <div className="mt-4">
-                            <SocialHandleBadges marketing={movie.marketing} />
-                        </div>
-                    )}
+                    {/* Social Handle Badges - Stabilized container removed as they are moved to banner */}
                 </div>
             </div>
-
-            {/* Edit Marketing Modal */}
-            <EditMarketingModal
-                open={isEditModalOpen}
-                onOpenChange={setIsEditModalOpen}
-                movieId={movie.id}
-                movieTitle={movie.title}
-                initialData={movie.marketing}
-                onSuccess={() => {
-                    onMarketingUpdate?.();
-                }}
-            />
         </>
     );
 }

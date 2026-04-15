@@ -32,6 +32,12 @@ function formatMetadataField(field: any): string {
     return String(field);
 }
 
+interface CastMember {
+    cast_type: string;
+    name?: string;
+    actor_name?: string;
+}
+
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ metadataId: string }> }
@@ -70,6 +76,12 @@ export async function GET(
             age_category: formatMetadataField(metadata.age_category),
             director: formatMetadataField(metadata.director),
             production_house: formatMetadataField(metadata.production_company),
+            actors: Array.isArray(metadata.casts) 
+                ? (metadata.casts as CastMember[])
+                    .filter((c) => c.cast_type === 'Actor')
+                    .map((c) => c.name || c.actor_name)
+                    .filter(Boolean) as string[]
+                : [],
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             last_updated: (perfDoc as any).last_swept_at || '',
             // eslint-disable-next-line @typescript-eslint/no-explicit-any

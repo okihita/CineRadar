@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Target, Loader2, ChevronLeft, ExternalLink } from 'lucide-react';
+import { Target, Users, Armchair, ChevronLeft, Globe, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { MovieSummaryCard } from './MovieSummaryCard';
+import { MovieSummaryCardWrapper } from './MovieSummaryCardWrapper';
 import { HistoryGrid } from './HistoryGrid';
 import { PerformanceTrendCharts } from './PerformanceTrendCharts';
+import { DailyStatsBannerWrapper } from './DailyStatsBannerWrapper';
 import { MarketingMetadata } from '../types/social';
+import { cn } from '@/lib/utils';
 
 interface MovieSummary {
     id: string;
@@ -20,6 +22,11 @@ interface MovieSummary {
     director?: string;
     production_house?: string;
     marketing?: MarketingMetadata;
+    // Aggregated stats
+    avg_occupancy_pct?: number;
+    total_sold?: number;
+    total_seats?: number;
+    total_showtimes?: number;
 }
 
 interface DailyPerformance {
@@ -100,34 +107,105 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
 
     return (
         <div className="min-h-screen bg-background text-foreground p-6 space-y-6 animate-in fade-in duration-500">
-            {/* Header / Nav */}
-            <div className="flex items-start gap-4">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => router.push('/performances_v2')}
-                    className="mt-1"
-                >
-                    <ChevronLeft className="w-6 h-6" />
-                </Button>
-                <div className="flex-1">
-                    <MovieSummaryCard movie={movie} />
-                </div>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    asChild
-                >
-                    <a
-                        href={`https://console.firebase.google.com/project/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}/firestore/data/~2Fmovie_performance_v2~2F${movieId}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+            {/* Unified Intelligence Header (Mirroring Daily View) */}
+            <div className="flex items-center justify-between gap-6 bg-muted/20 p-2 rounded-2xl border border-border/40 shadow-sm">
+                {/* 1. LEFT: Movie Identity */}
+                <div className="flex items-center gap-4 pl-2">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => router.push('/performances_v2')}
+                        className="h-8 w-8 hover:bg-background"
                     >
-                        <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
-                        Firestore
-                    </a>
-                </Button>
+                        <ChevronLeft className="w-5 h-5" />
+                    </Button>
+                    <div className="flex-1">
+                        <MovieSummaryCardWrapper movie={movie} />
+                    </div>
+                </div>
+
+                {/* 2. CENTER: All-Time Performance HUD */}
+                <div className="hidden lg:flex items-center gap-8 px-8 py-2 border-x border-border/30">
+                    {/* All-Time Occupancy */}
+                    <div className="flex flex-col items-center">
+                        <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
+                            <Target className="w-3 h-3" />
+                            ALL-TIME OCR
+                        </div>
+                        <div className="flex items-baseline gap-0.5">
+                            <span className={cn(
+                                "text-xl font-black font-mono tracking-tighter",
+                                (movie.avg_occupancy_pct || 0) >= 50 ? "text-green-600" : 
+                                (movie.avg_occupancy_pct || 0) >= 20 ? "text-amber-600" : "text-red-600"
+                            )}>
+                                {(movie.avg_occupancy_pct || 0).toFixed(1)}
+                            </span>
+                            <span className="text-[10px] font-bold opacity-40 uppercase">%</span>
+                        </div>
+                    </div>
+
+                    {/* Total Audience */}
+                    <div className="flex flex-col items-center">
+                        <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
+                            <Users className="w-3 h-3" />
+                            Total Audience
+                        </div>
+                        <span className="text-xl font-black font-mono tracking-tighter tabular-nums text-foreground">
+                            {((movie.total_sold || 0) / 1000).toFixed(1)}
+                            <span className="text-[10px] font-bold opacity-40 uppercase ml-0.5">k</span>
+                        </span>
+                    </div>
+
+                    {/* Total Inventory */}
+                    <div className="flex flex-col items-center">
+                        <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
+                            <Armchair className="w-3 h-3" />
+                            Total Inventory
+                        </div>
+                        <span className="text-xl font-black font-mono tracking-tighter tabular-nums text-foreground">
+                            {((movie.total_seats || 0) / 1000).toFixed(1)}
+                            <span className="text-[10px] font-bold opacity-40 uppercase ml-0.5">k</span>
+                        </span>
+                    </div>
+
+                    {/* Showtimes Count */}
+                    <div className="flex flex-col items-center">
+                        <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
+                            <Globe className="w-3 h-3" />
+                            Total Units
+                        </div>
+                        <span className="text-xl font-black font-mono tracking-tighter text-foreground">
+                            {movie.total_showtimes || 0}
+                        </span>
+                    </div>
+                </div>
+
+                {/* 3. RIGHT: Unified Context Pill */}
+                <div className="hidden md:flex items-center px-6 py-2.5 bg-zinc-900/5 dark:bg-white/5 rounded-xl border border-border/50">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <Globe className="w-3.5 h-3.5 opacity-60" />
+                        <span className="text-[10px] font-black uppercase tracking-widest opacity-60">
+                            National Aggregated View
+                        </span>
+                    </div>
+                </div>
             </div>
+
+            {/* Marketing DNA Strip (Parity with Daily View) */}
+            <DailyStatsBannerWrapper 
+                stats={{
+                    id: movie.id,
+                    movie_id: movie.movie_id,
+                    title: movie.title,
+                    date: movie.last_updated,
+                    total_showtimes: movie.total_showtimes || 0,
+                    avg_occupancy_pct: movie.avg_occupancy_pct || 0,
+                    total_seats: movie.total_seats || 0,
+                    total_sold: movie.total_sold || 0,
+                    cities: [],
+                    marketing: movie.marketing
+                }} 
+            />
 
             {/* Visual Trends */}
             {!loadingHistory && history.length > 0 && (

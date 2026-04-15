@@ -7,7 +7,7 @@ function getTodayJakarta(): string {
 
 /**
  * Schedules Page - Redirects to date-based URL
- * 
+ *
  * This page redirects /schedules -> /schedules/{today}
  * For date-specific views, use /schedules/yyyy-mm-dd directly
  */
