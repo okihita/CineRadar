@@ -8,26 +8,9 @@ import { MovieSummaryCardWrapper } from './MovieSummaryCardWrapper';
 import { HistoryGrid } from './HistoryGrid';
 import { PerformanceTrendCharts } from './PerformanceTrendCharts';
 import { DailyStatsBannerWrapper } from './DailyStatsBannerWrapper';
-import { MarketingMetadata } from '../types/social';
+import { MovieSummary } from '../types/performance';
+import { formatCompactNumber, formatOccupancy } from '../utils/format';
 import { cn } from '@/lib/utils';
-
-interface MovieSummary {
-    id: string;
-    movie_id: string;
-    title: string;
-    poster: string;
-    last_updated: string;
-    genres?: string;
-    age_category?: string;
-    director?: string;
-    production_house?: string;
-    marketing?: MarketingMetadata;
-    // Aggregated stats
-    avg_occupancy_pct?: number;
-    total_sold?: number;
-    total_seats?: number;
-    total_showtimes?: number;
-}
 
 interface DailyPerformance {
     date: string;
@@ -138,7 +121,7 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
                                 (movie.avg_occupancy_pct || 0) >= 50 ? "text-green-600" : 
                                 (movie.avg_occupancy_pct || 0) >= 20 ? "text-amber-600" : "text-red-600"
                             )}>
-                                {(movie.avg_occupancy_pct || 0).toFixed(1)}
+                                {formatOccupancy(movie.avg_occupancy_pct)}
                             </span>
                             <span className="text-[10px] font-bold opacity-40 uppercase">%</span>
                         </div>
@@ -151,8 +134,7 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
                             Total Audience
                         </div>
                         <span className="text-xl font-black font-mono tracking-tighter tabular-nums text-foreground">
-                            {((movie.total_sold || 0) / 1000).toFixed(1)}
-                            <span className="text-[10px] font-bold opacity-40 uppercase ml-0.5">k</span>
+                            {formatCompactNumber(movie.total_sold)}
                         </span>
                     </div>
 
@@ -163,8 +145,7 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
                             Total Inventory
                         </div>
                         <span className="text-xl font-black font-mono tracking-tighter tabular-nums text-foreground">
-                            {((movie.total_seats || 0) / 1000).toFixed(1)}
-                            <span className="text-[10px] font-bold opacity-40 uppercase ml-0.5">k</span>
+                            {formatCompactNumber(movie.total_seats)}
                         </span>
                     </div>
 

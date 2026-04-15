@@ -10,21 +10,7 @@ import { Target, Film, User, Link as LinkIcon, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import Link from 'next/link';
-import { MarketingMetadata } from '../types/social';
-
-interface MovieSummary {
-    id: string;
-    movie_id: string;
-    title: string;
-    poster: string;
-    genres?: string;
-    age_category?: string;
-    marketing?: MarketingMetadata;
-    // New fields for enriched view
-    director?: string;
-    production_house?: string;
-    actors?: string[];
-}
+import { MovieSummary } from '../types/performance';
 
 interface MovieSummaryCardProps {
     movie: MovieSummary;

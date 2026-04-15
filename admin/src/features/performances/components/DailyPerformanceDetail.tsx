@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { MovieSummaryCardWrapper } from "./MovieSummaryCardWrapper";
@@ -6,24 +5,13 @@ import { DailyStatsBannerWrapper } from "./DailyStatsBannerWrapper";
 import { ShowtimesDataFetcher } from "./ShowtimesDataFetcher";
 import { ShowtimesSkeleton } from "./skeletons/ShowtimesSkeleton";
 import { TelemetryHeader } from "./TelemetryHeader";
+import { DateNavigatorHeader } from "./DateNavigatorHeader";
 import { firestoreRestClient } from "@/lib/firestore-rest";
-import { MarketingMetadata } from "../types/social";
-import { Target, Users, Armchair, MapPin, ChevronLeft, Calendar } from "lucide-react";
+import { MovieSummary } from "../types/performance";
+import { formatCompactNumber, formatOccupancy } from "../utils/format";
+import { Target, Users, Armchair, MapPin, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-interface MovieSummary {
-  id: string;
-  movie_id: string;
-  title: string;
-  poster: string;
-  last_updated: string;
-  genres?: string;
-  age_category?: string;
-  director?: string;
-  production_house?: string;
-  actors?: string[];
-  marketing?: MarketingMetadata;
-}
+import Link from "next/link";
 
 /**
  * Formats genres or age_category into a string.
@@ -148,7 +136,7 @@ export async function DailyPerformanceDetail({
                             dailyStats.avg_occupancy_pct >= 50 ? "text-green-600" : 
                             dailyStats.avg_occupancy_pct >= 20 ? "text-amber-600" : "text-red-600"
                         )}>
-                            {dailyStats.avg_occupancy_pct.toFixed(1)}
+                            {formatOccupancy(dailyStats.avg_occupancy_pct)}
                         </span>
                         <span className="text-[10px] font-bold opacity-40 uppercase">%</span>
                     </div>
@@ -161,8 +149,7 @@ export async function DailyPerformanceDetail({
                         Audience
                     </div>
                     <span className="text-xl font-black font-mono tracking-tighter tabular-nums text-foreground">
-                        {(dailyStats.total_sold / 1000).toFixed(1)}
-                        <span className="text-[10px] font-bold opacity-40 uppercase ml-0.5">k</span>
+                        {formatCompactNumber(dailyStats.total_sold)}
                     </span>
                 </div>
 
@@ -173,8 +160,7 @@ export async function DailyPerformanceDetail({
                         Inventory
                     </div>
                     <span className="text-xl font-black font-mono tracking-tighter tabular-nums text-foreground">
-                        {(dailyStats.total_seats / 1000).toFixed(1)}
-                        <span className="text-[10px] font-bold opacity-40 uppercase ml-0.5">k</span>
+                        {formatCompactNumber(dailyStats.total_seats)}
                     </span>
                 </div>
 
@@ -192,22 +178,12 @@ export async function DailyPerformanceDetail({
           )}
 
           {/* 3. RIGHT: Unified Intelligence Pill (Date + Telemetry) */}
-          <div className="hidden md:flex items-stretch bg-background/50 rounded-xl border border-border/50 overflow-hidden">
-            <TelemetryHeader />
-            <div className="w-px bg-border/50 my-3" /> 
-            <div className="flex flex-col items-end px-6 py-2.5 bg-zinc-900/5 dark:bg-white/5">
-                <div className="flex items-center gap-2 text-muted-foreground mb-0.5">
-                    <Calendar className="w-3.5 h-3.5" />
-                    <span className="text-[9px] font-black uppercase tracking-widest">
-                        Intelligence For
-                    </span>
-                </div>
-                <span className="text-xl font-black font-mono tracking-tighter text-primary">
-                    {date}
-                </span>
-            </div>
-          </div>
-        </div>
+          <div className="hidden md:flex items-stretch bg-background/50 rounded-xl border border-border/50 overflow-hidden shadow-sm">
+                        <TelemetryHeader />
+                        <DateNavigatorHeader date={date} movieId={movieId} />
+                      </div>
+                    </div>
+
 
         {/* Daily Stats Banner */}
         {dailyStats ? (
