@@ -8,17 +8,6 @@ import { calculateForensicAggregation } from '../utils/performance-math';
 import { ForensicAuditProgress } from './ForensicAuditProgress';
 import { cn } from '@/lib/utils';
 
-interface CinemaAggregation extends ShowtimeSnapshot {
-    theatre_id: string;
-    theatre_name: string;
-    merchant: string;
-    total_sold: number;
-    total_seats: number;
-    showtime_count: number;
-    audited_count: number;
-    true_occupancy_pct: number;
-}
-
 type SortField = 'theatre_name' | 'merchant' | 'showtime_count' | 'total_sold' | 'true_occupancy_pct';
 type SortDirection = 'asc' | 'desc';
 
@@ -49,7 +38,7 @@ export function RegionalCinemaTable({ showtimes, onDrillDown }: RegionalCinemaTa
             theatreGroups.get(id)!.push(st);
         });
 
-        return Array.from(theatreGroups.entries()).map(([id, theatreShows]) => {
+        return Array.from(theatreGroups.entries()).map(([, theatreShows]) => {
             const forensic = calculateForensicAggregation(theatreShows);
             const firstShow = theatreShows[0];
 
@@ -86,7 +75,6 @@ export function RegionalCinemaTable({ showtimes, onDrillDown }: RegionalCinemaTa
                 </thead>
                 <tbody className="divide-y divide-border/40">
                     {cinemaData.map((cinema) => {
-                        const auditProgress = (cinema.audited_count / cinema.showtime_count) * 100;
                         return (
                             <tr 
                                 key={cinema.theatre_id || cinema.theatre_name} 

@@ -2,7 +2,8 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Map as MapIcon } from "lucide-react";
-import { ShowtimeSnapshot } from "./ShowtimeTable";
+import { ShowtimeSnapshot } from '../types/performance';
+
 import { useCityAggregation } from "../hooks/useCityAggregation";
 import { CityPotentialRadar } from "./CityPotentialRadar";
 import { IndonesiaMap } from "./IndonesiaMap";

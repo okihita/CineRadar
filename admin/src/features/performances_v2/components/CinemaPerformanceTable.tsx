@@ -4,7 +4,8 @@ import React, { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowUpDown, Building2, MapPin, ChevronDown, ChevronRight } from 'lucide-react';
-import { ShowtimeSnapshot, ShowtimeRow } from './ShowtimeTable';
+import { ShowtimeRow } from './ShowtimeTable';
+import { ShowtimeSnapshot } from '../types/performance';
 
 interface CinemaAggregation {
     theatre_name: string;

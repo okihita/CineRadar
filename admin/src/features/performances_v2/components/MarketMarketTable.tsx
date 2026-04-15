@@ -7,16 +7,6 @@ import { calculateForensicAggregation } from '../utils/performance-math';
 import { ForensicAuditProgress } from './ForensicAuditProgress';
 import { cn } from '@/lib/utils';
 
-interface MarketAggregation extends ShowtimeSnapshot {
-    city: string;
-    total_sold: number;
-    total_seats: number;
-    showtime_count: number;
-    theatre_count: number;
-    audited_count: number;
-    true_occupancy_pct: number;
-}
-
 type SortField = 'city' | 'showtime_count' | 'theatre_count' | 'total_sold' | 'true_occupancy_pct';
 type SortDirection = 'asc' | 'desc';
 
@@ -83,7 +73,6 @@ export function MarketMarketTable({ showtimes, onDrillDown }: MarketMarketTableP
                 </thead>
                 <tbody className="divide-y divide-border/40">
                     {marketData.map((market) => {
-                        const auditProgress = (market.audited_count / market.showtime_count) * 100;
                         return (
                             <tr 
                                 key={market.city} 
