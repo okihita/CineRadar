@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Map as MapIcon } from "lucide-react";
+import { Map as MapIcon, Trophy } from "lucide-react";
 import { ShowtimeSnapshot } from '../types/performance';
 
 import { useCityAggregation } from "../hooks/useCityAggregation";
@@ -20,18 +20,25 @@ export function NationalSeatAllocation({
   if (showtimes.length === 0) return null;
 
   return (
-    <Card className="mb-6">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-base font-semibold flex items-center gap-2">
-          <MapIcon className="w-5 h-5 text-primary" />
-          National Allocation & Core Markets
-        </CardTitle>
+    <Card className="mb-6 overflow-hidden">
+      <CardHeader className="pb-4 border-b bg-muted/10 py-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
+                <MapIcon className="w-4 h-4 text-primary" />
+                National Allocation
+            </CardTitle>
+            
+            <div className="hidden xl:flex items-center gap-2 text-sm font-black uppercase tracking-widest opacity-60">
+                <Trophy className="w-4 h-4 text-amber-500" />
+                Top 15 Core Markets
+            </div>
+        </div>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <CardContent className="p-0">
+        <div className="grid grid-cols-1 xl:grid-cols-2 divide-y xl:divide-y-0">
           {/* Map Component */}
-          <div className="w-full flex flex-col gap-2">
-            <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+          <div className="w-full flex flex-col gap-2 p-6 bg-background/50 xl:border-r">
+            <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-tighter text-muted-foreground mb-1">
               <span>Choropleth Heatmap (Provincial)</span>
               <div className="flex items-center gap-2">
                 <span className="text-[9px] text-muted-foreground font-mono">0%</span>
@@ -53,7 +60,7 @@ export function NationalSeatAllocation({
           </div>
 
           {/* Radar Component */}
-          <div className="w-full">
+          <div className="w-full xl:p-6 bg-background/30">
             <CityPotentialRadar cityStats={cityStats} />
           </div>
         </div>
