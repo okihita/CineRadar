@@ -1,7 +1,6 @@
 import { firestoreRestClient } from "@/lib/firestore-rest";
-import { ShowtimeSnapshot, ShowtimeTable } from "./ShowtimeTable";
-import { CinemaPerformanceTable } from "./CinemaPerformanceTable";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ShowtimeSnapshot } from "./ShowtimeTable";
+import { ForensicPerformanceHub } from "./ForensicPerformanceHub";
 import { NationalSeatAllocation } from "./NationalSeatAllocation";
 import { TelemetryUpdater } from "./TelemetryUpdater";
 
@@ -24,12 +23,14 @@ export async function ShowtimesDataFetcher({
 }: ShowtimesDataFetcherProps) {
   
   const getTelemetryData = async () => {
-    const start = performance.now();
+    // eslint-disable-next-line react-hooks/purity
+    const start = Date.now();
     const data = await firestoreRestClient.getSubCollection(
         `movie_performance_v2/${movieId}/days/${date}/showtimes`,
         PERFORMANCE_METADATA_MASK
     );
-    const end = performance.now();
+    // eslint-disable-next-line react-hooks/purity
+    const end = Date.now();
     const json = JSON.stringify(data);
     return {
         showtimesData: data,
@@ -59,19 +60,8 @@ export async function ShowtimesDataFetcher({
       {/* National Allocation & Core Markets */}
       <NationalSeatAllocation showtimes={showtimes} />
 
-      {/* Interactive Tabs for Showtimes */}
-      <Tabs defaultValue="cinema" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:w-[400px]">
-          <TabsTrigger value="cinema">By Cinema / Mall</TabsTrigger>
-          <TabsTrigger value="showtime">All Showtimes</TabsTrigger>
-        </TabsList>
-        <TabsContent value="cinema" className="mt-4">
-            <CinemaPerformanceTable showtimes={showtimes} />
-        </TabsContent>
-        <TabsContent value="showtime" className="mt-4">
-            <ShowtimeTable showtimes={showtimes} loading={false} />
-        </TabsContent>
-      </Tabs>
+      {/* Forensic Intelligence Hub (Drill-Down + Feed) */}
+      <ForensicPerformanceHub showtimes={showtimes} movieId={movieId} date={date} />
     </div>
   );
 }

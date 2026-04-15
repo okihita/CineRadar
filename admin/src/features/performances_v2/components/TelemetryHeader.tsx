@@ -1,7 +1,7 @@
 'use client';
 
 import { useTelemetryStore } from '../stores/useTelemetryStore';
-import { Gauge, HardDrive, Zap, Loader2 } from 'lucide-react';
+import { HardDrive, Zap, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function TelemetryHeader() {

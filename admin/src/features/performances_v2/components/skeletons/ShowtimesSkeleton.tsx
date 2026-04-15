@@ -1,25 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, Zap } from "lucide-react";
 import { useTelemetryStore } from '../../stores/useTelemetryStore';
 
 export function ShowtimesSkeleton() {
-  const [seconds, setSeconds] = useState(0);
-  const { setElapsed, setStatus, reset } = useTelemetryStore();
+  const { setElapsed, setStatus, reset, elapsed } = useTelemetryStore();
 
   useEffect(() => {
     reset();
     setStatus('crunching');
+    
+    let currentSeconds = 0;
     const interval = setInterval(() => {
-      setSeconds(s => {
-        const next = s + 1;
-        setElapsed(next);
-        return next;
-      });
+      currentSeconds += 1;
+      setElapsed(currentSeconds);
     }, 1000);
+    
     return () => clearInterval(interval);
   }, [setElapsed, setStatus, reset]);
 
@@ -43,7 +42,7 @@ export function ShowtimesSkeleton() {
                 </p>
             </div>
             
-            {seconds > 15 && (
+            {elapsed > 15 && (
                 <p className="text-[10px] font-bold text-amber-600 uppercase tracking-tight animate-in slide-in-from-bottom-2">
                     ⚡ This is a massive blockbuster dataset. Hang tight.
                 </p>
