@@ -2,10 +2,12 @@
 
 import React, { useMemo, useState } from 'react';
 import { MapPin, ChevronRight } from 'lucide-react';
-import { ShowtimeSnapshot } from './ShowtimeTable';
+import { ShowtimeSnapshot } from '../types/performance';
+import { calculateForensicAggregation } from '../utils/performance-math';
+import { ForensicAuditProgress } from './ForensicAuditProgress';
 import { cn } from '@/lib/utils';
 
-interface MarketAggregation {
+interface MarketAggregation extends ShowtimeSnapshot {
     city: string;
     total_sold: number;
     total_seats: number;
@@ -37,39 +39,22 @@ export function MarketMarketTable({ showtimes, onDrillDown }: MarketMarketTableP
     };
 
     const marketData = useMemo(() => {
-        const map = new Map<string, MarketAggregation & { _theatre_ids: Set<string> }>();
+        const cityGroups = new Map<string, ShowtimeSnapshot[]>();
 
         showtimes.forEach(st => {
             const city = st.city || 'Unknown';
-            if (!map.has(city)) {
-                map.set(city, {
-                    city,
-                    total_sold: 0,
-                    total_seats: 0,
-                    showtime_count: 0,
-                    theatre_count: 0,
-                    audited_count: 0,
-                    true_occupancy_pct: 0,
-                    _theatre_ids: new Set()
-                });
-            }
-
-            const agg = map.get(city)!;
-            agg.total_sold += (st.audience_count ?? st.sold_seats ?? 0);
-            agg.total_seats += (st.total_seats ?? 0);
-            agg.showtime_count += 1;
-            if (st.audience_count !== undefined) {
-                agg.audited_count += 1;
-            }
-            agg._theatre_ids.add(st.theatre_id || st.theatre_name);
+            if (!cityGroups.has(city)) cityGroups.set(city, []);
+            cityGroups.get(city)!.push(st);
         });
 
-        return Array.from(map.values()).map(agg => {
-            const { _theatre_ids, ...rest } = agg;
+        return Array.from(cityGroups.entries()).map(([city, cityShows]) => {
+            const forensic = calculateForensicAggregation(cityShows);
+            const uniqueTheatres = new Set(cityShows.map(st => st.theatre_id || st.theatre_name)).size;
+
             return {
-                ...rest,
-                theatre_count: _theatre_ids.size,
-                true_occupancy_pct: rest.total_seats > 0 ? (rest.total_sold / rest.total_seats) * 100 : 0
+                city,
+                ...forensic,
+                theatre_count: uniqueTheatres
             };
         }).sort((a, b) => {
             let comp = 0;
@@ -114,18 +99,10 @@ export function MarketMarketTable({ showtimes, onDrillDown }: MarketMarketTableP
                                 <td className="p-4 text-right font-mono font-bold text-xs opacity-60">{market.theatre_count}</td>
                                 <td className="p-4 text-right font-mono font-bold text-xs opacity-60">{market.showtime_count}</td>
                                 <td className="p-4 hidden md:table-cell">
-                                    <div className="flex items-center justify-center gap-2">
-                                        <div className="w-16 h-1 bg-muted rounded-full overflow-hidden">
-                                            <div 
-                                                className={cn(
-                                                    "h-full transition-all duration-1000",
-                                                    auditProgress === 100 ? "bg-green-500" : "bg-amber-500"
-                                                )}
-                                                style={{ width: `${auditProgress}%` }}
-                                            />
-                                        </div>
-                                        <span className="text-[9px] font-black font-mono text-muted-foreground/60">{auditProgress.toFixed(0)}%</span>
-                                    </div>
+                                    <ForensicAuditProgress 
+                                        auditedCount={market.audited_count} 
+                                        totalCount={market.showtime_count} 
+                                    />
                                 </td>
                                 <td className="p-4 text-right font-black font-mono text-xs tabular-nums">
                                     {market.total_sold.toLocaleString()}

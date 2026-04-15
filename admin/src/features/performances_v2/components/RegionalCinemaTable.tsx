@@ -3,10 +3,12 @@
 import React, { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Building2, ChevronRight } from 'lucide-react';
-import { ShowtimeSnapshot } from './ShowtimeTable';
+import { ShowtimeSnapshot } from '../types/performance';
+import { calculateForensicAggregation } from '../utils/performance-math';
+import { ForensicAuditProgress } from './ForensicAuditProgress';
 import { cn } from '@/lib/utils';
 
-interface CinemaAggregation {
+interface CinemaAggregation extends ShowtimeSnapshot {
     theatre_id: string;
     theatre_name: string;
     merchant: string;
@@ -39,36 +41,25 @@ export function RegionalCinemaTable({ showtimes, onDrillDown }: RegionalCinemaTa
     };
 
     const cinemaData = useMemo(() => {
-        const map = new Map<string, CinemaAggregation>();
+        const theatreGroups = new Map<string, ShowtimeSnapshot[]>();
 
         showtimes.forEach(st => {
             const id = st.theatre_id || st.theatre_name;
-            if (!map.has(id)) {
-                map.set(id, {
-                    theatre_id: st.theatre_id,
-                    theatre_name: st.theatre_name || 'Unknown Cinema',
-                    merchant: st.merchant || 'Unknown',
-                    total_sold: 0,
-                    total_seats: 0,
-                    showtime_count: 0,
-                    audited_count: 0,
-                    true_occupancy_pct: 0
-                });
-            }
-
-            const agg = map.get(id)!;
-            agg.total_sold += (st.audience_count ?? st.sold_seats ?? 0);
-            agg.total_seats += (st.total_seats ?? 0);
-            agg.showtime_count += 1;
-            if (st.audience_count !== undefined) {
-                agg.audited_count += 1;
-            }
+            if (!theatreGroups.has(id)) theatreGroups.set(id, []);
+            theatreGroups.get(id)!.push(st);
         });
 
-        return Array.from(map.values()).map(agg => ({
-            ...agg,
-            true_occupancy_pct: agg.total_seats > 0 ? (agg.total_sold / agg.total_seats) * 100 : 0
-        })).sort((a, b) => {
+        return Array.from(theatreGroups.entries()).map(([id, theatreShows]) => {
+            const forensic = calculateForensicAggregation(theatreShows);
+            const firstShow = theatreShows[0];
+
+            return {
+                theatre_id: firstShow.theatre_id,
+                theatre_name: firstShow.theatre_name || 'Unknown Cinema',
+                merchant: firstShow.merchant || 'Unknown',
+                ...forensic
+            };
+        }).sort((a, b) => {
             let comp = 0;
             if (sortField === 'theatre_name') comp = a.theatre_name.localeCompare(b.theatre_name);
             else if (sortField === 'merchant') comp = a.merchant.localeCompare(b.merchant);
@@ -120,18 +111,10 @@ export function RegionalCinemaTable({ showtimes, onDrillDown }: RegionalCinemaTa
                                 </td>
                                 <td className="p-4 text-right font-mono font-bold text-xs opacity-60">{cinema.showtime_count}</td>
                                 <td className="p-4 hidden md:table-cell">
-                                    <div className="flex items-center justify-center gap-2">
-                                        <div className="w-16 h-1 bg-muted rounded-full overflow-hidden">
-                                            <div 
-                                                className={cn(
-                                                    "h-full transition-all duration-1000",
-                                                    auditProgress === 100 ? "bg-green-500" : "bg-amber-500"
-                                                )}
-                                                style={{ width: `${auditProgress}%` }}
-                                            />
-                                        </div>
-                                        <span className="text-[9px] font-black font-mono text-muted-foreground/60">{auditProgress.toFixed(0)}%</span>
-                                    </div>
+                                    <ForensicAuditProgress 
+                                        auditedCount={cinema.audited_count} 
+                                        totalCount={cinema.showtime_count} 
+                                    />
                                 </td>
                                 <td className="p-4 text-right font-black font-mono text-xs tabular-nums">
                                     {cinema.total_sold.toLocaleString()}

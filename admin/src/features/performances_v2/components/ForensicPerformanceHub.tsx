@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { ChevronRight, Home, MapPin, Building2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ShowtimeSnapshot } from './ShowtimeTable';
+import { ShowtimeSnapshot } from '../types/performance';
 import { cn } from '@/lib/utils';
 
 // --- Types ---

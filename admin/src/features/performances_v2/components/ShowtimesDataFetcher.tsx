@@ -1,8 +1,8 @@
 import { firestoreRestClient } from "@/lib/firestore-rest";
-import { ShowtimeSnapshot } from "./ShowtimeTable";
 import { ForensicPerformanceHub } from "./ForensicPerformanceHub";
 import { NationalSeatAllocation } from "./NationalSeatAllocation";
 import { TelemetryUpdater } from "./TelemetryUpdater";
+import { ShowtimeSnapshot } from "../types/performance";
 
 interface ShowtimesDataFetcherProps {
   movieId: string;

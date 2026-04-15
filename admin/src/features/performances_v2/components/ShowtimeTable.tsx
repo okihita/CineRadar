@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, memo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,33 +8,9 @@ import { Clock, Filter, Layers, Loader2, ShieldCheck, Microscope, Users, Ban, Ch
 import { cn } from '@/lib/utils';
 import { SeatProgressBar } from './SeatProgressBar';
 import { TriPanelAudit } from './TriPanelAudit';
+import { ShowtimeSnapshot } from '../types/performance';
 
-export interface ShowtimeSnapshot {
-    id: string;
-    showtime_id: string;
-    movie_title: string;
-    theatre_name: string;
-    theatre_id: string;
-    city: string;
-    room_category: string;
-    merchant: string;
-    showtime: string;
-    total_seats: number;
-    sold_seats: number;
-    occupancy_pct: number;
-    price?: number;
-    initial_unavailable?: number;
-    final_unavailable?: number;
-    audience_count?: number;
-    audience_pct?: number;
-    scrape_phase?: string;
-    scraped_at?: string;
-    studio_id?: string;
-    metadata_id?: string;
-    date?: string;
-}
-
-type SortField = 'showtime' | 'occupancy' | 'theatre' | 'city';
+type SortField = 'showtime' | 'occupancy' | 'theatre' | 'city' | 'anomaly';
 type SortDirection = 'asc' | 'desc';
 type GroupBy = 'none' | 'theatre' | 'city' | 'merchant';
 
@@ -50,11 +26,13 @@ const MERCHANT_COLORS: Record<string, string> = {
 interface ShowtimeTableProps {
     showtimes: ShowtimeSnapshot[];
     loading?: boolean;
+    movieId?: string;
+    date?: string;
 }
 
-export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps) {
-    const [sortField, setSortField] = useState<SortField>('showtime');
-    const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+export function ShowtimeTable({ showtimes, loading = false, movieId, date }: ShowtimeTableProps) {
+    const [sortField, setSortField] = useState<SortField>('anomaly');
+    const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
     const [groupBy, setGroupBy] = useState<GroupBy>('none');
     const [pageSize, setPageSize] = useState(50);
     const [currentPage, setCurrentPage] = useState(1);
@@ -99,16 +77,23 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
             switch (sortField) {
                 case 'showtime': comparison = (a.showtime || '').localeCompare(b.showtime || ''); break;
                 case 'occupancy':
-                    const occA = a.audience_pct !== undefined ? a.audience_pct : a.occupancy_pct;
-                    const occB = b.audience_pct !== undefined ? b.audience_pct : b.occupancy_pct;
+                    const occA = a.audience_pct ?? a.occupancy_pct ?? 0;
+                    const occB = b.audience_pct ?? b.occupancy_pct ?? 0;
                     comparison = occA - occB;
                     break;
                 case 'theatre': comparison = (a.theatre_name || '').localeCompare(b.theatre_name || ''); break;
                 case 'city': comparison = (a.city || '').localeCompare(b.city || ''); break;
+                case 'anomaly':
+                    const deltaA = (a.sold_seats || 0) - (a.audience_count ?? a.sold_seats ?? 0);
+                    const deltaB = (b.sold_seats || 0) - (b.audience_count ?? b.sold_seats ?? 0);
+                    comparison = deltaA - deltaB;
+                    break;
             }
             return sortDirection === 'asc' ? comparison : -comparison;
         });
-        return result;
+
+        // HARD LIMIT: Global feed should never exceed 200 units to prevent DOM bloat
+        return result.slice(0, 200);
     }, [showtimes, filterCity, filterMerchant, filterRoom, sortField, sortDirection]);
 
     const paginatedShowtimes = useMemo(() => {
@@ -119,8 +104,8 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
 
     const summaryStats = useMemo(() => {
         const totalShowtimes = processedShowtimes.length;
-        const totalSeats = processedShowtimes.reduce((sum, st) => sum + st.total_seats, 0);
-        const totalSold = processedShowtimes.reduce((sum, st) => sum + (st.audience_count ?? st.sold_seats), 0);
+        const totalSeats = processedShowtimes.reduce((sum, st) => sum + (st.total_seats ?? 0), 0);
+        const totalSold = processedShowtimes.reduce((sum, st) => sum + (st.audience_count ?? st.sold_seats ?? 0), 0);
         const avgOccupancy = totalSeats > 0 ? (totalSold / totalSeats * 100) : 0;
         return { totalShowtimes, totalSeats, totalSold, avgOccupancy };
     }, [processedShowtimes]);
@@ -130,13 +115,25 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
             setSortDirection(d => d === 'asc' ? 'desc' : 'asc');
         } else {
             setSortField(field);
-            setSortDirection('asc');
+            setSortDirection('desc');
         }
         setCurrentPage(1);
     };
 
     return (
         <div className="space-y-6">
+            <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-2">
+                    <Microscope className="w-4 h-4 text-primary" />
+                    <h2 className="text-sm font-black uppercase tracking-widest text-foreground">Global Forensic Audit Feed</h2>
+                </div>
+                {showtimes.length > 200 && (
+                    <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest text-amber-600 border-amber-500/20 bg-amber-500/5">
+                        Performance Limit: Showing Top 200 Anomalies
+                    </Badge>
+                )}
+            </div>
+
             <Card className="border-primary/10 shadow-sm">
                 <CardHeader className="pb-3 px-4 pt-4 border-b bg-muted/5">
                     <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 text-muted-foreground/60">
@@ -213,13 +210,20 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
                                             <th className="py-4 px-4 cursor-pointer hover:text-primary transition-colors" onClick={() => toggleSort('theatre')}>Theatre</th>
                                             <th className="py-4 px-4 cursor-pointer hover:text-primary transition-colors" onClick={() => toggleSort('city')}>Location</th>
                                             <th className="py-4 px-4">Room</th>
-                                            <th className="py-4 px-4">Price</th>
-                                            <th className="py-4 px-4 w-48 cursor-pointer hover:text-primary transition-colors" onClick={() => toggleSort('occupancy')}>Occupancy</th>
-                                            <th className="py-4 px-4 text-right w-24">Audience</th>
+                                            <th className="py-4 px-4 w-28 cursor-pointer hover:text-primary transition-colors" onClick={() => toggleSort('anomaly')}><div className="flex items-center gap-1.5"><ShieldCheck className="w-3 h-3 text-primary" />Anomaly</div></th>
+                                            <th className="py-4 px-4 w-48 cursor-pointer hover:text-primary transition-colors" onClick={() => toggleSort('occupancy')}>True Occupancy</th>
+                                            <th className="py-4 px-4 text-right w-24">True Sold</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {paginatedShowtimes.map((st) => <ShowtimeRow key={st.id} showtime={st} />)}
+                                        {paginatedShowtimes.map((st) => (
+                                            <ShowtimeRow 
+                                                key={st.id} 
+                                                showtime={st} 
+                                                movieId={movieId || st.metadata_id || st.movie_id} 
+                                                date={date || st.date} 
+                                            />
+                                        ))}
                                     </tbody>
                                     <tfoot>
                                         <tr className="bg-primary/5 border-t font-black uppercase text-[10px] tracking-widest text-primary/60">
@@ -233,7 +237,7 @@ export function ShowtimeTable({ showtimes, loading = false }: ShowtimeTableProps
                                                 </div>
                                             </td>
                                             <td className="py-4 px-4 text-right font-mono tabular-nums text-foreground">
-                                                {summaryStats.totalSold.toLocaleString()}<span className="opacity-30">/{summaryStats.totalSeats.toLocaleString()}</span>
+                                                {summaryStats.totalSold.toLocaleString()}<span className="opacity-30">/{(summaryStats.totalSeats || 0).toLocaleString()}</span>
                                             </td>
                                         </tr>
                                     </tfoot>
@@ -255,27 +259,40 @@ interface RawDataResponse {
     inferredStudioId?: string;
 }
 
-export function ShowtimeRow({ showtime: st, movieId: propMovieId, date: propDate }: { showtime: ShowtimeSnapshot; movieId?: string; date?: string }) {
+export const ShowtimeRow = memo(({ showtime: st, movieId: propMovieId, date: propDate }: { showtime: ShowtimeSnapshot; movieId?: string; date?: string }) => {
     const merchantColor = MERCHANT_COLORS[st.merchant] || 'bg-gray-500'
     const [expanded, setExpanded] = useState(false);
     const [rawData, setRawData] = useState<RawDataResponse | null>(null);
     const [isLoadingLayout, setIsLoadingLayout] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
+    const abortController = useRef<AbortController | null>(null);
 
     const toggleExpand = async () => {
         const nextExpanded = !expanded;
         setExpanded(nextExpanded);
         if (nextExpanded && !rawData) {
+            if (abortController.current) abortController.current.abort();
+            abortController.current = new AbortController();
             setIsLoadingLayout(true);
             try {
-                const pathParts = window.location.pathname.split('/');
-                const movieId = propMovieId || pathParts[2];
-                const date = propDate || pathParts[3];
-                const res = await fetch(`/api/showtimes/${st.showtime_id}/raw?movieId=${movieId}&date=${date}`);
+                const mid = propMovieId || st.metadata_id || st.movie_id;
+                const d = propDate || st.date;
+                
+                if (!mid || !d) {
+                    console.error("Missing movieId or date for audit fetch", { mid, d });
+                    setIsLoadingLayout(false);
+                    return;
+                }
+
+                const res = await fetch(`/api/showtimes/${st.showtime_id}/raw?movieId=${mid}&date=${d}`, { signal: abortController.current.signal });
                 if (res.ok) setRawData(await res.json());
                 else setErrorMsg("Failed to load forensic data");
-            } catch { setErrorMsg("Network Error"); }
+            } catch (err: unknown) { 
+                if (err instanceof Error && err.name !== 'AbortError') {
+                    setErrorMsg("Network Error"); 
+                }
+            }
             finally { setIsLoadingLayout(false); }
         }
     };
@@ -287,10 +304,10 @@ export function ShowtimeRow({ showtime: st, movieId: propMovieId, date: propDate
         setTimeout(() => setCopied(false), 2000);
     };
 
-    const finalSold = st.audience_count ?? st.sold_seats;
-    const finalPct = st.audience_pct ?? st.occupancy_pct;
+    const finalSold = st.audience_count ?? st.sold_seats ?? 0;
+    const finalPct = st.audience_pct ?? st.occupancy_pct ?? 0;
     const initialBlocked = st.initial_unavailable ?? 0;
-    const availableSeats = Math.max(0, st.total_seats - initialBlocked - finalSold);
+    const availableSeats = Math.max(0, (st.total_seats ?? 0) - initialBlocked - finalSold);
 
     return (
         <>
@@ -305,7 +322,21 @@ export function ShowtimeRow({ showtime: st, movieId: propMovieId, date: propDate
                 </td>
                 <td className="py-4 px-4 text-muted-foreground font-bold text-[10px] uppercase tracking-tighter">{st.city}</td>
                 <td className="py-4 px-4"><Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 border-muted-foreground/20">{st.room_category}</Badge></td>
-                <td className="py-4 px-4 text-[10px] font-mono font-bold">{st.price ? `Rp ${st.price.toLocaleString('id-ID')}` : '-'}</td>
+                <td className="py-4 px-4 font-mono">
+                    {st.audience_count !== undefined ? (
+                        <div className="flex flex-col">
+                            <span className={cn(
+                                "text-[10px] font-black uppercase tracking-widest",
+                                (st.sold_seats - st.audience_count) > 0 ? "text-amber-600" : "text-green-600"
+                            )}>
+                                {(st.sold_seats - st.audience_count) > 0 ? `+${st.sold_seats - st.audience_count}` : "0"} Delta
+                            </span>
+                            <span className="text-[8px] font-bold text-muted-foreground/40 uppercase tracking-tighter">Verified Audit</span>
+                        </div>
+                    ) : (
+                        <span className="text-[9px] font-black uppercase text-muted-foreground/20 italic tracking-widest">Pending</span>
+                    )}
+                </td>
                 <td className="py-4 px-4">
                     <div className="flex flex-col gap-1 w-32">
                         <SeatProgressBar totalSeats={st.total_seats} blockedSeats={initialBlocked} soldSeats={finalSold} size="sm" showLabels={false} />
@@ -318,7 +349,7 @@ export function ShowtimeRow({ showtime: st, movieId: propMovieId, date: propDate
                 <td className="py-4 px-4 text-right">
                     <div className="flex items-center justify-end gap-3">
                         <div className="flex flex-col items-end">
-                            <span className="text-xs font-bold font-mono text-foreground tabular-nums">{finalSold}<span className="opacity-20">/{st.total_seats}</span></span>
+                            <span className="text-xs font-bold font-mono text-foreground tabular-nums">{finalSold}<span className="opacity-20">/{(st.total_seats ?? 0)}</span></span>
                         </div>
                         <Button variant="outline" className="h-7 w-7 p-0 rounded-lg border-primary/10 hover:bg-primary/5">
                             <Microscope className={cn("w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-all", expanded && "text-primary scale-110")} />
@@ -349,7 +380,7 @@ export function ShowtimeRow({ showtime: st, movieId: propMovieId, date: propDate
                                             <span className="text-[10px] text-muted-foreground/40">•</span>
                                             <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">Phase: {st.scrape_phase || 'N/A'}</p>
                                             <a 
-                                                href={`https://console.firebase.google.com/project/cineradar-481014/firestore/databases/-default-/data/~2Fmovie_performance_v2~2F${propMovieId || window.location.pathname.split('/')[2]}~2Fdays~2F${propDate || window.location.pathname.split('/')[3]}~2Fshowtimes~2F${st.showtime_id}`}
+                                                href={`https://console.firebase.google.com/project/cineradar-481014/firestore/databases/-default-/data/~2Fmovie_performance_v2~2F${propMovieId || st.metadata_id || st.movie_id || 'unknown'}~2Fdays~2F${propDate || st.date || 'unknown'}~2Fshowtimes~2F${st.showtime_id}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="flex items-center gap-1.5 text-[9px] font-black uppercase text-primary hover:bg-primary/10 bg-primary/5 px-2 py-0.5 rounded-full border border-primary/10 transition-all shadow-sm"
@@ -369,14 +400,14 @@ export function ShowtimeRow({ showtime: st, movieId: propMovieId, date: propDate
                                             <span className="text-[8px] font-bold text-green-600/60 uppercase tracking-tighter mt-0.5">Tickets Sold</span>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-red-500/5 border border-red-500/10 shadow-sm transition-all hover:bg-red-500/10 group">
+                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-red-500/5 border border-red-500/10 shadow-sm transition-all hover:bg-green-500/10 group">
                                         <Ban className="w-3 h-3 text-red-500" />
                                         <div className="flex flex-col">
                                             <span className="text-xs font-black text-red-600 leading-none">{initialBlocked}</span>
                                             <span className="text-[8px] font-bold text-red-600/60 uppercase tracking-tighter mt-0.5">Static Block</span>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-500/5 border border-zinc-500/10 shadow-sm transition-all hover:bg-zinc-500/10 group">
+                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-500/5 border border-zinc-500/10 shadow-sm transition-all hover:bg-green-500/10 group">
                                         <CheckCircle2 className="w-3 h-3 text-zinc-500" />
                                         <div className="flex flex-col">
                                             <span className="text-xs font-black text-zinc-600 leading-none">{availableSeats}</span>
@@ -416,4 +447,6 @@ export function ShowtimeRow({ showtime: st, movieId: propMovieId, date: propDate
             )}
         </>
     );
-}
+});
+
+ShowtimeRow.displayName = 'ShowtimeRow';

@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { ShowtimeSnapshot, ShowtimeRow } from './ShowtimeTable';
+import { ShowtimeRow } from './ShowtimeTable';
+import { ShowtimeSnapshot } from '../types/performance';
 
 interface ForensicShowtimeTableProps {
     showtimes: ShowtimeSnapshot[];
