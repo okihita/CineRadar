@@ -6,6 +6,7 @@ import { MovieSummaryCard } from "./MovieSummaryCard";
 import { DailyStatsBanner } from "./DailyStatsBanner";
 import { ShowtimesDataFetcher } from "./ShowtimesDataFetcher";
 import { ShowtimesSkeleton } from "./skeletons/ShowtimesSkeleton";
+import { TelemetryHeader } from "./TelemetryHeader";
 import { firestoreRestClient } from "@/lib/firestore-rest";
 
 interface MovieSummary {
@@ -112,17 +113,21 @@ export async function DailyPerformanceDetail({
             <MovieSummaryCard movie={movie} />
           </div>
 
-          {/* Date Highlight */}
-          <div className="hidden md:flex flex-col items-end bg-muted/30 px-6 py-3 rounded-lg border">
-            <div className="flex items-center gap-2 text-muted-foreground mb-1">
-              <Calendar className="w-4 h-4" />
-              <span className="text-xs font-semibold uppercase tracking-wider">
-                Viewing Details For
-              </span>
+          {/* Unified Intelligence Header (Date + Telemetry) */}
+          <div className="hidden md:flex items-stretch bg-muted/30 rounded-xl border border-border/50 overflow-hidden shadow-sm">
+            <TelemetryHeader />
+            <div className="w-px bg-border/50 my-3" /> {/* Unified vertical divider */}
+            <div className="flex flex-col items-end px-6 py-3.5 bg-zinc-900/5 dark:bg-white/5">
+                <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                <Calendar className="w-4 h-4" />
+                <span className="text-[10px] font-black uppercase tracking-widest">
+                    Viewing Details For
+                </span>
+                </div>
+                <span className="text-2xl font-black font-mono tracking-tighter text-primary">
+                {date}
+                </span>
             </div>
-            <span className="text-2xl font-bold font-mono tracking-tight text-primary">
-              {date}
-            </span>
           </div>
         </div>
 
