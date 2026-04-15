@@ -1,7 +1,8 @@
 'use client';
 
-import { Target, Users, Armchair, MapPin, Camera, MessageCircle, Hash, TrendingUp } from 'lucide-react';
+import { Target, Users, Armchair, MapPin, Camera, MessageCircle, Hash, TrendingUp, Music } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { MarketingMetadata } from '../types/social';
 
 interface DailyPerformance {
     date: string;
@@ -10,12 +11,7 @@ interface DailyPerformance {
     total_seats: number;
     total_sold: number;
     cities: string[];
-    marketing?: {
-        instagram?: string;
-        twitter?: string;
-        hashtag?: string;
-        trends_score?: number;
-    };
+    marketing?: MarketingMetadata;
 }
 
 interface DailyStatsBannerProps {
@@ -34,7 +30,7 @@ export function DailyStatsBanner({ stats }: DailyStatsBannerProps) {
                         <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Marketing Intelligence</span>
                     </div>
                     
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                         {/* Instagram Slot */}
                         <div className="flex items-center gap-2.5 group cursor-help" title="Official Instagram Campaign">
                             <div className="w-8 h-8 rounded-full bg-pink-500/10 flex items-center justify-center text-pink-600 border border-pink-500/10 transition-colors group-hover:bg-pink-500/20">
@@ -42,7 +38,7 @@ export function DailyStatsBanner({ stats }: DailyStatsBannerProps) {
                             </div>
                             <div className="flex flex-col">
                                 <span className="text-[10px] font-bold text-muted-foreground uppercase leading-none mb-1 tracking-tighter">Instagram</span>
-                                <span className="text-xs font-black truncate max-w-[100px]">{stats.marketing?.instagram || "@cine_radar"}</span>
+                                <span className="text-xs font-black truncate max-w-[100px]">{stats.marketing?.official_accounts?.instagram || "—"}</span>
                             </div>
                         </div>
 
@@ -53,7 +49,18 @@ export function DailyStatsBanner({ stats }: DailyStatsBannerProps) {
                             </div>
                             <div className="flex flex-col">
                                 <span className="text-[10px] font-bold text-muted-foreground uppercase leading-none mb-1 tracking-tighter">X / Twitter</span>
-                                <span className="text-xs font-black truncate max-w-[100px]">{stats.marketing?.twitter || "Pending..."}</span>
+                                <span className="text-xs font-black truncate max-w-[100px]">{stats.marketing?.official_accounts?.x || "—"}</span>
+                            </div>
+                        </div>
+
+                        {/* TikTok Slot */}
+                        <div className="flex items-center gap-2.5 group cursor-help" title="TikTok Campaign">
+                            <div className="w-8 h-8 rounded-full bg-cyan-500/10 flex items-center justify-center text-cyan-600 border border-cyan-500/10 transition-colors group-hover:bg-cyan-500/20">
+                                <Music className="w-4 h-4" />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase leading-none mb-1 tracking-tighter">TikTok</span>
+                                <span className="text-xs font-black truncate max-w-[100px]">{stats.marketing?.official_accounts?.tiktok || "—"}</span>
                             </div>
                         </div>
 
@@ -63,8 +70,22 @@ export function DailyStatsBanner({ stats }: DailyStatsBannerProps) {
                                 <Hash className="w-4 h-4" />
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-[10px] font-bold text-muted-foreground uppercase leading-none mb-1 tracking-tighter">Campaign</span>
-                                <span className="text-xs font-black truncate max-w-[100px]">{stats.marketing?.hashtag || "#CineRadar"}</span>
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase leading-none mb-1 tracking-tighter">Hashtag</span>
+                                <div className="flex flex-col gap-0.5">
+                                    <span className="text-xs font-black truncate max-w-[100px]">{stats.marketing?.primary_hashtag || "—"}</span>
+                                    {stats.marketing?.secondary_hashtags && stats.marketing.secondary_hashtags.length > 0 && (
+                                        <div className="flex flex-wrap gap-1 max-w-[120px]">
+                                            {stats.marketing.secondary_hashtags.slice(0, 2).map(tag => (
+                                                <span key={tag} className="text-[8px] font-bold text-muted-foreground/50 truncate">
+                                                    {tag}
+                                                </span>
+                                            ))}
+                                            {stats.marketing.secondary_hashtags.length > 2 && (
+                                                <span className="text-[8px] font-bold text-muted-foreground/30">+{stats.marketing.secondary_hashtags.length - 2}</span>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
 

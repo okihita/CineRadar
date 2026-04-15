@@ -61,6 +61,8 @@ export interface MarketingMetadata {
   campaign_start_date?: string;
   /** Marketing budget in IDR for ROI calculation */
   marketing_budget?: number;
+  /** Google Trends score (0-100) */
+  trends_score?: number;
 }
 
 /**

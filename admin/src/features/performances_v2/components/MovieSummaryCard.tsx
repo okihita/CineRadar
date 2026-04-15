@@ -7,10 +7,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Target, Pencil } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Target, Pencil, Film, User, Link as LinkIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
+import Link from 'next/link';
 import { SocialHandleBadges, EditMarketingModal } from './social';
 import { MarketingMetadata } from '../types/social';
 
@@ -19,10 +19,13 @@ interface MovieSummary {
     movie_id: string;
     title: string;
     poster: string;
-    last_updated: string;
     genres?: string;
     age_category?: string;
     marketing?: MarketingMetadata;
+    // New fields for enriched view
+    director?: string;
+    production_house?: string;
+    actors?: string[];
 }
 
 interface MovieSummaryCardProps {
@@ -54,35 +57,56 @@ export function MovieSummaryCard({ movie, onMarketingUpdate }: MovieSummaryCardP
                     )}
                 </div>
                 <div className="flex-1">
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center justify-between gap-4">
                         <h1 className="text-2xl font-bold tracking-tight">{movie.title}</h1>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setIsEditModalOpen(true)}
-                            className="text-muted-foreground hover:text-foreground"
-                        >
-                            <Pencil className="w-4 h-4 mr-1" />
-                            Edit Marketing
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                asChild
+                            >
+                                <Link href={`/movies/${movie.id}`} target="_blank" rel="noopener noreferrer">
+                                    <LinkIcon className="w-3.5 h-3.5 mr-1.5" />
+                                    View in Database
+                                </Link>
+                            </Button>
+
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setIsEditModalOpen(true)}
+                                className="text-muted-foreground hover:text-foreground"
+                            >
+                                <Pencil className="w-4 h-4 mr-1" />
+                                Edit Marketing
+                            </Button>
+                        </div>
                     </div>
-                    <p className="text-sm text-muted-foreground/80 mt-1 max-w-xl">
-                        {movie.genres || 'Genre N/A'} • {movie.age_category || 'Rating N/A'}
-                    </p>
+                    <div className="text-sm text-muted-foreground/80 mt-1 flex items-center gap-2 divide-x">
+                        <span className="pr-2">{movie.genres || 'N/A'}</span>
+                        <span className="px-2">{movie.age_category || 'N/A'}</span>
+                    </div>
+
+                    {/* Enriched Metadata */}
+                    <div className="mt-4 space-y-2 text-xs">
+                        <div className="flex items-center gap-2">
+                            <Film className="w-3.5 h-3.5 text-muted-foreground/70" />
+                            <span className="font-semibold text-muted-foreground">Production:</span>
+                            <span className="font-bold">{movie.production_house || 'N/A'}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <User className="w-3.5 h-3.5 text-muted-foreground/70" />
+                            <span className="font-semibold text-muted-foreground">Director:</span>
+                            <span className="font-bold">{movie.director || 'N/A'}</span>
+                        </div>
+                    </div>
                     
                     {/* Social Handle Badges */}
                     {movie.marketing && (
-                        <div className="mt-3">
+                        <div className="mt-4">
                             <SocialHandleBadges marketing={movie.marketing} />
                         </div>
                     )}
-                    
-                    {/* Last Updated Badge */}
-                    <div className="flex gap-2 mt-3">
-                        <Badge variant="secondary" className="text-xs font-normal">
-                            Updated: {new Date(movie.last_updated).toLocaleDateString()}
-                        </Badge>
-                    </div>
                 </div>
             </div>
 

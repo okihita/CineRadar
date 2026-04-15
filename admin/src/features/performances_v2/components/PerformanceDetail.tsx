@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Target, Loader2, ChevronLeft } from 'lucide-react';
+import { Target, Loader2, ChevronLeft, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MovieSummaryCard } from './MovieSummaryCard';
 import { HistoryGrid } from './HistoryGrid';
 import { PerformanceTrendCharts } from './PerformanceTrendCharts';
+import { MarketingMetadata } from '../types/social';
 
 interface MovieSummary {
     id: string;
@@ -16,6 +17,9 @@ interface MovieSummary {
     last_updated: string;
     genres?: string;
     age_category?: string;
+    director?: string;
+    production_house?: string;
+    marketing?: MarketingMetadata;
 }
 
 interface DailyPerformance {
@@ -106,7 +110,23 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
                 >
                     <ChevronLeft className="w-6 h-6" />
                 </Button>
-                <MovieSummaryCard movie={movie} />
+                <div className="flex-1">
+                    <MovieSummaryCard movie={movie} />
+                </div>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                >
+                    <a
+                        href={`https://console.firebase.google.com/project/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}/firestore/data/~2Fmovie_performance_v2~2F${movieId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
+                        Firestore
+                    </a>
+                </Button>
             </div>
 
             {/* Visual Trends */}

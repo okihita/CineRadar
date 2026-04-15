@@ -8,6 +8,7 @@ import { ShowtimesDataFetcher } from "./ShowtimesDataFetcher";
 import { ShowtimesSkeleton } from "./skeletons/ShowtimesSkeleton";
 import { TelemetryHeader } from "./TelemetryHeader";
 import { firestoreRestClient } from "@/lib/firestore-rest";
+import { MarketingMetadata } from "../types/social";
 
 interface MovieSummary {
   id: string;
@@ -17,6 +18,9 @@ interface MovieSummary {
   last_updated: string;
   genres?: string;
   age_category?: string;
+  director?: string;
+  production_house?: string;
+  marketing?: MarketingMetadata;
 }
 
 /**
@@ -79,6 +83,8 @@ export async function DailyPerformanceDetail({
             "",
           genres: formatMetadataField(movieMeta.genres),
           age_category: formatMetadataField(movieMeta.age_category),
+          director: formatMetadataField(movieMeta.director),
+          production_house: formatMetadataField(movieMeta.production_company),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           last_updated: (perfDoc as any).last_swept_at || "",
         } as unknown as MovieSummary)
@@ -133,7 +139,7 @@ export async function DailyPerformanceDetail({
 
         {/* Daily Stats Banner */}
         {dailyStats ? (
-          <DailyStatsBanner stats={dailyStats} />
+          <DailyStatsBanner stats={{ ...dailyStats, marketing: movie.marketing }} />
         ) : (
           <div className="p-4 border rounded-md bg-muted/50 text-center text-sm text-muted-foreground">
             No summary stats found for this date.

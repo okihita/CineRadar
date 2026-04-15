@@ -34,11 +34,11 @@ export function SocialHandleBadges({
     return null;
   }
 
-  const { primary_hashtag, official_accounts } = marketing;
+  const { primary_hashtag, secondary_hashtags, official_accounts } = marketing;
 
   // Check if there's any social data to display
   const hasSocialData = 
-    (showHashtag && primary_hashtag) ||
+    (showHashtag && (primary_hashtag || (secondary_hashtags && secondary_hashtags.length > 0))) ||
     (official_accounts?.tiktok) ||
     (official_accounts?.instagram) ||
     (official_accounts?.x);
@@ -53,11 +53,22 @@ export function SocialHandleBadges({
       {showHashtag && primary_hashtag && (
         <Badge 
           variant="secondary" 
-          className={`${compact ? 'text-[10px] px-1.5 py-0' : ''} cursor-default`}
+          className={`${compact ? 'text-[10px] px-1.5 py-0' : ''} cursor-default font-bold`}
         >
           {primary_hashtag}
         </Badge>
       )}
+
+      {/* Secondary Hashtag Badges */}
+      {showHashtag && secondary_hashtags && secondary_hashtags.map((tag) => (
+        <Badge 
+          key={tag}
+          variant="outline" 
+          className={`${compact ? 'text-[10px] px-1.5 py-0' : ''} cursor-default opacity-70`}
+        >
+          {tag}
+        </Badge>
+      ))}
       
       {/* Social Platform Badges */}
       {SOCIAL_PLATFORMS.map((platform) => {

@@ -68,6 +68,8 @@ export async function GET(
             poster: (metadata.poster as string) || (metadata.poster_path as string) || '',
             genres: formatMetadataField(metadata.genres),
             age_category: formatMetadataField(metadata.age_category),
+            director: formatMetadataField(metadata.director),
+            production_house: formatMetadataField(metadata.production_company),
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             last_updated: (perfDoc as any).last_swept_at || '',
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -154,6 +156,7 @@ export async function PATCH(
         }
 
         // Update the document in movie_performance_v2
+        console.log('[PATCH marketing] updateData:', JSON.stringify(updateData, null, 2));
         const success = await firestoreRestClient.updateDocument(
             'movie_performance_v2',
             metadataId,

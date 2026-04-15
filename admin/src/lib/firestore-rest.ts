@@ -478,9 +478,11 @@ export class FirestoreRestClient {
                 }
             );
 
+            const responseText = await response.text();
+            console.log(`[Firestore PATCH] ${collectionName}/${documentId} status: ${response.status}`, responseText.substring(0, 500));
+
             if (!response.ok) {
-                const errorText = await response.text();
-                console.error(`Failed to update ${collectionName}/${documentId}: ${response.status}`, errorText);
+                console.error(`Failed to update ${collectionName}/${documentId}: ${response.status}`, responseText);
                 return false;
             }
 
