@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { ChevronRight, Home, MapPin, Building2, ArrowLeft } from 'lucide-react';
+import React, { useState, useMemo, useRef } from 'react';
+import { ChevronRight, Home, MapPin, Building2, ArrowLeft, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ShowtimeSnapshot } from '../types/performance';
 import { cn } from '@/lib/utils';
@@ -26,7 +26,6 @@ import { MarketMarketTable } from './MarketMarketTable';
 import { RegionalCinemaTable } from './RegionalCinemaTable';
 import { ForensicShowtimeTable } from './ForensicShowtimeTable';
 import { ShowtimeTable } from './ShowtimeTable';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // --- Main Hub Component ---
 
@@ -35,27 +34,66 @@ export function ForensicPerformanceHub({ showtimes, movieId, date }: ForensicPer
     const [viewLevel, setViewLevel] = useState<ViewLevel>('MARKET');
     const [selectedCity, setSelectedCity] = useState<string | null>(null);
     const [selectedCinema, setSelectedCinema] = useState<string | null>(null);
+    const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('left');
+    
+    const hubRef = useRef<HTMLDivElement>(null);
 
     // Navigation Actions
+    const scrollToTop = () => {
+        if (hubRef.current) {
+            const offset = 120; // Account for sticky header
+            const bodyRect = document.body.getBoundingClientRect().top;
+            const elementRect = hubRef.current.getBoundingClientRect().top;
+            const elementPosition = elementRect - bodyRect;
+            const offsetPosition = elementPosition - offset;
+
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: 'smooth'
+            });
+        }
+    };
+
     const drillToCity = (city: string) => {
+        setSlideDirection('left');
         setSelectedCity(city);
         setViewLevel('CITY');
+        scrollToTop();
     };
 
     const drillToCinema = (theatreId: string) => {
+        setSlideDirection('left');
         setSelectedCinema(theatreId);
         setViewLevel('CINEMA');
+        scrollToTop();
     };
 
     const goBack = () => {
-        if (viewLevel === 'CINEMA') setViewLevel('CITY');
-        else if (viewLevel === 'CITY') setViewLevel('MARKET');
+        setSlideDirection('right');
+        if (viewLevel === 'CINEMA') {
+            setViewLevel('CITY');
+            setSelectedCinema(null);
+        } else if (viewLevel === 'CITY') {
+            setViewLevel('MARKET');
+            setSelectedCity(null);
+        }
+        scrollToTop();
     };
 
-    const resetToNational = () => {
-        setSelectedCity(null);
-        setSelectedCinema(null);
-        setViewLevel('MARKET');
+    const jumpToLevel = (level: ViewLevel) => {
+        if (level === viewLevel) return;
+        
+        // Determine direction based on hierarchy depth
+        const depth = { 'MARKET': 0, 'CITY': 1, 'CINEMA': 2 };
+        setSlideDirection(depth[level] > depth[viewLevel] ? 'left' : 'right');
+
+        setViewLevel(level);
+        if (level === 'CITY') setSelectedCinema(null);
+        if (level === 'MARKET') {
+            setSelectedCity(null);
+            setSelectedCinema(null);
+        }
+        scrollToTop();
     };
 
     // Breadcrumbs Calculation
@@ -78,89 +116,129 @@ export function ForensicPerformanceHub({ showtimes, movieId, date }: ForensicPer
     }, [showtimes, viewLevel, selectedCity, selectedCinema]);
 
     return (
-        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'HIERARCHY' | 'FEED')} className="w-full">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                <TabsList className="grid w-full grid-cols-2 md:w-[400px] h-10 bg-muted/20 border border-border/50">
-                    <TabsTrigger value="HIERARCHY" className="text-[10px] font-bold uppercase tracking-wider">By Market / City</TabsTrigger>
-                    <TabsTrigger value="FEED" className="text-[10px] font-bold uppercase tracking-wider">Global Audit Feed</TabsTrigger>
-                </TabsList>
+        <div ref={hubRef} className="w-full relative scroll-mt-32 min-h-[600px] flex flex-col">
+            
+            {/* 1. STICKY COMMAND BAR (The 10/10 Upgrade) */}
+            <div className="sticky top-0 z-40 bg-background/90 backdrop-blur-md pb-4 pt-2 -mx-2 px-2 border-b border-border/40 shadow-sm mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                
+                {/* Left: Spatial Navigation */}
+                <div className="flex items-center gap-3 overflow-x-auto no-scrollbar">
+                    
+                    {/* Dedicated Emergency Exit */}
+                    <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className={cn(
+                            "h-9 w-9 rounded-full flex-shrink-0 shadow-sm transition-all duration-300",
+                            viewLevel === 'MARKET' ? "opacity-30 pointer-events-none grayscale" : "border-primary/30 text-primary hover:bg-primary/10 hover:scale-105"
+                        )}
+                        onClick={goBack}
+                        disabled={viewLevel === 'MARKET'}
+                        title="Go up one level"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                    </Button>
 
+                    {/* Interactive Context Pill (Breadcrumbs) */}
+                    <div className="flex items-center gap-1.5 px-1.5 py-1 bg-muted/30 rounded-xl border border-border/50 shadow-inner">
+                        {breadcrumbs.map((bc, idx) => {
+                            const isLast = idx === breadcrumbs.length - 1;
+                            const Icon = bc.level === 'MARKET' ? Home : bc.level === 'CITY' ? MapPin : Building2;
+                            
+                            return (
+                                <React.Fragment key={bc.level}>
+                                    {idx > 0 && <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/30" />}
+                                    <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        className={cn(
+                                            "h-7 gap-1.5 px-3 rounded-lg transition-all",
+                                            isLast 
+                                                ? "bg-background shadow-sm text-foreground font-bold hover:bg-background cursor-default" 
+                                                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                                        )}
+                                        onClick={() => !isLast && jumpToLevel(bc.level)}
+                                    >
+                                        <Icon className={cn("w-3.5 h-3.5", !isLast && "opacity-70")} />
+                                        <span className="text-[10px] uppercase tracking-wider">{bc.label}</span>
+                                    </Button>
+                                </React.Fragment>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Right: Mode Switcher */}
+                <div className="flex items-center bg-muted/20 p-1 rounded-xl border border-border/40">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                            "h-7 px-4 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all",
+                            viewMode === 'HIERARCHY' ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                        )}
+                        onClick={() => {
+                            setViewMode('HIERARCHY');
+                            scrollToTop();
+                        }}
+                    >
+                        <MapPin className="w-3 h-3 mr-1.5 opacity-70" />
+                        Hierarchy
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                            "h-7 px-4 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all",
+                            viewMode === 'FEED' ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground"
+                        )}
+                        onClick={() => {
+                            setViewMode('FEED');
+                            scrollToTop();
+                        }}
+                    >
+                        <Globe className="w-3 h-3 mr-1.5 opacity-70" />
+                        Global Feed
+                    </Button>
+                </div>
+            </div>
+
+            {/* 2. DYNAMIC CONTENT AREA */}
+            <div className="flex-1 relative overflow-hidden">
                 {viewMode === 'HIERARCHY' && (
-                    <div className="flex items-center gap-2 px-1 text-sm overflow-x-auto no-scrollbar py-1 bg-muted/10 rounded-lg border border-border/40">
-                        <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className={cn(
-                                "h-7 gap-1.5 hover:bg-background/50 px-2",
-                                viewLevel === 'MARKET' ? "text-primary font-bold" : "text-muted-foreground"
-                            )}
-                            onClick={resetToNational}
-                        >
-                            <Home className="w-3.5 h-3.5 opacity-70" />
-                            <span className="text-[10px] font-bold uppercase tracking-wider">National</span>
-                        </Button>
+                    <div 
+                        key={viewLevel} // Changing key forces re-render for animation
+                        className={cn(
+                            "animate-in fade-in duration-500 fill-mode-forwards",
+                            slideDirection === 'left' ? "slide-in-from-right-8" : "slide-in-from-left-8"
+                        )}
+                    >
+                        {viewLevel === 'MARKET' && (
+                            <div className="border rounded-2xl bg-card overflow-hidden shadow-sm">
+                                <MarketMarketTable showtimes={showtimes} onDrillDown={drillToCity} />
+                            </div>
+                        )}
 
-                        {breadcrumbs.slice(1).map((bc, idx) => (
-                            <React.Fragment key={bc.level}>
-                                <ChevronRight className="w-3 h-3 text-muted-foreground/30" />
-                                <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className={cn(
-                                        "h-7 gap-1.5 hover:bg-background/50 px-2",
-                                        idx === breadcrumbs.length - 2 ? "text-primary font-bold" : "text-muted-foreground"
-                                    )}
-                                    onClick={() => {
-                                        setViewLevel(bc.level);
-                                        if (bc.level === 'CITY') setSelectedCinema(null);
-                                    }}
-                                >
-                                    {bc.level === 'CITY' ? <MapPin className="w-3 h-3 opacity-70" /> : <Building2 className="w-3 h-3 opacity-70" />}
-                                    <span className="text-[10px] font-bold uppercase tracking-wider">{bc.label}</span>
-                                </Button>
-                            </React.Fragment>
-                        ))}
+                        {viewLevel === 'CITY' && (
+                            <div className="border rounded-2xl bg-card overflow-hidden shadow-sm">
+                                <RegionalCinemaTable showtimes={filteredData} onDrillDown={drillToCinema} />
+                            </div>
+                        )}
 
-                        {viewLevel !== 'MARKET' && (
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="h-7 ml-auto gap-1 border-primary/20 text-primary hover:bg-primary/5 rounded-full px-3"
-                                onClick={goBack}
-                            >
-                                <ArrowLeft className="w-3 h-3" />
-                                <span className="text-[9px] font-black uppercase tracking-tighter">Go Back</span>
-                            </Button>
+                        {viewLevel === 'CINEMA' && (
+                            <div className="space-y-4">
+                                <ForensicShowtimeTable showtimes={filteredData} movieId={movieId} date={date} />
+                            </div>
                         )}
                     </div>
                 )}
+
+                {viewMode === 'FEED' && (
+                    <div className="animate-in fade-in zoom-in-95 duration-300">
+                        <ShowtimeTable showtimes={showtimes} loading={false} movieId={movieId} date={date} />
+                    </div>
+                )}
             </div>
-
-            <TabsContent value="HIERARCHY" className="mt-0 space-y-6">
-                <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-                    {viewLevel === 'MARKET' && (
-                        <div className="border rounded-xl bg-card overflow-hidden shadow-sm">
-                            <MarketMarketTable showtimes={showtimes} onDrillDown={drillToCity} />
-                        </div>
-                    )}
-
-                    {viewLevel === 'CITY' && (
-                        <div className="border rounded-xl bg-card overflow-hidden shadow-sm">
-                            <RegionalCinemaTable showtimes={filteredData} onDrillDown={drillToCinema} />
-                        </div>
-                    )}
-
-                    {viewLevel === 'CINEMA' && (
-                        <div className="space-y-4">
-                            <ForensicShowtimeTable showtimes={filteredData} movieId={movieId} date={date} />
-                        </div>
-                    )}
-                </div>
-            </TabsContent>
-
-            <TabsContent value="FEED" className="mt-0">
-                <ShowtimeTable showtimes={showtimes} loading={false} movieId={movieId} date={date} />
-            </TabsContent>
-        </Tabs>
+        </div>
     );
 }

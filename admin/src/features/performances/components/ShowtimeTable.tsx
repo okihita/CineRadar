@@ -41,6 +41,7 @@ export function ShowtimeTable({ showtimes, loading = false, movieId, date }: Sho
     const [filterCity, setFilterCity] = useState<string>('all');
     const [filterMerchant, setFilterMerchant] = useState<string>('all');
     const [filterRoom, setFilterRoom] = useState<string>('all');
+    const [filterHour, setFilterHour] = useState<string>('all');
 
     const filterOptions = useMemo(() => {
         const cities = new Set<string>();
@@ -71,6 +72,7 @@ export function ShowtimeTable({ showtimes, loading = false, movieId, date }: Sho
         if (filterCity !== 'all') result = result.filter(st => st.city === filterCity);
         if (filterMerchant !== 'all') result = result.filter(st => st.merchant === filterMerchant);
         if (filterRoom !== 'all') result = result.filter(st => st.room_category === filterRoom);
+        if (filterHour !== 'all') result = result.filter(st => st.showtime?.startsWith(filterHour + ':'));
 
         result.sort((a, b) => {
             let comparison = 0;
@@ -94,7 +96,7 @@ export function ShowtimeTable({ showtimes, loading = false, movieId, date }: Sho
 
         // HARD LIMIT: Global feed should never exceed 200 units to prevent DOM bloat
         return result.slice(0, 200);
-    }, [showtimes, filterCity, filterMerchant, filterRoom, sortField, sortDirection]);
+    }, [showtimes, filterCity, filterMerchant, filterRoom, filterHour, sortField, sortDirection]);
 
     const paginatedShowtimes = useMemo(() => {
         if (showAll || groupBy !== 'none') return processedShowtimes;
@@ -142,7 +144,7 @@ export function ShowtimeTable({ showtimes, loading = false, movieId, date }: Sho
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="px-4 py-4">
-                    <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+                    <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-4">
                         <Select value={filterCity} onValueChange={(v) => { setFilterCity(v); setCurrentPage(1); }}>
                             <SelectTrigger className="h-9 text-xs font-bold uppercase tracking-tighter"><SelectValue placeholder="City" /></SelectTrigger>
                             <SelectContent>
@@ -182,6 +184,41 @@ export function ShowtimeTable({ showtimes, loading = false, movieId, date }: Sho
                         </Select>
                         <div className="flex items-center justify-end text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 tabular-nums">
                             {processedShowtimes.length} Matches
+                        </div>
+                    </div>
+
+                    {/* Hour Filter Pills */}
+                    <div className="flex flex-col gap-2 pt-2 border-t border-border/40">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50 flex items-center gap-1.5 ml-1">
+                            <Clock className="w-2.5 h-2.5" />
+                            Filter by Hour
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                            <Button 
+                                variant={filterHour === 'all' ? 'default' : 'outline'}
+                                size="sm"
+                                className={cn(
+                                    "h-7 px-3 text-[10px] font-bold rounded-full transition-all",
+                                    filterHour === 'all' ? "shadow-md scale-105" : "text-muted-foreground hover:text-foreground"
+                                )}
+                                onClick={() => { setFilterHour('all'); setCurrentPage(1); }}
+                            >
+                                All
+                            </Button>
+                            {filterOptions.hours.map(hour => (
+                                <Button 
+                                    key={hour}
+                                    variant={filterHour === hour ? 'default' : 'outline'}
+                                    size="sm"
+                                    className={cn(
+                                        "h-7 px-3 text-[10px] font-bold rounded-full transition-all",
+                                        filterHour === hour ? "shadow-md scale-105" : "text-muted-foreground hover:text-foreground"
+                                    )}
+                                    onClick={() => { setFilterHour(hour); setCurrentPage(1); }}
+                                >
+                                    {hour}:00
+                                </Button>
+                            ))}
                         </div>
                     </div>
                 </CardContent>
