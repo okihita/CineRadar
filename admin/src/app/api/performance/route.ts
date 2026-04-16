@@ -23,82 +23,124 @@ interface MovieWithStats {
     };
 }
 
+interface DiagnosticEntry {
+    id: string;
+    title: string;
+    has_metadata: boolean;
+    has_performance: boolean;
+    has_schedule: boolean;
+    showtimes_count: number;
+}
+
 export const dynamic = 'force-dynamic';
-export const revalidate = 300; // Cache for 5 minutes (300 seconds)
+export const revalidate = 0; 
 
 export async function GET() {
     try {
         const today = getTodayJakarta();
 
-        // 1. Get all performance metadata documents (Root Collection - V2)
-        // Optimized: Only get the top 60 most recently updated movies
-        const performanceDocs = (await firestoreRestClient.getCollectionWithQuery(
-            'movie_performance_v2',
-            'last_swept_at', 
-            60
-        )) as unknown as Array<{ id: string; last_swept_at?: string }>;
+        // 1. DISCOVERY: Get active schedule registry
+        const scheduleMoviesV2 = await firestoreRestClient.getSubCollection(`schedules_v2/${today}/movies`, ['id', 'name']);
+        const scheduledIds = new Set(scheduleMoviesV2.map(m => String(m.id)));
 
-        if (!performanceDocs || performanceDocs.length === 0) {
-            return NextResponse.json({ success: true, date: today, movies: [] });
-        }
+        // 2. DISCOVERY: Get historical performance context
+        const recentPerfDocs = await firestoreRestClient.getCollectionWithQuery('movie_performance_v2', 'last_swept_at', 100);
+        const performanceIds = new Set((recentPerfDocs as Array<{ id: string }>).map(d => d.id));
 
-        // 2. Fetch metadata and daily stats in parallel for ALL found movies
-        // We avoid batching here to maximize concurrency for the small doc set (~40-60 movies)
-        const moviesWithStats = await Promise.all(
-            performanceDocs.map(async (perfDoc) => {
+        // Combine for a master audit list
+        const masterAuditIds = new Set([...scheduledIds, ...performanceIds]);
+        
+        const diagnostic: DiagnosticEntry[] = [];
+        const validMovies: MovieWithStats[] = [];
+
+        // ENRICHMENT PHASE
+        await Promise.all(
+            Array.from(masterAuditIds).map(async (id) => {
                 try {
-                    // Fetch Movie Metadata AND Today's Stats in parallel
-                    const [metadata, todayStats] = await Promise.all([
-                        firestoreRestClient.getDocument('movies', perfDoc.id),
-                        firestoreRestClient.getDocument(`movie_performance_v2/${perfDoc.id}/days`, today)
+                    const [metadata, todayStats, scheduleV2] = await Promise.all([
+                        firestoreRestClient.getDocument('movies', id),
+                        firestoreRestClient.getDocument(`movie_performance_v2/${id}/days`, today),
+                        firestoreRestClient.getDocument(`schedules_v2/${today}/movies`, id)
                     ]);
 
-                    // Fallback to basic info if today stats aren't initialized yet
-                    // But we no longer fetch schedules_v2 here as it's too slow for a list view
-                    
-                    return {
-                        id: perfDoc.id,
-                        movie_id: perfDoc.id,
-                        title: metadata?.name || metadata?.title || `ID: ${perfDoc.id}`,
-                        poster: metadata?.poster || metadata?.poster_path || '',
-                        last_updated: perfDoc.last_swept_at || '',
-                        today: todayStats ? {
-                            date: todayStats.date || today,
-                            total_showtimes: todayStats.total_showtimes || 0,
-                            total_showtimes_scraped: todayStats.total_showtimes_scraped || 0,
-                            avg_occupancy_pct: todayStats.avg_occupancy_pct || 0,
-                            total_seats: todayStats.total_seats || 0,
-                            total_sold: todayStats.total_sold || 0,
-                            cities: todayStats.cities || [],
-                        } : undefined,
-                    };
+                    const hasMetadata = !!(metadata && (metadata.name || metadata.title));
+                    const hasPerformance = !!todayStats;
+                    const hasSchedule = scheduledIds.has(id);
+
+                    // Calculate accurate showtimes count
+                    let totalShowtimes = (todayStats?.total_showtimes as number) || 0;
+                    if (scheduleV2 && scheduleV2.cities) {
+                        const scheduledCount = Object.values(scheduleV2.cities as Record<string, unknown[]>)
+                            .flat()
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            .reduce((sum: number, theatre: any) => {
+                                const t = theatre as { rooms?: Array<{ all_showtimes?: unknown[] }> };
+                                return sum + (t.rooms || []).reduce((roomSum: number, room) => {
+                                    return roomSum + (room.all_showtimes?.length || 0);
+                                }, 0);
+                            }, 0);
+                        totalShowtimes = Math.max(totalShowtimes, scheduledCount as number);
+                    }
+
+                    // Add to diagnostic list
+                    diagnostic.push({
+                        id,
+                        title: (metadata?.name || metadata?.title || scheduleMoviesV2.find(m => m.id === id)?.name || `Unknown ID: ${id}`) as string,
+                        has_metadata: hasMetadata,
+                        has_performance: hasPerformance,
+                        has_schedule: hasSchedule,
+                        showtimes_count: totalShowtimes
+                    });
+
+                    // UI INTEGRITY: Only add to active dashboard if we have metadata AND active showtimes
+                    if (hasMetadata && totalShowtimes > 0) {
+                        validMovies.push({
+                            id,
+                            movie_id: id,
+                            title: (metadata.name || metadata.title) as string,
+                            poster: (metadata.poster || metadata.poster_path) as string || '',
+                            last_updated: (todayStats?.last_updated as string) || (metadata.scraped_at as string) || '',
+                            today: {
+                                date: (todayStats?.date as string) || today,
+                                total_showtimes: totalShowtimes,
+                                total_showtimes_scraped: (todayStats?.total_showtimes_scraped as number) || 0,
+                                avg_occupancy_pct: (todayStats?.avg_occupancy_pct as number) || 0,
+                                total_seats: (todayStats?.total_seats as number) || 0,
+                                total_sold: (todayStats?.total_sold as number) || 0,
+                                cities: (todayStats?.cities as string[]) || Object.keys(scheduleV2?.cities || {}),
+                            },
+                        });
+                    }
                 } catch (err) {
-                    console.error(`[API] Error fetching data for movie ${perfDoc.id}:`, err);
-                    return null;
+                    console.error(`[API] Error auditing movie ${id}:`, err);
                 }
             })
         );
 
-        // Filter out any failed fetches
-        const validMovies = moviesWithStats.filter(m => m !== null) as MovieWithStats[];
-
-        // 3. Return response with caching headers
-        const response = NextResponse.json({
-            success: true,
-            date: today,
-            count: validMovies.length,
-            movies: validMovies
+        // Deterministic sort for the UI
+        validMovies.sort((a, b) => {
+            const soldA = a.today?.total_sold || 0;
+            const soldB = b.today?.total_sold || 0;
+            if (soldB !== soldA) return soldB - soldA;
+            return a.title.localeCompare(b.title);
         });
 
-        // Set cache control for 5 minutes
-        response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+        // Deterministic sort for the diagnostic audit
+        diagnostic.sort((a, b) => a.title.localeCompare(b.title));
 
-        return response;
+        return NextResponse.json({
+            success: true,
+            date: today,
+            movies: validMovies,
+            diagnostic: {
+                total_discovered: masterAuditIds.size,
+                active_count: validMovies.length,
+                scheduled_count: scheduledIds.size,
+                items: diagnostic
+            }
+        });
     } catch (error) {
-        console.error('Error in /api/performance:', error);
-        return NextResponse.json(
-            { success: false, error: String(error) },
-            { status: 500 }
-        );
+        console.error('Error in /api/performance (Diagnostic):', error);
+        return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
     }
 }
