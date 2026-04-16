@@ -124,8 +124,11 @@ export function PerformanceTab() {
                         <div className="absolute inset-0 bg-green-500/20 blur-md rounded-full animate-pulse" />
                     </div>
                     <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 leading-none mb-1">National Pulse</p>
-                        <p className="text-xs font-bold text-green-600 uppercase tracking-tight">Market Live</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 leading-none mb-1">National Pulse Today</p>
+                        <div className="text-xs font-bold text-green-600 uppercase tracking-tight flex items-center gap-1.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                            Market Live
+                        </div>
                     </div>
                 </div>
 
