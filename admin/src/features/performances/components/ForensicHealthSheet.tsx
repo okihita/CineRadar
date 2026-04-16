@@ -43,18 +43,27 @@ interface ForensicHealthSheetProps {
 /**
  * Data Integrity Audit Panel
  * 
- * Uses Dialog as a functional replacement for Sheet.
+ * Provides visibility into why certain scheduled movies might be missing
+ * from the main dashboard grid.
  */
 export function ForensicHealthSheet({ diagnostic }: ForensicHealthSheetProps) {
     const [search, setSearch] = React.useState('');
+    const [showScheduledOnly, setShowScheduledOnly] = React.useState(true);
 
     const filteredItems = React.useMemo(() => {
-        if (!search) return diagnostic.items;
-        return diagnostic.items.filter(item => 
-            item.title.toLowerCase().includes(search.toLowerCase()) || 
-            item.id.includes(search)
-        );
-    }, [diagnostic.items, search]);
+        let items = diagnostic.items;
+        if (showScheduledOnly) {
+            items = items.filter(item => item.has_schedule);
+        }
+        if (search) {
+            const lowSearch = search.toLowerCase();
+            items = items.filter(item => 
+                item.title.toLowerCase().includes(lowSearch) || 
+                item.id.includes(lowSearch)
+            );
+        }
+        return items;
+    }, [diagnostic.items, search, showScheduledOnly]);
 
     const mismatches = diagnostic.scheduled_count - diagnostic.active_count;
 
@@ -110,36 +119,59 @@ export function ForensicHealthSheet({ diagnostic }: ForensicHealthSheetProps) {
                         </div>
                     </div>
 
-                    {/* Search */}
-                    <div className="relative mb-6">
-                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
-                        <input 
-                            type="text"
-                            placeholder="Search by title or ID..."
-                            className="w-full h-11 pl-11 pr-4 bg-muted/20 border border-border/50 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold placeholder:font-medium"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                        />
+                    {/* Filter & Search */}
+                    <div className="flex flex-col gap-3 mb-6">
+                        <div className="flex items-center justify-between px-1">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Data Filters</span>
+                            <label className="flex items-center gap-2 cursor-pointer group">
+                                <span className="text-[10px] font-bold text-muted-foreground group-hover:text-primary transition-colors">Scheduled Only</span>
+                                <input 
+                                    type="checkbox" 
+                                    checked={showScheduledOnly} 
+                                    onChange={(e) => setShowScheduledOnly(e.target.checked)}
+                                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                />
+                            </label>
+                        </div>
+                        <div className="relative">
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
+                            <input 
+                                type="text"
+                                placeholder="Search by title or ID..."
+                                className="w-full h-11 pl-11 pr-4 bg-muted/20 border border-border/50 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold placeholder:font-medium"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                            />
+                        </div>
                     </div>
 
                     {/* Audit List */}
                     <div className="space-y-3">
                         {filteredItems.map((item) => {
                             const isSynced = item.has_metadata && (item.has_performance || item.showtimes_count > 0);
+                            const isScheduledButMissing = item.has_schedule && !isSynced;
 
                             return (
                                 <div 
                                     key={item.id}
                                     className={cn(
                                         "p-4 rounded-2xl border transition-all flex flex-col gap-3",
-                                        isSynced ? "bg-background border-border/40 shadow-sm" : "bg-muted/5 border-dashed"
+                                        isSynced ? "bg-background border-border/40 shadow-sm" : "bg-muted/5 border-dashed",
+                                        isScheduledButMissing && "border-amber-500/50 bg-amber-500/[0.02]"
                                     )}
                                 >
                                     <div className="flex items-start justify-between">
                                         <div className="min-w-0">
-                                            <h4 className="text-sm font-black uppercase truncate pr-2 tracking-tight leading-none mb-1.5" title={item.title}>
-                                                {item.title}
-                                            </h4>
+                                            <div className="flex items-center gap-2 mb-1.5">
+                                                <h4 className="text-sm font-black uppercase truncate tracking-tight leading-none" title={item.title}>
+                                                    {item.title}
+                                                </h4>
+                                                {item.has_schedule && (
+                                                    <Badge className="h-4 px-1.5 bg-blue-500/10 text-blue-600 border-blue-500/20 text-[7px] font-black uppercase tracking-tighter">
+                                                        Today
+                                                    </Badge>
+                                                )}
+                                            </div>
                                             <p className="text-[10px] font-mono font-bold text-muted-foreground/40 tracking-tighter">{item.id}</p>
                                         </div>
                                         <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -169,10 +201,17 @@ export function ForensicHealthSheet({ diagnostic }: ForensicHealthSheetProps) {
                                         />
                                     </div>
 
-                                    {item.has_schedule && !item.has_metadata && (
-                                        <div className="flex items-center gap-2 mt-1 px-3 py-2 bg-amber-500/5 border border-amber-500/10 rounded-xl">
-                                            <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-                                            <span className="text-[10px] font-bold text-amber-600 uppercase tracking-tight">Awaiting Movie Scraper Enrichment</span>
+                                    {isScheduledButMissing && (
+                                        <div className="flex items-center gap-2 mt-1 px-3 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                                            <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] font-bold text-amber-700 uppercase tracking-tight">
+                                                    Scheduled but Missing from Dashboard
+                                                </span>
+                                                <span className="text-[8px] font-medium text-amber-600/70 uppercase">
+                                                    {!item.has_metadata ? "Reason: Awaiting Metadata Scraper" : "Reason: Awaiting Performance Aggregator"}
+                                                </span>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
