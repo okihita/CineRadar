@@ -8,7 +8,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Target, Trophy, Clapperboard, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
+import { Target, Trophy, Clapperboard, ChevronDown, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -100,9 +100,36 @@ export function PerformanceTab() {
     // Loading state
     if (loadingMovies) {
         return (
-            <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                <span className="ml-2 text-muted-foreground">Loading movies...</span>
+            <div className="space-y-12 animate-in fade-in duration-500">
+                <section>
+                    <div className="flex items-center gap-2 mb-4">
+                        <Trophy className="w-5 h-5 text-muted-foreground opacity-20" />
+                        <div className="h-6 w-48 bg-muted animate-pulse rounded" />
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        {[...Array(5)].map((_, i) => (
+                            <div key={i} className="space-y-3">
+                                <div className="aspect-[2/3] bg-muted animate-pulse rounded-md" />
+                                <div className="space-y-2">
+                                    <div className="h-4 w-full bg-muted animate-pulse rounded" />
+                                    <div className="h-3 w-2/3 bg-muted animate-pulse rounded opacity-60" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+
+                <section>
+                    <div className="flex items-center gap-2 mb-4">
+                        <Clapperboard className="w-5 h-5 text-muted-foreground opacity-20" />
+                        <div className="h-6 w-32 bg-muted animate-pulse rounded" />
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        {[...Array(6)].map((_, i) => (
+                            <div key={i} className="aspect-[2/3] bg-muted animate-pulse rounded-md" />
+                        ))}
+                    </div>
+                </section>
             </div>
         );
     }
