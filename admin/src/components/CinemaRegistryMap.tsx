@@ -204,8 +204,9 @@ function createPinContent(color: string, isSelected: boolean, markerLib: any): H
         scale: isSelected ? 1.3 : 1.0,
     });
 
-    // Modern way to set the glyph to avoid deprecation warning
-    pin.glyph = glyphSvg;
+    // Use glyphSrc to avoid deprecation warning for 'glyph' property
+    const svgString = new XMLSerializer().serializeToString(glyphSvg);
+    pin.glyphSrc = `data:image/svg+xml;base64,${btoa(svgString)}`;
 
     return pin.element;
 }

@@ -129,19 +129,38 @@ function parseDocument(doc: { name: string; fields?: Record<string, FirestoreVal
 
 export class FirestoreRestClient {
     /**
+     * Unified fetch helper with auth and cache: 'no-store'
+     */
+    private async _fetch(url: string | URL, options: RequestInit = {}): Promise<Response> {
+        const token = await getAccessToken();
+        const headers: HeadersInit = {
+            'Authorization': `Bearer ${token}`,
+            ...options.headers,
+        };
+
+        // Only add Content-Type if there's a body or it's a mutation
+        if (options.body || ['POST', 'PATCH', 'PUT'].includes(options.method || '')) {
+            (headers as Record<string, string>)['Content-Type'] = 'application/json';
+        }
+
+        return fetch(url.toString(), {
+            ...options,
+            headers,
+            cache: 'no-store',
+        });
+    }
+
+    /**
      * Get all documents from a collection (with pagination to get ALL docs)
      */
     async getCollection(collectionName: string, maskFields?: string[]): Promise<Record<string, unknown>[]> {
         try {
-            const token = await getAccessToken();
             const allDocuments: Record<string, unknown>[] = [];
             let pageToken: string | undefined;
 
-            // Firestore REST API has a default page size of ~100
-            // We need to paginate to get all documents
             do {
                 const url = new URL(`${FIRESTORE_BASE_URL}/${collectionName}`);
-                url.searchParams.set('pageSize', '500'); // Max allowed
+                url.searchParams.set('pageSize', '500');
 
                 if (maskFields && maskFields.length > 0) {
                     maskFields.forEach(field => {
@@ -153,10 +172,7 @@ export class FirestoreRestClient {
                     url.searchParams.set('pageToken', pageToken);
                 }
 
-                const response = await fetch(url.toString(), {
-                    headers: { 'Authorization': `Bearer ${token}` },
-                    cache: 'no-store',
-                });
+                const response = await this._fetch(url);
 
                 if (!response.ok) {
                     console.error(`Failed to get ${collectionName}: ${response.status}`);
@@ -167,7 +183,6 @@ export class FirestoreRestClient {
                 const documents = (data.documents || []).map(parseDocument);
                 allDocuments.push(...documents);
 
-                // Get next page token
                 pageToken = data.nextPageToken;
             } while (pageToken);
 
@@ -179,7 +194,7 @@ export class FirestoreRestClient {
     }
 
     /**
-     * Query collection with ordering and limit using Firestore REST runQuery
+     * Query collection with ordering and limit
      */
     async getCollectionWithQuery(
         collectionName: string,
@@ -187,8 +202,6 @@ export class FirestoreRestClient {
         limitCount: number = 100
     ): Promise<Record<string, unknown>[]> {
         try {
-            const token = await getAccessToken();
-
             const query = {
                 structuredQuery: {
                     from: [{ collectionId: collectionName }],
@@ -197,14 +210,9 @@ export class FirestoreRestClient {
                 },
             };
 
-            const response = await fetch(`${FIRESTORE_BASE_URL}:runQuery`, {
+            const response = await this._fetch(`${FIRESTORE_BASE_URL}:runQuery`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
                 body: JSON.stringify(query),
-                cache: 'no-store',
             });
 
             if (!response.ok) {
@@ -225,12 +233,10 @@ export class FirestoreRestClient {
     }
 
     /**
-     * Get collection document count using aggregation query
+     * Get collection document count
      */
     async getCollectionCount(collectionName: string): Promise<number> {
         try {
-            const token = await getAccessToken();
-
             const query = {
                 structuredAggregationQuery: {
                     structuredQuery: {
@@ -240,14 +246,9 @@ export class FirestoreRestClient {
                 },
             };
 
-            const response = await fetch(`${FIRESTORE_BASE_URL}:runAggregationQuery`, {
+            const response = await this._fetch(`${FIRESTORE_BASE_URL}:runAggregationQuery`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
                 body: JSON.stringify(query),
-                cache: 'no-store',
             });
 
             if (!response.ok) {
@@ -264,9 +265,11 @@ export class FirestoreRestClient {
         }
     }
 
+    /**
+     * Get documents from a collection group (recursive)
+     */
     async getCollectionGroup(collectionId: string): Promise<Record<string, unknown>[]> {
         try {
-            const token = await getAccessToken();
             const allDocuments: Record<string, unknown>[] = [];
             let lastDocName: string | undefined;
             const PAGE_SIZE = 1000;
@@ -287,14 +290,9 @@ export class FirestoreRestClient {
                     };
                 }
 
-                const response = await fetch(`${FIRESTORE_BASE_URL}:runQuery`, {
+                const response = await this._fetch(`${FIRESTORE_BASE_URL}:runQuery`, {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
                     body: JSON.stringify(query),
-                    cache: 'no-store',
                 });
 
                 if (!response.ok) {
@@ -322,7 +320,6 @@ export class FirestoreRestClient {
                     }
                 }
 
-                // If we got fewer results than requested, we've reached the end
                 if (resultsInPage < PAGE_SIZE) {
                     break;
                 }
@@ -334,13 +331,13 @@ export class FirestoreRestClient {
             return [];
         }
     }
+
+    /**
+     * Get a single document
+     */
     async getDocument(collectionName: string, documentId: string): Promise<Record<string, unknown> | null> {
         try {
-            const token = await getAccessToken();
-            const response = await fetch(`${FIRESTORE_BASE_URL}/${collectionName}/${documentId}`, {
-                headers: { 'Authorization': `Bearer ${token}` },
-                cache: 'no-store',
-            });
+            const response = await this._fetch(`${FIRESTORE_BASE_URL}/${collectionName}/${documentId}`);
 
             if (response.status === 404) {
                 return null;
@@ -372,13 +369,12 @@ export class FirestoreRestClient {
      */
     async getSubCollection(collectionPath: string, maskFields?: string[]): Promise<Record<string, unknown>[]> {
         try {
-            const token = await getAccessToken();
             const allDocuments: Record<string, unknown>[] = [];
             let pageToken: string | undefined;
 
             do {
                 const url = new URL(`${FIRESTORE_BASE_URL}/${collectionPath}`);
-                url.searchParams.set('pageSize', '500'); // Max allowed
+                url.searchParams.set('pageSize', '500');
                 
                 if (maskFields && maskFields.length > 0) {
                     maskFields.forEach(field => {
@@ -390,10 +386,7 @@ export class FirestoreRestClient {
                     url.searchParams.set('pageToken', pageToken);
                 }
 
-                const response = await fetch(url.toString(), {
-                    headers: { 'Authorization': `Bearer ${token}` },
-                    cache: 'no-store',
-                });
+                const response = await this._fetch(url);
 
                 if (!response.ok) {
                     console.error(`Failed to get sub-collection ${collectionPath}: ${response.status}`);
@@ -404,7 +397,6 @@ export class FirestoreRestClient {
                 const documents = (data.documents || []).map(parseDocument);
                 allDocuments.push(...documents);
 
-                // Get next page token
                 pageToken = data.nextPageToken;
             } while (pageToken);
 
@@ -451,12 +443,11 @@ export class FirestoreRestClient {
             }
             return { mapValue: { fields } };
         }
-        // Fallback to string
         return { stringValue: String(value) };
     }
 
     /**
-     * Update a document (merge mode - only updates specified fields)
+     * Update a document (merge mode)
      */
     async updateDocument(
         collectionName: string,
@@ -464,22 +455,15 @@ export class FirestoreRestClient {
         data: Record<string, unknown>
     ): Promise<boolean> {
         try {
-            const token = await getAccessToken();
-
-            // Convert data to Firestore format
             const fields: Record<string, FirestoreValue> = {};
             for (const [key, value] of Object.entries(data)) {
                 fields[key] = this.toFirestoreValue(value);
             }
 
-            const response = await fetch(
+            const response = await this._fetch(
                 `${FIRESTORE_BASE_URL}/${collectionName}/${documentId}?updateMask.fieldPaths=${Object.keys(data).join('&updateMask.fieldPaths=')}`,
                 {
                     method: 'PATCH',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
                     body: JSON.stringify({ fields }),
                 }
             );
