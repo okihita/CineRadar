@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Target, Users, Armchair, ChevronLeft, Globe, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { MovieSummaryCardWrapper } from './MovieSummaryCardWrapper';
+import { MovieSummaryCard } from './MovieSummaryCard';
 import { HistoryGrid } from './HistoryGrid';
 import { PerformanceTrendCharts } from './PerformanceTrendCharts';
-import { DailyStatsBannerWrapper } from './DailyStatsBannerWrapper';
+import { DailyStatsBanner } from './DailyStatsBanner';
 import { MovieSummary } from '../types/performance';
 import { formatCompactNumber, formatOccupancy } from '../utils/format';
 import { cn } from '@/lib/utils';
@@ -33,24 +33,24 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
     const [loadingHistory, setLoadingHistory] = useState(true);
 
     // 1. Fetch Movie Summary
-    useEffect(() => {
-        async function fetchMovie() {
-            try {
-                const res = await fetch(`/api/performance/${movieId}`);
-                const data = await res.json();
-                if (data.success) {
-                    setMovie(data.summary);
-                } else {
-                    console.error('Failed to load movie:', data.error);
-                }
-            } catch (e) {
-                console.error('Error fetching movie:', e);
-            } finally {
-                setLoadingMovie(false);
+    const fetchMovie = useCallback(async () => {
+        try {
+            const res = await fetch(`/api/performance/${movieId}`);
+            const data = await res.json();
+            if (data.success) {
+                setMovie(data.summary);
+            } else {
+                console.error('Failed to load movie:', data.error);
             }
+        } catch (e) {
+            console.error('Error fetching movie:', e);
         }
-        fetchMovie();
     }, [movieId]);
+
+    useEffect(() => {
+        setLoadingMovie(true);
+        fetchMovie().finally(() => setLoadingMovie(false));
+    }, [fetchMovie]);
 
     // 2. Fetch History
     useEffect(() => {
@@ -103,7 +103,7 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
                         <ChevronLeft className="w-5 h-5" />
                     </Button>
                     <div className="flex-1">
-                        <MovieSummaryCardWrapper movie={movie} />
+                        <MovieSummaryCard movie={movie} />
                     </div>
                 </div>
 
@@ -183,7 +183,7 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
             </div>
 
             {/* Marketing DNA Strip (Parity with Daily View) */}
-            <DailyStatsBannerWrapper 
+            <DailyStatsBanner
                 stats={{
                     id: movie.id,
                     movie_id: movie.movie_id,
@@ -195,7 +195,8 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
                     total_sold: movie.total_sold || 0,
                     cities: [],
                     marketing: movie.marketing
-                }} 
+                }}
+                onMarketingUpdate={fetchMovie}
             />
 
             {/* Visual Trends */}

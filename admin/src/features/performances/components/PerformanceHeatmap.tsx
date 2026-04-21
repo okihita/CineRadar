@@ -4,7 +4,7 @@ import React, { useMemo, useState, useRef } from "react";
 import { geoMercator, geoPath } from "d3-geo";
 import { ProvincePerformance } from "../hooks/useCityAggregation";
 
-interface IndonesiaMapProps {
+interface PerformanceHeatmapProps {
   provinceStats: ProvincePerformance[];
 }
 
@@ -22,7 +22,7 @@ interface GeoJsonCollection {
   features: GeoJsonFeature[];
 }
 
-export function IndonesiaMap({ provinceStats }: IndonesiaMapProps) {
+export function PerformanceHeatmap({ provinceStats }: PerformanceHeatmapProps) {
   const [geoJson, setGeoJson] = useState<GeoJsonCollection | null>(null);
   const [hoveredProvince, setHoveredProvince] =
     useState<ProvincePerformance | null>(null);

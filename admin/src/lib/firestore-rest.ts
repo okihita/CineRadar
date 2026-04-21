@@ -155,6 +155,7 @@ export class FirestoreRestClient {
 
                 const response = await fetch(url.toString(), {
                     headers: { 'Authorization': `Bearer ${token}` },
+                    cache: 'no-store',
                 });
 
                 if (!response.ok) {
@@ -203,6 +204,7 @@ export class FirestoreRestClient {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(query),
+                cache: 'no-store',
             });
 
             if (!response.ok) {
@@ -245,6 +247,7 @@ export class FirestoreRestClient {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(query),
+                cache: 'no-store',
             });
 
             if (!response.ok) {
@@ -291,6 +294,7 @@ export class FirestoreRestClient {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(query),
+                    cache: 'no-store',
                 });
 
                 if (!response.ok) {
@@ -335,6 +339,7 @@ export class FirestoreRestClient {
             const token = await getAccessToken();
             const response = await fetch(`${FIRESTORE_BASE_URL}/${collectionName}/${documentId}`, {
                 headers: { 'Authorization': `Bearer ${token}` },
+                cache: 'no-store',
             });
 
             if (response.status === 404) {
@@ -387,6 +392,7 @@ export class FirestoreRestClient {
 
                 const response = await fetch(url.toString(), {
                     headers: { 'Authorization': `Bearer ${token}` },
+                    cache: 'no-store',
                 });
 
                 if (!response.ok) {

@@ -5,8 +5,9 @@ import { APIProvider, Map, InfoWindow, useMap, useMapsLibrary } from '@vis.gl/re
 import { MarkerClusterer, SuperClusterAlgorithm } from '@googlemaps/markerclusterer';
 import { Theatre } from '@/types';
 import { ExternalLink, Navigation } from 'lucide-react';
+import { createPieChartSvg } from '@/lib/mapUtils';
 
-interface IndonesiaMapProps {
+interface CinemaRegistryMapProps {
     theatres: Theatre[];
     selectedTheatre: Theatre | null;
     onTheatreSelect: (theatre: Theatre) => void;
@@ -16,66 +17,6 @@ interface IndonesiaMapProps {
     center?: { lat: number; lng: number; zoom: number } | null;
     children?: React.ReactNode;
 }
-
-// Pie chart SVG generator for cluster markers (donut style)
-function createPieChartSvg(xxi: number, cgv: number, cine: number, total: number, size: number): string {
-    const radius = size / 2;
-    const center = radius;
-    const innerRadius = radius * 0.5;
-
-    // Determine if single chain
-    const chains = [xxi > 0, cgv > 0, cine > 0].filter(Boolean).length;
-
-    if (chains === 1) {
-        // Single chain: use same structure as multi-chain but with full 360° arc
-        const color = xxi > 0 ? '#CFAB7A' : cgv > 0 ? '#E03C31' : '#002069'; // XXI tan, CGV red, Cinépolis blue
-        const fullPath = describeArc(center, center, radius - 2, 0, 359.9); // Nearly full circle
-        return `
-            <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="${center}" cy="${center}" r="${radius}" fill="white" stroke="#e5e7eb" stroke-width="2"/>
-                <path d="${fullPath}" fill="${color}"/>
-                <circle cx="${center}" cy="${center}" r="${innerRadius}" fill="white"/>
-                <text x="${center}" y="${center + 4}" text-anchor="middle" font-size="${size * 0.3}" font-weight="bold" fill="#374151">${total}</text>
-            </svg>
-        `;
-    }
-
-    // Multi-chain: pie chart segments
-    const xxiRatio = xxi / total;
-    const cgvRatio = cgv / total;
-    const cineRatio = cine / total;
-
-    const xxiAngle = xxiRatio * 360;
-    const cgvAngle = cgvRatio * 360;
-
-    const xxiPath = xxiRatio > 0 ? describeArc(center, center, radius - 2, 0, xxiAngle) : '';
-    const cgvPath = cgvRatio > 0 ? describeArc(center, center, radius - 2, xxiAngle, xxiAngle + cgvAngle) : '';
-    const cinePath = cineRatio > 0 ? describeArc(center, center, radius - 2, xxiAngle + cgvAngle, 360) : '';
-
-    return `
-        <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="${center}" cy="${center}" r="${radius}" fill="white" stroke="#e5e7eb" stroke-width="2"/>
-            ${xxiRatio > 0 ? `<path d="${xxiPath}" fill="#CFAB7A"/>` : ''}
-            ${cgvRatio > 0 ? `<path d="${cgvPath}" fill="#E03C31"/>` : ''}
-            ${cineRatio > 0 ? `<path d="${cinePath}" fill="#002069"/>` : ''}
-            <circle cx="${center}" cy="${center}" r="${innerRadius}" fill="white"/>
-            <text x="${center}" y="${center + 4}" text-anchor="middle" font-size="${size * 0.3}" font-weight="bold" fill="#374151">${total}</text>
-        </svg>
-    `;
-}
-
-function describeArc(x: number, y: number, radius: number, startAngle: number, endAngle: number): string {
-    const start = polarToCartesian(x, y, radius, endAngle);
-    const end = polarToCartesian(x, y, radius, startAngle);
-    const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-    return `M ${x} ${y} L ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 0 ${end.x} ${end.y} Z`;
-}
-
-function polarToCartesian(cx: number, cy: number, r: number, angle: number) {
-    const rad = (angle - 90) * Math.PI / 180;
-    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
-}
-
 
 // Inner component that uses the map
 function ClusteredMarkers({ theatres, selectedTheatre, onTheatreSelect }: {
@@ -309,7 +250,17 @@ function MapController({ center }: { center?: { lat: number; lng: number; zoom: 
     return null;
 }
 
-export function IndonesiaMap({ theatres, selectedTheatre, onTheatreSelect, onViewDetails, apiKey, lastUpdated, center, children }: IndonesiaMapProps) {
+export function CinemaRegistryMap({ 
+    theatres, 
+    selectedTheatre, 
+    onTheatreSelect, 
+    onViewDetails, 
+    apiKey, 
+    lastUpdated,
+    center,
+    children 
+}: CinemaRegistryMapProps) {
+
     const [isDarkMode, setIsDarkMode] = useState(false);
 
     useEffect(() => {

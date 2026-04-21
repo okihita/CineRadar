@@ -6,7 +6,7 @@ import { ShowtimeSnapshot } from '../types/performance';
 
 import { useCityAggregation } from "../hooks/useCityAggregation";
 import { CityPotentialRadar } from "./CityPotentialRadar";
-import { IndonesiaMap } from "./IndonesiaMap";
+import { PerformanceHeatmap } from "./PerformanceHeatmap";
 
 interface NationalSeatAllocationProps {
   showtimes: ShowtimeSnapshot[];
@@ -56,7 +56,7 @@ export function NationalSeatAllocation({
                 <span className="text-[9px] text-muted-foreground font-mono">27%+</span>
               </div>
             </div>
-            <IndonesiaMap provinceStats={provinceStats} />
+            <PerformanceHeatmap provinceStats={provinceStats} />
           </div>
 
           {/* Radar Component */}

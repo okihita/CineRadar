@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
-import { MovieSummaryCardWrapper } from "./MovieSummaryCardWrapper";
-import { DailyStatsBannerWrapper } from "./DailyStatsBannerWrapper";
+import { MovieSummaryCard } from "./MovieSummaryCard";
+import { DailyStatsBanner } from "./DailyStatsBanner";
 import { ShowtimesDataFetcher } from "./ShowtimesDataFetcher";
 import { ShowtimesSkeleton } from "./skeletons/ShowtimesSkeleton";
 import { TelemetryHeader } from "./TelemetryHeader";
@@ -118,7 +118,7 @@ export async function DailyPerformanceDetail({
                 <ChevronLeft className="w-5 h-5" />
               </Button>
             </Link>
-            <MovieSummaryCardWrapper movie={movie} />
+            <MovieSummaryCard movie={movie} />
           </div>
 
           {/* 2. CENTER: Performance HUD (The "What") */}
@@ -187,14 +187,14 @@ export async function DailyPerformanceDetail({
 
         {/* Daily Stats Banner */}
         {dailyStats ? (
-          <DailyStatsBannerWrapper 
-            stats={{ 
-                ...dailyStats, 
-                id: movie.id, 
-                movie_id: movie.movie_id,
-                title: movie.title, 
-                marketing: movie.marketing 
-            }} 
+          <DailyStatsBanner
+            stats={{
+              ...dailyStats,
+              id: movie.id,
+              movie_id: movie.movie_id,
+              title: movie.title,
+              marketing: movie.marketing
+            }}
           />
         ) : (
           <div className="p-4 border rounded-md bg-muted/50 text-center text-sm text-muted-foreground">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Camera, MessageCircle, Hash, TrendingUp, Music, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MarketingMetadata } from '../types/social';
@@ -32,6 +33,7 @@ interface DailyStatsBannerProps {
  */
 export function DailyStatsBanner({ stats, onMarketingUpdate }: DailyStatsBannerProps) {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const router = useRouter();
 
     return (
         <div className="w-full bg-muted/20 border border-border/40 rounded-2xl overflow-hidden shadow-sm">
@@ -215,6 +217,7 @@ export function DailyStatsBanner({ stats, onMarketingUpdate }: DailyStatsBannerP
                 movieTitle={stats.title}
                 initialData={stats.marketing}
                 onSuccess={() => {
+                    router.refresh();
                     onMarketingUpdate?.();
                 }}
             />

@@ -41,7 +41,7 @@ export function DonutChart({ data, total, size = 160, defaultColors = [] }: Donu
     }, [data, total, cx, cy, outerR, innerR, defaultColors]);
 
     return (
-        <svg width={size} height={size} viewBox={`0 0 ${size} $ {size}`}>
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
             {segments.map(({ item, ratio, path, color }) => (
                 <g key={item.name}>
                     <path

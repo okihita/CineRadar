@@ -18,24 +18,23 @@ export function describeDonutArc(
     endAngle: number
 ): string {
     const toRad = (deg: number) => ((deg - 90) * Math.PI) / 180;
-    const outerStart = {
-        x: cx + outerR * Math.cos(toRad(startAngle)),
-        y: cy + outerR * Math.sin(toRad(startAngle)),
-    };
-    const outerEnd = {
-        x: cx + outerR * Math.cos(toRad(endAngle)),
-        y: cy + outerR * Math.sin(toRad(endAngle)),
-    };
-    const innerStart = {
-        x: cx + innerR * Math.cos(toRad(endAngle)),
-        y: cy + innerR * Math.sin(toRad(endAngle)),
-    };
-    const innerEnd = {
-        x: cx + innerR * Math.cos(toRad(startAngle)),
-        y: cy + innerR * Math.sin(toRad(startAngle)),
-    };
+    
+    // Outer arc points
+    const x1 = cx + outerR * Math.cos(toRad(startAngle));
+    const y1 = cy + outerR * Math.sin(toRad(startAngle));
+    const x2 = cx + outerR * Math.cos(toRad(endAngle));
+    const y2 = cy + outerR * Math.sin(toRad(endAngle));
+    
+    // Inner arc points
+    const x3 = cx + innerR * Math.cos(toRad(endAngle));
+    const y3 = cy + innerR * Math.sin(toRad(endAngle));
+    const x4 = cx + innerR * Math.cos(toRad(startAngle));
+    const y4 = cy + innerR * Math.sin(toRad(startAngle));
+    
     const largeArc = endAngle - startAngle > 180 ? 1 : 0;
-    return `M ${outerStart.x} ${outerStart.y} A ${outerR} ${outerR} 0 ${largeArc} 1 ${outerEnd.x} ${outerEnd.y} L ${innerStart.x} ${innerStart.y} A ${innerR} ${innerR} 0 ${largeArc} 0 ${innerEnd.x} ${innerEnd.y} Z`;
+    
+    // Path: Move to outer start, Arc to outer end, Line to inner end, Arc back to inner start, Close
+    return `M ${x1} ${y1} A ${outerR} ${outerR} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${innerR} ${innerR} 0 ${largeArc} 0 ${x4} ${y4} Z`;
 }
 
 /**
@@ -82,7 +81,10 @@ export function createPieChartSvg(
 ): string {
     const cx = size / 2;
     const cy = size / 2;
-    const outerR = size / 2 - 2;
+    // Reduce radius by 1px (half of 2px stroke) to prevent clipping at viewBox edges
+    const radius = (size - 2) / 2;
+    // outerR should be slightly smaller than the circle's inner edge for a clean look
+    const outerR = radius - 1;
     const innerR = outerR * 0.5;
 
     const segments: { count: number; color: string }[] = [
@@ -92,7 +94,7 @@ export function createPieChartSvg(
     ].filter((s) => s.count > 0);
 
     if (segments.length === 0) {
-        return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+        return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
       <circle cx="${cx}" cy="${cy}" r="${outerR}" fill="#666"/>
     </svg>`;
     }
@@ -103,17 +105,24 @@ export function createPieChartSvg(
     for (const segment of segments) {
         const angle = (segment.count / total) * 360;
         if (angle > 0) {
-            const path = describeDonutArc(cx, cy, outerR, innerR, currentAngle, currentAngle + angle);
+            // Handle near-full circles to avoid SVG arc glitching at exactly 360
+            const effectiveAngle = angle >= 360 ? 359.99 : angle;
+            const path = describeDonutArc(cx, cy, outerR, innerR, currentAngle, currentAngle + effectiveAngle);
             paths += `<path d="${path}" fill="${segment.color}"/>`;
             currentAngle += angle;
         }
     }
 
-    // Center count
-    const fontSize = size * 0.28;
-    paths += `<text x="${cx}" y="${cy + fontSize * 0.35}" text-anchor="middle" font-size="${fontSize}" font-weight="bold" fill="currentColor">${total}</text>`;
-
-    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">${paths}</svg>`;
+    // Center count and background setup
+    const fontSize = size * 0.3;
+    
+    return `
+        <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="${cx}" cy="${cy}" r="${radius}" fill="white" stroke="#e5e7eb" stroke-width="2"/>
+            ${paths}
+            <text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="${fontSize}" font-weight="bold" fill="#374151">${total}</text>
+        </svg>
+    `.trim();
 }
 
 /**

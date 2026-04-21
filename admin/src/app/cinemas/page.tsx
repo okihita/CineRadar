@@ -3,7 +3,7 @@
 import { useEffect, useCallback, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { ChevronUp, MapPin } from 'lucide-react';
-import { IndonesiaMap } from '@/components/indonesia-map';
+import { CinemaRegistryMap } from '@/components/CinemaRegistryMap';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { PageHeader } from '@/components/PageHeader';
 import { getRegion } from '@/lib/regions';
@@ -123,7 +123,7 @@ function CinemasPageContent() {
             </div>
 
             <Card className="overflow-hidden border shadow-lg rounded-2xl aspect-[21/9] min-h-[500px] relative group">
-                <IndonesiaMap
+                <CinemaRegistryMap
                     theatres={mapTheatres}
                     selectedTheatre={store.selectedTheatre}
                     onTheatreSelect={store.setSelectedTheatre}
@@ -142,7 +142,7 @@ function CinemasPageContent() {
                             <RegionBreakdownCard regionBreakdown={regionBreakdown} totalTheatres={theatres.length} />
                         </div>
                     </div>
-                </IndonesiaMap>
+                </CinemaRegistryMap>
             </Card>
 
             <div className="pt-4">
