@@ -9,6 +9,7 @@ import { HistoryGrid } from './HistoryGrid';
 import { PerformanceTrendCharts } from './PerformanceTrendCharts';
 import { DailyStatsBanner } from './DailyStatsBanner';
 import { MovieSummary } from '../types/performance';
+import { getOccupancyColor } from '../utils/colors';
 import { formatCompactNumber, formatOccupancy } from '../utils/format';
 import { cn } from '@/lib/utils';
 
@@ -118,11 +119,11 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
                         <div className="flex items-baseline gap-0.5">
                             <span className={cn(
                                 "text-xl font-black font-mono tracking-tighter",
-                                (movie.avg_occupancy_pct || 0) >= 50 ? "text-green-600" : 
-                                (movie.avg_occupancy_pct || 0) >= 20 ? "text-amber-600" : "text-red-600"
+                                getOccupancyColor(movie.avg_occupancy_pct || 0)
                             )}>
                                 {formatOccupancy(movie.avg_occupancy_pct)}
                             </span>
+
                             <span className="text-[10px] font-bold opacity-40 uppercase">%</span>
                         </div>
                     </div>

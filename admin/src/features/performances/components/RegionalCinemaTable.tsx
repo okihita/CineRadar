@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Building2, ChevronRight } from 'lucide-react';
 import { ShowtimeSnapshot } from '../types/performance';
 import { calculateForensicAggregation } from '../utils/performance-math';
+import { getOccupancyColor } from '../utils/colors';
 import { ForensicAuditProgress } from './ForensicAuditProgress';
 import { cn } from '@/lib/utils';
 
@@ -108,15 +109,15 @@ export function RegionalCinemaTable({ showtimes, onDrillDown }: RegionalCinemaTa
                                     {cinema.total_sold.toLocaleString()}
                                     <span className="text-muted-foreground/30 font-normal ml-1">/{cinema.total_seats.toLocaleString()}</span>
                                 </td>
-                                <td className="p-4 text-right">
+                                <td className="py-4 px-4 text-right">
                                     <span className={cn(
-                                        "font-mono font-black text-sm",
-                                        cinema.true_occupancy_pct >= 50 ? 'text-green-600' : 
-                                        cinema.true_occupancy_pct >= 20 ? 'text-amber-600' : 'text-red-600'
+                                        "text-xs font-black font-mono tabular-nums",
+                                        getOccupancyColor(cinema.true_occupancy_pct)
                                     )}>
                                         {cinema.true_occupancy_pct.toFixed(1)}%
                                     </span>
                                 </td>
+
                                 <td className="p-4">
                                     <ChevronRight className="w-4 h-4 text-muted-foreground/20 group-hover:text-primary transition-all group-hover:translate-x-0.5" />
                                 </td>

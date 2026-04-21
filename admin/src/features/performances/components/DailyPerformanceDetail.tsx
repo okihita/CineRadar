@@ -9,6 +9,7 @@ import { DateNavigatorHeader } from "./DateNavigatorHeader";
 import { firestoreRestClient } from "@/lib/firestore-rest";
 import { MovieSummary } from "../types/performance";
 import { formatCompactNumber, formatOccupancy } from "../utils/format";
+import { getOccupancyColor } from "../utils/colors";
 import { Target, Users, Armchair, MapPin, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -133,8 +134,7 @@ export async function DailyPerformanceDetail({
                     <div className="flex items-baseline gap-0.5">
                         <span className={cn(
                             "text-xl font-black font-mono tracking-tighter",
-                            dailyStats.avg_occupancy_pct >= 50 ? "text-green-600" : 
-                            dailyStats.avg_occupancy_pct >= 20 ? "text-amber-600" : "text-red-600"
+                            getOccupancyColor(dailyStats.avg_occupancy_pct)
                         )}>
                             {formatOccupancy(dailyStats.avg_occupancy_pct)}
                         </span>
