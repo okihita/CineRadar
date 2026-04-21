@@ -112,7 +112,7 @@ function ClusteredMarkers({ theatres, selectedTheatre, onTheatreSelect }: {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (marker as any)._theatre = theatre;
 
-            marker.addListener('click', () => onTheatreSelect(theatre));
+            marker.addListener('gmp-click', () => onTheatreSelect(theatre));
 
             newMarkers.push(marker);
             markerRecord[theatre.theatre_id] = marker;
@@ -208,7 +208,7 @@ function createPinContent(color: string, isSelected: boolean, markerLib: any): H
     const svgString = new XMLSerializer().serializeToString(glyphSvg);
     pin.glyphSrc = `data:image/svg+xml;base64,${btoa(svgString)}`;
 
-    return pin.element;
+    return pin;
 }
 
 
