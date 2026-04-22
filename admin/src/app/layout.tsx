@@ -23,10 +23,10 @@ export const metadata: Metadata = {
   },
 };
 
-// Blocking script to prevent flash of wrong theme on initial load
-// This runs before React hydrates to immediately apply the correct theme
-const themeScript = `
+// Blocking script to prevent flash of wrong theme and suppress internal performance measurement bugs
+const initScript = `
 (function() {
+    // 1. Dark Mode initialization
     const STORAGE_KEY = 'cineradar-dark-mode';
     const stored = localStorage.getItem(STORAGE_KEY);
     let dark;
@@ -36,6 +36,22 @@ const themeScript = `
         dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     }
     document.documentElement.classList.toggle('dark', dark);
+
+    // 2. Suppress Next.js 16/Turbopack "negative time stamp" measurement error
+    if (typeof window !== 'undefined' && window.performance && window.performance.measure) {
+        const originalMeasure = window.performance.measure;
+        window.performance.measure = function(name, start, end) {
+            try {
+                return originalMeasure.call(window.performance, name, start, end);
+            } catch (e) {
+                // Silently catch the "negative time stamp" error to prevent console spam/crashes
+                if (e instanceof Error && e.message.includes('negative time stamp')) {
+                    return;
+                }
+                throw e;
+            }
+        };
+    }
 })();
 `;
 
@@ -47,7 +63,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script dangerouslySetInnerHTML={{ __html: initScript }} />
       </head>
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
