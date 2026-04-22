@@ -3,7 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Clapperboard, Users } from 'lucide-react';
+import { Clapperboard, Users, Zap } from 'lucide-react';
 import { formatCompactNumber, formatOccupancy } from '../../utils/format';
 import { getOccupancyColor } from '../../utils/colors';
 import { MovieWithStats } from '../../types/performance';
@@ -54,17 +54,21 @@ export function MarketGrid({ movies }: MarketGridProps) {
 
                         <div className="px-1">
                             <h3 className="text-xs font-bold leading-tight line-clamp-1 mb-1 group-hover:text-primary transition-colors">{movie.title}</h3>
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-1">
                                     <Users className="w-2.5 h-2.5 text-muted-foreground/60" />
                                     <span className="text-[10px] font-black font-mono text-muted-foreground tabular-nums">
                                         {formatCompactNumber(movie.today?.total_sold || 0)}
                                     </span>
                                 </div>
-                                <span className="text-[8px] font-black text-muted-foreground/30 uppercase tracking-tighter">
-                                    {movie.today?.total_showtimes || 0} Shows
-                                </span>
+                                <div className="flex items-center gap-1">
+                                    <Zap className="w-2.5 h-2.5 text-amber-500/50" />
+                                    <span className="text-[10px] font-black font-mono text-muted-foreground tabular-nums">
+                                        {movie.today?.total_showtimes || 0}
+                                    </span>
+                                </div>
                             </div>
+
                         </div>
                     </div>
                 ))}

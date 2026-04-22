@@ -3,7 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Trophy, Target, Users, TrendingUp } from 'lucide-react';
+import { Trophy, Target, Users, TrendingUp, Zap } from 'lucide-react';
 import { formatCompactNumber, formatOccupancy } from '../../utils/format';
 import { getOccupancyColor } from '../../utils/colors';
 import { MovieWithStats } from '../../types/performance';
@@ -83,13 +83,23 @@ export function PerformanceBentoGrid({ movies }: PerformanceBentoGridProps) {
                                                 {formatOccupancy(podium[0].today?.avg_occupancy_pct)}<span className="text-sm ml-0.5 opacity-40">%</span>
                                             </p>
                                         </div>
-                                        <div className="space-y-1 text-right">
-                                            <p className="text-[9px] font-black text-white/30 uppercase tracking-widest flex items-center gap-1.5 justify-end">
-                                                <Users className="w-3 h-3" /> Audience
-                                            </p>
-                                            <p className="text-2xl font-black font-mono text-white leading-none">
-                                                {formatCompactNumber(podium[0].today?.total_sold || 0)}
-                                            </p>
+                                        <div className="flex gap-8 text-right">
+                                            <div className="space-y-1">
+                                                <p className="text-[9px] font-black text-white/30 uppercase tracking-widest flex items-center gap-1.5 justify-end">
+                                                    <Zap className="w-3 h-3" /> Shows
+                                                </p>
+                                                <p className="text-2xl font-black font-mono text-white leading-none">
+                                                    {podium[0].today?.total_showtimes.toLocaleString()}
+                                                </p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-[9px] font-black text-white/30 uppercase tracking-widest flex items-center gap-1.5 justify-end">
+                                                    <Users className="w-3 h-3" /> Audience
+                                                </p>
+                                                <p className="text-2xl font-black font-mono text-white leading-none">
+                                                    {formatCompactNumber(podium[0].today?.total_sold || 0)}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -117,7 +127,7 @@ export function PerformanceBentoGrid({ movies }: PerformanceBentoGridProps) {
                                     <h4 className="text-xl font-black tracking-tight line-clamp-1 mb-4 group-hover:text-primary transition-colors">
                                         {movie.title}
                                     </h4>
-                                    <div className="flex items-center gap-8">
+                                    <div className="flex items-center gap-6">
                                         <div>
                                             <p className="text-[8px] font-black text-muted-foreground/50 uppercase tracking-widest mb-0.5">OCR</p>
                                             <p className={cn("text-xl font-black font-mono leading-none", getOccupancyColor(movie.today?.avg_occupancy_pct || 0))}>
@@ -126,7 +136,14 @@ export function PerformanceBentoGrid({ movies }: PerformanceBentoGridProps) {
                                         </div>
                                         <div className="h-6 w-px bg-border/40" />
                                         <div>
-                                            <p className="text-[8px] font-black text-muted-foreground/50 uppercase tracking-widest mb-0.5">Tickets Sold</p>
+                                            <p className="text-[8px] font-black text-muted-foreground/50 uppercase tracking-widest mb-0.5">Shows</p>
+                                            <p className="text-xl font-black font-mono text-foreground leading-none">
+                                                {movie.today?.total_showtimes.toLocaleString()}
+                                            </p>
+                                        </div>
+                                        <div className="h-6 w-px bg-border/40" />
+                                        <div>
+                                            <p className="text-[8px] font-black text-muted-foreground/50 uppercase tracking-widest mb-0.5">Audience</p>
                                             <p className="text-xl font-black font-mono text-foreground leading-none">
                                                 {formatCompactNumber(movie.today?.total_sold || 0)}
                                             </p>
