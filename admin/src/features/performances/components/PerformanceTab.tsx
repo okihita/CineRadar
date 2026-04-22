@@ -49,8 +49,8 @@ export function PerformanceTab() {
     }, [movies]);
 
     // --- Slicing for Bento vs Grid ---
-    const bentoMovies = movies.slice(0, 6);
-    const gridMovies = movies.slice(6);
+    const bentoMovies = movies.slice(0, 3);
+    const gridMovies = movies.slice(3);
 
     // Loading Skeleton
     if (loadingMovies) {
