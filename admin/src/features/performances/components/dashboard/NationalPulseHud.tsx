@@ -12,6 +12,7 @@ interface NationalPulseHudProps {
     totalShows: number;
     activeCount: number;
     diagnostic?: DiagnosticData | null;
+    telemetry?: { elapsed: number; size: number } | null;
 }
 
 export function NationalPulseHud({ 
@@ -19,7 +20,8 @@ export function NationalPulseHud({
     totalSold, 
     totalShows, 
     activeCount,
-    diagnostic 
+    diagnostic,
+    telemetry
 }: NationalPulseHudProps) {
     return (
         <div className="flex flex-wrap items-center gap-6 px-6 py-4 bg-muted/20 border border-border/40 rounded-2xl shadow-sm">
@@ -30,9 +32,16 @@ export function NationalPulseHud({
                 </div>
                 <div>
                     <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 leading-none mb-1">National Pulse Today</p>
-                    <div className="text-xs font-bold text-green-600 uppercase tracking-tight flex items-center gap-1.5">
-                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                        Market Live
+                    <div className="flex items-center gap-2">
+                        <div className="text-xs font-bold text-green-600 uppercase tracking-tight flex items-center gap-1.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                            Live
+                        </div>
+                        {telemetry && (
+                            <div className="text-[9px] font-mono text-muted-foreground px-1.5 py-0.5 bg-background/50 rounded border border-border/30">
+                                {telemetry.elapsed.toFixed(2)}s | {telemetry.size.toFixed(0)}KB
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

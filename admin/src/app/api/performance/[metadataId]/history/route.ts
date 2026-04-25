@@ -29,8 +29,10 @@ export async function GET(
 
         return NextResponse.json({
             success: true,
-            movieId: metadataId,
-            history: days
+            data: {
+                movieId: metadataId,
+                history: days
+            }
         });
     } catch (error) {
         console.error(`Error fetching history for ${metadataId} (V2):`, error);

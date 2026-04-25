@@ -114,7 +114,7 @@ function parseValue(value: FirestoreValue): unknown {
     return null;
 }
 
-function parseDocument(doc: { name: string; fields?: Record<string, FirestoreValue> }): Record<string, unknown> {
+function parseDocument<T = Record<string, unknown>>(doc: { name: string; fields?: Record<string, FirestoreValue> }): T {
     const id = doc.name.split('/').pop() || '';
     const data: Record<string, unknown> = { id };
 
@@ -124,7 +124,7 @@ function parseDocument(doc: { name: string; fields?: Record<string, FirestoreVal
         }
     }
 
-    return data;
+    return data as T;
 }
 
 export class FirestoreRestClient {
@@ -153,9 +153,9 @@ export class FirestoreRestClient {
     /**
      * Get all documents from a collection (with pagination to get ALL docs)
      */
-    async getCollection(collectionName: string, maskFields?: string[]): Promise<Record<string, unknown>[]> {
+    async getCollection<T = Record<string, unknown>>(collectionName: string, maskFields?: string[]): Promise<T[]> {
         try {
-            const allDocuments: Record<string, unknown>[] = [];
+            const allDocuments: T[] = [];
             let pageToken: string | undefined;
 
             do {
@@ -180,7 +180,7 @@ export class FirestoreRestClient {
                 }
 
                 const data = await response.json();
-                const documents = (data.documents || []).map(parseDocument);
+                const documents = (data.documents || []).map((doc: { name: string; fields?: Record<string, FirestoreValue> }) => parseDocument<T>(doc));
                 allDocuments.push(...documents);
 
                 pageToken = data.nextPageToken;
@@ -196,11 +196,11 @@ export class FirestoreRestClient {
     /**
      * Query collection with ordering and limit
      */
-    async getCollectionWithQuery(
+    async getCollectionWithQuery<T = Record<string, unknown>>(
         collectionName: string,
         orderByField: string,
         limitCount: number = 100
-    ): Promise<Record<string, unknown>[]> {
+    ): Promise<T[]> {
         try {
             const query = {
                 structuredQuery: {
@@ -224,7 +224,7 @@ export class FirestoreRestClient {
             return results
                 .filter((r: { document?: unknown }) => r.document)
                 .map((r: { document: { name: string; fields: Record<string, FirestoreValue> } }) =>
-                    parseDocument(r.document)
+                    parseDocument<T>(r.document)
                 );
         } catch (error) {
             console.error(`Error querying ${collectionName}:`, error);
@@ -268,9 +268,9 @@ export class FirestoreRestClient {
     /**
      * Get documents from a collection group (recursive)
      */
-    async getCollectionGroup(collectionId: string): Promise<Record<string, unknown>[]> {
+    async getCollectionGroup<T = Record<string, unknown>>(collectionId: string): Promise<T[]> {
         try {
-            const allDocuments: Record<string, unknown>[] = [];
+            const allDocuments: T[] = [];
             let lastDocName: string | undefined;
             const PAGE_SIZE = 1000;
 
@@ -309,11 +309,11 @@ export class FirestoreRestClient {
                 const resultsInPage = results.length;
                 for (const r of results) {
                     if (r.document) {
-                        const parsed = parseDocument(r.document);
+                        const parsed = parseDocument<T>(r.document);
                         const pathParts = r.document.name.split('/');
                         if (pathParts.length >= 4) {
-                            parsed._parent_id = pathParts[pathParts.length - 3];
-                            parsed._path = r.document.name;
+                            (parsed as Record<string, unknown>)._parent_id = pathParts[pathParts.length - 3];
+                            (parsed as Record<string, unknown>)._path = r.document.name;
                         }
                         allDocuments.push(parsed);
                         lastDocName = r.document.name;
@@ -335,7 +335,7 @@ export class FirestoreRestClient {
     /**
      * Get a single document
      */
-    async getDocument(collectionName: string, documentId: string): Promise<Record<string, unknown> | null> {
+    async getDocument<T = Record<string, unknown>>(collectionName: string, documentId: string): Promise<T | null> {
         try {
             const response = await this._fetch(`${FIRESTORE_BASE_URL}/${collectionName}/${documentId}`);
 
@@ -349,7 +349,7 @@ export class FirestoreRestClient {
             }
 
             const doc = await response.json();
-            return parseDocument(doc);
+            return parseDocument<T>(doc);
         } catch (error) {
             console.error(`Error getting ${collectionName}/${documentId}:`, error);
             return null;
@@ -359,17 +359,17 @@ export class FirestoreRestClient {
     /**
      * Get a single sample document from a collection
      */
-    async getSampleDocument(collectionName: string): Promise<Record<string, unknown> | null> {
-        const docs = await this.getCollectionWithQuery(collectionName, '__name__', 1);
+    async getSampleDocument<T = Record<string, unknown>>(collectionName: string): Promise<T | null> {
+        const docs = await this.getCollectionWithQuery<T>(collectionName, '__name__', 1);
         return docs.length > 0 ? docs[0] : null;
     }
 
     /**
      * Get all documents from a sub-collection (with optional field masking)
      */
-    async getSubCollection(collectionPath: string, maskFields?: string[]): Promise<Record<string, unknown>[]> {
+    async getSubCollection<T = Record<string, unknown>>(collectionPath: string, maskFields?: string[]): Promise<T[]> {
         try {
-            const allDocuments: Record<string, unknown>[] = [];
+            const allDocuments: T[] = [];
             let pageToken: string | undefined;
 
             do {
@@ -394,7 +394,7 @@ export class FirestoreRestClient {
                 }
 
                 const data = await response.json();
-                const documents = (data.documents || []).map(parseDocument);
+                const documents = (data.documents || []).map((doc: { name: string; fields?: Record<string, FirestoreValue> }) => parseDocument<T>(doc));
                 allDocuments.push(...documents);
 
                 pageToken = data.nextPageToken;

@@ -130,13 +130,15 @@ export async function GET() {
 
         return NextResponse.json({
             success: true,
-            date: today,
-            movies: validMovies,
-            diagnostic: {
-                total_discovered: masterAuditIds.size,
-                active_count: validMovies.length,
-                scheduled_count: scheduledIds.size,
-                items: diagnostic
+            data: {
+                date: today,
+                movies: validMovies,
+                diagnostic: {
+                    total_discovered: masterAuditIds.size,
+                    active_count: validMovies.length,
+                    scheduled_count: scheduledIds.size,
+                    items: diagnostic
+                }
             }
         });
     } catch (error) {

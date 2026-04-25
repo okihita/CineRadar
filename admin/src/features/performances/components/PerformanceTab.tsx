@@ -13,21 +13,31 @@ import { PerformanceBentoGrid } from './dashboard/PerformanceBentoGrid';
 import { MarketGrid } from './dashboard/MarketGrid';
 import { ForensicHealthSheet } from './ForensicHealthSheet';
 import { MovieWithStats, DiagnosticData } from '../types/performance';
+import { ApiResponse } from '@/types';
 
 export function PerformanceTab() {
     const [movies, setMovies] = useState<MovieWithStats[]>([]);
     const [diagnostic, setDiagnostic] = useState<DiagnosticData | null>(null);
     const [loadingMovies, setLoadingMovies] = useState(true);
+    const [telemetry, setTelemetry] = useState<{ elapsed: number; size: number } | null>(null);
 
     // 1. Fetch Movies List (Filtered to Active by API)
     useEffect(() => {
         async function fetchMovies() {
+            const start = performance.now();
             try {
                 const res = await fetch('/api/performance');
-                const data = await res.json();
-                if (data.success) {
-                    setMovies(data.movies);
-                    setDiagnostic(data.diagnostic);
+                const text = await res.text();
+                const result: ApiResponse<{ movies: MovieWithStats[]; diagnostic: DiagnosticData }> = JSON.parse(text);
+
+                const end = performance.now();
+                if (result.success) {
+                    setMovies(result.data.movies);
+                    setDiagnostic(result.data.diagnostic);
+                    setTelemetry({
+                        elapsed: (end - start) / 1000,
+                        size: new Blob([text]).size / 1024
+                    });
                 }
             } catch (e) {
                 console.error(String(e));
@@ -37,6 +47,7 @@ export function PerformanceTab() {
         }
         fetchMovies();
     }, []);
+
 
     // --- Aggregated National Pulse ---
     const nationalPulse = useMemo(() => {
@@ -87,6 +98,7 @@ export function PerformanceTab() {
                 totalShows={nationalPulse.totalShows}
                 activeCount={nationalPulse.activeCount}
                 diagnostic={diagnostic}
+                telemetry={telemetry}
             />
 
             {/* 2. THE INSIGHT BENTO (Top 6) */}

@@ -9,10 +9,16 @@ export async function GET() {
         const docs = await firestoreRestClient.getCollectionWithQuery('scraper_logs', 'date', 30);
 
         return NextResponse.json({
-            logs: docs
+            success: true,
+            data: {
+                runs: docs
+            }
         });
     } catch (error) {
         console.error('Error fetching scraper logs:', error);
-        return NextResponse.json({ logs: [] }, { status: 500 });
+        return NextResponse.json(
+            { success: false, error: 'Failed to fetch scraper logs' },
+            { status: 500 }
+        );
     }
 }

@@ -90,7 +90,7 @@ export async function GET(
 
         return NextResponse.json({
             success: true,
-            summary
+            data: { summary }
         });
     } catch (error) {
         console.error('Error fetching movie performance V2 detail:', error);
@@ -184,8 +184,10 @@ export async function PATCH(
 
         return NextResponse.json({
             success: true,
-            message: 'Movie performance V2 updated successfully',
-            updatedFields: Object.keys(updateData),
+            data: {
+                message: 'Movie performance V2 updated successfully',
+                updatedFields: Object.keys(updateData),
+            }
         });
     } catch (error) {
         console.error('Error updating movie performance V2:', error);

@@ -34,3 +34,7 @@ export interface ScraperRun {
     showtimes_scraped?: number;
     showtimes_success?: number;
 }
+
+export type ApiResponse<T> = 
+    | { success: true; data: T }
+    | { success: false; error: string };

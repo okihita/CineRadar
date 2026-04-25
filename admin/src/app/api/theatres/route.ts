@@ -54,11 +54,14 @@ export async function GET() {
             };
         });
 
-        return NextResponse.json(theatres);
+        return NextResponse.json({
+            success: true,
+            data: theatres
+        });
     } catch (error) {
         console.error('Error fetching augmented theatres:', error);
         return NextResponse.json(
-            { error: 'Failed to fetch theatres' },
+            { success: false, error: 'Failed to fetch theatres' },
             { status: 500 }
         );
     }

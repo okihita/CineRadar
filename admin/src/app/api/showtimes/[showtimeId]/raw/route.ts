@@ -147,7 +147,7 @@ export async function GET(
             }
         }
 
-        const response: RawShowtimeResponse = {
+        const showtimeData: RawShowtimeResponse = {
             showtimeId: String(data.showtime_id),
             movieTitle: String(data.movie_title),
             theatreName: String(data.theatre_name),
@@ -168,12 +168,16 @@ export async function GET(
             inferredStudioId,
         };
 
-        return NextResponse.json(response);
-    } catch (error) {
+        return NextResponse.json({
+            success: true,
+            data: showtimeData
+        });
+        } catch (error) {
         console.error('Error fetching showtime raw data:', error);
         return NextResponse.json(
-            { error: 'Failed to fetch showtime data' },
+            { success: false, error: 'Failed to fetch showtime data' },
             { status: 500 }
         );
-    }
-}
+        }
+        }
+
