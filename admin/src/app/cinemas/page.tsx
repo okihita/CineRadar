@@ -127,7 +127,6 @@ function CinemasPageContent() {
                     theatres={mapTheatres}
                     selectedTheatre={store.selectedTheatre}
                     onTheatreSelect={store.setSelectedTheatre}
-                    onViewDetails={(theatre: Theatre) => window.open(`/cinemas/${theatre.theatre_id}`, '_blank')}
                     apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}
                     lastUpdated={lastUpdated}
                     center={store.mapCenter}

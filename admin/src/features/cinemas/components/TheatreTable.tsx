@@ -20,7 +20,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import Link from 'next/link';
 import type { Theatre } from '../';
 
 interface TheatreTableProps {
@@ -209,17 +208,16 @@ export function TheatreTable({
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Link href={`/cinemas/${theatre.theatre_id}`}>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 gap-2 px-3 text-[10px] font-bold uppercase tracking-tight border-primary/20 hover:bg-primary/5 text-muted-foreground hover:text-primary transition-all shadow-sm"
-                        >
-                          Intelligence
-                          <ExternalLink className="w-3 h-3 opacity-50" />
-                        </Button>
-                      </Link>
+                    <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                      <a 
+                        href={`/cinemas/${theatre.theatre_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center gap-2 h-8 px-3 text-[10px] font-bold uppercase tracking-tight border border-primary/20 bg-background hover:bg-primary/5 text-muted-foreground hover:text-primary transition-all shadow-sm rounded-md no-underline"
+                      >
+                        Intelligence
+                        <ExternalLink className="w-3 h-3 opacity-50" />
+                      </a>
                     </div>
                   </TableCell>
                 </TableRow>

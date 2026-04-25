@@ -11,7 +11,6 @@ interface CinemaRegistryMapProps {
     theatres: Theatre[];
     selectedTheatre: Theatre | null;
     onTheatreSelect: (theatre: Theatre) => void;
-    onViewDetails?: (theatre: Theatre) => void;
     apiKey: string;
     lastUpdated?: string | null;
     center?: { lat: number; lng: number; zoom: number } | null;
@@ -255,7 +254,6 @@ export function CinemaRegistryMap({
     theatres, 
     selectedTheatre, 
     onTheatreSelect, 
-    onViewDetails, 
     apiKey, 
     lastUpdated,
     center,
@@ -273,16 +271,6 @@ export function CinemaRegistryMap({
         observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
         return () => observer.disconnect();
     }, []);
-
-    const handleGetDirections = (theatre: Theatre) => {
-        const destination = theatre.place_id
-            ? `place_id:${theatre.place_id}`
-            : `${theatre.lat},${theatre.lng}`;
-        window.open(
-            `https://www.google.com/maps/dir/?api=1&destination=${destination}`,
-            '_blank'
-        );
-    };
 
     if (!apiKey) {
         return (
@@ -364,32 +352,37 @@ export function CinemaRegistryMap({
 
                                 {/* Compact Action Buttons */}
                                 <div className="flex gap-1">
-                                    <button
-                                        onClick={() => onViewDetails?.(selectedTheatre)}
-                                        className="flex-[1.5] flex items-center justify-center gap-1 px-2 py-1 text-[11px] font-bold bg-primary text-white rounded hover:bg-primary/90 transition-colors uppercase tracking-tight"
+                                    <a
+                                        href={`/cinemas/${selectedTheatre.theatre_id}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex-[1.5] flex items-center justify-center gap-1 px-2 py-1 text-[11px] font-bold bg-primary text-white rounded hover:bg-primary/90 transition-colors uppercase tracking-tight no-underline"
                                     >
                                         <ExternalLink className="w-3 h-3" />
                                         Intelligence
-                                    </button>
-                                    <button
-                                        onClick={() => handleGetDirections(selectedTheatre)}
-                                        className="flex-1 flex items-center justify-center gap-1 px-2 py-1 text-[11px] font-medium bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                                    </a>
+                                    <a
+                                        href={selectedTheatre.place_id
+                                            ? `https://www.google.com/maps/dir/?api=1&destination=place_id:${selectedTheatre.place_id}`
+                                            : `https://www.google.com/maps/dir/?api=1&destination=${selectedTheatre.lat},${selectedTheatre.lng}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex-1 flex items-center justify-center gap-1 px-2 py-1 text-[11px] font-medium bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors no-underline"
                                     >
                                         <Navigation className="w-3 h-3" />
                                         Directions
-                                    </button>
-                                    <button
-                                        onClick={() => window.open(
-                                            selectedTheatre.place_id
+                                    </a>
+                                    <a
+                                        href={selectedTheatre.place_id
                                                 ? `https://www.google.com/maps/place/?q=place_id:${selectedTheatre.place_id}`
-                                                : `https://www.google.com/maps?q=${selectedTheatre.lat},${selectedTheatre.lng}`,
-                                            '_blank'
-                                        )}
-                                        className="flex items-center justify-center px-2 py-1 text-[11px] font-medium bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
+                                                : `https://www.google.com/maps?q=${selectedTheatre.lat},${selectedTheatre.lng}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-center px-2 py-1 text-[11px] font-medium bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors no-underline"
                                         title="Open in Google Maps"
                                     >
                                         <ExternalLink className="w-3 h-3" />
-                                    </button>
+                                    </a>
                                 </div>
                             </div>
                         </InfoWindow>
