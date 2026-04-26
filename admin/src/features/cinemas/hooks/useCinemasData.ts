@@ -59,7 +59,7 @@ export function useCinemasData() {
  * Automatically synchronizes filtered IDs to the store for snappy navigation.
  */
 export function useFilteredTheatres(
-    theatres: Theatre[],
+    theatres: Theatre[] = [],
     searchTerm: string,
     selectedMerchant: string,
     selectedRegion: string,
@@ -69,9 +69,12 @@ export function useFilteredTheatres(
     getRegion: (city: string) => string,
     setFilteredIds: (ids: string[]) => void
 ) {
+    // Ensure theatres is an array
+    const safeTheatres = useMemo(() => Array.isArray(theatres) ? theatres : [], [theatres]);
+
     // 1. Filtering & Sorting Logic
     const filtered = useMemo(() => {
-        let result = theatres;
+        let result = safeTheatres;
 
         if (selectedMerchant !== 'all') {
             result = result.filter((t) => t.merchant === selectedMerchant);
@@ -113,7 +116,7 @@ export function useFilteredTheatres(
         }
 
         return result;
-    }, [theatres, searchTerm, selectedMerchant, selectedRegion, sortByName, sortByCity, sortByCapacity, getRegion]);
+    }, [safeTheatres, searchTerm, selectedMerchant, selectedRegion, sortByName, sortByCity, sortByCapacity, getRegion]);
 
     // 2. Side Effect: Sync IDs to Store
     useEffect(() => {

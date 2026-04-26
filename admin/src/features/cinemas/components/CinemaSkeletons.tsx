@@ -2,6 +2,23 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
+ * Perfectly mirrors the main Cinemas page structure.
+ */
+export function CinemasPageSkeleton() {
+  return (
+    <div className="min-h-screen bg-background p-10">
+      <div className="grid grid-cols-[280px_1fr] gap-10">
+          <Skeleton className="h-[600px] rounded-xl" />
+          <div className="space-y-6">
+              <Skeleton className="h-12 rounded-xl w-64" />
+              <Skeleton className="h-[450px] rounded-2xl" />
+          </div>
+      </div>
+    </div>
+  );
+}
+
+/**
  * Perfectly mirrors the CinemaDetailView header card to prevent layout shift.
  * Matches exact padding (p-6), gaps (gap-6), and element heights.
  */

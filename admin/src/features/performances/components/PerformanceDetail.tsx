@@ -39,7 +39,7 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
             const res = await fetch(`/api/performance/${movieId}`);
             const data = await res.json();
             if (data.success) {
-                setMovie(data.summary);
+                setMovie(data.data.summary);
             } else {
                 console.error('Failed to load movie:', data.error);
             }
@@ -60,7 +60,7 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
                 const res = await fetch(`/api/performance/${movieId}/history`);
                 const data = await res.json();
                 if (data.success) {
-                    setHistory(data.history);
+                    setHistory(data.data.history);
                 }
             } catch (e) {
                 console.error('Error fetching history:', e);

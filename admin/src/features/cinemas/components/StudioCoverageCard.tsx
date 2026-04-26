@@ -3,6 +3,7 @@
 import React, { useMemo } from 'react';
 import { useTheatres } from '@/hooks/useTheatres';
 import { ShieldCheck, Zap, Activity } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 /**
  * Compact Sidebar KPIs
@@ -30,10 +31,10 @@ export function StudioCoverageCard() {
 
   if (loadingTheatres || !stats) {
     return (
-      <div className="space-y-3 animate-pulse opacity-50">
-        <div className="h-12 bg-muted/20 rounded-lg" />
-        <div className="h-12 bg-muted/20 rounded-lg" />
-        <div className="h-12 bg-muted/20 rounded-lg" />
+      <div className="space-y-3">
+        <Skeleton className="h-12 w-full rounded-lg" />
+        <Skeleton className="h-12 w-full rounded-lg" />
+        <Skeleton className="h-12 w-full rounded-lg" />
       </div>
     );
   }

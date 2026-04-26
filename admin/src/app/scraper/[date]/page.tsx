@@ -11,6 +11,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/PageHeader';
 import { Database, Calendar } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Feature imports
 import {
@@ -119,7 +120,7 @@ export default function ScraperDatePage({ params }: PageProps) {
     if (!resolvedParams || isLoading) {
         return (
             <div className="p-6">
-                <div className="h-48 bg-muted animate-pulse rounded-lg" />
+                <Skeleton className="h-48 w-full rounded-lg" />
             </div>
         );
     }

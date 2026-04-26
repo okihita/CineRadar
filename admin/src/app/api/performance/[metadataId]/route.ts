@@ -48,13 +48,6 @@ export async function GET(
         // 1. Get Movie Performance Doc (Root V2)
         const perfDoc = await firestoreRestClient.getDocument('movie_performance_v2', metadataId);
 
-        if (!perfDoc) {
-            return NextResponse.json(
-                { success: false, error: 'Movie performance not found' },
-                { status: 404 }
-            );
-        }
-
         // 2. Get Movie Metadata from `movies`
         const metadata = await firestoreRestClient.getDocument('movies', metadataId);
 
@@ -67,7 +60,7 @@ export async function GET(
 
         // Merge results
         const summary = {
-            ...perfDoc,
+            ...((perfDoc as object) || {}),
             id: metadataId,
             movie_id: metadataId, // For compatibility
             title: (metadata.name as string) || `ID: ${metadataId}`,
@@ -83,9 +76,9 @@ export async function GET(
                     .filter(Boolean) as string[]
                 : [],
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            last_updated: (perfDoc as any).last_swept_at || '',
+            last_updated: (perfDoc as any)?.last_swept_at || '',
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            marketing: (perfDoc as any).marketing || undefined,
+            marketing: (perfDoc as any)?.marketing || undefined,
         };
 
         return NextResponse.json({

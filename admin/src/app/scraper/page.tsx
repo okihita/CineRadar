@@ -6,6 +6,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Helper to get today's date in YYYY-MM-DD format using Jakarta timezone
 const getTodayDate = () => {
@@ -32,7 +33,7 @@ export default function ScraperPage() {
 
     return (
         <div className="p-6">
-            <div className="h-48 bg-muted animate-pulse rounded-lg" />
+            <Skeleton className="h-48 w-full rounded-lg" />
         </div>
     );
 }

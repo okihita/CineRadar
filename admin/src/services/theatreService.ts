@@ -5,7 +5,7 @@
  * Firestore calls with service account credentials must go through API routes.
  */
 
-import { Theatre, ScraperRun } from '@/types';
+import { Theatre, ScraperRun, ApiResponse } from '@/types';
 
 export interface TheatreService {
     getTheatres(): Promise<Theatre[]>;
@@ -18,7 +18,11 @@ export const firebaseTheatreService: TheatreService = {
         if (!response.ok) {
             throw new Error(`Failed to fetch theatres: ${response.status}`);
         }
-        return response.json();
+        const result = await response.json() as ApiResponse<Theatre[]>;
+        if (result.success) {
+            return result.data;
+        }
+        throw new Error(result.error || 'Failed to fetch theatres');
     },
 
     async getScraperRuns(limitCount = 5): Promise<ScraperRun[]> {

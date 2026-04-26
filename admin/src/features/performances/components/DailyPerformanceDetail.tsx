@@ -68,9 +68,9 @@ export async function DailyPerformanceDetail({
   ]);
 
   const movie =
-    movieMeta && perfDoc
+    movieMeta
       ? ({
-          ...perfDoc,
+          ...((perfDoc as object) || {}),
           id: movieId,
           movie_id: movieId,
           title: (movieMeta.name as string) || "Unknown Title",
@@ -89,7 +89,9 @@ export async function DailyPerformanceDetail({
                 .filter(Boolean) as string[]
             : [],
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          last_updated: (perfDoc as any).last_swept_at || "",
+          last_updated: (perfDoc as any)?.last_swept_at || "",
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          marketing: (perfDoc as any)?.marketing,
         } as unknown as MovieSummary)
       : null;
   const dailyStats =

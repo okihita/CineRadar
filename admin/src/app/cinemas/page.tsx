@@ -11,6 +11,7 @@ import { formatWIBShort } from '@/lib/timeUtils';
 import { useTheatres } from '@/hooks/useTheatres';
 
 // DIRECT CLIENT IMPORTS
+import { CinemasPageSkeleton } from '@/features/cinemas/components/CinemaSkeletons';
 import { useCinemasStore } from '@/features/cinemas/stores/useCinemasStore';
 import { useFilteredTheatres } from '@/features/cinemas/hooks/useCinemasData';
 import { useCinemaAnalytics } from '@/features/cinemas/hooks/useCinemaAnalytics';
@@ -61,17 +62,7 @@ function CinemasPageContent() {
 
   // Loading skeleton
   if (isLoading && theatres.length === 0) {
-    return (
-      <div className="min-h-screen bg-background text-foreground animate-pulse p-10">
-        <div className="grid grid-cols-[280px_1fr] gap-10">
-            <div className="bg-muted/20 h-[600px] rounded-xl" />
-            <div className="space-y-6">
-                <div className="bg-muted/20 h-12 rounded-xl w-64" />
-                <div className="bg-muted/20 h-[450px] rounded-2xl" />
-            </div>
-        </div>
-      </div>
-    );
+    return <CinemasPageSkeleton />;
   }
 
   return (
