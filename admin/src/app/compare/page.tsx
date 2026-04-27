@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Search, X, Calendar as CalendarIcon, Loader2, GitCompare, Users, MonitorPlay, Percent } from 'lucide-react';
+import { Search, X, Calendar as CalendarIcon, Loader2, GitCompare, Users, MonitorPlay, Percent, TrendingUp, Flame } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { format, subDays, parseISO, isAfter, startOfDay } from 'date-fns';
 import { DateRange } from 'react-day-picker';
@@ -45,6 +45,16 @@ interface Movie {
     poster: string;
     is_showing_today?: boolean;
     last_updated?: string;
+}
+
+interface TrendingMovie {
+    id: string;
+    title: string;
+    poster: string;
+    today?: {
+        total_sold: number;
+        total_showtimes: number;
+    };
 }
 
 const CHART_COLORS = [
@@ -254,7 +264,7 @@ function CompareDashboard() {
         router.push(`${pathname}?${queryString}`);
     };
 
-    const handleAddMovie = (movie: Movie) => {
+    const handleAddMovie = (movie: Movie | TrendingMovie) => {
         if (selectedMovieIds.length >= 6) return;
         if (selectedMovieIds.includes(movie.id)) return;
         updateUrl([...selectedMovieIds, movie.id], dateRange);
@@ -277,6 +287,24 @@ function CompareDashboard() {
         }
     };
 
+    // Fetch trending market leaders from performance API (only if no movies are selected)
+    const { data: trendingData, isLoading: isLoadingTrending, error: trendingError } = useSWR(
+        selectedMovieIds.length === 0 ? '/api/performance' : null, 
+        fetcher, 
+        { revalidateOnFocus: false }
+    );
+
+    const trendingMovies: TrendingMovie[] = useMemo(() => {
+        if (!trendingData?.data?.movies) return [];
+        return trendingData.data.movies.slice(0, 8);
+    }, [trendingData]);
+
+    const handleCompareTop = (count: number) => {
+        if (trendingMovies.length < count) return;
+        const topIds = trendingMovies.slice(0, count).map((m) => m.id);
+        updateUrl(topIds, dateRange);
+    };
+
     return (
         <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
             <PageHeader
@@ -285,10 +313,25 @@ function CompareDashboard() {
             />
 
             {/* Control Panel */}
-            <Card className="overflow-visible">
-                <CardHeader>
-                    <CardTitle className="text-lg">Configuration</CardTitle>
-                    <CardDescription>Select up to 6 movies to compare side-by-side.</CardDescription>
+            <Card className="overflow-visible shadow-sm">
+                <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <CardTitle className="text-lg">Configuration</CardTitle>
+                            <CardDescription>Select up to 6 movies to compare side-by-side.</CardDescription>
+                        </div>
+                        {selectedMovieIds.length > 0 && (
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => updateUrl([], dateRange)}
+                                className="text-muted-foreground hover:text-destructive"
+                            >
+                                <X className="w-4 h-4 mr-2" />
+                                Clear All
+                            </Button>
+                        )}
+                    </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="flex flex-col md:flex-row gap-4 items-start">
@@ -390,7 +433,10 @@ function CompareDashboard() {
                                     </Badge>
                                 ))}
                                 {selectedMovieIds.length === 0 && (
-                                    <span className="text-sm text-muted-foreground italic">No movies selected</span>
+                                    <span className="text-sm text-muted-foreground italic flex items-center gap-2">
+                                        <Loader2 className={`w-3 h-3 animate-spin ${isLoadingTrending ? 'opacity-100' : 'opacity-0'}`} />
+                                        Select up to 6 movies or choose from trending below
+                                    </span>
                                 )}
                             </div>
                         </div>
@@ -471,16 +517,19 @@ function CompareDashboard() {
             {selectedMovieIds.length > 0 ? (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     {isComparing ? (
-                        <div className="flex items-center justify-center p-12 text-muted-foreground gap-3">
-                            <Loader2 className="w-6 h-6 animate-spin" />
-                            Fetching comparison data...
+                        <div className="flex flex-col items-center justify-center p-24 text-muted-foreground gap-4 border-2 border-dashed rounded-xl">
+                            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                            <div className="text-center">
+                                <p className="font-semibold text-foreground">Analyzing Head-to-Head Performance</p>
+                                <p className="text-sm">Fetching daily admissions, showtimes, and occupancy data...</p>
+                            </div>
                         </div>
                     ) : (
                         <>
                             {/* Summary Metrics */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                 {/* Total Admissions Card */}
-                                <Card>
+                                <Card className="shadow-sm">
                                     <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
                                         <CardTitle className="text-sm font-medium">Total Admissions</CardTitle>
                                         <Users className="h-4 w-4 text-muted-foreground" />
@@ -491,7 +540,7 @@ function CompareDashboard() {
                                                 <div key={id} className="flex justify-between items-center text-sm gap-2">
                                                     <div className="flex items-center gap-2 min-w-0">
                                                         <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: movieColorsMap[id] }} />
-                                                        <span className="font-medium whitespace-nowrap" title={compareData?.movies?.[id]?.title || id}>
+                                                        <span className="font-medium whitespace-nowrap truncate" title={compareData?.movies?.[id]?.title || id}>
                                                             {abbreviateTitle(compareData?.movies?.[id]?.title || id)}
                                                         </span>
                                                     </div>
@@ -505,7 +554,7 @@ function CompareDashboard() {
                                 </Card>
 
                                 {/* Total Showtimes Card */}
-                                <Card>
+                                <Card className="shadow-sm">
                                     <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
                                         <CardTitle className="text-sm font-medium">Total Showtimes</CardTitle>
                                         <MonitorPlay className="h-4 w-4 text-muted-foreground" />
@@ -516,7 +565,7 @@ function CompareDashboard() {
                                                 <div key={id} className="flex justify-between items-center text-sm gap-2">
                                                     <div className="flex items-center gap-2 min-w-0">
                                                         <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: movieColorsMap[id] }} />
-                                                        <span className="font-medium whitespace-nowrap" title={compareData?.movies?.[id]?.title || id}>
+                                                        <span className="font-medium whitespace-nowrap truncate" title={compareData?.movies?.[id]?.title || id}>
                                                             {abbreviateTitle(compareData?.movies?.[id]?.title || id)}
                                                         </span>
                                                     </div>
@@ -530,7 +579,7 @@ function CompareDashboard() {
                                 </Card>
                                 
                                 {/* Admissions per Showtime */}
-                                <Card>
+                                <Card className="shadow-sm">
                                     <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
                                         <CardTitle className="text-sm font-medium">Avg Adm. / Showtime</CardTitle>
                                         <Users className="h-4 w-4 text-muted-foreground" />
@@ -541,7 +590,7 @@ function CompareDashboard() {
                                                 <div key={id} className="flex justify-between items-center text-sm gap-2">
                                                     <div className="flex items-center gap-2 min-w-0">
                                                         <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: movieColorsMap[id] }} />
-                                                        <span className="font-medium whitespace-nowrap" title={compareData?.movies?.[id]?.title || id}>
+                                                        <span className="font-medium whitespace-nowrap truncate" title={compareData?.movies?.[id]?.title || id}>
                                                             {abbreviateTitle(compareData?.movies?.[id]?.title || id)}
                                                         </span>
                                                     </div>
@@ -555,7 +604,7 @@ function CompareDashboard() {
                                 </Card>
 
                                 {/* Occupancy Card */}
-                                <Card>
+                                <Card className="shadow-sm">
                                     <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
                                         <CardTitle className="text-sm font-medium">Avg Occupancy</CardTitle>
                                         <Percent className="h-4 w-4 text-muted-foreground" />
@@ -566,7 +615,7 @@ function CompareDashboard() {
                                                 <div key={id} className="flex justify-between items-center text-sm gap-2">
                                                     <div className="flex items-center gap-2 min-w-0">
                                                         <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: movieColorsMap[id] }} />
-                                                        <span className="font-medium whitespace-nowrap" title={compareData?.movies?.[id]?.title || id}>
+                                                        <span className="font-medium whitespace-nowrap truncate" title={compareData?.movies?.[id]?.title || id}>
                                                             {abbreviateTitle(compareData?.movies?.[id]?.title || id)}
                                                         </span>
                                                     </div>
@@ -582,7 +631,7 @@ function CompareDashboard() {
 
                             {/* Share Distribution (Pie Charts) */}
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                <Card>
+                                <Card className="shadow-sm">
                                     <CardHeader className="pb-2">
                                         <CardTitle className="text-base">Share of Admissions</CardTitle>
                                         <CardDescription>Total distribution of tickets sold</CardDescription>
@@ -623,7 +672,7 @@ function CompareDashboard() {
                                     </CardContent>
                                 </Card>
 
-                                <Card>
+                                <Card className="shadow-sm">
                                     <CardHeader className="pb-2">
                                         <CardTitle className="text-base">Share of Showtimes</CardTitle>
                                         <CardDescription>Total distribution of screen allocations</CardDescription>
@@ -666,7 +715,7 @@ function CompareDashboard() {
                             </div>
 
                             {/* Chart Area */}
-                            <Card className="col-span-full">
+                            <Card className="col-span-full shadow-sm">
                                 <CardHeader>
                                     <CardTitle>Performance Timelines</CardTitle>
                                     <CardDescription>
@@ -763,7 +812,7 @@ function CompareDashboard() {
                             </Card>
 
                             {/* Table Area - Day by Day Progression */}
-                            <Card className="col-span-full">
+                            <Card className="col-span-full shadow-sm">
                                 <CardHeader>
                                     <CardTitle>Day-by-Day Progression</CardTitle>
                                     <CardDescription>
@@ -817,9 +866,110 @@ function CompareDashboard() {
                     )}
                 </div>
             ) : (
-                <div className="flex flex-col items-center justify-center py-24 text-muted-foreground bg-muted/10 border-2 border-dashed rounded-xl gap-4">
-                    <GitCompare className="w-12 h-12 opacity-50" />
-                    <p className="text-lg">Select up to 6 movies to begin comparison.</p>
+                <div className="space-y-8 animate-in fade-in duration-700">
+                    <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-4 bg-muted/5 border-2 border-dashed rounded-xl border-primary/20">
+                        <GitCompare className="w-16 h-16 opacity-20 text-primary" />
+                        <div className="text-center">
+                            <h3 className="text-xl font-bold text-foreground">Discover Market Battles</h3>
+                            <p className="max-w-md mx-auto text-muted-foreground mt-2">
+                                Compare the latest blockbusters and tracking their performance across the archipelago.
+                            </p>
+                        </div>
+                        
+                        {/* Quick Actions */}
+                        <div className="flex flex-wrap items-center justify-center gap-3 mt-4">
+                            <Button 
+                                variant="default" 
+                                className="shadow-lg shadow-primary/20 font-bold"
+                                disabled={isLoadingTrending || trendingMovies.length < 2}
+                                onClick={() => handleCompareTop(2)}
+                            >
+                                <Flame className="w-4 h-4 mr-2" />
+                                Top 2 Leaders
+                            </Button>
+                            <Button 
+                                variant="secondary" 
+                                className="font-bold"
+                                disabled={isLoadingTrending || trendingMovies.length < 3}
+                                onClick={() => handleCompareTop(3)}
+                            >
+                                <TrendingUp className="w-4 h-4 mr-2" />
+                                Top 3 Contenders
+                            </Button>
+                        </div>
+                    </div>
+
+                    {/* Trending Grid */}
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-bold flex items-center gap-2">
+                                <Flame className="w-4 h-4 text-primary" /> Today&apos;s Market Leaders
+                            </h3>
+                            <span className="text-xs text-muted-foreground uppercase tracking-widest font-mono">
+                                Sorted by Tickets Sold
+                            </span>
+                        </div>
+                        
+                        {trendingError ? (
+                            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-2">
+                                <X className="w-6 h-6 text-destructive" />
+                                <p className="text-sm">Failed to load trending movies. Please try again later.</p>
+                            </div>
+                        ) : isLoadingTrending ? (
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+                                {[...Array(8)].map((_, i) => (
+                                    <div key={i} className="space-y-3 animate-pulse">
+                                        <div className="aspect-[2/3] bg-muted rounded-lg" />
+                                        <div className="h-4 bg-muted rounded w-3/4 mx-auto" />
+                                        <div className="h-3 bg-muted rounded w-1/2 mx-auto" />
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+                                {trendingMovies.map((movie) => (
+                                    <Card 
+                                        key={movie.id} 
+                                        className="group cursor-pointer overflow-hidden hover:ring-2 hover:ring-primary transition-all duration-300 shadow-sm hover:shadow-xl"
+                                        onClick={() => handleAddMovie(movie)}
+                                    >
+                                        <div className="relative aspect-[2/3]">
+                                            {movie.poster ? (
+                                                /* eslint-disable-next-line @next/next/no-img-element */
+                                                <img 
+                                                    src={movie.poster} 
+                                                    alt={movie.title} 
+                                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                                                    No Poster
+                                                </div>
+                                            )}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
+                                                <span className="text-[10px] text-white font-bold uppercase">Add to Compare</span>
+                                            </div>
+                                        </div>
+                                        <CardContent className="p-2 space-y-2">
+                                            <div className="font-bold text-[13px] leading-tight truncate" title={movie.title}>
+                                                {abbreviateTitle(movie.title)}
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-[10px] text-muted-foreground">Tickets</span>
+                                                    <span className="text-[11px] font-bold text-primary">{(movie.today?.total_sold || 0).toLocaleString()}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-[10px] text-muted-foreground">Shows</span>
+                                                    <span className="text-[11px] font-bold">{(movie.today?.total_showtimes || 0).toLocaleString()}</span>
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
         </div>
