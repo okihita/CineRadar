@@ -1,4 +1,21 @@
 /**
+ * Get today's date in Jakarta timezone as YYYY-MM-DD
+ * e.g., "2026-04-27"
+ */
+export function getTodayJakarta(): string {
+    return new Date().toLocaleDateString('sv-SE', { timeZone: WIB_TIMEZONE });
+}
+
+/**
+ * Validate a date string in YYYY-MM-DD format
+ */
+export function isValidDateFormat(dateStr: string): boolean {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
+    const date = new Date(dateStr);
+    return !isNaN(date.getTime());
+}
+
+/**
  * Time utilities for displaying times in WIB (Jakarta time)
  * 
  * CONVENTION:

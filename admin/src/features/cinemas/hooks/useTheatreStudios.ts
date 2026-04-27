@@ -1,5 +1,6 @@
 import useSWR from 'swr';
 import { useState } from 'react';
+import { PerformanceMetrics } from '@/types';
 
 export interface Seat {
     id: string;
@@ -53,11 +54,6 @@ export interface Studio {
     version: number;
     last_updated: string;
     is_locked?: boolean; // Manual override if needed
-}
-
-export interface PerformanceMetrics {
-    latencyMs: number;
-    sizeKB: number;
 }
 
 export function useTheatreStudios(theatreId: string | null) {

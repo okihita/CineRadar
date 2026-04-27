@@ -1,4 +1,5 @@
 import useSWR from 'swr';
+import { createFetcher } from '@/lib/api';
 
 export interface StudioCoverageData {
     studio_progress: {
@@ -28,10 +29,7 @@ export interface StudioCoverageData {
     }>;
 }
 
-const fetcher = (url: string): Promise<StudioCoverageData> => fetch(url).then(res => {
-    if (!res.ok) throw new Error('Failed to fetch coverage');
-    return res.json() as Promise<StudioCoverageData>;
-});
+const fetcher = createFetcher<StudioCoverageData>(() => new Error('Failed to fetch coverage'));
 
 export function useStudioCoverage() {
     const { data, error, isLoading, mutate } = useSWR<StudioCoverageData>(

@@ -7,10 +7,7 @@
  */
 import { NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
-
-function getTodayJakarta(): string {
-    return new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Jakarta' });
-}
+import { getTodayJakarta } from '@/lib/timeUtils';
 
 interface FirestoreMovie {
     id?: string;

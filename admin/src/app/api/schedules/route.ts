@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { ScheduleResponse, MovieSchedule } from '@/features/schedules/types';
-
-// Get today's date in Jakarta timezone (YYYY-MM-DD)
-function getTodayJakarta(): string {
-    return new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Jakarta' });
-}
+import { getTodayJakarta } from '@/lib/timeUtils';
 
 export async function GET(request: NextRequest) {
     try {

@@ -7,28 +7,13 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
-
-// Helper to get today's date in YYYY-MM-DD format using Jakarta timezone
-const getTodayDate = () => {
-    const now = new Date();
-    const wibOptions: Intl.DateTimeFormatOptions = {
-        timeZone: 'Asia/Jakarta',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-    };
-    const parts = new Intl.DateTimeFormat('en-CA', wibOptions).formatToParts(now);
-    const year = parts.find(p => p.type === 'year')?.value || '';
-    const month = parts.find(p => p.type === 'month')?.value || '';
-    const day = parts.find(p => p.type === 'day')?.value || '';
-    return `${year}-${month}-${day}`;
-};
+import { getTodayJakarta } from '@/lib/timeUtils';
 
 export default function ScraperPage() {
     const router = useRouter();
 
     useEffect(() => {
-        router.replace(`/scraper/${getTodayDate()}`);
+        router.replace(`/scraper/${getTodayJakarta()}`);
     }, [router]);
 
     return (

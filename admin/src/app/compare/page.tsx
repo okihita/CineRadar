@@ -18,7 +18,7 @@ import { format, subDays, parseISO, isAfter, startOfDay } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { cn } from '@/lib/utils';
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
+import { fetcher } from '@/lib/api';
 
 const abbreviateTitle = (title: string) => {
     // 1. Colon rule: If it has a colon, use the part before it

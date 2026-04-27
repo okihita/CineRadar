@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useTheatreStudios, type PerformanceMetrics } from '../hooks/useTheatreStudios';
+import { useTheatreStudios } from '../hooks/useTheatreStudios';
+import type { PerformanceMetrics } from '@/types';
 import { StudioLayoutViewer } from './StudioLayoutViewer';
 import { AlertCircle, Search, Star, Calendar, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';

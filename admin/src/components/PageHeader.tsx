@@ -2,11 +2,7 @@
 
 import { RefreshCw, Gauge, HardDrive } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-interface PerformanceMetrics {
-    latencyMs: number;
-    sizeKB: number;
-}
+import { PerformanceMetrics } from '@/types';
 
 interface PageHeaderProps {
     title: string;

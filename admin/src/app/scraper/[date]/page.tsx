@@ -12,6 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/PageHeader';
 import { Database, Calendar } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getTodayJakarta, isValidDateFormat } from '@/lib/timeUtils';
 
 // Feature imports
 import {
@@ -24,34 +25,10 @@ import {
     WaveBreakdown,
 } from '@/features/scraper';
 
-// Helper to get today's date in YYYY-MM-DD format using Jakarta timezone
-const getTodayDate = () => {
-    const now = new Date();
-    const wibOptions: Intl.DateTimeFormatOptions = {
-        timeZone: 'Asia/Jakarta',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-    };
-    const parts = new Intl.DateTimeFormat('en-CA', wibOptions).formatToParts(now);
-    const year = parts.find(p => p.type === 'year')?.value || '';
-    const month = parts.find(p => p.type === 'month')?.value || '';
-    const day = parts.find(p => p.type === 'day')?.value || '';
-    return `${year}-${month}-${day}`;
-};
-
 // Helper to get min date (first available log)
 const getMinDate = () => {
     // Allow going back to January 2025
     return '2025-01-01';
-};
-
-// Validate date format YYYY-MM-DD
-const isValidDateFormat = (dateStr: string): boolean => {
-    const regex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!regex.test(dateStr)) return false;
-    const date = new Date(dateStr);
-    return !isNaN(date.getTime());
 };
 
 interface PageProps {
@@ -80,7 +57,7 @@ export default function ScraperDatePage({ params }: PageProps) {
     const routeDate = resolvedParams?.date || '';
 
     // Validate and normalize date
-    const selectedDate = isValidDateFormat(routeDate) ? routeDate : getTodayDate();
+    const selectedDate = isValidDateFormat(routeDate) ? routeDate : getTodayJakarta();
 
     // Current day data
     const {
@@ -112,7 +89,7 @@ export default function ScraperDatePage({ params }: PageProps) {
     // Redirect invalid dates to today
     useEffect(() => {
         if (resolvedParams && !isValidDateFormat(routeDate)) {
-            router.replace(`/scraper/${getTodayDate()}`);
+            router.replace(`/scraper/${getTodayJakarta()}`);
         }
     }, [resolvedParams, routeDate, router]);
 
@@ -142,7 +119,7 @@ export default function ScraperDatePage({ params }: PageProps) {
                     selectedDate={selectedDate}
                     onDateChange={handleDateChange}
                     minDate={getMinDate()}
-                    maxDate={getTodayDate()}
+                    maxDate={getTodayJakarta()}
                 />
             </div>
 

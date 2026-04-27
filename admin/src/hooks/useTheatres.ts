@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { Theatre, ScraperRun } from '@/types';
+import { Theatre, ScraperRun, PerformanceMetrics } from '@/types';
 import theatreService from '@/services/theatreService';
 
 const CACHE_KEY = 'cineradar_theatres_cache';
@@ -37,11 +37,6 @@ function setCache(data: CacheData): void {
     } catch {
         // Ignore storage errors
     }
-}
-
-interface PerformanceMetrics {
-    latencyMs: number;
-    sizeKB: number;
 }
 
 interface UseTheatresReturn {

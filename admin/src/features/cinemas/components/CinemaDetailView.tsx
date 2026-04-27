@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/button';
 import { TheatreStudiosList } from './TheatreStudiosList';
 import { useCinemaDetails } from '../hooks/useCinemaDetails';
 import { useCinemasStore } from '../stores/useCinemasStore';
-import type { PerformanceMetrics } from '../hooks/useTheatreStudios';
+import type { PerformanceMetrics } from '@/types';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';

@@ -13,8 +13,9 @@ import { Loader2, ArrowLeft, Film, AlertCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { formatRelativeWIB } from '@/lib/timeUtils';
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+import { fetcher } from '@/lib/api';
 
 interface MovieDetailResponse {
     success: boolean;
@@ -371,22 +372,7 @@ export function MovieDatabaseDetail({ movieId }: { movieId: string }) {
                         {movie.scraped_at ? (
                             <span className="text-[11px] ml-1 flex items-center gap-1.5 text-muted-foreground/80 font-mono" title={String(movie.scraped_at)}>
                                 <span className="w-1.5 h-1.5 rounded-full bg-green-500/80 inline-block shadow-[0_0_4px_rgba(34,197,94,0.4)]"></span>
-                                Updated {(() => {
-                                    try {
-                                        const date = new Date(movie.scraped_at as string);
-                                        const now = new Date();
-                                        const diffMs = now.getTime() - date.getTime();
-                                        const diffMins = Math.floor(diffMs / 60000);
-                                        const diffHours = Math.floor(diffMins / 60);
-                                        const diffDays = Math.floor(diffHours / 24);
-
-                                        if (diffMins < 60) return `${diffMins}m ago`;
-                                        if (diffHours < 24) return `${diffHours}h ago`;
-                                        return `${diffDays}d ago`;
-                                    } catch {
-                                        return movie.scraped_at as string;
-                                    }
-                                })()}
+                                Updated {formatRelativeWIB(movie.scraped_at as string)}
                             </span>
                         ) : null}
                     </div>

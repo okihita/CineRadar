@@ -18,19 +18,8 @@ import { ScheduleResponse, MovieSchedule, countMovieShowtimes, countAvailableMov
 import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
-
-// Get today's date in Jakarta timezone (YYYY-MM-DD)
-function getTodayJakarta(): string {
-    return new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Jakarta" });
-}
-
-// Validate date format YYYY-MM-DD
-function isValidDateFormat(dateStr: string): boolean {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
-    const date = parse(dateStr, "yyyy-MM-dd", new Date());
-    return !isNaN(date.getTime());
-}
+import { fetcher } from '@/lib/api';
+import { getTodayJakarta, isValidDateFormat } from '@/lib/timeUtils';
 
 interface PageProps {
     params: Promise<{ date: string }>;
