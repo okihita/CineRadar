@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import { CHAIN_COLORS } from './constants';
 
 /**
  * Describe a donut arc path for SVG
@@ -76,6 +77,7 @@ export function createPieChartSvg(
     xxi: number,
     cgv: number,
     cine: number,
+    flix: number,
     total: number,
     size: number
 ): string {
@@ -88,9 +90,10 @@ export function createPieChartSvg(
     const innerR = outerR * 0.5;
 
     const segments: { count: number; color: string }[] = [
-        { count: xxi, color: '#CFAB7A' },
-        { count: cgv, color: '#E03C31' },
-        { count: cine, color: '#002069' },
+        { count: xxi, color: CHAIN_COLORS.XXI },
+        { count: cgv, color: CHAIN_COLORS.CGV },
+        { count: cine, color: CHAIN_COLORS.Cinépolis },
+        { count: flix, color: CHAIN_COLORS.FLIX },
     ].filter((s) => s.count > 0);
 
     if (segments.length === 0) {

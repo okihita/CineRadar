@@ -45,15 +45,12 @@ export function getRegion(city: string): string {
     return CITY_TO_REGION[city.toUpperCase().trim()] ?? 'Jawa'; // Default to Jawa if unknown
 }
 
-// Merchant colors - FROZEN REQUIREMENT
-export const MERCHANT_COLORS = {
-    XXI: { bg: '#f59e0b', text: 'text-amber-600 dark:text-amber-400', badge: 'bg-amber-500 text-white', badgeLight: 'bg-amber-500/20' },
-    CGV: { bg: '#dc2626', text: 'text-red-600 dark:text-red-400', badge: 'bg-red-600 text-white', badgeLight: 'bg-red-500/20' },
-    'Cinépolis': { bg: '#2563eb', text: 'text-blue-600 dark:text-blue-400', badge: 'bg-blue-600 text-white', badgeLight: 'bg-blue-500/20' },
-} as const;
+// Merchant colors - re-exported from constants for Tailwind classes
+export { CHAIN_TAILWIND as MERCHANT_COLORS } from './constants';
+import { CHAIN_TAILWIND } from './constants';
 
 export function getMerchantColor(merchant: string) {
-    return MERCHANT_COLORS[merchant as keyof typeof MERCHANT_COLORS] ?? MERCHANT_COLORS['Cinépolis'];
+    return CHAIN_TAILWIND[merchant as keyof typeof CHAIN_TAILWIND] ?? CHAIN_TAILWIND['Cinépolis'];
 }
 
 // Region center coordinates for map panning

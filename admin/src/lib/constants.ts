@@ -8,6 +8,7 @@ export const CHAIN_COLORS = {
   XXI: '#CFAB7A',
   CGV: '#E03C31',
   Cinépolis: '#002069',
+  FLIX: '#FFDA00',
 } as const;
 
 // Chain colors with opacity for badges/backgrounds
@@ -15,6 +16,7 @@ export const CHAIN_COLORS_LIGHT = {
   XXI: 'rgba(207, 171, 122, 0.2)',
   CGV: 'rgba(224, 60, 49, 0.2)',
   Cinépolis: 'rgba(0, 32, 105, 0.2)',
+  FLIX: 'rgba(255, 218, 0, 0.2)',
 } as const;
 
 // Region colors for charts and filters (ordered by typical display)
@@ -31,8 +33,17 @@ export const REGION_COLORS = [
 export const ITEMS_PER_PAGE = 15;
 
 // Chain names for iteration
-export const CHAIN_NAMES = ['XXI', 'CGV', 'Cinépolis'] as const;
+export const CHAIN_NAMES = ['XXI', 'CGV', 'Cinépolis', 'FLIX'] as const;
 export type ChainName = (typeof CHAIN_NAMES)[number];
+
+// Chain Tailwind classes for badges and text
+export const CHAIN_TAILWIND = {
+  XXI: { bg: 'bg-amber-500', text: 'text-amber-600 dark:text-amber-400', badge: 'bg-amber-500 text-white', badgeLight: 'bg-amber-500/20' },
+  CGV: { bg: 'bg-red-600', text: 'text-red-600 dark:text-red-400', badge: 'bg-red-600 text-white', badgeLight: 'bg-red-500/20' },
+  Cinépolis: { bg: 'bg-blue-600', text: 'text-blue-600 dark:text-blue-400', badge: 'bg-blue-600 text-white', badgeLight: 'bg-blue-500/20' },
+  FLIX: { bg: 'bg-yellow-400', text: 'text-yellow-600 dark:text-yellow-400', badge: 'bg-yellow-400 text-black', badgeLight: 'bg-yellow-400/20' },
+} as const;
+export type ChainTailwindKey = keyof typeof CHAIN_TAILWIND;
 
 // Helper to get chain color
 export function getChainColor(chain: string): string {

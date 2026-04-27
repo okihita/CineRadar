@@ -48,18 +48,20 @@ function ClusteredMarkers({ theatres, selectedTheatre, onTheatreSelect }: {
             renderer: {
                 render: ({ count, position, markers: clusterMarkers }) => {
                     // Count by chain
-                    let xxi = 0, cgv = 0, cine = 0;
+                    let xxi = 0, cgv = 0, cine = 0, flix = 0;
                     clusterMarkers?.forEach(m => {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const theatre = (m as any)._theatre as Theatre;
                         if (theatre?.merchant === 'XXI') xxi++;
                         else if (theatre?.merchant === 'CGV') cgv++;
-                        else cine++;
+                        else if (theatre?.merchant === 'Cinépolis') cine++;
+                        else if (theatre?.merchant === 'FLIX') flix++;
+                        else cine++; // Legacy fallback for unknown merchants
                     });
 
                     const size = Math.min(60, 35 + Math.log2(count) * 8);
-                    const svg = createPieChartSvg(xxi, cgv, cine, count, size);
-                    const tooltipText = `${count} theatres\nXXI: ${xxi} (${Math.round(xxi / count * 100)}%)\nCGV: ${cgv} (${Math.round(cgv / count * 100)}%)\nCinépolis: ${cine} (${Math.round(cine / count * 100)}%)`;
+                    const svg = createPieChartSvg(xxi, cgv, cine, flix, count, size);
+                    const tooltipText = `${count} theatres\nXXI: ${xxi} (${Math.round(xxi / count * 100)}%)\nCGV: ${cgv} (${Math.round(cgv / count * 100)}%)\nCinépolis: ${cine} (${Math.round(cine / count * 100)}%)\nFLIX: ${flix} (${Math.round(flix / count * 100)}%)`;
                     const content = createMarkerContent(svg, tooltipText);
 
                     // Use markerLib from ref (guaranteed available since we check in useEffect deps)

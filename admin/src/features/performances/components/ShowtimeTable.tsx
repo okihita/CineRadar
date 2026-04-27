@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Clock, Filter, Layers, Loader2, ShieldCheck, Microscope, Users, Ban, CheckCircle2, Percent, Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { CHAIN_TAILWIND } from '@/lib/constants';
 import { SeatProgressBar } from './SeatProgressBar';
 import { TriPanelAudit } from './TriPanelAudit';
 import { ShowtimeSnapshot } from '../types/performance';
@@ -15,13 +16,6 @@ type SortDirection = 'asc' | 'desc';
 type GroupBy = 'none' | 'theatre' | 'city' | 'merchant';
 
 const PAGE_SIZES = [20, 50, 100, 200];
-
-const MERCHANT_COLORS: Record<string, string> = {
-    'CGV': 'bg-red-500',
-    'XXI': 'bg-blue-600',
-    'Cinépolis': 'bg-purple-600',
-    'CINEPOLIS': 'bg-purple-600',
-};
 
 interface ShowtimeTableProps {
     showtimes: ShowtimeSnapshot[];
@@ -297,7 +291,7 @@ interface RawDataResponse {
 }
 
 export const ShowtimeRow = memo(({ showtime: st, movieId: propMovieId, date: propDate }: { showtime: ShowtimeSnapshot; movieId?: string; date?: string }) => {
-    const merchantColor = MERCHANT_COLORS[st.merchant] || 'bg-gray-500'
+    const merchantColor = CHAIN_TAILWIND[st.merchant as keyof typeof CHAIN_TAILWIND]?.bg || 'bg-gray-500'
     const [expanded, setExpanded] = useState(false);
     const [rawData, setRawData] = useState<RawDataResponse | null>(null);
     const [isLoadingLayout, setIsLoadingLayout] = useState(false);
