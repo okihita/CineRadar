@@ -43,7 +43,7 @@ async function getMovieData(): Promise<MovieData | null> {
     const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/snapshots/latest`;
 
     const response = await fetch(url, {
-      cache: 'no-store' // Always fetch fresh data
+      next: { revalidate: 3600 } // Cache for 1 hour
     });
 
     if (!response.ok) {
