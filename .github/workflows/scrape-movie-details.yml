@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: astral-sh/setup-uv@v8.0.0
+      - uses: astral-sh/setup-uv@v8.1.0
 
       - uses: actions/setup-python@v6
         with:
@@ -32,7 +32,7 @@ jobs:
 
       - name: Alert on failure
         if: failure()
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const title = '🚨 Daily Metadata Backfill Failed';
