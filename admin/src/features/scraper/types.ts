@@ -2,19 +2,7 @@
  * Scraper feature types
  */
 
-export interface ScraperRun {
-    id?: string;
-    date: string;
-    timestamp: string;
-    status: 'success' | 'partial' | 'failed';
-    run_type?: string;
-    movies: number;
-    cities: number;
-    theatres_total: number;
-    theatres_success: number;
-    theatres_failed: number;
-    presales?: number;
-}
+export type { ScraperRun } from '@/types';
 
 export interface CollectionStats {
     name: string;
