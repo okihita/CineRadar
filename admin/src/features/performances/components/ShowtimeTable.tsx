@@ -10,6 +10,7 @@ import { CHAIN_TAILWIND } from '@/lib/constants';
 import { SeatProgressBar } from './SeatProgressBar';
 import { TriPanelAudit } from './TriPanelAudit';
 import { ShowtimeSnapshot } from '../types/performance';
+import { RawShowtimeData } from '../types/seat';
 
 type SortField = 'showtime' | 'occupancy' | 'theatre' | 'city' | 'anomaly';
 type SortDirection = 'asc' | 'desc';
@@ -282,18 +283,11 @@ export function ShowtimeTable({ showtimes, loading = false, movieId, date }: Sho
     );
 }
 
-interface RawDataResponse {
-    initialLayout: unknown;
-    finalLayout: unknown;
-    masterLayout: unknown;
-    isInferred?: boolean;
-    inferredStudioId?: string;
-}
 
 export const ShowtimeRow = memo(({ showtime: st, movieId: propMovieId, date: propDate }: { showtime: ShowtimeSnapshot; movieId?: string; date?: string }) => {
     const merchantColor = CHAIN_TAILWIND[st.merchant as keyof typeof CHAIN_TAILWIND]?.bg || 'bg-gray-500'
     const [expanded, setExpanded] = useState(false);
-    const [rawData, setRawData] = useState<RawDataResponse | null>(null);
+    const [rawData, setRawData] = useState<RawShowtimeData | null>(null);
     const [isLoadingLayout, setIsLoadingLayout] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
@@ -317,7 +311,10 @@ export const ShowtimeRow = memo(({ showtime: st, movieId: propMovieId, date: pro
                 }
 
                 const res = await fetch(`/api/showtimes/${st.showtime_id}/raw?movieId=${mid}&date=${d}`, { signal: abortController.current.signal });
-                if (res.ok) setRawData(await res.json());
+                if (res.ok) {
+                    const json = await res.json();
+                    setRawData(json.data ?? json);
+                }
                 else setErrorMsg("Failed to load forensic data");
             } catch (err: unknown) { 
                 if (err instanceof Error && err.name !== 'AbortError') {
@@ -467,7 +464,7 @@ export const ShowtimeRow = memo(({ showtime: st, movieId: propMovieId, date: pro
                                         <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Decrypting Spatial Layout...</p>
                                     </div>
                                 ) : rawData ? (
-                                    <TriPanelAudit initialLayout={rawData.initialLayout} finalLayout={rawData.finalLayout} masterLayout={rawData.masterLayout} theatreId={st.theatre_id} />
+                                    <TriPanelAudit initialLayout={rawData.initialLayout} finalLayout={rawData.finalLayout} masterLayout={rawData.masterLayout} theatreId={st.theatre_id} studioId={st.studio_id} />
                                 ) : (
                                     <div className="h-[450px] flex items-center justify-center border rounded-2xl bg-red-500/5 border-red-500/10"><p className="text-xs font-bold text-red-500/60 uppercase tracking-widest">{errorMsg || "Forensic Data Unavailable"}</p></div>
                                 )}

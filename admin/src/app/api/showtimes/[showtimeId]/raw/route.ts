@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
+import { type ObjectLayoutGrid, type LayoutGrid } from '@/features/performances/types/seat';
 import zlib from 'zlib';
 
 function decompressLayout(base64Data?: string | null): LayoutGrid | null {
@@ -17,34 +18,50 @@ function decompressLayout(base64Data?: string | null): LayoutGrid | null {
 
 function extractLayoutFromRaw(raw: unknown): LayoutGrid | null {
     if (!raw || typeof raw !== 'object') return null;
-    const rawObj = raw as { data?: { seat_map?: { seat_code: string; seat_rows: { seat_row: string; status: number }[] }[] } };
+    const rawObj = raw as { data?: { seat_map?: Record<string, unknown>[] } };
     if (!rawObj.data || !rawObj.data.seat_map) return null;
     try {
-        const tixSeatMap = rawObj.data.seat_map;
-        return tixSeatMap.map((row) => ({
-            row_name: row.seat_code,
-            seats: (row.seat_rows || []).map((s) => ({
-                id: s.seat_row,
-                status: s.status
-            }))
-        }));
+        const seatMap = rawObj.data.seat_map;
+        if (seatMap.length === 0) return null;
+
+        // Detect format: flat seat list (TIX) vs grouped row format
+        const firstItem = seatMap[0];
+        if ('seat_id' in firstItem && 'row_name' in firstItem) {
+            // TIX format: flat array of seats, group by row_name
+            const rowMap = new Map<string, { id: string; status: number }[]>();
+            for (const seat of seatMap) {
+                const rowName = String(seat.row_name ?? '');
+                const seatYn = String(seat.seat_yn ?? '1');
+                if (!rowMap.has(rowName)) rowMap.set(rowName, []);
+                rowMap.get(rowName)!.push({
+                    id: String(seat.seat_id ?? ''),
+                    status: seatYn === '0' ? -1 : Number(seat.seat_status ?? 1),
+                });
+            }
+            const result: ObjectLayoutGrid = [];
+            for (const [rowName, seats] of rowMap) {
+                result.push({ row_name: rowName, seats });
+            }
+            return result.length > 0 ? result : null;
+        }
+
+        // Legacy grouped format (seat_code + seat_rows)
+        if ('seat_code' in firstItem && 'seat_rows' in firstItem) {
+            return seatMap.map((row) => ({
+                row_name: String((row as { seat_code: string }).seat_code),
+                seats: ((row as { seat_rows: { seat_row: string; status: number }[] }).seat_rows || []).map((s) => ({
+                    id: s.seat_row,
+                    status: s.status
+                }))
+            }));
+        }
+
+        return null;
     } catch (e) {
         console.error('Failed to extract layout from raw API response:', e);
         return null;
     }
 }
-
-interface Seat {
-    id: string;
-    status: number;
-}
-
-interface SeatRow {
-    row_name: string;
-    seats: (Seat | null)[];
-}
-
-type LayoutGrid = SeatRow[];
 
 interface RawShowtimeResponse {
     showtimeId: string;
@@ -125,8 +142,8 @@ export async function GET(
                         `theatres/${theatreId}/studios`,
                         studioId
                     );
-                    if (studioDoc && studioDoc.layout) {
-                        masterLayout = studioDoc.layout;
+                    if (studioDoc) {
+                        masterLayout = (studioDoc.physical_layout as { grid?: unknown } | null)?.grid || studioDoc.layout || null;
                     }
                 } else {
                     // Legacy data: JIT Inference by capacity
@@ -135,8 +152,8 @@ export async function GET(
                     );
                     // Find a studio with the exact same capacity
                     const matchingStudio = studios.find(s => Number(s.total_seats) === totalSeats);
-                    if (matchingStudio && matchingStudio.layout) {
-                        masterLayout = matchingStudio.layout;
+                    if (matchingStudio) {
+                        masterLayout = (matchingStudio.physical_layout as { grid?: unknown } | null)?.grid || matchingStudio.layout || null;
                         isInferred = true;
                         inferredStudioId = String(matchingStudio.id);
                         console.log(`[JIT Inference] Matched legacy showtime (seats: ${totalSeats}) to studio ID: ${matchingStudio.id}`);

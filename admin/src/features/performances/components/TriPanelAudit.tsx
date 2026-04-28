@@ -2,34 +2,15 @@
 
 import { useMemo } from 'react';
 import { BaseSeatMap } from './BaseSeatMap';
-
-// Unified Layout Types
-type SimpleLayoutGrid = [string, number[]][];
-
-interface SeatObject {
-    id: string;
-    status: number;
-}
-
-interface RowObject {
-    row_name?: string;
-    rowName?: string;
-    row?: string;
-    seats?: (SeatObject | null)[];
-    seat?: (SeatObject | null)[];
-}
-
-type LayoutGrid = SimpleLayoutGrid | ObjectLayoutGrid;
-type ObjectLayoutGrid = RowObject[];
+import { type LayoutGrid, type VisSeatStatus } from '../types/seat';
 
 interface TriPanelAuditProps {
     initialLayout: unknown;
     finalLayout: unknown;
     masterLayout?: unknown; 
     theatreId?: string;
+    studioId?: string;
 }
-
-type VisSeatStatus = 'available' | 'blocked' | 'sold' | 'gap' | 'master';
 
 interface SkeletonSeat {
     id: string;
@@ -47,7 +28,7 @@ interface SkeletonRow {
  * Forensic Seating Auditor (Master-Driven Projection)
  * Uses the Digital Twin as the definitive skeleton for all 3 panels.
  */
-export function TriPanelAudit({ initialLayout, finalLayout, masterLayout, theatreId }: TriPanelAuditProps) {
+export function TriPanelAudit({ initialLayout, finalLayout, masterLayout, theatreId, studioId }: TriPanelAuditProps) {
     
     // 1. Build high-speed lookup maps for the snapshots
     const initialMap = useMemo(() => buildStatusMap(initialLayout as LayoutGrid), [initialLayout]);
@@ -114,6 +95,14 @@ export function TriPanelAudit({ initialLayout, finalLayout, masterLayout, theatr
     return (
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 w-full min-h-[500px]">
             <BaseSeatMap 
+                type="master"
+                title="Digital Twin"
+                subtitle={masterLayout ? "Physical Registry Template" : "No Physical Template (Fallback)"}
+                rows={masterRows}
+                href={theatreId ? `/cinemas/${theatreId}` : undefined}
+                studioId={studioId}
+            />
+            <BaseSeatMap 
                 type="baseline"
                 title="2 AM Baseline"
                 subtitle="Presale state before mall opens"
@@ -124,13 +113,6 @@ export function TriPanelAudit({ initialLayout, finalLayout, masterLayout, theatr
                 title="Final Showtime"
                 subtitle="JIT Snapshot (T-30 mins)"
                 rows={showtimeRows}
-            />
-            <BaseSeatMap 
-                type="master"
-                title="Digital Twin"
-                subtitle={masterLayout ? "Physical Registry Template" : "No Physical Template (Fallback)"}
-                rows={masterRows}
-                href={theatreId ? `/cinemas/${theatreId}` : undefined}
             />
         </div>
     );

@@ -21,12 +21,13 @@ interface BaseSeatMapProps {
     }>;
     type: 'baseline' | 'showtime' | 'master';
     href?: string;
+    studioId?: string;
 }
 
 /**
  * Low-level seat map renderer for side-by-side auditing.
  */
-export function BaseSeatMap({ title, subtitle, rows, type, href }: BaseSeatMapProps) {
+export function BaseSeatMap({ title, subtitle, rows, type, href, studioId }: BaseSeatMapProps) {
     const getSeatStyles = (status: VisSeatStatus) => {
         switch (status) {
             case 'available':
@@ -58,16 +59,6 @@ export function BaseSeatMap({ title, subtitle, rows, type, href }: BaseSeatMapPr
                         )}>
                             {title}
                         </h3>
-                        {href && (
-                            <Link 
-                                href={href} 
-                                target="_blank"
-                                className="p-1 hover:bg-primary/10 rounded-full text-primary transition-colors"
-                                title="Open Asset Registry"
-                            >
-                                <ExternalLink className="w-2.5 h-2.5" />
-                            </Link>
-                        )}
                     </div>
                     <div className={cn(
                         "w-2 h-2 rounded-full",
@@ -139,10 +130,29 @@ export function BaseSeatMap({ title, subtitle, rows, type, href }: BaseSeatMapPr
                         </div>
                     </>
                 ) : (
-                    <div className="flex items-center gap-1.5">
-                        <div className="w-2 h-2 rounded-sm bg-purple-500/10 border border-purple-500/30" />
-                        <span className="text-[8px] font-bold text-muted-foreground uppercase">Physical Slot</span>
-                    </div>
+                    <>
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-2 h-2 rounded-sm bg-purple-500/10 border border-purple-500/30" />
+                            <span className="text-[8px] font-bold text-muted-foreground uppercase">Physical Slot</span>
+                        </div>
+                        <div className="flex items-center gap-2 ml-2 pl-2 border-l border-border/50">
+                            {studioId && (
+                                <span className="text-[8px] font-black uppercase tracking-tighter text-purple-500/70 bg-purple-500/5 border border-purple-500/10 px-1.5 py-0.5 rounded">
+                                    Studio {studioId}
+                                </span>
+                            )}
+                            {href && (
+                                <Link 
+                                    href={href} 
+                                    target="_blank"
+                                    className="inline-flex items-center gap-1 text-[8px] font-black uppercase tracking-widest text-purple-600 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 px-2 py-0.5 rounded transition-all"
+                                >
+                                    <ExternalLink className="w-2.5 h-2.5" />
+                                    Asset Registry
+                                </Link>
+                            )}
+                        </div>
+                    </>
                 )}
             </div>
         </div>
