@@ -2,14 +2,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
-interface DailyPerformance {
-    date: string;
-    total_showtimes: number;
-    avg_occupancy_pct: number;
-    total_seats: number;
-    total_sold: number;
-    cities: string[];
-}
+import { DailyPerformance } from '../types/performance';
 
 interface HistoryGridProps {
     movieId: string;

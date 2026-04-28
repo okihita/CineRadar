@@ -4,24 +4,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Camera, MessageCircle, Hash, TrendingUp, Music, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { MarketingMetadata } from '../types/social';
 import { EditMarketingModal } from './social';
-
-interface DailyPerformance {
-    id: string;
-    movie_id: string;
-    title: string;
-    date: string;
-    total_showtimes: number;
-    avg_occupancy_pct: number;
-    total_seats: number;
-    total_sold: number;
-    cities: string[];
-    marketing?: MarketingMetadata;
-}
+import { DailyPerformanceWithMeta } from '../types/performance';
 
 interface DailyStatsBannerProps {
-    stats: DailyPerformance;
+    stats: DailyPerformanceWithMeta;
     onMarketingUpdate?: () => void;
 }
 

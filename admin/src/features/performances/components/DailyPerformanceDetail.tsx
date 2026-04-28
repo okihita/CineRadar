@@ -36,14 +36,7 @@ function formatMetadataField(field: any): string {
   return String(field);
 }
 
-interface DailyPerformance {
-  date: string;
-  total_showtimes: number;
-  avg_occupancy_pct: number;
-  total_seats: number;
-  total_sold: number;
-  cities: string[];
-}
+import { DailyPerformance } from '../types/performance';
 
 interface DailyPerformanceDetailProps {
   movieId: string;

@@ -63,6 +63,22 @@ export interface TodayStats {
     cities: string[];
 }
 
+export interface DailyPerformance {
+    date: string;
+    total_showtimes: number;
+    avg_occupancy_pct: number;
+    total_seats: number;
+    total_sold: number;
+    cities: string[];
+}
+
+export interface DailyPerformanceWithMeta extends DailyPerformance {
+    id: string;
+    movie_id: string;
+    title: string;
+    marketing?: MarketingMetadata;
+}
+
 export interface MovieWithStats {
     id: string;
     movie_id: string;
