@@ -103,3 +103,9 @@ export interface DiagnosticData {
     scheduled_count: number;
     items: DiagnosticItem[];
 }
+
+export interface CastMember {
+    cast_type: string;
+    name?: string;
+    actor_name?: string;
+}

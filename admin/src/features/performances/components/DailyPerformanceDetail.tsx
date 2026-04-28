@@ -7,46 +7,17 @@ import { ShowtimesSkeleton } from "./skeletons/ShowtimesSkeleton";
 import { TelemetryHeader } from "./TelemetryHeader";
 import { DateNavigatorHeader } from "./DateNavigatorHeader";
 import { firestoreRestClient } from "@/lib/firestore-rest";
-import { MovieSummary } from "../types/performance";
+import { DailyPerformance } from '../types/performance';
+import { buildMovieSummary } from "../utils/movie-mapping";
 import { formatCompactNumber, formatOccupancy } from "../utils/format";
 import { getOccupancyColor } from "../utils/colors";
 import { Target, Users, Armchair, MapPin, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
-/**
- * Formats genres or age_category into a string.
- * Handles strings, arrays of strings, and arrays of objects { name: string }.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function formatMetadataField(field: any): string {
-  if (!field) return "";
-  if (typeof field === "string") return field;
-  if (Array.isArray(field)) {
-    return field
-      .map((item) => {
-        if (typeof item === "string") return item;
-        if (item && typeof item === "object" && "name" in item) return item.name;
-        return "";
-      })
-      .filter(Boolean)
-      .join(", ");
-  }
-  if (typeof field === "object" && "name" in field) return field.name;
-  return String(field);
-}
-
-import { DailyPerformance } from '../types/performance';
-
 interface DailyPerformanceDetailProps {
   movieId: string;
   date: string;
-}
-
-interface CastMember {
-  cast_type: string;
-  name?: string;
-  actor_name?: string;
 }
 
 export async function DailyPerformanceDetail({
@@ -60,33 +31,7 @@ export async function DailyPerformanceDetail({
     firestoreRestClient.getSubCollection(`movie_performance_v2/${movieId}/days`),
   ]);
 
-  const movie =
-    movieMeta
-      ? ({
-          ...((perfDoc as object) || {}),
-          id: movieId,
-          movie_id: movieId,
-          title: (movieMeta.name as string) || "Unknown Title",
-          poster:
-            (movieMeta.poster as string) ||
-            (movieMeta.poster_path as string) ||
-            "",
-          genres: formatMetadataField(movieMeta.genres),
-          age_category: formatMetadataField(movieMeta.age_category),
-          director: formatMetadataField(movieMeta.director),
-          production_house: formatMetadataField(movieMeta.production_company),
-          actors: Array.isArray(movieMeta.casts)
-            ? (movieMeta.casts as CastMember[])
-                .filter((c) => c.cast_type === "Actor")
-                .map((c) => c.name || c.actor_name)
-                .filter(Boolean) as string[]
-            : [],
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          last_updated: (perfDoc as any)?.last_swept_at || "",
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          marketing: (perfDoc as any)?.marketing,
-        } as unknown as MovieSummary)
-      : null;
+  const movie = buildMovieSummary(movieMeta, perfDoc, movieId);
   const dailyStats =
     (daysSubCollection as unknown as DailyPerformance[]).find((d) => d.date === date) ||
     null;

@@ -7,36 +7,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { MarketingMetadata } from '@/features/performances/types/social';
+import { buildMovieSummary } from '@/features/performances/utils/movie-mapping';
 
 export const revalidate = 300; // Cache for 5 minutes
-
-/**
- * Formats genres or age_category into a string.
- * Handles strings, arrays of strings, and arrays of objects { name: string }.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function formatMetadataField(field: any): string {
-    if (!field) return '';
-    if (typeof field === 'string') return field;
-    if (Array.isArray(field)) {
-        return field
-            .map((item) => {
-                if (typeof item === 'string') return item;
-                if (item && typeof item === 'object' && 'name' in item) return item.name;
-                return '';
-            })
-            .filter(Boolean)
-            .join(', ');
-    }
-    if (typeof field === 'object' && 'name' in field) return field.name;
-    return String(field);
-}
-
-interface CastMember {
-    cast_type: string;
-    name?: string;
-    actor_name?: string;
-}
 
 export async function GET(
     request: NextRequest,
@@ -59,27 +32,7 @@ export async function GET(
         }
 
         // Merge results
-        const summary = {
-            ...((perfDoc as object) || {}),
-            id: metadataId,
-            movie_id: metadataId, // For compatibility
-            title: (metadata.name as string) || `ID: ${metadataId}`,
-            poster: (metadata.poster as string) || (metadata.poster_path as string) || '',
-            genres: formatMetadataField(metadata.genres),
-            age_category: formatMetadataField(metadata.age_category),
-            director: formatMetadataField(metadata.director),
-            production_house: formatMetadataField(metadata.production_company),
-            actors: Array.isArray(metadata.casts) 
-                ? (metadata.casts as CastMember[])
-                    .filter((c) => c.cast_type === 'Actor')
-                    .map((c) => c.name || c.actor_name)
-                    .filter(Boolean) as string[]
-                : [],
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            last_updated: (perfDoc as any)?.last_swept_at || '',
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            marketing: (perfDoc as any)?.marketing || undefined,
-        };
+        const summary = buildMovieSummary(metadata, perfDoc, metadataId);
 
         return NextResponse.json({
             success: true,
