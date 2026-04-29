@@ -1,47 +1,8 @@
 /**
  * Social Marketing Types
- * 
+ *
  * Type definitions for social marketing metadata and metrics.
- * Used in Phase 1 of the Social Marketing Integration Plan.
  */
-
-/**
- * Social platform configuration for badge display
- */
-export interface SocialPlatformConfig {
-  id: 'tiktok' | 'instagram' | 'x';
-  label: string;
-  baseUrl: string;
-  color: string;
-  icon: string;
-}
-
-/**
- * Platform configurations for rendering social badges
- */
-export const SOCIAL_PLATFORMS: SocialPlatformConfig[] = [
-  {
-    id: 'tiktok',
-    label: 'TikTok',
-    baseUrl: 'https://www.tiktok.com/@',
-    color: 'bg-black hover:bg-gray-800',
-    icon: '🎵',
-  },
-  {
-    id: 'instagram',
-    label: 'Instagram',
-    baseUrl: 'https://www.instagram.com/',
-    color: 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600',
-    icon: '📷',
-  },
-  {
-    id: 'x',
-    label: 'X',
-    baseUrl: 'https://x.com/',
-    color: 'bg-gray-900 hover:bg-gray-700',
-    icon: '𝕏',
-  },
-];
 
 /**
  * Static marketing metadata stored on movie documents

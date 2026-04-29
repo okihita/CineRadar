@@ -4,13 +4,6 @@
 
 export type { ScraperRun } from '@/types';
 
-export interface CollectionStats {
-    name: string;
-    count: number;
-    sample: Record<string, unknown> | null;
-    fields: string[];
-}
-
 export interface ScraperStats {
     totalRuns: number;
     successRate: number;
@@ -75,19 +68,6 @@ export interface MorningRunLog {
     movies_found: number;
     theatres_total: number;
     cities_covered: number;
-    error?: string;
-}
-
-/**
- * @deprecated Use DispatchEntry instead. Kept for backwards compatibility during migration.
- */
-export interface JITRunEntry {
-    dispatched_at: string;
-    window_start: string;
-    window_end: string;
-    showtimes_found: number;
-    jobs_published: number;
-    status: string;
     error?: string;
 }
 
