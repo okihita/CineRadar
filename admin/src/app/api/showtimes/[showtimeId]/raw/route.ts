@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { type ObjectLayoutGrid, type LayoutGrid } from '@/features/performances/types/seat';
+import { type RawShowtimeResponse } from '@/features/performances/types/performance';
 import zlib from 'zlib';
 
 function decompressLayout(base64Data?: string | null): LayoutGrid | null {
@@ -61,27 +62,6 @@ function extractLayoutFromRaw(raw: unknown): LayoutGrid | null {
         console.error('Failed to extract layout from raw API response:', e);
         return null;
     }
-}
-
-interface RawShowtimeResponse {
-    showtimeId: string;
-    movieTitle: string;
-    theatreName: string;
-    city: string;
-    roomCategory: string;
-    merchant: string;
-    showtime: string;
-    date: string;
-    occupancyPct: number;
-    totalSeats: number;
-    soldSeats: number;
-    scrapedAt: string;
-    rawApiResponse: object | null;
-    initialLayout: LayoutGrid | null;
-    finalLayout: LayoutGrid | null;
-    masterLayout: unknown | null;
-    isInferred: boolean;
-    inferredStudioId?: string;
 }
 
 export async function GET(

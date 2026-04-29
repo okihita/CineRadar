@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Building2, ChevronRight } from 'lucide-react';
-import { ShowtimeSnapshot } from '../types/performance';
+import { ShowtimeSnapshot, SortDirection } from '../types/performance';
 import { calculateForensicAggregation } from '../utils/performance-math';
 import { getOccupancyColor } from '../utils/colors';
 import { formatOccupancy } from '../utils/format';
@@ -11,7 +11,6 @@ import { ForensicAuditProgress } from './ForensicAuditProgress';
 import { cn } from '@/lib/utils';
 
 type SortField = 'theatre_name' | 'merchant' | 'showtime_count' | 'total_sold' | 'true_occupancy_pct';
-type SortDirection = 'asc' | 'desc';
 
 interface RegionalCinemaTableProps {
     showtimes: ShowtimeSnapshot[];

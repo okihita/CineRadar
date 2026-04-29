@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { MapPin, ChevronRight } from 'lucide-react';
-import { ShowtimeSnapshot } from '../types/performance';
+import { ShowtimeSnapshot, SortDirection } from '../types/performance';
 import { calculateForensicAggregation } from '../utils/performance-math';
 import { getOccupancyColor } from '../utils/colors';
 import { formatOccupancy } from '../utils/format';
@@ -10,7 +10,6 @@ import { ForensicAuditProgress } from './ForensicAuditProgress';
 import { cn } from '@/lib/utils';
 
 type SortField = 'city' | 'showtime_count' | 'theatre_count' | 'total_sold' | 'true_occupancy_pct';
-type SortDirection = 'asc' | 'desc';
 
 interface MarketMarketTableProps {
     showtimes: ShowtimeSnapshot[];

@@ -3,6 +3,7 @@ import React, { useMemo, useState } from "react";
 import { Trophy, ArrowUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CityPerformance } from "../hooks/useCityAggregation";
+import { SortDirection } from "../types/performance";
 import { formatOccupancy } from "../utils/format";
 
 interface CityPotentialRadarProps {
@@ -16,7 +17,6 @@ type SortField =
   | "potential"
   | "occupancy"
   | "sold";
-type SortDirection = "asc" | "desc";
 
 function SortIcon({ field, sortField }: { field: SortField, sortField: SortField }) {
   if (sortField !== field) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-20 inline-block" />;

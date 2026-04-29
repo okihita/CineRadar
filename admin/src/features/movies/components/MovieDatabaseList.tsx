@@ -17,33 +17,10 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 
 import { fetcher } from '@/lib/api';
-
-interface UnifiedMovie {
-    id: string;
-    movie_id: string;
-    tix_metadata_id: string;
-    title: string;
-    poster: string;
-    is_showing_today: boolean;
-    last_updated: string;
-    release_date: number;
-    age_category: string;
-    genres: string[];
-    rating?: {
-        average: number;
-        count: number;
-    };
-}
-
-interface MovieDatabaseResponse {
-    success: boolean;
-    date: string;
-    movies: UnifiedMovie[];
-    error?: string;
-}
+import { SortDirection } from '@/features/performances/types/performance';
+import type { MovieDatabaseResponse } from '../types';
 
 type SortField = 'title' | 'schedule_id' | 'metadata_id' | 'date' | 'status' | 'rating' | 'release_date';
-type SortDirection = 'asc' | 'desc';
 
 export function MovieDatabaseList() {
     const [searchTerm, setSearchTerm] = useState('');

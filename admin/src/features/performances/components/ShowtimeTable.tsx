@@ -9,12 +9,11 @@ import { cn } from '@/lib/utils';
 import { CHAIN_TAILWIND } from '@/lib/constants';
 import { SeatProgressBar } from './SeatProgressBar';
 import { TriPanelAudit } from './TriPanelAudit';
-import { ShowtimeSnapshot } from '../types/performance';
+import { ShowtimeSnapshot, SortDirection } from '../types/performance';
 import { RawShowtimeData } from '../types/seat';
 import { formatOccupancy } from '../utils/format';
 
 type SortField = 'showtime' | 'occupancy' | 'theatre' | 'city' | 'anomaly';
-type SortDirection = 'asc' | 'desc';
 type GroupBy = 'none' | 'theatre' | 'city' | 'merchant';
 
 const PAGE_SIZES = [20, 50, 100, 200];

@@ -8,22 +8,7 @@
 import { NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { getTodayJakarta } from '@/lib/timeUtils';
-
-interface FirestoreMovie {
-    id?: string;
-    movie_id?: string;
-    name?: string;
-    title?: string;
-    poster_path?: string;
-    scraped_at?: string;
-    release_date?: number;
-    age_category?: string;
-    genres?: Array<{ id: string; name: string }>;
-    rating_score?: {
-        vote_average?: number;
-        vote_count?: number;
-    };
-}
+import type { FirestoreMovie } from '@/features/movies/types';
 
 export async function GET() {
     try {

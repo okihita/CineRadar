@@ -15,35 +15,7 @@ import {
 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-
-interface RigidityStat {
-    merchant: string;
-    collisionRate: number;
-    totalStudios: number;
-    quarantined: number;
-}
-
-interface PricingStat {
-    city: string;
-    avgPrice: number;
-}
-
-interface FormatStats {
-    atmos: number;
-    threeD: number;
-    total: number;
-}
-
-interface InsightData {
-    formatStats: FormatStats;
-    regionalPricing: PricingStat[];
-    rigidityStats: RigidityStat[];
-    metadata: {
-        totalTheatres: number;
-        totalStudios: number;
-        timestamp: string;
-    };
-}
+import type { InsightData } from '../types';
 
 export function InsightsDashboard() {
     const [data, setData] = useState<InsightData | null>(null);

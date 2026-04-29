@@ -1,32 +1,7 @@
 import { NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { getTodayJakarta } from '@/lib/timeUtils';
-
-interface MovieWithStats {
-    id: string; // metadata_id
-    movie_id: string; // schedule_id / movie_id
-    title: string;
-    poster: string;
-    last_updated: string;
-    today?: {
-        date: string;
-        total_showtimes: number;
-        total_showtimes_scraped: number;
-        avg_occupancy_pct: number;
-        total_seats: number;
-        total_sold: number;
-        cities: string[];
-    };
-}
-
-interface DiagnosticEntry {
-    id: string;
-    title: string;
-    has_metadata: boolean;
-    has_performance: boolean;
-    has_schedule: boolean;
-    showtimes_count: number;
-}
+import { DiagnosticItem, MovieWithStats } from '@/features/performances/types/performance';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0; 
@@ -46,7 +21,7 @@ export async function GET() {
         // Combine for a master audit list
         const masterAuditIds = new Set([...scheduledIds, ...performanceIds]);
         
-        const diagnostic: DiagnosticEntry[] = [];
+        const diagnostic: DiagnosticItem[] = [];
         const validMovies: MovieWithStats[] = [];
 
         // ENRICHMENT PHASE

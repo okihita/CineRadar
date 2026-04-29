@@ -109,3 +109,27 @@ export interface CastMember {
     name?: string;
     actor_name?: string;
 }
+
+export type SortDirection = 'asc' | 'desc';
+
+/** API response shape for GET /api/showtimes/[showtimeId]/raw */
+export interface RawShowtimeResponse {
+    showtimeId: string;
+    movieTitle: string;
+    theatreName: string;
+    city: string;
+    roomCategory: string;
+    merchant: string;
+    showtime: string;
+    date: string;
+    occupancyPct: number;
+    totalSeats: number;
+    soldSeats: number;
+    scrapedAt: string;
+    rawApiResponse: object | null;
+    initialLayout: unknown;
+    finalLayout: unknown;
+    masterLayout: unknown;
+    isInferred: boolean;
+    inferredStudioId?: string;
+}

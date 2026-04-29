@@ -23,15 +23,7 @@ import {
 import { cn } from '@/lib/utils';
 import { getTodayJakarta } from '@/lib/timeUtils';
 import Link from 'next/link';
-
-interface DiagnosticItem {
-    id: string;
-    title: string;
-    has_metadata: boolean;
-    has_performance: boolean;
-    has_schedule: boolean;
-    showtimes_count: number;
-}
+import { DiagnosticItem } from '../types/performance';
 
 interface ForensicHealthSheetProps {
     diagnostic: {

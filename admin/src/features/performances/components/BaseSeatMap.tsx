@@ -5,8 +5,7 @@ import { cn } from '@/lib/utils';
 import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 
-// Shared types from the existing visualizer logic
-type VisSeatStatus = 'available' | 'blocked' | 'sold' | 'gap' | 'master';
+import { VisSeatStatus } from '../types/seat';
 
 interface BaseSeatMapProps {
     title: string;

@@ -16,13 +16,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { formatRelativeWIB } from '@/lib/timeUtils';
 
 import { fetcher } from '@/lib/api';
-
-interface MovieDetailResponse {
-    success: boolean;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    movie?: Record<string, any>;
-    error?: string;
-}
+import type { MovieDetailResponse } from '../types';
 
 // Render a value in a human-readable way
 function renderValue(value: unknown, depth = 0): React.ReactNode {
