@@ -7,7 +7,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { X } from 'lucide-react';
-import { CHAIN_COLORS, REGION_COLORS } from '@/lib/constants';
+import { getChainColor, REGION_COLORS } from '@/lib/constants';
 import { REGION_CENTERS } from '@/lib/regions';
 import type { MerchantBreakdown, RegionBreakdown } from '../types';
 
@@ -63,7 +63,7 @@ export function TheatreFilters({
                                     onClick={() => onMerchantChange('all')}
                                 />
                                 {merchantBreakdown.map((m) => {
-                                    const color = CHAIN_COLORS[m.name as keyof typeof CHAIN_COLORS] || '#666';
+                                    const color = getChainColor(m.name);
                                     return (
                                         <FilterPill
                                             key={m.name}

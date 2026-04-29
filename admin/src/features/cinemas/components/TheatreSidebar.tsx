@@ -11,7 +11,7 @@ import {
     BarChart3
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { CHAIN_COLORS } from '@/lib/constants';
+import { getChainColor } from '@/lib/constants';
 import { REGION_CENTERS } from '@/lib/regions';
 import type { MerchantBreakdown, RegionBreakdown } from '../types';
 import { StudioCoverageCard } from './StudioCoverageCard';
@@ -106,7 +106,7 @@ export function TheatreSidebar({
                             <span className="text-[10px] opacity-60">{totalCount}</span>
                         </button>
                         {merchantBreakdown.map((m) => {
-                            const color = CHAIN_COLORS[m.name as keyof typeof CHAIN_COLORS];
+                            const color = getChainColor(m.name);
                             const isSelected = selectedMerchant === m.name;
                             return (
                                 <button

@@ -114,7 +114,6 @@ export async function PATCH(
         }
 
         // Update the document in movie_performance_v2
-        console.log('[PATCH marketing] updateData:', JSON.stringify(updateData, null, 2));
         const success = await firestoreRestClient.updateDocument(
             'movie_performance_v2',
             metadataId,

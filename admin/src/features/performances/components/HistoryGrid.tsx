@@ -3,6 +3,7 @@ import { Calendar, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
 import { DailyPerformance } from '../types/performance';
+import { formatOccupancy, formatCompactNumber } from '../utils/format';
 
 interface HistoryGridProps {
     movieId: string;
@@ -139,13 +140,13 @@ export function HistoryGrid({ movieId, history }: HistoryGridProps) {
                                             <div className="bg-muted/50 p-1.5 rounded flex flex-col items-center justify-center">
                                                 <p className="text-[9px] font-semibold text-muted-foreground uppercase leading-none mb-0.5">Occ</p>
                                                 <p className="font-mono text-xs font-bold leading-none text-primary">
-                                                    {dayData.avg_occupancy_pct.toFixed(1)}%
+                                                    {formatOccupancy(dayData.avg_occupancy_pct)}%
                                                 </p>
                                             </div>
                                             <div className="bg-muted/50 p-1.5 rounded flex flex-col items-center justify-center">
                                                 <p className="text-[9px] font-semibold text-muted-foreground uppercase leading-none mb-0.5">Sold</p>
                                                 <p className="font-mono text-xs font-bold leading-none">
-                                                    {dayData.total_sold > 999 ? `${(dayData.total_sold / 1000).toFixed(1)}k` : dayData.total_sold}
+                                                    {formatCompactNumber(dayData.total_sold)}
                                                 </p>
                                             </div>
                                         </div>

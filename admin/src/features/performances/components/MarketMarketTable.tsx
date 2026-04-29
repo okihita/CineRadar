@@ -5,6 +5,7 @@ import { MapPin, ChevronRight } from 'lucide-react';
 import { ShowtimeSnapshot } from '../types/performance';
 import { calculateForensicAggregation } from '../utils/performance-math';
 import { getOccupancyColor } from '../utils/colors';
+import { formatOccupancy } from '../utils/format';
 import { ForensicAuditProgress } from './ForensicAuditProgress';
 import { cn } from '@/lib/utils';
 
@@ -103,7 +104,7 @@ export function MarketMarketTable({ showtimes, onDrillDown }: MarketMarketTableP
                                         "text-xs font-black font-mono tabular-nums",
                                         getOccupancyColor(market.true_occupancy_pct)
                                     )}>
-                                        {market.true_occupancy_pct.toFixed(1)}%
+                                        {formatOccupancy(market.true_occupancy_pct)}%
                                     </span>
                                 </td>
 

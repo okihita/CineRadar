@@ -156,7 +156,6 @@ export async function GET(
                         masterLayout = (matchingStudio.physical_layout as { grid?: unknown } | null)?.grid || matchingStudio.layout || null;
                         isInferred = true;
                         inferredStudioId = String(matchingStudio.id);
-                        console.log(`[JIT Inference] Matched legacy showtime (seats: ${totalSeats}) to studio ID: ${matchingStudio.id}`);
                     }
                 }
             } catch (err) {

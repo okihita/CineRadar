@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Activity, Target, Users, Zap, Globe } from 'lucide-react';
-import { formatCompactNumber } from '../../utils/format';
+import { formatCompactNumber, formatOccupancy } from '../../utils/format';
 import { ForensicHealthSheet } from '../ForensicHealthSheet';
 import { DiagnosticData } from '../../types/performance';
 
@@ -52,7 +52,7 @@ export function NationalPulseHud({
                         <Target className="w-2.5 h-2.5" /> Market OCR
                     </span>
                     <span className="text-xl font-black font-mono tracking-tighter text-foreground">
-                        {avgOCR.toFixed(1)}<span className="text-xs opacity-30 ml-0.5">%</span>
+                        {formatOccupancy(avgOCR)}<span className="text-xs opacity-30 ml-0.5">%</span>
                     </span>
                 </div>
 

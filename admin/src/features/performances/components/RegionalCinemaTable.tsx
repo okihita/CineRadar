@@ -6,6 +6,7 @@ import { Building2, ChevronRight } from 'lucide-react';
 import { ShowtimeSnapshot } from '../types/performance';
 import { calculateForensicAggregation } from '../utils/performance-math';
 import { getOccupancyColor } from '../utils/colors';
+import { formatOccupancy } from '../utils/format';
 import { ForensicAuditProgress } from './ForensicAuditProgress';
 import { cn } from '@/lib/utils';
 
@@ -114,7 +115,7 @@ export function RegionalCinemaTable({ showtimes, onDrillDown }: RegionalCinemaTa
                                         "text-xs font-black font-mono tabular-nums",
                                         getOccupancyColor(cinema.true_occupancy_pct)
                                     )}>
-                                        {cinema.true_occupancy_pct.toFixed(1)}%
+                                        {formatOccupancy(cinema.true_occupancy_pct)}%
                                     </span>
                                 </td>
 

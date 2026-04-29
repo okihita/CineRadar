@@ -3,6 +3,7 @@ import React, { useMemo, useState } from "react";
 import { Trophy, ArrowUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CityPerformance } from "../hooks/useCityAggregation";
+import { formatOccupancy } from "../utils/format";
 
 interface CityPotentialRadarProps {
   cityStats: CityPerformance[];
@@ -94,7 +95,7 @@ export function CityPotentialRadar({ cityStats }: CityPotentialRadarProps) {
                           style={{ width: `${Math.min(city.occupancyPct, 100)}%` }}
                         />
                       </div>
-                      <span className="text-[10px] font-black font-mono w-8 text-right opacity-80">{city.occupancyPct.toFixed(1)}%</span>
+                      <span className="text-[10px] font-black font-mono w-8 text-right opacity-80">{formatOccupancy(city.occupancyPct)}%</span>
                     </div>
                   </td>
                   <td className="py-1.5 px-4 text-right font-mono font-black text-[11px] text-foreground tabular-nums">{city.totalSold.toLocaleString()}</td>

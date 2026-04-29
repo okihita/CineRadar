@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 import { DonutChart, type DonutItem } from './DonutChart';
 import { Building2 } from 'lucide-react';
-import { CHAIN_COLORS } from '@/lib/constants';
+import { getChainColor } from '@/lib/constants';
 import type { Theatre } from '../types';
 
 interface ChainDistributionCardProps {
@@ -22,7 +22,7 @@ export function ChainDistributionCard({ theatres }: ChainDistributionCardProps) 
       .map(([name, count]) => ({
         name,
         count,
-        color: CHAIN_COLORS[name as keyof typeof CHAIN_COLORS] || '#666',
+        color: getChainColor(name),
       }))
       .sort((a, b) => b.count - a.count);
 
