@@ -73,17 +73,17 @@ export function ShowtimeTable({ showtimes, loading = false, movieId, date }: Sho
         result.sort((a, b) => {
             let comparison = 0;
             switch (sortField) {
-                case 'showtime': comparison = (a.showtime || '').localeCompare(b.showtime || ''); break;
+                case 'showtime': comparison = a.showtime.localeCompare(b.showtime); break;
                 case 'occupancy':
                     const occA = a.audience_pct ?? a.occupancy_pct ?? 0;
                     const occB = b.audience_pct ?? b.occupancy_pct ?? 0;
                     comparison = occA - occB;
                     break;
-                case 'theatre': comparison = (a.theatre_name || '').localeCompare(b.theatre_name || ''); break;
-                case 'city': comparison = (a.city || '').localeCompare(b.city || ''); break;
+                case 'theatre': comparison = a.theatre_name.localeCompare(b.theatre_name); break;
+                case 'city': comparison = a.city.localeCompare(b.city); break;
                 case 'anomaly':
-                    const deltaA = (a.sold_seats || 0) - (a.audience_count ?? a.sold_seats ?? 0);
-                    const deltaB = (b.sold_seats || 0) - (b.audience_count ?? b.sold_seats ?? 0);
+                    const deltaA = a.sold_seats - (a.audience_count ?? a.sold_seats);
+                    const deltaB = b.sold_seats - (b.audience_count ?? b.sold_seats);
                     comparison = deltaA - deltaB;
                     break;
             }
@@ -275,7 +275,7 @@ export function ShowtimeTable({ showtimes, loading = false, movieId, date }: Sho
                                                 </div>
                                             </td>
                                             <td className="py-4 px-4 text-right font-mono tabular-nums text-foreground">
-                                                {summaryStats.totalSold.toLocaleString()}<span className="opacity-30">/{(summaryStats.totalSeats || 0).toLocaleString()}</span>
+                                                {summaryStats.totalSold.toLocaleString()}<span className="opacity-30">/{summaryStats.totalSeats.toLocaleString()}</span>
                                             </td>
                                         </tr>
                                     </tfoot>

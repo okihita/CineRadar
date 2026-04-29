@@ -116,8 +116,8 @@ export function metadataToForm(metadata?: MarketingMetadata): MarketingFormData 
   }
   
   return {
-    primary_hashtag: metadata.primary_hashtag || '',
-    secondary_hashtags: metadata.secondary_hashtags || [],
+    primary_hashtag: metadata.primary_hashtag,
+    secondary_hashtags: metadata.secondary_hashtags,
     tiktok_handle: metadata.official_accounts?.tiktok || '',
     instagram_handle: metadata.official_accounts?.instagram || '',
     x_handle: metadata.official_accounts?.x || '',

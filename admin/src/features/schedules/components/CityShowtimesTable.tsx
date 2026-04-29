@@ -12,13 +12,13 @@ interface CityShowtimesTableProps {
 
 export function CityShowtimesTable({ cityData }: CityShowtimesTableProps) {
     const rows = useMemo(() => {
-        return Object.entries(cityData || {})
+        return Object.entries(cityData)
             .map(([city, theatres]) => {
                 let showtimes = 0;
                 let available = 0;
                 theatres.forEach(t => {
                     showtimes += countTheatreShowtimes(t);
-                    available += (t.rooms || []).reduce((sum, room) => sum + (room.all_showtimes || []).filter(s => s.is_available).length, 0);
+                    available += t.rooms.reduce((sum, room) => sum + room.all_showtimes.filter(s => s.is_available).length, 0);
                 });
                 const chains = computeCityChains(theatres);
                 return { city, showtimes, available, theatres: theatres.length, chains };

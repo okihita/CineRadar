@@ -76,23 +76,23 @@ export function MovieDatabaseList() {
                     comparison = (a.is_showing_today ? 1 : 0) - (b.is_showing_today ? 1 : 0);
                     if (comparison === 0) {
                         // secondary sort by date
-                        comparison = (a.last_updated || '').localeCompare(b.last_updated || '');
+                        comparison = a.last_updated.localeCompare(b.last_updated);
                     }
                     break;
                 case 'title':
-                    comparison = (a.title || '').localeCompare(b.title || '');
+                    comparison = a.title.localeCompare(b.title);
                     break;
                 case 'schedule_id':
-                    comparison = (a.movie_id || '').localeCompare(b.movie_id || '');
+                    comparison = a.movie_id.localeCompare(b.movie_id);
                     break;
                 case 'metadata_id':
-                    comparison = (a.id || '').localeCompare(b.id || '');
+                    comparison = a.id.localeCompare(b.id);
                     break;
                 case 'date':
-                    comparison = (a.last_updated || '').localeCompare(b.last_updated || '');
+                    comparison = a.last_updated.localeCompare(b.last_updated);
                     break;
                 case 'release_date':
-                    comparison = (a.release_date || 0) - (b.release_date || 0);
+                    comparison = a.release_date - b.release_date;
                     break;
                 case 'rating':
                     comparison = (a.rating?.average || 0) - (b.rating?.average || 0);

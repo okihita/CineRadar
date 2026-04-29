@@ -12,9 +12,9 @@ export function computeRoomTypes(cities: CitySchedule | null | undefined): Recor
     if (!cities) return roomTypes;
     for (const theatres of Object.values(cities)) {
         for (const theatre of theatres) {
-            for (const room of theatre.rooms || []) {
+            for (const room of theatre.rooms) {
                 if (room.category) {
-                    roomTypes[room.category] = (roomTypes[room.category] || 0) + (room.all_showtimes?.length || 0);
+                    roomTypes[room.category] = (roomTypes[room.category] || 0) + room.all_showtimes.length;
                 }
             }
         }
@@ -83,8 +83,8 @@ export function computeCityChains(theatres: { merchant: string; rooms: { all_sho
         const chain = normalizeMerchant(t.merchant);
         if (!chain) continue;
         const entry = map.get(chain) || { showtimes: 0, available: 0 };
-        for (const room of t.rooms || []) {
-            for (const s of room.all_showtimes || []) {
+        for (const room of t.rooms) {
+            for (const s of room.all_showtimes) {
                 entry.showtimes++;
                 if (s.is_available) entry.available++;
             }
@@ -127,7 +127,7 @@ export function getLatestUpload(movies: { uploaded_at: string }[]): string | nul
 export function collectGenres(movies: { genres: string[] }[]): string[] {
     const set = new Set<string>();
     for (const m of movies) {
-        for (const g of m.genres || []) {
+        for (const g of m.genres) {
             set.add(g);
         }
     }

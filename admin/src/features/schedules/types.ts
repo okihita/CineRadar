@@ -48,8 +48,8 @@ export interface ScheduleResponse {
 
 // Helper: count all showtimes across all rooms in a theatre
 export function countTheatreShowtimes(theatre: TheatreSchedule): number {
-    return (theatre.rooms || []).reduce(
-        (sum, room) => sum + (room.all_showtimes?.length || 0),
+    return theatre.rooms.reduce(
+        (sum, room) => sum + room.all_showtimes.length,
         0
     );
 }
@@ -70,8 +70,8 @@ export function countAvailableMovieShowtimes(cities: CitySchedule): number {
     let total = 0;
     for (const theatres of Object.values(cities)) {
         for (const theatre of theatres) {
-            total += (theatre.rooms || []).reduce((sum, room) => {
-                const availableCount = (room.all_showtimes || []).filter(s => s.is_available).length;
+            total += theatre.rooms.reduce((sum, room) => {
+                const availableCount = room.all_showtimes.filter(s => s.is_available).length;
                 return sum + availableCount;
             }, 0);
         }

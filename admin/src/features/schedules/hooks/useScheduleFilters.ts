@@ -19,7 +19,7 @@ export function useScheduleFilters(movies: MovieWithStats[]) {
     const availableGenres = useMemo(() => {
         const set = new Set<string>();
         for (const m of movies) {
-            for (const g of m.genres || []) set.add(g);
+            for (const g of m.genres) set.add(g);
         }
         return Array.from(set).sort();
     }, [movies]);
@@ -27,7 +27,7 @@ export function useScheduleFilters(movies: MovieWithStats[]) {
     const availableChains = useMemo(() => {
         const set = new Set<ChainName>();
         for (const m of movies) {
-            for (const c of m.merchants || []) {
+            for (const c of m.merchants) {
                 if (['XXI', 'CGV', 'Cinépolis', 'FLIX'].includes(c)) {
                     set.add(c as ChainName);
                 }
@@ -46,7 +46,7 @@ export function useScheduleFilters(movies: MovieWithStats[]) {
 
             // Genre filter
             if (genres.size > 0) {
-                const movieGenres = new Set(m.genres || []);
+                const movieGenres = new Set(m.genres);
                 let hasMatch = false;
                 for (const g of genres) {
                     if (movieGenres.has(g)) { hasMatch = true; break; }
@@ -56,7 +56,7 @@ export function useScheduleFilters(movies: MovieWithStats[]) {
 
             // Chain filter
             if (chains.size > 0) {
-                const movieChains = new Set(m.merchants || []);
+                const movieChains = new Set(m.merchants);
                 let hasMatch = false;
                 for (const c of chains) {
                     if (movieChains.has(c)) { hasMatch = true; break; }

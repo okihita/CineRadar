@@ -52,9 +52,9 @@ export function PerformanceTab() {
 
     // --- Aggregated National Pulse ---
     const nationalPulse = useMemo(() => {
-        const totalSold = movies.reduce((sum, m) => sum + (m.today?.total_sold || 0), 0);
-        const totalSeats = movies.reduce((sum, m) => sum + (m.today?.total_seats || 0), 0);
-        const totalShows = movies.reduce((sum, m) => sum + (m.today?.total_showtimes || 0), 0);
+        const totalSold = movies.reduce((sum, m) => sum + (m.today?.total_sold ?? 0), 0);
+        const totalSeats = movies.reduce((sum, m) => sum + (m.today?.total_seats ?? 0), 0);
+        const totalShows = movies.reduce((sum, m) => sum + (m.today?.total_showtimes ?? 0), 0);
         const avgOCR = totalSeats > 0 ? (totalSold / totalSeats * 100) : 0;
         
         return { totalSold, totalShows, avgOCR, activeCount: movies.length };

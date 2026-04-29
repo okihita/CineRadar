@@ -80,9 +80,9 @@ export function fillBucketsFromCities(
     for (const theatres of Object.values(cities)) {
         if (!Array.isArray(theatres)) continue;
         for (const theatre of theatres) {
-            const t = theatre as { rooms?: Array<{ all_showtimes?: Array<{ time: string; is_available: boolean }> }> };
-            for (const room of t.rooms || []) {
-                for (const show of room.all_showtimes || []) {
+            const t = theatre as { rooms: Array<{ all_showtimes: Array<{ time: string; is_available: boolean }> }> };
+            for (const room of t.rooms) {
+                for (const show of room.all_showtimes) {
                     if (!show.time) continue;
                     const bucketKey = timeToBucketKey(show.time);
                     const bucket = bucketKey ? buckets.get(bucketKey) : undefined;
