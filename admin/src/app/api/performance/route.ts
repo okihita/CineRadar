@@ -2,11 +2,17 @@ import { NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { getTodayJakarta } from '@/lib/timeUtils';
 import { DiagnosticItem, MovieWithStats } from '@/features/performances/types/performance';
+import { auth } from '@/auth';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0; 
 
 export async function GET() {
+    const session = await auth();
+    if (!session) {
+        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     try {
         const today = getTodayJakarta();
 

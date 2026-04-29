@@ -1,10 +1,16 @@
 import { NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
+import { auth } from '@/auth';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600; // Cache for 1 hour
 
 export async function GET() {
+    const session = await auth();
+    if (!session) {
+        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     try {
         const [theatresDocs, studiosDocs] = await Promise.all([
             firestoreRestClient.getCollection('theatres'),

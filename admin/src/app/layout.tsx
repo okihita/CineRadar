@@ -4,6 +4,7 @@ import "./globals.css";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { DarkModeProvider } from "@/hooks";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/components/AuthProvider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -69,13 +70,15 @@ export default function RootLayout({
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <DarkModeProvider>
-          <TooltipProvider>
-            <DashboardLayout>
-              {children}
-            </DashboardLayout>
-          </TooltipProvider>
-        </DarkModeProvider>
+        <AuthProvider>
+          <DarkModeProvider>
+            <TooltipProvider>
+              <DashboardLayout>
+                {children}
+              </DashboardLayout>
+            </TooltipProvider>
+          </DarkModeProvider>
+        </AuthProvider>
       </body>
     </html>
   );

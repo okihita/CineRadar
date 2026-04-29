@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
+import { auth } from '@/auth';
 
 /**
  * GET /api/scraper/errors
@@ -12,6 +13,11 @@ import { firestoreRestClient } from '@/lib/firestore-rest';
  *   - slot: Required dispatch slot (e.g., "10-35" or "10:35")
  */
 export async function GET(request: NextRequest) {
+    const session = await auth();
+    if (!session) {
+        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     try {
         const { searchParams } = new URL(request.url);
         const dateStr = searchParams.get('date');

@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { MarketingMetadata } from '@/features/performances/types/social';
 import { buildMovieSummary } from '@/features/performances/utils/movie-mapping';
+import { auth } from '@/auth';
 
 export const revalidate = 300; // Cache for 5 minutes
 
@@ -15,6 +16,11 @@ export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ metadataId: string }> }
 ) {
+    const session = await auth();
+    if (!session) {
+        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     try {
         const { metadataId } = await params;
 
@@ -57,6 +63,11 @@ export async function PATCH(
     request: NextRequest,
     { params }: { params: Promise<{ metadataId: string }> }
 ) {
+    const session = await auth();
+    if (!session) {
+        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     try {
         const { metadataId } = await params;
         const body = await request.json();

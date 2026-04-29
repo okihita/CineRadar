@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { MapPin, Film, ChevronLeft, ChevronRight, Database, Calendar, Clapperboard, Sun, Moon, Monitor, BarChart2 } from 'lucide-react';
+import { MapPin, Film, ChevronLeft, ChevronRight, Database, Calendar, Clapperboard, Sun, Moon, Monitor, BarChart2, LogOut } from 'lucide-react';
 import { useState } from 'react';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { useDarkModeContext } from '@/hooks';
+import { useSession, signOut } from 'next-auth/react';
 
 const menuItems = [
   {
@@ -53,6 +55,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const { darkMode, toggleDarkMode, followsSystem, resetToSystem } = useDarkModeContext();
+  const { data: session } = useSession();
 
   return (
     <aside
@@ -122,8 +125,38 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Theme Toggle + Collapse */}
+      {/* User + Theme + Collapse */}
       <div className="p-2 border-t space-y-1">
+        {/* User Info */}
+        {session?.user && (
+          <div className="flex items-center gap-3 px-3 py-2">
+            {session.user.image ? (
+              <Image src={session.user.image} alt="" width={24} height={24} className="rounded-full flex-shrink-0" />
+            ) : (
+              <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                <span className="text-[10px] font-bold text-primary-foreground">
+                  {session.user.name?.[0]?.toUpperCase() || 'U'}
+                </span>
+              </div>
+            )}
+            {!collapsed && (
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium truncate">{session.user.name}</p>
+                <p className="text-[10px] text-muted-foreground truncate">{session.user.email}</p>
+              </div>
+            )}
+            {!collapsed && (
+              <button
+                onClick={() => signOut({ callbackUrl: '/sign-in' })}
+                className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+                title="Sign out"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Theme Toggle Button */}
         <button
           onClick={toggleDarkMode}

@@ -9,8 +9,14 @@ import { NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { getTodayJakarta } from '@/lib/timeUtils';
 import type { FirestoreMovie } from '@/features/movies/types';
+import { auth } from '@/auth';
 
 export async function GET() {
+    const session = await auth();
+    if (!session) {
+        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     try {
         const today = getTodayJakarta();
 

@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@/auth';
 
 export async function GET() {
+    const session = await auth();
+    if (!session) {
+        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     // Debug endpoint to check Firebase config in production
     // IMPORTANT: Never log the actual API key, only check if it exists
     return NextResponse.json({

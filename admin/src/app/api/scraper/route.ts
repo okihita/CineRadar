@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
+import { auth } from '@/auth';
 
 
 export async function GET() {
+    const session = await auth();
+    if (!session) {
+        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     try {
         // Fetch scraper logs directly from Firestore
         // Sorted by date descending (newest first)
