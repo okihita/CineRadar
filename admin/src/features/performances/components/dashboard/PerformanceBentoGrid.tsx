@@ -79,7 +79,7 @@ export function PerformanceBentoGrid({ movies }: PerformanceBentoGridProps) {
                                             <p className="text-[9px] font-black text-white/30 uppercase tracking-widest flex items-center gap-1.5">
                                                 <Target className="w-3 h-3" /> True OCR
                                             </p>
-                                            <p className={cn("text-3xl font-black font-mono leading-none", getOccupancyColor(podium[0].today?.avg_occupancy_pct || 0).replace('text-', 'text-'))}>
+                                            <p className={cn("text-3xl font-black font-mono leading-none", getOccupancyColor(podium[0].today?.avg_occupancy_pct || 0))}>
                                                 {formatOccupancy(podium[0].today?.avg_occupancy_pct)}<span className="text-sm ml-0.5 opacity-40">%</span>
                                             </p>
                                         </div>

@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { CityPerformance } from "../hooks/useCityAggregation";
 import { SortDirection } from "../types/performance";
 import { formatOccupancy } from "../utils/format";
+import { getPerformanceTier } from "@/lib/constants";
 
 interface CityPotentialRadarProps {
   cityStats: CityPerformance[];
@@ -90,7 +91,7 @@ export function CityPotentialRadar({ cityStats }: CityPotentialRadarProps) {
                         <div
                           className={cn(
                             "h-full rounded-full",
-                            city.occupancyPct >= 10 ? "bg-green-500" : city.occupancyPct < 5 ? "bg-red-500" : "bg-amber-500",
+                            getPerformanceTier(city.occupancyPct).twBg,
                           )}
                           style={{ width: `${Math.min(city.occupancyPct, 100)}%` }}
                         />

@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Clock, Filter, Layers, Loader2, ShieldCheck, Microscope, Users, Ban, CheckCircle2, Percent, Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { CHAIN_TAILWIND } from '@/lib/constants';
+import { CHAIN_TAILWIND, getPerformanceTier } from '@/lib/constants';
+import { getOccupancyColor, getOccupancyBgSoft, getOccupancyBorderSoft } from '../utils/colors';
 import { SeatProgressBar } from './SeatProgressBar';
 import { TriPanelAudit } from './TriPanelAudit';
 import { ShowtimeSnapshot, SortDirection } from '../types/performance';
@@ -258,14 +259,19 @@ export function ShowtimeTable({ showtimes, loading = false, movieId, date }: Sho
                                         ))}
                                     </tbody>
                                     <tfoot>
-                                        <tr className="bg-primary/5 border-t font-black uppercase text-[10px] tracking-widest text-primary/60">
+                                        <tr className="bg-muted/5 border-t font-black uppercase text-[10px] tracking-widest text-muted-foreground/60">
                                             <td className="py-4 px-4" colSpan={5}>National Daily Aggregation ({summaryStats.totalShowtimes} units)</td>
                                             <td className="py-4 px-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="flex-1 h-1.5 bg-primary/10 rounded-full overflow-hidden">
-                                                        <div className="h-full bg-primary rounded-full shadow-[0_0_8px_rgba(var(--primary),0.4)]" style={{ width: `${Math.min(summaryStats.avgOccupancy, 100)}%` }} />
+                                                    <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                                                        <div 
+                                                            className={cn("h-full rounded-full transition-all", getPerformanceTier(summaryStats.avgOccupancy).twBg)} 
+                                                            style={{ width: `${Math.min(summaryStats.avgOccupancy, 100)}%` }} 
+                                                        />
                                                     </div>
-                                                    <span className="font-mono tabular-nums">{formatOccupancy(summaryStats.avgOccupancy)}%</span>
+                                                    <span className={cn("font-mono tabular-nums", getOccupancyColor(summaryStats.avgOccupancy))}>
+                                                        {formatOccupancy(summaryStats.avgOccupancy)}%
+                                                    </span>
                                                 </div>
                                             </td>
                                             <td className="py-4 px-4 text-right font-mono tabular-nums text-foreground">
@@ -442,11 +448,15 @@ export const ShowtimeRow = memo(({ showtime: st, movieId: propMovieId, date: pro
                                             <span className="text-[8px] font-bold text-zinc-600/60 uppercase tracking-tighter mt-0.5">Available</span>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/5 border border-primary/10 shadow-sm transition-all hover:bg-primary/10 group">
-                                        <Percent className="w-3 h-3 text-primary" />
+                                    <div className={cn(
+                                        "flex items-center gap-2 px-3 py-1.5 rounded-xl border shadow-sm transition-all group",
+                                        getOccupancyBgSoft(finalPct),
+                                        getOccupancyBorderSoft(finalPct)
+                                    )}>
+                                        <Percent className={cn("w-3 h-3", getOccupancyColor(finalPct))} />
                                         <div className="flex flex-col">
-                                            <span className="text-xs font-black text-primary leading-none">{formatOccupancy(finalPct)}%</span>
-                                            <span className="text-[8px] font-bold text-primary/60 uppercase tracking-tighter mt-0.5">True Occ</span>
+                                            <span className={cn("text-xs font-black leading-none", getOccupancyColor(finalPct))}>{formatOccupancy(finalPct)}%</span>
+                                            <span className={cn("text-[8px] font-bold uppercase tracking-tighter mt-0.5 opacity-60", getOccupancyColor(finalPct))}>True Occ</span>
                                         </div>
                                     </div>
                                     <div className="h-8 w-px bg-border/50 mx-1 hidden md:block" />

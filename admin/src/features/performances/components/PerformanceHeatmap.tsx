@@ -3,6 +3,9 @@
 import React, { useMemo, useState, useRef } from "react";
 import { geoMercator, geoPath } from "d3-geo";
 import { ProvincePerformance } from "../hooks/useCityAggregation";
+import { getPerformanceTier } from "@/lib/constants";
+import { getOccupancyColor } from "../utils/colors";
+import { cn } from "@/lib/utils";
 
 interface PerformanceHeatmapProps {
   provinceStats: ProvincePerformance[];
@@ -65,18 +68,8 @@ export function PerformanceHeatmap({ provinceStats }: PerformanceHeatmapProps) {
     const stat = provinceStats.find((p) => p.province === provName);
     if (!stat || stat.totalShows === 0) return "fill-muted/30 stroke-muted";
 
-    const pct = stat.occupancyPct;
-    const tierSize = 3.0; // 27% / 9 tiers
-
-    if (pct < tierSize) return "fill-red-700 hover:fill-red-600 stroke-background";
-    if (pct < tierSize * 2) return "fill-red-500 hover:fill-red-400 stroke-background";
-    if (pct < tierSize * 3) return "fill-red-300 hover:fill-red-200 stroke-background";
-    if (pct < tierSize * 4) return "fill-orange-400 hover:fill-orange-300 stroke-background";
-    if (pct < tierSize * 5) return "fill-amber-400 hover:fill-amber-300 stroke-background";
-    if (pct < tierSize * 6) return "fill-yellow-400 hover:fill-yellow-300 stroke-background";
-    if (pct < tierSize * 7) return "fill-lime-400 hover:fill-lime-300 stroke-background";
-    if (pct < tierSize * 8) return "fill-green-500 hover:fill-green-400 stroke-background";
-    return "fill-green-700 hover:fill-green-600 stroke-background";
+    const tier = getPerformanceTier(stat.occupancyPct);
+    return `${tier.twFill} hover:brightness-90 stroke-background`;
   };
 
   const handleMouseEnter = (e: React.MouseEvent, provName: string) => {
@@ -141,13 +134,7 @@ export function PerformanceHeatmap({ provinceStats }: PerformanceHeatmapProps) {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Occupancy:</span>
                 <span
-                  className={`font-mono font-bold ${
-                    hoveredProvince.occupancyPct >= 18.0
-                      ? "text-green-500"
-                      : hoveredProvince.occupancyPct < 9.0
-                        ? "text-red-500"
-                        : "text-amber-500"
-                  }`}
+                  className={cn("font-mono font-bold", getOccupancyColor(hoveredProvince.occupancyPct))}
                 >
                   {" "}
                   {hoveredProvince.occupancyPct.toFixed(1)}%

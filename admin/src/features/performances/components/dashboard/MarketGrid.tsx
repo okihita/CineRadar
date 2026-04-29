@@ -45,7 +45,7 @@ export function MarketGrid({ movies }: MarketGridProps) {
                             />
                             {/* Glassmorphism OCR Overlay */}
                             <div className="absolute top-2 right-2 px-2 py-1 rounded-lg backdrop-blur-md bg-zinc-900/60 border border-white/10">
-                                <span className={cn("text-[10px] font-black font-mono italic", getOccupancyColor(movie.today?.avg_occupancy_pct || 0).replace('text-', 'text-'))}>
+                                <span className={cn("text-[10px] font-black font-mono italic", getOccupancyColor(movie.today?.avg_occupancy_pct || 0))}>
                                     {formatOccupancy(movie.today?.avg_occupancy_pct)}%
                                 </span>
                             </div>

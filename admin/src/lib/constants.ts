@@ -96,3 +96,34 @@ export const TIME_CONSTANTS = {
   MAX_RETRIES: 3,
   RETRY_DELAY_BASE: 1000,  // 1 second base delay
 } as const;
+
+/**
+ * Performance Tiers for Occupancy (OCR)
+ * Unified color scale from Red (0%) to Purple (30%+)
+ *
+ * All Tailwind classes are full static strings so the JIT compiler can detect them.
+ */
+export const PERFORMANCE_TIERS = [
+  { threshold: 2.5, color: '#b91c1c', twText: 'text-red-700', twBg: 'bg-red-700', twFill: 'fill-red-700', twBgSoft: 'bg-red-700/5', twBorderSoft: 'border-red-700/10', label: 'Critical' },
+  { threshold: 5.0, color: '#ef4444', twText: 'text-red-500', twBg: 'bg-red-500', twFill: 'fill-red-500', twBgSoft: 'bg-red-500/5', twBorderSoft: 'border-red-500/10', label: 'Very Low' },
+  { threshold: 7.5, color: '#ea580c', twText: 'text-orange-600', twBg: 'bg-orange-600', twFill: 'fill-orange-600', twBgSoft: 'bg-orange-600/5', twBorderSoft: 'border-orange-600/10', label: 'Low' },
+  { threshold: 10.0, color: '#fb923c', twText: 'text-orange-400', twBg: 'bg-orange-400', twFill: 'fill-orange-400', twBgSoft: 'bg-orange-400/5', twBorderSoft: 'border-orange-400/10', label: 'Underperforming' },
+  { threshold: 12.5, color: '#eab308', twText: 'text-yellow-500', twBg: 'bg-yellow-500', twFill: 'fill-yellow-500', twBgSoft: 'bg-yellow-500/5', twBorderSoft: 'border-yellow-500/10', label: 'Soft' },
+  { threshold: 15.0, color: '#facc15', twText: 'text-yellow-400', twBg: 'bg-yellow-400', twFill: 'fill-yellow-400', twBgSoft: 'bg-yellow-400/5', twBorderSoft: 'border-yellow-400/10', label: 'Steady' },
+  { threshold: 17.5, color: '#84cc16', twText: 'text-lime-500', twBg: 'bg-lime-500', twFill: 'fill-lime-500', twBgSoft: 'bg-lime-500/5', twBorderSoft: 'border-lime-500/10', label: 'Healthy' },
+  { threshold: 20.0, color: '#22c55e', twText: 'text-green-500', twBg: 'bg-green-500', twFill: 'fill-green-500', twBgSoft: 'bg-green-500/5', twBorderSoft: 'border-green-500/10', label: 'Good' },
+  { threshold: 22.5, color: '#10b981', twText: 'text-emerald-500', twBg: 'bg-emerald-500', twFill: 'fill-emerald-500', twBgSoft: 'bg-emerald-500/5', twBorderSoft: 'border-emerald-500/10', label: 'High' },
+  { threshold: 25.0, color: '#14b8a6', twText: 'text-teal-500', twBg: 'bg-teal-500', twFill: 'fill-teal-500', twBgSoft: 'bg-teal-500/5', twBorderSoft: 'border-teal-500/10', label: 'Very High' },
+  { threshold: 27.5, color: '#2563eb', twText: 'text-blue-600', twBg: 'bg-blue-600', twFill: 'fill-blue-600', twBgSoft: 'bg-blue-600/5', twBorderSoft: 'border-blue-600/10', label: 'Elite' },
+  { threshold: 30.0, color: '#7e22ce', twText: 'text-purple-700', twBg: 'bg-purple-700', twFill: 'fill-purple-700', twBgSoft: 'bg-purple-700/5', twBorderSoft: 'border-purple-700/10', label: 'Peak' },
+] as const;
+
+/**
+ * Gets the performance tier based on occupancy percentage
+ */
+export function getPerformanceTier(pct: number) {
+  for (const tier of PERFORMANCE_TIERS) {
+    if (pct < tier.threshold) return tier;
+  }
+  return PERFORMANCE_TIERS[PERFORMANCE_TIERS.length - 1];
+}

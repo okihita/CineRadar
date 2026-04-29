@@ -2,8 +2,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
+import { cn } from '@/lib/utils';
 import { DailyPerformance } from '../types/performance';
 import { formatOccupancy, formatCompactNumber } from '../utils/format';
+import { getOccupancyColor } from '../utils/colors';
 
 interface HistoryGridProps {
     movieId: string;
@@ -139,7 +141,7 @@ export function HistoryGrid({ movieId, history }: HistoryGridProps) {
                                         <div className="grid grid-cols-2 gap-1 mt-auto">
                                             <div className="bg-muted/50 p-1.5 rounded flex flex-col items-center justify-center">
                                                 <p className="text-[9px] font-semibold text-muted-foreground uppercase leading-none mb-0.5">Occ</p>
-                                                <p className="font-mono text-xs font-bold leading-none text-primary">
+                                                <p className={cn("font-mono text-xs font-bold leading-none", getOccupancyColor(dayData.avg_occupancy_pct))}>
                                                     {formatOccupancy(dayData.avg_occupancy_pct)}%
                                                 </p>
                                             </div>
