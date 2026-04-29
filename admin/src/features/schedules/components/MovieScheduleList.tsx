@@ -48,6 +48,7 @@ export function MovieScheduleList({ movies }: MovieScheduleListProps) {
     return (
         <div className="space-y-2 min-h-[50vh]">
             {movies.map((movie, idx) => {
+                const rank = idx + 1;
                 const isExpanded = expandedMovieId === movie.movie_id;
                 const cityCount = movie.cities ? Object.keys(movie.cities).length : 0;
                 const roomCategories = Object.keys(movie.roomTypes);
@@ -61,6 +62,11 @@ export function MovieScheduleList({ movies }: MovieScheduleListProps) {
                             )}
                             onClick={() => toggleMovie(movie.movie_id)}
                         >
+                            {/* Rank */}
+                            <div className="flex items-center justify-center w-6 flex-shrink-0">
+                                <span className="text-xs font-mono font-bold text-muted-foreground/60 tabular-nums">{rank}</span>
+                            </div>
+
                             {/* Poster */}
                             <div className="relative w-16 h-24 flex-shrink-0 bg-muted rounded overflow-hidden">
                                 {movie.poster ? (

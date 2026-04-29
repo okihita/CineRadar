@@ -9,26 +9,24 @@ export const CHART_BUCKET_MINUTES = 5;
 
 /** Shared Recharts Tooltip content style */
 export const tooltipContentStyle: React.CSSProperties = {
-    backgroundColor: 'hsl(var(--popover))',
-    borderRadius: '4px',
-    border: '1px solid hsl(var(--border))',
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+    backgroundColor: 'var(--card)',
+    borderRadius: '8px',
+    border: '1px solid var(--border)',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.12)',
     fontSize: '12px',
     padding: '8px 12px',
 };
 
 export const tooltipItemStyle: React.CSSProperties = {
-    color: 'hsl(var(--popover-foreground))',
+    color: 'var(--card-foreground)',
     padding: '2px 0',
 };
 
 export const tooltipLabelStyle: React.CSSProperties = {
-    color: 'hsl(var(--muted-foreground))',
+    color: 'var(--muted-foreground)',
     marginBottom: '4px',
     fontWeight: 500,
 };
-
-export const tooltipCursor = { fill: 'hsl(var(--muted))' };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const tooltipFormatter = (value: any, name: any) => [value, name === 'available' ? 'Available' : 'Closed'];
@@ -36,7 +34,7 @@ export const tooltipFormatter = (value: any, name: any) => [value, name === 'ava
 /** Shared axis props */
 export const xAxisTickProps = { fontSize: 10 };
 export const yAxisTickProps = { fontSize: 10 };
-export const axisStroke = 'hsl(var(--muted-foreground))';
+export const axisStroke = 'var(--muted-foreground)';
 
 /**
  * Builds an empty bucket map from CHART_TIME_START to CHART_TIME_END

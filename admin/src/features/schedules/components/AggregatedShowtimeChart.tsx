@@ -10,7 +10,6 @@ import {
     tooltipContentStyle,
     tooltipItemStyle,
     tooltipLabelStyle,
-    tooltipCursor,
     tooltipFormatter,
     xAxisTickProps,
     yAxisTickProps,
@@ -68,9 +67,9 @@ export function AggregatedShowtimeChart({ movies }: AggregatedShowtimeChartProps
             </CardHeader>
             <CardContent>
                 <div className="h-[200px] w-full mt-2">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="99%" height={200}>
                         <BarChart data={data} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.4} />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.4} />
                             <XAxis
                                 dataKey="time"
                                 tick={xAxisTickProps}
@@ -91,12 +90,12 @@ export function AggregatedShowtimeChart({ movies }: AggregatedShowtimeChartProps
                             <Tooltip
                                 contentStyle={tooltipContentStyle}
                                 itemStyle={tooltipItemStyle}
-                                cursor={tooltipCursor}
+                                cursor={false}
                                 labelStyle={tooltipLabelStyle}
                                 formatter={tooltipFormatter}
                             />
-                            <Bar dataKey="available" stackId="a" fill="hsl(var(--primary))" radius={[0, 0, 0, 0]} />
-                            <Bar dataKey="unavailable" stackId="a" fill="hsl(var(--muted-foreground))" opacity={0.2} radius={[2, 2, 0, 0]} />
+                            <Bar dataKey="available" stackId="a" fill="var(--primary)" activeBar={{ fill: 'oklch(0.55 0.2 270)' }} />
+                            <Bar dataKey="unavailable" stackId="a" fill="var(--muted-foreground)" opacity={0.2} radius={[2, 2, 0, 0]} activeBar={{ fill: 'var(--muted-foreground)', opacity: 0.5 }} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
