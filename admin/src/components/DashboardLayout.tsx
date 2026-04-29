@@ -1,31 +1,22 @@
 'use client';
 
-import { ReactNode, useSyncExternalStore } from 'react';
+import { ReactNode } from 'react';
 import { Sidebar } from '@/components/Sidebar';
+import { useSession } from 'next-auth/react';
 
 interface DashboardLayoutProps {
     children: ReactNode;
 }
 
-// Empty subscribe function for server snapshot
-const emptySubscribe = () => () => { };
-
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-    // useSyncExternalStore to safely detect client-side mounting
-    const mounted = useSyncExternalStore(
-        emptySubscribe,
-        () => true,
-        () => false
-    );
+    const { data: session } = useSession();
 
-    // Prevent hydration mismatch by showing placeholder until mounted
-    // The blocking script in layout.tsx handles the initial theme
-    if (!mounted) {
+    // Guests: no sidebar, full-width content (sign-in page)
+    if (!session) {
         return (
-            <div className="flex h-screen">
-                <div className="w-64 flex-shrink-0" /> {/* Sidebar placeholder */}
-                <main className="flex-1 overflow-auto bg-background" />
-            </div>
+            <main className="flex-1 overflow-auto bg-background">
+                {children}
+            </main>
         );
     }
 
