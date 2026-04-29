@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import type { ScraperLog, DispatchEntry } from '@/features/scraper/types';
+import { getTodayJakarta } from '@/lib/timeUtils';
 
 /**
  * GET /api/scraper/today
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest) {
 
         // Default to today in Jakarta timezone
         if (!dateStr) {
-            dateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+            dateStr = getTodayJakarta();
         }
 
         // 1. ALWAYS fetch schedules first (available after morning scrape ~6:35 AM)

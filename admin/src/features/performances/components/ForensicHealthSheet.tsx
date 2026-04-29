@@ -21,6 +21,7 @@ import {
     Clock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getTodayJakarta } from '@/lib/timeUtils';
 import Link from 'next/link';
 
 interface DiagnosticItem {
@@ -50,7 +51,7 @@ interface ForensicHealthSheetProps {
 export function ForensicHealthSheet({ diagnostic }: ForensicHealthSheetProps) {
     const [search, setSearch] = React.useState('');
     const [showScheduledOnly, setShowScheduledOnly] = React.useState(true);
-    const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Jakarta" });
+    const today = getTodayJakarta();
 
     const filteredItems = React.useMemo(() => {
         let items = diagnostic.items;

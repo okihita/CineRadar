@@ -3,7 +3,7 @@
  * e.g., "2026-04-27"
  */
 export function getTodayJakarta(): string {
-    return new Date().toLocaleDateString('sv-SE', { timeZone: WIB_TIMEZONE });
+    return new Date().toLocaleDateString('en-CA', { timeZone: WIB_TIMEZONE });
 }
 
 /**

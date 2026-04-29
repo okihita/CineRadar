@@ -1,9 +1,5 @@
 import { redirect } from "next/navigation";
-
-// Get today's date in Jakarta timezone (YYYY-MM-DD)
-function getTodayJakarta(): string {
-    return new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Jakarta" });
-}
+import { getTodayJakarta } from "@/lib/timeUtils";
 
 /**
  * Schedules Page - Redirects to date-based URL
