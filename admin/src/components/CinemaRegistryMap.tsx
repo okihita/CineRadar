@@ -8,6 +8,7 @@ import { ExternalLink, Navigation } from 'lucide-react';
 import { createPieChartSvg } from '@/lib/mapUtils';
 import { getChainColor, normalizeMerchant } from '@/lib/constants';
 import { MerchantBadge } from './MerchantBadge';
+import { useDarkModeContext } from '@/hooks';
 
 interface CinemaRegistryMapProps {
     theatres: Theatre[];
@@ -264,17 +265,7 @@ export function CinemaRegistryMap({
     children 
 }: CinemaRegistryMapProps) {
 
-    const [isDarkMode, setIsDarkMode] = useState(false);
-
-    useEffect(() => {
-        const checkDarkMode = () => {
-            setIsDarkMode(document.documentElement.classList.contains('dark'));
-        };
-        checkDarkMode();
-        const observer = new MutationObserver(checkDarkMode);
-        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-        return () => observer.disconnect();
-    }, []);
+    const { darkMode } = useDarkModeContext();
 
     if (!apiKey) {
         return (
@@ -297,7 +288,7 @@ export function CinemaRegistryMap({
                     defaultZoom={5.5}
                     gestureHandling={'greedy'}
                     mapTypeControl={false}
-                    colorScheme={isDarkMode ? 'DARK' : 'LIGHT'}
+                    colorScheme={darkMode ? 'DARK' : 'LIGHT'}
                     style={{ width: '100%', height: '100%' }}
                 >
                     <ClusteredMarkers
