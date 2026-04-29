@@ -20,7 +20,6 @@ export function DateNavigator({ date, setDate, isLoading }: DateNavigatorProps) 
                 variant="outline"
                 size="icon"
                 onClick={() => setDate(subDays(date, 1))}
-                disabled={isLoading}
             >
                 <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -28,7 +27,7 @@ export function DateNavigator({ date, setDate, isLoading }: DateNavigatorProps) 
             <Popover>
                 <PopoverTrigger asChild>
                     <Button
-                        variant={"outline"}
+                        variant="outline"
                         className={cn(
                             "w-[240px] justify-start text-left font-normal",
                             !date && "text-muted-foreground"
@@ -52,19 +51,22 @@ export function DateNavigator({ date, setDate, isLoading }: DateNavigatorProps) 
                 variant="outline"
                 size="icon"
                 onClick={() => setDate(addDays(date, 1))}
-                disabled={isLoading}
             >
                 <ChevronRight className="h-4 w-4" />
             </Button>
 
             <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={() => setDate(new Date())}
-                className="ml-2 text-xs text-muted-foreground hover:text-primary"
+                className="ml-2 text-xs font-semibold"
             >
                 Today
             </Button>
+
+            {isLoading && (
+                <span className="ml-2 text-[10px] text-muted-foreground animate-pulse">Loading…</span>
+            )}
         </div>
     );
 }

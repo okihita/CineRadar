@@ -3,6 +3,8 @@ import { firestoreRestClient } from '@/lib/firestore-rest';
 import { ScheduleResponse, MovieSchedule } from '@/features/schedules/types';
 import { getTodayJakarta } from '@/lib/timeUtils';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
     try {
         const searchParams = request.nextUrl.searchParams;
@@ -15,17 +17,31 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // Collection path: schedules/{date}/movies
-        const path = `schedules/${date}/movies`;
+        // Collection path: schedules_v2/{date}/movies (v2 is the canonical source)
+        const path = `schedules_v2/${date}/movies`;
 
-        // Using getSubCollection which internally does a runQuery on the parent document
         const moviesRaw = await firestoreRestClient.getSubCollection(path);
+
+        // Normalize: schedules_v2 documents use Firestore document id as the identifier.
+        // Map to MovieSchedule shape so consumers always see movie_id.
+        const movies: MovieSchedule[] = moviesRaw.map((doc) => ({
+            movie_id: doc.id as string,
+            title: (doc.title as string) || '',
+            poster: (doc.poster as string) || '',
+            genres: (doc.genres as string[]) || [],
+            age_category: (doc.age_category as string) || '',
+            merchants: (doc.merchants as string[]) || [],
+            is_presale: (doc.is_presale as boolean) || false,
+            date: (doc.date as string) || date,
+            uploaded_at: (doc.uploaded_at as string) || '',
+            cities: (doc.cities as MovieSchedule['cities']) || {},
+        }));
 
         return NextResponse.json({
             success: true,
             date,
-            count: moviesRaw.length,
-            movies: moviesRaw as unknown as MovieSchedule[]
+            count: movies.length,
+            movies,
         } as ScheduleResponse);
 
     } catch (error) {

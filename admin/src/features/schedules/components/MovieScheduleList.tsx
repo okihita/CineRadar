@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MovieSchedule, countMovieShowtimes, countAvailableMovieShowtimes } from "../types";
+import { MovieWithStats } from "../hooks/useScheduleData";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,16 +12,11 @@ import { CityShowtimesTable } from "./CityShowtimesTable";
 import { cn } from "@/lib/utils";
 
 interface MovieScheduleListProps {
-    movies: MovieSchedule[];
-    isLoading: boolean;
+    movies: MovieWithStats[];
 }
 
-export function MovieScheduleList({ movies, isLoading }: MovieScheduleListProps) {
+export function MovieScheduleList({ movies }: MovieScheduleListProps) {
     const [expandedMovieId, setExpandedMovieId] = useState<string | null>(null);
-
-    if (isLoading) {
-        return <div className="text-center py-10 text-muted-foreground">Loading schedules...</div>;
-    }
 
     if (movies.length === 0) {
         return <div className="text-center py-10 text-muted-foreground">No schedules found for this date.</div>;
@@ -33,11 +28,9 @@ export function MovieScheduleList({ movies, isLoading }: MovieScheduleListProps)
 
     return (
         <div className="space-y-2">
-            {movies.map((movie) => {
+            {movies.map((movie, idx) => {
                 const isExpanded = expandedMovieId === movie.movie_id;
                 const cityCount = movie.cities ? Object.keys(movie.cities).length : 0;
-                const totalShowtimes = movie.cities ? countMovieShowtimes(movie.cities) : 0;
-                const availableShowtimes = movie.cities ? countAvailableMovieShowtimes(movie.cities) : 0;
 
                 return (
                     <Card key={movie.movie_id} className={cn("overflow-hidden transition-colors border-border/60 shadow-sm py-0", isExpanded ? "border-primary bg-primary/5" : "")}>
@@ -57,7 +50,7 @@ export function MovieScheduleList({ movies, isLoading }: MovieScheduleListProps)
                                         fill
                                         className="object-cover"
                                         sizes="64px"
-                                        priority={movies.indexOf(movie) < 4}
+                                        priority={idx < 4}
                                     />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">No Img</div>
@@ -87,15 +80,15 @@ export function MovieScheduleList({ movies, isLoading }: MovieScheduleListProps)
                                     <div className="flex items-center gap-1.5">
                                         <Clock className="h-3.5 w-3.5" />
                                         <span>
-                                            <span className="text-foreground font-medium">{availableShowtimes}</span>
-                                            <span className="text-muted-foreground/60"> / {totalShowtimes}</span>
+                                            <span className="text-foreground font-medium">{movie.availableCount}</span>
+                                            <span className="text-muted-foreground/60"> / {movie.showtimeCount}</span>
                                         </span>
                                     </div>
                                     <div className="flex items-center">
                                         <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-medium",
-                                            totalShowtimes > 0 && (availableShowtimes / totalShowtimes) > 0.5 ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                                            movie.showtimeCount > 0 && (movie.availableCount / movie.showtimeCount) > 0.5 ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
                                         )}>
-                                            {totalShowtimes > 0 ? ((availableShowtimes / totalShowtimes) * 100).toFixed(0) : 0}% bookable
+                                            {movie.showtimeCount > 0 ? ((movie.availableCount / movie.showtimeCount) * 100).toFixed(0) : 0}% bookable
                                         </span>
                                     </div>
                                 </div>

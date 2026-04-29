@@ -4,6 +4,18 @@ import { useMemo } from "react";
 import { MovieSchedule } from "../types";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+    buildEmptyBuckets,
+    fillBucketsFromCities,
+    tooltipContentStyle,
+    tooltipItemStyle,
+    tooltipLabelStyle,
+    tooltipCursor,
+    tooltipFormatter,
+    xAxisTickProps,
+    yAxisTickProps,
+    axisStroke,
+} from "../utils/chart-config";
 
 interface AggregatedShowtimeChartProps {
     movies: MovieSchedule[];
@@ -11,57 +23,20 @@ interface AggregatedShowtimeChartProps {
 
 export function AggregatedShowtimeChart({ movies }: AggregatedShowtimeChartProps) {
     const { data, totalShowtimes, totalAvailable } = useMemo(() => {
-        // Re-initializing with 5 min intervals to match existing style
-        const bucketMap = new Map<string, { available: number; unavailable: number }>();
-        for (let h = 9; h <= 23; h++) {
-            for (let m = 0; m < 60; m += 5) {
-                const timeStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-                bucketMap.set(timeStr, { available: 0, unavailable: 0 });
-            }
-        }
-
+        const bucketMap = buildEmptyBuckets();
         let total = 0;
         let available = 0;
 
-        movies.forEach(movie => {
-            if (!movie.cities) return;
-            Object.values(movie.cities).forEach(theatres => {
-                theatres.forEach(theatre => {
-                    theatre.rooms.forEach(room => {
-                        (room.all_showtimes || []).forEach(show => {
-                            if (!show.time) return;
-                            const [hStr, mStr] = show.time.split(':');
-                            const h = parseInt(hStr, 10);
-                            const m = parseInt(mStr, 10);
-
-                            // Filter valid times within our range
-                            if (!isNaN(h) && !isNaN(m)) {
-                                if (h >= 9 && h <= 23) {
-                                    const mRounded = Math.floor(m / 5) * 5;
-                                    const bucketKey = `${h.toString().padStart(2, '0')}:${mRounded.toString().padStart(2, '0')}`;
-                                    const bucket = bucketMap.get(bucketKey);
-                                    if (bucket) {
-                                        if (show.is_available) {
-                                            bucket.available++;
-                                            available++;
-                                        } else {
-                                            bucket.unavailable++;
-                                        }
-                                        total++;
-                                    }
-                                }
-                            }
-                        });
-                    });
-                });
-            });
-        });
+        for (const movie of movies) {
+            const counts = fillBucketsFromCities(bucketMap, movie.cities as Record<string, unknown[]>);
+            total += counts.total;
+            available += counts.available;
+        }
 
         const formattedData = Array.from(bucketMap.entries()).map(([time, counts]) => ({
             time,
             available: counts.available,
             unavailable: counts.unavailable,
-            total: counts.available + counts.unavailable
         }));
 
         return { data: formattedData, totalShowtimes: total, totalAvailable: available };
@@ -98,35 +73,27 @@ export function AggregatedShowtimeChart({ movies }: AggregatedShowtimeChartProps
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.4} />
                             <XAxis
                                 dataKey="time"
-                                tick={{ fontSize: 10 }}
-                                interval={23} // Show rough hourly ticks (12 * 5min = 60min)
-                                stroke="hsl(var(--muted-foreground))"
+                                tick={xAxisTickProps}
+                                interval={23}
+                                stroke={axisStroke}
                                 minTickGap={30}
                                 tickLine={false}
                                 axisLine={false}
                             />
                             <YAxis
-                                tick={{ fontSize: 10 }}
-                                stroke="hsl(var(--muted-foreground))"
+                                tick={yAxisTickProps}
+                                stroke={axisStroke}
                                 allowDecimals={false}
                                 width={30}
                                 tickLine={false}
                                 axisLine={false}
                             />
                             <Tooltip
-                                contentStyle={{
-                                    backgroundColor: 'hsl(var(--popover))',
-                                    borderRadius: '4px',
-                                    border: '1px solid hsl(var(--border))',
-                                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
-                                    fontSize: '12px',
-                                    padding: '8px 12px'
-                                }}
-                                itemStyle={{ color: 'hsl(var(--popover-foreground))', padding: '2px 0' }}
-                                cursor={{ fill: 'hsl(var(--muted))' }}
-                                labelStyle={{ color: 'hsl(var(--muted-foreground))', marginBottom: '4px', fontWeight: 500 }}
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                formatter={(value: any, name: any) => [value, name === 'available' ? 'Available' : 'Closed']}
+                                contentStyle={tooltipContentStyle}
+                                itemStyle={tooltipItemStyle}
+                                cursor={tooltipCursor}
+                                labelStyle={tooltipLabelStyle}
+                                formatter={tooltipFormatter}
                             />
                             <Bar dataKey="available" stackId="a" fill="hsl(var(--primary))" radius={[0, 0, 0, 0]} />
                             <Bar dataKey="unavailable" stackId="a" fill="hsl(var(--muted-foreground))" opacity={0.2} radius={[2, 2, 0, 0]} />

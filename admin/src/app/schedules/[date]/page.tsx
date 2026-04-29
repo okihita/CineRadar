@@ -9,16 +9,15 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format, parse } from "date-fns";
-import useSWR from "swr";
 import { DateNavigator } from "@/features/schedules/components/DateNavigator";
 import { ScheduleStats } from "@/features/schedules/components/ScheduleStats";
 import { MovieScheduleList } from "@/features/schedules/components/MovieScheduleList";
 import { AggregatedShowtimeChart } from "@/features/schedules/components/AggregatedShowtimeChart";
-import { ScheduleResponse, MovieSchedule, countMovieShowtimes, countAvailableMovieShowtimes } from "@/features/schedules/types";
+import { SchedulesPageSkeleton } from "@/features/schedules/components/skeletons/SchedulesPageSkeleton";
+import { useScheduleData } from "@/features/schedules/hooks/useScheduleData";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-import { fetcher } from '@/lib/api';
 import { getTodayJakarta, isValidDateFormat } from '@/lib/timeUtils';
 
 interface PageProps {
@@ -41,11 +40,8 @@ export default function SchedulesDatePage({ params }: PageProps) {
     const selectedDate = isValidDateFormat(routeDate) ? routeDate : getTodayJakarta();
     const dateObj = parse(selectedDate, "yyyy-MM-dd", new Date());
 
-    // Fetch data
-    const { data, error, isLoading } = useSWR<ScheduleResponse>(
-        `/api/schedules?date=${selectedDate}`,
-        fetcher
-    );
+    // Fetch + process data via custom hook (memoized dedup, sort, stats)
+    const { movies, stats, error, isLoading } = useScheduleData(selectedDate);
 
     // Redirect invalid dates to today
     useEffect(() => {
@@ -54,48 +50,11 @@ export default function SchedulesDatePage({ params }: PageProps) {
         }
     }, [resolvedParams, routeDate, router]);
 
-    // Date navigation handler - updates URL
+    // Date navigation handler
     const handleDateChange = (newDate: Date) => {
         const dateStr = format(newDate, "yyyy-MM-dd");
         router.push(`/schedules/${dateStr}`);
     };
-
-    // Calculate aggregated stats
-    const totalMovies = data?.movies?.length || 0;
-    let totalShowtimes = 0;
-    let totalAvailableShowtimes = 0;
-    let totalTheatres = 0;
-
-    // Process movies: Deduplicate and Sort
-    let processedMovies: MovieSchedule[] = data?.movies ? [...data.movies] : [];
-
-    if (processedMovies.length > 0) {
-        // 1. Calculate stats
-        processedMovies.forEach((m) => {
-            if (!m.cities) return;
-            totalShowtimes += countMovieShowtimes(m.cities);
-            totalAvailableShowtimes += countAvailableMovieShowtimes(m.cities);
-            Object.values(m.cities).forEach((theatres) => {
-                totalTheatres += theatres.length;
-            });
-        });
-
-        // 2. Deduplicate by movie_id
-        const uniqueMovies = new Map<string, MovieSchedule>();
-        processedMovies.forEach((m) => {
-            if (!uniqueMovies.has(m.movie_id)) {
-                uniqueMovies.set(m.movie_id, m);
-            }
-        });
-        processedMovies = Array.from(uniqueMovies.values());
-
-        // 3. Sort by showtime count (descending)
-        processedMovies.sort((a, b) => {
-            const countA = a.cities ? countMovieShowtimes(a.cities) : 0;
-            const countB = b.cities ? countMovieShowtimes(b.cities) : 0;
-            return countB - countA;
-        });
-    }
 
     // Show loading while resolving params
     if (!resolvedParams) {
@@ -136,22 +95,25 @@ export default function SchedulesDatePage({ params }: PageProps) {
                         </Alert>
                     )}
 
-                    {!error && (
+                    {!error && isLoading && (
+                        <SchedulesPageSkeleton />
+                    )}
+
+                    {!error && !isLoading && (
                         <>
                             <ScheduleStats
-                                totalMovies={totalMovies}
-                                totalShowtimes={totalShowtimes}
-                                totalAvailableShowtimes={totalAvailableShowtimes}
-                                totalTheatres={totalTheatres}
+                                totalMovies={stats.totalMovies}
+                                totalShowtimes={stats.totalShowtimes}
+                                totalAvailableShowtimes={stats.totalAvailableShowtimes}
+                                totalTheatres={stats.totalTheatres}
                             />
 
-                            {processedMovies.length > 0 && (
-                                <AggregatedShowtimeChart movies={processedMovies} />
+                            {movies.length > 0 && (
+                                <AggregatedShowtimeChart movies={movies} />
                             )}
 
                             <MovieScheduleList
-                                movies={processedMovies}
-                                isLoading={isLoading}
+                                movies={movies}
                             />
                         </>
                     )}
