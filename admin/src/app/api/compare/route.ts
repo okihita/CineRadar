@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { eachDayOfInterval, parseISO, format } from 'date-fns';
-import { auth } from '@clerk/nextjs/server';
 
 export async function GET(req: NextRequest) {
-    const { userId } = await auth();
-    if (!userId) {
-        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    }
     try {
         const { searchParams } = new URL(req.url);
         const moviesParam = searchParams.get('movies');

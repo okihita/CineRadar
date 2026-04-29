@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
-import { auth } from '@clerk/nextjs/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,10 +7,6 @@ export async function POST(
     request: Request,
     { params }: { params: Promise<{ id: string; studioId: string }> }
 ) {
-    const { userId } = await auth();
-    if (!userId) {
-        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    }
     try {
         const { id: theatreId, studioId } = await params;
         

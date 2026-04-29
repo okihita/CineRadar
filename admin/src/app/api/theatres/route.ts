@@ -7,17 +7,12 @@
 
 import { NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
-import { auth } from '@clerk/nextjs/server';
 
 export const dynamic = 'force-dynamic';
 // Cache for 1 hour to prevent heavy join on every request
 export const revalidate = 3600;
 
 export async function GET() {
-    const { userId } = await auth();
-    if (!userId) {
-        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    }
     try {
         // Fetch all theatres and all studios in parallel
         const [theatresDocs, studiosDocs] = await Promise.all([

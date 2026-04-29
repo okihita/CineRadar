@@ -3,15 +3,10 @@ import { firestoreRestClient } from '@/lib/firestore-rest';
 import { ScheduleResponse, MovieSchedule, TheatreSchedule } from '@/features/schedules/types';
 import { getTodayJakarta } from '@/lib/timeUtils';
 import { normalizeMerchant } from '@/lib/constants';
-import { auth } from '@clerk/nextjs/server';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
-    const { userId } = await auth();
-    if (!userId) {
-        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    }
     try {
         const searchParams = request.nextUrl.searchParams;
         const date = searchParams.get('date') || getTodayJakarta();

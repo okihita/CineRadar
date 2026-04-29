@@ -6,16 +6,11 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
-import { auth } from '@clerk/nextjs/server';
 
 export async function GET(
     _request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const { userId } = await auth();
-    if (!userId) {
-        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    }
     try {
         const { id } = await params;
 
