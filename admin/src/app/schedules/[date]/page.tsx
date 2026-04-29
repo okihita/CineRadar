@@ -13,10 +13,14 @@ import { DateNavigator } from "@/features/schedules/components/DateNavigator";
 import { ScheduleStats } from "@/features/schedules/components/ScheduleStats";
 import { MovieScheduleList } from "@/features/schedules/components/MovieScheduleList";
 import { AggregatedShowtimeChart } from "@/features/schedules/components/AggregatedShowtimeChart";
+import { ChainDistribution } from "@/features/schedules/components/ChainDistribution";
+import { ScheduleFilterBar } from "@/features/schedules/components/ScheduleFilterBar";
 import { SchedulesPageSkeleton } from "@/features/schedules/components/skeletons/SchedulesPageSkeleton";
 import { useScheduleData } from "@/features/schedules/hooks/useScheduleData";
-import { Loader2, AlertCircle } from "lucide-react";
+import { useScheduleFilters } from "@/features/schedules/hooks/useScheduleFilters";
+import { Loader2, AlertCircle, Clock } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { formatFreshness, getLatestUpload } from "@/features/schedules/utils/schedule-helpers";
 
 import { getTodayJakarta, isValidDateFormat } from '@/lib/timeUtils';
 
@@ -41,7 +45,13 @@ export default function SchedulesDatePage({ params }: PageProps) {
     const dateObj = parse(selectedDate, "yyyy-MM-dd", new Date());
 
     // Fetch + process data via custom hook (memoized dedup, sort, stats)
-    const { movies, stats, error, isLoading } = useScheduleData(selectedDate);
+    const { movies, stats, chainDistribution, error, isLoading } = useScheduleData(selectedDate);
+
+    // Filter state
+    const filters = useScheduleFilters(movies);
+
+    // Data freshness
+    const freshnessLabel = movies.length > 0 ? formatFreshness(getLatestUpload(movies)) : null;
 
     // Redirect invalid dates to today
     useEffect(() => {
@@ -82,7 +92,15 @@ export default function SchedulesDatePage({ params }: PageProps) {
                                 Daily schedule coverage and analysis for {selectedDate}
                             </p>
                         </div>
-                        {isLoading && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
+                        <div className="flex items-center gap-3">
+                            {freshnessLabel && (
+                                <span className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground bg-muted/50 px-2 py-1 rounded-md border border-border/50">
+                                    <Clock className="h-3 w-3" />
+                                    Updated {freshnessLabel}
+                                </span>
+                            )}
+                            {isLoading && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
+                        </div>
                     </div>
 
                     {error && (
@@ -108,12 +126,33 @@ export default function SchedulesDatePage({ params }: PageProps) {
                                 totalTheatres={stats.totalTheatres}
                             />
 
+                            {chainDistribution.length > 0 && (
+                                <ChainDistribution chainDistribution={chainDistribution} />
+                            )}
+
                             {movies.length > 0 && (
                                 <AggregatedShowtimeChart movies={movies} />
                             )}
 
+                            <ScheduleFilterBar
+                                search={filters.search}
+                                onSearchChange={filters.setSearch}
+                                availableGenres={filters.availableGenres}
+                                selectedGenres={filters.genres}
+                                onToggleGenre={filters.toggleGenre}
+                                availableChains={filters.availableChains}
+                                selectedChains={filters.chains}
+                                onToggleChain={filters.toggleChain}
+                                presaleOnly={filters.presaleOnly}
+                                onTogglePresale={() => filters.setPresaleOnly(!filters.presaleOnly)}
+                                hasActiveFilters={filters.hasActiveFilters}
+                                onClear={filters.clearFilters}
+                                resultCount={filters.filteredMovies.length}
+                                totalCount={movies.length}
+                            />
+
                             <MovieScheduleList
-                                movies={movies}
+                                movies={filters.filteredMovies}
                             />
                         </>
                     )}

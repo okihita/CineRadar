@@ -7,6 +7,7 @@ import {
     countMovieShowtimes,
     countAvailableMovieShowtimes,
 } from '../types';
+import { computeRoomTypes, computeChainDistribution } from '../utils/schedule-helpers';
 
 export interface ScheduleStats {
     totalMovies: number;
@@ -18,23 +19,48 @@ export interface ScheduleStats {
 export interface MovieWithStats extends MovieSchedule {
     showtimeCount: number;
     availableCount: number;
+    roomTypes: Record<string, number>;
+    delta: number | null; // showtime count difference vs previous day, null if no prev data
 }
 
 /**
  * Custom hook for schedule data fetching, deduplication, sorting,
- * and stats computation — all memoized.
+ * stats computation, and day-over-day comparison — all memoized.
  */
 export function useScheduleData(date: string) {
+    // Current day
     const { data, error, isLoading } = useSWR<ScheduleResponse>(
         `/api/schedules?date=${date}`,
         fetcher
     );
 
-    const rawMovies = data?.movies;
+    // Previous day for comparison
+    const prevDate = getPreviousDate(date);
+    const { data: prevData } = useSWR<ScheduleResponse>(
+        prevDate ? `/api/schedules?date=${prevDate}` : null,
+        fetcher
+    );
 
-    const { movies, stats } = useMemo(() => {
+    const rawMovies = data?.movies;
+    const rawPrevMovies = prevData?.movies;
+
+    const { movies, stats, chainDistribution } = useMemo(() => {
         if (!rawMovies || rawMovies.length === 0) {
-            return { movies: [], stats: { totalMovies: 0, totalShowtimes: 0, totalAvailableShowtimes: 0, totalTheatres: 0 } };
+            return {
+                movies: [],
+                stats: { totalMovies: 0, totalShowtimes: 0, totalAvailableShowtimes: 0, totalTheatres: 0 },
+                chainDistribution: [],
+            };
+        }
+
+        // Build previous day lookup: movie_id -> showtime count
+        const prevMap = new Map<string, number>();
+        if (rawPrevMovies) {
+            for (const m of rawPrevMovies) {
+                if (m.movie_id && m.cities) {
+                    prevMap.set(m.movie_id, countMovieShowtimes(m.cities));
+                }
+            }
         }
 
         // Deduplicate by movie_id, skipping malformed documents
@@ -53,7 +79,11 @@ export function useScheduleData(date: string) {
         const enriched: MovieWithStats[] = Array.from(uniqueMovies.values()).map((m) => {
             const showtimeCount = m.cities ? countMovieShowtimes(m.cities) : 0;
             const availableCount = m.cities ? countAvailableMovieShowtimes(m.cities) : 0;
-            return { ...m, showtimeCount, availableCount };
+            const roomTypes = computeRoomTypes(m.cities);
+            const prevCount = prevMap.get(m.movie_id);
+            const delta = prevCount !== undefined ? showtimeCount - prevCount : null;
+
+            return { ...m, showtimeCount, availableCount, roomTypes, delta };
         });
 
         enriched.sort((a, b) => b.showtimeCount - a.showtimeCount);
@@ -73,16 +103,23 @@ export function useScheduleData(date: string) {
             }
         });
 
+        // Chain distribution
+        const chainDistribution = computeChainDistribution(enriched);
+
         return {
             movies: enriched,
-            stats: {
-                totalMovies: enriched.length,
-                totalShowtimes,
-                totalAvailableShowtimes,
-                totalTheatres,
-            },
+            stats: { totalMovies: enriched.length, totalShowtimes, totalAvailableShowtimes, totalTheatres },
+            chainDistribution,
         };
-    }, [rawMovies]);
+    }, [rawMovies, rawPrevMovies]);
 
-    return { movies, stats, error, isLoading };
+    return { movies, stats, chainDistribution, error, isLoading };
+}
+
+/** Returns the previous day in YYYY-MM-DD format */
+function getPreviousDate(dateStr: string): string | null {
+    const d = new Date(dateStr + 'T00:00:00');
+    if (isNaN(d.getTime())) return null;
+    d.setDate(d.getDate() - 1);
+    return d.toISOString().slice(0, 10);
 }
