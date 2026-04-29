@@ -36,6 +36,19 @@ export const ITEMS_PER_PAGE = 15;
 export const CHAIN_NAMES = ['XXI', 'CGV', 'Cinépolis', 'FLIX'] as const;
 export type ChainName = (typeof CHAIN_NAMES)[number];
 
+/**
+ * Normalizes merchant name to match CHAIN_NAMES keys
+ */
+export function normalizeMerchant(merchant: string | undefined | null): ChainName | null {
+  if (!merchant) return null;
+  const m = merchant.toUpperCase();
+  if (m.includes('XXI')) return 'XXI';
+  if (m.includes('CGV')) return 'CGV';
+  if (m.includes('CINEPOLIS') || m.includes('CINÉPOLIS')) return 'Cinépolis';
+  if (m.includes('FLIX')) return 'FLIX';
+  return null;
+}
+
 // Chain Tailwind classes for badges and text
 export const CHAIN_TAILWIND = {
   XXI: { bg: 'bg-amber-500', text: 'text-amber-600 dark:text-amber-400', badge: 'bg-amber-500 text-white', badgeLight: 'bg-amber-500/20' },
@@ -45,14 +58,24 @@ export const CHAIN_TAILWIND = {
 } as const;
 export type ChainTailwindKey = keyof typeof CHAIN_TAILWIND;
 
+/**
+ * Gets tailwind classes for a merchant
+ */
+export function getChainTailwind(merchant: string | undefined | null) {
+  const normalized = normalizeMerchant(merchant);
+  return normalized ? CHAIN_TAILWIND[normalized] : null;
+}
+
 // Helper to get chain color
 export function getChainColor(chain: string): string {
-  return CHAIN_COLORS[chain as ChainName] || '#666666';
+  const normalized = normalizeMerchant(chain);
+  return normalized ? CHAIN_COLORS[normalized] : '#666666';
 }
 
 // Helper to get chain light color
 export function getChainColorLight(chain: string): string {
-  return CHAIN_COLORS_LIGHT[chain as ChainName] || 'rgba(102, 102, 102, 0.2)';
+  const normalized = normalizeMerchant(chain);
+  return normalized ? CHAIN_COLORS_LIGHT[normalized] : 'rgba(102, 102, 102, 0.2)';
 }
 
 // Refresh intervals (milliseconds)

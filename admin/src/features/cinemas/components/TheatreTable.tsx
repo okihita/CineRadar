@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { MerchantBadge } from '@/components/MerchantBadge';
 import type { Theatre } from '../';
 
 interface TheatreTableProps {
@@ -77,15 +78,6 @@ export function TheatreTable({
         )}
       </>
     );
-  };
-
-  const getMerchantStyles = (merchant: string) => {
-    const m = merchant.toUpperCase();
-    if (m.includes('XXI')) return 'border-orange-200 bg-orange-50 text-orange-700 dark:bg-orange-950/30 dark:border-orange-900/50 dark:text-orange-400';
-    if (m.includes('CGV')) return 'border-red-200 bg-red-50 text-red-700 dark:bg-red-950/30 dark:border-red-900/50 dark:text-red-400';
-    if (m.includes('CINEPOLIS')) return 'border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:border-blue-900/50 dark:text-blue-400';
-    if (m.includes('FLIX')) return 'border-zinc-300 bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300';
-    return 'border-zinc-200 bg-zinc-50 text-zinc-600 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400';
   };
 
   if (totalCount === 0 && searchTerm) {
@@ -184,12 +176,7 @@ export function TheatreTable({
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={cn('text-[10px] font-bold uppercase tracking-tighter', getMerchantStyles(theatre.merchant))}
-                    >
-                      {theatre.merchant}
-                    </Badge>
+                    <MerchantBadge merchant={theatre.merchant} />
                   </TableCell>
                   <TableCell>
                     {hasCapacity ? (

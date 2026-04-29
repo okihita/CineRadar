@@ -17,13 +17,12 @@ import {
     Check,
     Tag
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { MerchantBadge } from '@/components/MerchantBadge';
 import { TheatreStudiosList } from './TheatreStudiosList';
 import { useCinemaDetails } from '../hooks/useCinemaDetails';
 import { useCinemasStore } from '../stores/useCinemasStore';
 import type { PerformanceMetrics } from '@/types';
-import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { CinemaDetailSkeleton } from './CinemaSkeletons';
@@ -86,15 +85,6 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [navContext, router]);
-
-    const getMerchantColor = (merchant: string) => {
-        const m = merchant.toUpperCase();
-        if (m.includes('XXI')) return 'text-orange-600 bg-orange-50 border-orange-200';
-        if (m.includes('CGV')) return 'text-red-600 bg-red-50 border-red-200';
-        if (m.includes('CINEPOLIS')) return 'text-blue-600 bg-blue-50 border-blue-200';
-        if (m.includes('FLIX')) return 'text-zinc-800 bg-zinc-100 border-zinc-300';
-        return 'text-muted-foreground bg-muted/50 border-border';
-    };
 
     if (error) {
         return (
@@ -172,9 +162,7 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
                             <div className="space-y-2 flex-1 overflow-hidden">
                                 {/* Row 1: Merchant + ID - FORCE 20px HEIGHT */}
                                 <div className="flex items-center gap-3 h-5 overflow-hidden">
-                                    <Badge variant="outline" className={cn("font-bold uppercase tracking-widest text-[10px] h-5 px-2 leading-none flex items-center justify-center", getMerchantColor(theatre.merchant))}>
-                                        {theatre.merchant}
-                                    </Badge>
+                                    <MerchantBadge merchant={theatre.merchant} className="h-5" variant="outline" />
                                     <div className="flex items-center gap-1.5 group cursor-pointer h-5 overflow-hidden" onClick={handleCopyId}>
                                         <span className="text-[10px] font-mono text-muted-foreground/60 uppercase tracking-tighter transition-colors group-hover:text-primary leading-none flex items-center h-full">
                                             ID: {theatre.theatre_id}

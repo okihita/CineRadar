@@ -6,6 +6,8 @@ import { MarkerClusterer, SuperClusterAlgorithm } from '@googlemaps/markercluste
 import { Theatre } from '@/types';
 import { ExternalLink, Navigation } from 'lucide-react';
 import { createPieChartSvg } from '@/lib/mapUtils';
+import { getChainColor, normalizeMerchant } from '@/lib/constants';
+import { MerchantBadge } from './MerchantBadge';
 
 interface CinemaRegistryMapProps {
     theatres: Theatre[];
@@ -52,10 +54,11 @@ function ClusteredMarkers({ theatres, selectedTheatre, onTheatreSelect }: {
                     clusterMarkers?.forEach(m => {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const theatre = (m as any)._theatre as Theatre;
-                        if (theatre?.merchant === 'XXI') xxi++;
-                        else if (theatre?.merchant === 'CGV') cgv++;
-                        else if (theatre?.merchant === 'Cinépolis') cine++;
-                        else if (theatre?.merchant === 'FLIX') flix++;
+                        const normalized = normalizeMerchant(theatre?.merchant);
+                        if (normalized === 'XXI') xxi++;
+                        else if (normalized === 'CGV') cgv++;
+                        else if (normalized === 'Cinépolis') cine++;
+                        else if (normalized === 'FLIX') flix++;
                         else cine++; // Legacy fallback for unknown merchants
                     });
 
@@ -99,8 +102,7 @@ function ClusteredMarkers({ theatres, selectedTheatre, onTheatreSelect }: {
             if (typeof theatre.lat !== 'number' || typeof theatre.lng !== 'number') return;
 
             const isSelected = selectedId === theatre.theatre_id;
-            const color = theatre.merchant === 'XXI' ? '#CFAB7A' :
-                theatre.merchant === 'CGV' ? '#E03C31' : '#002069';
+            const color = getChainColor(theatre.merchant);
 
             // Use markerLib.AdvancedMarkerElement (guaranteed to be loaded)
             const marker = new markerLib.AdvancedMarkerElement({
@@ -319,15 +321,7 @@ export function CinemaRegistryMap({
                             <div className="p-1 min-w-[240px] max-w-[300px]">
                                 {/* Header: Chain badge + Name */}
                                 <div className="flex items-start gap-1.5 mb-1">
-                                    <span
-                                        className="px-1.5 py-0.5 text-[10px] font-bold rounded text-white flex-shrink-0"
-                                        style={{
-                                            backgroundColor: selectedTheatre.merchant === 'XXI' ? '#CFAB7A' :
-                                                selectedTheatre.merchant === 'CGV' ? '#E03C31' : '#002069'
-                                        }}
-                                    >
-                                        {selectedTheatre.merchant}
-                                    </span>
+                                    <MerchantBadge merchant={selectedTheatre.merchant} variant="solid" />
                                     <span className="font-semibold text-sm text-gray-900 leading-tight">{selectedTheatre.name}</span>
                                 </div>
 

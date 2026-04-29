@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Building2, ChevronRight } from 'lucide-react';
+import { MerchantBadge } from '@/components/MerchantBadge';
 import { ShowtimeSnapshot, SortDirection } from '../types/performance';
 import { calculateForensicAggregation } from '../utils/performance-math';
 import { getOccupancyColor } from '../utils/colors';
@@ -89,14 +89,7 @@ export function RegionalCinemaTable({ showtimes, onDrillDown }: RegionalCinemaTa
                                     </div>
                                 </td>
                                 <td className="p-4">
-                                    <Badge variant="outline" className={cn(
-                                        "text-[9px] font-black uppercase tracking-widest border-muted-foreground/20",
-                                        cinema.merchant.toUpperCase().includes('CGV') && "text-red-600 border-red-500/20 bg-red-500/5",
-                                        cinema.merchant.toUpperCase().includes('XXI') && "text-blue-600 border-blue-500/20 bg-blue-500/5",
-                                        (cinema.merchant.toUpperCase().includes('CINEPOLIS') || cinema.merchant.toUpperCase().includes('CINÉPOLIS')) && "text-purple-600 border-purple-500/20 bg-purple-500/5"
-                                    )}>
-                                        {cinema.merchant}
-                                    </Badge>
+                                    <MerchantBadge merchant={cinema.merchant} />
                                 </td>
                                 <td className="p-4 text-right font-mono font-bold text-xs opacity-60">{cinema.showtime_count}</td>
                                 <td className="p-4 hidden md:table-cell">
