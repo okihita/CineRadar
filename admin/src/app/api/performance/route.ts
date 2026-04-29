@@ -94,11 +94,14 @@ export async function GET() {
             })
         );
 
-        // Deterministic sort for the UI
+        // Deterministic sort: by audience → showtimes → title
         validMovies.sort((a, b) => {
             const soldA = a.today?.total_sold || 0;
             const soldB = b.today?.total_sold || 0;
             if (soldB !== soldA) return soldB - soldA;
+            const showsA = a.today?.total_showtimes || 0;
+            const showsB = b.today?.total_showtimes || 0;
+            if (showsB !== showsA) return showsB - showsA;
             return a.title.localeCompare(b.title);
         });
 
