@@ -1,11 +1,16 @@
 import { NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
+import { auth } from '@clerk/nextjs/server';
 
 // Revalidate every hour
 export const revalidate = 3600;
 export const dynamic = 'force-dynamic'; // or 'force-static' with revalidate
 
 export async function GET() {
+    const { userId } = await auth();
+    if (!userId) {
+        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
     try {
         // Get all theatres for names
         const theatresDocs = await firestoreRestClient.getCollection('theatres');

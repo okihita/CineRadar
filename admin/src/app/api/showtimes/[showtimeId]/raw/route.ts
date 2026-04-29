@@ -3,6 +3,7 @@ import { firestoreRestClient } from '@/lib/firestore-rest';
 import { type ObjectLayoutGrid, type LayoutGrid } from '@/features/performances/types/seat';
 import { type RawShowtimeResponse } from '@/features/performances/types/performance';
 import zlib from 'zlib';
+import { auth } from '@clerk/nextjs/server';
 
 function decompressLayout(base64Data?: string | null): LayoutGrid | null {
     if (!base64Data) return null;
@@ -68,6 +69,10 @@ export async function GET(
     request: Request,
     { params }: { params: Promise<{ showtimeId: string }> }
 ) {
+    const { userId } = await auth();
+    if (!userId) {
+        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
     const { showtimeId } = await params;
     const { searchParams } = new URL(request.url);
 

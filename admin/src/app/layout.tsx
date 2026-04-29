@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { DarkModeProvider } from "@/hooks";
@@ -69,13 +70,15 @@ export default function RootLayout({
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <DarkModeProvider>
-          <TooltipProvider>
-            <DashboardLayout>
-              {children}
-            </DashboardLayout>
-          </TooltipProvider>
-        </DarkModeProvider>
+        <ClerkProvider>
+          <DarkModeProvider>
+            <TooltipProvider>
+              <DashboardLayout>
+                {children}
+              </DashboardLayout>
+            </TooltipProvider>
+          </DarkModeProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

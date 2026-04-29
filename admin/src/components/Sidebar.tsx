@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { MapPin, Film, ChevronLeft, ChevronRight, Database, Calendar, Clapperboard, Sun, Moon, Monitor, BarChart2 } from 'lucide-react';
+import { UserButton } from '@clerk/nextjs';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useDarkModeContext } from '@/hooks';
@@ -122,8 +123,15 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Theme Toggle + Collapse */}
+      {/* User + Theme + Collapse */}
       <div className="p-2 border-t space-y-1">
+        {/* Clerk User Button */}
+        <div className="flex items-center gap-3 px-3 py-2">
+          <UserButton />
+          {!collapsed && (
+            <span className="text-xs text-muted-foreground truncate">Account</span>
+          )}
+        </div>
         {/* Theme Toggle Button */}
         <button
           onClick={toggleDarkMode}

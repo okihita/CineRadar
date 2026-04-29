@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import type { ScraperLog, DispatchEntry } from '@/features/scraper/types';
 import { getTodayJakarta } from '@/lib/timeUtils';
+import { auth } from '@clerk/nextjs/server';
 
 /**
  * GET /api/scraper/today
@@ -13,6 +14,10 @@ import { getTodayJakarta } from '@/lib/timeUtils';
  *   - date: Optional date in YYYY-MM-DD format. Defaults to today (Jakarta time).
  */
 export async function GET(request: NextRequest) {
+    const { userId } = await auth();
+    if (!userId) {
+        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
     try {
         const { searchParams } = new URL(request.url);
         let dateStr = searchParams.get('date');

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
+import { auth } from '@clerk/nextjs/server';
 
 export const revalidate = 300; // Cache for 5 minutes
 
@@ -12,6 +13,10 @@ export async function GET(
     request: Request,
     { params }: { params: Promise<{ metadataId: string }> }
 ) {
+    const { userId } = await auth();
+    if (!userId) {
+        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
     const { metadataId } = await params;
 
     try {

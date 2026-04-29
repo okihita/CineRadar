@@ -5,11 +5,16 @@
  */
 import { NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
+import { auth } from '@clerk/nextjs/server';
 
 export async function GET(
     request: Request,
     { params }: { params: Promise<{ metadataId: string; date: string; showtimeId: string }> }
 ) {
+    const { userId } = await auth();
+    if (!userId) {
+        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
     const { metadataId, date, showtimeId } = await params;
 
     try {
