@@ -1,23 +1,26 @@
 import { NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
-import { getTodayJakarta } from '@/lib/timeUtils';
+import { getTodayJakarta, isValidDateFormat } from '@/lib/timeUtils';
 import { DiagnosticItem, MovieWithStats } from '@/features/performances/types/performance';
 import { auth } from '@/auth';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0; 
 
-export async function GET() {
+export async function GET(request: Request) {
     const session = await auth();
     if (!session) {
         return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     try {
-        const today = getTodayJakarta();
+        // Support ?date=YYYY-MM-DD query param (defaults to today in Jakarta time)
+        const { searchParams } = new URL(request.url);
+        const dateParam = searchParams.get('date');
+        const targetDate = dateParam && isValidDateFormat(dateParam) ? dateParam : getTodayJakarta();
 
         // 1. DISCOVERY: Get active schedule registry
-        const scheduleMoviesV2 = await firestoreRestClient.getSubCollection(`schedules_v2/${today}/movies`, ['id', 'name']);
+        const scheduleMoviesV2 = await firestoreRestClient.getSubCollection(`schedules_v2/${targetDate}/movies`, ['id', 'name']);
         const scheduledIds = new Set(scheduleMoviesV2.map(m => String(m.id)));
 
         // 2. DISCOVERY: Get historical performance context
@@ -36,8 +39,8 @@ export async function GET() {
                 try {
                     const [metadata, todayStats, scheduleV2] = await Promise.all([
                         firestoreRestClient.getDocument('movies', id),
-                        firestoreRestClient.getDocument(`movie_performance_v2/${id}/days`, today),
-                        firestoreRestClient.getDocument(`schedules_v2/${today}/movies`, id)
+                        firestoreRestClient.getDocument(`movie_performance_v2/${id}/days`, targetDate),
+                        firestoreRestClient.getDocument(`schedules_v2/${targetDate}/movies`, id)
                     ]);
 
                     const hasMetadata = !!(metadata && (metadata.name || metadata.title));
@@ -78,7 +81,7 @@ export async function GET() {
                             poster: (metadata.poster || metadata.poster_path) as string || '',
                             last_updated: (todayStats?.last_updated as string) || (metadata.scraped_at as string) || '',
                             today: {
-                                date: (todayStats?.date as string) || today,
+                                date: (todayStats?.date as string) || targetDate,
                                 total_showtimes: totalShowtimes,
                                 total_showtimes_scraped: (todayStats?.total_showtimes_scraped as number) || 0,
                                 avg_occupancy_pct: (todayStats?.avg_occupancy_pct as number) || 0,
@@ -111,7 +114,7 @@ export async function GET() {
         return NextResponse.json({
             success: true,
             data: {
-                date: today,
+                date: targetDate,
                 movies: validMovies,
                 diagnostic: {
                     total_discovered: masterAuditIds.size,

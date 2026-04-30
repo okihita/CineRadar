@@ -18,10 +18,16 @@ import { MovieWithStats, DiagnosticData } from '../types/performance';
 import { ApiResponse } from '@/types';
 import { fetcher } from '@/lib/api';
 
-export function PerformanceTab() {
-    const { data, isLoading, error } = useSWR('/api/performance', fetcher, {
-        refreshInterval: 60000,
-    });
+interface PerformanceTabProps {
+    date: string; // YYYY-MM-DD
+}
+
+export function PerformanceTab({ date }: PerformanceTabProps) {
+    const { data, isLoading, error } = useSWR(
+        `/api/performance?date=${date}`,
+        fetcher,
+        { refreshInterval: 60000 },
+    );
 
     const result = data as ApiResponse<{ movies: MovieWithStats[]; diagnostic: DiagnosticData }> | undefined;
     const movies = result?.success ? result.data.movies : [];
@@ -60,7 +66,12 @@ export function PerformanceTab() {
         return (
             <div className="py-20 text-center border border-dashed rounded-3xl bg-muted/5 flex flex-col items-center gap-4">
                 <Globe className="w-12 h-12 mx-auto text-muted-foreground/20" />
-                <p className="text-muted-foreground font-medium uppercase tracking-widest text-sm">No Active Movies Found in Today&apos;s Market</p>
+                <p className="text-muted-foreground font-medium uppercase tracking-widest text-sm">
+                    No performance data available for this date
+                </p>
+                <p className="text-[11px] text-muted-foreground/50">
+                    Data collection started December 2025
+                </p>
                 {diagnostic && <ForensicHealthSheet diagnostic={diagnostic} />}
             </div>
         );
