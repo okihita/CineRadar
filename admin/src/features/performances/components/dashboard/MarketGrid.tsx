@@ -45,8 +45,8 @@ export function MarketGrid({ movies }: MarketGridProps) {
                             />
                             {/* Glassmorphism OCR Overlay */}
                             <div className="absolute top-2 right-2 px-2 py-1 rounded-lg backdrop-blur-md bg-zinc-900/60 border border-white/10">
-                                <span className={cn("text-[10px] font-black font-mono italic", getOccupancyColor(movie.today!.avg_occupancy_pct))}>
-                                    {formatOccupancy(movie.today!.avg_occupancy_pct)}%
+                                <span className={cn("text-[10px] font-black font-mono italic", getOccupancyColor(movie.today?.avg_occupancy_pct ?? 0))}>
+                                    {formatOccupancy(movie.today?.avg_occupancy_pct ?? 0)}%
                                 </span>
                             </div>
                             <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
@@ -58,13 +58,13 @@ export function MarketGrid({ movies }: MarketGridProps) {
                                 <div className="flex items-center gap-1">
                                     <Users className="w-2.5 h-2.5 text-muted-foreground/60" />
                                     <span className="text-[10px] font-black font-mono text-muted-foreground tabular-nums">
-                                        {formatCompactNumber(movie.today!.total_sold)}
+                                        {formatCompactNumber(movie.today?.total_sold ?? 0)}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                     <Zap className="w-2.5 h-2.5 text-amber-500/50" />
                                     <span className="text-[10px] font-black font-mono text-muted-foreground tabular-nums">
-                                        {movie.today!.total_showtimes}
+                                        {movie.today?.total_showtimes ?? 0}
                                     </span>
                                 </div>
                             </div>

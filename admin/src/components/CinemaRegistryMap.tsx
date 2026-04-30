@@ -13,7 +13,7 @@ import { useDarkModeContext } from '@/hooks';
 interface CinemaRegistryMapProps {
     theatres: Theatre[];
     selectedTheatre: Theatre | null;
-    onTheatreSelect: (theatre: Theatre) => void;
+    onTheatreSelect: (theatre: Theatre | null) => void;
     apiKey: string;
     lastUpdated?: string | null;
     center?: { lat: number; lng: number; zoom: number } | null;
@@ -24,7 +24,7 @@ interface CinemaRegistryMapProps {
 function ClusteredMarkers({ theatres, selectedTheatre, onTheatreSelect }: {
     theatres: Theatre[];
     selectedTheatre: Theatre | null;
-    onTheatreSelect: (theatre: Theatre) => void;
+    onTheatreSelect: (theatre: Theatre | null) => void;
 }) {
     const map = useMap();
     // Wait for marker library to load before creating markers
@@ -32,6 +32,10 @@ function ClusteredMarkers({ theatres, selectedTheatre, onTheatreSelect }: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const markerLibRef = useRef<any>(null);
     const [clusterer, setClusterer] = useState<MarkerClusterer | null>(null);
+
+    // Store callback in ref to avoid recreating markers on every parent render
+    const onTheatreSelectRef = useRef(onTheatreSelect);
+    onTheatreSelectRef.current = onTheatreSelect;
 
     const selectedId = selectedTheatre?.theatre_id ?? null;
 
@@ -116,7 +120,7 @@ function ClusteredMarkers({ theatres, selectedTheatre, onTheatreSelect }: {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (marker as any)._theatre = theatre;
 
-            marker.addListener('gmp-click', () => onTheatreSelect(theatre));
+            marker.addListener('gmp-click', () => onTheatreSelectRef.current(theatre));
 
             newMarkers.push(marker);
             markerRecord[theatre.theatre_id] = marker;
@@ -125,7 +129,7 @@ function ClusteredMarkers({ theatres, selectedTheatre, onTheatreSelect }: {
         clusterer.clearMarkers();
         clusterer.addMarkers(newMarkers);
 
-    }, [clusterer, theatres, selectedId, onTheatreSelect, map, markerLib]);
+    }, [clusterer, theatres, selectedId, map, markerLib]);
 
     return null;
 }
@@ -306,7 +310,7 @@ export function CinemaRegistryMap({
                     {selectedTheatre && selectedTheatre.lat && selectedTheatre.lng && (
                         <InfoWindow
                             position={{ lat: selectedTheatre.lat, lng: selectedTheatre.lng }}
-                            onCloseClick={() => onTheatreSelect(null as unknown as Theatre)}
+                            onCloseClick={() => onTheatreSelect(null)}
                             pixelOffset={[0, -20]}
                         >
                             <div className="p-1 min-w-[240px] max-w-[300px]">

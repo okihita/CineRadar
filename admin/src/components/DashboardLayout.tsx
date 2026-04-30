@@ -2,6 +2,7 @@
 
 import { ReactNode } from 'react';
 import { Sidebar } from '@/components/Sidebar';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useSession } from 'next-auth/react';
 
 interface DashboardLayoutProps {
@@ -15,7 +16,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     if (!session) {
         return (
             <main className="flex-1 overflow-auto bg-background">
-                {children}
+                <ErrorBoundary>{children}</ErrorBoundary>
             </main>
         );
     }
@@ -24,7 +25,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="flex h-screen">
             <Sidebar />
             <main className="flex-1 overflow-auto bg-background">
-                {children}
+                <ErrorBoundary>{children}</ErrorBoundary>
             </main>
         </div>
     );

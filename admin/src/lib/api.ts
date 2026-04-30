@@ -5,7 +5,11 @@
 /**
  * Standard SWR fetcher — parses JSON from a URL.
  */
-export const fetcher = (url: string) => fetch(url).then((res) => res.json());
+export const fetcher = (url: string) =>
+    fetch(url).then((res) => {
+        if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+        return res.json();
+    });
 
 /**
  * Typed SWR fetcher — parses JSON and validates HTTP status.

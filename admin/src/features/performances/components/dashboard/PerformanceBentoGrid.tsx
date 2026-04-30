@@ -79,8 +79,8 @@ export function PerformanceBentoGrid({ movies }: PerformanceBentoGridProps) {
                                             <p className="text-[9px] font-black text-white/30 uppercase tracking-widest flex items-center gap-1.5">
                                                 <Target className="w-3 h-3" /> True OCR
                                             </p>
-                                            <p className={cn("text-3xl font-black font-mono leading-none", getOccupancyColor(podium[0].today!.avg_occupancy_pct))}>
-                                                {formatOccupancy(podium[0].today!.avg_occupancy_pct)}<span className="text-sm ml-0.5 opacity-40">%</span>
+                                            <p className={cn("text-3xl font-black font-mono leading-none", getOccupancyColor(podium[0].today?.avg_occupancy_pct ?? 0))}>
+                                                {formatOccupancy(podium[0].today?.avg_occupancy_pct ?? 0)}<span className="text-sm ml-0.5 opacity-40">%</span>
                                             </p>
                                         </div>
                                         <div className="flex gap-8 text-right">
@@ -89,7 +89,7 @@ export function PerformanceBentoGrid({ movies }: PerformanceBentoGridProps) {
                                                     <Zap className="w-3 h-3" /> Shows
                                                 </p>
                                                 <p className="text-2xl font-black font-mono text-white leading-none">
-                                                    {podium[0].today!.total_showtimes.toLocaleString()}
+                                                    {(podium[0].today?.total_showtimes ?? 0).toLocaleString()}
                                                 </p>
                                             </div>
                                             <div className="space-y-1">
@@ -97,7 +97,7 @@ export function PerformanceBentoGrid({ movies }: PerformanceBentoGridProps) {
                                                     <Users className="w-3 h-3" /> Audience
                                                 </p>
                                                 <p className="text-2xl font-black font-mono text-white leading-none">
-                                                    {formatCompactNumber(podium[0].today!.total_sold)}
+                                                    {formatCompactNumber(podium[0].today?.total_sold ?? 0)}
                                                 </p>
                                             </div>
                                         </div>
@@ -118,7 +118,7 @@ export function PerformanceBentoGrid({ movies }: PerformanceBentoGridProps) {
                         >
                             <div className="absolute inset-0 flex p-4 gap-6">
                                 <div className="relative h-full aspect-[2/3] flex-shrink-0">
-                                    <Image src={movie.poster} alt={movie.title} fill className="object-contain rounded-lg drop-shadow-md border border-border/10" />
+                                    <Image src={movie.poster} alt={movie.title} fill sizes="(max-width: 768px) 50vw, 33vw" className="object-contain rounded-lg drop-shadow-md border border-border/10" />
                                 </div>
                                 <div className="flex-1 flex flex-col justify-center min-w-0">
                                     <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 flex items-center gap-1.5">
@@ -130,22 +130,22 @@ export function PerformanceBentoGrid({ movies }: PerformanceBentoGridProps) {
                                     <div className="flex items-center gap-6">
                                         <div>
                                             <p className="text-[8px] font-black text-muted-foreground/50 uppercase tracking-widest mb-0.5">OCR</p>
-                                            <p className={cn("text-xl font-black font-mono leading-none", getOccupancyColor(movie.today!.avg_occupancy_pct))}>
-                                                {formatOccupancy(movie.today!.avg_occupancy_pct)}%
+                                            <p className={cn("text-xl font-black font-mono leading-none", getOccupancyColor(movie.today?.avg_occupancy_pct ?? 0))}>
+                                                {formatOccupancy(movie.today?.avg_occupancy_pct ?? 0)}%
                                             </p>
                                         </div>
                                         <div className="h-6 w-px bg-border/40" />
                                         <div>
                                             <p className="text-[8px] font-black text-muted-foreground/50 uppercase tracking-widest mb-0.5">Shows</p>
                                             <p className="text-xl font-black font-mono text-foreground leading-none">
-                                                {movie.today!.total_showtimes.toLocaleString()}
+                                                {(movie.today?.total_showtimes ?? 0).toLocaleString()}
                                             </p>
                                         </div>
                                         <div className="h-6 w-px bg-border/40" />
                                         <div>
                                             <p className="text-[8px] font-black text-muted-foreground/50 uppercase tracking-widest mb-0.5">Audience</p>
                                             <p className="text-xl font-black font-mono text-foreground leading-none">
-                                                {formatCompactNumber(movie.today!.total_sold)}
+                                                {formatCompactNumber(movie.today?.total_sold ?? 0)}
                                             </p>
                                         </div>
                                     </div>

@@ -123,7 +123,7 @@ export function InsightsDashboard() {
                             </div>
                             <div className="flex flex-col justify-center items-center border-l border-dashed pl-8">
                                 <p className="text-4xl font-black tracking-tighter text-blue-500">
-                                    {(data.formatStats.atmos / data.formatStats.threeD).toFixed(1)}x
+                                    {(data.formatStats.threeD > 0 ? (data.formatStats.atmos / data.formatStats.threeD).toFixed(1) : '∞')}x
                                 </p>
                                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-center mt-2 text-muted-foreground/60">
                                     Atmos-to-3D<br/>Inventory Ratio
