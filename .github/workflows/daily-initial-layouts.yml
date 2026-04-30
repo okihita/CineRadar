@@ -2,8 +2,8 @@ name: Scrape Morning Baseline Seat Layouts
 
 on:
   schedule:
-    - cron: '0 19 * * *'   # 02:00 AM WIB (19:00 UTC) - 45m after primary showtime scrape
-    - cron: '15 23 * * *'  # 06:15 AM WIB (23:15 UTC previous day) - 45m after backup showtime scrape
+    - cron: '15 23 * * *'  # 06:15 WIB (23:15 UTC previous day) — 45m after primary scrape
+    - cron: '45 2 * * *'   # 09:45 WIB (02:45 UTC) — 45m after secondary scrape
   workflow_dispatch:
     inputs:
       force:

@@ -2,7 +2,8 @@ name: Scrape Missing Movie Details
 
 on:
   schedule:
-    - cron: '30 18 * * *'  # 1:30 AM WIB (18:30 UTC previous day)
+    - cron: '30 23 * * *'  # 06:30 WIB (23:30 UTC previous day) — after primary scrape & layout
+    - cron: '0 3 * * *'    # 10:00 WIB (03:00 UTC) — after secondary scrape & layout
   workflow_dispatch:
 
 jobs:
