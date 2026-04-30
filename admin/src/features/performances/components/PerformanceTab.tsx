@@ -27,6 +27,21 @@ export function PerformanceTab() {
     const movies = result?.success ? result.data.movies : [];
     const diagnostic = result?.success ? result.data.diagnostic : null;
 
+    // --- Aggregated National Pulse (must be above all early returns) ---
+    const nationalPulse = useMemo(() => {
+        const totalSold = movies.reduce((sum: number, m: MovieWithStats) => sum + (m.today?.total_sold ?? 0), 0);
+        const totalSeats = movies.reduce((sum: number, m: MovieWithStats) => sum + (m.today?.total_seats ?? 0), 0);
+        const totalShows = movies.reduce((sum: number, m: MovieWithStats) => sum + (m.today?.total_showtimes ?? 0), 0);
+        const avgOCR = totalSeats > 0 ? (totalSold / totalSeats * 100) : 0;
+        
+        return { totalSold, totalShows, avgOCR, activeCount: movies.length };
+    }, [movies]);
+
+    // --- Slicing for Bento vs Grid ---
+    const bentoMovies = movies.slice(0, 3);
+    const gridMovies = movies.slice(3);
+
+    // --- Conditional renders (after all hooks) ---
     if (isLoading) {
         return <PerformanceTabSkeleton />;
     }
@@ -40,21 +55,6 @@ export function PerformanceTab() {
             </div>
         );
     }
-
-
-    // --- Aggregated National Pulse ---
-    const nationalPulse = useMemo(() => {
-        const totalSold = movies.reduce((sum: number, m: MovieWithStats) => sum + (m.today?.total_sold ?? 0), 0);
-        const totalSeats = movies.reduce((sum: number, m: MovieWithStats) => sum + (m.today?.total_seats ?? 0), 0);
-        const totalShows = movies.reduce((sum: number, m: MovieWithStats) => sum + (m.today?.total_showtimes ?? 0), 0);
-        const avgOCR = totalSeats > 0 ? (totalSold / totalSeats * 100) : 0;
-        
-        return { totalSold, totalShows, avgOCR, activeCount: movies.length };
-    }, [movies]);
-
-    // --- Slicing for Bento vs Grid ---
-    const bentoMovies = movies.slice(0, 3);
-    const gridMovies = movies.slice(3);
 
     if (movies.length === 0) {
         return (
