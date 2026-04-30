@@ -151,6 +151,14 @@ export class FirestoreRestClient {
     }
 
     /**
+     * Build a document URL with proper encoding for document IDs
+     * that may contain special characters like @ and .
+     */
+    private docUrl(collectionName: string, documentId: string): string {
+        return `${FIRESTORE_BASE_URL}/${collectionName}/${encodeURIComponent(documentId)}`;
+    }
+
+    /**
      * Get all documents from a collection (with pagination to get ALL docs)
      */
     async getCollection<T = Record<string, unknown>>(collectionName: string, maskFields?: string[]): Promise<T[]> {
@@ -337,7 +345,7 @@ export class FirestoreRestClient {
      */
     async getDocument<T = Record<string, unknown>>(collectionName: string, documentId: string): Promise<T | null> {
         try {
-            const response = await this._fetch(`${FIRESTORE_BASE_URL}/${collectionName}/${documentId}`);
+            const response = await this._fetch(this.docUrl(collectionName, documentId));
 
             if (response.status === 404) {
                 return null;
@@ -447,6 +455,45 @@ export class FirestoreRestClient {
     }
 
     /**
+     * Create a new document with a specific ID (fails if document already exists)
+     */
+    async createDocument(
+        collectionName: string,
+        documentId: string,
+        data: Record<string, unknown>
+    ): Promise<boolean> {
+        try {
+            const fields: Record<string, FirestoreValue> = {};
+            for (const [key, value] of Object.entries(data)) {
+                fields[key] = this.toFirestoreValue(value);
+            }
+
+            const response = await this._fetch(
+                `${FIRESTORE_BASE_URL}/${collectionName}?documentId=${encodeURIComponent(documentId)}`,
+                {
+                    method: 'POST',
+                    body: JSON.stringify({ fields }),
+                }
+            );
+
+            if (!response.ok) {
+                const responseText = await response.text();
+                // Document already exists is OK for our use case (idempotent)
+                if (response.status === 409) {
+                    return true;
+                }
+                console.error(`Failed to create ${collectionName}/${documentId}: ${response.status}`, responseText);
+                return false;
+            }
+
+            return true;
+        } catch (error) {
+            console.error(`Error creating ${collectionName}/${documentId}:`, error);
+            return false;
+        }
+    }
+
+    /**
      * Update a document (merge mode)
      */
     async updateDocument(
@@ -461,7 +508,7 @@ export class FirestoreRestClient {
             }
 
             const response = await this._fetch(
-                `${FIRESTORE_BASE_URL}/${collectionName}/${documentId}?updateMask.fieldPaths=${Object.keys(data).join('&updateMask.fieldPaths=')}`,
+                `${this.docUrl(collectionName, documentId)}?updateMask.fieldPaths=${Object.keys(data).join('&updateMask.fieldPaths=')}`,
                 {
                     method: 'PATCH',
                     body: JSON.stringify({ fields }),

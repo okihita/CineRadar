@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { MapPin, Film, ChevronLeft, ChevronRight, Database, Calendar, Clapperboard, Sun, Moon, Monitor, BarChart2, LogOut } from 'lucide-react';
+import { MapPin, Film, ChevronLeft, ChevronRight, Database, Calendar, Clapperboard, Sun, Moon, Monitor, BarChart2, LogOut, Users as UsersIcon } from 'lucide-react';
 import { useState } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
@@ -15,36 +15,49 @@ const menuItems = [
     description: 'Movie performance comparison',
     href: '/compare',
     icon: BarChart2,
+    adminOnly: false,
   },
   {
     title: 'Cinema Intelligence',
     description: 'Theatre locations & chains',
     href: '/cinemas',
     icon: MapPin,
+    adminOnly: false,
   },
   {
     title: 'Performance',
     description: 'Box office tracking',
     href: '/performances',
     icon: Film,
+    adminOnly: false,
   },
   {
     title: 'Movie Database',
     description: 'All movies & details',
     href: '/movies',
     icon: Clapperboard,
+    adminOnly: false,
   },
   {
     title: 'Showtime Intelligence',
     description: 'Daily coverage & analysis',
     href: '/schedules',
     icon: Calendar,
+    adminOnly: false,
   },
   {
     title: 'Scraper Monitor',
     description: 'Data collection & runs',
     href: '/scraper',
     icon: Database,
+    adminOnly: false,
+  },
+  {
+    title: 'User Management',
+    description: 'Approve & manage access',
+    href: '/users',
+    icon: UsersIcon,
+    adminOnly: true,
   },
 ];
 
@@ -56,6 +69,8 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const { darkMode, toggleDarkMode, followsSystem, resetToSystem } = useDarkModeContext();
   const { data: session } = useSession();
+  const isAdmin = (session as unknown as { user?: { role?: string } })?.user?.role === 'admin';
+  const visibleMenuItems = menuItems.filter(item => !item.adminOnly || isAdmin);
 
   return (
     <aside
@@ -83,7 +98,7 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 p-2 space-y-1">
-        {menuItems.map((item) => {
+        {visibleMenuItems.map((item) => {
           let isActive = false;
           if (item.href === '/performances') {
              // Exact match for /performances or starts with /performances/ but not /performances

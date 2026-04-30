@@ -1,7 +1,50 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useState } from "react";
+import { useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { AlertCircle, Clock, Ban } from "lucide-react";
+
+function AuthErrorBanner() {
+  const searchParams = useSearchParams();
+  const error = searchParams.get("error");
+
+  if (!error) return null;
+
+  const config: Record<string, { icon: React.ReactNode; title: string; message: string; className: string }> = {
+    AccessPending: {
+      icon: <Clock className="w-5 h-5 text-amber-500" />,
+      title: "Registration Submitted",
+      message: "Your account is awaiting admin approval. You'll receive access once approved.",
+      className: "border-amber-500/20 bg-amber-500/5",
+    },
+    AccessDenied: {
+      icon: <Ban className="w-5 h-5 text-red-500" />,
+      title: "Access Denied",
+      message: "Your registration was not approved. Contact an administrator for assistance.",
+      className: "border-red-500/20 bg-red-500/5",
+    },
+    AccessSuspended: {
+      icon: <AlertCircle className="w-5 h-5 text-orange-500" />,
+      title: "Account Suspended",
+      message: "Your account has been suspended. Contact an administrator for assistance.",
+      className: "border-orange-500/20 bg-orange-500/5",
+    },
+  };
+
+  const c = config[error];
+  if (!c) return null;
+
+  return (
+    <div className={`flex items-start gap-3 p-4 rounded-xl border ${c.className} mb-6`}>
+      <div className="flex-shrink-0 mt-0.5">{c.icon}</div>
+      <div>
+        <p className="text-sm font-semibold">{c.title}</p>
+        <p className="text-xs text-muted-foreground mt-1">{c.message}</p>
+      </div>
+    </div>
+  );
+}
 
 const STATS = [
   { label: "Theatres Tracked", value: "500+", sub: "across Indonesia" },
@@ -88,6 +131,11 @@ export default function SignInPage() {
           <h2 className="text-2xl font-bold mb-2">Welcome back</h2>
           <p className="text-sm text-muted-foreground mb-8">Sign in to access the dashboard.</p>
 
+          {/* Auth status messages */}
+          <Suspense fallback={null}>
+            <AuthErrorBanner />
+          </Suspense>
+
           {/* Google Sign-in Button */}
           <button
             onClick={() => { setLoading(true); signIn("google", { callbackUrl: "/" }); }}
@@ -106,8 +154,8 @@ export default function SignInPage() {
           {/* Footer */}
           <div className="mt-12 pt-6 border-t border-border">
             <p className="text-[10px] text-muted-foreground text-center leading-relaxed">
-              Access restricted to authorized personnel.<br />
-              Unauthorized access attempts are logged.
+              New here? Sign in with Google to request access.<br />
+              An administrator will review and approve your account.
             </p>
           </div>
         </div>
