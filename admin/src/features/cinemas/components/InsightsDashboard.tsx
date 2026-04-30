@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import useSWR from 'swr';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
     Zap, 
@@ -11,30 +12,18 @@ import {
     BoxSelect,
     Loader2,
     TrendingDown,
-    ShieldCheck
+    ShieldCheck,
+    AlertCircle
 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { fetcher } from '@/lib/api';
 import type { InsightData } from '../types';
 
 export function InsightsDashboard() {
-    const [data, setData] = useState<InsightData | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { data, isLoading, error } = useSWR<InsightData>('/api/insights', fetcher);
 
-    useEffect(() => {
-        fetch('/api/insights')
-            .then(res => res.json())
-            .then(d => {
-                setData(d);
-                setLoading(false);
-            })
-            .catch(err => {
-                console.error('Failed to load insights:', err);
-                setLoading(false);
-            });
-    }, []);
-
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
                 <Loader2 className="w-8 h-8 animate-spin text-primary/40" />
@@ -43,7 +32,15 @@ export function InsightsDashboard() {
         );
     }
 
-    if (!data) return null;
+    if (error || !data) {
+        return (
+            <div className="flex flex-col items-center justify-center py-20 gap-4 border border-dashed rounded-xl bg-red-500/5">
+                <AlertCircle className="w-8 h-8 text-red-500" />
+                <p className="text-sm font-bold text-red-600">Failed to load market intelligence</p>
+                <p className="text-xs text-muted-foreground">{error?.message || 'No data available'}</p>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">

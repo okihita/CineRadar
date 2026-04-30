@@ -1,13 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Movie, abbreviateTitle } from '../types';
+import { Movie, abbreviateTitle, CompareChartDataItem } from '../types';
 
 interface DayByDayTableProps {
     selectedMovieIds: string[];
     selectedMoviesDetails: Movie[];
     movieColorsMap: Record<string, string>;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    chartData: any[];
+    chartData: CompareChartDataItem[];
 }
 
 export function DayByDayTable({
@@ -45,8 +44,7 @@ export function DayByDayTable({
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                        {chartData.map((dayData: any, index: number) => (
+                    {chartData.map((dayData: CompareChartDataItem, index: number) => (
                             <TableRow key={index}>
                                 <TableCell className="font-medium">{dayData.date}</TableCell>
                                 {selectedMovieIds.map((id) => {

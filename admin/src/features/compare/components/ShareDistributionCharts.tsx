@@ -41,7 +41,7 @@ function PieChartCard({ title, description, data, label }: { title: string; desc
                                 <RechartsTooltip
                                     contentStyle={{ backgroundColor: 'hsl(var(--background))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
                                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                    formatter={(value: any) => [value.toLocaleString(), label]}
+                                    formatter={(value: any) => [Number(value).toLocaleString(), label]}
                                 />
                                 <Legend verticalAlign="bottom" align="center" iconType="circle" />
                             </PieChart>

@@ -6,8 +6,7 @@ import { Film } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface MovieCastSectionProps {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    movie: Record<string, any>;
+    movie: Record<string, unknown>;
 }
 
 export function MovieCastSection({ movie }: MovieCastSectionProps) {

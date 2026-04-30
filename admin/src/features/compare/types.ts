@@ -16,6 +16,43 @@ export interface TrendingMovie {
     };
 }
 
+/** A single day's worth of compare data for one movie */
+export interface CompareMovieDayData {
+    admissions: number;
+    showtimes: number;
+    occupancy: number;
+    total_seats: number;
+}
+
+/** A single row in the day-by-day chart data */
+export interface CompareChartDataItem {
+    date: string;
+    [key: string]: string | number;
+}
+
+/** Compare API movies map entry */
+export interface CompareMovieMeta {
+    title: string;
+    poster?: string;
+}
+
+/** Summary metrics for one movie in compare view */
+export interface CompareSummaryMetrics {
+    totalAdmissions: number;
+    totalShowtimes: number;
+    avgOccupancy: number;
+    admissionsPerShowtime: number;
+}
+
+/** Recharts tooltip entry */
+export interface RechartsTooltipEntry {
+    stroke?: string;
+    color?: string;
+    name: string;
+    value: number;
+    dataKey: string;
+}
+
 export const CHART_COLORS = [
     '#2563eb', // Indigo 600
     '#059669', // Emerald 600

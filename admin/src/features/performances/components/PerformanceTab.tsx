@@ -6,8 +6,9 @@
  */
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { Globe } from 'lucide-react';
+import { useMemo } from 'react';
+import useSWR from 'swr';
+import { Globe, AlertCircle } from 'lucide-react';
 import { NationalPulseHud } from './dashboard/NationalPulseHud';
 import { PerformanceBentoGrid } from './dashboard/PerformanceBentoGrid';
 import { MarketGrid } from './dashboard/MarketGrid';
@@ -15,46 +16,37 @@ import { ForensicHealthSheet } from './ForensicHealthSheet';
 import { PerformanceTabSkeleton } from './skeletons/PerformanceTabSkeleton';
 import { MovieWithStats, DiagnosticData } from '../types/performance';
 import { ApiResponse } from '@/types';
+import { fetcher } from '@/lib/api';
 
 export function PerformanceTab() {
-    const [movies, setMovies] = useState<MovieWithStats[]>([]);
-    const [diagnostic, setDiagnostic] = useState<DiagnosticData | null>(null);
-    const [loadingMovies, setLoadingMovies] = useState(true);
-    const [telemetry, setTelemetry] = useState<{ elapsed: number; size: number } | null>(null);
+    const { data, isLoading, error } = useSWR('/api/performance', fetcher, {
+        refreshInterval: 60000,
+    });
 
-    // 1. Fetch Movies List (Filtered to Active by API)
-    useEffect(() => {
-        async function fetchMovies() {
-            const start = performance.now();
-            try {
-                const res = await fetch('/api/performance');
-                const text = await res.text();
-                const result: ApiResponse<{ movies: MovieWithStats[]; diagnostic: DiagnosticData }> = JSON.parse(text);
+    const result = data as ApiResponse<{ movies: MovieWithStats[]; diagnostic: DiagnosticData }> | undefined;
+    const movies = result?.success ? result.data.movies : [];
+    const diagnostic = result?.success ? result.data.diagnostic : null;
 
-                const end = performance.now();
-                if (result.success) {
-                    setMovies(result.data.movies);
-                    setDiagnostic(result.data.diagnostic);
-                    setTelemetry({
-                        elapsed: (end - start) / 1000,
-                        size: new Blob([text]).size / 1024
-                    });
-                }
-            } catch (e) {
-                console.error(String(e));
-            } finally {
-                setLoadingMovies(false);
-            }
-        }
-        fetchMovies();
-    }, []);
+    if (isLoading) {
+        return <PerformanceTabSkeleton />;
+    }
+
+    if (error) {
+        return (
+            <div className="py-20 text-center border border-dashed rounded-3xl bg-red-500/5 flex flex-col items-center gap-4">
+                <AlertCircle className="w-12 h-12 mx-auto text-red-500" />
+                <p className="text-red-600 font-medium">Failed to load performance data</p>
+                <p className="text-sm text-muted-foreground">{error.message}</p>
+            </div>
+        );
+    }
 
 
     // --- Aggregated National Pulse ---
     const nationalPulse = useMemo(() => {
-        const totalSold = movies.reduce((sum, m) => sum + (m.today?.total_sold ?? 0), 0);
-        const totalSeats = movies.reduce((sum, m) => sum + (m.today?.total_seats ?? 0), 0);
-        const totalShows = movies.reduce((sum, m) => sum + (m.today?.total_showtimes ?? 0), 0);
+        const totalSold = movies.reduce((sum: number, m: MovieWithStats) => sum + (m.today?.total_sold ?? 0), 0);
+        const totalSeats = movies.reduce((sum: number, m: MovieWithStats) => sum + (m.today?.total_seats ?? 0), 0);
+        const totalShows = movies.reduce((sum: number, m: MovieWithStats) => sum + (m.today?.total_showtimes ?? 0), 0);
         const avgOCR = totalSeats > 0 ? (totalSold / totalSeats * 100) : 0;
         
         return { totalSold, totalShows, avgOCR, activeCount: movies.length };
@@ -64,12 +56,7 @@ export function PerformanceTab() {
     const bentoMovies = movies.slice(0, 3);
     const gridMovies = movies.slice(3);
 
-    // Loading Skeleton
-    if (loadingMovies) {
-        return <PerformanceTabSkeleton />;
-    }
-
-    if (movies.length === 0 && !loadingMovies) {
+    if (movies.length === 0) {
         return (
             <div className="py-20 text-center border border-dashed rounded-3xl bg-muted/5 flex flex-col items-center gap-4">
                 <Globe className="w-12 h-12 mx-auto text-muted-foreground/20" />
@@ -88,7 +75,6 @@ export function PerformanceTab() {
                 totalShows={nationalPulse.totalShows}
                 activeCount={nationalPulse.activeCount}
                 diagnostic={diagnostic}
-                telemetry={telemetry}
             />
 
             {/* 2. THE INSIGHT BENTO (Top 6) */}

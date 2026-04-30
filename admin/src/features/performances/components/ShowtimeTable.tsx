@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Clock, Filter, Layers, Loader2, ShieldCheck, Microscope, Users, Ban, CheckCircle2, Percent, Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { CHAIN_TAILWIND, getPerformanceTier } from '@/lib/constants';
+import { CHAIN_TAILWIND, getPerformanceTier, getFirestoreConsoleUrl } from '@/lib/constants';
 import { getOccupancyColor, getOccupancyBgSoft, getOccupancyBorderSoft } from '../utils/colors';
 import { SeatProgressBar } from './SeatProgressBar';
 import { TriPanelAudit } from './TriPanelAudit';
@@ -237,14 +237,14 @@ export function ShowtimeTable({ showtimes, loading = false, movieId, date }: Sho
                                 <table className="w-full text-sm">
                                     <thead>
                                         <tr className="bg-muted/30 border-b text-left text-muted-foreground/60 uppercase text-[9px] font-black tracking-widest">
-                                            <th className="py-4 px-4 w-24 cursor-pointer hover:text-primary transition-colors" onClick={() => toggleSort('showtime')}>
+                                            <th className="py-4 px-4 w-24 cursor-pointer hover:text-primary transition-colors" role="button" tabIndex={0} onClick={() => toggleSort('showtime')} onKeyDown={(e) => e.key === 'Enter' && toggleSort('showtime')}>
                                                 <div className="flex items-center gap-1.5"><Clock className="w-3 h-3" />Time</div>
                                             </th>
-                                            <th className="py-4 px-4 cursor-pointer hover:text-primary transition-colors" onClick={() => toggleSort('theatre')}>Theatre</th>
-                                            <th className="py-4 px-4 cursor-pointer hover:text-primary transition-colors" onClick={() => toggleSort('city')}>Location</th>
+                                            <th className="py-4 px-4 cursor-pointer hover:text-primary transition-colors" role="button" tabIndex={0} onClick={() => toggleSort('theatre')} onKeyDown={(e) => e.key === 'Enter' && toggleSort('theatre')}>Theatre</th>
+                                            <th className="py-4 px-4 cursor-pointer hover:text-primary transition-colors" role="button" tabIndex={0} onClick={() => toggleSort('city')} onKeyDown={(e) => e.key === 'Enter' && toggleSort('city')}>Location</th>
                                             <th className="py-4 px-4">Room</th>
-                                            <th className="py-4 px-4 w-28 cursor-pointer hover:text-primary transition-colors" onClick={() => toggleSort('anomaly')}><div className="flex items-center gap-1.5"><ShieldCheck className="w-3 h-3 text-primary" />Anomaly</div></th>
-                                            <th className="py-4 px-4 w-48 cursor-pointer hover:text-primary transition-colors" onClick={() => toggleSort('occupancy')}>True Occupancy</th>
+                                            <th className="py-4 px-4 w-28 cursor-pointer hover:text-primary transition-colors" role="button" tabIndex={0} onClick={() => toggleSort('anomaly')} onKeyDown={(e) => e.key === 'Enter' && toggleSort('anomaly')}><div className="flex items-center gap-1.5"><ShieldCheck className="w-3 h-3 text-primary" />Anomaly</div></th>
+                                            <th className="py-4 px-4 w-48 cursor-pointer hover:text-primary transition-colors" role="button" tabIndex={0} onClick={() => toggleSort('occupancy')} onKeyDown={(e) => e.key === 'Enter' && toggleSort('occupancy')}>True Occupancy</th>
                                             <th className="py-4 px-4 text-right w-24">True Sold</th>
                                         </tr>
                                     </thead>
@@ -414,7 +414,7 @@ export const ShowtimeRow = memo(({ showtime: st, movieId: propMovieId, date: pro
                                             <span className="text-[10px] text-muted-foreground/40">•</span>
                                             <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">Phase: {st.scrape_phase || 'N/A'}</p>
                                             <a 
-                                                href={`https://console.firebase.google.com/project/cineradar-481014/firestore/databases/-default-/data/~2Fmovie_performance_v2~2F${propMovieId || st.metadata_id || st.movie_id || 'unknown'}~2Fdays~2F${propDate || st.date || 'unknown'}~2Fshowtimes~2F${st.showtime_id}`}
+                                                href={getFirestoreConsoleUrl('movie_performance_v2', propMovieId || st.metadata_id || st.movie_id || 'unknown', 'days', propDate || st.date || 'unknown', 'showtimes', st.showtime_id)}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="flex items-center gap-1.5 text-[9px] font-black uppercase text-primary hover:bg-primary/10 bg-primary/5 px-2 py-0.5 rounded-full border border-primary/10 transition-all shadow-sm"

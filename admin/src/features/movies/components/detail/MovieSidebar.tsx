@@ -5,8 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PropertyViewer } from './PropertyViewer';
 
 interface MovieSidebarProps {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    movie: Record<string, any>;
+    movie: Record<string, unknown>;
 }
 
 // Field mapping for human-readable labels

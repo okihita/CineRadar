@@ -4,11 +4,11 @@ import { useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import useSWR from 'swr';
 import { PageHeader } from '@/components/PageHeader';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { format, subDays, parseISO } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { fetcher } from '@/lib/api';
-import { Movie, TrendingMovie, CHART_COLORS, abbreviateTitle } from '@/features/compare/types';
+import { Movie, TrendingMovie, CHART_COLORS, abbreviateTitle, CompareSummaryMetrics, CompareMovieDayData, CompareMovieMeta, CompareChartDataItem } from '@/features/compare/types';
 import { CompareControlPanel } from '@/features/compare/components/CompareControlPanel';
 import { SummaryMetricsCards } from '@/features/compare/components/SummaryMetricsCards';
 import { ShareDistributionCharts } from '@/features/compare/components/ShareDistributionCharts';
@@ -51,8 +51,12 @@ function CompareDashboard() {
         ? `/api/compare?movies=${selectedMovieIds.join(',')}${dateRange.from ? `&startDate=${format(dateRange.from, 'yyyy-MM-dd')}` : ''}${dateRange.to ? `&endDate=${format(dateRange.to, 'yyyy-MM-dd')}` : ''}`
         : null;
 
-    const { data: compareData, isLoading, isValidating } = useSWR(compareUrl, fetcher);
+    const { data: compareData, isLoading, isValidating, error: compareError } = useSWR<{
+        data: Record<string, CompareMovieDayData | string>[];
+        movies?: Record<string, CompareMovieMeta>;
+    }>(compareUrl, fetcher);
     const isComparing = (isLoading || isValidating) && !compareData;
+    const safeCompareData = compareData ?? null;
 
     // Fetch trending market leaders (only if no movies are selected)
     const { data: trendingData, isLoading: isLoadingTrending, error: trendingError } = useSWR(
@@ -71,19 +75,19 @@ function CompareDashboard() {
         if (!compareData || !compareData.data) return {};
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const metrics: Record<string, any> = {};
+        const metrics: Record<string, CompareSummaryMetrics> = {};
 
         selectedMovieIds.forEach(id => {
             let totalAdmissions = 0;
             let totalShowtimes = 0;
             let totalSeats = 0;
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            compareData.data.forEach((day: any) => {
-                if (day[id]) {
-                    totalAdmissions += day[id].admissions || 0;
-                    totalShowtimes += day[id].showtimes || 0;
-                    totalSeats += day[id].total_seats || 0;
+            compareData.data.forEach((day: Record<string, CompareMovieDayData | string>) => {
+                const dayData = day[id] as CompareMovieDayData | undefined;
+                if (dayData) {
+                    totalAdmissions += dayData.admissions || 0;
+                    totalShowtimes += dayData.showtimes || 0;
+                    totalSeats += dayData.total_seats || 0;
                 }
             });
 
@@ -102,16 +106,15 @@ function CompareDashboard() {
     const chartData = useMemo(() => {
         if (!compareData || !compareData.data) return [];
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return compareData.data.map((day: any) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const formattedDay: Record<string, any> = { date: day.date };
+        return compareData.data.map((day: Record<string, CompareMovieDayData | string>) => {
+            const formattedDay: CompareChartDataItem = { date: day.date as string };
 
             selectedMovieIds.forEach(id => {
-                if (day[id]) {
-                    formattedDay[`${id}_admissions`] = day[id].admissions;
-                    formattedDay[`${id}_showtimes`] = day[id].showtimes;
-                    formattedDay[`${id}_occupancy`] = day[id].occupancy;
+                const dayData = day[id] as CompareMovieDayData | undefined;
+                if (dayData) {
+                    formattedDay[`${id}_admissions`] = dayData.admissions;
+                    formattedDay[`${id}_showtimes`] = dayData.showtimes;
+                    formattedDay[`${id}_occupancy`] = dayData.occupancy;
                 }
             });
 
@@ -212,7 +215,15 @@ function CompareDashboard() {
 
             {selectedMovieIds.length > 0 ? (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    {isComparing ? (
+                    {compareError ? (
+                        <div className="flex flex-col items-center justify-center p-24 text-red-600 gap-4 border-2 border-dashed rounded-xl bg-red-500/5">
+                            <AlertCircle className="w-8 h-8" />
+                            <div className="text-center">
+                                <p className="font-semibold">Failed to load comparison data</p>
+                                <p className="text-sm text-muted-foreground">{compareError.message}</p>
+                            </div>
+                        </div>
+                    ) : isComparing ? (
                         <div className="flex flex-col items-center justify-center p-24 text-muted-foreground gap-4 border-2 border-dashed rounded-xl">
                             <Loader2 className="w-8 h-8 animate-spin text-primary" />
                             <div className="text-center">
@@ -226,7 +237,7 @@ function CompareDashboard() {
                                 selectedMovieIds={selectedMovieIds}
                                 movieColorsMap={movieColorsMap}
                                 summaryMetrics={summaryMetrics}
-                                compareData={compareData}
+                                compareData={safeCompareData}
                             />
 
                             <ShareDistributionCharts
@@ -238,7 +249,7 @@ function CompareDashboard() {
                                 selectedMovieIds={selectedMovieIds}
                                 movieColorsMap={movieColorsMap}
                                 chartData={chartData}
-                                compareData={compareData}
+                                compareData={safeCompareData}
                             />
 
                             <DayByDayTable

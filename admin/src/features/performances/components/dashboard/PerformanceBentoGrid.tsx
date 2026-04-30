@@ -31,7 +31,10 @@ export function PerformanceBentoGrid({ movies }: PerformanceBentoGridProps) {
                 {podium[0] && (
                     <div 
                         className="lg:col-span-6 group relative overflow-hidden rounded-[2rem] bg-zinc-950 aspect-[16/9] lg:aspect-auto lg:h-[400px] cursor-pointer shadow-2xl border border-white/5"
+                        role="button"
+                        tabIndex={0}
                         onClick={() => router.push(`/performances/${podium[0].id}`)}
+                        onKeyDown={(e) => e.key === 'Enter' && router.push(`/performances/${podium[0].id}`)}
                     >
                         {/* 
                             NO-CROP POSTER FIX: 
@@ -43,6 +46,7 @@ export function PerformanceBentoGrid({ movies }: PerformanceBentoGridProps) {
                                 src={podium[0].poster} 
                                 alt="" 
                                 fill 
+                                sizes="100vw"
                                 className="object-cover opacity-30 blur-2xl scale-110"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
@@ -55,6 +59,7 @@ export function PerformanceBentoGrid({ movies }: PerformanceBentoGridProps) {
                                     src={podium[0].poster} 
                                     alt={podium[0].title} 
                                     fill 
+                                    sizes="(max-width: 768px) 50vw, 250px"
                                     className="object-contain rounded-xl border border-white/10"
                                     priority
                                 />
@@ -114,7 +119,10 @@ export function PerformanceBentoGrid({ movies }: PerformanceBentoGridProps) {
                         <div 
                             key={movie.id}
                             className="flex-1 relative overflow-hidden rounded-[1.5rem] bg-muted/40 border border-border/50 group cursor-pointer hover:border-primary/30 transition-all shadow-sm"
+                            role="button"
+                            tabIndex={0}
                             onClick={() => router.push(`/performances/${movie.id}`)}
+                            onKeyDown={(e) => e.key === 'Enter' && router.push(`/performances/${movie.id}`)}
                         >
                             <div className="absolute inset-0 flex p-4 gap-6">
                                 <div className="relative h-full aspect-[2/3] flex-shrink-0">

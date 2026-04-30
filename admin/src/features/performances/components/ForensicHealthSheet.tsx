@@ -21,6 +21,7 @@ import {
     Clock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getFirestoreConsoleUrl } from '@/lib/constants';
 import { getTodayJakarta } from '@/lib/timeUtils';
 import Link from 'next/link';
 import { DiagnosticItem } from '../types/performance';
@@ -215,7 +216,7 @@ export function ForensicHealthSheet({ diagnostic }: ForensicHealthSheetProps) {
                                     {/* 6. External Registry */}
                                     <div className="flex items-center gap-1.5 justify-end">
                                         <a 
-                                            href={`https://console.firebase.google.com/project/cineradar-481014/firestore/databases/-default-/data/~2Fschedules_v2~2F${today}~2Fmovies~2F${item.id}`} 
+                                            href={getFirestoreConsoleUrl('schedules_v2', today, 'movies', item.id)} 
                                             target="_blank" 
                                             rel="noopener noreferrer"
                                             className="p-1.5 bg-muted/40 hover:bg-amber-500/10 text-muted-foreground/60 hover:text-amber-600 rounded-md transition-all border border-border/30 hover:border-amber-500/30"
@@ -224,7 +225,7 @@ export function ForensicHealthSheet({ diagnostic }: ForensicHealthSheetProps) {
                                             <Database className="w-3.5 h-3.5" />
                                         </a>
                                         <a 
-                                            href={`https://console.firebase.google.com/project/cineradar-481014/firestore/databases/-default-/data/~2Fmovie_performance_v2~2F${item.id}`} 
+                                            href={getFirestoreConsoleUrl('movie_performance_v2', item.id)} 
                                             target="_blank" 
                                             rel="noopener noreferrer"
                                             className="p-1.5 bg-muted/40 hover:bg-amber-500/10 text-muted-foreground/60 hover:text-amber-600 rounded-md transition-all border border-border/30 hover:border-amber-500/30"

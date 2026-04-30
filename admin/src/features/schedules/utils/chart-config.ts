@@ -28,6 +28,7 @@ export const tooltipLabelStyle: React.CSSProperties = {
     fontWeight: 500,
 };
 
+// Recharts formatter types are loosely typed; `any` is required for compatibility
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const tooltipFormatter = (value: any, name: any) => [value, name === 'available' ? 'Available' : 'Closed'];
 

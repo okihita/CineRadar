@@ -78,6 +78,17 @@ export function getChainColorLight(chain: string): string {
   return normalized ? CHAIN_COLORS_LIGHT[normalized] : 'rgba(102, 102, 102, 0.2)';
 }
 
+/** Firebase Firestore Console URL base */
+const FIRESTORE_CONSOLE_BASE = 'https://console.firebase.google.com/project/cineradar-481014/firestore/databases/-default-/data';
+
+/**
+ * Generates a direct link to a document in the Firebase Console.
+ * @param pathSegments - Path segments (e.g. ['movie_performance_v2', movieId])
+ */
+export function getFirestoreConsoleUrl(...pathSegments: string[]): string {
+  return `${FIRESTORE_CONSOLE_BASE}/${pathSegments.map(s => `~2F${s}`).join('')}`;
+}
+
 // Refresh intervals (milliseconds)
 export const REFRESH_INTERVALS = {
   FAST: 30000,        // 30 seconds - for real-time monitoring

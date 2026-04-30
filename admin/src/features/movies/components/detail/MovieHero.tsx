@@ -7,14 +7,17 @@ import { Badge } from '@/components/ui/badge';
 import { formatRelativeWIB } from '@/lib/timeUtils';
 
 interface MovieHeroProps {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    movie: Record<string, any>;
+    movie: Record<string, unknown>;
     movieId: string;
 }
 
 export function MovieHero({ movie, movieId }: MovieHeroProps) {
     const title = (movie.title as string) || (movie.name as string) || `Movie ${movieId}`;
     const poster = (movie.poster_path as string) || (movie.poster as string);
+    const status = typeof movie.status === 'string' ? movie.status : null;
+    const synopsis = typeof movie.synopsis === 'string' ? movie.synopsis : typeof movie.information === 'string' ? movie.information : null;
+    const duration = typeof movie.duration === 'number' ? movie.duration : null;
+    const scrapedAt = typeof movie.scraped_at === 'string' ? movie.scraped_at : null;
 
     // Format release date
     const releaseDate = movie.release_date;
@@ -97,7 +100,7 @@ export function MovieHero({ movie, movieId }: MovieHeroProps) {
                 {/* Release Date & Duration & ID & Status & Last Update */}
                 <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mb-6 font-medium">
                     {formattedReleaseDate && <span>{formattedReleaseDate}</span>}
-                    {movie.duration && <span>• {movie.duration as number} min</span>}
+                    {duration != null && <span>• {duration} min</span>}
                     <span className="flex items-center gap-1.5 ml-1">
                         <span className="text-xs bg-muted/50 px-2 py-0.5 rounded border border-border/50 font-mono select-all text-foreground/70">
                             {movieId}
@@ -105,17 +108,17 @@ export function MovieHero({ movie, movieId }: MovieHeroProps) {
                     </span>
 
                     {/* Status */}
-                    {movie.status && (
+                    {status && (
                         <Badge variant="outline" className="ml-1 border-primary/20 text-primary bg-primary/5 rounded-sm shadow-none">
-                            {movie.status as string}
+                            {status}
                         </Badge>
                     )}
 
                     {/* Last Scraped */}
-                    {movie.scraped_at && (
-                        <span className="text-[11px] ml-1 flex items-center gap-1.5 text-muted-foreground/80 font-mono" title={String(movie.scraped_at)}>
+                    {scrapedAt && (
+                        <span className="text-[11px] ml-1 flex items-center gap-1.5 text-muted-foreground/80 font-mono" title={scrapedAt}>
                             <span className="w-1.5 h-1.5 rounded-full bg-green-500/80 inline-block shadow-[0_0_4px_rgba(34,197,94,0.4)]"></span>
-                            Updated {formatRelativeWIB(movie.scraped_at as string)}
+                            Updated {formatRelativeWIB(scrapedAt)}
                         </span>
                     )}
                 </div>
@@ -126,10 +129,10 @@ export function MovieHero({ movie, movieId }: MovieHeroProps) {
                 </div>
 
                 {/* Synopsis */}
-                {(movie.synopsis || movie.information) && (
+                {synopsis && (
                     <div className="prose prose-sm dark:prose-invert max-w-3xl">
                         <p className="text-muted-foreground leading-relaxed text-[15px]">
-                            {(movie.synopsis as string) || (movie.information as string)}
+                            {synopsis}
                         </p>
                     </div>
                 )}

@@ -83,6 +83,7 @@ export function ScheduleFilterBar({
                             <button
                                 key={chain}
                                 onClick={() => onToggleChain(chain)}
+                                aria-pressed={isSelected}
                                 className={cn(
                                     "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all border",
                                     isSelected
@@ -104,6 +105,7 @@ export function ScheduleFilterBar({
                         <button
                             key={genre}
                             onClick={() => onToggleGenre(genre)}
+                            aria-pressed={selectedGenres.has(genre)}
                             className={cn(
                                 "px-2 py-0.5 rounded text-[10px] font-medium transition-all border",
                                 selectedGenres.has(genre)

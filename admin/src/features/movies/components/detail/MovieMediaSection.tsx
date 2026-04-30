@@ -5,9 +5,14 @@ import Image from 'next/image';
 import { Film } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
+interface MovieVideo {
+    path?: string;
+    title?: string;
+    thumbnail?: string;
+}
+
 interface MovieMediaSectionProps {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    movie: Record<string, any>;
+    movie: Record<string, unknown>;
 }
 
 export function MovieMediaSection({ movie }: MovieMediaSectionProps) {
@@ -20,10 +25,10 @@ export function MovieMediaSection({ movie }: MovieMediaSectionProps) {
             </CardHeader>
             <CardContent className="pt-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {(movie.videos as Record<string, unknown>[]).map((video, idx: number) => {
-                        const path = (video.path as string) || '';
-                        const title = (video.title as string) || 'Video';
-                        const thumbnail = (video.thumbnail as string) || '';
+                    {(movie.videos as MovieVideo[]).map((video, idx: number) => {
+                        const path = video.path || '';
+                        const title = video.title || 'Video';
+                        const thumbnail = video.thumbnail || '';
 
                         if (!path) return null;
 
@@ -41,6 +46,7 @@ export function MovieMediaSection({ movie }: MovieMediaSectionProps) {
                                             src={thumbnail} 
                                             alt={title} 
                                             fill 
+                                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                             className="object-cover opacity-80 group-hover:opacity-100 transition-opacity" 
                                             unoptimized 
                                         />

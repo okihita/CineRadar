@@ -1,11 +1,33 @@
 import { CastMember, MovieSummary } from '../types/performance';
 
+/** Raw movie metadata as stored in Firestore */
+interface MovieMetadata {
+    name?: string;
+    title?: string;
+    poster?: string;
+    poster_path?: string;
+    genres?: string | Array<string | { name: string }>;
+    age_category?: string | Array<string | { name: string }>;
+    director?: string | Array<string | { name: string }>;
+    production_company?: string | Array<string | { name: string }>;
+    casts?: CastMember[];
+    [key: string]: unknown;
+}
+
+/** Raw performance document from Firestore */
+interface PerformanceDocument {
+    last_swept_at?: string;
+    marketing?: unknown;
+    [key: string]: unknown;
+}
+
+type MetadataFieldValue = string | number | boolean | Array<string | { name: string }> | { name: string } | null | undefined;
+
 /**
  * Formats genres, age_category, director, etc. into a string.
  * Handles strings, arrays of strings, and arrays of objects { name: string }.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function formatMetadataField(field: any): string {
+export function formatMetadataField(field: MetadataFieldValue): string {
     if (!field) return '';
     if (typeof field === 'string') return field;
     if (Array.isArray(field)) {
@@ -27,10 +49,8 @@ export function formatMetadataField(field: any): string {
  * Shared by the API route and the DailyPerformanceDetail server component.
  */
 export function buildMovieSummary(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    movieMeta: any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    perfDoc: any,
+    movieMeta: MovieMetadata | Record<string, unknown> | null,
+    perfDoc: PerformanceDocument | Record<string, unknown> | null,
     movieId: string,
 ): MovieSummary | null {
     if (!movieMeta) return null;
@@ -44,10 +64,10 @@ export function buildMovieSummary(
             (movieMeta.poster as string) ||
             (movieMeta.poster_path as string) ||
             '',
-        genres: formatMetadataField(movieMeta.genres),
-        age_category: formatMetadataField(movieMeta.age_category),
-        director: formatMetadataField(movieMeta.director),
-        production_house: formatMetadataField(movieMeta.production_company),
+        genres: formatMetadataField(movieMeta.genres as MetadataFieldValue),
+        age_category: formatMetadataField(movieMeta.age_category as MetadataFieldValue),
+        director: formatMetadataField(movieMeta.director as MetadataFieldValue),
+        production_house: formatMetadataField(movieMeta.production_company as MetadataFieldValue),
         actors: Array.isArray(movieMeta.casts)
             ? (movieMeta.casts as CastMember[])
                 .filter((c) => c.cast_type === 'Actor')

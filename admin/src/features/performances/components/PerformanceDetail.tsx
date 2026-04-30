@@ -1,19 +1,20 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Target, Users, Armchair, ChevronLeft, Globe, Loader2 } from 'lucide-react';
+import useSWR from 'swr';
+import { Target, Users, Armchair, ChevronLeft, Globe, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MovieSummaryCard } from './MovieSummaryCard';
 import { HistoryGrid } from './HistoryGrid';
 import { PerformanceTrendCharts } from './PerformanceTrendCharts';
 import { DailyStatsBanner } from './DailyStatsBanner';
-import { MovieSummary } from '../types/performance';
+import { MovieSummary, DailyPerformance } from '../types/performance';
 import { getOccupancyColor } from '../utils/colors';
 import { formatCompactNumber, formatOccupancy } from '../utils/format';
 import { cn } from '@/lib/utils';
-
-import { DailyPerformance } from '../types/performance';
+import { getFirestoreConsoleUrl } from '@/lib/constants';
+import { fetcher } from '@/lib/api';
 
 interface PerformanceDetailProps {
     movieId: string;
@@ -21,53 +22,39 @@ interface PerformanceDetailProps {
 
 export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
     const router = useRouter();
-    const [movie, setMovie] = useState<MovieSummary | null>(null);
-    const [history, setHistory] = useState<DailyPerformance[]>([]);
-    const [loadingMovie, setLoadingMovie] = useState(true);
-    const [loadingHistory, setLoadingHistory] = useState(true);
 
     // 1. Fetch Movie Summary
-    const fetchMovie = useCallback(async () => {
-        try {
-            const res = await fetch(`/api/performance/${movieId}`);
-            const data = await res.json();
-            if (data.success) {
-                setMovie(data.data.summary);
-            } else {
-                console.error('Failed to load movie:', data.error);
-            }
-        } catch (e) {
-            console.error('Error fetching movie:', e);
-        }
-    }, [movieId]);
-
-    useEffect(() => {
-        setLoadingMovie(true);
-        fetchMovie().finally(() => setLoadingMovie(false));
-    }, [fetchMovie]);
+    const { data: movieData, mutate: refetchMovie } = useSWR<{
+        success: boolean;
+        data: { summary: MovieSummary };
+    }>(`/api/performance/${movieId}`, fetcher);
 
     // 2. Fetch History
-    useEffect(() => {
-        async function fetchHistory() {
-            try {
-                const res = await fetch(`/api/performance/${movieId}/history`);
-                const data = await res.json();
-                if (data.success) {
-                    setHistory(data.data.history);
-                }
-            } catch (e) {
-                console.error('Error fetching history:', e);
-            } finally {
-                setLoadingHistory(false);
-            }
-        }
-        fetchHistory();
-    }, [movieId]);
+    const { data: historyData } = useSWR<{
+        success: boolean;
+        data: { history: DailyPerformance[] };
+    }>(`/api/performance/${movieId}/history`, fetcher);
 
-    if (loadingMovie) {
+    const movie = movieData?.data?.summary ?? null;
+    const history = historyData?.data?.history ?? [];
+    const loadingMovie = !movieData && !movieData;
+    const loadingHistory = !historyData;
+
+    if (!movieData && loadingMovie) {
         return (
             <div className="flex items-center justify-center min-h-[50vh]">
                 <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+
+    if (movieData && !movieData.success) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
+                <AlertCircle className="w-12 h-12 text-red-500" />
+                <h2 className="text-xl font-semibold text-red-600">Failed to load movie data</h2>
+                <p className="text-sm text-muted-foreground">An error occurred while fetching performance data.</p>
+                <Button onClick={() => router.push('/performances')}>Back to Performances</Button>
             </div>
         );
     }
@@ -165,7 +152,7 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
                             </span>
                         </div>
                         <a 
-                            href={`https://console.firebase.google.com/project/cineradar-481014/firestore/databases/-default-/data/~2Fmovie_performance_v2~2F${movieId}`}
+                            href={getFirestoreConsoleUrl('movie_performance_v2', movieId)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-[8px] font-black uppercase text-primary hover:underline mt-0.5"
@@ -190,7 +177,7 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
                     cities: [],
                     marketing: movie.marketing
                 }}
-                onMarketingUpdate={fetchMovie}
+                onMarketingUpdate={() => refetchMovie()}
             />
 
             {/* Visual Trends */}

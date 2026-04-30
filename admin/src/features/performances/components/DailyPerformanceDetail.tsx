@@ -31,7 +31,7 @@ export async function DailyPerformanceDetail({
     firestoreRestClient.getSubCollection(`movie_performance_v2/${movieId}/days`),
   ]);
 
-  const movie = buildMovieSummary(movieMeta, perfDoc, movieId);
+  const movie = buildMovieSummary(movieMeta ?? {}, perfDoc ?? null, movieId);
   const dailyStats =
     (daysSubCollection as unknown as DailyPerformance[]).find((d) => d.date === date) ||
     null;

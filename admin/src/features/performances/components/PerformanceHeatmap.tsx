@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, useRef } from "react";
-import { geoMercator, geoPath } from "d3-geo";
+import { geoMercator, geoPath, GeoPermissibleObjects } from "d3-geo";
 import { ProvincePerformance } from "../hooks/useCityAggregation";
 import { getPerformanceTier } from "@/lib/constants";
 import { getOccupancyColor } from "../utils/colors";
@@ -107,10 +107,12 @@ export function PerformanceHeatmap({ provinceStats }: PerformanceHeatmapProps) {
             return (
               <path
                 key={`prov-${i}`}
-                d={pathGenerator(feature as any /* eslint-disable-line @typescript-eslint/no-explicit-any */) || ""}
+                d={pathGenerator(feature as unknown as GeoPermissibleObjects) || ""}
                 className={`transition-colors duration-300 stroke-[0.5] ${getColor(provName)}`}
                 onMouseEnter={(e) => handleMouseEnter(e, provName)}
                 onMouseLeave={handleMouseLeave}
+                tabIndex={0}
+                aria-label={`${provName} — occupancy data`}
               />
             );
           })}

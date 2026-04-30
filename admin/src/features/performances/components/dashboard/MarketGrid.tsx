@@ -33,7 +33,10 @@ export function MarketGrid({ movies }: MarketGridProps) {
                     <div
                         key={movie.id}
                         className="group cursor-pointer space-y-3"
+                        role="button"
+                        tabIndex={0}
                         onClick={() => router.push(`/performances/${movie.id}`)}
+                        onKeyDown={(e) => e.key === 'Enter' && router.push(`/performances/${movie.id}`)}
                     >
                         <div className="aspect-[2/3] relative overflow-hidden rounded-xl bg-muted border border-border/40 transition-all group-hover:shadow-lg group-hover:border-primary/20">
                             <Image
