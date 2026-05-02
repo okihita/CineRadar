@@ -53,7 +53,8 @@ ignore = [
 known-first-party = ["backend"]
 
 [tool.ruff.lint.per-file-ignores]
-
+"scripts/*.py" = ["T201"]
+"backend/scripts/*.py" = ["T201"]
 
 [tool.mypy]
 python_version = "3.13"
@@ -61,6 +62,16 @@ warn_return_any = true
 warn_unused_ignores = true
 disallow_untyped_defs = true
 ignore_missing_imports = true
+
+# Scripts can be less strict
+[[tool.mypy.overrides]]
+module = [
+    "scripts.*",
+    "backend.scripts.*",
+    "v1_v2_gap_analysis",
+]
+disallow_untyped_defs = false
+disallow_untyped_calls = false
 
 # Strict for domain layer
 [[tool.mypy.overrides]]

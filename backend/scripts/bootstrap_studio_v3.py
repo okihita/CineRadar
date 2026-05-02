@@ -360,20 +360,20 @@ def format_duration(seconds: float) -> str:
 
 async def main() -> None:
     db = await get_firestore_async_client()
-    print(f"\n🚀 STARTING NATIONAL REBOOT (Parallel Batch: {THEATRE_BATCH_SIZE})")  # noqa: T201
+    print(f"\n🚀 STARTING NATIONAL REBOOT (Parallel Batch: {THEATRE_BATCH_SIZE})")
     if os.path.exists(COLLISION_LOG):
         os.remove(COLLISION_LOG)
 
     theatre_docs = await db.collection(THEATRES).get()
     total_theatres = len(theatre_docs)
-    print(f"==> Targeting {total_theatres} theatres...")  # noqa: T201
+    print(f"==> Targeting {total_theatres} theatres...")
 
     start_time = time.time()
 
     # Chunking into batches of 10
     for i in range(0, total_theatres, THEATRE_BATCH_SIZE):
         batch = theatre_docs[i : i + THEATRE_BATCH_SIZE]
-        print(  # noqa: T201
+        print(
             f"\n🎬 Processing Batch {i//THEATRE_BATCH_SIZE + 1} ({len(batch)} theatres)..."
         )
 
@@ -381,7 +381,7 @@ async def main() -> None:
         batch_results = await asyncio.gather(*batch_tasks)
 
         for res in batch_results:
-            print(f"   -> {res}")  # noqa: T201
+            print(f"   -> {res}")
 
         # Telemetry
         processed = i + len(batch)
@@ -389,12 +389,12 @@ async def main() -> None:
         avg_time = current_elapsed / processed
         remaining = (total_theatres - processed) * avg_time
 
-        print(  # noqa: T201
+        print(
             f"⏱️  ELAPSED: {format_duration(current_elapsed)} | ⏳ REMAINING: {format_duration(remaining)} (Avg: {avg_time:.1f}s/theatre)"
         )
         sys.stdout.flush()
 
-    print("\n🏁 NATIONAL REBOOT COMPLETE.")  # noqa: T201
+    print("\n🏁 NATIONAL REBOOT COMPLETE.")
 
 
 if __name__ == "__main__":

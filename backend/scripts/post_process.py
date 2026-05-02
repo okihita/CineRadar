@@ -45,7 +45,7 @@ def get_firestore_client() -> firestore.Client:
     sa_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
     if sa_json:
         sa_info = json.loads(sa_json)
-        credentials = service_account.Credentials.from_service_account_info(sa_info)  # type: ignore[no-untyped-call]
+        credentials = service_account.Credentials.from_service_account_info(sa_info)
         return firestore.Client(credentials=credentials, project=sa_info["project_id"])
     else:
         return firestore.Client()
@@ -137,7 +137,7 @@ async def run_studio_discovery(db: firestore.Client, date: str) -> None:
         if studios:
             await populate_studios(async_db, studios, dry_run=False)
     finally:
-        async_db.close()  # type: ignore[no-untyped-call]
+        await async_db.close()
 
 
 async def send_discovery_alerts(new_theatres: list[str]) -> None:

@@ -42,7 +42,7 @@ async def get_firestore_client() -> AsyncClient:
     sa_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
     if sa_json:
         sa_info = json.loads(sa_json)
-        credentials = service_account.Credentials.from_service_account_info(sa_info)  # type: ignore[no-untyped-call]
+        credentials = service_account.Credentials.from_service_account_info(sa_info)
         return AsyncClient(credentials=credentials, project=sa_info["project_id"])
     return AsyncClient()
 
@@ -164,7 +164,7 @@ async def main() -> None:
         if studios:
             await populate_studios(db, studios, args.dry_run)
     finally:
-        db.close()  # type: ignore[no-untyped-call]
+        await db.close()
 
 
 if __name__ == "__main__":
