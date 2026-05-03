@@ -4,14 +4,19 @@
  */
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Film, Trophy, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import useSWR from 'swr';
 import {
     PerformanceTab,
+    UpdateTimer
 } from '@/features/performances';
+import { MovieWithStats } from '@/features/performances/types/performance';
 import { getTodayJakarta } from '@/lib/timeUtils';
+import { fetcher } from '@/lib/api';
+import { ApiResponse } from '@/types';
 
 function shiftDate(dateStr: string, days: number): string {
     const d = new Date(dateStr + 'T00:00:00');
@@ -35,6 +40,19 @@ function formatShortDate(dateStr: string): { day: string; weekday: string } {
 export default function PerformancePage() {
     const today = getTodayJakarta();
     const [selectedDate, setSelectedDate] = useState(today);
+
+    // Fetch summary data to extract last_swept_at
+    const { data } = useSWR(`/api/performance?date=${selectedDate}`, fetcher);
+    const result = data as ApiResponse<{ movies: MovieWithStats[] }> | undefined;
+    const movies = result?.success ? result.data.movies : [];
+
+    const lastSweptAt = useMemo(() => {
+        const timestamps = movies
+            .map(m => m.today?.last_swept_at)
+            .filter((ts): ts is string => !!ts);
+        if (timestamps.length === 0) return null;
+        return timestamps.sort().reverse()[0];
+    }, [movies]);
 
     const goBack = useCallback(() => setSelectedDate(d => shiftDate(d, -1)), []);
     const goForward = useCallback(() => setSelectedDate(d => {
@@ -70,10 +88,13 @@ export default function PerformancePage() {
                         </div>
                         <h1 className="text-3xl font-black uppercase tracking-tighter">Market Pulse</h1>
                     </div>
-                    <p className="text-muted-foreground text-sm font-medium">
-                        Box office performance for{' '}
-                        <span className="text-foreground font-bold">{formatDisplayDate(selectedDate)}</span>
-                    </p>
+                    <div className="flex items-center">
+                        <p className="text-muted-foreground text-sm font-medium">
+                            Box office performance for{' '}
+                            <span className="text-foreground font-bold">{formatDisplayDate(selectedDate)}</span>
+                        </p>
+                        {lastSweptAt && <UpdateTimer lastSweptAt={lastSweptAt} variant="minimal" />}
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-3">

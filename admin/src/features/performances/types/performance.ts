@@ -61,6 +61,7 @@ export interface TodayStats {
     total_seats: number;
     total_sold: number;
     cities: string[];
+    last_swept_at?: string;
 }
 
 export interface DailyPerformance {
@@ -70,6 +71,7 @@ export interface DailyPerformance {
     total_seats: number;
     total_sold: number;
     cities: string[];
+    last_swept_at?: string;
 }
 
 export interface DailyPerformanceWithMeta extends DailyPerformance {

@@ -88,6 +88,7 @@ export async function GET(request: Request) {
                                 total_seats: (todayStats?.total_seats as number) || 0,
                                 total_sold: (todayStats?.total_sold as number) || 0,
                                 cities: (todayStats?.cities as string[]) || Object.keys(scheduleV2?.cities || {}),
+                                last_swept_at: (todayStats?.last_swept_at as string) || '',
                             },
                         });
                     }

@@ -2,3 +2,4 @@
 export { PerformanceTab } from './components/PerformanceTab';
 export { PerformanceDetail } from './components/PerformanceDetail';
 export { DailyPerformanceDetail } from './components/DailyPerformanceDetail';
+export { UpdateTimer } from './components/UpdateTimer';

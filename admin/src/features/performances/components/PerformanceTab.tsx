@@ -14,7 +14,9 @@ import { PerformanceBentoGrid } from './dashboard/PerformanceBentoGrid';
 import { MarketGrid } from './dashboard/MarketGrid';
 import { ForensicHealthSheet } from './ForensicHealthSheet';
 import { PerformanceTabSkeleton } from './skeletons/PerformanceTabSkeleton';
+import { UpdateTimer } from './UpdateTimer';
 import { MovieWithStats, DiagnosticData } from '../types/performance';
+
 import { ApiResponse } from '@/types';
 import { fetcher } from '@/lib/api';
 
@@ -46,6 +48,15 @@ export function PerformanceTab({ date }: PerformanceTabProps) {
     // --- Slicing for Bento vs Grid ---
     const bentoMovies = movies.slice(0, 3);
     const gridMovies = movies.slice(3);
+
+    // Get the most recent sweep timestamp from the movie list
+    const lastSweptAt = useMemo(() => {
+        const timestamps = movies
+            .map(m => m.today?.last_swept_at)
+            .filter((ts): ts is string => !!ts);
+        if (timestamps.length === 0) return null;
+        return timestamps.sort().reverse()[0];
+    }, [movies]);
 
     // --- Conditional renders (after all hooks) ---
     if (isLoading) {

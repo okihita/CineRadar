@@ -6,6 +6,7 @@ import { ShowtimesDataFetcher } from "./ShowtimesDataFetcher";
 import { ShowtimesSkeleton } from "./skeletons/ShowtimesSkeleton";
 import { TelemetryHeader } from "./TelemetryHeader";
 import { DateNavigatorHeader } from "./DateNavigatorHeader";
+import { UpdateTimer } from "./UpdateTimer";
 import { firestoreRestClient } from "@/lib/firestore-rest";
 import { DailyPerformance } from '../types/performance';
 import { buildMovieSummary } from "../utils/movie-mapping";
@@ -119,11 +120,10 @@ export async function DailyPerformanceDetail({
 
           {/* 3. RIGHT: Unified Intelligence Pill (Date + Telemetry) */}
           <div className="hidden md:flex items-stretch bg-background/50 rounded-xl border border-border/50 overflow-hidden shadow-sm">
-                        <TelemetryHeader />
+                        <TelemetryHeader lastSweptAt={dailyStats?.last_swept_at} />
                         <DateNavigatorHeader date={date} movieId={movieId} />
                       </div>
                     </div>
-
 
         {/* Daily Stats Banner */}
         {dailyStats ? (
