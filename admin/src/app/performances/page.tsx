@@ -13,7 +13,7 @@ import {
     PerformanceTab,
     UpdateTimer
 } from '@/features/performances';
-import { MovieWithStats } from '@/features/performances/types/performance';
+import { MovieWithStats, DiagnosticData } from '@/features/performances/types/performance';
 import { getTodayJakarta } from '@/lib/timeUtils';
 import { fetcher } from '@/lib/api';
 import { ApiResponse } from '@/types';
@@ -49,8 +49,8 @@ export default function PerformancePage() {
     );
     
     const result = data as ApiResponse<{ movies: MovieWithStats[]; diagnostic: DiagnosticData }> | undefined;
-    const movies = result?.success ? result.data.movies : [];
-    const diagnostic = result?.success ? result.data.diagnostic : null;
+    const movies = useMemo(() => result?.success ? result.data.movies : [], [result]);
+    const diagnostic = useMemo(() => result?.success ? result.data.diagnostic : null, [result]);
 
     const lastSweptAt = useMemo(() => {
         const timestamps = movies

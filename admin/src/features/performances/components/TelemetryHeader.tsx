@@ -3,13 +3,8 @@
 import { useTelemetryStore } from '../stores/useTelemetryStore';
 import { HardDrive, Zap, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { UpdateTimer } from './UpdateTimer';
 
-interface TelemetryHeaderProps {
-    lastSweptAt?: string;
-}
-
-export function TelemetryHeader({ lastSweptAt }: TelemetryHeaderProps) {
+export function TelemetryHeader() {
     const { latency, payloadSize, elapsed, status } = useTelemetryStore();
 
     if (status === 'idle') return null;

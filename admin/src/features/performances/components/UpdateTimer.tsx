@@ -1,7 +1,6 @@
 'use client';
 
 import { Clock } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface UpdateTimerProps {
     lastSweptAt: string;
@@ -24,7 +23,7 @@ export function UpdateTimer({ lastSweptAt, variant = 'pill', showNextUpdate = tr
                 second: '2-digit',
                 hour12: false
             }).format(date);
-        } catch (e) {
+        } catch {
             return date.toLocaleTimeString('en-GB', { hour12: false });
         }
     };

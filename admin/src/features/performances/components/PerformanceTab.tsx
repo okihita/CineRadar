@@ -13,7 +13,6 @@ import { PerformanceBentoGrid } from './dashboard/PerformanceBentoGrid';
 import { MarketGrid } from './dashboard/MarketGrid';
 import { ForensicHealthSheet } from './ForensicHealthSheet';
 import { PerformanceTabSkeleton } from './skeletons/PerformanceTabSkeleton';
-import { UpdateTimer } from './UpdateTimer';
 import { MovieWithStats, DiagnosticData } from '../types/performance';
 
 interface PerformanceTabProps {
@@ -21,10 +20,10 @@ interface PerformanceTabProps {
     movies: MovieWithStats[];
     diagnostic: DiagnosticData | null;
     isLoading: boolean;
-    error: any;
+    error: Error | null;
 }
 
-export function PerformanceTab({ date, movies, diagnostic, isLoading, error }: PerformanceTabProps) {
+export function PerformanceTab({ movies, diagnostic, isLoading, error }: PerformanceTabProps) {
     // --- Aggregated National Pulse (must be above all early returns) ---
     const nationalPulse = useMemo(() => {
         const totalSold = movies.reduce((sum: number, m: MovieWithStats) => sum + (m.today?.total_sold ?? 0), 0);
@@ -38,15 +37,6 @@ export function PerformanceTab({ date, movies, diagnostic, isLoading, error }: P
     // --- Slicing for Bento vs Grid ---
     const bentoMovies = movies.slice(0, 3);
     const gridMovies = movies.slice(3);
-
-    // Get the most recent sweep timestamp from the movie list
-    const lastSweptAt = useMemo(() => {
-        const timestamps = movies
-            .map(m => m.today?.last_swept_at)
-            .filter((ts): ts is string => !!ts);
-        if (timestamps.length === 0) return null;
-        return timestamps.sort().reverse()[0];
-    }, [movies]);
 
     // --- Conditional renders (after all hooks) ---
     if (isLoading) {

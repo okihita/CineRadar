@@ -1,6 +1,5 @@
 'use client';
 
-import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import { Target, Users, Armchair, ChevronLeft, Globe, Loader2, AlertCircle } from 'lucide-react';
