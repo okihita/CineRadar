@@ -99,7 +99,13 @@ export default function PerformancePage() {
                             Box office performance for{' '}
                             <span className="text-foreground font-bold">{formatDisplayDate(selectedDate)}</span>
                         </p>
-                        {lastSweptAt && <UpdateTimer lastSweptAt={lastSweptAt} variant="minimal" />}
+                        {lastSweptAt && (
+                            <UpdateTimer 
+                                lastSweptAt={lastSweptAt} 
+                                variant="minimal" 
+                                showNextUpdate={selectedDate === today} 
+                            />
+                        )}
                     </div>
                 </div>
 

@@ -119,11 +119,20 @@ export async function DailyPerformanceDetail({
           )}
 
           {/* 3. RIGHT: Unified Intelligence Pill (Date + Telemetry) */}
-          <div className="hidden md:flex items-stretch bg-background/50 rounded-xl border border-border/50 overflow-hidden shadow-sm">
-                        <TelemetryHeader lastSweptAt={dailyStats?.last_swept_at} />
-                        <DateNavigatorHeader date={date} movieId={movieId} />
-                      </div>
-                    </div>
+          <div className="flex flex-col items-end gap-1.5 pr-2">
+            <div className="hidden md:flex items-stretch bg-background/50 rounded-xl border border-border/50 overflow-hidden shadow-sm">
+              <TelemetryHeader />
+              <DateNavigatorHeader date={date} movieId={movieId} />
+            </div>
+            {dailyStats?.last_swept_at && (
+              <UpdateTimer 
+                lastSweptAt={dailyStats.last_swept_at} 
+                variant="minimal" 
+                showNextUpdate={date === new Date().toLocaleDateString('en-CA')} 
+              />
+            )}
+          </div>
+        </div>
 
         {/* Daily Stats Banner */}
         {dailyStats ? (

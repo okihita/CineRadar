@@ -17,13 +17,6 @@ export function TelemetryHeader({ lastSweptAt }: TelemetryHeaderProps) {
     return (
         <div className="flex flex-col items-end justify-center px-6 py-3">
             <div className="flex items-center gap-3">
-                {/* 0. Freshness (WIB Clock) */}
-                {lastSweptAt && (
-                    <div className="border-r border-border/30 pr-3 mr-1">
-                        <UpdateTimer lastSweptAt={lastSweptAt} variant="minimal" />
-                    </div>
-                )}
-
                 {/* 1. Status / Latency */}
                 <div className="flex flex-col items-end">
                     <div className="flex items-center gap-1.5">
