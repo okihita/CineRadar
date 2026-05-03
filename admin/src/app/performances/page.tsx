@@ -41,10 +41,16 @@ export default function PerformancePage() {
     const today = getTodayJakarta();
     const [selectedDate, setSelectedDate] = useState(today);
 
-    // Fetch summary data to extract last_swept_at
-    const { data } = useSWR(`/api/performance?date=${selectedDate}`, fetcher);
-    const result = data as ApiResponse<{ movies: MovieWithStats[] }> | undefined;
+    // 1. Centralized Data Fetching (Lifts state from PerformanceTab)
+    const { data, isLoading, error } = useSWR(
+        `/api/performance?date=${selectedDate}`, 
+        fetcher,
+        { refreshInterval: 60000 } // Live monitoring refresh every 60s
+    );
+    
+    const result = data as ApiResponse<{ movies: MovieWithStats[]; diagnostic: DiagnosticData }> | undefined;
     const movies = result?.success ? result.data.movies : [];
+    const diagnostic = result?.success ? result.data.diagnostic : null;
 
     const lastSweptAt = useMemo(() => {
         const timestamps = movies
@@ -187,7 +193,13 @@ export default function PerformancePage() {
             </div>
 
             {/* Main Content */}
-            <PerformanceTab date={selectedDate} />
+            <PerformanceTab 
+                date={selectedDate} 
+                movies={movies}
+                diagnostic={diagnostic}
+                isLoading={isLoading}
+                error={error}
+            />
         </div>
     );
 }

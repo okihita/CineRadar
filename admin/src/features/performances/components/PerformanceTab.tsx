@@ -7,7 +7,6 @@
 'use client';
 
 import { useMemo } from 'react';
-import useSWR from 'swr';
 import { Globe, AlertCircle } from 'lucide-react';
 import { NationalPulseHud } from './dashboard/NationalPulseHud';
 import { PerformanceBentoGrid } from './dashboard/PerformanceBentoGrid';
@@ -17,24 +16,15 @@ import { PerformanceTabSkeleton } from './skeletons/PerformanceTabSkeleton';
 import { UpdateTimer } from './UpdateTimer';
 import { MovieWithStats, DiagnosticData } from '../types/performance';
 
-import { ApiResponse } from '@/types';
-import { fetcher } from '@/lib/api';
-
 interface PerformanceTabProps {
     date: string; // YYYY-MM-DD
+    movies: MovieWithStats[];
+    diagnostic: DiagnosticData | null;
+    isLoading: boolean;
+    error: any;
 }
 
-export function PerformanceTab({ date }: PerformanceTabProps) {
-    const { data, isLoading, error } = useSWR(
-        `/api/performance?date=${date}`,
-        fetcher,
-        { refreshInterval: 60000 },
-    );
-
-    const result = data as ApiResponse<{ movies: MovieWithStats[]; diagnostic: DiagnosticData }> | undefined;
-    const movies = result?.success ? result.data.movies : [];
-    const diagnostic = result?.success ? result.data.diagnostic : null;
-
+export function PerformanceTab({ date, movies, diagnostic, isLoading, error }: PerformanceTabProps) {
     // --- Aggregated National Pulse (must be above all early returns) ---
     const nationalPulse = useMemo(() => {
         const totalSold = movies.reduce((sum: number, m: MovieWithStats) => sum + (m.today?.total_sold ?? 0), 0);
