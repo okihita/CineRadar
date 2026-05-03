@@ -99,50 +99,99 @@ def generate_default_name(studio_id: str, category: str) -> str:
 
 
 async def populate_studios(
-    db: AsyncClient, studios: dict[tuple[str, str], str], dry_run: bool
+    db: AsyncClient, studios_map: dict[tuple[str, str], str], dry_run: bool
 ) -> None:
-    """Write basic metadata to Firestore if document does not exist."""
-    new_count = 0
-    existing_count = 0
-    new_entries = []
+    """Write basic metadata to Firestore if document does not exist using bulk operations."""
+    studio_items = list(studios_map.items())  # [((t_id, s_id), category), ...]
+    studio_refs = [
+        db.collection(THEATRES).document(t_id).collection("studios").document(s_id)
+        for (t_id, s_id), _ in studio_items
+    ]
 
-    notification_service = ResendNotificationService()
+    logger.info(f"Checking existence of {len(studio_items)} studios...")
+    existing_studios = set()
+    # Firestore get_all has a limit of 1000 per call
+    for i in range(0, len(studio_refs), 1000):
+        chunk = studio_refs[i : i + 1000]
+        async for doc in db.get_all(chunk, field_paths=["studio_id"]):
+            if doc.exists:
+                # doc.reference.parent is the collection 'studios'
+                # doc.reference.parent.parent is the document 'theatres/{theatre_id}'
+                t_id = doc.reference.parent.parent.id
+                existing_studios.add((t_id, doc.id))
 
-    for (theatre_id, studio_id), category in studios.items():
-        # Check if theatre doc exists to get name for notification
-        theatre_doc = await db.collection(THEATRES).document(theatre_id).get(["name"])
-        t_dict = theatre_doc.to_dict()
-        theatre_name = t_dict.get("name", theatre_id) if theatre_doc.exists and t_dict else theatre_id
+    # Identify new studios
+    new_studio_requests = [
+        ((t_id, s_id), category)
+        for (t_id, s_id), category in studio_items
+        if (t_id, s_id) not in existing_studios
+    ]
 
-        doc_ref = (
-            db.collection(THEATRES).document(theatre_id).collection("studios").document(studio_id)
-        )
+    existing_count = len(studio_items) - len(new_studio_requests)
+    new_count = len(new_studio_requests)
 
-        doc = await doc_ref.get(["studio_id"])
-        if doc.exists:
-            existing_count += 1
-            continue
+    if not new_studio_requests:
+        logger.info(f"Summary: 0 newly created, {existing_count} already existed.")
+        return
 
-        new_count += 1
-        name = generate_default_name(studio_id, category)
-        layout = StudioLayout(studio_id=studio_id, name=name)
-        new_entries.append(f"{theatre_name}: {name} ({category})")
+    logger.info(f"Found {new_count} new studios. Fetching theatre names...")
 
-        if not dry_run:
-            await doc_ref.set(layout.to_dict())
-            logger.info(f"Created [Theatre: {theatre_id}] Studio: {studio_id} '{name}'")
-        else:
-            logger.info(
-                f"[DRY RUN] Would create [Theatre: {theatre_id}] Studio: {studio_id} '{name}'"
+    # Fetch theatre names for NEW studios only to reduce notification noise
+    new_theatre_ids = {t_id for (t_id, s_id), _ in new_studio_requests}
+    theatre_refs = [db.collection(THEATRES).document(t_id) for t_id in new_theatre_ids]
+    theatre_names = {}
+
+    for i in range(0, len(theatre_refs), 1000):
+        chunk = theatre_refs[i : i + 1000]
+        async for doc in db.get_all(chunk, field_paths=["name"]):
+            t_dict = doc.to_dict()
+            theatre_names[doc.id] = (
+                t_dict.get("name", doc.id) if doc.exists and t_dict else doc.id
             )
 
-    if new_count > 0 and not dry_run:
+    # Batch create new studios
+    new_entries = []
+    if not dry_run:
+        batch = db.batch()
+        batch_count = 0
+
+        for (t_id, s_id), category in new_studio_requests:
+            name = generate_default_name(s_id, category)
+            layout = StudioLayout(studio_id=s_id, name=name)
+            theatre_name = theatre_names.get(t_id, t_id)
+            new_entries.append(f"{theatre_name}: {name} ({category})")
+
+            doc_ref = (
+                db.collection(THEATRES)
+                .document(t_id)
+                .collection("studios")
+                .document(s_id)
+            )
+            batch.set(doc_ref, layout.to_dict())
+            batch_count += 1
+
+            if batch_count >= 500:
+                await batch.commit()
+                batch = db.batch()
+                batch_count = 0
+
+        if batch_count > 0:
+            await batch.commit()
+
+        # Send notifications for new discoveries
+        notification_service = ResendNotificationService()
         subject = f"[CineRadar] {new_count} New Studios Discovered"
         body = "The following new studios were discovered during the daily scan:\n\n"
         body += "\n".join([f"- {entry}" for entry in new_entries])
         body += "\n\nPlease review and bootstrap layouts if needed."
-
         await notification_service.send_alert(subject, body)
+    else:
+        for (t_id, s_id), category in new_studio_requests:
+            name = generate_default_name(s_id, category)
+            theatre_name = theatre_names.get(t_id, t_id)
+            logger.info(
+                f"[DRY RUN] Would create [Theatre: {t_id}] Studio: {s_id} '{name}'"
+            )
 
     logger.info(f"Summary: {new_count} newly created, {existing_count} already existed.")
 
