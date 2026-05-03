@@ -167,7 +167,7 @@ async def populate_studios(
                 .collection("studios")
                 .document(s_id)
             )
-            batch.set(doc_ref, layout.to_dict())
+            batch.set(doc_ref, layout.to_dict(), merge=True)
             batch_count += 1
 
             if batch_count >= 500:
@@ -213,7 +213,7 @@ async def main() -> None:
         if studios:
             await populate_studios(db, studios, args.dry_run)
     finally:
-        await db.close()
+        db.close()
 
 
 if __name__ == "__main__":
