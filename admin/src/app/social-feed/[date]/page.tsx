@@ -231,6 +231,7 @@ export default function SocialFeedPage() {
     const [backfilling, setBackfilling] = useState(false);
     const [selectedHour, setSelectedHour] = useState<number | null>(null);
     const hourRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+    const sidebarButtonRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
     const feedContainerRef = useRef<HTMLDivElement>(null);
     const isScrollingTo = useRef<number | null>(null);
 
@@ -378,6 +379,18 @@ export default function SocialFeedPage() {
 
         return () => observer.disconnect();
     }, [hasData, posts.length]);
+
+    // ─── Sync sidebar scroll with selected hour ────────────
+    useEffect(() => {
+        if (selectedHour === null) return;
+        // Only auto-scroll sidebar when triggered by scroll spy (not by click)
+        if (isScrollingTo.current !== null) return;
+
+        const btn = sidebarButtonRefs.current.get(selectedHour);
+        if (btn) {
+            btn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }, [selectedHour]);
 
     // Backfill handler — consumes SSE stream
     const handleBackfill = useCallback(async () => {
@@ -716,14 +729,14 @@ export default function SocialFeedPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
                     {/* ZONE 1: AI Pulse — hourly analysis timeline */}
-                    <aside className="lg:col-span-2 space-y-4">
-                        <div className="sticky top-6 space-y-4">
-                            <div className="flex items-center gap-2">
+                    <aside className="lg:col-span-2">
+                        <div className="sticky top-4 h-[calc(100vh-2rem)] flex flex-col">
+                            <div className="flex items-center gap-2 mb-3 flex-shrink-0">
                                 <Sparkles className="w-3.5 h-3.5 text-primary" />
                                 <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">AI Pulse</h2>
                             </div>
 
-                            <div className="space-y-1.5 max-h-[calc(100vh-180px)] overflow-y-auto">
+                            <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 scrollbar-thin">
                                 {[...Array(24)].map((_, h) => {
                                     const hourPosts = hourGroups.get(h) || [];
                                     const analysis = analysisMap.get(h);
@@ -733,6 +746,10 @@ export default function SocialFeedPage() {
                                     return (
                                         <button
                                             key={h}
+                                            ref={(el) => {
+                                                if (el) sidebarButtonRefs.current.set(h, el);
+                                                else sidebarButtonRefs.current.delete(h);
+                                            }}
                                             onClick={() => {
                                                 if (isSelected) {
                                                     setSelectedHour(null);
