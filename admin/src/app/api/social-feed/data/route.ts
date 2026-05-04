@@ -15,6 +15,18 @@ function validateDate(searchParams: URLSearchParams): string | null {
     return date;
 }
 
+/** Convert a Jakarta date to UTC ISO string range for Firestore queries */
+function jakartaDayToUtcRange(date: string): { after: string; before: string } {
+    // Jakarta = UTC+7, so 2026-05-05 00:00+07:00 = 2026-05-04T17:00:00Z
+    // and 2026-05-05 23:59:59+07:00 = 2026-05-05T16:59:59Z
+    const start = new Date(`${date}T00:00:00+07:00`);
+    const end = new Date(`${date}T23:59:59+07:00`);
+    return {
+        after: start.toISOString(),   // "2026-05-04T17:00:00.000Z"
+        before: end.toISOString(),     // "2026-05-05T16:59:59.000Z"
+    };
+}
+
 // ─── GET ───────────────────────────────────────────────
 
 export async function GET(request: Request) {
@@ -27,8 +39,7 @@ export async function GET(request: Request) {
             );
         }
 
-        const publishedAfter = `${date}T00:00:00.000Z`;
-        const publishedBefore = `${date}T23:59:59.999Z`;
+        const { after: publishedAfter, before: publishedBefore } = jakartaDayToUtcRange(date);
 
         const [videos, analyses] = await Promise.all([
             firestoreRestClient.runQuery<FirestoreYouTubeVideo>({
@@ -102,8 +113,7 @@ export async function DELETE(request: Request) {
             );
         }
 
-        const publishedAfter = `${date}T00:00:00.000Z`;
-        const publishedBefore = `${date}T23:59:59.999Z`;
+        const { after: publishedAfter, before: publishedBefore } = jakartaDayToUtcRange(date);
 
         const [videosDeleted, analysesDeleted] = await Promise.all([
             firestoreRestClient.deleteByQuery({

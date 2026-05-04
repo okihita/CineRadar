@@ -127,8 +127,10 @@ export async function POST(request: Request) {
             );
         }
 
-        const publishedAfter = `${date}T00:00:00Z`;
-        const publishedBefore = `${date}T23:59:59Z`;
+        // Convert Jakarta date to UTC range for YouTube API
+        // Jakarta is UTC+7, so a Jakarta day starts at 17:00 UTC the previous day
+        const publishedAfter = `${date}T00:00:00+07:00`;
+        const publishedBefore = `${date}T23:59:59+07:00`;
         const totalChannels = YOUTUBE_CHANNELS.length;
 
         console.log(`[Backfill] Starting backfill for ${date}`);

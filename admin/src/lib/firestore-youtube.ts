@@ -65,11 +65,12 @@ export function formatHour(hour: number): string {
     return `${String(hour).padStart(2, '0')}:00`;
 }
 
-/** Group videos by hour of day (0-23) based on published_at */
+/** Group videos by hour of day (0-23) in Jakarta timezone */
 export function groupVideosByHour(videos: FirestoreYouTubeVideo[]): Map<number, FirestoreYouTubeVideo[]> {
     const groups = new Map<number, FirestoreYouTubeVideo[]>();
     for (const video of videos) {
-        const hour = new Date(video.published_at).getHours();
+        const jakartaTime = new Date(video.published_at).toLocaleString('en-US', { timeZone: 'Asia/Jakarta', hour: 'numeric', hour12: false });
+        const hour = parseInt(jakartaTime, 10);
         if (!groups.has(hour)) groups.set(hour, []);
         groups.get(hour)!.push(video);
     }
