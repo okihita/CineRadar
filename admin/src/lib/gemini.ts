@@ -84,7 +84,8 @@ export async function generateHourlySummary(
     }
 
     const client = getClient();
-    const model = client.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const modelName = 'gemini-3.1-flash-lite-preview';
+    const model = client.getGenerativeModel({ model: modelName });
 
     const videoList = videos
         .map(v => `- "${v.title}" by ${v.channel_title} [${v.content_type}] at ${v.published_at}`)
@@ -110,7 +111,7 @@ Write exactly 2-3 concise, factual sentences. No fluff. No generic filler.`;
             const text = result.response.text().trim();
             return {
                 summary: text || 'Summary generation returned empty.',
-                model: 'gemini-2.0-flash',
+                model: modelName,
                 retried,
             };
         } catch (error: unknown) {
@@ -136,7 +137,7 @@ Write exactly 2-3 concise, factual sentences. No fluff. No generic filler.`;
             console.error(`[Gemini Error] Attempt ${attempt + 1} failed:`, error instanceof Error ? error.message : error);
             return {
                 summary: `⚠️ AI summary unavailable — ${is429 ? 'Gemini rate limit reached after retries.' : (error instanceof Error ? error.message : 'Unknown error')}`,
-                model: 'gemini-2.0-flash',
+                model: modelName,
                 retried,
             };
         }
@@ -144,7 +145,7 @@ Write exactly 2-3 concise, factual sentences. No fluff. No generic filler.`;
 
     return {
         summary: '⚠️ AI summary unavailable after multiple retries.',
-        model: 'gemini-2.0-flash',
+        model: modelName,
         retried: true,
     };
 }
