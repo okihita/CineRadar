@@ -163,12 +163,13 @@ Brevity is critical. Every sentence must carry new information. No filler.`;
             };
         } catch (error: unknown) {
             const status = (error as { status?: number }).status;
-            const is429 = status === 429;
+            const isRetryable = status === 429 || status === 503 || status === 500;
 
-            if (is429 && attempt < MAX_RETRIES) {
-                const baseDelay = extractRetryDelay(error);
+            if (isRetryable && attempt < MAX_RETRIES) {
+                const baseDelay = status === 429 ? extractRetryDelay(error) : 10;
                 const delay = Math.ceil(baseDelay * Math.pow(1.5, attempt));
-                console.warn(`[Gemini 429] Retry ${attempt + 1}/${MAX_RETRIES} in ${delay}s`);
+                const reason = status === 429 ? 'Rate limit' : status === 503 ? 'Service unavailable' : 'Server error';
+                console.warn(`[Gemini ${status}] ${reason}. Retry ${attempt + 1}/${MAX_RETRIES} in ${delay}s`);
 
                 if (onRetry) {
                     onRetry({ attempt: attempt + 1, maxRetries: MAX_RETRIES, retryDelaySeconds: delay });
@@ -181,7 +182,7 @@ Brevity is critical. Every sentence must carry new information. No filler.`;
 
             console.error(`[Gemini Error] Attempt ${attempt + 1} failed:`, error instanceof Error ? error.message : error);
             return {
-                summary: `⚠️ AI summary unavailable — ${is429 ? 'Gemini rate limit reached after retries.' : (error instanceof Error ? error.message : 'Unknown error')}`,
+                summary: `⚠️ AI summary unavailable — ${isRetryable ? `Gemini ${status} after retries.` : (error instanceof Error ? error.message : 'Unknown error')}`,
                 model: modelName,
                 retried,
                 hashtags,

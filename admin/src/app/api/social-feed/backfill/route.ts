@@ -440,6 +440,7 @@ export async function POST(request: Request) {
                             hourFormatted: `${String(hour).padStart(2, '0')}:00`,
                             videoCount: postsInHour.length,
                             summary: summary.slice(0, 120) + (summary.length > 120 ? '...' : ''),
+                            fullSummary: summary,
                             hashtags: hashtags.slice(0, 10),
                             completedHours,
                             totalHours: 24,

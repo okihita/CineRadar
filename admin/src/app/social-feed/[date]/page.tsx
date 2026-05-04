@@ -252,6 +252,7 @@ export default function SocialFeedPage() {
         totalHours?: number;
         percent?: number;
         lastSummary?: string;
+        completedSummaries?: { hour: string; hourNum: number; postCount: number; summary: string; hashtags: string[] }[];
         done?: boolean;
         error?: string;
         videos_written?: number;
@@ -264,8 +265,8 @@ export default function SocialFeedPage() {
         };
     } | null>(null);
 
-    const updateProgress = (update: Partial<typeof progress> & { phase: string; message: string }) => {
-        setProgress(prev => prev ? { ...prev, ...update } : update);
+    const updateProgress = (update: Partial<NonNullable<typeof progress>> & { phase: string; message: string }) => {
+        setProgress(prev => prev ? { ...prev, ...update } : { completedSummaries: [], ...update } as NonNullable<typeof progress>);
     };
 
     // Reset progress when navigating to a different date
@@ -402,7 +403,7 @@ export default function SocialFeedPage() {
     // Backfill handler — consumes SSE stream
     const handleBackfill = useCallback(async () => {
         setBackfilling(true);
-        setProgress({ phase: 'starting', message: 'Connecting...' });
+        setProgress({ phase: 'starting', message: 'Connecting...', completedSummaries: [] });
 
         try {
             const res = await fetch('/api/social-feed/backfill', {
@@ -450,8 +451,18 @@ export default function SocialFeedPage() {
                                     completedHours: data.completedHours,
                                     totalHours: data.totalHours,
                                     percent: data.progress,
-                                    lastSummary: data.summary,
+                                    lastSummary: data.fullSummary || data.summary,
                                     retryInfo: undefined,
+                                    completedSummaries: [
+                                        ...(progress?.completedSummaries || []),
+                                        {
+                                            hour: data.hourFormatted,
+                                            hourNum: data.hour,
+                                            postCount: data.videoCount,
+                                            summary: data.fullSummary || data.summary,
+                                            hashtags: data.hashtags || [],
+                                        },
+                                    ],
                                 });
                             } else if (eventType === 'retry') {
                                 updateProgress({
@@ -747,11 +758,29 @@ export default function SocialFeedPage() {
                         </div>
                     )}
 
-                    {/* Last summary preview */}
-                    {progress.lastSummary && progress.phase === 'analyzing' && (
-                        <div className="p-3 bg-muted/20 rounded-xl border border-border/20">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50 mb-1">Latest AI Summary</p>
-                            <p className="text-xs text-muted-foreground leading-relaxed">{progress.lastSummary}</p>
+                    {/* Completed summaries — readable while waiting */}
+                    {(progress.completedSummaries ?? []).length > 0 && progress.phase === 'analyzing' && (
+                        <div className="space-y-2 max-h-[40vh] overflow-y-auto">
+                            <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50 sticky top-0 bg-background py-1">Summaries generated ({(progress.completedSummaries ?? []).length})</p>
+                            {(progress.completedSummaries ?? []).map((s, i) => (
+                                <div key={i} className="p-3 bg-muted/20 rounded-xl border border-border/20">
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <span className="text-xs font-mono font-bold tabular-nums text-primary">{s.hour}</span>
+                                        <span className="text-[10px] text-muted-foreground">{s.postCount} posts</span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{s.summary}</p>
+                                    {s.hashtags.length > 0 && (
+                                        <div className="flex flex-wrap gap-1 mt-1.5">
+                                            {s.hashtags.map((tag: string) => (
+                                                <span key={tag} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-primary/10 text-primary/70 rounded-full text-[8px] font-bold">
+                                                    <Hash className="w-2 h-2" />
+                                                    {tag.replace('#', '')}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
                         </div>
                     )}
 
