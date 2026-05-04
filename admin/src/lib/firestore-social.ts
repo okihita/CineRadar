@@ -36,6 +36,7 @@ export interface FirestoreSocialSource {
     url: string;                   // Link to account on platform
     active: boolean;               // false = paused/removed
     notes: string;                 // admin notes
+    sort_order: number;            // display order within category (0 = first)
 
     metadata: {
         subscriber_count?: number;

@@ -30,6 +30,7 @@ interface Source {
     frequency: string;
     added_at: string;
     last_fetched_at: string;
+    sort_order: number;
 }
 
 interface LookupResult {
@@ -203,28 +204,35 @@ function KanbanColumn({
     column,
     sources,
     dropTarget,
+    dropInsertIndex,
     onDragOver,
     onDragLeave,
     onDrop,
+    onCardDragOver,
+    onCardDragLeave,
     renderCard,
 }: {
     column: typeof COLUMNS[number];
     sources: Source[];
     dropTarget: string | null;
+    dropInsertIndex: number | null;
     onDragOver: (e: React.DragEvent, category: SourceCategory) => void;
     onDragLeave: () => void;
     onDrop: (e: React.DragEvent, category: SourceCategory) => void;
-    renderCard: (source: Source) => React.ReactNode;
+    onCardDragOver: (e: React.DragEvent, category: SourceCategory, index: number) => void;
+    onCardDragLeave: () => void;
+    renderCard: (source: Source, showInsertAbove: boolean) => React.ReactNode;
 }) {
     const activeInCol = sources.filter(s => s.active).length;
     const inactiveInCol = sources.length - activeInCol;
+    const isTarget = dropTarget === column.value;
 
     return (
         <div
             className={cn(
                 'flex flex-col rounded-xl min-w-[260px] transition-colors border border-border/30',
                 column.bg,
-                dropTarget === column.value && 'ring-2 ring-primary/30 bg-primary/[0.06]',
+                isTarget && 'ring-2 ring-primary/30 bg-primary/[0.06]',
             )}
             onDragOver={e => onDragOver(e, column.value)}
             onDragLeave={onDragLeave}
@@ -240,13 +248,31 @@ function KanbanColumn({
             </div>
 
             {/* Cards */}
-            <div className="flex-1 px-2 pb-2 space-y-1.5 overflow-y-auto min-h-[120px]">
+            <div className="flex-1 px-2 pb-2 overflow-y-auto min-h-[120px]">
                 {sources.length === 0 && (
                     <div className="flex items-center justify-center h-[120px] border border-dashed border-border/30 rounded-lg">
                         <p className="text-[10px] text-muted-foreground/30">Drop sources here</p>
                     </div>
                 )}
-                {sources.map(renderCard)}
+                {sources.map((source, i) => {
+                    const showInsertAbove = isTarget && dropInsertIndex === i;
+                    return (
+                        <div
+                            key={source.id}
+                            onDragOver={e => onCardDragOver(e, column.value, i)}
+                            onDragLeave={onCardDragLeave}
+                        >
+                            {showInsertAbove && (
+                                <div className="h-0.5 bg-primary rounded-full my-1 mx-1" />
+                            )}
+                            {renderCard(source, false)}
+                        </div>
+                    );
+                })}
+                {/* Insert at end */}
+                {isTarget && dropInsertIndex === sources.length && sources.length > 0 && (
+                    <div className="h-0.5 bg-primary rounded-full my-1 mx-1" />
+                )}
             </div>
         </div>
     );
@@ -275,6 +301,7 @@ export default function SourceSettingsPage() {
 
     // Drag state
     const [dropTarget, setDropTarget] = useState<string | null>(null);
+    const [dropInsertIndex, setDropInsertIndex] = useState<number | null>(null);
     const dragCounterRef = useRef(0);
 
     // Add source state
@@ -416,20 +443,67 @@ export default function SourceSettingsPage() {
         dragCounterRef.current++;
     }, []);
 
+    const handleCardDragOver = useCallback((e: React.DragEvent, category: SourceCategory, index: number) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDropTarget(category);
+        setDropInsertIndex(index);
+    }, []);
+
+    const handleCardDragLeave = useCallback(() => {
+        setDropInsertIndex(null);
+    }, []);
+
     const handleDrop = useCallback(async (e: React.DragEvent, newCategory: SourceCategory) => {
         e.preventDefault();
         dragCounterRef.current = 0;
         setDropTarget(null);
+        setDropInsertIndex(null);
 
         const sourceId = e.dataTransfer.getData('text/plain');
         if (!sourceId) return;
 
-        // Find the source and check if category actually changed
         const source = sources.find(s => s.id === sourceId);
-        if (!source || source.category === newCategory) return;
+        if (!source) return;
 
-        await updateCategory(sourceId, newCategory);
-    }, [sources, updateCategory]);
+        const sameCategory = source.category === newCategory;
+
+        // Build the current target column list (sorted by sort_order) from sources directly
+        const colSources = sources
+            .filter(s => s.category === newCategory)
+            .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+
+        const insertIdx = dropInsertIndex ?? colSources.length;
+
+        // Build the new order for the target column
+        let targetList = colSources.filter(s => s.id !== sourceId);
+        if (sameCategory) {
+            // Reorder within same column
+            targetList.splice(insertIdx, 0, source);
+        } else {
+            // Move to different column
+            targetList.splice(Math.min(insertIdx, targetList.length), 0, source);
+        }
+
+        // Batch update sort_order for all cards in the column
+        const updates = targetList.map((s, i) => ({ id: s.id, sort_order: i }));
+
+        // Update category + sort_order for the moved source, and sort_order for the rest
+        await Promise.all([
+            // Update category if changed
+            ...(!sameCategory ? [updateCategory(sourceId, newCategory)] : []),
+            // Update sort_order for all cards in column
+            ...updates.map(u =>
+                fetch('/api/social-feed/sources', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: u.id, sort_order: u.sort_order }),
+                })
+            ),
+        ]);
+
+        mutate();
+    }, [sources, dropInsertIndex, updateCategory, mutate]);
 
     // ── Filter & group ──
     const filtered = sources.filter(s =>
@@ -440,13 +514,13 @@ export default function SourceSettingsPage() {
     );
 
     const grouped = Object.fromEntries(
-        COLUMNS.map(c => [c.value, filtered.filter(s => s.category === c.value)])
+        COLUMNS.map(c => [c.value, filtered.filter(s => s.category === c.value).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))])
     ) as Record<SourceCategory, Source[]>;
 
     const activeCount = sources.filter(s => s.active).length;
 
     // ── Card renderer ──
-    const renderCard = useCallback((source: Source) => (
+    const renderCard = useCallback((source: Source, _showInsertAbove: boolean) => (
         <SourceCard
             key={source.id}
             source={source}
@@ -513,9 +587,12 @@ export default function SourceSettingsPage() {
                                 column={column}
                                 sources={grouped[column.value]}
                                 dropTarget={dropTarget}
+                                dropInsertIndex={dropInsertIndex}
                                 onDragOver={handleDragOver}
                                 onDragLeave={handleDragLeave}
                                 onDrop={handleDrop}
+                                onCardDragOver={handleCardDragOver}
+                                onCardDragLeave={handleCardDragLeave}
                                 renderCard={renderCard}
                             />
                         ))}

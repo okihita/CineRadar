@@ -43,6 +43,7 @@ export async function GET() {
                     url: s.url,
                     active: s.active,
                     notes: s.notes,
+                    sort_order: s.sort_order ?? 0,
                     subscriber_count: s.metadata?.subscriber_count || 0,
                     frequency: s.fetch_config?.frequency || 'daily',
                     added_at: s.added_at,
@@ -136,7 +137,7 @@ export async function PATCH(request: NextRequest) {
         }
 
         // Whitelist updatable fields
-        const allowedFields = ['display_name', 'handle', 'category', 'active', 'notes', 'avatar_url', 'url', 'verified'];
+        const allowedFields = ['display_name', 'handle', 'category', 'active', 'notes', 'avatar_url', 'url', 'verified', 'sort_order'];
         const filteredUpdates: Record<string, unknown> = {};
         for (const key of allowedFields) {
             if (key in updates) {

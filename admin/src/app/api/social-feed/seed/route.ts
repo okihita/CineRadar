@@ -102,9 +102,14 @@ export async function POST(request: Request) {
         let written = 0;
         let skipped = 0;
 
+        // Track per-category sort_order
+        const categoryCounters = new Map<string, number>();
+
         for (const seed of CHANNEL_SEEDS) {
             const stats = statsMap.get(seed.channel_id);
             const docId = `youtube_${seed.channel_id}`;
+            const catIdx = categoryCounters.get(seed.category) || 0;
+            categoryCounters.set(seed.category, catIdx + 1);
 
             const doc: Omit<FirestoreSocialSource, 'id'> = {
                 platform: 'youtube',
@@ -116,6 +121,7 @@ export async function POST(request: Request) {
                 url: `https://youtube.com/${seed.handle}`,
                 active: seed.active,
                 notes: seed.notes,
+                sort_order: catIdx,
                 metadata: {
                     subscriber_count: stats?.subscriberCount || 0,
                 },
