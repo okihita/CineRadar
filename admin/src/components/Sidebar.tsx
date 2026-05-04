@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { MapPin, Film, ChevronLeft, ChevronRight, Database, Calendar, Clapperboard, Sun, Moon, Monitor, BarChart2, LogOut, Users as UsersIcon } from 'lucide-react';
+import { MapPin, ChevronLeft, ChevronRight, Database, Calendar, Clapperboard, Sun, Moon, Monitor, BarChart2, LogOut, Users as UsersIcon, Share2, ArrowRightLeft, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
@@ -14,7 +14,21 @@ const menuItems = [
     title: 'Head-to-Head Compare',
     description: 'Movie performance comparison',
     href: '/compare',
-    icon: BarChart2,
+    icon: ArrowRightLeft,
+    adminOnly: false,
+  },
+  {
+    title: 'Social Pulse',
+    description: 'Sentiment & Buzz tracking',
+    href: '/social-pulse',
+    icon: Share2,
+    adminOnly: false,
+  },
+  {
+    title: 'Performance',
+    description: 'Box office tracking',
+    href: '/performances',
+    icon: TrendingUp,
     adminOnly: false,
   },
   {
@@ -25,14 +39,8 @@ const menuItems = [
     adminOnly: false,
   },
   {
-    title: 'Performance',
-    description: 'Box office tracking',
-    href: '/performances',
-    icon: Film,
-    adminOnly: false,
-  },
-  {
-    title: 'Movie Database',
+    title: 'Movie Registry',
+
     description: 'All movies & details',
     href: '/movies',
     icon: Clapperboard,
