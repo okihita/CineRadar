@@ -304,6 +304,13 @@ export default function SocialFeedPage() {
         fetcher,
     );
 
+    // Fetch sources list (for backfill panel when no data)
+    const { data: sourcesData } = useSWR<{ success: boolean; data: { sources: { id: string; display_name: string; category: string; avatar_url: string; handle: string; active: boolean }[] } }>(
+        '/api/social-feed/sources',
+        fetcher,
+    );
+    const activeSources = (sourcesData?.data?.sources || []).filter(s => s.active);
+
     const data = responseData?.data;
     // Support both new "posts" key and backward-compat "videos" key
     const posts = data?.posts || data?.videos || [];
@@ -586,32 +593,61 @@ export default function SocialFeedPage() {
                 </div>
             </div>
 
-            {/* ─── Backfill Bar (shown when no data) ──────────── */}
+            {/* ─── Backfill Panel (shown when no data) ──────────── */}
             {!hasData && !isLoading && !backfilling && !progress?.done && (
-                <div className="p-5 bg-amber-500/5 border border-amber-500/20 rounded-2xl space-y-3">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-amber-500/10 rounded-xl text-amber-500">
-                            <Download className="w-5 h-5" />
+                <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl overflow-hidden">
+                    {/* Header */}
+                    <div className="p-5 pb-4 space-y-3">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-amber-500/10 rounded-xl text-amber-500">
+                                <Download className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold">No data for {formatDate(selectedDate)}</p>
+                                <p className="text-xs text-muted-foreground">
+                                    Backfill will fetch YouTube uploads from <span className="text-foreground font-semibold">{activeSources.length}</span> monitored accounts and generate per-hour AI analysis.
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-sm font-bold">No data for {formatDate(selectedDate)}</p>
-                            <p className="text-xs text-muted-foreground">
-                                Fetch YouTube uploads from <span className="text-foreground font-semibold">{derivedAccounts.length > 0 ? derivedAccounts.length : '18'}</span> monitored accounts, then generate per-hour AI analysis with Gemini.
-                            </p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <div className="flex-1 flex items-center gap-4 text-[10px] text-muted-foreground">
-                            <span className="flex items-center gap-1"><YouTubeIcon className="w-3 h-3 text-red-500" /> YouTube activities.list + videos.list</span>
+                        <div className="flex items-center gap-4 text-[10px] text-muted-foreground">
+                            <span className="flex items-center gap-1"><YouTubeIcon className="w-3 h-3 text-red-500" /> activities.list + videos.list</span>
                             <span>•</span>
                             <span className="flex items-center gap-1"><Sparkles className="w-3 h-3 text-primary" /> Gemini hourly summaries</span>
                             <span>•</span>
                             <span>~90-140 API quota units</span>
                         </div>
+                    </div>
+
+                    {/* Source list */}
+                    <div className="border-t border-amber-500/10 px-5 py-4">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-3">Accounts to scrape</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
+                            {activeSources.map(source => (
+                                <div key={source.id} className="flex items-center gap-2 px-2.5 py-2 bg-background/40 rounded-lg border border-border/10">
+                                    <div className="w-7 h-7 rounded-full overflow-hidden bg-muted flex-shrink-0">
+                                        {source.avatar_url ? (
+                                            <img src={source.avatar_url} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center">
+                                                <YouTubeIcon className="w-3 h-3 text-red-500" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-[10px] font-bold truncate">{source.display_name}</p>
+                                        <p className="text-[8px] text-muted-foreground/60 truncate">{source.category.replace('_', ' ')}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Action button — at the bottom */}
+                    <div className="border-t border-amber-500/10 p-5 pt-4">
                         <Button
                             onClick={handleBackfill}
                             disabled={backfilling}
-                            className="bg-amber-500 hover:bg-amber-600 text-white flex-shrink-0"
+                            className="bg-amber-500 hover:bg-amber-600 text-white w-full sm:w-auto"
                         >
                             <><Download className="w-4 h-4 mr-2" />Backfill {formatDate(selectedDate)}</>
                         </Button>
