@@ -45,7 +45,10 @@ export default function PerformancePage() {
     const { data, isLoading, error } = useSWR(
         `/api/performance?date=${selectedDate}`, 
         fetcher,
-        { refreshInterval: 60000 } // Live monitoring refresh every 60s
+        { 
+            refreshInterval: 60000, // Live monitoring refresh every 60s
+            keepPreviousData: true  // Show cached data while revalidating — eliminates flicker on date switch & refresh
+        }
     );
     
     const result = data as ApiResponse<{ movies: MovieWithStats[]; diagnostic: DiagnosticData }> | undefined;
