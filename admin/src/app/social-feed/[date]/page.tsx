@@ -230,6 +230,8 @@ export default function SocialFeedPage() {
     const selectedDate = (params.date as string) || today;
     const [backfilling, setBackfilling] = useState(false);
     const [selectedHour, setSelectedHour] = useState<number | null>(null);
+    const hourRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+    const feedContainerRef = useRef<HTMLDivElement>(null);
 
     // Navigate to a new date (updates URL)
     const setSelectedDate = useCallback((date: string) => {
@@ -469,7 +471,7 @@ export default function SocialFeedPage() {
     }, [posts]);
 
     return (
-        <div className="min-h-screen bg-background text-foreground p-6 max-w-[1600px] mx-auto space-y-6 animate-in fade-in duration-700">
+        <div className="min-h-screen bg-background text-foreground p-6 space-y-6 animate-in fade-in duration-700">
             {/* ─── Header + Date Navigation ─────────────────── */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -539,19 +541,34 @@ export default function SocialFeedPage() {
 
             {/* ─── Backfill Bar (shown when no data) ──────────── */}
             {!hasData && !isLoading && !backfilling && !progress?.done && (
-                <div className="flex items-center gap-4 p-4 bg-amber-500/5 border border-amber-500/20 rounded-2xl">
-                    <Download className="w-5 h-5 text-amber-500 flex-shrink-0" />
-                    <div className="flex-1">
-                        <p className="text-sm font-bold">No data for {formatDate(selectedDate)}</p>
-                        <p className="text-xs text-muted-foreground">Click backfill to fetch social media posts and generate AI analysis for this date.</p>
+                <div className="p-5 bg-amber-500/5 border border-amber-500/20 rounded-2xl space-y-3">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-amber-500/10 rounded-xl text-amber-500">
+                            <Download className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-bold">No data for {formatDate(selectedDate)}</p>
+                            <p className="text-xs text-muted-foreground">
+                                Fetch YouTube uploads from <span className="text-foreground font-semibold">{derivedAccounts.length > 0 ? derivedAccounts.length : '18'}</span> monitored accounts, then generate per-hour AI analysis with Gemini.
+                            </p>
+                        </div>
                     </div>
-                    <Button
-                        onClick={handleBackfill}
-                        disabled={backfilling}
-                        className="bg-amber-500 hover:bg-amber-600 text-white"
-                    >
-                        <><Download className="w-4 h-4 mr-2" />Backfill {formatDate(selectedDate)}</>
-                    </Button>
+                    <div className="flex items-center gap-3">
+                        <div className="flex-1 flex items-center gap-4 text-[10px] text-muted-foreground">
+                            <span className="flex items-center gap-1"><YouTubeIcon className="w-3 h-3 text-red-500" /> YouTube activities.list + videos.list</span>
+                            <span>•</span>
+                            <span className="flex items-center gap-1"><Sparkles className="w-3 h-3 text-primary" /> Gemini hourly summaries</span>
+                            <span>•</span>
+                            <span>~90-140 API quota units</span>
+                        </div>
+                        <Button
+                            onClick={handleBackfill}
+                            disabled={backfilling}
+                            className="bg-amber-500 hover:bg-amber-600 text-white flex-shrink-0"
+                        >
+                            <><Download className="w-4 h-4 mr-2" />Backfill {formatDate(selectedDate)}</>
+                        </Button>
+                    </div>
                 </div>
             )}
 
@@ -682,7 +699,15 @@ export default function SocialFeedPage() {
                                     return (
                                         <button
                                             key={h}
-                                            onClick={() => setSelectedHour(isSelected ? null : h)}
+                                            onClick={() => {
+                                                setSelectedHour(isSelected ? null : h);
+                                                if (!isSelected) {
+                                                    const el = hourRefs.current.get(h);
+                                                    if (el) {
+                                                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                    }
+                                                }
+                                            }}
                                             className={cn(
                                                 "w-full text-left p-2.5 rounded-xl transition-all duration-200",
                                                 isSelected
@@ -713,8 +738,8 @@ export default function SocialFeedPage() {
                         </div>
                     </aside>
 
-                    {/* ZONE 2: Visual Feed — hour-grouped */}
-                    <main className="lg:col-span-7 space-y-6">
+                    {/* ZONE 2: Visual Feed — hour-grouped, always visible */}
+                    <main className="lg:col-span-7 space-y-6" ref={feedContainerRef}>
                         {/* Content type summary bar */}
                         <div className="flex items-center gap-2 flex-wrap">
                             {(Object.entries(contentTypeCounts) as [ContentType, number][]).filter(([, count]) => count > 0).map(([type, count]) => {
@@ -729,28 +754,37 @@ export default function SocialFeedPage() {
                             })}
                         </div>
 
-                        {/* Hour sections — descending from 23 to 0 */}
+                        {/* Hour sections — descending from 23 to 0, always all visible */}
                         {[...Array(24)].map((_, h) => {
                             const hourIdx = 23 - h;
-                            const hourPosts = selectedHour !== null
-                                ? (hourGroups.get(selectedHour) || [])
-                                : (hourGroups.get(hourIdx) || []);
+                            const hourPosts = hourGroups.get(hourIdx) || [];
 
-                            if (selectedHour !== null && hourIdx !== selectedHour) return null;
-                            if (selectedHour === null && hourPosts.length === 0) return null;
+                            // Always skip empty hours (no filter by selectedHour)
+                            if (hourPosts.length === 0) return null;
 
-                            const analysis = analysisMap.get(selectedHour ?? hourIdx);
+                            const analysis = analysisMap.get(hourIdx);
                             const postCount = analysis?.total_posts || analysis?.video_count || hourPosts.length;
+                            const isSelected = selectedHour === hourIdx;
 
                             return (
-                                <div key={hourIdx}>
+                                <div
+                                    key={hourIdx}
+                                    ref={(el) => {
+                                        if (el) hourRefs.current.set(hourIdx, el);
+                                        else hourRefs.current.delete(hourIdx);
+                                    }}
+                                    className={cn(
+                                        "scroll-mt-6 rounded-2xl transition-all duration-300",
+                                        isSelected && "ring-2 ring-primary/20 bg-primary/[0.02]",
+                                    )}
+                                >
                                     {/* Hour header */}
-                                    <div className="flex items-center gap-3 mb-3">
+                                    <div className="flex items-center gap-3 mb-3 px-3 pt-3">
                                         <span className={cn(
                                             "text-sm font-mono font-black tabular-nums",
-                                            selectedHour === hourIdx ? "text-primary" : "text-muted-foreground",
+                                            isSelected ? "text-primary" : "text-muted-foreground",
                                         )}>
-                                            {formatHour(selectedHour ?? hourIdx)}
+                                            {formatHour(hourIdx)}
                                         </span>
                                         <div className="flex-1 h-px bg-border/30" />
                                         <span className="text-[10px] text-muted-foreground/50 font-mono">{postCount} posts</span>
@@ -758,7 +792,7 @@ export default function SocialFeedPage() {
 
                                     {/* Full analysis for this hour */}
                                     {analysis && postCount > 0 && (
-                                        <div className="mb-3 p-3 bg-primary/5 rounded-xl border border-primary/10">
+                                        <div className="mb-3 mx-3 p-3 bg-primary/5 rounded-xl border border-primary/10">
                                             <div className="flex items-center gap-1.5 mb-1.5">
                                                 <Sparkles className="w-3 h-3 text-primary" />
                                                 <span className="text-[9px] font-black uppercase tracking-widest text-primary/60">AI Summary</span>
@@ -779,7 +813,7 @@ export default function SocialFeedPage() {
                                     )}
 
                                     {/* Post grid */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 px-3 pb-3">
                                         {hourPosts.map(post => (
                                             <PostCard key={post.id} post={post} />
                                         ))}
@@ -787,13 +821,6 @@ export default function SocialFeedPage() {
                                 </div>
                             );
                         })}
-
-                        {/* Empty state when hour selected but no posts */}
-                        {selectedHour !== null && (hourGroups.get(selectedHour) || []).length === 0 && (
-                            <div className="py-12 text-center border border-dashed rounded-3xl border-border/40">
-                                <p className="text-muted-foreground font-bold uppercase tracking-widest text-sm">No posts at {formatHour(selectedHour)}</p>
-                            </div>
-                        )}
                     </main>
 
                     {/* ZONE 3: Account Directory */}
