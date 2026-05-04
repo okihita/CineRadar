@@ -119,7 +119,8 @@ export async function generateHourlySummary(
     const model = client.getGenerativeModel({ model: modelName });
 
     const postCount = posts.length;
-    const paragraphCount = Math.max(1, Math.floor(postCount / 4));
+    // 3 sentences for 1-4 items, +1 sentence for every additional 2 items
+    const sentenceCount = postCount <= 4 ? 3 : 3 + Math.ceil((postCount - 4) / 2);
 
     const postList = posts
         .map(p => {
@@ -137,8 +138,7 @@ export async function generateHourlySummary(
 Activity from monitored accounts:
 ${postList}
 
-There are ${postCount} items. Write exactly ${paragraphCount} paragraph${paragraphCount > 1 ? 's' : ''} of analysis.
-Do NOT mention the hour or time range.
+There are ${postCount} items. Write exactly ${sentenceCount} sentences. Not a paragraph — separate sentences. Do NOT mention the hour or time range.
 
 Focus on:
 1. Key releases (trailers, teasers, new announcements)
@@ -146,7 +146,8 @@ Focus on:
 3. Cross-platform trends
 4. Notable patterns (e.g., same movie trending across multiple sources)
 
-Be factual and specific. Mention movie titles, studio names, and people.`;
+Be factual and specific. Mention movie titles, studio names, and people.
+Brevity is critical. Every sentence must carry new information. No filler.`;
 
     let retried = false;
 

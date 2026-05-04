@@ -232,6 +232,7 @@ export default function SocialFeedPage() {
     const [selectedHour, setSelectedHour] = useState<number | null>(null);
     const hourRefs = useRef<Map<number, HTMLDivElement>>(new Map());
     const feedContainerRef = useRef<HTMLDivElement>(null);
+    const isScrollingTo = useRef<number | null>(null);
 
     // Navigate to a new date (updates URL)
     const setSelectedDate = useCallback((date: string) => {
@@ -344,6 +345,39 @@ export default function SocialFeedPage() {
         }
         return [...seen.values()];
     }, [posts]);
+
+    // ─── Scroll spy: sync sidebar highlight with feed scroll position ───
+    useEffect(() => {
+        if (!hasData || posts.length === 0) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                // Don't update during programmatic scroll from sidebar click
+                if (isScrollingTo.current !== null) return;
+
+                // Find the topmost visible hour section
+                const visible = entries
+                    .filter(e => e.isIntersecting)
+                    .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+
+                if (visible.length > 0) {
+                    const el = visible[0].target;
+                    const hour = [...hourRefs.current.entries()].find(([, v]) => v === el)?.[0];
+                    if (hour !== undefined) {
+                        setSelectedHour(prev => prev !== hour ? hour : prev);
+                    }
+                }
+            },
+            { rootMargin: '-80px 0px -60% 0px', threshold: 0 }
+        );
+
+        // Observe all hour sections
+        for (const [, el] of hourRefs.current) {
+            observer.observe(el);
+        }
+
+        return () => observer.disconnect();
+    }, [hasData, posts.length]);
 
     // Backfill handler — consumes SSE stream
     const handleBackfill = useCallback(async () => {
@@ -700,12 +734,17 @@ export default function SocialFeedPage() {
                                         <button
                                             key={h}
                                             onClick={() => {
-                                                setSelectedHour(isSelected ? null : h);
-                                                if (!isSelected) {
+                                                if (isSelected) {
+                                                    setSelectedHour(null);
+                                                } else {
+                                                    setSelectedHour(h);
+                                                    isScrollingTo.current = h;
                                                     const el = hourRefs.current.get(h);
                                                     if (el) {
                                                         el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                                     }
+                                                    // Clear guard after scroll animation finishes
+                                                    setTimeout(() => { isScrollingTo.current = null; }, 800);
                                                 }
                                             }}
                                             className={cn(
@@ -754,12 +793,12 @@ export default function SocialFeedPage() {
                             })}
                         </div>
 
-                        {/* Hour sections — descending from 23 to 0, always all visible */}
+                        {/* Hour sections — ascending from 0 (morning) to 23 (night) */}
                         {[...Array(24)].map((_, h) => {
-                            const hourIdx = 23 - h;
+                            const hourIdx = h;
                             const hourPosts = hourGroups.get(hourIdx) || [];
 
-                            // Always skip empty hours (no filter by selectedHour)
+                            // Always skip empty hours
                             if (hourPosts.length === 0) return null;
 
                             const analysis = analysisMap.get(hourIdx);
