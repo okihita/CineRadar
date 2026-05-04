@@ -349,7 +349,7 @@ export default function SourceSettingsPage() {
         setLookupError('');
         setLookupResult(null);
         try {
-            const res = await fetch(`/api/social-feed/sources/lookup?channel_id=${encodeURIComponent(lookupId.trim())}`);
+            const res = await fetch(`/api/social-feed/sources/lookup?q=${encodeURIComponent(lookupId.trim())}`);
             const data = await res.json();
             if (data.success) {
                 setLookupResult(data.data);
@@ -534,12 +534,12 @@ export default function SourceSettingsPage() {
 
                         {/* Step 1: Lookup */}
                         <div className="space-y-3">
-                            <label className="text-xs font-medium text-muted-foreground">YouTube Channel ID</label>
+                            <label className="text-xs font-medium text-muted-foreground">YouTube Channel</label>
                             <div className="flex gap-2">
                                 <Input
                                     value={lookupId}
                                     onChange={e => { setLookupId(e.target.value); setLookupResult(null); setLookupError(''); }}
-                                    placeholder="UCQExjzw5-z1VE2Fcbd3ky9Q"
+                                    placeholder="Channel ID, @handle, or youtube.com URL"
                                     className="font-mono text-sm"
                                     onKeyDown={e => { if (e.key === 'Enter') lookupChannel(); }}
                                 />
