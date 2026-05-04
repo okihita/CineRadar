@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { MapPin, ChevronLeft, ChevronRight, Database, Calendar, Clapperboard, Sun, Moon, Monitor, BarChart2, LogOut, Users as UsersIcon, Share2, ArrowRightLeft, TrendingUp } from 'lucide-react';
+import { MapPin, ChevronLeft, ChevronRight, Database, Calendar, Clapperboard, Sun, Moon, Monitor, BarChart2, LogOut, Users as UsersIcon, Share2, ArrowRightLeft, TrendingUp, Rss } from 'lucide-react';
 import { useState } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
@@ -22,6 +22,13 @@ const menuItems = [
     description: 'Sentiment & Buzz tracking',
     href: '/social-pulse',
     icon: Share2,
+    adminOnly: false,
+  },
+  {
+    title: 'Industry Feed',
+    description: 'Curated social timeline',
+    href: '/social-feed',
+    icon: Rss,
     adminOnly: false,
   },
   {
