@@ -1,6 +1,6 @@
 /**
  * Google Gemini AI client for hourly analysis generation.
- * Uses @google/generative-ai SDK with gemini-2.0-flash model.
+ * Uses @google/generative-ai SDK with retry + graceful degradation.
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -26,16 +26,36 @@ export interface VideoForAnalysis {
     published_at: string;
 }
 
+/** Parse retry delay from Gemini 429 error (defaults to 8s) */
+function parseRetryDelay(error: unknown): number {
+    try {
+        const details = (error as { errorDetails?: Array<{ '@type': string; retryDelay?: string }> }).errorDetails;
+        const retryInfo = details?.find(d => d['@type']?.includes('RetryInfo'));
+        if (retryInfo?.retryDelay) {
+            const match = retryInfo.retryDelay.match(/(\d+)s/);
+            if (match) return parseInt(match[1]) + 1; // +1s buffer
+        }
+    } catch { /* ignore */ }
+    return 8;
+}
+
+const MAX_RETRIES = 4;
+
 /**
  * Generate a concise hourly summary of YouTube activity.
+ * Retries on 429 with exponential backoff + parsed retryDelay.
  */
 export async function generateHourlySummary(
     videos: VideoForAnalysis[],
     hour: number,
     date: string,
-): Promise<string> {
+): Promise<{ summary: string; model: string; retried: boolean }> {
     if (videos.length === 0) {
-        return 'No YouTube activity from monitored accounts this hour.';
+        return {
+            summary: 'No YouTube activity from monitored accounts this hour.',
+            model: 'none',
+            retried: false,
+        };
     }
 
     const client = getClient();
@@ -57,12 +77,44 @@ ${videoList}
 
 Write exactly 2-3 concise, factual sentences. No fluff. No generic filler.`;
 
-    try {
-        const result = await model.generateContent(prompt);
-        const text = result.response.text().trim();
-        return text || 'Summary generation returned empty.';
-    } catch (error) {
-        console.error('[Gemini Error]', error);
-        return `Failed to generate summary: ${error instanceof Error ? error.message : 'Unknown error'}`;
+    let retried = false;
+
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        try {
+            const result = await model.generateContent(prompt);
+            const text = result.response.text().trim();
+            return {
+                summary: text || 'Summary generation returned empty.',
+                model: 'gemini-2.0-flash',
+                retried,
+            };
+        } catch (error: unknown) {
+            const status = (error as { status?: number }).status;
+            const is429 = status === 429;
+
+            if (is429 && attempt < MAX_RETRIES) {
+                const baseDelay = parseRetryDelay(error);
+                const delay = baseDelay * Math.pow(1.5, attempt); // Exponential backoff
+                console.warn(`[Gemini 429] Retry ${attempt + 1}/${MAX_RETRIES} in ${Math.round(delay)}s`);
+                retried = true;
+                await new Promise(r => setTimeout(r, delay * 1000));
+                continue;
+            }
+
+            // Non-429 error or exhausted retries
+            console.error(`[Gemini Error] Attempt ${attempt + 1} failed:`, error instanceof Error ? error.message : error);
+            return {
+                summary: `⚠️ AI summary unavailable — ${is429 ? 'Gemini rate limit reached. Retry this hour later.' : (error instanceof Error ? error.message : 'Unknown error')}`,
+                model: 'gemini-2.0-flash',
+                retried,
+            };
+        }
     }
+
+    // Should never reach here, but just in case
+    return {
+        summary: '⚠️ AI summary unavailable after multiple retries.',
+        model: 'gemini-2.0-flash',
+        retried: true,
+    };
 }

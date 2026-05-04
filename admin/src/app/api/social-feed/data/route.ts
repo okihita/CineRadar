@@ -65,7 +65,6 @@ export async function GET(request: Request) {
                         value: { stringValue: date },
                     },
                 },
-                orderBy: [{ field: { fieldPath: 'hour' }, direction: 'ASCENDING' }],
             }),
         ]);
 

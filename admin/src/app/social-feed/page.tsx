@@ -196,8 +196,29 @@ export default function SocialFeedPage() {
     const today = useMemo(() => new Date().toISOString().split('T')[0], []);
     const [selectedDate, setSelectedDate] = useState(today);
     const [backfilling, setBackfilling] = useState(false);
-    const [backfillResult, setBackfillResult] = useState<{ videos: number; analyses: number } | null>(null);
     const [selectedHour, setSelectedHour] = useState<number | null>(null);
+
+    // SSE progress state
+    const [progress, setProgress] = useState<{
+        phase: string;
+        message: string;
+        channel?: string;
+        channelIndex?: number;
+        totalChannels?: number;
+        totalVideos?: number;
+        completedHours?: number;
+        totalHours?: number;
+        percent?: number;
+        lastSummary?: string;
+        done?: boolean;
+        error?: string;
+        videos_written?: number;
+        analyses_written?: number;
+    } | null>(null);
+
+    const updateProgress = (update: Partial<typeof progress> & { phase: string; message: string }) => {
+        setProgress(prev => prev ? { ...prev, ...update } : update);
+    };
 
     // Fetch persisted data for selected date
     const { data: responseData, isLoading, mutate } = useSWR<DataResponse>(
@@ -213,12 +234,10 @@ export default function SocialFeedPage() {
     // Group videos by hour
     const hourGroups = useMemo(() => groupVideosByHour(videos), [videos]);
 
-    // Build analysis map for quick lookup
+    // Build analysis map for quick lookup (sorted by hour ascending)
     const analysisMap = useMemo(() => {
         const map = new Map<number, FirestoreHourlyAnalysis>();
-        for (const a of analyses) {
-            map.set(a.hour, a);
-        }
+        [...analyses].sort((a, b) => a.hour - b.hour).forEach(a => map.set(a.hour, a));
         return map;
     }, [analyses]);
 
@@ -251,28 +270,80 @@ export default function SocialFeedPage() {
         return account && v.channel_title === account.display_name;
     }).length;
 
-    // Backfill handler
+    // Backfill handler — consumes SSE stream
     const handleBackfill = useCallback(async () => {
         setBackfilling(true);
-        setBackfillResult(null);
+        setProgress({ phase: 'starting', message: 'Connecting...' });
+
         try {
             const res = await fetch('/api/social-feed/backfill', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ date: selectedDate }),
             });
-            const result = await res.json();
-            if (result.success) {
-                setBackfillResult({
-                    videos: result.data.videos_written,
-                    analyses: result.data.analyses_written,
-                });
-                mutate(); // Refresh data
-            } else {
-                console.error('Backfill failed:', result.error);
+
+            if (!res.ok || !res.body) {
+                setProgress({ phase: 'error', message: `Request failed: ${res.status}`, error: 'Request failed' });
+                return;
+            }
+
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+
+                // Parse SSE events
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || ''; // Keep incomplete last line
+
+                let eventType = '';
+                for (const line of lines) {
+                    if (line.startsWith('event: ')) {
+                        eventType = line.slice(7);
+                    } else if (line.startsWith('data: ') && eventType) {
+                        try {
+                            const data = JSON.parse(line.slice(6));
+
+                            if (eventType === 'phase') {
+                                updateProgress({ phase: data.phase, message: data.message, totalVideos: data.totalVideos });
+                            } else if (eventType === 'progress') {
+                                updateProgress({ phase: 'fetching', message: data.message, channel: data.channel, channelIndex: data.channelIndex, totalChannels: data.totalChannels });
+                            } else if (eventType === 'channel_done') {
+                                updateProgress({ phase: 'fetching', message: progress?.message || 'Fetching...', totalVideos: data.totalVideosSoFar });
+                            } else if (eventType === 'hour_done') {
+                                updateProgress({
+                                    phase: 'analyzing',
+                                    message: `Analyzing hour ${data.hourFormatted}...`,
+                                    completedHours: data.completedHours,
+                                    totalHours: data.totalHours,
+                                    percent: data.progress,
+                                    lastSummary: data.summary,
+                                });
+                            } else if (eventType === 'done') {
+                                updateProgress({
+                                    phase: 'done',
+                                    message: 'Complete!',
+                                    done: true,
+                                    videos_written: data.videos_written,
+                                    analyses_written: data.analyses_written,
+                                    percent: 100,
+                                });
+                                mutate(); // Refresh data
+                            } else if (eventType === 'error') {
+                                updateProgress({ phase: 'error', message: data.message, error: data.message });
+                            }
+                        } catch { /* ignore parse errors */ }
+                        eventType = '';
+                    }
+                }
             }
         } catch (err) {
-            console.error('Backfill error:', err);
+            setProgress({ phase: 'error', message: 'Connection failed', error: String(err) });
         } finally {
             setBackfilling(false);
         }
@@ -383,7 +454,7 @@ export default function SocialFeedPage() {
             </div>
 
             {/* ─── Backfill Bar (shown when no data) ──────────── */}
-            {!hasData && !isLoading && (
+            {!hasData && !isLoading && !backfilling && !progress?.done && (
                 <div className="flex items-center gap-4 p-4 bg-amber-500/5 border border-amber-500/20 rounded-2xl">
                     <Download className="w-5 h-5 text-amber-500 flex-shrink-0" />
                     <div className="flex-1">
@@ -395,16 +466,77 @@ export default function SocialFeedPage() {
                         disabled={backfilling}
                         className="bg-amber-500 hover:bg-amber-600 text-white"
                     >
-                        {backfilling ? (
-                            <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Backfilling...</>
-                        ) : (
-                            <><Download className="w-4 h-4 mr-2" />Backfill {formatDate(selectedDate)}</>
-                        )}
+                        <><Download className="w-4 h-4 mr-2" />Backfill {formatDate(selectedDate)}</>
                     </Button>
-                    {backfillResult && (
-                        <span className="text-xs text-green-600 font-bold">
-                            ✓ {backfillResult.videos} videos, {backfillResult.analyses} analyses
-                        </span>
+                </div>
+            )}
+
+            {/* ─── Live Progress Panel ────────────────────────── */}
+            {(backfilling || (progress && !hasData)) && progress && (
+                <div className="p-5 bg-background border border-border/40 rounded-2xl space-y-4">
+                    {/* Header */}
+                    <div className="flex items-center gap-3">
+                        {progress.done ? (
+                            <div className="p-2 bg-green-500/10 rounded-xl text-green-500">
+                                <CheckCircle2 className="w-5 h-5" />
+                            </div>
+                        ) : progress.error ? (
+                            <div className="p-2 bg-destructive/10 rounded-xl text-destructive">
+                                <Loader2 className="w-5 h-5" />
+                            </div>
+                        ) : (
+                            <div className="p-2 bg-primary/10 rounded-xl text-primary">
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                            </div>
+                        )}
+                        <div className="flex-1">
+                            <p className="text-sm font-bold">{progress.message}</p>
+                            {progress.phase === 'fetching' && progress.channel && (
+                                <p className="text-xs text-muted-foreground">
+                                    Channel {progress.channelIndex}/{progress.totalChannels}: {progress.channel}
+                                </p>
+                            )}
+                            {progress.phase === 'analyzing' && (
+                                <p className="text-xs text-muted-foreground">
+                                    Hour {progress.completedHours}/{progress.totalHours}
+                                    {progress.totalVideos !== undefined && ` • ${progress.totalVideos} videos found`}
+                                </p>
+                            )}
+                        </div>
+                        {progress.percent !== undefined && (
+                            <span className="text-sm font-mono font-bold text-primary tabular-nums">{progress.percent}%</span>
+                        )}
+                    </div>
+
+                    {/* Progress bar */}
+                    {!progress.done && !progress.error && (
+                        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div
+                                className="h-full bg-primary rounded-full transition-all duration-500"
+                                style={{ width: `${progress.percent || 0}%` }}
+                            />
+                        </div>
+                    )}
+
+                    {/* Last summary preview */}
+                    {progress.lastSummary && progress.phase === 'analyzing' && (
+                        <div className="p-3 bg-muted/20 rounded-xl border border-border/20">
+                            <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50 mb-1">Latest AI Summary</p>
+                            <p className="text-xs text-muted-foreground leading-relaxed">{progress.lastSummary}</p>
+                        </div>
+                    )}
+
+                    {/* Done summary */}
+                    {progress.done && (
+                        <div className="flex items-center gap-4 text-xs">
+                            <span className="text-green-600 font-bold">✓ {progress.videos_written} videos fetched</span>
+                            <span className="text-green-600 font-bold">✓ {progress.analyses_written} hourly analyses</span>
+                        </div>
+                    )}
+
+                    {/* Error */}
+                    {progress.error && (
+                        <p className="text-xs text-destructive">{progress.error}</p>
                     )}
                 </div>
             )}

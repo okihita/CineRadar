@@ -4,6 +4,8 @@
  * Backfills YouTube data for a given date into Firestore,
  * then generates per-hour AI analysis via Gemini.
  *
+ * Returns Server-Sent Events (SSE) for live progress updates.
+ *
  * Body: { date: "2026-05-04" }
  */
 
@@ -17,7 +19,6 @@ import {
     makeHourId,
     groupVideosByHour,
     type FirestoreYouTubeVideo,
-    type FirestoreHourlyAnalysis,
 } from '@/lib/firestore-youtube';
 
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
@@ -41,8 +42,6 @@ interface YouTubeActivity {
         upload?: { videoId: string };
     };
 }
-
-// ─── Helpers ───────────────────────────────────────────
 
 function getAccountCategory(accountId: string): string {
     const categories: Record<string, string> = {
@@ -108,6 +107,12 @@ async function fetchChannelStats(): Promise<Map<string, { subscriberCount: strin
     return map;
 }
 
+// ─── SSE Helper ────────────────────────────────────────
+
+function sseEvent(event: string, data: unknown): string {
+    return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+}
+
 // ─── Route Handler ─────────────────────────────────────
 
 export async function POST(request: Request) {
@@ -115,7 +120,6 @@ export async function POST(request: Request) {
         const body = await request.json();
         const { date } = body;
 
-        // Validate date format
         if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
             return NextResponse.json(
                 { success: false, error: 'Invalid date. Use YYYY-MM-DD format.' },
@@ -123,125 +127,187 @@ export async function POST(request: Request) {
             );
         }
 
-        // Build time window for the full day (UTC)
         const publishedAfter = `${date}T00:00:00Z`;
         const publishedBefore = `${date}T23:59:59Z`;
+        const totalChannels = YOUTUBE_CHANNELS.length;
 
         console.log(`[Backfill] Starting backfill for ${date}`);
 
-        // 1. Fetch channel stats (avatars)
-        const statsMap = await fetchChannelStats();
-
-        // 2. Fetch activities for all channels in parallel
-        const activityPromises = YOUTUBE_CHANNELS.map(async (channel) => {
-            const activities = await fetchChannelActivities(
-                channel.channel_id,
-                publishedAfter,
-                publishedBefore,
-            );
-            return { channel, activities };
-        });
-        const channelResults = await Promise.all(activityPromises);
-
-        // 3. Convert to Firestore documents and write
-        const now = new Date().toISOString();
-        let videosWritten = 0;
-        const allVideos: FirestoreYouTubeVideo[] = [];
-
-        for (const { channel, activities } of channelResults) {
-            const stats = statsMap.get(channel.channel_id);
-            const category = getAccountCategory(channel.account_id) as 'critic' | 'cinema_chain' | 'distributor' | 'community';
-
-            for (const activity of activities) {
-                const videoId = activity.contentDetails!.upload!.videoId;
-                const contentType = detectContentType(activity.snippet.title, category);
-                const thumb = activity.snippet.thumbnails?.high?.url || activity.snippet.thumbnails?.default?.url || '';
-
-                const doc: Omit<FirestoreYouTubeVideo, 'id'> = {
-                    title: activity.snippet.title,
-                    description: activity.snippet.description?.slice(0, 500) || '',
-                    thumbnail: thumb,
-                    video_url: `https://youtube.com/watch?v=${videoId}`,
-                    channel_id: channel.channel_id,
-                    channel_title: channel.display_name,
-                    channel_avatar: stats?.avatarUrl || '',
-                    content_type: contentType,
-                    published_at: activity.snippet.publishedAt,
-                    fetched_at: now,
+        // ─── SSE Stream ──────────────────────────────────
+        const encoder = new TextEncoder();
+        const stream = new ReadableStream({
+            async start(controller) {
+                const send = (event: string, data: unknown) => {
+                    controller.enqueue(encoder.encode(sseEvent(event, data)));
                 };
 
-                const ok = await firestoreRestClient.createDocument(
-                    COLLECTIONS.VIDEOS,
-                    videoId,
-                    doc,
-                );
-                if (ok) videosWritten++;
-                allVideos.push({ id: videoId, ...doc });
-            }
-        }
+                try {
+                    // Phase 1: Fetch channel stats
+                    send('phase', { phase: 'stats', message: 'Fetching channel statistics...' });
+                    const statsMap = await fetchChannelStats();
 
-        console.log(`[Backfill] Wrote ${videosWritten} videos for ${date}`);
+                    // Phase 2: Fetch activities per channel
+                    const allVideos: FirestoreYouTubeVideo[] = [];
+                    let videosWritten = 0;
 
-        // 4. Group videos by hour and generate AI analysis
-        const hourGroups = groupVideosByHour(allVideos);
-        let analysesWritten = 0;
+                    for (let i = 0; i < YOUTUBE_CHANNELS.length; i++) {
+                        const channel = YOUTUBE_CHANNELS[i];
+                        send('progress', {
+                            phase: 'fetching',
+                            channel: channel.display_name,
+                            channelIndex: i + 1,
+                            totalChannels,
+                            message: `Fetching ${channel.display_name} (${i + 1}/${totalChannels})...`,
+                        });
 
-        for (let hour = 0; hour < 24; hour++) {
-            const hourId = makeHourId(date, hour);
-            const videosInHour = hourGroups.get(hour) || [];
+                        const activities = await fetchChannelActivities(
+                            channel.channel_id,
+                            publishedAfter,
+                            publishedBefore,
+                        );
 
-            // Count content types
-            const typeBreakdown: Record<string, number> = {};
-            const channelsActive = new Set<string>();
-            for (const v of videosInHour) {
-                typeBreakdown[v.content_type] = (typeBreakdown[v.content_type] || 0) + 1;
-                channelsActive.add(v.channel_title);
-            }
+                        const stats = statsMap.get(channel.channel_id);
+                        const category = getAccountCategory(channel.account_id) as 'critic' | 'cinema_chain' | 'distributor' | 'community';
+                        const now = new Date().toISOString();
 
-            // Generate AI summary
-            const summary = await generateHourlySummary(
-                videosInHour.map(v => ({
-                    title: v.title,
-                    channel_title: v.channel_title,
-                    content_type: v.content_type,
-                    published_at: v.published_at,
-                })),
-                hour,
-                date,
-            );
+                        for (const activity of activities) {
+                            const videoId = activity.contentDetails!.upload!.videoId;
+                            const contentType = detectContentType(activity.snippet.title, category);
+                            const thumb = activity.snippet.thumbnails?.high?.url || activity.snippet.thumbnails?.default?.url || '';
 
-            const analysisDoc: Omit<FirestoreHourlyAnalysis, 'id'> = {
-                date,
-                hour,
-                summary,
-                video_count: videosInHour.length,
-                content_type_breakdown: typeBreakdown,
-                channels_active: [...channelsActive],
-                generated_at: now,
-                model: 'gemini-2.0-flash',
-            };
+                            const doc: Omit<FirestoreYouTubeVideo, 'id'> = {
+                                title: activity.snippet.title,
+                                description: activity.snippet.description?.slice(0, 500) || '',
+                                thumbnail: thumb,
+                                video_url: `https://youtube.com/watch?v=${videoId}`,
+                                channel_id: channel.channel_id,
+                                channel_title: channel.display_name,
+                                channel_avatar: stats?.avatarUrl || '',
+                                content_type: contentType,
+                                published_at: activity.snippet.publishedAt,
+                                fetched_at: now,
+                            };
 
-            const ok = await firestoreRestClient.createDocument(
-                COLLECTIONS.HOURLY_ANALYSIS,
-                hourId,
-                analysisDoc,
-            );
-            if (ok) analysesWritten++;
+                            const ok = await firestoreRestClient.createDocument(
+                                COLLECTIONS.VIDEOS,
+                                videoId,
+                                doc,
+                            );
+                            if (ok) videosWritten++;
+                            allVideos.push({ id: videoId, ...doc });
+                        }
 
-            // Small delay to avoid Gemini rate limits (15 RPM free tier)
-            if (videosInHour.length > 0) {
-                await new Promise(r => setTimeout(r, 4500));
-            }
-        }
+                        send('channel_done', {
+                            channel: channel.display_name,
+                            videosFound: activities.length,
+                            totalVideosSoFar: allVideos.length,
+                        });
+                    }
 
-        console.log(`[Backfill] Wrote ${analysesWritten} hourly analyses for ${date}`);
+                    console.log(`[Backfill] Wrote ${videosWritten} videos for ${date}`);
 
-        return NextResponse.json({
-            success: true,
-            data: {
-                date,
-                videos_written: videosWritten,
-                analyses_written: analysesWritten,
+                    send('phase', {
+                        phase: 'writing_done',
+                        message: `Found ${videosWritten} videos. Starting AI analysis...`,
+                        totalVideos: videosWritten,
+                    });
+
+                    // Phase 3: AI analysis per hour
+                    const hourGroups = groupVideosByHour(allVideos);
+                    let analysesWritten = 0;
+                    let hoursWithContent = 0;
+
+                    // Count hours with content for progress
+                    for (let h = 0; h < 24; h++) {
+                        if ((hourGroups.get(h) || []).length > 0) hoursWithContent++;
+                    }
+
+                    let completedHours = 0;
+                    const now = new Date().toISOString();
+
+                    for (let hour = 0; hour < 24; hour++) {
+                        const hourId = makeHourId(date, hour);
+                        const videosInHour = hourGroups.get(hour) || [];
+
+                        // Count content types
+                        const typeBreakdown: Record<string, number> = {};
+                        const channelsActive = new Set<string>();
+                        for (const v of videosInHour) {
+                            typeBreakdown[v.content_type] = (typeBreakdown[v.content_type] || 0) + 1;
+                            channelsActive.add(v.channel_title);
+                        }
+
+                        // Generate AI summary
+                        const { summary, retried } = await generateHourlySummary(
+                            videosInHour.map(v => ({
+                                title: v.title,
+                                channel_title: v.channel_title,
+                                content_type: v.content_type,
+                                published_at: v.published_at,
+                            })),
+                            hour,
+                            date,
+                        );
+
+                        const analysisDoc = {
+                            date,
+                            hour,
+                            summary,
+                            video_count: videosInHour.length,
+                            content_type_breakdown: typeBreakdown,
+                            channels_active: [...channelsActive],
+                            generated_at: now,
+                            model: 'gemini-2.0-flash',
+                        };
+
+                        const ok = await firestoreRestClient.createDocument(
+                            COLLECTIONS.HOURLY_ANALYSIS,
+                            hourId,
+                            analysisDoc,
+                        );
+                        if (ok) analysesWritten++;
+                        completedHours++;
+
+                        send('hour_done', {
+                            hour,
+                            hourFormatted: `${String(hour).padStart(2, '0')}:00`,
+                            videoCount: videosInHour.length,
+                            summary: summary.slice(0, 120) + (summary.length > 120 ? '...' : ''),
+                            completedHours,
+                            totalHours: 24,
+                            progress: Math.round((completedHours / 24) * 100),
+                            retried,
+                        });
+
+                        // Rate limit: only delay if hour had content (triggered a real API call)
+                        if (videosInHour.length > 0) {
+                            await new Promise(r => setTimeout(r, 5000));
+                        }
+                    }
+
+                    console.log(`[Backfill] Wrote ${analysesWritten} hourly analyses for ${date}`);
+
+                    send('done', {
+                        date,
+                        videos_written: videosWritten,
+                        analyses_written: analysesWritten,
+                    });
+                } catch (error) {
+                    console.error('[Backfill Error]', error);
+                    send('error', {
+                        message: error instanceof Error ? error.message : 'Unknown error',
+                    });
+                } finally {
+                    controller.close();
+                }
+            },
+        });
+
+        return new Response(stream, {
+            headers: {
+                'Content-Type': 'text/event-stream',
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
             },
         });
     } catch (error) {

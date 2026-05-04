@@ -586,12 +586,27 @@ export class FirestoreRestClient {
     async deleteByQuery(structuredQuery: Record<string, unknown>): Promise<number> {
         const docs = await this.runQuery<{ id: string; _name: string }>(structuredQuery);
 
+        if (docs.length === 0) return 0;
+
+        // Safety: verify the collection from the query matches what we extracted from _name
+        const expectedCollection = (structuredQuery.from as { collectionId: string }[])?.[0]?.collectionId;
+        if (!expectedCollection) {
+            console.error('[deleteByQuery] No collection in query — aborting');
+            return 0;
+        }
+
         let deleted = 0;
-        // Parse _name to extract collection + docId, then use docUrl for proper encoding
         await Promise.all(docs.map(async (doc) => {
             const parts = doc._name.split('/');
             const docId = parts.pop() || '';
             const collectionName = parts.pop() || '';
+
+            // Safety: ensure the document belongs to the expected collection
+            if (collectionName !== expectedCollection) {
+                console.error(`[deleteByQuery] Skipping ${doc._name} — collection mismatch (expected ${expectedCollection}, got ${collectionName})`);
+                return;
+            }
+
             try {
                 const response = await this._fetch(this.docUrl(collectionName, docId), {
                     method: 'DELETE',
