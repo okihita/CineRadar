@@ -7,7 +7,7 @@
  */
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useSWR from 'swr';
 import { useRouter, useParams } from 'next/navigation';
 import {
@@ -232,6 +232,12 @@ export default function SocialFeedPage() {
         error?: string;
         videos_written?: number;
         analyses_written?: number;
+        retryInfo?: {
+            hour: string;
+            attempt: number;
+            maxRetries: number;
+            retryDelaySeconds: number;
+        };
     } | null>(null);
 
     const updateProgress = (update: Partial<typeof progress> & { phase: string; message: string }) => {
@@ -243,6 +249,30 @@ export default function SocialFeedPage() {
         setProgress(null);
         setBackfilling(false);
     }, [selectedDate]);
+
+    // Countdown timer for retry state
+    const [retryCountdown, setRetryCountdown] = useState<number | null>(null);
+    const retryStartTime = useRef<number>(0);
+    const retryDelayTotal = useRef<number>(0);
+
+    useEffect(() => {
+        if (progress?.phase === 'retrying' && progress.retryInfo) {
+            retryStartTime.current = Date.now();
+            retryDelayTotal.current = progress.retryInfo.retryDelaySeconds;
+            setRetryCountdown(progress.retryInfo.retryDelaySeconds);
+
+            const interval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - retryStartTime.current) / 1000);
+                const remaining = Math.max(0, retryDelayTotal.current - elapsed);
+                setRetryCountdown(remaining);
+                if (remaining <= 0) clearInterval(interval);
+            }, 1000);
+
+            return () => clearInterval(interval);
+        } else {
+            setRetryCountdown(null);
+        }
+    }, [progress?.phase, progress?.retryInfo?.attempt, progress?.retryInfo?.retryDelaySeconds]);
 
     // Fetch persisted data for selected date
     const { data: responseData, isLoading, mutate } = useSWR<DataResponse>(
@@ -347,6 +377,18 @@ export default function SocialFeedPage() {
                                     totalHours: data.totalHours,
                                     percent: data.progress,
                                     lastSummary: data.summary,
+                                    retryInfo: undefined, // Clear any previous retry state
+                                });
+                            } else if (eventType === 'retry') {
+                                updateProgress({
+                                    phase: 'retrying',
+                                    message: `Rate limited at ${data.hourFormatted}. Retrying in ${data.retryDelaySeconds}s (attempt ${data.attempt}/${data.maxRetries})...`,
+                                    retryInfo: {
+                                        hour: data.hourFormatted,
+                                        attempt: data.attempt,
+                                        maxRetries: data.maxRetries,
+                                        retryDelaySeconds: data.retryDelaySeconds,
+                                    },
                                 });
                             } else if (eventType === 'done') {
                                 updateProgress({
@@ -539,6 +581,33 @@ export default function SocialFeedPage() {
                                 className="h-full bg-primary rounded-full transition-all duration-500"
                                 style={{ width: `${progress.percent || 0}%` }}
                             />
+                        </div>
+                    )}
+
+                    {/* Retry countdown */}
+                    {progress.phase === 'retrying' && progress.retryInfo && (
+                        <div className="p-3 bg-amber-500/5 border border-amber-500/20 rounded-xl space-y-1.5">
+                            <div className="flex items-center justify-between">
+                                <p className="text-xs font-bold text-amber-600">
+                                    ⚡ Gemini rate limit — retrying {progress.retryInfo.hour}
+                                </p>
+                                <span className="text-lg font-mono font-black text-amber-500 tabular-nums">
+                                    {retryCountdown !== null ? `${retryCountdown}s` : '...'}
+                                </span>
+                            </div>
+                            <div className="h-1 bg-amber-500/10 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-amber-500/50 rounded-full transition-all duration-1000"
+                                    style={{
+                                        width: retryCountdown !== null && retryDelayTotal.current > 0
+                                            ? `${Math.max(0, (1 - retryCountdown / retryDelayTotal.current) * 100)}%`
+                                            : '0%',
+                                    }}
+                                />
+                            </div>
+                            <p className="text-[10px] text-muted-foreground">
+                                Attempt {progress.retryInfo.attempt} of {progress.retryInfo.maxRetries}
+                            </p>
                         </div>
                     )}
 

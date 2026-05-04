@@ -26,30 +26,55 @@ export interface VideoForAnalysis {
     published_at: string;
 }
 
-/** Parse retry delay from Gemini 429 error (defaults to 8s) */
-function parseRetryDelay(error: unknown): number {
+/** Extract retry delay in seconds from Gemini 429 error */
+function extractRetryDelay(error: unknown): number {
     try {
-        const details = (error as { errorDetails?: Array<{ '@type': string; retryDelay?: string }> }).errorDetails;
-        const retryInfo = details?.find(d => d['@type']?.includes('RetryInfo'));
-        if (retryInfo?.retryDelay) {
-            const match = retryInfo.retryDelay.match(/(\d+)s/);
-            if (match) return parseInt(match[1]) + 1; // +1s buffer
+        // The SDK exposes errorDetails directly on the error object
+        const errorDetails = (error as { errorDetails?: Array<Record<string, unknown>> }).errorDetails;
+        if (!Array.isArray(errorDetails)) return 10;
+
+        const retryInfo = errorDetails.find(
+            (d) => typeof d['@type'] === 'string' && d['@type'].includes('RetryInfo')
+        );
+
+        if (retryInfo) {
+            const raw = retryInfo['retryDelay'];
+            if (typeof raw === 'string') {
+                // Format: "6s", "6.779633506s", "12s"
+                const match = raw.match(/([\d.]+)s/);
+                if (match) {
+                    return Math.ceil(parseFloat(match[1])) + 1; // +1s buffer
+                }
+            }
         }
     } catch { /* ignore */ }
-    return 8;
+    return 10; // Safe default
 }
 
 const MAX_RETRIES = 4;
 
+export interface HourlySummaryResult {
+    summary: string;
+    model: string;
+    retried: boolean;
+}
+
+/**
+ * Callback for retry progress — lets the caller report countdown to the UI.
+ */
+export type RetryCallback = (info: { attempt: number; maxRetries: number; retryDelaySeconds: number }) => void;
+
 /**
  * Generate a concise hourly summary of YouTube activity.
- * Retries on 429 with exponential backoff + parsed retryDelay.
+ * Retries on 429 with parsed retryDelay from error + exponential backoff.
+ * Calls onRetry before each retry so the caller can stream progress.
  */
 export async function generateHourlySummary(
     videos: VideoForAnalysis[],
     hour: number,
     date: string,
-): Promise<{ summary: string; model: string; retried: boolean }> {
+    onRetry?: RetryCallback,
+): Promise<HourlySummaryResult> {
     if (videos.length === 0) {
         return {
             summary: 'No YouTube activity from monitored accounts this hour.',
@@ -93,9 +118,15 @@ Write exactly 2-3 concise, factual sentences. No fluff. No generic filler.`;
             const is429 = status === 429;
 
             if (is429 && attempt < MAX_RETRIES) {
-                const baseDelay = parseRetryDelay(error);
-                const delay = baseDelay * Math.pow(1.5, attempt); // Exponential backoff
-                console.warn(`[Gemini 429] Retry ${attempt + 1}/${MAX_RETRIES} in ${Math.round(delay)}s`);
+                const baseDelay = extractRetryDelay(error);
+                const delay = Math.ceil(baseDelay * Math.pow(1.5, attempt));
+                console.warn(`[Gemini 429] Retry ${attempt + 1}/${MAX_RETRIES} in ${delay}s`);
+
+                // Notify caller so SSE can stream countdown
+                if (onRetry) {
+                    onRetry({ attempt: attempt + 1, maxRetries: MAX_RETRIES, retryDelaySeconds: delay });
+                }
+
                 retried = true;
                 await new Promise(r => setTimeout(r, delay * 1000));
                 continue;
@@ -104,14 +135,13 @@ Write exactly 2-3 concise, factual sentences. No fluff. No generic filler.`;
             // Non-429 error or exhausted retries
             console.error(`[Gemini Error] Attempt ${attempt + 1} failed:`, error instanceof Error ? error.message : error);
             return {
-                summary: `⚠️ AI summary unavailable — ${is429 ? 'Gemini rate limit reached. Retry this hour later.' : (error instanceof Error ? error.message : 'Unknown error')}`,
+                summary: `⚠️ AI summary unavailable — ${is429 ? 'Gemini rate limit reached after retries.' : (error instanceof Error ? error.message : 'Unknown error')}`,
                 model: 'gemini-2.0-flash',
                 retried,
             };
         }
     }
 
-    // Should never reach here, but just in case
     return {
         summary: '⚠️ AI summary unavailable after multiple retries.',
         model: 'gemini-2.0-flash',

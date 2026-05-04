@@ -239,7 +239,7 @@ export async function POST(request: Request) {
                             channelsActive.add(v.channel_title);
                         }
 
-                        // Generate AI summary
+                        // Generate AI summary (with retry callback for SSE)
                         const { summary, retried } = await generateHourlySummary(
                             videosInHour.map(v => ({
                                 title: v.title,
@@ -249,6 +249,17 @@ export async function POST(request: Request) {
                             })),
                             hour,
                             date,
+                            // onRetry callback — streams retry countdown to the client
+                            ({ attempt, maxRetries, retryDelaySeconds }) => {
+                                send('retry', {
+                                    hour,
+                                    hourFormatted: `${String(hour).padStart(2, '0')}:00`,
+                                    attempt,
+                                    maxRetries,
+                                    retryDelaySeconds,
+                                    message: `Rate limited. Retrying in ${retryDelaySeconds}s (attempt ${attempt}/${maxRetries})...`,
+                                });
+                            },
                         );
 
                         const analysisDoc = {
