@@ -341,6 +341,35 @@ export class FirestoreRestClient {
     }
 
     /**
+     * Run a raw structured query against Firestore and return parsed documents.
+     * Supports full Firestore query capabilities (composite filters, etc.)
+     */
+    async runQuery<T = Record<string, unknown>>(structuredQuery: Record<string, unknown>): Promise<T[]> {
+        try {
+            const response = await this._fetch(`${FIRESTORE_BASE_URL}:runQuery`, {
+                method: 'POST',
+                body: JSON.stringify({ structuredQuery }),
+            });
+
+            if (!response.ok) {
+                const errText = await response.text();
+                console.error(`runQuery failed: ${response.status} - ${errText}`);
+                return [];
+            }
+
+            const results = await response.json();
+            return results
+                .filter((r: { document?: unknown }) => r.document)
+                .map((r: { document: { name: string; fields: Record<string, FirestoreValue> } }) =>
+                    parseDocument<T>(r.document)
+                );
+        } catch (error) {
+            console.error('Error in runQuery:', error);
+            return [];
+        }
+    }
+
+    /**
      * Get a single document
      */
     async getDocument<T = Record<string, unknown>>(collectionName: string, documentId: string): Promise<T | null> {

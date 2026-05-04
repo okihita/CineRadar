@@ -1,36 +1,47 @@
 /**
- * Industry Feed — YouTube-only MVP
- * 
- * Curated timeline from Indonesian cinema ecosystem YouTube channels.
- * Real data from YouTube Data API v3, organized by content type.
+ * Industry Feed — YouTube + AI Hourly Analysis
+ *
+ * Date-navigable timeline with backfill support.
+ * Loads persisted data from Firestore (via /api/social-feed/data).
+ * Backfill trigger via /api/social-feed/backfill.
  */
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import useSWR from 'swr';
 import {
-    Filter,
+    ChevronLeft,
+    ChevronRight,
     CheckCircle2,
     Film,
     Star,
     Clapperboard,
     Users,
     Zap,
+    Calendar,
+    Download,
+    Loader2,
+    Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { fetcher } from '@/lib/api';
 import {
     ACCOUNTS,
-    detectContentType,
     CONTENT_TYPE_LABELS,
     type SocialAccount,
     type AccountCategory,
     type ContentType,
 } from '@/features/social-pulse/data/mockSocialFeed';
 import { YouTubeIcon } from '@/components/BrandIcons';
+import {
+    type FirestoreYouTubeVideo,
+    type FirestoreHourlyAnalysis,
+    formatHour,
+    groupVideosByHour,
+} from '@/lib/firestore-youtube';
 
-// ─── Category labels (kept in page, UI-only) ──────────
+// ─── Category labels ──────────────────────────────────
 
 const CATEGORY_LABELS: Record<AccountCategory, { label: string; color: string }> = {
     critic: { label: 'Critics', color: 'text-amber-500' },
@@ -38,8 +49,6 @@ const CATEGORY_LABELS: Record<AccountCategory, { label: string; color: string }>
     distributor: { label: 'Distributors', color: 'text-blue-500' },
     community: { label: 'Community', color: 'text-purple-500' },
 };
-
-// ─── Content type icon mapping ────────────────────────
 
 const CONTENT_ICONS: Record<ContentType, typeof Film> = {
     trailer: Film,
@@ -49,7 +58,7 @@ const CONTENT_ICONS: Record<ContentType, typeof Film> = {
     community: Users,
 };
 
-// ─── Helper: relative time ────────────────────────────
+// ─── Helpers ───────────────────────────────────────────
 
 function timeAgo(iso: string): string {
     const diff = Date.now() - new Date(iso).getTime();
@@ -68,30 +77,41 @@ function formatNumber(n: number | string): string {
     return num.toString();
 }
 
-// ─── YouTube API response type ────────────────────────
-
-interface YouTubePost {
-    id: string;
-    account_id: string;
-    content: string;
-    description: string;
-    timestamp: string;
-    video_id: string;
-    video_url: string;
-    thumbnail?: string;
-    channel_avatar?: string;
-    channel_stats: { subscriber_count: string; video_count: string; view_count: string } | null;
+function formatDate(dateStr: string): string {
+    const d = new Date(dateStr + 'T00:00:00Z');
+    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
 
-interface EnrichedPost extends YouTubePost {
-    contentType: ContentType;
+function isToday(dateStr: string): boolean {
+    return dateStr === new Date().toISOString().split('T')[0];
 }
 
-// ─── Post Card ────────────────────────────────────────
+function addDays(dateStr: string, days: number): string {
+    const d = new Date(dateStr + 'T00:00:00Z');
+    d.setUTCDate(d.getUTCDate() + days);
+    return d.toISOString().split('T')[0];
+}
 
-function PostCard({ post, account }: { post: EnrichedPost; account: SocialAccount }) {
-    const typeConfig = CONTENT_TYPE_LABELS[post.contentType];
-    const TypeIcon = CONTENT_ICONS[post.contentType];
+// ─── API response types ────────────────────────────────
+
+interface DataResponse {
+    success: boolean;
+    data: {
+        date: string;
+        has_data: boolean;
+        videos: FirestoreYouTubeVideo[];
+        analyses: FirestoreHourlyAnalysis[];
+        video_count: number;
+        analysis_count: number;
+    };
+}
+
+// ─── Post Card ─────────────────────────────────────────
+
+function PostCard({ post }: { post: FirestoreYouTubeVideo }) {
+    const typeConfig = CONTENT_TYPE_LABELS[post.content_type as ContentType] || CONTENT_TYPE_LABELS.community;
+    const TypeIcon = CONTENT_ICONS[post.content_type as ContentType] || CONTENT_ICONS.community;
+    const account = ACCOUNTS.find(a => a.display_name === post.channel_title);
 
     return (
         <a
@@ -100,7 +120,6 @@ function PostCard({ post, account }: { post: EnrichedPost; account: SocialAccoun
             rel="noopener noreferrer"
             className="group block bg-background/50 border border-border/40 rounded-2xl hover:bg-muted/30 hover:border-border/60 transition-all duration-300 overflow-hidden"
         >
-            {/* Thumbnail — full width, no crop */}
             {post.thumbnail && (
                 <div className="relative">
                     <img src={post.thumbnail} alt="" className="w-full h-auto object-cover" loading="lazy" />
@@ -109,19 +128,15 @@ function PostCard({ post, account }: { post: EnrichedPost; account: SocialAccoun
                             <YouTubeIcon className="w-5 h-5 text-white" />
                         </div>
                     </div>
-                    {/* Content type badge — overlaid on thumbnail */}
                     <div className={cn("absolute bottom-2 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-background/80 backdrop-blur-sm text-[8px] font-bold uppercase tracking-wider", typeConfig.color)}>
                         <TypeIcon className="w-2.5 h-2.5" />
-                        <span>{post.contentType}</span>
+                        <span>{post.content_type}</span>
                     </div>
-                    {/* Timestamp — overlaid on thumbnail */}
-                    <span className="absolute bottom-2 right-2 text-[9px] text-white/80 font-mono tabular-nums bg-black/50 backdrop-blur-sm px-1.5 py-0.5 rounded-md">{timeAgo(post.timestamp)}</span>
+                    <span className="absolute bottom-2 right-2 text-[9px] text-white/80 font-mono tabular-nums bg-black/50 backdrop-blur-sm px-1.5 py-0.5 rounded-md">{timeAgo(post.published_at)}</span>
                 </div>
             )}
 
-            {/* Content below thumbnail */}
             <div className="p-3 space-y-2">
-                {/* Account header — compact */}
                 <div className="flex items-center gap-2">
                     <div className="w-6 h-6 rounded-full overflow-hidden bg-muted flex-shrink-0">
                         {post.channel_avatar ? (
@@ -133,23 +148,19 @@ function PostCard({ post, account }: { post: EnrichedPost; account: SocialAccoun
                         )}
                     </div>
                     <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                        <span className="text-[11px] font-bold truncate">{account.display_name}</span>
-                        {account.verified && <CheckCircle2 className="w-3 h-3 text-sky-400 flex-shrink-0" />}
-                        <span className="text-[9px] text-muted-foreground/50 font-mono flex-shrink-0">{account.follower_count}</span>
+                        <span className="text-[11px] font-bold truncate">{post.channel_title}</span>
+                        {account?.verified && <CheckCircle2 className="w-3 h-3 text-sky-400 flex-shrink-0" />}
                     </div>
-                    <span className="text-[9px] text-muted-foreground/40 font-mono flex-shrink-0">{post.channel_stats?.view_count ? formatNumber(post.channel_stats.view_count) + ' views' : ''}</span>
                 </div>
-
-                {/* Title */}
                 <p className="text-[12px] font-semibold leading-snug text-foreground line-clamp-2">
-                    {post.content}
+                    {post.title}
                 </p>
             </div>
         </a>
     );
 }
 
-// ─── Account Card (right sidebar) ────────────────────
+// ─── Account Card ──────────────────────────────────────
 
 function AccountCard({ account, postCount }: { account: SocialAccount; postCount: number }) {
     return (
@@ -178,59 +189,53 @@ function AccountCard({ account, postCount }: { account: SocialAccount; postCount
     );
 }
 
-// ─── Page ─────────────────────────────────────────────
-
-type FilterType = 'all' | ContentType;
+// ─── Page ──────────────────────────────────────────────
 
 export default function SocialFeedPage() {
-    const [filter, setFilter] = useState<FilterType>('all');
+    const today = useMemo(() => new Date().toISOString().split('T')[0], []);
+    const [selectedDate, setSelectedDate] = useState(today);
+    const [backfilling, setBackfilling] = useState(false);
+    const [backfillResult, setBackfillResult] = useState<{ videos: number; analyses: number } | null>(null);
+    const [selectedHour, setSelectedHour] = useState<number | null>(null);
 
-    // Fetch real YouTube data
-    const { data: ytData, isLoading } = useSWR<{ success: boolean; data: { posts: YouTubePost[] } }>(
-        '/api/social-feed/youtube?maxResults=5',
-        fetcher
+    // Fetch persisted data for selected date
+    const { data: responseData, isLoading, mutate } = useSWR<DataResponse>(
+        `/api/social-feed/data?date=${selectedDate}`,
+        fetcher,
     );
 
-    // Enrich posts with content type detection
-    const enrichedPosts = useMemo<EnrichedPost[]>(() => {
-        const posts = ytData?.data?.posts || [];
-        return posts.map(post => {
-            const account = ACCOUNTS.find(a => a.id === post.account_id);
-            const contentType = detectContentType(post.content, account?.category || 'community');
-            return { ...post, contentType };
-        });
-    }, [ytData]);
+    const data = responseData?.data;
+    const videos = data?.videos || [];
+    const analyses = data?.analyses || [];
+    const hasData = data?.has_data || false;
 
-    // Update accounts with real data from API
+    // Group videos by hour
+    const hourGroups = useMemo(() => groupVideosByHour(videos), [videos]);
+
+    // Build analysis map for quick lookup
+    const analysisMap = useMemo(() => {
+        const map = new Map<number, FirestoreHourlyAnalysis>();
+        for (const a of analyses) {
+            map.set(a.hour, a);
+        }
+        return map;
+    }, [analyses]);
+
+    // Compute account data from videos
     const enrichedAccounts = useMemo(() => {
-        const seen = new Map<string, { subscriber_count: string; avatar_url?: string }>();
-        for (const yt of ytData?.data?.posts || []) {
-            if (!seen.has(yt.account_id) && yt.channel_stats) {
-                seen.set(yt.account_id, {
-                    subscriber_count: yt.channel_stats.subscriber_count,
-                    avatar_url: yt.channel_avatar,
-                });
+        const avatarMap = new Map<string, string>();
+        const subsMap = new Map<string, string>();
+        for (const v of videos) {
+            if (v.channel_avatar && !avatarMap.has(v.channel_title)) {
+                avatarMap.set(v.channel_title, v.channel_avatar);
             }
         }
-
-        return ACCOUNTS.map(a => {
-            const data = seen.get(a.id);
-            if (data) {
-                return {
-                    ...a,
-                    follower_count: formatNumber(data.subscriber_count),
-                    avatar_url: data.avatar_url,
-                };
-            }
-            return a;
-        });
-    }, [ytData]);
-
-    // Filter posts
-    const filteredPosts = useMemo(() => {
-        if (filter === 'all') return enrichedPosts;
-        return enrichedPosts.filter(p => p.contentType === filter);
-    }, [filter, enrichedPosts]);
+        return ACCOUNTS.map(a => ({
+            ...a,
+            avatar_url: avatarMap.get(a.display_name) || a.avatar_url,
+            follower_count: subsMap.get(a.display_name) || a.follower_count,
+        }));
+    }, [videos]);
 
     const accountsByCategory = useMemo(() => {
         const grouped: Record<AccountCategory, SocialAccount[]> = {
@@ -240,19 +245,56 @@ export default function SocialFeedPage() {
         return grouped;
     }, [enrichedAccounts]);
 
-    const getPostCount = (accountId: string) => enrichedPosts.filter(p => p.account_id === accountId).length;
-    const getAccount = (id: string) => enrichedAccounts.find(a => a.id === id)!;
+    const getPostCount = (accountId: string) => videos.filter(v => {
+        const account = ACCOUNTS.find(a => a.id === accountId);
+        return account && v.channel_title === account.display_name;
+    }).length;
 
-    // Count posts per content type
+    // Backfill handler
+    const handleBackfill = useCallback(async () => {
+        setBackfilling(true);
+        setBackfillResult(null);
+        try {
+            const res = await fetch('/api/social-feed/backfill', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ date: selectedDate }),
+            });
+            const result = await res.json();
+            if (result.success) {
+                setBackfillResult({
+                    videos: result.data.videos_written,
+                    analyses: result.data.analyses_written,
+                });
+                mutate(); // Refresh data
+            } else {
+                console.error('Backfill failed:', result.error);
+            }
+        } catch (err) {
+            console.error('Backfill error:', err);
+        } finally {
+            setBackfilling(false);
+        }
+    }, [selectedDate, mutate]);
+
+    // Date navigation
+    const goToPrevDay = () => setSelectedDate(d => addDays(d, -1));
+    const goToNextDay = () => setSelectedDate(d => addDays(d, 1));
+    const canGoForward = addDays(selectedDate, 1) <= today;
+
+    // Content type counts
     const contentTypeCounts = useMemo(() => {
         const counts: Record<ContentType, number> = { trailer: 0, review: 0, short: 0, promo: 0, community: 0 };
-        enrichedPosts.forEach(p => { counts[p.contentType]++; });
+        videos.forEach(v => {
+            const ct = v.content_type as ContentType;
+            if (ct in counts) counts[ct]++;
+        });
         return counts;
-    }, [enrichedPosts]);
+    }, [videos]);
 
     return (
         <div className="min-h-screen bg-background text-foreground p-6 max-w-[1600px] mx-auto space-y-6 animate-in fade-in duration-700">
-            {/* Header */}
+            {/* ─── Header + Date Navigation ─────────────────── */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-red-500/10 rounded-xl text-red-500">
@@ -261,122 +303,210 @@ export default function SocialFeedPage() {
                     <div>
                         <div className="flex items-center gap-2">
                             <h1 className="text-2xl font-black uppercase tracking-tighter">Industry Feed</h1>
-                            <span className="px-2 py-0.5 bg-muted rounded text-[10px] font-black text-muted-foreground uppercase tracking-tight">YouTube</span>
+                            <span className="px-2 py-0.5 bg-muted rounded text-[10px] font-black text-muted-foreground uppercase tracking-tight">YouTube + AI</span>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                            <span className="text-foreground font-bold">{enrichedAccounts.length} channels</span> • {enrichedPosts.length} videos • YouTube Data API v3
+                            {hasData
+                                ? <><span className="text-foreground font-bold">{videos.length}</span> videos • <span className="text-foreground font-bold">{analyses.length}</span> hourly analyses</>
+                                : 'No data for this date'
+                            }
                         </p>
                     </div>
                 </div>
+
+                {/* Date picker */}
+                <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="icon" onClick={goToPrevDay} className="h-8 w-8">
+                        <ChevronLeft className="w-4 h-4" />
+                    </Button>
+
+                    <div className="flex items-center gap-2 px-4 py-2 bg-muted/30 rounded-xl border border-border/40">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                        <span className={cn("text-sm font-bold tabular-nums", isToday(selectedDate) && "text-primary")}>
+                            {formatDate(selectedDate)}
+                        </span>
+                        {isToday(selectedDate) && (
+                            <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded text-[8px] font-black uppercase">Today</span>
+                        )}
+                        <input
+                            type="date"
+                            value={selectedDate}
+                            max={today}
+                            min="2026-01-01"
+                            onChange={e => setSelectedDate(e.target.value)}
+                            className="ml-1 text-xs bg-transparent border border-border/40 rounded px-2 py-1 text-muted-foreground cursor-pointer"
+                        />
+                    </div>
+
+                    <Button variant="ghost" size="icon" onClick={goToNextDay} disabled={!canGoForward} className="h-8 w-8">
+                        <ChevronRight className="w-4 h-4" />
+                    </Button>
+                </div>
             </div>
 
-            {/* Content type filter tabs */}
-            <div className="flex items-center gap-2 flex-wrap">
-                <Filter className="w-3.5 h-3.5 text-muted-foreground/40" />
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setFilter('all')}
-                    className={cn(
-                        "h-7 px-3 rounded-lg text-[10px] font-bold uppercase tracking-wider",
-                        filter === 'all' ? "bg-red-500 text-white hover:bg-red-600" : "text-muted-foreground hover:text-foreground"
+            {/* ─── Backfill Bar (shown when no data) ──────────── */}
+            {!hasData && !isLoading && (
+                <div className="flex items-center gap-4 p-4 bg-amber-500/5 border border-amber-500/20 rounded-2xl">
+                    <Download className="w-5 h-5 text-amber-500 flex-shrink-0" />
+                    <div className="flex-1">
+                        <p className="text-sm font-bold">No data for {formatDate(selectedDate)}</p>
+                        <p className="text-xs text-muted-foreground">Click backfill to fetch YouTube uploads and generate AI analysis for this date.</p>
+                    </div>
+                    <Button
+                        onClick={handleBackfill}
+                        disabled={backfilling}
+                        className="bg-amber-500 hover:bg-amber-600 text-white"
+                    >
+                        {backfilling ? (
+                            <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Backfilling...</>
+                        ) : (
+                            <><Download className="w-4 h-4 mr-2" />Backfill {formatDate(selectedDate)}</>
+                        )}
+                    </Button>
+                    {backfillResult && (
+                        <span className="text-xs text-green-600 font-bold">
+                            ✓ {backfillResult.videos} videos, {backfillResult.analyses} analyses
+                        </span>
                     )}
-                >
-                    All ({enrichedPosts.length})
-                </Button>
-                {(Object.entries(CONTENT_TYPE_LABELS) as [ContentType, typeof CONTENT_TYPE_LABELS[ContentType]][]).map(([key, cfg]) => {
-                    const count = contentTypeCounts[key];
-                    if (count === 0) return null;
-                    const Icon = CONTENT_ICONS[key];
-                    return (
-                        <Button
-                            key={key}
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setFilter(key)}
-                            className={cn(
-                                "h-7 px-3 rounded-lg text-[10px] font-bold uppercase tracking-wider gap-1.5",
-                                filter === key ? "bg-red-500 text-white hover:bg-red-600" : "text-muted-foreground hover:text-foreground"
-                            )}
-                        >
-                            <Icon className="w-3 h-3" />
-                            {cfg.label} ({count})
-                        </Button>
-                    );
-                })}
-            </div>
+                </div>
+            )}
 
-            {/* Loading state */}
+            {/* ─── Loading ──────────────────────────────────── */}
             {isLoading && (
                 <div className="flex items-center justify-center py-20 gap-3 text-muted-foreground">
                     <YouTubeIcon className="w-6 h-6 text-red-500 animate-pulse" />
-                    <span className="text-sm font-bold uppercase tracking-widest">Fetching latest uploads...</span>
+                    <span className="text-sm font-bold uppercase tracking-widest">Loading data for {formatDate(selectedDate)}...</span>
                 </div>
             )}
 
             {/* ─── 3-Zone Layout ────────────────────────────── */}
-            {!isLoading && (
+            {!isLoading && hasData && (
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    
-                    {/* ZONE 1: AI Pulse (left, ~20%) */}
+
+                    {/* ZONE 1: AI Pulse — hourly analysis timeline */}
                     <aside className="lg:col-span-2 space-y-4">
                         <div className="sticky top-6 space-y-4">
-                            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">AI Pulse</h2>
-                            
-                            {/* Hourly signal summary */}
-                            <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10 space-y-3">
-                                <p className="text-xs font-bold text-foreground leading-relaxed">
-                                    {enrichedPosts.length > 0
-                                        ? `${enrichedPosts.filter(p => p.contentType === 'trailer').length} new trailers and ${enrichedPosts.filter(p => p.contentType === 'review').length} reviews detected in the latest fetch.`
-                                        : 'No new uploads detected. Next scan in 60 minutes.'
-                                    }
-                                </p>
-                                {enrichedPosts.length > 0 && (
-                                    <div className="space-y-2 pt-2 border-t border-border/20">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50">Top Signal</p>
-                                        <p className="text-xs text-muted-foreground leading-relaxed">
-                                            {(() => {
-                                                const topPost = enrichedPosts[0];
-                                                const acct = getAccount(topPost.account_id);
-                                                return `${acct.display_name} posted "${topPost.content.slice(0, 40)}..." — ${timeAgo(topPost.timestamp)}`;
-                                            })()}
-                                        </p>
-                                    </div>
-                                )}
+                            <div className="flex items-center gap-2">
+                                <Sparkles className="w-3.5 h-3.5 text-primary" />
+                                <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">AI Pulse</h2>
                             </div>
 
-                            {/* Content breakdown */}
-                            <div className="p-4 bg-muted/20 rounded-2xl border border-border/20 space-y-2">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50">Content Mix</p>
-                                {(Object.entries(contentTypeCounts) as [ContentType, number][]).filter(([, count]) => count > 0).map(([type, count]) => {
-                                    const total = Math.max(enrichedPosts.length, 1);
+                            <div className="space-y-1.5 max-h-[calc(100vh-180px)] overflow-y-auto">
+                                {/* Hours with data */}
+                                {[...Array(24)].map((_, h) => {
+                                    const hourVideos = hourGroups.get(h) || [];
+                                    const analysis = analysisMap.get(h);
+                                    const hasVideos = hourVideos.length > 0;
+                                    const isSelected = selectedHour === h;
+
                                     return (
-                                        <div key={type} className="flex items-center gap-2">
-                                            <div className={cn("w-2 h-2 rounded-full", CONTENT_TYPE_LABELS[type].color.replace('text-', 'bg-'))} />
-                                            <span className="text-xs text-muted-foreground flex-1">{CONTENT_TYPE_LABELS[type].label}</span>
-                                            <span className="text-xs font-mono font-bold">{Math.round((count / total) * 100)}%</span>
-                                        </div>
+                                        <button
+                                            key={h}
+                                            onClick={() => setSelectedHour(isSelected ? null : h)}
+                                            className={cn(
+                                                "w-full text-left p-2.5 rounded-xl transition-all duration-200",
+                                                isSelected
+                                                    ? "bg-primary/10 border border-primary/20"
+                                                    : hasVideos
+                                                        ? "bg-background/50 border border-border/20 hover:bg-muted/20 hover:border-border/40"
+                                                        : "opacity-30",
+                                            )}
+                                        >
+                                            <div className="flex items-center justify-between mb-1">
+                                                <span className="text-[10px] font-mono font-bold tabular-nums">{formatHour(h)}</span>
+                                                {hasVideos && (
+                                                    <span className="text-[9px] font-mono font-bold text-muted-foreground">{hourVideos.length}</span>
+                                                )}
+                                            </div>
+                                            {analysis && (
+                                                <p className="text-[10px] text-muted-foreground leading-snug line-clamp-3">
+                                                    {analysis.summary}
+                                                </p>
+                                            )}
+                                            {!hasVideos && !analysis && (
+                                                <p className="text-[9px] text-muted-foreground/50 italic">No activity</p>
+                                            )}
+                                        </button>
                                     );
                                 })}
                             </div>
                         </div>
                     </aside>
 
-                    {/* ZONE 2: Visual Grid (center, ~58%) */}
-                    <main className="lg:col-span-7">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {filteredPosts.map(post => (
-                                <PostCard key={post.id} post={post} account={getAccount(post.account_id)} />
-                            ))}
+                    {/* ZONE 2: Visual Feed — hour-grouped */}
+                    <main className="lg:col-span-7 space-y-6">
+                        {/* Content type summary bar */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                            {(Object.entries(contentTypeCounts) as [ContentType, number][]).filter(([, count]) => count > 0).map(([type, count]) => {
+                                const cfg = CONTENT_TYPE_LABELS[type];
+                                const Icon = CONTENT_ICONS[type];
+                                return (
+                                    <div key={type} className="flex items-center gap-1.5 px-2.5 py-1 bg-muted/20 rounded-lg">
+                                        <Icon className={cn("w-3 h-3", cfg.color)} />
+                                        <span className="text-[10px] font-bold text-muted-foreground">{count} {cfg.label}</span>
+                                    </div>
+                                );
+                            })}
                         </div>
-                        {filteredPosts.length === 0 && (
-                            <div className="py-20 text-center border border-dashed rounded-3xl border-border/40">
-                                <p className="text-muted-foreground font-bold uppercase tracking-widest text-sm">No videos for this filter.</p>
+
+                        {/* Hour sections — descending from 23 to 0 */}
+                        {[...Array(24)].map((_, h) => {
+                            const hourIdx = 23 - h; // Reverse order
+                            const hourVideos = selectedHour !== null
+                                ? (hourGroups.get(selectedHour) || [])
+                                : (hourGroups.get(hourIdx) || []);
+
+                            // If a specific hour is selected, only show that
+                            if (selectedHour !== null && hourIdx !== selectedHour) return null;
+                            // Skip empty hours unless viewing all
+                            if (selectedHour === null && hourVideos.length === 0) return null;
+
+                            const analysis = analysisMap.get(selectedHour ?? hourIdx);
+
+                            return (
+                                <div key={hourIdx}>
+                                    {/* Hour header */}
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <span className={cn(
+                                            "text-sm font-mono font-black tabular-nums",
+                                            selectedHour === hourIdx ? "text-primary" : "text-muted-foreground",
+                                        )}>
+                                            {formatHour(selectedHour ?? hourIdx)}
+                                        </span>
+                                        <div className="flex-1 h-px bg-border/30" />
+                                        <span className="text-[10px] text-muted-foreground/50 font-mono">{hourVideos.length} videos</span>
+                                    </div>
+
+                                    {/* Full analysis for this hour */}
+                                    {analysis && analysis.video_count > 0 && (
+                                        <div className="mb-3 p-3 bg-primary/5 rounded-xl border border-primary/10">
+                                            <div className="flex items-center gap-1.5 mb-1.5">
+                                                <Sparkles className="w-3 h-3 text-primary" />
+                                                <span className="text-[9px] font-black uppercase tracking-widest text-primary/60">AI Summary</span>
+                                            </div>
+                                            <p className="text-xs text-foreground/80 leading-relaxed">{analysis.summary}</p>
+                                        </div>
+                                    )}
+
+                                    {/* Video grid */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {hourVideos.map(post => (
+                                            <PostCard key={post.id} post={post} />
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })}
+
+                        {/* Empty state when hour selected but no videos */}
+                        {selectedHour !== null && (hourGroups.get(selectedHour) || []).length === 0 && (
+                            <div className="py-12 text-center border border-dashed rounded-3xl border-border/40">
+                                <p className="text-muted-foreground font-bold uppercase tracking-widest text-sm">No uploads at {formatHour(selectedHour)}</p>
                             </div>
                         )}
                     </main>
 
-                    {/* ZONE 3: Account Directory (right, ~22%) */}
+                    {/* ZONE 3: Account Directory */}
                     <aside className="lg:col-span-3 space-y-6">
                         <div className="sticky top-6 space-y-6">
                             {(Object.entries(accountsByCategory) as [AccountCategory, SocialAccount[]][]).map(([category, accounts]) => (
