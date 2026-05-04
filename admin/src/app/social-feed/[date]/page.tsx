@@ -529,8 +529,8 @@ export default function SocialFeedPage() {
             {/* ─── Header + Date Navigation ─────────────────── */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-red-500/10 rounded-xl text-red-500">
-                        <YouTubeIcon className="w-6 h-6" />
+                    <div className="p-2 bg-primary/10 rounded-xl text-primary">
+                        <Sparkles className="w-6 h-6" />
                     </div>
                     <div>
                         <div className="flex items-center gap-2">
@@ -618,28 +618,46 @@ export default function SocialFeedPage() {
                         </div>
                     </div>
 
-                    {/* Source list */}
-                    <div className="border-t border-amber-500/10 px-5 py-4">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-3">Accounts to scrape</p>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
-                            {activeSources.map(source => (
-                                <div key={source.id} className="flex items-center gap-2 px-2.5 py-2 bg-background/40 rounded-lg border border-border/10">
-                                    <div className="w-7 h-7 rounded-full overflow-hidden bg-muted flex-shrink-0">
-                                        {source.avatar_url ? (
-                                            <img src={source.avatar_url} alt="" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center">
-                                                <YouTubeIcon className="w-3 h-3 text-red-500" />
-                                            </div>
-                                        )}
+                    {/* Source list grouped by category */}
+                    <div className="border-t border-amber-500/10 px-5 py-4 space-y-4">
+                        {(() => {
+                            const CATEGORY_ORDER: { key: string; label: string }[] = [
+                                { key: 'distributor', label: 'Distributors & Studios' },
+                                { key: 'streaming', label: 'Streaming' },
+                                { key: 'cinema_chain', label: 'Cinema Chains' },
+                                { key: 'critic', label: 'Critics & Reviewers' },
+                                { key: 'community', label: 'Community & Fandom' },
+                                { key: 'news', label: 'News & Trade' },
+                            ];
+                            const grouped = new Map<string, typeof activeSources>();
+                            for (const s of activeSources) {
+                                if (!grouped.has(s.category)) grouped.set(s.category, []);
+                                grouped.get(s.category)!.push(s);
+                            }
+                            return CATEGORY_ORDER
+                                .filter(c => grouped.has(c.key))
+                                .map(({ key, label }) => (
+                                    <div key={key}>
+                                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">{label}</p>
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
+                                            {(grouped.get(key) || []).map(source => (
+                                                <div key={source.id} className="flex items-center gap-2.5 px-3 py-2 bg-background/40 rounded-lg border border-border/10">
+                                                    <div className="w-8 h-8 rounded-full overflow-hidden bg-muted flex-shrink-0">
+                                                        {source.avatar_url ? (
+                                                            <img src={source.avatar_url} alt="" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center">
+                                                                <YouTubeIcon className="w-3.5 h-3.5 text-red-500" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <span className="text-sm font-medium truncate">{source.display_name}</span>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="text-[10px] font-bold truncate">{source.display_name}</p>
-                                        <p className="text-[8px] text-muted-foreground/60 truncate">{source.category.replace('_', ' ')}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                                ));
+                        })()}
                     </div>
 
                     {/* Action button — at the bottom */}
