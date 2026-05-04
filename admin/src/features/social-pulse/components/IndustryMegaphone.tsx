@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Megaphone, ExternalLink, TrendingUp, Play, MessageSquare } from 'lucide-react';
+import { Megaphone, ExternalLink, TrendingUp, Play } from 'lucide-react';
 import { SocialSignal } from '../types';
 
 interface IndustryMegaphoneProps {
@@ -11,12 +11,8 @@ interface IndustryMegaphoneProps {
 
 export function IndustryMegaphone({ narrative, signals }: IndustryMegaphoneProps) {
     return (
-        <div className="bg-primary/5 border border-primary/20 rounded-3xl p-6 space-y-6 overflow-hidden relative group">
-            <div className="absolute -right-8 -top-8 text-primary/10 group-hover:text-primary/20 transition-all duration-1000 rotate-12">
-                <Megaphone size={160} />
-            </div>
-            
-            <div className="relative z-10 space-y-4">
+        <div className="bg-primary/5 border border-primary/20 rounded-3xl p-6 space-y-6">
+            <div className="space-y-4">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-primary/10 rounded-xl">
                         <Megaphone className="w-5 h-5 text-primary" />

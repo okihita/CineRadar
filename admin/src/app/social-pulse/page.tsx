@@ -1,11 +1,11 @@
 /**
- * Social Pulse Dashboard (Mockup)
+ * Social Pulse Dashboard
  * 
- * Demonstrates the Industry Megaphone and Buzz Ranking.
+ * Cross-platform sentiment analysis and buzz tracking.
  */
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import useSWR from 'swr';
 import { Share2, Loader2, AlertCircle, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,78 +15,25 @@ import { ApiResponse } from '@/types';
 import { MovieWithStats } from '@/features/performances/types/performance';
 import { IndustryMegaphone } from '@/features/social-pulse/components/IndustryMegaphone';
 import { DivergenceEngine } from '@/features/social-pulse/components/DivergenceEngine';
-import { MovieBuzz, SocialSignal } from '@/features/social-pulse/types';
+import { MovieDeepDive } from '@/features/social-pulse/components/MovieDeepDive';
+import { useMovieEnrichment, useNarrative, useSignals } from '@/features/social-pulse/hooks/useMovieEnrichment';
 
 export default function SocialPulsePage() {
     const today = getTodayJakarta();
     const { data, isLoading, error, mutate } = useSWR(`/api/performance?date=${today}`, fetcher);
-    
+    const [selectedMovieId, setSelectedMovieId] = useState<string | null>(null);
+
     const result = data as ApiResponse<{ movies: MovieWithStats[] }> | undefined;
+    const rawMovies = useMemo(() => result?.success ? result.data.movies : [], [result]);
 
-    // Mock narrative and signals
-    const mockNarrative = "Nostalgia factor for 'DILAN 1997' is perfectly synced with sales, while 'VINA' shows classic 'Pent-up Demand' where search volume is outstripping available tickets in secondary cities.";
-    const mockSignals: SocialSignal[] = [
-        {
-            source: 'YouTube',
-            author: 'Cine Crib',
-            title: 'DILAN 1997 REVIEW - Nostalgia Brutal!',
-            url: 'https://youtube.com',
-            engagement_score: 95,
-            sentiment: 'positive',
-            views: '120K Views',
-            timestamp: new Date().toISOString()
-        },
-        {
-            source: 'YouTube',
-            author: 'WatchmenID',
-            title: 'Kenapa Vina Bisa Viral?',
-            url: 'https://youtube.com',
-            engagement_score: 88,
-            sentiment: 'positive',
-            views: '85K Views',
-            timestamp: new Date().toISOString()
-        }
-    ];
+    const { enrichedMovies } = useMovieEnrichment(rawMovies);
+    const mockNarrative = useNarrative(enrichedMovies);
+    const mockSignals = useSignals(enrichedMovies);
 
-    // Enrich existing movies with Divergence Logic
-    const enrichedMovies: MovieBuzz[] = useMemo(() => {
-        const rawMovies = result?.success ? result.data.movies : [];
-        
-        return rawMovies.slice(0, 10).map((m, i) => {
-            // Use fixed values for mockup stability (Math.random is impure in render)
-            const buzzScore = Math.max(30, 95 - (i * 8));
-            const salesScore = Math.max(20, buzzScore - (i === 1 ? 30 : i === 4 ? -15 : 5));
-            
-            let insight: MovieBuzz['insight'] = 'synced';
-            if (buzzScore - salesScore > 20) insight = 'pent-up';
-            if (salesScore - buzzScore > 10) insight = 'over-hyped';
-            if (buzzScore < 50 && salesScore < 40) insight = 'fading';
-
-            let momentum: MovieBuzz['momentum'] = 'stable';
-            if (i === 1) momentum = 'rising';
-            if (i > 6) momentum = 'falling';
-
-            // Static trend for mockup
-            const trends_7d = [40, 45, 50, 60, 75, 90, 85, 80, 70, 60, 55, 50, 55, 65];
-
-            return {
-                metadata_id: m.id,
-                title: m.title,
-                poster: m.poster,
-                buzz_score: buzzScore,
-                sales_score: salesScore,
-                momentum,
-                insight,
-                top_keywords: [m.title.split(' ')[0].toLowerCase(), 'bioskop', 'review'],
-                trends_7d,
-                metrics: {
-                    google_trends: buzzScore,
-                    youtube_velocity: buzzScore - 10,
-                    ocr_pct: m.today?.avg_occupancy_pct || 0
-                }
-            } satisfies MovieBuzz;
-        }).sort((a, b) => b.buzz_score - a.buzz_score);
-    }, [result]);
+    const selectedMovie = useMemo(
+        () => enrichedMovies.find(m => m.metadata_id === selectedMovieId),
+        [enrichedMovies, selectedMovieId]
+    );
 
     if (isLoading) {
         return (
@@ -139,7 +86,14 @@ export default function SocialPulsePage() {
             <IndustryMegaphone narrative={mockNarrative} signals={mockSignals} />
 
             {/* 2. The Divergence Engine (Buzz vs Sales) */}
-            <DivergenceEngine movies={enrichedMovies} />
+            <DivergenceEngine movies={enrichedMovies} onMovieClick={(id) => setSelectedMovieId(id)} />
+
+            {/* 3. Detailed Forensic Overlay (Slide-over) */}
+            <MovieDeepDive 
+                movie={selectedMovie || null} 
+                open={!!selectedMovieId} 
+                onOpenChange={(open) => !open && setSelectedMovieId(null)} 
+            />
 
             {/* Empty State fallback */}
             {enrichedMovies.length === 0 && (

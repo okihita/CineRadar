@@ -19,10 +19,34 @@ export interface MovieBuzz {
     insight: 'synced' | 'pent-up' | 'fading' | 'over-hyped';
     top_keywords: string[];
     trends_7d: number[];
+    ai_analysis: string; // One paragraph forensic summary
+    history_14d: {
+        date: string;
+        buzz: number;
+        sales: number;
+    }[];
+    telemetry: {
+        google: {
+            top_provinces: { name: string; pct: number }[];
+            related_queries: string[];
+        };
+        youtube: {
+            view_velocity: string; // e.g. "+12%"
+            like_ratio: number;
+            top_comment_sentiment: string;
+        };
+        tmdb: {
+            global_rank: number;
+            local_popularity_delta: string;
+        };
+    };
     metrics: {
         google_trends: number;
         youtube_velocity: number;
-        ocr_pct: number; // Actual occupancy from performance data
+        ocr_pct: number;
+        raw_sold: number;
+        raw_seats: number;
+        raw_shows: number;
     };
 }
 
