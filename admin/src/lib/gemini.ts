@@ -82,6 +82,7 @@ export interface HourlySummaryResult {
     model: string;
     retried: boolean;
     hashtags: string[];
+    _error?: string;
 }
 
 /**
@@ -182,16 +183,17 @@ Brevity is critical. Every sentence must carry new information. No filler.`;
 
             console.error(`[Gemini Error] Attempt ${attempt + 1} failed:`, error instanceof Error ? error.message : error);
             return {
-                summary: `⚠️ AI summary unavailable — ${isRetryable ? `Gemini ${status} after retries.` : (error instanceof Error ? error.message : 'Unknown error')}`,
+                summary: `⚠️ Summary temporarily unavailable.`,
                 model: modelName,
                 retried,
                 hashtags,
+                _error: isRetryable ? `Service returned ${status} after retries.` : (error instanceof Error ? error.message : 'Unknown error'),
             };
         }
     }
 
     return {
-        summary: '⚠️ AI summary unavailable after multiple retries.',
+        summary: '⚠️ Summary temporarily unavailable.',
         model: modelName,
         retried: true,
         hashtags,

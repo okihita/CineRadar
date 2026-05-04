@@ -16,14 +16,12 @@
 import { NextResponse } from 'next/server';
 import { detectContentType } from '@/features/social-pulse/data/mockSocialFeed';
 import { firestoreRestClient } from '@/lib/firestore-rest';
-import { generateHourlySummary } from '@/lib/gemini';
+import { summarizeHour } from '@/lib/summarize';
 import {
     COLLECTIONS,
     makeHourId,
-    groupPostsByHour,
     type FirestoreSocialPost,
     type FirestoreSocialSource,
-    type FirestoreSocialAnalysis,
     type SourceCategory,
 } from '@/lib/firestore-social';
 
@@ -359,40 +357,15 @@ export async function POST(request: Request) {
                         totalVideos: postsWritten,
                     });
 
-                    const hourGroups = groupPostsByHour(allPosts);
                     let analysesWritten = 0;
                     let completedHours = 0;
-                    const now = new Date().toISOString();
                     const sourceIds = sources.map(s => s.id);
 
                     for (let hour = 0; hour < 24; hour++) {
-                        const hourId = makeHourId(date, hour);
-                        const postsInHour = hourGroups.get(hour) || [];
-
-                        // Count content types and active sources
-                        const typeBreakdown: Record<string, number> = {};
-                        const platformBreakdown: Record<string, number> = {};
-                        const sourcesActiveSet = new Set<string>();
-                        for (const p of postsInHour) {
-                            typeBreakdown[p.content_type] = (typeBreakdown[p.content_type] || 0) + 1;
-                            platformBreakdown[p.platform] = (platformBreakdown[p.platform] || 0) + 1;
-                            sourcesActiveSet.add(p.source_id);
-                        }
-                        const sourcesActive = [...sourcesActiveSet];
-
-                        // Generate AI summary (with retry callback for SSE)
-                        const { summary, model: usedModel, hashtags } = await generateHourlySummary(
-                            postsInHour.map(p => ({
-                                title: p.title,
-                                source_name: p.source_name,
-                                content_type: p.content_type,
-                                published_at: p.published_at,
-                                platform: p.platform,
-                                text: p.text || p.full_description || '',
-                            })),
-                            hour,
-                            date,
-                            ({ attempt, maxRetries, retryDelaySeconds }) => {
+                        const result = await summarizeHour(date, hour, {
+                            existingPosts: allPosts,
+                            sourceIds,
+                            onRetry: ({ attempt, maxRetries, retryDelaySeconds }) => {
                                 send('retry', {
                                     hour,
                                     hourFormatted: `${String(hour).padStart(2, '0')}:00`,
@@ -402,53 +375,25 @@ export async function POST(request: Request) {
                                     message: `Rate limited. Retrying in ${retryDelaySeconds}s (attempt ${attempt}/${maxRetries})...`,
                                 });
                             },
-                        );
+                        });
 
-                        const analysisDoc: Omit<FirestoreSocialAnalysis, 'id'> = {
-                            date,
-                            hour,
-                            summary,
-                            total_posts: postsInHour.length,
-                            posts_by_platform: platformBreakdown,
-                            posts_by_content_type: typeBreakdown,
-                            sources_active: sourcesActive,
-                            sources_fetched: sourceIds,
-                            hashtags,
-                            top_trailers: [],
-                            trending_topics: [],
-                            sentiment_hint: 'neutral',
-                            generated_at: now,
-                            model: usedModel,
-                            backfill_duration_ms: Date.now() - backfillStart,
-                            // YouTube backward compat
-                            video_count: postsInHour.length,
-                            content_type_breakdown: typeBreakdown,
-                            channels_active: postsInHour.map(p => p.source_name),
-                            channels_fetched: channelIds,
-                        };
-
-                        const ok = await firestoreRestClient.createDocument(
-                            COLLECTIONS.ANALYSIS,
-                            hourId,
-                            analysisDoc,
-                        );
-                        if (ok) analysesWritten++;
+                        if (result.success || result.postCount > 0) analysesWritten++;
                         completedHours++;
 
                         send('hour_done', {
                             hour,
                             hourFormatted: `${String(hour).padStart(2, '0')}:00`,
-                            videoCount: postsInHour.length,
-                            summary: summary.slice(0, 120) + (summary.length > 120 ? '...' : ''),
-                            fullSummary: summary,
-                            hashtags: hashtags.slice(0, 10),
+                            videoCount: result.postCount,
+                            summary: result.summary.slice(0, 120) + (result.summary.length > 120 ? '...' : ''),
+                            fullSummary: result.summary,
+                            hashtags: result.hashtags.slice(0, 10),
                             completedHours,
                             totalHours: 24,
                             progress: Math.round((completedHours / 24) * 100),
                         });
 
                         // Rate limit: only delay if hour had content (triggered a real API call)
-                        if (postsInHour.length > 0) {
+                        if (result.postCount > 0) {
                             await new Promise(r => setTimeout(r, 5000));
                         }
                     }

@@ -25,6 +25,7 @@ import {
     Sparkles,
     Trash2,
     Hash,
+    RefreshCw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -40,6 +41,31 @@ import {
     formatHour,
     groupPostsByHour,
 } from '@/lib/firestore-social';
+
+/** Render inline markdown (bold, italic) to JSX. Handles nested * and **. */
+function renderMD(text: string): React.ReactNode[] {
+    const parts: React.ReactNode[] = [];
+    // Match **bold**, *italic*, or plain text
+    const regex = /(\*\*(.+?)\*\*|\*(.+?)\*)/g;
+    let lastIdx = 0;
+    let match: RegExpExecArray | null;
+    let key = 0;
+    while ((match = regex.exec(text)) !== null) {
+        if (match.index > lastIdx) {
+            parts.push(text.slice(lastIdx, match.index));
+        }
+        if (match[2]) {
+            parts.push(<strong key={key++}>{match[2]}</strong>);
+        } else if (match[3]) {
+            parts.push(<em key={key++}>{match[3]}</em>);
+        }
+        lastIdx = regex.lastIndex;
+    }
+    if (lastIdx < text.length) {
+        parts.push(text.slice(lastIdx));
+    }
+    return parts.length > 0 ? parts : [text];
+}
 
 const CONTENT_ICONS: Record<ContentType, typeof Film> = {
     trailer: Film,
@@ -280,6 +306,10 @@ export default function SocialFeedPage() {
     const retryStartTime = useRef<number>(0);
     const retryDelayTotal = useRef<number>(0);
 
+    // Summary retry state
+    const [retryingHours, setRetryingHours] = useState<Set<number>>(new Set());
+    const [batchRetrying, setBatchRetrying] = useState(false);
+
     useEffect(() => {
         if (progress?.phase === 'retrying' && progress.retryInfo) {
             retryStartTime.current = Date.now();
@@ -519,6 +549,55 @@ export default function SocialFeedPage() {
             setDeleting(false);
         }
     }, [selectedDate, posts.length, analyses.length, mutate]);
+
+    // Summary retry — single hour
+    const handleRetryHour = useCallback(async (hour: number) => {
+        setRetryingHours(prev => new Set(prev).add(hour));
+        try {
+            const res = await fetch('/api/social-feed/summarize', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ date: selectedDate, hours: [hour] }),
+            });
+            const result = await res.json();
+            if (result.success) mutate();
+        } finally {
+            setRetryingHours(prev => {
+                const next = new Set(prev);
+                next.delete(hour);
+                return next;
+            });
+        }
+    }, [selectedDate, mutate]);
+
+    // Summary retry — batch (all failed/missing)
+    const handleRetryAll = useCallback(async () => {
+        setBatchRetrying(true);
+        try {
+            const res = await fetch('/api/social-feed/summarize', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ date: selectedDate }),
+            });
+            const result = await res.json();
+            if (result.success) mutate();
+        } finally {
+            setBatchRetrying(false);
+        }
+    }, [selectedDate, mutate]);
+
+    // Detect failed hours for batch retry button
+    const failedHours = useMemo(() => {
+        const failed: number[] = [];
+        for (const [hour, posts] of hourGroups.entries()) {
+            if (posts.length === 0) continue;
+            const analysis = analysisMap.get(hour);
+            if (!analysis || analysis.summary?.startsWith('⚠️')) {
+                failed.push(hour);
+            }
+        }
+        return failed;
+    }, [hourGroups, analysisMap]);
 
     // Date navigation
     const goToPrevDay = () => setSelectedDate(addDays(selectedDate, -1));
@@ -864,7 +943,7 @@ export default function SocialFeedPage() {
                                             </div>
                                             {analysis && (
                                                 <p className="text-[10px] text-muted-foreground leading-snug line-clamp-3">
-                                                    {analysis.summary}
+                                                    {renderMD(analysis.summary)}
                                                 </p>
                                             )}
                                             {!hasPosts && !analysis && (
@@ -892,6 +971,23 @@ export default function SocialFeedPage() {
                                 );
                             })}
                         </div>
+
+                        {/* Batch retry for failed summaries */}
+                        {failedHours.length > 0 && !backfilling && (
+                            <div className="flex items-center gap-3 px-3 py-2 bg-orange-500/5 rounded-xl border border-orange-500/10">
+                                <span className="text-[10px] text-orange-600 font-medium">
+                                    {failedHours.length} hour{failedHours.length > 1 ? 's' : ''} missing summary
+                                </span>
+                                <button
+                                    onClick={handleRetryAll}
+                                    disabled={batchRetrying}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-orange-600 hover:bg-orange-500/10 rounded-md transition-colors disabled:opacity-50"
+                                >
+                                    {batchRetrying ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                                    {batchRetrying ? 'Generating...' : 'Generate All'}
+                                </button>
+                            </div>
+                        )}
 
                         {/* Hour sections — ascending from 0 (morning) to 23 (night) */}
                         {[...Array(24)].map((_, h) => {
@@ -930,26 +1026,54 @@ export default function SocialFeedPage() {
                                     </div>
 
                                     {/* Full analysis for this hour */}
-                                    {analysis && postCount > 0 && (
-                                        <div className="mb-3 mx-3 p-3 bg-primary/5 rounded-xl border border-primary/10">
-                                            <div className="flex items-center gap-1.5 mb-1.5">
-                                                <Sparkles className="w-3 h-3 text-primary" />
-                                                <span className="text-[9px] font-black uppercase tracking-widest text-primary/60">AI Summary</span>
-                                            </div>
-                                            <p className="text-xs text-foreground/80 leading-relaxed whitespace-pre-line">{analysis.summary}</p>
-                                            {/* Hashtag pills */}
-                                            {analysis.hashtags && analysis.hashtags.length > 0 && (
-                                                <div className="flex flex-wrap gap-1.5 mt-2">
-                                                    {analysis.hashtags.map((tag: string) => (
-                                                        <span key={tag} className="inline-flex items-center gap-0.5 px-2 py-0.5 bg-primary/10 text-primary/70 rounded-full text-[9px] font-bold">
-                                                            <Hash className="w-2.5 h-2.5" />
-                                                            {tag.replace('#', '')}
-                                                        </span>
-                                                    ))}
+                                    {postCount > 0 && (() => {
+                                        const isFailed = !analysis || analysis.summary?.startsWith('⚠️');
+                                        const isRetrying = retryingHours.has(hourIdx);
+
+                                        if (isFailed) {
+                                            return (
+                                                <div className="mb-3 mx-3 p-3 bg-orange-500/5 rounded-xl border border-orange-500/10">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <Sparkles className="w-3 h-3 text-orange-500/50" />
+                                                            <span className="text-[9px] font-bold uppercase tracking-widest text-orange-500/50">
+                                                                {analysis ? 'Summary Unavailable' : 'No Summary'}
+                                                            </span>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => handleRetryHour(hourIdx)}
+                                                            disabled={isRetrying}
+                                                            className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-orange-600 hover:bg-orange-500/10 rounded-md transition-colors disabled:opacity-50"
+                                                        >
+                                                            {isRetrying ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                                                            {isRetrying ? 'Generating...' : 'Generate'}
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                            )}
-                                        </div>
-                                    )}
+                                            );
+                                        }
+
+                                        return (
+                                            <div className="mb-3 mx-3 p-3 bg-primary/5 rounded-xl border border-primary/10">
+                                                <div className="flex items-center gap-1.5 mb-1.5">
+                                                    <Sparkles className="w-3 h-3 text-primary" />
+                                                    <span className="text-[9px] font-black uppercase tracking-widest text-primary/60">AI Summary</span>
+                                                </div>
+                                                <p className="text-xs text-foreground/80 leading-relaxed whitespace-pre-line">{renderMD(analysis.summary)}</p>
+                                                {/* Hashtag pills */}
+                                                {analysis.hashtags && analysis.hashtags.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1.5 mt-2">
+                                                        {analysis.hashtags.map((tag: string) => (
+                                                            <span key={tag} className="inline-flex items-center gap-0.5 px-2 py-0.5 bg-primary/10 text-primary/70 rounded-full text-[9px] font-bold">
+                                                                <Hash className="w-2.5 h-2.5" />
+                                                                {tag.replace('#', '')}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
 
                                     {/* Post grid */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 px-3 pb-3">
