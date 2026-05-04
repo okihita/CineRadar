@@ -33,10 +33,18 @@ const CHANNEL_SEEDS: ChannelSeed[] = [
     { channel_id: 'UC-khv-3jEhk6DN4KVglHYkA', display_name: 'Soraya Intercine Films', handle: '@SorayaIntercineFilms', category: 'distributor', verified: true, active: true, notes: '~103K subs' },
     { channel_id: 'UCwZfUUW2r0TtnXhDfb3DRgw', display_name: 'Warner Bros. Indonesia', handle: '@WarnerBrosID', category: 'distributor', verified: true, active: true, notes: '~121K subs' },
     { channel_id: 'UCaMUw3b9jDwmay8EKP7CBsg', display_name: 'Falcon Pictures', handle: '@FalconPictures', category: 'distributor', verified: true, active: false, notes: 'Very small YouTube presence (~12 subs). Verify manually.' },
+    { channel_id: 'UCjTA5AcXGsksWEZkRvFO8mA', display_name: 'Visinema Pictures', handle: '@VisinemaPictures', category: 'distributor', verified: true, active: true, notes: 'Behind KKN, Pengabdi Setan 2. ~750K subs' },
+    { channel_id: 'UC6RHORmRuCiGJQILQDu5B7Q', display_name: 'Screenplay Films', handle: '@ScreenplayFilms', category: 'distributor', verified: true, active: true, notes: 'Behind Dilan, AADC 2. ~180K subs' },
+    { channel_id: 'UC1zZXckboolY8-GNVpU_ISQ', display_name: 'Miles Films', handle: '@MilesFilms', category: 'distributor', verified: true, active: true, notes: 'Behind Pengabdi Setan (2017). Joko Anwar.' },
+    { channel_id: 'UCyEdDGN6e9NsATMCgTktXTQ', display_name: 'MVP Pictures', handle: '@mvpictures', category: 'distributor', verified: true, active: true, notes: 'Behind KKN di Desa Penari (10M+ admissions)' },
+    { channel_id: 'UCrm3aF4Y1VGyEyUnEfXYY3A', display_name: 'BASE Films', handle: '@BASEFilms', category: 'distributor', verified: true, active: true, notes: 'Horror/thriller specialist. Behind Perewangan.' },
+    { channel_id: 'UCGFqddFzZ83Hg3q0OtYhT3Q', display_name: 'Infinite Studios', handle: '@InfiniteStudiosBatam', category: 'distributor', verified: true, active: true, notes: 'Animation & VFX studio. Behind Sing to the Dawn.' },
 
     // ─── Streaming ─────────────────────────────────────
     { channel_id: 'UCI_c_ZmYt6CtFJo4jOQVhiw', display_name: 'Disney+ Indonesia', handle: '@DisneyPlusID', category: 'streaming', verified: true, active: true, notes: '~1.2M subs' },
     { channel_id: 'UC5E0wgsW3JyQEP-DLkGwI2Q', display_name: 'Netflix Indonesia', handle: '@NetflixIndonesia', category: 'streaming', verified: true, active: true, notes: '~11.5M subs' },
+    { channel_id: 'UCC6BkAWZB6UWdQoVtilpDSw', display_name: 'Vidio', handle: '@vidioid', category: 'streaming', verified: true, active: true, notes: 'Major Indonesian streaming platform. ~550K subs' },
+    { channel_id: 'UC3RrFzfZJcXVdTklTUHDcBq', display_name: 'BioskopOnline', handle: '@BioskopOnline', category: 'streaming', verified: true, active: true, notes: 'Government-backed Indonesian cinema streaming' },
 
     // ─── Cinema Chains ─────────────────────────────────
     { channel_id: 'UC2vfMMUMoAZd-RBGwA0-9Nw', display_name: 'CGV Kreasi', handle: '@CGVKreasi', category: 'cinema_chain', verified: true, active: true, notes: '~260K subs' },
@@ -48,10 +56,15 @@ const CHANNEL_SEEDS: ChannelSeed[] = [
     { channel_id: 'UCrMqntY4lAQu0JHYFl8Z0nw', display_name: 'Cine Crib', handle: '@CineCrib', category: 'critic', verified: true, active: true, notes: '~500K subs' },
     { channel_id: 'UC_5tCGLrVehijNbC1_G8a5w', display_name: 'Ngelantur Indonesia', handle: '@NgelanturIndonesia', category: 'critic', verified: false, active: true, notes: '~200K subs' },
     { channel_id: 'UCLIm7HLHCNr4ZNJcNjNkbeQ', display_name: 'Review Film iD', handle: '@ReviewFilmID', category: 'critic', verified: true, active: true, notes: '~47K subs' },
+    { channel_id: 'UCFF47NXFmpN7elvt0e1TRUV', display_name: 'Duta Film', handle: '@DutaFilm', category: 'critic', verified: true, active: true, notes: 'Major movie review channel. ~500K subs' },
+    { channel_id: 'UCcy9-Nqw4RbOyVQglSxjCYg', display_name: 'Musik Film', handle: '@MusikFilm', category: 'critic', verified: true, active: true, notes: 'Film reviews and discussion. ~80K subs' },
 
     // ─── Community / Fandom ────────────────────────────
     { channel_id: 'UCHlCL5cY9PPlq2Ou9iU4NuQ', display_name: 'Bioskop Mania', handle: '@BioskopMania', category: 'community', verified: false, active: true, notes: '~350K subs' },
     { channel_id: 'UCTg9aljIS9E1eOv8W9Sx53g', display_name: 'Layar Lebar', handle: '@LayarLebar', category: 'community', verified: true, active: true, notes: 'Movie fan channel' },
+    { channel_id: 'UCsUT0qQmoezR_J5VAUlwffQ', display_name: 'KomaTV', handle: '@KomaTV', category: 'community', verified: true, active: true, notes: 'Sketch comedy, strong cinema culture. ~1.5M subs' },
+    { channel_id: 'UCvaUHIHmeEBxshWyYW5TfYg', display_name: 'Flix Indonesia', handle: '@FlixIndonesia', category: 'community', verified: true, active: true, notes: 'Film discussion and community' },
+    { channel_id: 'UCadv-UfEyjjwOPcZHc2QvIQ', display_name: 'Nonton Yuk', handle: '@nontonyukofficial', category: 'community', verified: true, active: true, notes: 'Movie reactions, reviews, recommendations' },
 
     // ─── News / Trade ──────────────────────────────────
     { channel_id: 'UCfsp3KKBKjezdNxpoWxCWHg', display_name: 'KapanLagi', handle: '@KapanLagidotcom', category: 'news', verified: true, active: true, notes: 'Entertainment news' },
