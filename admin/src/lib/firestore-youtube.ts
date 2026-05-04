@@ -2,16 +2,36 @@
  * Firestore types for the beta YouTube feed collections.
  * 
  * Collections:
- *   beta_youtube_videos/{video_id}         — individual video documents
- *   beta_youtube_hourly_analysis/{date_hour} — per-hour AI summaries
+ *   beta_youtube_channels/{channel_id}       — monitored YouTube channels
+ *   beta_youtube_videos/{video_id}           — individual video documents
+ *   beta_youtube_hourly_analysis/{date_hour}  — per-hour AI summaries
  */
+
+// ─── Channel Document ─────────────────────────────────
+
+export type ChannelCategory = 'critic' | 'cinema_chain' | 'distributor' | 'streaming' | 'community' | 'news';
+
+export interface FirestoreYouTubeChannel {
+    id: string;                    // YouTube channel ID (UC...)
+    display_name: string;
+    handle: string;                // @NetflixIndonesia
+    category: ChannelCategory;
+    verified: boolean;
+    avatar_url: string;
+    subscriber_count: number;
+    active: boolean;               // false = paused/removed
+    notes: string;                 // admin notes
+    added_at: string;              // ISO timestamp
+    last_backfilled_at: string;    // ISO timestamp of last successful fetch
+}
 
 // ─── YouTube Video Document ────────────────────────────
 
 export interface FirestoreYouTubeVideo {
     id: string;                    // YouTube video ID (document ID)
     title: string;
-    description: string;
+    description: string;          // Truncated from activities.list (~200 chars)
+    full_description: string;     // Complete description from videos.list
     thumbnail: string;
     video_url: string;
     channel_id: string;
@@ -20,6 +40,10 @@ export interface FirestoreYouTubeVideo {
     content_type: ContentType;
     published_at: string;          // ISO timestamp
     fetched_at: string;            // ISO timestamp
+    duration: string;              // ISO 8601 duration (PT15M30S)
+    view_count: number;
+    like_count: number;
+    tags: string[];
 }
 
 // ─── Hourly Analysis Document ──────────────────────────
@@ -33,16 +57,19 @@ export interface FirestoreHourlyAnalysis {
     content_type_breakdown: Record<string, number>;
     channels_active: string[];     // channel titles
     generated_at: string;          // ISO timestamp
-    model: string;                 // e.g. "gemini-2.0-flash"
+    model: string;                 // e.g. "gemini-3.1-flash-lite-preview"
+    channels_fetched: string[];    // channel IDs that were backfilled
+    backfill_duration_ms: number;  // how long the entire backfill took
 }
 
-// ─── Content types (synced with mockSocialFeed.ts) ─────
+// ─── Content types ─────────────────────────────────────
 
 export type ContentType = 'trailer' | 'short' | 'review' | 'promo' | 'community';
 
 // ─── Collection names ──────────────────────────────────
 
 export const COLLECTIONS = {
+    CHANNELS: 'beta_youtube_channels',
     VIDEOS: 'beta_youtube_videos',
     HOURLY_ANALYSIS: 'beta_youtube_hourly_analysis',
 } as const;

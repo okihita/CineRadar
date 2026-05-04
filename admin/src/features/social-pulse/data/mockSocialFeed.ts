@@ -4,7 +4,7 @@
  * Account data for the sidebar. Real post data comes from the YouTube API.
  */
 
-export type AccountCategory = 'critic' | 'cinema_chain' | 'distributor' | 'community';
+export type AccountCategory = 'critic' | 'cinema_chain' | 'distributor' | 'streaming' | 'community' | 'news';
 
 export interface SocialAccount {
     id: string;
@@ -112,7 +112,8 @@ export function detectContentType(title: string, category: AccountCategory): Con
     // Category-based fallback
     if (category === 'critic') return 'review';
     if (category === 'community') return 'community';
-    return 'promo';
+    if (category === 'news') return 'community'; // news posts treated as community content
+    return 'promo'; // distributor, streaming, cinema_chain all default to promo
 }
 
 export const CONTENT_TYPE_LABELS: Record<ContentType, { label: string; color: string; desc: string }> = {

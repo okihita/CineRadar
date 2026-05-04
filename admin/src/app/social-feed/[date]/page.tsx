@@ -29,10 +29,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { fetcher } from '@/lib/api';
 import {
-    ACCOUNTS,
     CONTENT_TYPE_LABELS,
-    type SocialAccount,
-    type AccountCategory,
     type ContentType,
 } from '@/features/social-pulse/data/mockSocialFeed';
 import { YouTubeIcon } from '@/components/BrandIcons';
@@ -42,15 +39,6 @@ import {
     formatHour,
     groupVideosByHour,
 } from '@/lib/firestore-youtube';
-
-// ─── Category labels ──────────────────────────────────
-
-const CATEGORY_LABELS: Record<AccountCategory, { label: string; color: string }> = {
-    critic: { label: 'Critics', color: 'text-amber-500' },
-    cinema_chain: { label: 'Cinema Chains', color: 'text-green-500' },
-    distributor: { label: 'Distributors', color: 'text-blue-500' },
-    community: { label: 'Community', color: 'text-purple-500' },
-};
 
 const CONTENT_ICONS: Record<ContentType, typeof Film> = {
     trailer: Film,
@@ -121,65 +109,93 @@ interface DataResponse {
 // ─── Post Card ─────────────────────────────────────────
 
 function PostCard({ post }: { post: FirestoreYouTubeVideo }) {
+    const [expanded, setExpanded] = useState(false);
     const typeConfig = CONTENT_TYPE_LABELS[post.content_type as ContentType] || CONTENT_TYPE_LABELS.community;
     const TypeIcon = CONTENT_ICONS[post.content_type as ContentType] || CONTENT_ICONS.community;
-    const account = ACCOUNTS.find(a => a.display_name === post.channel_title);
+    const description = post.full_description || post.description;
+    const hasDescription = description && description.length > 0;
 
     return (
-        <a
-            href={post.video_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group block bg-background/50 border border-border/40 rounded-2xl hover:bg-muted/30 hover:border-border/60 transition-all duration-300 overflow-hidden"
-        >
-            {post.thumbnail && (
-                <div className="relative">
-                    <img src={post.thumbnail} alt="" className="w-full h-auto object-cover" loading="lazy" />
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30">
-                        <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center shadow-lg">
-                            <YouTubeIcon className="w-5 h-5 text-white" />
-                        </div>
-                    </div>
-                    <div className={cn("absolute bottom-2 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-background/80 backdrop-blur-sm text-[8px] font-bold uppercase tracking-wider", typeConfig.color)}>
-                        <TypeIcon className="w-2.5 h-2.5" />
-                        <span>{post.content_type}</span>
-                    </div>
-                    <span className="absolute bottom-2 right-2 text-[9px] text-white/80 font-mono tabular-nums bg-black/50 backdrop-blur-sm px-1.5 py-0.5 rounded-md">{timeAgo(post.published_at)}</span>
-                </div>
-            )}
-
-            <div className="p-3 space-y-2">
-                <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full overflow-hidden bg-muted flex-shrink-0">
-                        {post.channel_avatar ? (
-                            <img src={post.channel_avatar} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                                <YouTubeIcon className="w-3 h-3 text-red-500" />
+        <div className="group bg-background/50 border border-border/40 rounded-2xl hover:bg-muted/30 hover:border-border/60 transition-all duration-300 overflow-hidden">
+            <a
+                href={post.video_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block"
+            >
+                {post.thumbnail && (
+                    <div className="relative">
+                        <img src={post.thumbnail} alt="" className="w-full h-auto object-cover" loading="lazy" />
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30">
+                            <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center shadow-lg">
+                                <YouTubeIcon className="w-5 h-5 text-white" />
                             </div>
+                        </div>
+                        <div className={cn("absolute bottom-2 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-background/80 backdrop-blur-sm text-[8px] font-bold uppercase tracking-wider", typeConfig.color)}>
+                            <TypeIcon className="w-2.5 h-2.5" />
+                            <span>{post.content_type}</span>
+                        </div>
+                        <span className="absolute bottom-2 right-2 text-[9px] text-white/80 font-mono tabular-nums bg-black/50 backdrop-blur-sm px-1.5 py-0.5 rounded-md">{timeAgo(post.published_at)}</span>
+                        {post.view_count > 0 && (
+                            <span className="absolute top-2 right-2 text-[8px] text-white/70 font-mono bg-black/40 backdrop-blur-sm px-1.5 py-0.5 rounded-md">{formatNumber(post.view_count)} views</span>
                         )}
                     </div>
-                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                        <span className="text-[11px] font-bold truncate">{post.channel_title}</span>
-                        {account?.verified && <CheckCircle2 className="w-3 h-3 text-sky-400 flex-shrink-0" />}
+                )}
+
+                <div className="p-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full overflow-hidden bg-muted flex-shrink-0">
+                            {post.channel_avatar ? (
+                                <img src={post.channel_avatar} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                    <YouTubeIcon className="w-3 h-3 text-red-500" />
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                            <span className="text-[11px] font-bold truncate">{post.channel_title}</span>
+                        </div>
                     </div>
+                    <p className="text-[12px] font-semibold leading-snug text-foreground line-clamp-2">
+                        {post.title}
+                    </p>
                 </div>
-                <p className="text-[12px] font-semibold leading-snug text-foreground line-clamp-2">
-                    {post.title}
-                </p>
-            </div>
-        </a>
+            </a>
+
+            {/* Expandable description */}
+            {hasDescription && (
+                <div className="px-3 pb-3">
+                    <button
+                        onClick={(e) => { e.preventDefault(); setExpanded(!expanded); }}
+                        className="w-full text-left"
+                    >
+                        <p className={cn(
+                            "text-[11px] text-muted-foreground/70 leading-relaxed whitespace-pre-line",
+                            !expanded && "line-clamp-2",
+                        )}>
+                            {description}
+                        </p>
+                        {description.length > 100 && (
+                            <span className="text-[9px] text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors">
+                                {expanded ? '← Show less' : 'Show more ▾'}
+                            </span>
+                        )}
+                    </button>
+                </div>
+            )}
+        </div>
     );
 }
 
 // ─── Account Card ──────────────────────────────────────
 
-function AccountCard({ account, postCount }: { account: SocialAccount; postCount: number }) {
+function AccountCard({ name, avatar, postCount }: { name: string; avatar: string; postCount: number }) {
     return (
         <div className="flex items-center gap-3 p-3 bg-background/50 rounded-xl border border-border/20 hover:bg-muted/20 transition-colors">
             <div className="w-10 h-10 rounded-full overflow-hidden bg-muted flex-shrink-0">
-                {account.avatar_url ? (
-                    <img src={account.avatar_url} alt="" className="w-full h-full object-cover" />
+                {avatar ? (
+                    <img src={avatar} alt="" className="w-full h-full object-cover" />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center">
                         <YouTubeIcon className="w-4 h-4 text-red-500" />
@@ -188,12 +204,9 @@ function AccountCard({ account, postCount }: { account: SocialAccount; postCount
             </div>
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-bold truncate">{account.display_name}</span>
-                    {account.verified && <CheckCircle2 className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />}
+                    <span className="text-sm font-bold truncate">{name}</span>
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs font-mono text-muted-foreground">{account.follower_count} subs</span>
-                    <span className="text-xs text-muted-foreground/30">•</span>
                     <span className="text-xs font-mono text-muted-foreground">{postCount} videos</span>
                 </div>
             </div>
@@ -295,34 +308,43 @@ export default function SocialFeedPage() {
         return map;
     }, [analyses]);
 
-    // Compute account data from videos
-    const enrichedAccounts = useMemo(() => {
-        const avatarMap = new Map<string, string>();
-        const subsMap = new Map<string, string>();
+    // Derive accounts from video data (no longer hardcoded)
+    interface DerivedAccount {
+        id: string;
+        display_name: string;
+        avatar_url: string;
+        category: string;
+        video_count: number;
+    }
+
+    const derivedAccounts = useMemo(() => {
+        const seen = new Map<string, DerivedAccount>();
         for (const v of videos) {
-            if (v.channel_avatar && !avatarMap.has(v.channel_title)) {
-                avatarMap.set(v.channel_title, v.channel_avatar);
+            if (!seen.has(v.channel_id)) {
+                seen.set(v.channel_id, {
+                    id: v.channel_id,
+                    display_name: v.channel_title,
+                    avatar_url: v.channel_avatar,
+                    category: 'unknown',
+                    video_count: 0,
+                });
             }
+            seen.get(v.channel_id)!.video_count++;
         }
-        return ACCOUNTS.map(a => ({
-            ...a,
-            avatar_url: avatarMap.get(a.display_name) || a.avatar_url,
-            follower_count: subsMap.get(a.display_name) || a.follower_count,
-        }));
+        return [...seen.values()];
     }, [videos]);
 
     const accountsByCategory = useMemo(() => {
-        const grouped: Record<AccountCategory, SocialAccount[]> = {
-            critic: [], cinema_chain: [], distributor: [], community: [],
-        };
-        enrichedAccounts.forEach(a => grouped[a.category].push(a));
+        // Group by whatever categories are in the videos; just list them flat for now
+        // since category is not stored per-video in the current schema
+        const grouped: Record<string, DerivedAccount[]> = {};
+        for (const a of derivedAccounts) {
+            const cat = 'all';
+            if (!grouped[cat]) grouped[cat] = [];
+            grouped[cat].push(a);
+        }
         return grouped;
-    }, [enrichedAccounts]);
-
-    const getPostCount = (accountId: string) => videos.filter(v => {
-        const account = ACCOUNTS.find(a => a.id === accountId);
-        return account && v.channel_title === account.display_name;
-    }).length;
+    }, [derivedAccounts]);
 
     // Backfill handler — consumes SSE stream
     const handleBackfill = useCallback(async () => {
@@ -772,20 +794,23 @@ export default function SocialFeedPage() {
                     {/* ZONE 3: Account Directory */}
                     <aside className="lg:col-span-3 space-y-6">
                         <div className="sticky top-6 space-y-6">
-                            {(Object.entries(accountsByCategory) as [AccountCategory, SocialAccount[]][]).map(([category, accounts]) => (
-                                accounts.length > 0 && (
-                                    <div key={category}>
-                                        <h3 className={cn("text-xs font-black uppercase tracking-widest mb-3", CATEGORY_LABELS[category].color)}>
-                                            {CATEGORY_LABELS[category].label}
-                                        </h3>
-                                        <div className="space-y-2">
-                                            {accounts.map(account => (
-                                                <AccountCard key={account.id} account={account} postCount={getPostCount(account.id)} />
-                                            ))}
-                                        </div>
-                                    </div>
-                                )
-                            ))}
+                            <div>
+                                <h3 className="text-xs font-black uppercase tracking-widest mb-3 text-muted-foreground">
+                                    Active Channels ({derivedAccounts.length})
+                                </h3>
+                                <div className="space-y-2">
+                                    {derivedAccounts
+                                        .sort((a, b) => b.video_count - a.video_count)
+                                        .map(account => (
+                                            <AccountCard
+                                                key={account.id}
+                                                name={account.display_name}
+                                                avatar={account.avatar_url}
+                                                postCount={account.video_count}
+                                            />
+                                        ))}
+                                </div>
+                            </div>
                         </div>
                     </aside>
                 </div>
