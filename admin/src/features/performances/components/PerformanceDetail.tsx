@@ -36,7 +36,7 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
 
     const movie = movieData?.data?.summary ?? null;
     const history = historyData?.data?.history ?? [];
-    const loadingMovie = !movieData && !movieData;
+    const loadingMovie = !movieData;
     const loadingHistory = !historyData;
 
     if (!movieData && loadingMovie) {

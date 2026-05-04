@@ -1,20 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2, Activity } from "lucide-react";
+import { useElapsedTimer } from '../../hooks/useElapsedTimer';
 
 export function PerformanceTabSkeleton() {
-    const [elapsed, setElapsed] = useState(0);
-
-    useEffect(() => {
-        let seconds = 0;
-        const interval = setInterval(() => {
-            seconds += 1;
-            setElapsed(seconds);
-        }, 1000);
-        return () => clearInterval(interval);
-    }, []);
+    const elapsed = useElapsedTimer();
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">

@@ -8,7 +8,7 @@ import isEqual from "fast-deep-equal";
 export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <SessionProvider>
-      <SWRConfig value={{ compare: isEqual }}>
+      <SWRConfig value={{ compare: isEqual, keepPreviousData: true }}>
         {children}
       </SWRConfig>
     </SessionProvider>
