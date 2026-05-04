@@ -97,6 +97,9 @@ importers:
       recharts:
         specifier: ^3.8.1
         version: 3.8.1(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react-is@18.3.1)(react@19.2.5)(redux@5.0.1)
+      simple-icons:
+        specifier: ^16.18.1
+        version: 16.18.1
       swr:
         specifier: ^2.4.1
         version: 2.4.1(react@19.2.5)
@@ -2954,6 +2957,10 @@ packages:
   side-channel@1.1.0:
     resolution: {integrity: sha512-ZX99e6tRweoUXqR+VBrslhda51Nh5MTQwou5tnUDgbtyM0dBgmhEDtWGP/xbKn6hqfPRHujUNwz5fy/wbbhnpw==}
     engines: {node: '>= 0.4'}
+
+  simple-icons@16.18.1:
+    resolution: {integrity: sha512-+AS16pmdVHFdKrzYuTGfNGW6RRJ7eubpRhh2wipqPD5nglXKKIbAoEFhdxuweR1AV63+TuLXVJ+NEqlJpXXa2A==}
+    engines: {node: '>=0.12.18'}
 
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
@@ -6205,6 +6212,8 @@ snapshots:
       side-channel-list: 1.0.1
       side-channel-map: 1.0.1
       side-channel-weakmap: 1.0.2
+
+  simple-icons@16.18.1: {}
 
   source-map-js@1.2.1: {}
 
