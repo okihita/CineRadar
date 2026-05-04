@@ -12,19 +12,14 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/auth';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { COLLECTIONS, type FirestoreSocialAnalysis, type FirestoreSocialPost } from '@/lib/firestore-social';
 import { summarizeHour } from '@/lib/summarize';
-
-function isAdmin(session: unknown): boolean {
-    return (session as { user?: { role?: string } })?.user?.role === 'admin';
-}
+import { requireAdmin, getJakartaHour } from '@/lib/auth-helpers';
 
 export async function POST(request: NextRequest) {
-    const session = await auth();
-    if (!session) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    if (!isAdmin(session)) return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    const authError = await requireAdmin();
+    if (authError) return authError;
 
     try {
         const body = await request.json();
@@ -92,8 +87,7 @@ export async function POST(request: NextRequest) {
             // Also find hours with posts but no analysis doc at all
             const postHourSet = new Set<number>();
             for (const p of allPosts) {
-                const jakartaTime = new Date(p.published_at).toLocaleString('en-US', { timeZone: 'Asia/Jakarta', hour: 'numeric', hour12: false });
-                const h = parseInt(jakartaTime, 10);
+                const h = getJakartaHour(p.published_at);
                 if (!analysisMap.has(h)) postHourSet.add(h);
             }
 
@@ -109,12 +103,11 @@ export async function POST(request: NextRequest) {
 
         // Execute retries sequentially (to avoid Gemini rate limits)
         const results = [];
-        for (const hour of hoursToRetry) {
-            const result = await summarizeHour(date, hour, { existingPosts: allPosts });
+        for (let i = 0; i < hoursToRetry.length; i++) {
+            const result = await summarizeHour(date, hoursToRetry[i], { existingPosts: allPosts });
             results.push(result);
 
-            // Small delay between retries to avoid rate limits
-            if (hoursToRetry.indexOf(hour) < hoursToRetry.length - 1) {
+            if (i < hoursToRetry.length - 1) {
                 await new Promise(r => setTimeout(r, 2000));
             }
         }

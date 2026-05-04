@@ -8,13 +8,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { COLLECTIONS, type FirestoreSocialSource, type Platform, type SourceCategory } from '@/lib/firestore-social';
+import { isAdmin } from '@/lib/auth-helpers';
 
 const VALID_PLATFORMS: Platform[] = ['youtube', 'twitter', 'instagram', 'tiktok', 'web'];
 const VALID_CATEGORIES: SourceCategory[] = ['critic', 'cinema_chain', 'distributor', 'streaming', 'community', 'news'];
-
-function isAdmin(session: unknown): boolean {
-    return (session as { user?: { role?: string } })?.user?.role === 'admin';
-}
 
 export async function GET() {
     try {
@@ -145,11 +142,6 @@ export async function PATCH(request: NextRequest) {
             if (key in updates) {
                 filteredUpdates[key] = updates[key];
             }
-        }
-
-        // Handle nested metadata update
-        if (typeof updates.subscriber_count === 'number') {
-            filteredUpdates.metadata = { subscriber_count: updates.subscriber_count };
         }
 
         if (Object.keys(filteredUpdates).length === 0) {

@@ -52,7 +52,6 @@ export async function summarizeHour(
         postsInHour = hourGroups.get(hour) || [];
     } else {
         // Query Firestore for posts in this hour range
-        const jakartaOffset = 7 * 60; // +07:00 in minutes
         const dayStart = new Date(`${date}T00:00:00+07:00`);
         const hourStart = new Date(dayStart.getTime() + hour * 60 * 60 * 1000);
         const hourEnd = new Date(hourStart.getTime() + 60 * 60 * 1000);
@@ -106,8 +105,7 @@ export async function summarizeHour(
     }
     const sourcesActive = [...sourcesActiveSet];
 
-    // Generate AI summary
-    const { summary, model: usedModel, hashtags } = await generateHourlySummary(
+    const { summary, model: usedModel, hashtags, _error } = await generateHourlySummary(
         postsInHour.map(p => ({
             title: p.title,
             source_name: p.source_name || p.channel_title,
@@ -121,7 +119,7 @@ export async function summarizeHour(
         options?.onRetry,
     );
 
-    const isError = summary.startsWith('⚠️');
+    const isError = !!_error;
 
     // Build analysis doc
     const analysisDoc: Omit<FirestoreSocialAnalysis, 'id'> = {

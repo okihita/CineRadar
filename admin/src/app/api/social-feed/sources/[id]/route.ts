@@ -8,10 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { COLLECTIONS } from '@/lib/firestore-social';
-
-function isAdmin(session: unknown): boolean {
-    return (session as { user?: { role?: string } })?.user?.role === 'admin';
-}
+import { isAdmin } from '@/lib/auth-helpers';
 
 export async function DELETE(
     _request: NextRequest,

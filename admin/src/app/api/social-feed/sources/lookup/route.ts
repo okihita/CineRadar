@@ -7,12 +7,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
+import { isAdmin } from '@/lib/auth-helpers';
 
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
-
-function isAdmin(session: unknown): boolean {
-    return (session as { user?: { role?: string } })?.user?.role === 'admin';
-}
 
 /**
  * Parse user input into the right YouTube API lookup strategy.

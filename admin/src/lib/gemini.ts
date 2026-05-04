@@ -192,10 +192,6 @@ Brevity is critical. Every sentence must carry new information. No filler.`;
         }
     }
 
-    return {
-        summary: '⚠️ Summary temporarily unavailable.',
-        model: modelName,
-        retried: true,
-        hashtags,
-    };
+    // Should never reach here — every loop iteration returns
+    return { summary: '⚠️ Summary temporarily unavailable.', model: modelName, retried: true, hashtags };
 }

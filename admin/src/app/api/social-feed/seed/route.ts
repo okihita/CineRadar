@@ -9,6 +9,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { auth } from '@/auth';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { COLLECTIONS, type FirestoreSocialSource, type SourceCategory } from '@/lib/firestore-social';
 
@@ -57,6 +58,9 @@ const CHANNEL_SEEDS: ChannelSeed[] = [
 ];
 
 export async function POST(request: Request) {
+    const session = await auth();
+    if (!session) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+
     try {
         // 1. Fetch real stats + avatars from YouTube API
         const statsMap = new Map<string, { subscriberCount: number; avatarUrl: string }>();

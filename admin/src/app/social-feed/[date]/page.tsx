@@ -128,9 +128,6 @@ interface DataResponse {
         has_data: boolean;
         posts: FirestoreSocialPost[];
         analyses: FirestoreSocialAnalysis[];
-        // Backward compat — API also returns these keys
-        videos: FirestoreSocialPost[];
-        video_count: number;
         analysis_count: number;
     };
 }
@@ -291,8 +288,16 @@ export default function SocialFeedPage() {
         };
     } | null>(null);
 
-    const updateProgress = (update: Partial<NonNullable<typeof progress>> & { phase: string; message: string }) => {
-        setProgress(prev => prev ? { ...prev, ...update } : { completedSummaries: [], ...update } as NonNullable<typeof progress>);
+    type SummaryEntry = { hour: string; hourNum: number; postCount: number; summary: string; hashtags: string[] };
+    const updateProgress = (update: Partial<NonNullable<typeof progress>> & { phase: string; message: string; appendSummary?: SummaryEntry }) => {
+        const { appendSummary, ...rest } = update;
+        setProgress(prev => {
+            const base = prev ? { ...prev, ...rest } : { completedSummaries: [], ...rest } as NonNullable<typeof progress>;
+            if (appendSummary) {
+                base.completedSummaries = [...(base.completedSummaries || []), appendSummary];
+            }
+            return base;
+        });
     };
 
     // Reset progress when navigating to a different date
@@ -344,7 +349,7 @@ export default function SocialFeedPage() {
 
     const data = responseData?.data;
     // Support both new "posts" key and backward-compat "videos" key
-    const posts = data?.posts || data?.videos || [];
+    const posts = data?.posts || [];
     const analyses = data?.analyses || [];
     const hasData = data?.has_data || false;
 
@@ -483,16 +488,13 @@ export default function SocialFeedPage() {
                                     percent: data.progress,
                                     lastSummary: data.fullSummary || data.summary,
                                     retryInfo: undefined,
-                                    completedSummaries: [
-                                        ...(progress?.completedSummaries || []),
-                                        {
-                                            hour: data.hourFormatted,
-                                            hourNum: data.hour,
-                                            postCount: data.videoCount,
-                                            summary: data.fullSummary || data.summary,
-                                            hashtags: data.hashtags || [],
-                                        },
-                                    ],
+                                    appendSummary: {
+                                        hour: data.hourFormatted,
+                                        hourNum: data.hour,
+                                        postCount: data.videoCount,
+                                        summary: data.fullSummary || data.summary,
+                                        hashtags: data.hashtags || [],
+                                    },
                                 });
                             } else if (eventType === 'retry') {
                                 updateProgress({

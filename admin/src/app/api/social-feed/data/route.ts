@@ -6,6 +6,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { auth } from '@/auth';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { COLLECTIONS, type FirestoreSocialPost, type FirestoreSocialAnalysis } from '@/lib/firestore-social';
 
@@ -18,7 +19,7 @@ function validateDate(searchParams: URLSearchParams): string | null {
 /** Convert a Jakarta date to UTC ISO string range for Firestore queries */
 function jakartaDayToUtcRange(date: string): { after: string; before: string } {
     const start = new Date(`${date}T00:00:00+07:00`);
-    const end = new Date(`${date}T23:59:59+07:00`);
+    const end = new Date(`${date}T23:59:59.999+07:00`);
     return {
         after: start.toISOString(),
         before: end.toISOString(),
@@ -102,6 +103,9 @@ export async function GET(request: Request) {
 // ─── DELETE ────────────────────────────────────────────
 
 export async function DELETE(request: Request) {
+    const session = await auth();
+    if (!session) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+
     try {
         const date = validateDate(new URL(request.url).searchParams);
         if (!date) {

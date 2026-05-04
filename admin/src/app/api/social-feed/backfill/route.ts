@@ -14,6 +14,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { auth } from '@/auth';
 import { detectContentType } from '@/features/social-pulse/data/mockSocialFeed';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { summarizeHour } from '@/lib/summarize';
@@ -158,6 +159,9 @@ function sseEvent(event: string, data: unknown): string {
 // ─── Route Handler ─────────────────────────────────────
 
 export async function POST(request: Request) {
+    const session = await auth();
+    if (!session) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+
     try {
         const body = await request.json();
         const { date } = body;

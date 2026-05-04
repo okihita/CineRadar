@@ -192,8 +192,10 @@ export function formatHour(hour: number): string {
 export function groupPostsByHour(posts: FirestoreSocialPost[]): Map<number, FirestoreSocialPost[]> {
     const groups = new Map<number, FirestoreSocialPost[]>();
     for (const post of posts) {
-        const jakartaTime = new Date(post.published_at).toLocaleString('en-US', { timeZone: 'Asia/Jakarta', hour: 'numeric', hour12: false });
-        const hour = parseInt(jakartaTime, 10);
+        const hour = parseInt(
+            new Date(post.published_at).toLocaleString('en-US', { timeZone: 'Asia/Jakarta', hour: 'numeric', hour12: false }),
+            10,
+        ) % 24;
         if (!groups.has(hour)) groups.set(hour, []);
         groups.get(hour)!.push(post);
     }
