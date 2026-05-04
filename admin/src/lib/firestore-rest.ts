@@ -116,7 +116,7 @@ function parseValue(value: FirestoreValue): unknown {
 
 function parseDocument<T = Record<string, unknown>>(doc: { name: string; fields?: Record<string, FirestoreValue> }): T {
     const id = doc.name.split('/').pop() || '';
-    const data: Record<string, unknown> = { id };
+    const data: Record<string, unknown> = { id, _name: doc.name };
 
     if (doc.fields) {
         for (const [key, value] of Object.entries(doc.fields)) {
@@ -556,6 +556,53 @@ export class FirestoreRestClient {
             console.error(`Error updating ${collectionName}/${documentId}:`, error);
             return false;
         }
+    }
+
+    /**
+     * Delete a single document by ID
+     */
+    async deleteDocument(collectionName: string, documentId: string): Promise<boolean> {
+        try {
+            const response = await this._fetch(this.docUrl(collectionName, documentId), {
+                method: 'DELETE',
+            });
+
+            if (!response.ok && response.status !== 404) {
+                console.error(`Failed to delete ${collectionName}/${documentId}: ${response.status}`);
+                return false;
+            }
+
+            return true;
+        } catch (error) {
+            console.error(`Error deleting ${collectionName}/${documentId}:`, error);
+            return false;
+        }
+    }
+
+    /**
+     * Delete all documents returned by a structured query.
+     * Returns the number of documents deleted.
+     */
+    async deleteByQuery(structuredQuery: Record<string, unknown>): Promise<number> {
+        const docs = await this.runQuery<{ id: string; _name: string }>(structuredQuery);
+
+        let deleted = 0;
+        // Parse _name to extract collection + docId, then use docUrl for proper encoding
+        await Promise.all(docs.map(async (doc) => {
+            const parts = doc._name.split('/');
+            const docId = parts.pop() || '';
+            const collectionName = parts.pop() || '';
+            try {
+                const response = await this._fetch(this.docUrl(collectionName, docId), {
+                    method: 'DELETE',
+                });
+                if (response.ok || response.status === 404) deleted++;
+            } catch {
+                // Swallow individual errors — best effort bulk delete
+            }
+        }));
+
+        return deleted;
     }
 }
 

@@ -22,6 +22,7 @@ import {
     Download,
     Loader2,
     Sparkles,
+    Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -277,6 +278,26 @@ export default function SocialFeedPage() {
         }
     }, [selectedDate, mutate]);
 
+    // Delete handler
+    const [deleting, setDeleting] = useState(false);
+    const handleDelete = useCallback(async () => {
+        if (!confirm(`Delete all data for ${formatDate(selectedDate)}?\n\nThis removes ${videos.length} videos and ${analyses.length} analyses from Firestore.`)) return;
+        setDeleting(true);
+        try {
+            const res = await fetch(`/api/social-feed/data?date=${selectedDate}`, { method: 'DELETE' });
+            const result = await res.json();
+            if (result.success) {
+                mutate(); // Refresh — will show "no data" state
+            } else {
+                console.error('Delete failed:', result.error);
+            }
+        } catch (err) {
+            console.error('Delete error:', err);
+        } finally {
+            setDeleting(false);
+        }
+    }, [selectedDate, videos.length, analyses.length, mutate]);
+
     // Date navigation
     const goToPrevDay = () => setSelectedDate(d => addDays(d, -1));
     const goToNextDay = () => setSelectedDate(d => addDays(d, 1));
@@ -341,6 +362,23 @@ export default function SocialFeedPage() {
                     <Button variant="ghost" size="icon" onClick={goToNextDay} disabled={!canGoForward} className="h-8 w-8">
                         <ChevronRight className="w-4 h-4" />
                     </Button>
+
+                    {/* Delete button — only when data exists */}
+                    {hasData && !isLoading && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleDelete}
+                            disabled={deleting || backfilling}
+                            className="h-8 px-3 text-destructive/60 hover:text-destructive hover:bg-destructive/10"
+                        >
+                            {deleting ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <><Trash2 className="w-3.5 h-3.5 mr-1.5" /><span className="text-[10px] font-bold uppercase">Delete</span></>
+                            )}
+                        </Button>
+                    )}
                 </div>
             </div>
 

@@ -1,20 +1,26 @@
 /**
- * GET /api/social-feed/data?date=2026-05-04
+ * /api/social-feed/data?date=2026-05-04
  *
- * Loads persisted YouTube videos and hourly AI analysis from Firestore
- * for a given date. Returns data ready for the social feed page.
+ * GET  — Loads persisted YouTube videos and hourly AI analysis from Firestore
+ * DELETE — Removes all videos and analyses for a date (clean slate)
  */
 
 import { NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { COLLECTIONS, type FirestoreYouTubeVideo, type FirestoreHourlyAnalysis } from '@/lib/firestore-youtube';
 
+function validateDate(searchParams: URLSearchParams): string | null {
+    const date = searchParams.get('date');
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+    return date;
+}
+
+// ─── GET ───────────────────────────────────────────────
+
 export async function GET(request: Request) {
     try {
-        const { searchParams } = new URL(request.url);
-        const date = searchParams.get('date');
-
-        if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        const date = validateDate(new URL(request.url).searchParams);
+        if (!date) {
             return NextResponse.json(
                 { success: false, error: 'Invalid date. Use YYYY-MM-DD format.' },
                 { status: 400 },
@@ -24,7 +30,6 @@ export async function GET(request: Request) {
         const publishedAfter = `${date}T00:00:00.000Z`;
         const publishedBefore = `${date}T23:59:59.999Z`;
 
-        // Run both queries in parallel
         const [videos, analyses] = await Promise.all([
             firestoreRestClient.runQuery<FirestoreYouTubeVideo>({
                 from: [{ collectionId: COLLECTIONS.VIDEOS }],
@@ -81,6 +86,77 @@ export async function GET(request: Request) {
         console.error('[Data Load Error]', error);
         return NextResponse.json(
             { success: false, error: 'Failed to load data' },
+            { status: 500 },
+        );
+    }
+}
+
+// ─── DELETE ────────────────────────────────────────────
+
+export async function DELETE(request: Request) {
+    try {
+        const date = validateDate(new URL(request.url).searchParams);
+        if (!date) {
+            return NextResponse.json(
+                { success: false, error: 'Invalid date. Use YYYY-MM-DD format.' },
+                { status: 400 },
+            );
+        }
+
+        const publishedAfter = `${date}T00:00:00.000Z`;
+        const publishedBefore = `${date}T23:59:59.999Z`;
+
+        const [videosDeleted, analysesDeleted] = await Promise.all([
+            firestoreRestClient.deleteByQuery({
+                from: [{ collectionId: COLLECTIONS.VIDEOS }],
+                where: {
+                    compositeFilter: {
+                        op: 'AND',
+                        filters: [
+                            {
+                                fieldFilter: {
+                                    field: { fieldPath: 'published_at' },
+                                    op: 'GREATER_THAN_OR_EQUAL',
+                                    value: { stringValue: publishedAfter },
+                                },
+                            },
+                            {
+                                fieldFilter: {
+                                    field: { fieldPath: 'published_at' },
+                                    op: 'LESS_THAN_OR_EQUAL',
+                                    value: { stringValue: publishedBefore },
+                                },
+                            },
+                        ],
+                    },
+                },
+            }),
+            firestoreRestClient.deleteByQuery({
+                from: [{ collectionId: COLLECTIONS.HOURLY_ANALYSIS }],
+                where: {
+                    fieldFilter: {
+                        field: { fieldPath: 'date' },
+                        op: 'EQUAL',
+                        value: { stringValue: date },
+                    },
+                },
+            }),
+        ]);
+
+        console.log(`[Delete] Removed ${videosDeleted} videos, ${analysesDeleted} analyses for ${date}`);
+
+        return NextResponse.json({
+            success: true,
+            data: {
+                date,
+                videos_deleted: videosDeleted,
+                analyses_deleted: analysesDeleted,
+            },
+        });
+    } catch (error) {
+        console.error('[Delete Error]', error);
+        return NextResponse.json(
+            { success: false, error: 'Failed to delete data' },
             { status: 500 },
         );
     }
