@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { MapPin, ChevronLeft, ChevronRight, Database, Calendar, Clapperboard, Sun, Moon, Monitor, BarChart2, LogOut, Users as UsersIcon, Share2, ArrowRightLeft, TrendingUp, Rss } from 'lucide-react';
+import { MapPin, ChevronLeft, ChevronRight, Database, Calendar, Clapperboard, Sun, Moon, Monitor, BarChart2, LogOut, Users as UsersIcon, Share2, ArrowRightLeft, TrendingUp, Rss, Settings } from 'lucide-react';
 import { useState } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
@@ -29,6 +29,13 @@ const menuItems = [
     description: 'Curated social timeline',
     href: '/social-feed',
     icon: Rss,
+    adminOnly: false,
+  },
+  {
+    title: 'Source Settings',
+    description: 'Manage social sources',
+    href: '/social-feed/settings',
+    icon: Settings,
     adminOnly: false,
   },
   {
@@ -121,6 +128,9 @@ export function Sidebar() {
           } else if (item.href === '/schedules') {
              // Same for /schedules to avoid matching /schedules_v2
             isActive = pathname === '/schedules' || pathname.startsWith('/schedules/');
+          } else if (item.href === '/social-feed') {
+            // Exact match to avoid highlighting when on /social-feed/settings
+            isActive = pathname === '/social-feed' || /^\/social-feed\/\d{4}/.test(pathname);
           } else {
             isActive = pathname.startsWith(item.href);
           }
