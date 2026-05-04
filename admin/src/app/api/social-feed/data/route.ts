@@ -1,13 +1,13 @@
 /**
  * /api/social-feed/data?date=2026-05-04
  *
- * GET  — Loads persisted YouTube videos and hourly AI analysis from Firestore
- * DELETE — Removes all videos and analyses for a date (clean slate)
+ * GET  — Loads persisted posts and hourly AI analysis from Firestore
+ * DELETE — Removes all posts and analyses for a date (clean slate)
  */
 
 import { NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
-import { COLLECTIONS, type FirestoreYouTubeVideo, type FirestoreHourlyAnalysis } from '@/lib/firestore-youtube';
+import { COLLECTIONS, type FirestoreSocialPost, type FirestoreSocialAnalysis } from '@/lib/firestore-social';
 
 function validateDate(searchParams: URLSearchParams): string | null {
     const date = searchParams.get('date');
@@ -17,13 +17,11 @@ function validateDate(searchParams: URLSearchParams): string | null {
 
 /** Convert a Jakarta date to UTC ISO string range for Firestore queries */
 function jakartaDayToUtcRange(date: string): { after: string; before: string } {
-    // Jakarta = UTC+7, so 2026-05-05 00:00+07:00 = 2026-05-04T17:00:00Z
-    // and 2026-05-05 23:59:59+07:00 = 2026-05-05T16:59:59Z
     const start = new Date(`${date}T00:00:00+07:00`);
     const end = new Date(`${date}T23:59:59+07:00`);
     return {
-        after: start.toISOString(),   // "2026-05-04T17:00:00.000Z"
-        before: end.toISOString(),     // "2026-05-05T16:59:59.000Z"
+        after: start.toISOString(),
+        before: end.toISOString(),
     };
 }
 
@@ -41,9 +39,9 @@ export async function GET(request: Request) {
 
         const { after: publishedAfter, before: publishedBefore } = jakartaDayToUtcRange(date);
 
-        const [videos, analyses] = await Promise.all([
-            firestoreRestClient.runQuery<FirestoreYouTubeVideo>({
-                from: [{ collectionId: COLLECTIONS.VIDEOS }],
+        const [posts, analyses] = await Promise.all([
+            firestoreRestClient.runQuery<FirestoreSocialPost>({
+                from: [{ collectionId: COLLECTIONS.POSTS }],
                 where: {
                     compositeFilter: {
                         op: 'AND',
@@ -67,8 +65,8 @@ export async function GET(request: Request) {
                 },
                 orderBy: [{ field: { fieldPath: 'published_at' }, direction: 'DESCENDING' }],
             }),
-            firestoreRestClient.runQuery<FirestoreHourlyAnalysis>({
-                from: [{ collectionId: COLLECTIONS.HOURLY_ANALYSIS }],
+            firestoreRestClient.runQuery<FirestoreSocialAnalysis>({
+                from: [{ collectionId: COLLECTIONS.ANALYSIS }],
                 where: {
                     fieldFilter: {
                         field: { fieldPath: 'date' },
@@ -79,16 +77,16 @@ export async function GET(request: Request) {
             }),
         ]);
 
-        const hasData = videos.length > 0 || analyses.length > 0;
+        const hasData = posts.length > 0 || analyses.length > 0;
 
         return NextResponse.json({
             success: true,
             data: {
                 date,
                 has_data: hasData,
-                videos,
+                posts,
                 analyses,
-                video_count: videos.length,
+                video_count: posts.length,
                 analysis_count: analyses.length,
             },
         });
@@ -115,9 +113,9 @@ export async function DELETE(request: Request) {
 
         const { after: publishedAfter, before: publishedBefore } = jakartaDayToUtcRange(date);
 
-        const [videosDeleted, analysesDeleted] = await Promise.all([
+        const [postsDeleted, analysesDeleted] = await Promise.all([
             firestoreRestClient.deleteByQuery({
-                from: [{ collectionId: COLLECTIONS.VIDEOS }],
+                from: [{ collectionId: COLLECTIONS.POSTS }],
                 where: {
                     compositeFilter: {
                         op: 'AND',
@@ -141,7 +139,7 @@ export async function DELETE(request: Request) {
                 },
             }),
             firestoreRestClient.deleteByQuery({
-                from: [{ collectionId: COLLECTIONS.HOURLY_ANALYSIS }],
+                from: [{ collectionId: COLLECTIONS.ANALYSIS }],
                 where: {
                     fieldFilter: {
                         field: { fieldPath: 'date' },
@@ -152,13 +150,13 @@ export async function DELETE(request: Request) {
             }),
         ]);
 
-        console.log(`[Delete] Removed ${videosDeleted} videos, ${analysesDeleted} analyses for ${date}`);
+        console.log(`[Delete] Removed ${postsDeleted} posts, ${analysesDeleted} analyses for ${date}`);
 
         return NextResponse.json({
             success: true,
             data: {
                 date,
-                videos_deleted: videosDeleted,
+                posts_deleted: postsDeleted,
                 analyses_deleted: analysesDeleted,
             },
         });

@@ -4,8 +4,9 @@
  * Backfills YouTube data for a given date into Firestore,
  * then generates per-hour AI analysis via Gemini.
  *
- * Channels are read from beta_youtube_channels (Firestore).
+ * Sources are read from beta_social_sources (Firestore).
  * Full video details fetched via videos.list (descriptions, duration, stats).
+ * Posts written with denormalized source info for historical integrity.
  *
  * Returns Server-Sent Events (SSE) for live progress updates.
  *
@@ -19,12 +20,12 @@ import { generateHourlySummary } from '@/lib/gemini';
 import {
     COLLECTIONS,
     makeHourId,
-    groupVideosByHour,
-    type FirestoreYouTubeVideo,
-    type FirestoreYouTubeChannel,
-    type FirestoreHourlyAnalysis,
-    type ChannelCategory,
-} from '@/lib/firestore-youtube';
+    groupPostsByHour,
+    type FirestoreSocialPost,
+    type FirestoreSocialSource,
+    type FirestoreSocialAnalysis,
+    type SourceCategory,
+} from '@/lib/firestore-social';
 
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 
@@ -55,7 +56,7 @@ interface VideoDetails {
         tags?: string[];
     };
     contentDetails?: {
-        duration?: string; // PT15M30S
+        duration?: string;
     };
     statistics?: {
         viewCount?: string;
@@ -65,7 +66,6 @@ interface VideoDetails {
 
 // ─── YouTube API helpers ───────────────────────────────
 
-/** Fetch YouTube activities for a single channel within a date range */
 async function fetchChannelActivities(
     channelId: string,
     publishedAfter: string,
@@ -91,12 +91,10 @@ async function fetchChannelActivities(
         .filter((a: YouTubeActivity) => a.snippet.type === 'upload' && a.contentDetails?.upload?.videoId);
 }
 
-/** Fetch full video details (description, duration, stats) — up to 50 IDs per call */
 async function fetchVideoDetails(videoIds: string[]): Promise<Map<string, VideoDetails>> {
     const map = new Map<string, VideoDetails>();
     if (!YOUTUBE_API_KEY || videoIds.length === 0) return map;
 
-    // Batch in groups of 50 (YouTube API limit)
     for (let i = 0; i < videoIds.length; i += 50) {
         const batch = videoIds.slice(i, i + 50);
         const url = new URL('https://www.googleapis.com/youtube/v3/videos');
@@ -115,7 +113,6 @@ async function fetchVideoDetails(videoIds: string[]): Promise<Map<string, VideoD
     return map;
 }
 
-/** Fetch channel stats + avatars for given channel IDs */
 async function fetchChannelStats(channelIds: string[]): Promise<Map<string, { subscriberCount: number; avatarUrl: string }>> {
     const map = new Map<string, { subscriberCount: number; avatarUrl: string }>();
     if (!YOUTUBE_API_KEY || channelIds.length === 0) return map;
@@ -138,10 +135,10 @@ async function fetchChannelStats(channelIds: string[]): Promise<Map<string, { su
     return map;
 }
 
-/** Load active channels from Firestore */
-async function loadActiveChannels(): Promise<FirestoreYouTubeChannel[]> {
-    const allChannels = await firestoreRestClient.runQuery<FirestoreYouTubeChannel>({
-        from: [{ collectionId: COLLECTIONS.CHANNELS }],
+/** Load active sources from Firestore */
+async function loadActiveSources(): Promise<FirestoreSocialSource[]> {
+    const allSources = await firestoreRestClient.runQuery<FirestoreSocialSource>({
+        from: [{ collectionId: COLLECTIONS.SOURCES }],
         where: {
             fieldFilter: {
                 field: { fieldPath: 'active' },
@@ -150,7 +147,8 @@ async function loadActiveChannels(): Promise<FirestoreYouTubeChannel[]> {
             },
         },
     });
-    return allChannels;
+    // Only YouTube sources for now
+    return allSources.filter(s => s.platform === 'youtube');
 }
 
 // ─── SSE Helper ────────────────────────────────────────
@@ -181,7 +179,6 @@ export async function POST(request: Request) {
 
         console.log(`[Backfill] Starting backfill for ${date}`);
 
-        // ─── SSE Stream ──────────────────────────────────
         const encoder = new TextEncoder();
         const stream = new ReadableStream({
             async start(controller) {
@@ -190,64 +187,83 @@ export async function POST(request: Request) {
                 };
 
                 try {
-                    // Phase 0: Load channels from Firestore
-                    send('phase', { phase: 'loading_channels', message: 'Loading channels from database...' });
-                    const channels = await loadActiveChannels();
+                    // Phase 0: Load sources from Firestore
+                    send('phase', { phase: 'loading_sources', message: 'Loading sources from database...' });
+                    const sources = await loadActiveSources();
 
-                    if (channels.length === 0) {
-                        send('error', { message: 'No active channels found. Run /api/social-feed/seed first.' });
+                    if (sources.length === 0) {
+                        send('error', { message: 'No active sources found. Run /api/social-feed/seed first.' });
                         controller.close();
                         return;
                     }
 
-                    const totalChannels = channels.length;
-                    const channelIds = channels.map(c => c.id);
+                    const totalSources = sources.length;
+
+                    // Extract YouTube channel IDs from source IDs (format: "youtube_UC...")
+                    const sourcesWithChannelId = sources.map(s => ({
+                        source: s,
+                        channelId: s.id.replace('youtube_', ''),
+                    }));
+                    const channelIds = sourcesWithChannelId.map(s => s.channelId);
 
                     // Phase 1: Fetch channel stats (avatars, subscriber counts)
-                    send('phase', { phase: 'stats', message: `Fetching stats for ${totalChannels} channels...` });
+                    send('phase', { phase: 'stats', message: `Fetching stats for ${totalSources} channels...` });
                     const statsMap = await fetchChannelStats(channelIds);
 
                     // Phase 2: Fetch activities per channel
-                    const allVideos: FirestoreYouTubeVideo[] = [];
-                    let videosWritten = 0;
+                    const allPosts: FirestoreSocialPost[] = [];
+                    let postsWritten = 0;
 
-                    for (let i = 0; i < channels.length; i++) {
-                        const channel = channels[i];
+                    for (let i = 0; i < sourcesWithChannelId.length; i++) {
+                        const { source, channelId } = sourcesWithChannelId[i];
                         send('progress', {
                             phase: 'fetching',
-                            channel: channel.display_name,
+                            channel: source.display_name,
                             channelIndex: i + 1,
-                            totalChannels,
-                            message: `Fetching ${channel.display_name} (${i + 1}/${totalChannels})...`,
+                            totalChannels: totalSources,
+                            message: `Fetching ${source.display_name} (${i + 1}/${totalSources})...`,
                         });
 
                         const activities = await fetchChannelActivities(
-                            channel.id,
+                            channelId,
                             publishedAfter,
                             publishedBefore,
                         );
 
-                        const stats = statsMap.get(channel.id);
-                        const category = channel.category as ChannelCategory;
+                        const stats = statsMap.get(channelId);
+                        const category = source.category as SourceCategory;
                         const now = new Date().toISOString();
 
                         for (const activity of activities) {
                             const videoId = activity.contentDetails!.upload!.videoId;
                             const contentType = detectContentType(activity.snippet.title, category);
                             const thumb = activity.snippet.thumbnails?.high?.url || activity.snippet.thumbnails?.default?.url || '';
+                            const postDocId = `youtube_${videoId}`;
 
-                            const doc: Omit<FirestoreYouTubeVideo, 'id'> = {
+                            const doc: Omit<FirestoreSocialPost, 'id'> = {
+                                platform: 'youtube',
                                 title: activity.snippet.title,
-                                description: activity.snippet.description?.slice(0, 500) || '',
-                                full_description: '', // Will be filled in Phase 2.5
-                                thumbnail: thumb,
-                                video_url: `https://youtube.com/watch?v=${videoId}`,
-                                channel_id: channel.id,
-                                channel_title: channel.display_name,
-                                channel_avatar: stats?.avatarUrl || '',
-                                content_type: contentType,
+                                text: '', // Will be filled with full_description after Phase 2.5
+                                url: `https://youtube.com/watch?v=${videoId}`,
                                 published_at: activity.snippet.publishedAt,
                                 fetched_at: now,
+                                source_id: source.id,
+                                source_name: source.display_name,
+                                source_handle: source.handle,
+                                source_avatar: stats?.avatarUrl || source.avatar_url || '',
+                                source_category: source.category,
+                                content_type: contentType,
+                                thumbnail: thumb,
+                                media: [{ type: 'video', url: thumb }],
+                                metrics: { views: 0, likes: 0 },
+                                platform_data: { video_id: videoId },
+                                // YouTube backward compat
+                                description: activity.snippet.description?.slice(0, 500) || '',
+                                full_description: '',
+                                video_url: `https://youtube.com/watch?v=${videoId}`,
+                                channel_id: channelId,
+                                channel_title: source.display_name,
+                                channel_avatar: stats?.avatarUrl || source.avatar_url || '',
                                 duration: '',
                                 view_count: 0,
                                 like_count: 0,
@@ -255,60 +271,80 @@ export async function POST(request: Request) {
                             };
 
                             const ok = await firestoreRestClient.createDocument(
-                                COLLECTIONS.VIDEOS,
-                                videoId,
+                                COLLECTIONS.POSTS,
+                                postDocId,
                                 doc,
                             );
-                            if (ok) videosWritten++;
-                            allVideos.push({ id: videoId, ...doc });
+                            if (ok) postsWritten++;
+                            allPosts.push({ id: postDocId, ...doc });
                         }
 
-                        // Update channel's last_backfilled_at
+                        // Update source's last_fetched_at
                         await firestoreRestClient.updateDocument(
-                            COLLECTIONS.CHANNELS,
-                            channel.id,
-                            { last_backfilled_at: new Date().toISOString() },
+                            COLLECTIONS.SOURCES,
+                            source.id,
+                            { last_fetched_at: new Date().toISOString() },
                         );
 
                         send('channel_done', {
-                            channel: channel.display_name,
+                            channel: source.display_name,
                             videosFound: activities.length,
-                            totalVideosSoFar: allVideos.length,
+                            totalVideosSoFar: allPosts.length,
                         });
                     }
 
-                    console.log(`[Backfill] Found ${allVideos.length} videos for ${date}`);
+                    console.log(`[Backfill] Found ${allPosts.length} posts for ${date}`);
 
                     // Phase 2.5: Fetch full video details (descriptions, durations, stats)
-                    if (allVideos.length > 0) {
-                        send('phase', { phase: 'video_details', message: `Fetching full details for ${allVideos.length} videos...` });
-                        const videoIds = allVideos.map(v => v.id);
+                    if (allPosts.length > 0) {
+                        send('phase', { phase: 'video_details', message: `Fetching full details for ${allPosts.length} videos...` });
+                        // Extract video IDs from post IDs (format: "youtube_{videoId}")
+                        const videoIds = allPosts.map(p => p.id.replace('youtube_', ''));
                         const detailsMap = await fetchVideoDetails(videoIds);
 
                         let detailsUpdated = 0;
-                        for (const video of allVideos) {
-                            const details = detailsMap.get(video.id);
+                        for (const post of allPosts) {
+                            const videoId = post.platform_data?.video_id || post.id.replace('youtube_', '');
+                            const details = detailsMap.get(videoId);
                             if (details) {
+                                const fullDesc = details.snippet?.description || '';
+                                const dur = details.contentDetails?.duration || '';
+                                const views = parseInt(details.statistics?.viewCount || '0');
+                                const likes = parseInt(details.statistics?.likeCount || '0');
+                                const vidTags = details.snippet?.tags || [];
+
                                 const update: Record<string, unknown> = {
-                                    full_description: details.snippet?.description || '',
-                                    duration: details.contentDetails?.duration || '',
-                                    view_count: parseInt(details.statistics?.viewCount || '0'),
-                                    like_count: parseInt(details.statistics?.likeCount || '0'),
-                                    tags: details.snippet?.tags || [],
+                                    text: fullDesc,
+                                    full_description: fullDesc,
+                                    duration: dur,
+                                    view_count: views,
+                                    like_count: likes,
+                                    tags: vidTags,
+                                    metrics: { views, likes },
+                                    platform_data: { video_id: videoId, duration: dur, tags: vidTags },
                                 };
 
                                 await firestoreRestClient.updateDocument(
-                                    COLLECTIONS.VIDEOS,
-                                    video.id,
+                                    COLLECTIONS.POSTS,
+                                    post.id,
                                     update,
                                 );
 
-                                // Update local copy too (for AI analysis below)
-                                video.full_description = update.full_description as string;
-                                video.duration = update.duration as string;
-                                video.view_count = update.view_count as number;
-                                video.like_count = update.like_count as number;
-                                video.tags = update.tags as string[];
+                                // Update local copy too (for AI analysis)
+                                post.text = fullDesc;
+                                post.full_description = fullDesc;
+                                post.duration = dur;
+                                post.view_count = views;
+                                post.like_count = likes;
+                                post.tags = vidTags;
+                                if (post.metrics) {
+                                    post.metrics.views = views;
+                                    post.metrics.likes = likes;
+                                }
+                                if (post.platform_data) {
+                                    post.platform_data.duration = dur;
+                                    post.platform_data.tags = vidTags;
+                                }
 
                                 detailsUpdated++;
                             }
@@ -319,34 +355,40 @@ export async function POST(request: Request) {
                     // Phase 3: AI analysis per hour
                     send('phase', {
                         phase: 'writing_done',
-                        message: `Found ${videosWritten} videos with full details. Starting AI analysis...`,
-                        totalVideos: videosWritten,
+                        message: `Found ${postsWritten} posts with full details. Starting AI analysis...`,
+                        totalVideos: postsWritten,
                     });
 
-                    const hourGroups = groupVideosByHour(allVideos);
+                    const hourGroups = groupPostsByHour(allPosts);
                     let analysesWritten = 0;
                     let completedHours = 0;
                     const now = new Date().toISOString();
+                    const sourceIds = sources.map(s => s.id);
 
                     for (let hour = 0; hour < 24; hour++) {
                         const hourId = makeHourId(date, hour);
-                        const videosInHour = hourGroups.get(hour) || [];
+                        const postsInHour = hourGroups.get(hour) || [];
 
-                        // Count content types
+                        // Count content types and active sources
                         const typeBreakdown: Record<string, number> = {};
-                        const channelsActive = new Set<string>();
-                        for (const v of videosInHour) {
-                            typeBreakdown[v.content_type] = (typeBreakdown[v.content_type] || 0) + 1;
-                            channelsActive.add(v.channel_title);
+                        const platformBreakdown: Record<string, number> = {};
+                        const sourcesActiveSet = new Set<string>();
+                        for (const p of postsInHour) {
+                            typeBreakdown[p.content_type] = (typeBreakdown[p.content_type] || 0) + 1;
+                            platformBreakdown[p.platform] = (platformBreakdown[p.platform] || 0) + 1;
+                            sourcesActiveSet.add(p.source_id);
                         }
+                        const sourcesActive = [...sourcesActiveSet];
 
                         // Generate AI summary (with retry callback for SSE)
-                        const { summary, model: usedModel } = await generateHourlySummary(
-                            videosInHour.map(v => ({
-                                title: v.title,
-                                channel_title: v.channel_title,
-                                content_type: v.content_type,
-                                published_at: v.published_at,
+                        const { summary, model: usedModel, hashtags } = await generateHourlySummary(
+                            postsInHour.map(p => ({
+                                title: p.title,
+                                source_name: p.source_name,
+                                content_type: p.content_type,
+                                published_at: p.published_at,
+                                platform: p.platform,
+                                text: p.text || p.full_description || '',
                             })),
                             hour,
                             date,
@@ -362,21 +404,31 @@ export async function POST(request: Request) {
                             },
                         );
 
-                        const analysisDoc: Omit<FirestoreHourlyAnalysis, 'id'> = {
+                        const analysisDoc: Omit<FirestoreSocialAnalysis, 'id'> = {
                             date,
                             hour,
                             summary,
-                            video_count: videosInHour.length,
-                            content_type_breakdown: typeBreakdown,
-                            channels_active: [...channelsActive],
+                            total_posts: postsInHour.length,
+                            posts_by_platform: platformBreakdown,
+                            posts_by_content_type: typeBreakdown,
+                            sources_active: sourcesActive,
+                            sources_fetched: sourceIds,
+                            hashtags,
+                            top_trailers: [],
+                            trending_topics: [],
+                            sentiment_hint: 'neutral',
                             generated_at: now,
                             model: usedModel,
-                            channels_fetched: channelIds,
                             backfill_duration_ms: Date.now() - backfillStart,
+                            // YouTube backward compat
+                            video_count: postsInHour.length,
+                            content_type_breakdown: typeBreakdown,
+                            channels_active: postsInHour.map(p => p.source_name),
+                            channels_fetched: channelIds,
                         };
 
                         const ok = await firestoreRestClient.createDocument(
-                            COLLECTIONS.HOURLY_ANALYSIS,
+                            COLLECTIONS.ANALYSIS,
                             hourId,
                             analysisDoc,
                         );
@@ -386,24 +438,25 @@ export async function POST(request: Request) {
                         send('hour_done', {
                             hour,
                             hourFormatted: `${String(hour).padStart(2, '0')}:00`,
-                            videoCount: videosInHour.length,
+                            videoCount: postsInHour.length,
                             summary: summary.slice(0, 120) + (summary.length > 120 ? '...' : ''),
+                            hashtags: hashtags.slice(0, 10),
                             completedHours,
                             totalHours: 24,
                             progress: Math.round((completedHours / 24) * 100),
                         });
 
                         // Rate limit: only delay if hour had content (triggered a real API call)
-                        if (videosInHour.length > 0) {
+                        if (postsInHour.length > 0) {
                             await new Promise(r => setTimeout(r, 5000));
                         }
                     }
 
-                    console.log(`[Backfill] Complete: ${videosWritten} videos, ${analysesWritten} analyses for ${date}`);
+                    console.log(`[Backfill] Complete: ${postsWritten} posts, ${analysesWritten} analyses for ${date}`);
 
                     send('done', {
                         date,
-                        videos_written: videosWritten,
+                        videos_written: postsWritten,
                         analyses_written: analysesWritten,
                         duration_ms: Date.now() - backfillStart,
                     });

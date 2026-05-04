@@ -1,5 +1,5 @@
 /**
- * Industry Feed — YouTube + AI Hourly Analysis
+ * Industry Feed — Multi-Platform + AI Hourly Analysis
  *
  * Date-navigable timeline with backfill support.
  * Loads persisted data from Firestore (via /api/social-feed/data).
@@ -24,6 +24,7 @@ import {
     Loader2,
     Sparkles,
     Trash2,
+    Hash,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -34,11 +35,11 @@ import {
 } from '@/features/social-pulse/data/mockSocialFeed';
 import { YouTubeIcon } from '@/components/BrandIcons';
 import {
-    type FirestoreYouTubeVideo,
-    type FirestoreHourlyAnalysis,
+    type FirestoreSocialPost,
+    type FirestoreSocialAnalysis,
     formatHour,
-    groupVideosByHour,
-} from '@/lib/firestore-youtube';
+    groupPostsByHour,
+} from '@/lib/firestore-social';
 
 const CONTENT_ICONS: Record<ContentType, typeof Film> = {
     trailer: Film,
@@ -53,7 +54,7 @@ const CONTENT_ICONS: Record<ContentType, typeof Film> = {
 const TZ = 'Asia/Jakarta';
 
 function getJakartaToday(): string {
-    return new Date().toLocaleDateString('sv-SE', { timeZone: TZ }); // "2026-05-05"
+    return new Date().toLocaleDateString('sv-SE', { timeZone: TZ });
 }
 
 function getJakartaDate(date: Date): string {
@@ -99,8 +100,10 @@ interface DataResponse {
     data: {
         date: string;
         has_data: boolean;
-        videos: FirestoreYouTubeVideo[];
-        analyses: FirestoreHourlyAnalysis[];
+        posts: FirestoreSocialPost[];
+        analyses: FirestoreSocialAnalysis[];
+        // Backward compat — API also returns these keys
+        videos: FirestoreSocialPost[];
         video_count: number;
         analysis_count: number;
     };
@@ -108,17 +111,21 @@ interface DataResponse {
 
 // ─── Post Card ─────────────────────────────────────────
 
-function PostCard({ post }: { post: FirestoreYouTubeVideo }) {
+function PostCard({ post }: { post: FirestoreSocialPost }) {
     const [expanded, setExpanded] = useState(false);
     const typeConfig = CONTENT_TYPE_LABELS[post.content_type as ContentType] || CONTENT_TYPE_LABELS.community;
     const TypeIcon = CONTENT_ICONS[post.content_type as ContentType] || CONTENT_ICONS.community;
-    const description = post.full_description || post.description;
+    const description = post.text || post.full_description || post.description;
     const hasDescription = description && description.length > 0;
+    const views = post.metrics?.views || post.view_count || 0;
+    const avatar = post.source_avatar || post.channel_avatar || '';
+    const name = post.source_name || post.channel_title || '';
+    const postUrl = post.url || post.video_url || '#';
 
     return (
         <div className="group bg-background/50 border border-border/40 rounded-2xl hover:bg-muted/30 hover:border-border/60 transition-all duration-300 overflow-hidden">
             <a
-                href={post.video_url}
+                href={postUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block"
@@ -136,8 +143,8 @@ function PostCard({ post }: { post: FirestoreYouTubeVideo }) {
                             <span>{post.content_type}</span>
                         </div>
                         <span className="absolute bottom-2 right-2 text-[9px] text-white/80 font-mono tabular-nums bg-black/50 backdrop-blur-sm px-1.5 py-0.5 rounded-md">{timeAgo(post.published_at)}</span>
-                        {post.view_count > 0 && (
-                            <span className="absolute top-2 right-2 text-[8px] text-white/70 font-mono bg-black/40 backdrop-blur-sm px-1.5 py-0.5 rounded-md">{formatNumber(post.view_count)} views</span>
+                        {views > 0 && (
+                            <span className="absolute top-2 right-2 text-[8px] text-white/70 font-mono bg-black/40 backdrop-blur-sm px-1.5 py-0.5 rounded-md">{formatNumber(views)} views</span>
                         )}
                     </div>
                 )}
@@ -145,8 +152,8 @@ function PostCard({ post }: { post: FirestoreYouTubeVideo }) {
                 <div className="p-3 space-y-2">
                     <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-full overflow-hidden bg-muted flex-shrink-0">
-                            {post.channel_avatar ? (
-                                <img src={post.channel_avatar} alt="" className="w-full h-full object-cover" />
+                            {avatar ? (
+                                <img src={avatar} alt="" className="w-full h-full object-cover" />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center">
                                     <YouTubeIcon className="w-3 h-3 text-red-500" />
@@ -154,7 +161,7 @@ function PostCard({ post }: { post: FirestoreYouTubeVideo }) {
                             )}
                         </div>
                         <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                            <span className="text-[11px] font-bold truncate">{post.channel_title}</span>
+                            <span className="text-[11px] font-bold truncate">{name}</span>
                         </div>
                     </div>
                     <p className="text-[12px] font-semibold leading-snug text-foreground line-clamp-2">
@@ -207,7 +214,7 @@ function AccountCard({ name, avatar, postCount }: { name: string; avatar: string
                     <span className="text-sm font-bold truncate">{name}</span>
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs font-mono text-muted-foreground">{postCount} videos</span>
+                    <span className="text-xs font-mono text-muted-foreground">{postCount} posts</span>
                 </div>
             </div>
         </div>
@@ -294,57 +301,47 @@ export default function SocialFeedPage() {
     );
 
     const data = responseData?.data;
-    const videos = data?.videos || [];
+    // Support both new "posts" key and backward-compat "videos" key
+    const posts = data?.posts || data?.videos || [];
     const analyses = data?.analyses || [];
     const hasData = data?.has_data || false;
 
-    // Group videos by hour
-    const hourGroups = useMemo(() => groupVideosByHour(videos), [videos]);
+    // Group posts by hour
+    const hourGroups = useMemo(() => groupPostsByHour(posts), [posts]);
 
     // Build analysis map for quick lookup (sorted by hour ascending)
     const analysisMap = useMemo(() => {
-        const map = new Map<number, FirestoreHourlyAnalysis>();
+        const map = new Map<number, FirestoreSocialAnalysis>();
         [...analyses].sort((a, b) => a.hour - b.hour).forEach(a => map.set(a.hour, a));
         return map;
     }, [analyses]);
 
-    // Derive accounts from video data (no longer hardcoded)
+    // Derive accounts from post data
     interface DerivedAccount {
         id: string;
         display_name: string;
         avatar_url: string;
         category: string;
-        video_count: number;
+        post_count: number;
     }
 
     const derivedAccounts = useMemo(() => {
         const seen = new Map<string, DerivedAccount>();
-        for (const v of videos) {
-            if (!seen.has(v.channel_id)) {
-                seen.set(v.channel_id, {
-                    id: v.channel_id,
-                    display_name: v.channel_title,
-                    avatar_url: v.channel_avatar,
-                    category: 'unknown',
-                    video_count: 0,
+        for (const p of posts) {
+            const accountId = p.source_id || p.channel_id;
+            if (!seen.has(accountId)) {
+                seen.set(accountId, {
+                    id: accountId,
+                    display_name: p.source_name || p.channel_title || '',
+                    avatar_url: p.source_avatar || p.channel_avatar || '',
+                    category: p.source_category || 'unknown',
+                    post_count: 0,
                 });
             }
-            seen.get(v.channel_id)!.video_count++;
+            seen.get(accountId)!.post_count++;
         }
         return [...seen.values()];
-    }, [videos]);
-
-    const accountsByCategory = useMemo(() => {
-        // Group by whatever categories are in the videos; just list them flat for now
-        // since category is not stored per-video in the current schema
-        const grouped: Record<string, DerivedAccount[]> = {};
-        for (const a of derivedAccounts) {
-            const cat = 'all';
-            if (!grouped[cat]) grouped[cat] = [];
-            grouped[cat].push(a);
-        }
-        return grouped;
-    }, [derivedAccounts]);
+    }, [posts]);
 
     // Backfill handler — consumes SSE stream
     const handleBackfill = useCallback(async () => {
@@ -373,9 +370,8 @@ export default function SocialFeedPage() {
 
                 buffer += decoder.decode(value, { stream: true });
 
-                // Parse SSE events
                 const lines = buffer.split('\n');
-                buffer = lines.pop() || ''; // Keep incomplete last line
+                buffer = lines.pop() || '';
 
                 let eventType = '';
                 for (const line of lines) {
@@ -399,7 +395,7 @@ export default function SocialFeedPage() {
                                     totalHours: data.totalHours,
                                     percent: data.progress,
                                     lastSummary: data.summary,
-                                    retryInfo: undefined, // Clear any previous retry state
+                                    retryInfo: undefined,
                                 });
                             } else if (eventType === 'retry') {
                                 updateProgress({
@@ -421,7 +417,7 @@ export default function SocialFeedPage() {
                                     analyses_written: data.analyses_written,
                                     percent: 100,
                                 });
-                                mutate(); // Refresh data
+                                mutate();
                             } else if (eventType === 'error') {
                                 updateProgress({ phase: 'error', message: data.message, error: data.message });
                             }
@@ -440,13 +436,13 @@ export default function SocialFeedPage() {
     // Delete handler
     const [deleting, setDeleting] = useState(false);
     const handleDelete = useCallback(async () => {
-        if (!confirm(`Delete all data for ${formatDate(selectedDate)}?\n\nThis removes ${videos.length} videos and ${analyses.length} analyses from Firestore.`)) return;
+        if (!confirm(`Delete all data for ${formatDate(selectedDate)}?\n\nThis removes ${posts.length} posts and ${analyses.length} analyses from Firestore.`)) return;
         setDeleting(true);
         try {
             const res = await fetch(`/api/social-feed/data?date=${selectedDate}`, { method: 'DELETE' });
             const result = await res.json();
             if (result.success) {
-                mutate(); // Refresh — will show "no data" state
+                mutate();
             } else {
                 console.error('Delete failed:', result.error);
             }
@@ -455,7 +451,7 @@ export default function SocialFeedPage() {
         } finally {
             setDeleting(false);
         }
-    }, [selectedDate, videos.length, analyses.length, mutate]);
+    }, [selectedDate, posts.length, analyses.length, mutate]);
 
     // Date navigation
     const goToPrevDay = () => setSelectedDate(addDays(selectedDate, -1));
@@ -465,12 +461,12 @@ export default function SocialFeedPage() {
     // Content type counts
     const contentTypeCounts = useMemo(() => {
         const counts: Record<ContentType, number> = { trailer: 0, review: 0, short: 0, promo: 0, community: 0 };
-        videos.forEach(v => {
-            const ct = v.content_type as ContentType;
+        posts.forEach(p => {
+            const ct = p.content_type as ContentType;
             if (ct in counts) counts[ct]++;
         });
         return counts;
-    }, [videos]);
+    }, [posts]);
 
     return (
         <div className="min-h-screen bg-background text-foreground p-6 max-w-[1600px] mx-auto space-y-6 animate-in fade-in duration-700">
@@ -483,11 +479,11 @@ export default function SocialFeedPage() {
                     <div>
                         <div className="flex items-center gap-2">
                             <h1 className="text-2xl font-black uppercase tracking-tighter">Industry Feed</h1>
-                            <span className="px-2 py-0.5 bg-muted rounded text-[10px] font-black text-muted-foreground uppercase tracking-tight">YouTube + AI</span>
+                            <span className="px-2 py-0.5 bg-muted rounded text-[10px] font-black text-muted-foreground uppercase tracking-tight">Social + AI</span>
                         </div>
                         <p className="text-xs text-muted-foreground">
                             {hasData
-                                ? <><span className="text-foreground font-bold">{videos.length}</span> videos • <span className="text-foreground font-bold">{analyses.length}</span> hourly analyses</>
+                                ? <><span className="text-foreground font-bold">{posts.length}</span> posts • <span className="text-foreground font-bold">{analyses.length}</span> hourly analyses</>
                                 : 'No data for this date'
                             }
                         </p>
@@ -547,7 +543,7 @@ export default function SocialFeedPage() {
                     <Download className="w-5 h-5 text-amber-500 flex-shrink-0" />
                     <div className="flex-1">
                         <p className="text-sm font-bold">No data for {formatDate(selectedDate)}</p>
-                        <p className="text-xs text-muted-foreground">Click backfill to fetch YouTube uploads and generate AI analysis for this date.</p>
+                        <p className="text-xs text-muted-foreground">Click backfill to fetch social media posts and generate AI analysis for this date.</p>
                     </div>
                     <Button
                         onClick={handleBackfill}
@@ -581,13 +577,13 @@ export default function SocialFeedPage() {
                             <p className="text-sm font-bold">{progress.message}</p>
                             {progress.phase === 'fetching' && progress.channel && (
                                 <p className="text-xs text-muted-foreground">
-                                    Channel {progress.channelIndex}/{progress.totalChannels}: {progress.channel}
+                                    Source {progress.channelIndex}/{progress.totalChannels}: {progress.channel}
                                 </p>
                             )}
                             {progress.phase === 'analyzing' && (
                                 <p className="text-xs text-muted-foreground">
                                     Hour {progress.completedHours}/{progress.totalHours}
-                                    {progress.totalVideos !== undefined && ` • ${progress.totalVideos} videos found`}
+                                    {progress.totalVideos !== undefined && ` • ${progress.totalVideos} posts found`}
                                 </p>
                             )}
                         </div>
@@ -644,7 +640,7 @@ export default function SocialFeedPage() {
                     {/* Done summary */}
                     {progress.done && (
                         <div className="flex items-center gap-4 text-xs">
-                            <span className="text-green-600 font-bold">✓ {progress.videos_written} videos fetched</span>
+                            <span className="text-green-600 font-bold">✓ {progress.videos_written} posts fetched</span>
                             <span className="text-green-600 font-bold">✓ {progress.analyses_written} hourly analyses</span>
                         </div>
                     )}
@@ -677,11 +673,10 @@ export default function SocialFeedPage() {
                             </div>
 
                             <div className="space-y-1.5 max-h-[calc(100vh-180px)] overflow-y-auto">
-                                {/* Hours with data */}
                                 {[...Array(24)].map((_, h) => {
-                                    const hourVideos = hourGroups.get(h) || [];
+                                    const hourPosts = hourGroups.get(h) || [];
                                     const analysis = analysisMap.get(h);
-                                    const hasVideos = hourVideos.length > 0;
+                                    const hasPosts = hourPosts.length > 0;
                                     const isSelected = selectedHour === h;
 
                                     return (
@@ -692,15 +687,15 @@ export default function SocialFeedPage() {
                                                 "w-full text-left p-2.5 rounded-xl transition-all duration-200",
                                                 isSelected
                                                     ? "bg-primary/10 border border-primary/20"
-                                                    : hasVideos
+                                                    : hasPosts
                                                         ? "bg-background/50 border border-border/20 hover:bg-muted/20 hover:border-border/40"
                                                         : "opacity-30",
                                             )}
                                         >
                                             <div className="flex items-center justify-between mb-1">
                                                 <span className="text-[10px] font-mono font-bold tabular-nums">{formatHour(h)}</span>
-                                                {hasVideos && (
-                                                    <span className="text-[9px] font-mono font-bold text-muted-foreground">{hourVideos.length}</span>
+                                                {hasPosts && (
+                                                    <span className="text-[9px] font-mono font-bold text-muted-foreground">{hourPosts.length}</span>
                                                 )}
                                             </div>
                                             {analysis && (
@@ -708,7 +703,7 @@ export default function SocialFeedPage() {
                                                     {analysis.summary}
                                                 </p>
                                             )}
-                                            {!hasVideos && !analysis && (
+                                            {!hasPosts && !analysis && (
                                                 <p className="text-[9px] text-muted-foreground/50 italic">No activity</p>
                                             )}
                                         </button>
@@ -736,17 +731,16 @@ export default function SocialFeedPage() {
 
                         {/* Hour sections — descending from 23 to 0 */}
                         {[...Array(24)].map((_, h) => {
-                            const hourIdx = 23 - h; // Reverse order
-                            const hourVideos = selectedHour !== null
+                            const hourIdx = 23 - h;
+                            const hourPosts = selectedHour !== null
                                 ? (hourGroups.get(selectedHour) || [])
                                 : (hourGroups.get(hourIdx) || []);
 
-                            // If a specific hour is selected, only show that
                             if (selectedHour !== null && hourIdx !== selectedHour) return null;
-                            // Skip empty hours unless viewing all
-                            if (selectedHour === null && hourVideos.length === 0) return null;
+                            if (selectedHour === null && hourPosts.length === 0) return null;
 
                             const analysis = analysisMap.get(selectedHour ?? hourIdx);
+                            const postCount = analysis?.total_posts || analysis?.video_count || hourPosts.length;
 
                             return (
                                 <div key={hourIdx}>
@@ -759,23 +753,34 @@ export default function SocialFeedPage() {
                                             {formatHour(selectedHour ?? hourIdx)}
                                         </span>
                                         <div className="flex-1 h-px bg-border/30" />
-                                        <span className="text-[10px] text-muted-foreground/50 font-mono">{hourVideos.length} videos</span>
+                                        <span className="text-[10px] text-muted-foreground/50 font-mono">{postCount} posts</span>
                                     </div>
 
                                     {/* Full analysis for this hour */}
-                                    {analysis && analysis.video_count > 0 && (
+                                    {analysis && postCount > 0 && (
                                         <div className="mb-3 p-3 bg-primary/5 rounded-xl border border-primary/10">
                                             <div className="flex items-center gap-1.5 mb-1.5">
                                                 <Sparkles className="w-3 h-3 text-primary" />
                                                 <span className="text-[9px] font-black uppercase tracking-widest text-primary/60">AI Summary</span>
                                             </div>
-                                            <p className="text-xs text-foreground/80 leading-relaxed">{analysis.summary}</p>
+                                            <p className="text-xs text-foreground/80 leading-relaxed whitespace-pre-line">{analysis.summary}</p>
+                                            {/* Hashtag pills */}
+                                            {analysis.hashtags && analysis.hashtags.length > 0 && (
+                                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                                    {analysis.hashtags.map((tag: string) => (
+                                                        <span key={tag} className="inline-flex items-center gap-0.5 px-2 py-0.5 bg-primary/10 text-primary/70 rounded-full text-[9px] font-bold">
+                                                            <Hash className="w-2.5 h-2.5" />
+                                                            {tag.replace('#', '')}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 
-                                    {/* Video grid */}
+                                    {/* Post grid */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {hourVideos.map(post => (
+                                        {hourPosts.map(post => (
                                             <PostCard key={post.id} post={post} />
                                         ))}
                                     </div>
@@ -783,10 +788,10 @@ export default function SocialFeedPage() {
                             );
                         })}
 
-                        {/* Empty state when hour selected but no videos */}
+                        {/* Empty state when hour selected but no posts */}
                         {selectedHour !== null && (hourGroups.get(selectedHour) || []).length === 0 && (
                             <div className="py-12 text-center border border-dashed rounded-3xl border-border/40">
-                                <p className="text-muted-foreground font-bold uppercase tracking-widest text-sm">No uploads at {formatHour(selectedHour)}</p>
+                                <p className="text-muted-foreground font-bold uppercase tracking-widest text-sm">No posts at {formatHour(selectedHour)}</p>
                             </div>
                         )}
                     </main>
@@ -796,17 +801,17 @@ export default function SocialFeedPage() {
                         <div className="sticky top-6 space-y-6">
                             <div>
                                 <h3 className="text-xs font-black uppercase tracking-widest mb-3 text-muted-foreground">
-                                    Active Channels ({derivedAccounts.length})
+                                    Active Sources ({derivedAccounts.length})
                                 </h3>
                                 <div className="space-y-2">
                                     {derivedAccounts
-                                        .sort((a, b) => b.video_count - a.video_count)
+                                        .sort((a, b) => b.post_count - a.post_count)
                                         .map(account => (
                                             <AccountCard
                                                 key={account.id}
                                                 name={account.display_name}
                                                 avatar={account.avatar_url}
-                                                postCount={account.video_count}
+                                                postCount={account.post_count}
                                             />
                                         ))}
                                 </div>

@@ -1,15 +1,16 @@
 /**
  * POST /api/social-feed/seed
  *
- * One-time seed: populates beta_youtube_channels with 24 Indonesian cinema channels.
+ * One-time seed: populates beta_social_sources with 18 Indonesian cinema channels.
  * Safe to re-run — uses createDocument (idempotent, skips existing).
  *
  * Also fetches real subscriber counts + avatars from YouTube API.
+ * Document IDs use the platform-agnostic format: "youtube_{channelId}"
  */
 
 import { NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
-import { COLLECTIONS, type FirestoreYouTubeChannel, type ChannelCategory } from '@/lib/firestore-youtube';
+import { COLLECTIONS, type FirestoreSocialSource, type SourceCategory } from '@/lib/firestore-social';
 
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 
@@ -17,7 +18,7 @@ interface ChannelSeed {
     channel_id: string;
     display_name: string;
     handle: string;
-    category: ChannelCategory;
+    category: SourceCategory;
     verified: boolean;
     active: boolean;
     notes: string;
@@ -79,30 +80,39 @@ export async function POST(request: Request) {
             }
         }
 
-        // 2. Write channels to Firestore
+        // 2. Write sources to Firestore with new schema
         const now = new Date().toISOString();
         let written = 0;
         let skipped = 0;
 
         for (const seed of CHANNEL_SEEDS) {
             const stats = statsMap.get(seed.channel_id);
+            const docId = `youtube_${seed.channel_id}`;
 
-            const doc: Omit<FirestoreYouTubeChannel, 'id'> = {
+            const doc: Omit<FirestoreSocialSource, 'id'> = {
+                platform: 'youtube',
                 display_name: seed.display_name,
                 handle: seed.handle,
                 category: seed.category,
                 verified: seed.verified,
                 avatar_url: stats?.avatarUrl || '',
-                subscriber_count: stats?.subscriberCount || 0,
+                url: `https://youtube.com/${seed.handle}`,
                 active: seed.active,
                 notes: seed.notes,
+                metadata: {
+                    subscriber_count: stats?.subscriberCount || 0,
+                },
+                fetch_config: {
+                    frequency: 'daily',
+                    max_items_per_fetch: 50,
+                },
                 added_at: now,
-                last_backfilled_at: '',
+                last_fetched_at: '',
             };
 
             const ok = await firestoreRestClient.createDocument(
-                COLLECTIONS.CHANNELS,
-                seed.channel_id,
+                COLLECTIONS.SOURCES,
+                docId,
                 doc,
             );
             if (ok) written++;

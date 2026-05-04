@@ -1,6 +1,12 @@
 /**
  * Google Gemini AI client for hourly analysis generation.
  * Uses @google/generative-ai SDK with retry + graceful degradation.
+ * 
+ * Summary rules:
+ *   - 1 paragraph per 4 timeline items (rounding down)
+ *   - 0 items → default message
+ *   - No hour/time mention in output (already shown in UI)
+ *   - Hashtags extracted from post text and returned separately
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -19,17 +25,21 @@ function getClient(): GoogleGenerativeAI {
     return genAI;
 }
 
-export interface VideoForAnalysis {
+export interface PostForAnalysis {
     title: string;
-    channel_title: string;
+    source_name: string;         // was channel_title
     content_type: string;
     published_at: string;
+    platform: string;            // e.g. "youtube", "twitter"
+    text: string;                // Full description/text — used for hashtag extraction
 }
+
+/** Backward compat */
+export type VideoForAnalysis = PostForAnalysis;
 
 /** Extract retry delay in seconds from Gemini 429 error */
 function extractRetryDelay(error: unknown): number {
     try {
-        // The SDK exposes errorDetails directly on the error object
         const errorDetails = (error as { errorDetails?: Array<Record<string, unknown>> }).errorDetails;
         if (!Array.isArray(errorDetails)) return 10;
 
@@ -40,15 +50,29 @@ function extractRetryDelay(error: unknown): number {
         if (retryInfo) {
             const raw = retryInfo['retryDelay'];
             if (typeof raw === 'string') {
-                // Format: "6s", "6.779633506s", "12s"
                 const match = raw.match(/([\d.]+)s/);
                 if (match) {
-                    return Math.ceil(parseFloat(match[1])) + 1; // +1s buffer
+                    return Math.ceil(parseFloat(match[1])) + 1;
                 }
             }
         }
     } catch { /* ignore */ }
-    return 10; // Safe default
+    return 10;
+}
+
+/** Extract hashtags from post text (matches #word patterns) */
+function extractHashtags(posts: PostForAnalysis[]): string[] {
+    const hashtagSet = new Set<string>();
+    for (const post of posts) {
+        if (!post.text) continue;
+        const matches = post.text.match(/#[\w]+/g);
+        if (matches) {
+            for (const tag of matches) {
+                hashtagSet.add(tag);
+            }
+        }
+    }
+    return [...hashtagSet].sort();
 }
 
 const MAX_RETRIES = 4;
@@ -57,6 +81,7 @@ export interface HourlySummaryResult {
     summary: string;
     model: string;
     retried: boolean;
+    hashtags: string[];
 }
 
 /**
@@ -65,21 +90,27 @@ export interface HourlySummaryResult {
 export type RetryCallback = (info: { attempt: number; maxRetries: number; retryDelaySeconds: number }) => void;
 
 /**
- * Generate a concise hourly summary of YouTube activity.
- * Retries on 429 with parsed retryDelay from error + exponential backoff.
- * Calls onRetry before each retry so the caller can stream progress.
+ * Generate a concise hourly summary of social media activity.
+ * 
+ * Summary length: 1 paragraph per 4 posts (rounding down).
+ * No hour/time mention — the UI already shows it.
+ * Hashtags are extracted from post text and returned separately.
  */
 export async function generateHourlySummary(
-    videos: VideoForAnalysis[],
+    posts: PostForAnalysis[],
     hour: number,
     date: string,
     onRetry?: RetryCallback,
 ): Promise<HourlySummaryResult> {
-    if (videos.length === 0) {
+    // Extract hashtags regardless of post count
+    const hashtags = extractHashtags(posts);
+
+    if (posts.length === 0) {
         return {
-            summary: 'No YouTube activity from monitored accounts this hour.',
+            summary: 'No activity from monitored accounts this hour.',
             model: 'none',
             retried: false,
+            hashtags: [],
         };
     }
 
@@ -87,21 +118,35 @@ export async function generateHourlySummary(
     const modelName = 'gemini-3.1-flash-lite-preview';
     const model = client.getGenerativeModel({ model: modelName });
 
-    const videoList = videos
-        .map(v => `- "${v.title}" by ${v.channel_title} [${v.content_type}] at ${v.published_at}`)
+    const postCount = posts.length;
+    const paragraphCount = Math.max(1, Math.floor(postCount / 4));
+
+    const postList = posts
+        .map(p => {
+            const platformLabel = p.platform === 'youtube' ? 'YouTube'
+                : p.platform === 'twitter' ? 'Twitter'
+                : p.platform === 'instagram' ? 'Instagram'
+                : p.platform === 'tiktok' ? 'TikTok'
+                : 'Web';
+            return `- [${platformLabel}] "${p.title}" by ${p.source_name} (${p.content_type})`;
+        })
         .join('\n');
 
-    const prompt = `You are a cinema industry analyst covering the Indonesian film market. Summarize the following YouTube activity from monitored cinema accounts during the ${hour}:00–${hour}:59 hour on ${date}.
+    const prompt = `You are a cinema industry analyst covering the Indonesian film market.
+
+Activity from monitored accounts:
+${postList}
+
+There are ${postCount} items. Write exactly ${paragraphCount} paragraph${paragraphCount > 1 ? 's' : ''} of analysis.
+Do NOT mention the hour or time range.
 
 Focus on:
 1. Key releases (trailers, teasers, new announcements)
-2. Audience reactions (reviews, community buzz)
-3. Notable trends or patterns across channels
+2. Audience reactions (reviews, community buzz, sentiment)
+3. Cross-platform trends
+4. Notable patterns (e.g., same movie trending across multiple sources)
 
-Videos this hour:
-${videoList}
-
-Write exactly 2-3 concise, factual sentences. No fluff. No generic filler.`;
+Be factual and specific. Mention movie titles, studio names, and people.`;
 
     let retried = false;
 
@@ -113,6 +158,7 @@ Write exactly 2-3 concise, factual sentences. No fluff. No generic filler.`;
                 summary: text || 'Summary generation returned empty.',
                 model: modelName,
                 retried,
+                hashtags,
             };
         } catch (error: unknown) {
             const status = (error as { status?: number }).status;
@@ -123,7 +169,6 @@ Write exactly 2-3 concise, factual sentences. No fluff. No generic filler.`;
                 const delay = Math.ceil(baseDelay * Math.pow(1.5, attempt));
                 console.warn(`[Gemini 429] Retry ${attempt + 1}/${MAX_RETRIES} in ${delay}s`);
 
-                // Notify caller so SSE can stream countdown
                 if (onRetry) {
                     onRetry({ attempt: attempt + 1, maxRetries: MAX_RETRIES, retryDelaySeconds: delay });
                 }
@@ -133,12 +178,12 @@ Write exactly 2-3 concise, factual sentences. No fluff. No generic filler.`;
                 continue;
             }
 
-            // Non-429 error or exhausted retries
             console.error(`[Gemini Error] Attempt ${attempt + 1} failed:`, error instanceof Error ? error.message : error);
             return {
                 summary: `⚠️ AI summary unavailable — ${is429 ? 'Gemini rate limit reached after retries.' : (error instanceof Error ? error.message : 'Unknown error')}`,
                 model: modelName,
                 retried,
+                hashtags,
             };
         }
     }
@@ -147,5 +192,6 @@ Write exactly 2-3 concise, factual sentences. No fluff. No generic filler.`;
         summary: '⚠️ AI summary unavailable after multiple retries.',
         model: modelName,
         retried: true,
+        hashtags,
     };
 }
