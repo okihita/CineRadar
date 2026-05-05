@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Clapperboard, Users, Zap } from 'lucide-react';
-import { formatCompactNumber, formatOccupancy } from '../../utils/format';
+import { formatOccupancy } from '../../utils/format';
 import { getOccupancyColor } from '../../utils/colors';
 import { MovieWithStats } from '../../types/performance';
 import { cn } from '@/lib/utils';
@@ -60,8 +60,8 @@ export function MarketGrid({ movies }: MarketGridProps) {
                             <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-1">
                                     <Users className="w-2.5 h-2.5 text-muted-foreground/60" />
-                                    <span className="text-[10px] font-black font-mono text-muted-foreground tabular-nums">
-                                        {formatCompactNumber(movie.today?.total_sold ?? 0)}
+                                    <span className="text-[10px] font-black font-mono text-muted-foreground tabular-nums tracking-tighter">
+                                        {(movie.today?.total_sold ?? 0).toLocaleString()}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-1">

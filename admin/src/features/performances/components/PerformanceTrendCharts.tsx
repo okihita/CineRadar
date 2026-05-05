@@ -46,7 +46,7 @@ const DeltaBadge = ({ value }: { value: number | null }) => {
 };
 
 // Custom tooltip for charts
-const CustomTooltip = ({ active, payload, label }: { active?: boolean, payload?: any[], label?: string }) => {
+const CustomTooltip = ({ active, payload, label }: { active?: boolean, payload?: { color: string, name: string, value: number | string, dataKey: string, payload: Record<string, unknown> }[], label?: string }) => {
     if (active && payload && payload.length) {
         return (
             <div className="bg-background/95 backdrop-blur-md border border-border/40 rounded-xl shadow-2xl p-4 min-w-[220px] animate-in fade-in zoom-in-95 duration-200">
@@ -56,7 +56,7 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean, payload?:
                         // Extract pre-calculated delta from the original data object
                         const dataKey = entry.dataKey;
                         const deltaKey = `${dataKey}_delta`;
-                        const deltaValue = entry.payload[deltaKey] ?? null;
+                        const deltaValue = (entry.payload[deltaKey] as number) ?? null;
 
                         return (
                             <div key={index} className="flex flex-col gap-0.5">

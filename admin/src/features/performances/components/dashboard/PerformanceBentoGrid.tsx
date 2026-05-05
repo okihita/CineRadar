@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Trophy, Target, Users, TrendingUp, Zap } from 'lucide-react';
-import { formatCompactNumber, formatOccupancy } from '../../utils/format';
+import { formatOccupancy } from '../../utils/format';
 import { getOccupancyColor } from '../../utils/colors';
 import { MovieWithStats } from '../../types/performance';
 import { cn } from '@/lib/utils';
@@ -101,8 +101,8 @@ export function PerformanceBentoGrid({ movies }: PerformanceBentoGridProps) {
                                                 <p className="text-[9px] font-black text-white/30 uppercase tracking-widest flex items-center gap-1.5 justify-end">
                                                     <Users className="w-3 h-3" /> Audience
                                                 </p>
-                                                <p className="text-2xl font-black font-mono text-white leading-none">
-                                                    {formatCompactNumber(podium[0].today?.total_sold ?? 0)}
+                                                <p className="text-2xl font-black font-mono text-white leading-none tabular-nums">
+                                                    {podium[0].today?.total_sold.toLocaleString() || '0'}
                                                 </p>
                                             </div>
                                         </div>
@@ -152,8 +152,8 @@ export function PerformanceBentoGrid({ movies }: PerformanceBentoGridProps) {
                                         <div className="h-6 w-px bg-border/40" />
                                         <div>
                                             <p className="text-[8px] font-black text-muted-foreground/50 uppercase tracking-widest mb-0.5">Audience</p>
-                                            <p className="text-xl font-black font-mono text-foreground leading-none">
-                                                {formatCompactNumber(movie.today?.total_sold ?? 0)}
+                                            <p className="text-xl font-black font-mono text-foreground leading-none tabular-nums">
+                                                {movie.today?.total_sold.toLocaleString() || '0'}
                                             </p>
                                         </div>
                                     </div>

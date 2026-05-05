@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Activity, Target, Users, Zap, Globe } from 'lucide-react';
-import { formatCompactNumber, formatOccupancy } from '../../utils/format';
+import { formatOccupancy } from '../../utils/format';
 import { ForensicHealthSheet } from '../ForensicHealthSheet';
 import { DiagnosticData } from '../../types/performance';
 
@@ -60,8 +60,8 @@ export function NationalPulseHud({
                     <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50 mb-0.5 flex items-center gap-1.5">
                         <Users className="w-2.5 h-2.5" /> Total Sales
                     </span>
-                    <span className="text-xl font-black font-mono tracking-tighter text-foreground">
-                        {formatCompactNumber(totalSold)}
+                    <span className="text-xl font-black font-mono tracking-tighter text-foreground tabular-nums">
+                        {totalSold.toLocaleString()}
                     </span>
                 </div>
 

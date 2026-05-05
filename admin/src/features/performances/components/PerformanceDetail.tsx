@@ -2,15 +2,21 @@
 
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
-import { Target, Users, Armchair, ChevronLeft, Globe, Loader2, AlertCircle } from 'lucide-react';
+import { Target, Users, Armchair, ChevronLeft, Globe, Loader2, AlertCircle, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { 
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { MovieSummaryCard } from './MovieSummaryCard';
 import { HistoryGrid } from './HistoryGrid';
 import { PerformanceTrendCharts } from './PerformanceTrendCharts';
 import { DailyStatsBanner } from './DailyStatsBanner';
 import { MovieSummary, DailyPerformance } from '../types/performance';
 import { getOccupancyColor } from '../utils/colors';
-import { formatCompactNumber, formatOccupancy } from '../utils/format';
+import { formatOccupancy } from '../utils/format';
 import { cn } from '@/lib/utils';
 import { getFirestoreConsoleUrl } from '@/lib/constants';
 import { fetcher } from '@/lib/api';
@@ -114,7 +120,7 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
                             Total Audience
                         </div>
                         <span className="text-xl font-black font-mono tracking-tighter tabular-nums text-foreground">
-                            {formatCompactNumber(movie.total_sold)}
+                            {(movie.total_sold || 0).toLocaleString()}
                         </span>
                     </div>
 
@@ -125,7 +131,7 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
                             Total Inventory
                         </div>
                         <span className="text-xl font-black font-mono tracking-tighter tabular-nums text-foreground">
-                            {formatCompactNumber(movie.total_seats)}
+                            {(movie.total_seats || 0).toLocaleString()}
                         </span>
                     </div>
 
@@ -133,10 +139,23 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
                     <div className="flex flex-col items-center">
                         <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
                             <Globe className="w-3 h-3" />
-                            Total Units
+                            <span>Total Showtimes</span>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Info className="w-2.5 h-2.5 text-primary/40 cursor-help hover:text-primary transition-colors" />
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-[200px] bg-background/95 backdrop-blur-md border-border/40 p-3 rounded-xl shadow-xl">
+                                        <p className="text-[10px] leading-relaxed font-medium text-foreground">
+                                            <strong className="text-primary uppercase block mb-1">Cumulative Supply</strong>
+                                            The total number of individual showtimes (units) tracked for this title since its release date.
+                                        </p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         </div>
-                        <span className="text-xl font-black font-mono tracking-tighter text-foreground">
-                            {movie.total_showtimes || 0}
+                        <span className="text-xl font-black font-mono tracking-tighter text-foreground tabular-nums">
+                            {(movie.total_showtimes_scraped || 0).toLocaleString()}
                         </span>
                     </div>
                 </div>

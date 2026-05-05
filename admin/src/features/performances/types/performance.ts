@@ -43,6 +43,7 @@ export interface MovieSummary {
     total_sold?: number;
     total_seats?: number;
     total_showtimes?: number;
+    total_showtimes_scraped?: number;
 }
 
 export interface ForensicAggregation {
