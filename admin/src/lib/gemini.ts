@@ -27,15 +27,12 @@ function getClient(): GoogleGenerativeAI {
 
 export interface PostForAnalysis {
     title: string;
-    source_name: string;         // was channel_title
+    source_name: string;
     content_type: string;
     published_at: string;
     platform: string;            // e.g. "youtube", "twitter"
     text: string;                // Full description/text — used for hashtag extraction
 }
-
-/** Backward compat */
-export type VideoForAnalysis = PostForAnalysis;
 
 /** Extract retry delay in seconds from Gemini 429 error */
 function extractRetryDelay(error: unknown): number {

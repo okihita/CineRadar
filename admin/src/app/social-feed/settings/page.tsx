@@ -11,7 +11,7 @@ import { ShieldAlert, Settings, Plus, Trash2, Loader2, Search, ExternalLink, Che
 import { fetcher } from '@/lib/api';
 import { YouTubeIcon } from '@/components/BrandIcons';
 import { cn } from '@/lib/utils';
-import type { SourceCategory } from '@/lib/firestore-social';
+import { SOURCE_CATEGORIES, type SourceCategory } from '@/lib/firestore-social';
 
 // ─── Types ──────────────────────────────────────────────
 
@@ -44,21 +44,29 @@ interface LookupResult {
 
 // ─── Constants ──────────────────────────────────────────
 
-const COLUMNS: { value: SourceCategory; label: string; bg: string }[] = [
-    { value: 'distributor', label: 'Distributors & Studios', bg: 'bg-purple-500/[0.04]' },
-    { value: 'streaming', label: 'Streaming', bg: 'bg-blue-500/[0.04]' },
-    { value: 'cinema_chain', label: 'Cinema Chains', bg: 'bg-orange-500/[0.04]' },
-    { value: 'critic', label: 'Critics & Reviewers', bg: 'bg-emerald-500/[0.04]' },
-    { value: 'community', label: 'Community & Fandom', bg: 'bg-pink-500/[0.04]' },
-    { value: 'news', label: 'News & Trade', bg: 'bg-cyan-500/[0.04]' },
-];
+const COLUMN_BGS: Record<SourceCategory, string> = {
+    distributor: 'bg-purple-500/[0.04]',
+    streaming: 'bg-blue-500/[0.04]',
+    cinema_chain: 'bg-orange-500/[0.04]',
+    critic: 'bg-emerald-500/[0.04]',
+    community: 'bg-pink-500/[0.04]',
+    news: 'bg-cyan-500/[0.04]',
+};
+
+const COLUMNS = SOURCE_CATEGORIES.map(c => ({
+    value: c.value,
+    label: c.label,
+    bg: COLUMN_BGS[c.value],
+}));
 
 const COLUMN_MAP = Object.fromEntries(COLUMNS.map(c => [c.value, c]));
 
-function formatSubscribers(n: number): string {
-    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-    if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
-    return n.toString();
+function formatCompactNumber(n: number | string): string {
+    const num = typeof n === 'string' ? parseInt(n as string) : n;
+    if (isNaN(num)) return '0';
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(0)}K`;
+    return num.toString();
 }
 
 // ─── Source Card (draggable) ────────────────────────────
@@ -139,7 +147,7 @@ function SourceCard({
                         {source.subscriber_count > 0 && (
                             <>
                                 <span className="text-muted-foreground/20">·</span>
-                                <span className="font-mono">{formatSubscribers(source.subscriber_count)}</span>
+                                <span className="font-mono">{formatCompactNumber(source.subscriber_count)}</span>
                             </>
                         )}
                     </div>
@@ -641,7 +649,7 @@ export default function SourceSettingsPage() {
                                         <p className="font-medium text-sm truncate">{lookupResult.display_name}</p>
                                         <p className="text-xs text-muted-foreground font-mono">{lookupResult.handle}</p>
                                         <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-0.5">
-                                            <span>{formatSubscribers(lookupResult.subscriber_count)} subs</span>
+                                            <span>{formatCompactNumber(lookupResult.subscriber_count)} subs</span>
                                             <span>{lookupResult.video_count} videos</span>
                                         </div>
                                     </div>

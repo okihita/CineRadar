@@ -101,18 +101,18 @@ export async function summarizeHour(
     for (const p of postsInHour) {
         typeBreakdown[p.content_type] = (typeBreakdown[p.content_type] || 0) + 1;
         platformBreakdown[p.platform] = (platformBreakdown[p.platform] || 0) + 1;
-        sourcesActiveSet.add(p.source_id || p.channel_id);
+        sourcesActiveSet.add(p.source_id);
     }
     const sourcesActive = [...sourcesActiveSet];
 
     const { summary, model: usedModel, hashtags, _error } = await generateHourlySummary(
         postsInHour.map(p => ({
             title: p.title,
-            source_name: p.source_name || p.channel_title,
+            source_name: p.source_name,
             content_type: p.content_type,
             published_at: p.published_at,
             platform: p.platform,
-            text: p.text || p.full_description || p.description || '',
+            text: p.text,
         })),
         hour,
         date,
@@ -138,11 +138,6 @@ export async function summarizeHour(
         generated_at: now,
         model: usedModel,
         backfill_duration_ms: 0,
-        // YouTube backward compat
-        video_count: postsInHour.length,
-        content_type_breakdown: typeBreakdown,
-        channels_active: postsInHour.map(p => p.source_name || p.channel_title),
-        channels_fetched: options?.sourceIds || sourcesActive,
     };
 
     // Use updateDocument (PATCH) to overwrite existing analysis, or createDocument if new

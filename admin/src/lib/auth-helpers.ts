@@ -22,3 +22,16 @@ export function getJakartaHour(isoTimestamp: string): number {
     });
     return parseInt(hour, 10) % 24;
 }
+
+/** Get the current date in Jakarta timezone as YYYY-MM-DD */
+export function getJakartaToday(): string {
+    return new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Jakarta' });
+}
+
+/** Get the current hour (0-23) in Jakarta timezone */
+export function getJakartaCurrentHour(): number {
+    return parseInt(
+        new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta', hour: 'numeric', hour12: false }),
+        10,
+    ) % 24;
+}

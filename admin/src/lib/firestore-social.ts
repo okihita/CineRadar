@@ -15,6 +15,20 @@ export type SourceCategory = 'critic' | 'cinema_chain' | 'distributor' | 'stream
 
 export type ContentType = 'trailer' | 'short' | 'review' | 'promo' | 'community';
 
+/** Source categories in display order with labels */
+export const SOURCE_CATEGORIES: { value: SourceCategory; label: string }[] = [
+    { value: 'distributor', label: 'Distributors & Studios' },
+    { value: 'streaming', label: 'Streaming Platforms' },
+    { value: 'cinema_chain', label: 'Cinema Chains' },
+    { value: 'critic', label: 'Critics & Reviewers' },
+    { value: 'community', label: 'Community & Fandom' },
+    { value: 'news', label: 'News & Trade' },
+];
+
+export const SOURCE_CATEGORY_ORDER = Object.fromEntries(
+    SOURCE_CATEGORIES.map((c, i) => [c.value, i]),
+) as Record<SourceCategory, number>;
+
 // ─── Collection names ──────────────────────────────────
 
 export const COLLECTIONS = {
@@ -118,18 +132,6 @@ export interface FirestoreSocialPost {
     media: PostMedia[];
     metrics: PostMetrics;
     platform_data: PostPlatformData;
-
-    // YouTube backward compat (populated for YouTube posts)
-    description: string;
-    full_description: string;
-    video_url: string;
-    channel_id: string;
-    channel_title: string;
-    channel_avatar: string;
-    duration: string;
-    view_count: number;
-    like_count: number;
-    tags: string[];
 }
 
 // ─── Hourly Analysis Document ───────────────────────────
@@ -163,12 +165,6 @@ export interface FirestoreSocialAnalysis {
     generated_at: string;          // ISO timestamp
     model: string;                 // e.g. "gemini-3.1-flash-lite-preview"
     backfill_duration_ms: number;  // how long the entire backfill took
-
-    // YouTube backward compat
-    video_count: number;
-    content_type_breakdown: Record<string, number>;
-    channels_active: string[];
-    channels_fetched: string[];
 }
 
 // ─── Helpers ────────────────────────────────────────────
@@ -206,12 +202,3 @@ export function groupPostsByHour(posts: FirestoreSocialPost[]): Map<number, Fire
     }
     return groups;
 }
-
-// ─── Backward Compatibility Aliases ─────────────────────
-// These allow existing code that imports old names to keep working during migration.
-
-export type FirestoreYouTubeChannel = FirestoreSocialSource;
-export type FirestoreYouTubeVideo = FirestoreSocialPost;
-export type FirestoreHourlyAnalysis = FirestoreSocialAnalysis;
-export type ChannelCategory = SourceCategory;
-export const groupVideosByHour = groupPostsByHour;

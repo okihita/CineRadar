@@ -18,7 +18,7 @@ import { auth } from '@/auth';
 import { detectContentType } from '@/features/social-pulse/data/mockSocialFeed';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { summarizeHour } from '@/lib/summarize';
-import { getJakartaHour } from '@/lib/auth-helpers';
+import { getJakartaHour, getJakartaToday } from '@/lib/auth-helpers';
 import {
     COLLECTIONS,
     makeHourId,
@@ -179,8 +179,7 @@ export async function POST(request: Request) {
 
         // Determine analysis range: for today, only analyze completed hours (current hour - 1)
         // to avoid partial data — an hour bucket isn't complete until the hour is over.
-        const jakartaNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
-        const todayJakarta = `${jakartaNow.getFullYear()}-${String(jakartaNow.getMonth() + 1).padStart(2, '0')}-${String(jakartaNow.getDate()).padStart(2, '0')}`;
+        const todayJakarta = getJakartaToday();
         const isToday = date === todayJakarta;
         const currentHour = isToday ? getJakartaHour(new Date().toISOString()) : 23;
         const maxHour = isToday ? Math.max(0, currentHour - 1) : 23;
@@ -255,7 +254,7 @@ export async function POST(request: Request) {
                             const doc: Omit<FirestoreSocialPost, 'id'> = {
                                 platform: 'youtube',
                                 title: activity.snippet.title,
-                                text: '', // Will be filled with full_description after Phase 2.5
+                                text: '', // Will be filled after Phase 2.5
                                 url: `https://youtube.com/watch?v=${videoId}`,
                                 published_at: activity.snippet.publishedAt,
                                 fetched_at: now,
@@ -269,17 +268,6 @@ export async function POST(request: Request) {
                                 media: [{ type: 'video', url: thumb }],
                                 metrics: { views: 0, likes: 0 },
                                 platform_data: { video_id: videoId },
-                                // YouTube backward compat
-                                description: activity.snippet.description?.slice(0, 500) || '',
-                                full_description: '',
-                                video_url: `https://youtube.com/watch?v=${videoId}`,
-                                channel_id: channelId,
-                                channel_title: source.display_name,
-                                channel_avatar: stats?.avatarUrl || source.avatar_url || '',
-                                duration: '',
-                                view_count: 0,
-                                like_count: 0,
-                                tags: [],
                             };
 
                             const ok = await firestoreRestClient.createDocument(
@@ -327,11 +315,6 @@ export async function POST(request: Request) {
 
                                 const update: Record<string, unknown> = {
                                     text: fullDesc,
-                                    full_description: fullDesc,
-                                    duration: dur,
-                                    view_count: views,
-                                    like_count: likes,
-                                    tags: vidTags,
                                     metrics: { views, likes },
                                     platform_data: { video_id: videoId, duration: dur, tags: vidTags },
                                 };
@@ -344,11 +327,6 @@ export async function POST(request: Request) {
 
                                 // Update local copy too (for AI analysis)
                                 post.text = fullDesc;
-                                post.full_description = fullDesc;
-                                post.duration = dur;
-                                post.view_count = views;
-                                post.like_count = likes;
-                                post.tags = vidTags;
                                 if (post.metrics) {
                                     post.metrics.views = views;
                                     post.metrics.likes = likes;

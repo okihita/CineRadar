@@ -87,8 +87,6 @@ export async function GET(request: Request) {
                 has_data: hasData,
                 posts,
                 analyses,
-                video_count: posts.length,
-                analysis_count: analyses.length,
             },
         });
     } catch (error) {

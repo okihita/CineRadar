@@ -31,12 +31,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { fetcher } from '@/lib/api';
+import { getJakartaToday, getJakartaCurrentHour } from '@/lib/auth-helpers';
 import {
     CONTENT_TYPE_LABELS,
     type ContentType,
 } from '@/features/social-pulse/data/mockSocialFeed';
 import { YouTubeIcon } from '@/components/BrandIcons';
 import {
+    SOURCE_CATEGORIES,
     type FirestoreSocialPost,
     type FirestoreSocialAnalysis,
     formatHour,
@@ -79,17 +81,6 @@ const CONTENT_ICONS: Record<ContentType, typeof Film> = {
 // ─── Helpers (Jakarta timezone) ────────────────────────
 
 const TZ = 'Asia/Jakarta';
-
-function getJakartaToday(): string {
-    return new Date().toLocaleDateString('sv-SE', { timeZone: TZ });
-}
-
-function getJakartaCurrentHour(): number {
-    return parseInt(
-        new Date().toLocaleString('en-US', { timeZone: TZ, hour: 'numeric', hour12: false }),
-        10,
-    ) % 24;
-}
 
 function getJakartaDate(date: Date): string {
     return date.toLocaleDateString('sv-SE', { timeZone: TZ });
@@ -146,12 +137,12 @@ function PostCard({ post }: { post: FirestoreSocialPost }) {
     const [expanded, setExpanded] = useState(false);
     const typeConfig = CONTENT_TYPE_LABELS[post.content_type as ContentType] || CONTENT_TYPE_LABELS.community;
     const TypeIcon = CONTENT_ICONS[post.content_type as ContentType] || CONTENT_ICONS.community;
-    const description = post.text || post.full_description || post.description;
+    const description = post.text;
     const hasDescription = description && description.length > 0;
-    const views = post.metrics?.views || post.view_count || 0;
-    const avatar = post.source_avatar || post.channel_avatar || '';
-    const name = post.source_name || post.channel_title || '';
-    const postUrl = post.url || post.video_url || '#';
+    const views = post.metrics?.views || 0;
+    const avatar = post.source_avatar;
+    const name = post.source_name;
+    const postUrl = post.url || '#';
 
     return (
         <div className="group bg-background/50 border border-border/40 rounded-2xl hover:bg-muted/30 hover:border-border/60 transition-all duration-300 overflow-hidden">
@@ -383,12 +374,12 @@ export default function SocialFeedPage() {
     const derivedAccounts = useMemo(() => {
         const seen = new Map<string, DerivedAccount>();
         for (const p of posts) {
-            const accountId = p.source_id || p.channel_id;
+            const accountId = p.source_id;
             if (!seen.has(accountId)) {
                 seen.set(accountId, {
                     id: accountId,
-                    display_name: p.source_name || p.channel_title || '',
-                    avatar_url: p.source_avatar || p.channel_avatar || '',
+                    display_name: p.source_name,
+                    avatar_url: p.source_avatar,
                     category: p.source_category || 'unknown',
                     post_count: 0,
                 });
@@ -742,26 +733,18 @@ export default function SocialFeedPage() {
                     {/* Source list grouped by category */}
                     <div className="border-t border-amber-500/10 px-5 py-4 space-y-4">
                         {(() => {
-                            const CATEGORY_ORDER: { key: string; label: string }[] = [
-                                { key: 'distributor', label: 'Distributors & Studios' },
-                                { key: 'streaming', label: 'Streaming' },
-                                { key: 'cinema_chain', label: 'Cinema Chains' },
-                                { key: 'critic', label: 'Critics & Reviewers' },
-                                { key: 'community', label: 'Community & Fandom' },
-                                { key: 'news', label: 'News & Trade' },
-                            ];
                             const grouped = new Map<string, typeof activeSources>();
                             for (const s of activeSources) {
                                 if (!grouped.has(s.category)) grouped.set(s.category, []);
                                 grouped.get(s.category)!.push(s);
                             }
-                            return CATEGORY_ORDER
-                                .filter(c => grouped.has(c.key))
-                                .map(({ key, label }) => (
-                                    <div key={key}>
+                            return SOURCE_CATEGORIES
+                                .filter(c => grouped.has(c.value))
+                                .map(({ value, label }) => (
+                                    <div key={value}>
                                         <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">{label}</p>
                                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
-                                            {(grouped.get(key) || []).map(source => (
+                                            {(grouped.get(value) || []).map(source => (
                                                 <div key={source.id} className="flex items-center gap-2.5 px-3 py-2 bg-background/40 rounded-lg border border-border/10">
                                                     <div className="w-8 h-8 rounded-full overflow-hidden bg-muted flex-shrink-0">
                                                         {source.avatar_url ? (
@@ -1068,7 +1051,7 @@ export default function SocialFeedPage() {
                             if (hourPosts.length === 0) return null;
 
                             const analysis = analysisMap.get(hourIdx);
-                            const postCount = analysis?.total_posts || analysis?.video_count || hourPosts.length;
+                            const postCount = analysis?.total_posts || hourPosts.length;
                             const isSelected = selectedHour === hourIdx;
 
                             return (

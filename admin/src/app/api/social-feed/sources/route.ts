@@ -7,11 +7,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { firestoreRestClient } from '@/lib/firestore-rest';
-import { COLLECTIONS, type FirestoreSocialSource, type Platform, type SourceCategory } from '@/lib/firestore-social';
+import { COLLECTIONS, SOURCE_CATEGORIES, SOURCE_CATEGORY_ORDER, type FirestoreSocialSource, type Platform, type SourceCategory } from '@/lib/firestore-social';
 import { isAdmin } from '@/lib/auth-helpers';
 
 const VALID_PLATFORMS: Platform[] = ['youtube', 'twitter', 'instagram', 'tiktok', 'web'];
-const VALID_CATEGORIES: SourceCategory[] = ['critic', 'cinema_chain', 'distributor', 'streaming', 'community', 'news'];
+const VALID_CATEGORIES: SourceCategory[] = SOURCE_CATEGORIES.map(c => c.value);
 
 export async function GET() {
     try {
@@ -20,11 +20,10 @@ export async function GET() {
         );
 
         // Sort: active first, then by category, then by display_name
-        const categoryOrder: Record<string, number> = { distributor: 0, streaming: 1, cinema_chain: 2, critic: 3, community: 4, news: 5 };
         sources.sort((a, b) => {
             if (a.active !== b.active) return a.active ? -1 : 1;
-            const ca = categoryOrder[a.category] ?? 9;
-            const cb = categoryOrder[b.category] ?? 9;
+            const ca = SOURCE_CATEGORY_ORDER[a.category] ?? 9;
+            const cb = SOURCE_CATEGORY_ORDER[b.category] ?? 9;
             if (ca !== cb) return ca - cb;
             return a.display_name.localeCompare(b.display_name);
         });
