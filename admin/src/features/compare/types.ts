@@ -60,6 +60,8 @@ export const CHART_COLORS = [
     '#db2777', // Pink 600
     '#7c3aed', // Violet 600
     '#dc2626', // Red 600
+    '#0891b2', // Cyan 600
+    '#ea580c', // Orange 600
 ];
 
 /**

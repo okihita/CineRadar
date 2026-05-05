@@ -170,7 +170,7 @@ function CompareDashboard() {
     };
 
     const handleAddMovie = (movie: Movie | TrendingMovie) => {
-        if (selectedMovieIds.length >= 6) return;
+        if (selectedMovieIds.length >= 8) return;
         if (selectedMovieIds.includes(movie.id)) return;
         updateUrl([...selectedMovieIds, movie.id], dateRange);
     };

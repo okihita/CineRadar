@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { TrendingUp, TrendingDown, Minus, Info } from 'lucide-react';
 import { MovieBuzz } from '../types';
 import { cn } from '@/lib/utils';
@@ -38,8 +39,14 @@ export function BuzzRankingTable({ movies }: BuzzRankingTableProps) {
                                 <td className="py-4 px-4">
                                     <div className="flex items-center gap-3">
                                         {movie.poster && (
-                                            <div className="w-8 h-10 rounded-lg bg-muted overflow-hidden flex-shrink-0 border border-border/20 shadow-sm">
-                                                <img src={movie.poster} alt="" className="w-full h-full object-cover" />
+                                            <div className="w-8 h-10 rounded-lg bg-muted overflow-hidden flex-shrink-0 border border-border/20 shadow-sm relative">
+                                                <Image 
+                                                    src={movie.poster} 
+                                                    alt={movie.title} 
+                                                    fill 
+                                                    className="object-cover"
+                                                    sizes="32px"
+                                                />
                                             </div>
                                         )}
                                         <span className="font-bold text-sm tracking-tight">{movie.title}</span>

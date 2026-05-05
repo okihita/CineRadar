@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { X, GitCompare, Flame, TrendingUp } from 'lucide-react';
@@ -44,6 +45,24 @@ export function TrendingGrid({ trendingMovies, isLoading, error, onAddMovie, onC
                         <TrendingUp className="w-4 h-4 mr-2" />
                         Top 3 Contenders
                     </Button>
+                    <Button
+                        variant="secondary"
+                        className="font-bold"
+                        disabled={isLoading || trendingMovies.length < 5}
+                        onClick={() => onCompareTop(5)}
+                    >
+                        <GitCompare className="w-4 h-4 mr-2" />
+                        Top 5 Battles
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        className="font-bold"
+                        disabled={isLoading || trendingMovies.length < 8}
+                        onClick={() => onCompareTop(8)}
+                    >
+                        <TrendingUp className="w-4 h-4 mr-2" />
+                        All 8 Leaders
+                    </Button>
                 </div>
             </div>
 
@@ -83,11 +102,12 @@ export function TrendingGrid({ trendingMovies, isLoading, error, onAddMovie, onC
                             >
                                 <div className="relative aspect-[2/3]">
                                     {movie.poster ? (
-                                        /* eslint-disable-next-line @next/next/no-img-element */
-                                        <img
+                                        <Image
                                             src={movie.poster}
                                             alt={movie.title}
-                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                            fill
+                                            className="object-cover transition-transform duration-500 group-hover:scale-110"
+                                            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 12vw"
                                         />
                                     ) : (
                                         <div className="w-full h-full bg-muted flex items-center justify-center text-xs text-muted-foreground">

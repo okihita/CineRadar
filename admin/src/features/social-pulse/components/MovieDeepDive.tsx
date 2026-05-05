@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { 
     Dialog, 
     DialogContent, 
@@ -47,8 +48,14 @@ export function MovieDeepDive({ movie, open, onOpenChange }: MovieDeepDiveProps)
                     <DialogHeader>
                         <div className="flex items-start gap-6">
                             {movie.poster && (
-                                <div className="w-20 h-28 rounded-2xl bg-muted overflow-hidden flex-shrink-0 border border-border/20 shadow-2xl">
-                                    <img src={movie.poster} alt="" className="w-full h-full object-cover" />
+                                <div className="w-20 h-28 rounded-2xl bg-muted overflow-hidden flex-shrink-0 border border-border/20 shadow-2xl relative">
+                                    <Image 
+                                        src={movie.poster} 
+                                        alt={movie.title} 
+                                        fill 
+                                        className="object-cover"
+                                        sizes="80px"
+                                    />
                                 </div>
                             )}
                             <div className="space-y-3 flex-1">

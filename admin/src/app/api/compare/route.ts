@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ success: false, error: 'Missing movies parameter' }, { status: 400 });
         }
 
-        const movieIds = moviesParam.split(',').slice(0, 6); // max 6 movies
+        const movieIds = moviesParam.split(',').slice(0, 8); // max 8 movies
         
         let startDate = new Date();
         startDate.setDate(startDate.getDate() - 7); // Default last 7 days

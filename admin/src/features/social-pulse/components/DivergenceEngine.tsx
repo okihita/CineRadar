@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { Users, Armchair, Calendar } from 'lucide-react';
 import { MovieBuzz } from '../types';
 import { cn } from '@/lib/utils';
@@ -50,8 +51,14 @@ export function DivergenceEngine({ movies, onMovieClick }: DivergenceEngineProps
                                     <td className="py-5 px-6">
                                         <div className="flex items-center gap-4">
                                             {movie.poster && (
-                                                <div className="w-10 h-14 rounded-xl bg-muted overflow-hidden flex-shrink-0 border border-border/20 shadow-xl group-hover:scale-105 transition-transform duration-500">
-                                                    <img src={movie.poster} alt="" className="w-full h-full object-cover" />
+                                                <div className="w-10 h-14 rounded-xl bg-muted overflow-hidden flex-shrink-0 border border-border/20 shadow-xl group-hover:scale-105 transition-transform duration-500 relative">
+                                                    <Image 
+                                                        src={movie.poster} 
+                                                        alt={movie.title} 
+                                                        fill 
+                                                        className="object-cover"
+                                                        sizes="40px"
+                                                    />
                                                 </div>
                                             )}
                                             <div className="min-w-0">

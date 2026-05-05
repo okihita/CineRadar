@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import useSWR from 'swr';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -66,7 +67,7 @@ export function CompareControlPanel({
                 <div className="flex items-center justify-between">
                     <div>
                         <CardTitle className="text-lg">Configuration</CardTitle>
-                        <CardDescription>Select up to 6 movies to compare side-by-side. Click on the color to pick another color for a movie.</CardDescription>
+                        <CardDescription>Select up to 8 movies to compare side-by-side. Click on the color to pick another color for a movie.</CardDescription>
                     </div>
                     {selectedMovieIds.length > 0 && (
                         <Button
@@ -95,7 +96,7 @@ export function CompareControlPanel({
                                     setIsSearchOpen(true);
                                 }}
                                 onFocus={() => setIsSearchOpen(true)}
-                                disabled={selectedMovieIds.length >= 6 || isLoadingMovies}
+                                disabled={selectedMovieIds.length >= 8 || isLoadingMovies}
                                 className="pl-8"
                             />
                         </div>
@@ -117,10 +118,17 @@ export function CompareControlPanel({
                                             }}
                                         >
                                             {movie.poster ? (
-                                                // eslint-disable-next-line @next/next/no-img-element
-                                                <img src={movie.poster} alt="" className="w-16 h-24 object-cover rounded shadow-sm border" />
+                                                <div className="w-16 h-24 relative flex-shrink-0">
+                                                    <Image 
+                                                        src={movie.poster} 
+                                                        alt={movie.title} 
+                                                        fill 
+                                                        className="object-cover rounded shadow-sm border"
+                                                        sizes="64px"
+                                                    />
+                                                </div>
                                             ) : (
-                                                <div className="w-16 h-24 bg-muted rounded flex items-center justify-center border border-dashed">
+                                                <div className="w-16 h-24 bg-muted rounded flex items-center justify-center border border-dashed flex-shrink-0">
                                                     <span className="text-xs text-muted-foreground">No poster</span>
                                                 </div>
                                             )}
@@ -187,7 +195,7 @@ export function CompareControlPanel({
                             {selectedMovieIds.length === 0 && (
                                 <span className="text-sm text-muted-foreground italic flex items-center gap-2">
                                     <Loader2 className={`w-3 h-3 animate-spin ${isLoadingTrending ? 'opacity-100' : 'opacity-0'}`} />
-                                    Select up to 6 movies or choose from trending below
+                                    Select up to 8 movies or choose from trending below
                                 </span>
                             )}
                         </div>
