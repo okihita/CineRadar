@@ -1,7 +1,9 @@
 "use client";
-import React from "react";
+import React, { useRef, useCallback, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Map as MapIcon, Trophy } from "lucide-react";
+import { Map as MapIcon, Trophy, Camera, Loader2 } from "lucide-react";
+import { toPng } from 'html-to-image';
+import { Button } from "@/components/ui/button";
 import { ShowtimeSnapshot } from '../types/performance';
 import { PERFORMANCE_TIERS } from "@/lib/constants";
 
@@ -17,6 +19,35 @@ export function NationalSeatAllocation({
   showtimes,
 }: NationalSeatAllocationProps) {
   const { cityStats, provinceStats } = useCityAggregation(showtimes);
+  const mapRef = useRef<HTMLDivElement>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
+
+  const handleDownloadImage = useCallback(async () => {
+    if (!mapRef.current) return;
+    
+    setIsCapturing(true);
+    try {
+      // Small delay to ensure any animations are settled
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const dataUrl = await toPng(mapRef.current, {
+        cacheBust: true,
+        backgroundColor: 'hsl(var(--background))',
+        style: {
+          borderRadius: '0px',
+        }
+      });
+      
+      const link = document.createElement('a');
+      link.download = `cineradar-national-allocation-${new Date().toISOString().split('T')[0]}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error('Failed to capture map:', err);
+    } finally {
+      setIsCapturing(false);
+    }
+  }, []);
 
   if (showtimes.length === 0) return null;
 
@@ -24,10 +55,27 @@ export function NationalSeatAllocation({
     <Card className="mb-6 overflow-hidden border-border/50">
       <CardHeader className="pb-4 border-b bg-muted/5 py-2.5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <CardTitle className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 text-muted-foreground">
-                <MapIcon className="w-3.5 h-3.5 opacity-70" />
-                National Allocation
-            </CardTitle>
+            <div className="flex items-center gap-4">
+                <CardTitle className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 text-muted-foreground">
+                    <MapIcon className="w-3.5 h-3.5 opacity-70" />
+                    National Allocation
+                </CardTitle>
+                
+                <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={handleDownloadImage}
+                    disabled={isCapturing}
+                    className="h-7 gap-1.5 px-2 text-[10px] font-black uppercase text-primary hover:text-primary hover:bg-primary/5 transition-all"
+                >
+                    {isCapturing ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                        <Camera className="w-3 h-3" />
+                    )}
+                    {isCapturing ? 'Capturing...' : 'Capture Map'}
+                </Button>
+            </div>
             
             <div className="hidden xl:flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
                 <Trophy className="w-3.5 h-3.5 text-amber-500 opacity-50" />
@@ -38,7 +86,10 @@ export function NationalSeatAllocation({
       <CardContent className="p-0">
         <div className="grid grid-cols-1 xl:grid-cols-2 divide-y xl:divide-y-0">
           {/* Map Component */}
-          <div className="w-full flex flex-col gap-2 p-6 bg-background/50 xl:border-r">
+          <div 
+            ref={mapRef}
+            className="w-full flex flex-col gap-2 p-6 bg-background/50 xl:border-r"
+          >
             <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-tighter text-muted-foreground mb-1">
               <span>Choropleth Heatmap (Provincial)</span>
             </div>
