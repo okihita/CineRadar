@@ -1,4 +1,5 @@
 import MovieBrowser from '@/components/movie/MovieBrowser';
+import type { Metadata } from 'next';
 
 interface TheaterSchedule {
   theatre_id: string;
@@ -34,6 +35,50 @@ interface MovieData {
   };
   movies: Movie[];
   city_stats: Record<string, number>;
+}
+
+type Props = {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+};
+
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const params = await searchParams;
+  const movieId = params.movie as string;
+
+  const baseMetadata: Metadata = {
+    title: "CineRadar - Indonesia Movie Tracker",
+    description: "Track movie availability across all Indonesian cities. See which movies are showing where.",
+    openGraph: {
+      title: "CineRadar",
+      description: "Track movie availability across all Indonesian cities.",
+      images: ['/opengraph-image'], // Default fallback
+    }
+  };
+
+  if (!movieId) return baseMetadata;
+
+  const data = await getMovieData();
+  const movie = data?.movies.find(m => m.id === movieId);
+
+  if (movie) {
+    return {
+      ...baseMetadata,
+      title: `${movie.title} - CineRadar`,
+      description: `Check showtimes and seat availability for ${movie.title} across Indonesia.`,
+      openGraph: {
+        ...baseMetadata.openGraph,
+        title: movie.title,
+        images: [movie.poster],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: movie.title,
+        images: [movie.poster],
+      }
+    };
+  }
+
+  return baseMetadata;
 }
 
 async function getMovieData(): Promise<MovieData | null> {
@@ -130,8 +175,10 @@ function formatWIB(date: string | null | undefined): string {
   }) + ' WIB';
 }
 
-export default async function Home() {
+export default async function Home({ searchParams }: Props) {
   const data = await getMovieData();
+  const params = await searchParams;
+  const initialMovieId = params.movie as string;
 
   if (!data) {
     return (
@@ -195,7 +242,7 @@ export default async function Home() {
       </header>
 
       {/* Movie Browser */}
-      <MovieBrowser movies={data.movies} />
+      <MovieBrowser movies={data.movies} initialMovieId={initialMovieId} />
     </div>
   );
 }

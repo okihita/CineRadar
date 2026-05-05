@@ -47,6 +47,7 @@ interface Movie {
 
 interface MovieBrowserProps {
     movies: Movie[];
+    initialMovieId?: string;
 }
 
 type ViewMode = 'browser' | 'dashboard';
@@ -175,8 +176,14 @@ async function fetchMovieAdmissions(movieId: string, date: string): Promise<Admi
     }
 }
 
-export default function MovieBrowser({ movies }: MovieBrowserProps) {
-    const [selectedMovie, setSelectedMovie] = useState<Movie | null>(movies[0] || null);
+export default function MovieBrowser({ movies, initialMovieId }: MovieBrowserProps) {
+    const [selectedMovie, setSelectedMovie] = useState<Movie | null>(() => {
+        if (initialMovieId) {
+            const found = movies.find(m => m.id === initialMovieId);
+            if (found) return found;
+        }
+        return movies[0] || null;
+    });
     const [movieWithSchedules, setMovieWithSchedules] = useState<Movie | null>(null);
     const [loadingSchedule, setLoadingSchedule] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>('browser');
