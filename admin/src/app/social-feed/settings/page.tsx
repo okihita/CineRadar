@@ -484,7 +484,7 @@ export default function SourceSettingsPage() {
         const insertIdx = dropInsertIndex ?? colSources.length;
 
         // Build the new order for the target column
-        let targetList = colSources.filter(s => s.id !== sourceId);
+        const targetList = colSources.filter(s => s.id !== sourceId);
         if (sameCategory) {
             // Reorder within same column
             targetList.splice(insertIdx, 0, source);

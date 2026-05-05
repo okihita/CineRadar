@@ -9,7 +9,7 @@ import {
     TrendingUp, Rss, Settings, Shield, BookOpen, Radio,
     type LucideIcon,
 } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { useDarkModeContext } from '@/hooks';
@@ -186,12 +186,10 @@ export function Sidebar() {
     const { data: session } = useSession();
     const isAdmin = (session as unknown as { user?: { role?: string } })?.user?.role === 'admin';
 
-    const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
-
-    // Load persisted state on mount
-    useEffect(() => {
-        setCollapsedGroups(loadCollapsedGroups());
-    }, []);
+    const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => {
+        if (typeof window === 'undefined') return new Set();
+        return loadCollapsedGroups();
+    });
 
     const toggleGroup = useCallback((groupId: string) => {
         setCollapsedGroups(prev => {

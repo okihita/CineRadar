@@ -22,6 +22,16 @@ export const metadata: Metadata = {
   icons: {
     icon: "/icon.svg",
   },
+  openGraph: {
+    title: "CineRadar Admin",
+    description: "Forensic Market Intelligence Dashboard",
+    images: ['/opengraph-image'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "CineRadar Admin",
+    images: ['/opengraph-image'],
+  }
 };
 
 // Blocking script to prevent flash of wrong theme and suppress internal performance measurement bugs
