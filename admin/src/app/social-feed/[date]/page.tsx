@@ -26,6 +26,7 @@ import {
     Trash2,
     Hash,
     RefreshCw,
+    Clock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -81,6 +82,13 @@ const TZ = 'Asia/Jakarta';
 
 function getJakartaToday(): string {
     return new Date().toLocaleDateString('sv-SE', { timeZone: TZ });
+}
+
+function getJakartaCurrentHour(): number {
+    return parseInt(
+        new Date().toLocaleString('en-US', { timeZone: TZ, hour: 'numeric', hour12: false }),
+        10,
+    ) % 24;
 }
 
 function getJakartaDate(date: Date): string {
@@ -601,6 +609,27 @@ export default function SocialFeedPage() {
         return failed;
     }, [hourGroups, analysisMap]);
 
+    // Detect unscraped hours for today (hours that have passed but have no data)
+    const currentJakartaHour = useMemo(() => getJakartaCurrentHour(), [selectedDate]);
+    const isViewingToday = isToday(selectedDate);
+
+    const staleHours = useMemo(() => {
+        if (!isViewingToday || !hasData) return [];
+        const stale: number[] = [];
+        // Find the last hour that has been analyzed
+        const analyzedHours = [...analysisMap.keys()].filter(h => h <= currentJakartaHour);
+        const maxAnalyzed = analyzedHours.length > 0 ? Math.max(...analyzedHours) : -1;
+        // Hours from maxAnalyzed+1 up to currentJakartaHour (inclusive) are unscraped.
+        // The current hour itself is not scraped either (backfill caps at currentHour - 1).
+        for (let h = maxAnalyzed + 1; h <= currentJakartaHour; h++) {
+            if ((hourGroups.get(h) || []).length > 0) continue;
+            stale.push(h);
+        }
+        return stale;
+    }, [isViewingToday, hasData, analysisMap, hourGroups, currentJakartaHour]);
+
+    const hasStaleHours = staleHours.length > 0;
+
     // Date navigation
     const goToPrevDay = () => setSelectedDate(addDays(selectedDate, -1));
     const goToNextDay = () => setSelectedDate(addDays(selectedDate, 1));
@@ -906,6 +935,11 @@ export default function SocialFeedPage() {
                                     const analysis = analysisMap.get(h);
                                     const hasPosts = hourPosts.length > 0;
                                     const isSelected = selectedHour === h;
+                                    const isStale = hasStaleHours && staleHours.includes(h);
+                                    const isFutureToday = isViewingToday && h > currentJakartaHour;
+
+                                    // Skip rendering hours that haven't happened yet (for today)
+                                    if (isFutureToday) return null;
 
                                     return (
                                         <button
@@ -932,15 +966,25 @@ export default function SocialFeedPage() {
                                                 "w-full text-left p-2.5 rounded-xl transition-all duration-200",
                                                 isSelected
                                                     ? "bg-primary/10 border border-primary/20"
-                                                    : hasPosts
-                                                        ? "bg-background/50 border border-border/20 hover:bg-muted/20 hover:border-border/40"
-                                                        : "opacity-30",
+                                                    : isStale
+                                                        ? "bg-blue-500/[0.04] border border-blue-500/10 border-dashed"
+                                                        : hasPosts
+                                                            ? "bg-background/50 border border-border/20 hover:bg-muted/20 hover:border-border/40"
+                                                            : "opacity-30",
                                             )}
                                         >
                                             <div className="flex items-center justify-between mb-1">
-                                                <span className="text-[10px] font-mono font-bold tabular-nums">{formatHour(h)}</span>
+                                                <span className={cn(
+                                                    "text-[10px] font-mono font-bold tabular-nums",
+                                                    isStale && "text-blue-500/60",
+                                                )}>
+                                                    {formatHour(h)}
+                                                </span>
                                                 {hasPosts && (
                                                     <span className="text-[9px] font-mono font-bold text-muted-foreground">{hourPosts.length}</span>
+                                                )}
+                                                {isStale && (
+                                                    <span className="text-[8px] font-bold text-blue-500/50 uppercase tracking-wider">Pending</span>
                                                 )}
                                             </div>
                                             {analysis && (
@@ -948,7 +992,7 @@ export default function SocialFeedPage() {
                                                     {renderMD(analysis.summary)}
                                                 </p>
                                             )}
-                                            {!hasPosts && !analysis && (
+                                            {!hasPosts && !analysis && !isStale && (
                                                 <p className="text-[9px] text-muted-foreground/50 italic">No activity</p>
                                             )}
                                         </button>
@@ -987,6 +1031,30 @@ export default function SocialFeedPage() {
                                 >
                                     {batchRetrying ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
                                     {batchRetrying ? 'Generating...' : 'Generate All'}
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Stale hours banner — today has unscraped hours */}
+                        {hasStaleHours && !backfilling && (
+                            <div className="flex items-center justify-between px-4 py-3 bg-blue-500/5 rounded-xl border border-blue-500/10">
+                                <div className="flex items-center gap-2.5">
+                                    <Clock className="w-4 h-4 text-blue-500/70 flex-shrink-0" />
+                                    <div>
+                                        <p className="text-[11px] text-foreground font-medium">
+                                            {staleHours.length} hour{staleHours.length > 1 ? 's' : ''} not yet scraped
+                                        </p>
+                                        <p className="text-[10px] text-muted-foreground">
+                                            {formatHour(staleHours[0])} – {String(staleHours[staleHours.length - 1]).padStart(2, '0')}:59 · data may be missing
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={handleBackfill}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-blue-600 hover:bg-blue-500/10 rounded-md transition-colors flex-shrink-0"
+                                >
+                                    <Download className="w-3 h-3" />
+                                    Refresh Now
                                 </button>
                             </div>
                         )}

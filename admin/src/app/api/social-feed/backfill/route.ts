@@ -18,11 +18,13 @@ import { auth } from '@/auth';
 import { detectContentType } from '@/features/social-pulse/data/mockSocialFeed';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { summarizeHour } from '@/lib/summarize';
+import { getJakartaHour } from '@/lib/auth-helpers';
 import {
     COLLECTIONS,
     makeHourId,
     type FirestoreSocialPost,
     type FirestoreSocialSource,
+    type FirestoreSocialAnalysis,
     type SourceCategory,
 } from '@/lib/firestore-social';
 
@@ -174,6 +176,14 @@ export async function POST(request: Request) {
         }
 
         const backfillStart = Date.now();
+
+        // Determine analysis range: for today, only analyze completed hours (current hour - 1)
+        // to avoid partial data — an hour bucket isn't complete until the hour is over.
+        const jakartaNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+        const todayJakarta = `${jakartaNow.getFullYear()}-${String(jakartaNow.getMonth() + 1).padStart(2, '0')}-${String(jakartaNow.getDate()).padStart(2, '0')}`;
+        const isToday = date === todayJakarta;
+        const currentHour = isToday ? getJakartaHour(new Date().toISOString()) : 23;
+        const maxHour = isToday ? Math.max(0, currentHour - 1) : 23;
 
         // Convert Jakarta date to UTC range for YouTube API
         const publishedAfter = `${date}T00:00:00+07:00`;
@@ -354,10 +364,37 @@ export async function POST(request: Request) {
                         console.log(`[Backfill] Updated details for ${detailsUpdated} videos`);
                     }
 
-                    // Phase 3: AI analysis per hour
+                    // Phase 3: AI analysis per hour (skip hours that already have successful analyses)
+                    // Fetch existing analyses to avoid redundant Gemini calls
+                    const existingAnalyses = await firestoreRestClient.runQuery<FirestoreSocialAnalysis>({
+                        from: [{ collectionId: COLLECTIONS.ANALYSIS }],
+                        where: {
+                            fieldFilter: {
+                                field: { fieldPath: 'date' },
+                                op: 'EQUAL',
+                                value: { stringValue: date },
+                            },
+                        },
+                    });
+                    const successfulHours = new Set(
+                        existingAnalyses
+                            .filter(a => a.summary && !a.summary.startsWith('⚠️') && a.total_posts > 0)
+                            .map(a => a.hour),
+                    );
+
+                    // Determine which hours need analysis
+                    const hoursToAnalyze = [];
+                    for (let hour = 0; hour <= maxHour; hour++) {
+                        if (!successfulHours.has(hour)) {
+                            hoursToAnalyze.push(hour);
+                        }
+                    }
+
+                    const totalHours = hoursToAnalyze.length;
+                    const skippedHours = (maxHour + 1) - totalHours;
                     send('phase', {
                         phase: 'writing_done',
-                        message: `Found ${postsWritten} posts with full details. Starting AI analysis...`,
+                        message: `Found ${postsWritten} posts. Analyzing ${totalHours} hours (skipping ${skippedHours} already done)...`,
                         totalVideos: postsWritten,
                     });
 
@@ -365,7 +402,7 @@ export async function POST(request: Request) {
                     let completedHours = 0;
                     const sourceIds = sources.map(s => s.id);
 
-                    for (let hour = 0; hour < 24; hour++) {
+                    for (const hour of hoursToAnalyze) {
                         const result = await summarizeHour(date, hour, {
                             existingPosts: allPosts,
                             sourceIds,
@@ -392,8 +429,8 @@ export async function POST(request: Request) {
                             fullSummary: result.summary,
                             hashtags: result.hashtags.slice(0, 10),
                             completedHours,
-                            totalHours: 24,
-                            progress: Math.round((completedHours / 24) * 100),
+                            totalHours,
+                            progress: Math.round((completedHours / totalHours) * 100),
                         });
 
                         // Rate limit: only delay if hour had content (triggered a real API call)
