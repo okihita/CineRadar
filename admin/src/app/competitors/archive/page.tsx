@@ -640,6 +640,7 @@ export default function TweetArchivePage() {
                 <CalendarPicker
                   mode="single"
                   selected={currentDateInView}
+                  disabled={{ after: new Date() }}
                   onSelect={(date) => {
                     if (date) setCurrentDateInView(date);
                   }}
