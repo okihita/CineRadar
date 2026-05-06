@@ -6,7 +6,7 @@ import {
     MapPin, ChevronLeft, ChevronRight, ChevronDown,
     Database, Calendar, Clapperboard, Sun, Moon, Monitor,
     LogOut, Users as UsersIcon, Share2, ArrowRightLeft,
-    TrendingUp, Rss, Settings, Shield, BookOpen, Radio,
+    TrendingUp, Rss, Settings, Shield, BookOpen, Radio, Swords,
     type LucideIcon,
 } from 'lucide-react';
 import { useState, useCallback } from 'react';
@@ -83,6 +83,13 @@ const menuGroups: MenuGroup[] = [
                 description: 'Box office tracking',
                 href: '/performances',
                 icon: TrendingUp,
+                adminOnly: false,
+            },
+            {
+                title: 'Competitor Data',
+                description: 'CinePoint benchmarking',
+                href: '/competitors',
+                icon: Swords,
                 adminOnly: false,
             },
             {
@@ -168,6 +175,9 @@ function isItemActive(href: string, pathname: string): boolean {
     }
     if (href === '/social-feed') {
         return pathname === '/social-feed' || /^\/social-feed\/\d{4}/.test(pathname);
+    }
+    if (href === '/competitors') {
+        return pathname === '/competitors' || pathname.startsWith('/competitors/');
     }
     return pathname.startsWith(href);
 }
