@@ -129,6 +129,80 @@ export interface TweetSourceSummary {
   date_range: number;                  // number of days covered
 }
 
+// ─── Confidence Score ──────────────────────────────────────
+
+export interface ConfidenceBreakdown {
+  match_score: number;         // 0-100: matched_movies / total_cp_movies * 100
+  deviation_score: number;     // 0-100: penalized by avg deviation
+  completeness_score: number;  // 0-100: 100 if both showtimes+admissions, 50 if partial
+}
+
+export interface ConfidenceResult {
+  score: number;                // 0-100 composite
+  level: 'excellent' | 'good' | 'warning' | 'critical';
+  breakdown: ConfidenceBreakdown;
+}
+
+// ─── Trend Data (30-day dashboard) ─────────────────────────
+
+export interface TrendMovieDay {
+  title_cp: string;
+  matched: boolean;
+  showtime_delta_pct: number | null;
+  admission_delta_pct: number | null;
+}
+
+export interface TrendDay {
+  date: string;
+  status: SnapshotStatus;
+  confidence: ConfidenceResult | null;
+  coverage_ratio: number | null;       // cr_showtimes / cp_showtimes
+  showtime_delta_pct: number | null;   // overall showtime delta %
+  admission_delta_pct: number | null;  // overall admission delta %
+  match_rate: number | null;           // matched / total (0-1)
+  total_cp_showtimes: number;
+  total_cr_showtimes: number;
+  total_cp_admissions: number;
+  total_cr_admissions: number;
+  movies: TrendMovieDay[];
+}
+
+// ─── Cumulative Box Office Tracker ─────────────────────────
+
+export interface CumulativeDataPoint {
+  date: string;
+  daily_admissions: number;
+  cumulative_admissions: number;
+  daily_change_pct: number;
+}
+
+export interface CumulativeMovieTrack {
+  title_cp: string;
+  title_cr?: string;
+  matched_movie_id?: string;
+  data_points: CumulativeDataPoint[];
+  latest_cumulative: number;
+  peak_daily: number;
+  opening_daily?: number;
+  days_tracked: number;
+  drop_rate_w1_w2?: number;    // 2nd week avg / 1st week avg
+}
+
+// ─── Heatmap Data ──────────────────────────────────────────
+
+export type HeatmapCellStatus = 'matched_low' | 'matched_high' | 'unmatched' | 'no_data';
+
+export interface HeatmapCell {
+  title_cp: string;
+  dates: Record<string, {
+    status: HeatmapCellStatus;
+    delta_pct: number | null;
+    matched: boolean;
+  }>;
+  total_unmatched: number;
+  avg_deviation: number | null;
+}
+
 // ─── Twitter API Response (Raw) ────────────────────────────
 
 export interface TwitterInstruction {

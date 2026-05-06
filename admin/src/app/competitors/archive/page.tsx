@@ -8,7 +8,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, subDays, differenceInDays } from 'date-fns';
 import Image from 'next/image';
 import { Calendar as CalendarPicker } from '@/components/ui/calendar';
 import { JsonViewer, sortObjectKeys } from '@/components/JsonViewer';
@@ -52,7 +52,6 @@ export default function TweetArchivePage() {
 
   // Navigation State
   const [currentDateInView, setCurrentDateInView] = useState<Date | undefined>(new Date());
-  const dateSectionRefs = useRef<Record<string, HTMLElement | null>>({});
   const isManualScrolling = useRef(false);
 
   // Import state
@@ -113,44 +112,112 @@ export default function TweetArchivePage() {
   }, [fetchTweets]);
 
   // ─── Scroll-Spy Logic ────────────────────────────────────
-  
+   
   useEffect(() => {
     if (loading || !data) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (isManualScrolling.current) return;
-        
-        // Find the entry that is most prominent in the top of the viewport
-        const visible = entries.find(e => e.isIntersecting);
-        if (visible) {
-          const dateStr = visible.target.getAttribute('data-date');
-          if (dateStr) setCurrentDateInView(parseISO(dateStr));
-        }
-      },
-      { threshold: 0.1, rootMargin: '-10% 0px -80% 0px' }
-    );
+    // Delay observer setup to ensure DOM sections are rendered
+    const rafId = requestAnimationFrame(() => {
+      const sections = Array.from(document.querySelectorAll('section[data-date]'));
+      if (sections.length === 0) return;
 
-    Object.values(dateSectionRefs.current).forEach(ref => {
-      if (ref) observer.observe(ref);
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (isManualScrolling.current) return;
+
+          // Find the topmost visible section (closest to viewport top)
+          let topEntry: { element: Element; dateStr: string } | null = null;
+          
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              const dateStr = entry.target.getAttribute('data-date');
+              if (dateStr && dateStr !== 'unknown') {
+                const rect = entry.boundingClientRect;
+                // Pick the section whose top is closest to 0 (just past the header)
+                if (!topEntry || Math.abs(rect.top) < Math.abs(topEntry.element.getBoundingClientRect().top)) {
+                  topEntry = { element: entry.target, dateStr };
+                }
+              }
+            }
+          }
+
+          if (topEntry) {
+            setCurrentDateInView(parseISO(topEntry.dateStr));
+          }
+        },
+        // Tripwire: triggers when the top of a section enters the viewport band
+        // between -80px (below sticky header) and 60% down (before it leaves bottom)
+        { threshold: 0, rootMargin: '-80px 0px -60% 0px' }
+      );
+
+      sections.forEach(section => observer.observe(section));
+
+      // Store for cleanup
+      scrollObserverRef.current = observer;
     });
 
-    return () => observer.disconnect();
+    return () => {
+      cancelAnimationFrame(rafId);
+      if (scrollObserverRef.current) {
+        scrollObserverRef.current.disconnect();
+        scrollObserverRef.current = null;
+      }
+    };
   }, [loading, data]);
+
+  const scrollObserverRef = useRef<IntersectionObserver | null>(null);
 
   const scrollToDate = useCallback((date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    const element = dateSectionRefs.current[dateStr];
+    const element = document.getElementById(`date-section-${dateStr}`);
     
     if (element) {
       isManualScrolling.current = true;
       setCurrentDateInView(date);
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
       
-      // Release lock after animation
+      // Disconnect observer during programmatic scroll
+      if (scrollObserverRef.current) {
+        scrollObserverRef.current.disconnect();
+      }
+      
+      const y = element.getBoundingClientRect().top + window.scrollY - 80;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+      
+      // Release lock and re-connect observer after animation
       setTimeout(() => {
         isManualScrolling.current = false;
-      }, 1000);
+
+        // Re-observe all sections
+        const sections = Array.from(document.querySelectorAll('section[data-date]'));
+        if (scrollObserverRef.current) {
+          sections.forEach(section => scrollObserverRef.current!.observe(section));
+        } else {
+          // If observer was cleaned up, re-create
+          const observer = new IntersectionObserver(
+            (entries) => {
+              if (isManualScrolling.current) return;
+              let topEntry: { element: Element; dateStr: string } | null = null;
+              for (const entry of entries) {
+                if (entry.isIntersecting) {
+                  const dateStr = entry.target.getAttribute('data-date');
+                  if (dateStr && dateStr !== 'unknown') {
+                    const rect = entry.boundingClientRect;
+                    if (!topEntry || Math.abs(rect.top) < Math.abs(topEntry.element.getBoundingClientRect().top)) {
+                      topEntry = { element: entry.target, dateStr };
+                    }
+                  }
+                }
+              }
+              if (topEntry) {
+                setCurrentDateInView(parseISO(topEntry.dateStr));
+              }
+            },
+            { threshold: 0, rootMargin: '-80px 0px -60% 0px' }
+          );
+          sections.forEach(section => observer.observe(section));
+          scrollObserverRef.current = observer;
+        }
+      }, 1500);
     }
   }, []);
 
@@ -179,8 +246,27 @@ export default function TweetArchivePage() {
   }, [data]);
 
   const availableDates = useMemo(() => 
-    new Set(Array.from(groupedTweets.keys())), 
+    new Set(Array.from(groupedTweets.keys()).filter(d => d !== 'unknown')), 
   [groupedTweets]);
+
+  // Compute missing dates: dates within the tweet range that have no data
+  const missingDates = useMemo(() => {
+    const dates = Array.from(availableDates).sort();
+    if (dates.length < 2) return new Set<string>();
+
+    const earliest = parseISO(dates[0]);
+    const latest = parseISO(dates[dates.length - 1]);
+    const totalDays = differenceInDays(latest, earliest) + 1;
+
+    const missing = new Set<string>();
+    for (let i = 0; i < totalDays; i++) {
+      const d = format(subDays(latest, i), 'yyyy-MM-dd');
+      if (!availableDates.has(d)) {
+        missing.add(d);
+      }
+    }
+    return missing;
+  }, [availableDates]);
 
   const runImport = useCallback(async (jsonObj: unknown) => {
     setImporting(true);
@@ -525,8 +611,8 @@ export default function TweetArchivePage() {
                 {Array.from(groupedTweets.entries()).map(([date, tweets]) => (
                   <section 
                     key={date} 
+                    id={`date-section-${date}`}
                     data-date={date}
-                    ref={el => { dateSectionRefs.current[date] = el; }}
                     className="space-y-4 scroll-mt-24"
                   >
                     <div className="sticky top-20 z-20 flex items-center gap-4 py-2 pointer-events-none">
@@ -572,15 +658,42 @@ export default function TweetArchivePage() {
                 <CalendarPicker
                   mode="single"
                   selected={currentDateInView}
-                  onSelect={(d) => d && scrollToDate(d)}
+                  onSelect={setCurrentDateInView}
+                  onDayClick={scrollToDate}
                   modifiers={{
-                    hasData: (date) => availableDates.has(format(date, 'yyyy-MM-dd'))
+                    hasData: (date) => availableDates.has(format(date, 'yyyy-MM-dd')),
+                    missingData: (date) => missingDates.has(format(date, 'yyyy-MM-dd')),
                   }}
                   modifiersClassNames={{
-                    hasData: "relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-primary after:rounded-full font-bold text-foreground"
+                    hasData: "relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-primary after:rounded-full font-bold text-foreground",
+                    missingData: "relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-red-400 after:rounded-full text-red-400/80 font-medium",
                   }}
                   className="w-full"
                 />
+              </div>
+
+              {/* Legend */}
+              <div className="mt-4 space-y-2 px-2">
+                <div className="flex items-center gap-3 text-[10px] font-bold">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-primary" />
+                    <span className="text-muted-foreground">Has Data ({availableDates.size} days)</span>
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-red-400" />
+                    <span className="text-muted-foreground">Missing ({missingDates.size})</span>
+                  </span>
+                </div>
+                {missingDates.size > 0 && (
+                  <div className="px-3 py-2 rounded-xl bg-red-500/5 border border-red-500/15">
+                    <p className="text-[10px] font-bold text-red-600/80 uppercase tracking-wider">
+                      Gap Detected
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">
+                      {missingDates.size} date{missingDates.size > 1 ? 's' : ''} within the archive range lack tweet data. Fetch the missing JSON from the source account and import to fill gaps.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="mt-6 space-y-4 px-2">

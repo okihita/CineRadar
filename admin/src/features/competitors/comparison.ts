@@ -7,6 +7,8 @@ import type {
   CinePointAdmission,
   ComparisonRow,
   ComparisonSummary,
+  ConfidenceResult,
+  ConfidenceBreakdown,
 } from './types';
 
 // CineRadar's per-movie daily performance (fetched from movie_performance_v2)
@@ -144,4 +146,51 @@ export function buildComparison(
   };
 
   return { rows, summary };
+}
+
+// ─── Confidence Score ──────────────────────────────────────
+
+/**
+ * Compute a 0-100 confidence score from comparison summary.
+ *
+ * Weighting:
+ *   Match rate (40%) — how many CP movies were linked to CineRadar
+ *   Deviation (35%)  — how close the numbers are (penalized 10×)
+ *   Completeness (25%) — both showtimes + admissions present
+ */
+export function computeConfidenceScore(summary: ComparisonSummary): ConfidenceResult {
+  // Match score: 0-100
+  const matchRate = summary.total_cp_movies > 0
+    ? summary.matched_movies / summary.total_cp_movies
+    : 0;
+  const matchScore = matchRate * 100;
+
+  // Deviation score: penalize avg deviation, max penalty at 10%+
+  const avgDev = summary.avg_showtime_deviation_pct || 0;
+  const deviationScore = Math.max(0, 100 - avgDev * 10);
+
+  // Completeness score
+  const hasShowtimes = summary.total_cp_showtimes > 0;
+  const hasAdmissions = summary.total_cp_admissions > 0;
+  const completenessScore = (hasShowtimes && hasAdmissions) ? 100 : 50;
+
+  const score = Math.round(
+    matchScore * 0.4 +
+    deviationScore * 0.35 +
+    completenessScore * 0.25,
+  );
+
+  const breakdown: ConfidenceBreakdown = {
+    match_score: Math.round(matchScore),
+    deviation_score: Math.round(deviationScore),
+    completeness_score: completenessScore,
+  };
+
+  let level: ConfidenceResult['level'];
+  if (score >= 90) level = 'excellent';
+  else if (score >= 75) level = 'good';
+  else if (score >= 55) level = 'warning';
+  else level = 'critical';
+
+  return { score, level, breakdown };
 }
