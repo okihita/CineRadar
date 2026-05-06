@@ -6,7 +6,9 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface TweetUrlImportProps {
-  onImported: () => Promise<void>;
+  onImported: () => void | Promise<void>;
+  /** Hide the section heading (useful when embedded in a card with its own title) */
+  hideHeading?: boolean;
 }
 
 interface ScrapeResult {
@@ -16,7 +18,7 @@ interface ScrapeResult {
   snapshot: { date: string; type: string; parsed_count: number } | null;
 }
 
-export function TweetUrlImport({ onImported }: TweetUrlImportProps) {
+export function TweetUrlImport({ onImported, hideHeading }: TweetUrlImportProps) {
   const [url, setUrl] = useState('');
   const [fetching, setFetching] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; msg: string; detail?: ScrapeResult } | null>(null);
@@ -54,9 +56,11 @@ export function TweetUrlImport({ onImported }: TweetUrlImportProps) {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-        Import from Tweet URL
-      </h3>
+      {!hideHeading && (
+        <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+          Import from Tweet URL
+        </h3>
+      )}
 
       <div className="flex gap-2">
         <div className="relative flex-1">
