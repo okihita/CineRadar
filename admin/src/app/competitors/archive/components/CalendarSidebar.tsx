@@ -44,16 +44,28 @@ export function CalendarSidebar({
     return map;
   }, [coverageData]);
 
-  const completeDates = useMemo(
+  const partialDates = useMemo(
     () => new Set(
-      coverageData.filter((c) => c.status === 'complete').map((c) => c.date),
+      coverageData.filter((c) => c.status === 'showtimes_only' || c.status === 'admissions_only').map((c) => c.date),
     ),
     [coverageData],
   );
 
-  const partialDates = useMemo(
+  // Build per-data-point sets for 2-dot indicator
+  const showtimeDates = useMemo(
     () => new Set(
-      coverageData.filter((c) => c.status === 'showtimes_only' || c.status === 'admissions_only').map((c) => c.date),
+      coverageData
+        .filter((c) => c.status === 'complete' || c.status === 'showtimes_only')
+        .map((c) => c.date),
+    ),
+    [coverageData],
+  );
+
+  const admissionDates = useMemo(
+    () => new Set(
+      coverageData
+        .filter((c) => c.status === 'complete' || c.status === 'admissions_only')
+        .map((c) => c.date),
     ),
     [coverageData],
   );
@@ -95,32 +107,50 @@ export function CalendarSidebar({
               onDateSelect(date);
             }}
             modifiers={{
-              complete: (date) => completeDates.has(format(date, 'yyyy-MM-dd')),
-              partial: (date) => partialDates.has(format(date, 'yyyy-MM-dd')),
+              // Both data points
+              complete: (date) => {
+                const ds = format(date, 'yyyy-MM-dd');
+                return showtimeDates.has(ds) && admissionDates.has(ds);
+              },
+              // Only showtimes
+              showtimesOnly: (date) => {
+                const ds = format(date, 'yyyy-MM-dd');
+                return showtimeDates.has(ds) && !admissionDates.has(ds);
+              },
+              // Only admissions
+              admissionsOnly: (date) => {
+                const ds = format(date, 'yyyy-MM-dd');
+                return !showtimeDates.has(ds) && admissionDates.has(ds);
+              },
+              // Missing (in range but no data)
               missingData: (date) => missingDates.has(format(date, 'yyyy-MM-dd')),
             }}
             modifiersClassNames={{
-              complete: "relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-emerald-500 after:rounded-full font-bold text-foreground",
-              partial: "relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-amber-500 after:rounded-full font-bold text-foreground",
-              missingData: "relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-red-400 after:rounded-full text-red-400/80 font-medium",
+              complete: "rdp-dot-both",
+              showtimesOnly: "rdp-dot-showtimes",
+              admissionsOnly: "rdp-dot-admissions",
+              missingData: "ring-1 ring-red-400/40 ring-inset rounded text-red-400/70 font-medium",
             }}
             className="w-full"
           />
         </div>
+
+        {/* Custom dot styles for per-day data indicators */}
+        <style dangerouslySetInnerHTML={{ __html: DOT_STYLES }} />
 
         {/* Legend + Gap CTA */}
         <div className="mt-4 space-y-2 px-2">
           <div className="flex items-center gap-3 text-[10px] font-bold flex-wrap">
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span className="text-muted-foreground">Complete ({completeDates.size})</span>
+              <span className="text-muted-foreground">Showtimes</span>
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-amber-500" />
-              <span className="text-muted-foreground">Partial ({partialDates.size})</span>
+              <span className="w-2 h-2 rounded-full bg-blue-500" />
+              <span className="text-muted-foreground">Admissions</span>
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-red-400" />
+              <span className="w-2 h-2 rounded-full border border-red-400/40 bg-transparent" />
               <span className="text-muted-foreground">Missing ({missingDates.size})</span>
             </span>
           </div>
@@ -212,3 +242,57 @@ function computeMissingDates(coverageMap: Map<string, SnapshotStatus>): Set<stri
   }
   return missing;
 }
+
+// ─── Calendar Dot Styles ───────────────────────────────────
+
+/**
+ * CSS for per-day data indicators on the calendar.
+ *
+ * Three states via pseudo-element ::after:
+ * - .rdp-dot-both: two dots (green + blue) — has showtimes AND admissions
+ * - .rdp-dot-showtimes: single green dot — has showtimes only
+ * - .rdp-dot-admissions: single blue dot — has admissions only
+ * - .ring-1.ring-red-400/40: red ring — missing (in range, no data)
+ */
+const DOT_STYLES = `
+.rdp-dot-both,
+.rdp-dot-showtimes,
+.rdp-dot-admissions {
+  position: relative;
+  font-weight: 700;
+}
+.rdp-dot-both::after {
+  content: '';
+  position: absolute;
+  bottom: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 4px;
+  background:
+    radial-gradient(circle at 2px 2px, #22c55e 1.5px, transparent 1.5px),
+    radial-gradient(circle at 6px 2px, #3b82f6 1.5px, transparent 1.5px);
+}
+.rdp-dot-showtimes::after {
+  content: '';
+  position: absolute;
+  bottom: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background: #22c55e;
+  border-radius: 50%;
+}
+.rdp-dot-admissions::after {
+  content: '';
+  position: absolute;
+  bottom: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background: #3b82f6;
+  border-radius: 50%;
+}
+`;
