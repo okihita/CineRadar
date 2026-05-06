@@ -23,6 +23,7 @@ import { TweetCard } from './components/TweetCard';
 import { ImportModal } from './components/ImportModal';
 import { FilterSidebar } from './components/FilterSidebar';
 import { CalendarSidebar } from './components/CalendarSidebar';
+import { BatchUrlImport } from './components/BatchUrlImport';
 
 // ─── Types ─────────────────────────────────────────────────
 
@@ -258,38 +259,11 @@ export default function TweetArchivePage() {
                 ))}
               </div>
             ) : (
-              <div className="py-16 text-center border-2 border-dashed rounded-[2.5rem] border-border/40 bg-muted/5">
-                <div className="w-12 h-12 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
-                  <Archive className="w-6 h-6 text-muted-foreground/40" />
-                </div>
-                <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest">No signals found in the archive.</p>
-                <p className="text-muted-foreground/50 text-[10px] mt-2 uppercase tracking-tight font-medium">
-                  Import CinePoint tweet data to get started.
-                </p>
-
-                {/* Action CTAs for empty state */}
-                <div className="flex items-center justify-center gap-3 mt-6">
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() => setIsImportModalOpen(true)}
-                    disabled={importing}
-                    className="h-8 gap-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl"
-                  >
-                    <ClipboardPaste className="w-3.5 h-3.5" />
-                    Import Twitter JSON
-                  </Button>
-                  <a
-                    href="https://x.com/cinepoint_"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="h-8 px-4 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 rounded-xl border border-border/40 text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
-                  >
-                    <ExternalLink className="w-3 h-3" />
-                    Open @cinepoint_
-                  </a>
-                </div>
-              </div>
+              <EmptyArchiveState
+                importing={importing}
+                onOpenJsonImport={() => setIsImportModalOpen(true)}
+                onImportComplete={() => { fetchTweets(); fetchCoverage(); }}
+              />
             )}
           </div>
 
@@ -301,6 +275,70 @@ export default function TweetArchivePage() {
             onImportComplete={() => { fetchTweets(); fetchCoverage(); }}
           />
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Empty Archive State ────────────────────────────────────
+
+function EmptyArchiveState({
+  importing,
+  onOpenJsonImport,
+  onImportComplete,
+}: {
+  importing: boolean;
+  onOpenJsonImport: () => void;
+  onImportComplete: () => void;
+}) {
+  return (
+    <div className="py-16 text-center border-2 border-dashed rounded-[2.5rem] border-border/40 bg-muted/5">
+      <div className="w-12 h-12 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
+        <Archive className="w-6 h-6 text-muted-foreground/40" />
+      </div>
+      <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest">No signals found in the archive.</p>
+      <p className="text-muted-foreground/50 text-[10px] mt-2 uppercase tracking-tight font-medium">
+        Import CinePoint tweet data to get started.
+      </p>
+
+      {/* Import from tweet URLs */}
+      <div className="max-w-md mx-auto mt-6 px-6">
+        <div className="text-left">
+          <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 block mb-2 text-center">
+            Paste individual tweet URLs
+          </span>
+          <BatchUrlImport onComplete={onImportComplete} />
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div className="flex items-center gap-4 max-w-md mx-auto mt-6 px-6">
+        <div className="h-px flex-1 bg-border/30" />
+        <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/30">or</span>
+        <div className="h-px flex-1 bg-border/30" />
+      </div>
+
+      {/* Bulk import + external link */}
+      <div className="flex items-center justify-center gap-3 mt-6">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onOpenJsonImport}
+          disabled={importing}
+          className="h-8 gap-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl"
+        >
+          <ClipboardPaste className="w-3.5 h-3.5" />
+          Import Twitter JSON
+        </Button>
+        <a
+          href="https://x.com/cinepoint_"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="h-8 px-4 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 rounded-xl border border-border/40 text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
+        >
+          <ExternalLink className="w-3 h-3" />
+          Open @cinepoint_
+        </a>
       </div>
     </div>
   );
