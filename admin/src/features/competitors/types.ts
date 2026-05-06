@@ -13,17 +13,32 @@ export const TWEET_COLLECTION = 'beta_competitor_tweets';
 
 // ─── Snapshot Document ─────────────────────────────────────
 
+/** A single data point (showtimes or admissions) within a snapshot */
+export interface SnapshotDataPoint<T> {
+  raw: string;
+  parsed: T[];
+  source_tweet_id: string;
+  updated_at: string;
+}
+
+export type ShowtimeDataPoint = SnapshotDataPoint<CinePointShowtime>;
+export type AdmissionDataPoint = SnapshotDataPoint<CinePointAdmission>;
+
 export interface CompetitorSnapshot {
   id: string;                         // date string e.g. "2026-05-05"
   date: string;
   source: 'cinepoint';
 
-  // Showtime data (from morning tweet)
+  /** Showtime data for this date. null if no showtimes tweet imported yet. */
+  showtimes?: ShowtimeDataPoint | null;
+
+  /** Admission data for this date. null if no admissions tweet imported yet. */
+  admissions?: AdmissionDataPoint | null;
+
+  // ── Legacy flat fields (for backward compat during migration) ──
   showtimes_raw?: string;
   showtimes_parsed?: CinePointShowtime[];
   showtimes_parsed_at?: string;
-
-  // Admission data (from next-day tweet)
   admissions_raw?: string;
   admissions_parsed?: CinePointAdmission[];
   admissions_parsed_at?: string;
@@ -99,6 +114,16 @@ export interface CineRadarMovie {
 // ─── Snapshot Status ───────────────────────────────────────
 
 export type SnapshotStatus = 'empty' | 'showtimes_only' | 'admissions_only' | 'complete';
+
+/** Derive coverage status from a snapshot's nested data points */
+export function getSnapshotStatus(snap: { showtimes?: ShowtimeDataPoint | null; admissions?: AdmissionDataPoint | null }): SnapshotStatus {
+  const hasShowtimes = !!(snap.showtimes?.parsed?.length);
+  const hasAdmissions = !!(snap.admissions?.parsed?.length);
+  if (hasShowtimes && hasAdmissions) return 'complete';
+  if (hasShowtimes) return 'showtimes_only';
+  if (hasAdmissions) return 'admissions_only';
+  return 'empty';
+}
 
 // ─── Tweet Document ────────────────────────────────────────
 

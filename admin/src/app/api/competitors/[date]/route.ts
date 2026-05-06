@@ -65,8 +65,8 @@ export async function GET(
     }));
 
     // 3. Run matching on parsed data
-    let matchedShowtimes = snapshot.showtimes_parsed;
-    let matchedAdmissions = snapshot.admissions_parsed;
+    let matchedShowtimes = snapshot.showtimes?.parsed;
+    let matchedAdmissions = snapshot.admissions?.parsed;
 
     if (matchedShowtimes && matchedShowtimes.length > 0) {
       const result = matchShowtimes(matchedShowtimes, crMovies);
@@ -116,10 +116,8 @@ export async function GET(
       data: {
         snapshot: {
           date: snapshot.date || snapshot.id,
-          showtimes_raw: snapshot.showtimes_raw,
-          showtimes_parsed: matchedShowtimes,
-          admissions_raw: snapshot.admissions_raw,
-          admissions_parsed: matchedAdmissions,
+          showtimes: snapshot.showtimes ? { ...snapshot.showtimes, parsed: matchedShowtimes } : null,
+          admissions: snapshot.admissions ? { ...snapshot.admissions, parsed: matchedAdmissions } : null,
         },
         comparison: { rows, summary },
         cr_movies: crMovies.filter((m) => m.title), // for manual matching dropdown

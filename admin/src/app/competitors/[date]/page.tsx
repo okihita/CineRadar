@@ -13,12 +13,10 @@ import {
   CalendarDays,
   Info,
   Archive,
-  Shield,
   AlertTriangle,
   CheckCircle2,
   Target,
   TrendingUp,
-  TrendingDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -121,8 +119,8 @@ export default function CompetitorDatePage() {
   const handleMatchUpdate = useCallback(
     async (titleCp: string, movieId: string, movieTitle: string) => {
       // Determine which type to update based on which has data
-      const hasShowtimes = (data?.snapshot?.showtimes_parsed?.length || 0) > 0;
-      const hasAdmissions = (data?.snapshot?.admissions_parsed?.length || 0) > 0;
+      const hasShowtimes = (data?.snapshot?.showtimes?.parsed?.length || 0) > 0;
+      const hasAdmissions = (data?.snapshot?.admissions?.parsed?.length || 0) > 0;
 
       const updates = [{ title_cp: titleCp, matched_movie_id: movieId, matched_title: movieTitle }];
 
@@ -291,8 +289,8 @@ export default function CompetitorDatePage() {
               <PasteArea
                 label="Showtime Count"
                 placeholder={`Paste CinePoint showtime tweet here...\n\nExample:\n#Salmokji 2,466 (-3.90%)\n#GhostinTheCell 2,444 (+1.20%)`}
-                existingRaw={data?.snapshot?.showtimes_raw}
-                parsedCount={data?.snapshot?.showtimes_parsed?.length}
+                existingRaw={data?.snapshot?.showtimes?.raw}
+                parsedCount={data?.snapshot?.showtimes?.parsed?.length}
                 onSave={handleSaveShowtimes}
               />
 
@@ -301,8 +299,8 @@ export default function CompetitorDatePage() {
               <PasteArea
                 label="Estimated Admissions"
                 placeholder={`Paste CinePoint admissions tweet here...\n\nExample:\n#Salmokji\n+74,385 (-3.90%) | 389,072`}
-                existingRaw={data?.snapshot?.admissions_raw}
-                parsedCount={data?.snapshot?.admissions_parsed?.length}
+                existingRaw={data?.snapshot?.admissions?.raw}
+                parsedCount={data?.snapshot?.admissions?.parsed?.length}
                 onSave={handleSaveAdmissions}
               />
             </CardContent>

@@ -15,6 +15,7 @@ import {
   type TrendDay,
   type TrendMovieDay,
   type ConfidenceResult,
+  getSnapshotStatus,
 } from '@/features/competitors/types';
 import { matchShowtimes, matchAdmissions } from '@/features/competitors/matching';
 import { buildComparison, computeConfidenceScore, type CineRadarDayPerformance } from '@/features/competitors/comparison';
@@ -76,12 +77,12 @@ export async function GET(req: NextRequest) {
       if (!snap) continue;
 
       const mResult = {
-        showtimes: snap.showtimes_parsed && snap.showtimes_parsed.length > 0
-          ? matchShowtimes(snap.showtimes_parsed, crMovies)
-          : { items: snap.showtimes_parsed || [], unmatched: [], matchCount: 0 },
-        admissions: snap.admissions_parsed && snap.admissions_parsed.length > 0
-          ? matchAdmissions(snap.admissions_parsed, crMovies)
-          : { items: snap.admissions_parsed || [], unmatched: [], matchCount: 0 },
+        showtimes: snap.showtimes?.parsed && snap.showtimes.parsed.length > 0
+          ? matchShowtimes(snap.showtimes.parsed, crMovies)
+          : { items: snap.showtimes?.parsed || [], unmatched: [], matchCount: 0 },
+        admissions: snap.admissions?.parsed && snap.admissions.parsed.length > 0
+          ? matchAdmissions(snap.admissions.parsed, crMovies)
+          : { items: snap.admissions?.parsed || [], unmatched: [], matchCount: 0 },
       };
 
       matchCache.set(date, mResult);
@@ -180,10 +181,10 @@ export async function GET(req: NextRequest) {
       const { summary } = buildComparison(matchedShowtimes, matchedAdmissions, crPerformances);
 
       // Status
-      let status: SnapshotStatus = 'empty';
-      if (matchedShowtimes.length > 0 && matchedAdmissions.length > 0) status = 'complete';
-      else if (matchedShowtimes.length > 0) status = 'showtimes_only';
-      else if (matchedAdmissions.length > 0) status = 'admissions_only';
+      const status: SnapshotStatus = getSnapshotStatus({
+        showtimes: snap.showtimes,
+        admissions: snap.admissions,
+      });
 
       // Confidence
       let confidence: ConfidenceResult | null = null;

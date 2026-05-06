@@ -26,6 +26,7 @@ export interface ParsedImportResult {
   type: 'showtimes' | 'admissions';
   parsed: CinePointShowtime[] | CinePointAdmission[];
   raw_text: string;
+  source_tweet_id: string;
 }
 
 // ─── Helpers ───────────────────────────────────────────────
@@ -257,7 +258,7 @@ export function parseTweetBatch(tweets: RawTwitterEntry[]): ParsedImportResult[]
       const date = extractDateFromHeader(text, postingDate);
       const parsed = parseShowtimeTweet(text);
       if (date && parsed.length > 0) {
-        results.push({ date, type: 'showtimes', parsed, raw_text: text });
+        results.push({ date, type: 'showtimes', parsed, raw_text: text, source_tweet_id: tweet.id });
       }
     } else if (text.startsWith('ESTIMATED ADMISSION')) {
       // Admission tweets are often posted late night or early next morning
@@ -265,7 +266,7 @@ export function parseTweetBatch(tweets: RawTwitterEntry[]): ParsedImportResult[]
       const date = extractDateFromHeader(text, postingDate);
       const parsed = parseAdmissionsTweet(text);
       if (date && parsed.length > 0) {
-        results.push({ date, type: 'admissions', parsed, raw_text: text });
+        results.push({ date, type: 'admissions', parsed, raw_text: text, source_tweet_id: tweet.id });
       }
     }
     // Skip non-data tweets (milestones, commentary, etc.)

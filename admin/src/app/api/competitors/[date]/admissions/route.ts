@@ -40,17 +40,16 @@ export async function PUT(
     const data: Record<string, unknown> = {
       date,
       source: 'cinepoint',
-      admissions_raw: raw,
-      admissions_parsed: parsed,
-      admissions_parsed_at: new Date().toISOString(),
+      admissions: {
+        raw,
+        parsed,
+        source_tweet_id: '', // Manual paste — no source tweet
+        updated_at: new Date().toISOString(),
+      },
     };
 
     // Preserve existing showtimes data if any
-    if (existing?.showtimes_raw) {
-      data.showtimes_raw = existing.showtimes_raw;
-      data.showtimes_parsed = existing.showtimes_parsed;
-      data.showtimes_parsed_at = existing.showtimes_parsed_at;
-    }
+    data.showtimes = existing?.showtimes ?? null;
 
     const success = existing
       ? await firestoreRestClient.updateDocument(COMPETITOR_COLLECTION, date, data)

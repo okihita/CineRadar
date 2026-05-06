@@ -80,28 +80,32 @@ export async function POST(req: NextRequest) {
 
         const data: Record<string, unknown> = { date, source: 'cinepoint' };
 
+        // Showtimes: write nested object if present, otherwise preserve existing
         const showtimeItems = items.filter((i) => i.type === 'showtimes');
         if (showtimeItems.length > 0) {
           const latest = showtimeItems[showtimeItems.length - 1];
-          data.showtimes_raw = latest.raw_text;
-          data.showtimes_parsed = latest.parsed;
-          data.showtimes_parsed_at = now;
-        } else if (existing?.showtimes_raw) {
-          data.showtimes_raw = existing.showtimes_raw;
-          data.showtimes_parsed = existing.showtimes_parsed;
-          data.showtimes_parsed_at = existing.showtimes_parsed_at;
+          data.showtimes = {
+            raw: latest.raw_text,
+            parsed: latest.parsed,
+            source_tweet_id: latest.source_tweet_id,
+            updated_at: now,
+          };
+        } else {
+          data.showtimes = existing?.showtimes ?? null;
         }
 
+        // Admissions: write nested object if present, otherwise preserve existing
         const admissionItems = items.filter((i) => i.type === 'admissions');
         if (admissionItems.length > 0) {
           const latest = admissionItems[admissionItems.length - 1];
-          data.admissions_raw = latest.raw_text;
-          data.admissions_parsed = latest.parsed;
-          data.admissions_parsed_at = now;
-        } else if (existing?.admissions_raw) {
-          data.admissions_raw = existing.admissions_raw;
-          data.admissions_parsed = existing.admissions_parsed;
-          data.admissions_parsed_at = existing.admissions_parsed_at;
+          data.admissions = {
+            raw: latest.raw_text,
+            parsed: latest.parsed,
+            source_tweet_id: latest.source_tweet_id,
+            updated_at: now,
+          };
+        } else {
+          data.admissions = existing?.admissions ?? null;
         }
 
         const ok = existing

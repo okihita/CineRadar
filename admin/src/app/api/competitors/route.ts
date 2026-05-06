@@ -5,7 +5,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { firestoreRestClient } from '@/lib/firestore-rest';
-import { COMPETITOR_COLLECTION, type CompetitorSnapshot, type SnapshotStatus } from '@/features/competitors/types';
+import { COMPETITOR_COLLECTION, type CompetitorSnapshot, getSnapshotStatus } from '@/features/competitors/types';
 
 export async function GET() {
   const session = await auth();
@@ -20,23 +20,12 @@ export async function GET() {
       30,
     );
 
-    const result = snapshots.map((s) => {
-      let status: SnapshotStatus = 'empty';
-      if (s.showtimes_parsed && s.showtimes_parsed.length > 0 && s.admissions_parsed && s.admissions_parsed.length > 0) {
-        status = 'complete';
-      } else if (s.showtimes_parsed && s.showtimes_parsed.length > 0) {
-        status = 'showtimes_only';
-      } else if (s.admissions_parsed && s.admissions_parsed.length > 0) {
-        status = 'admissions_only';
-      }
-
-      return {
-        date: s.date || s.id,
-        status,
-        showtime_count: s.showtimes_parsed?.length || 0,
-        admission_count: s.admissions_parsed?.length || 0,
-      };
-    });
+    const result = snapshots.map((s) => ({
+      date: s.date || s.id,
+      status: getSnapshotStatus(s),
+      showtime_count: s.showtimes?.parsed?.length || 0,
+      admission_count: s.admissions?.parsed?.length || 0,
+    }));
 
     return NextResponse.json({ success: true, data: result });
   } catch (error) {

@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { firestoreRestClient } from '@/lib/firestore-rest';
-import { COMPETITOR_COLLECTION, type CompetitorSnapshot, type CinePointShowtime, type CinePointAdmission } from '@/features/competitors/types';
+import { COMPETITOR_COLLECTION, type CompetitorSnapshot, type CinePointShowtime, type CinePointAdmission, type ShowtimeDataPoint, type AdmissionDataPoint } from '@/features/competitors/types';
 
 export async function PATCH(
   req: NextRequest,
@@ -44,8 +44,8 @@ export async function PATCH(
     // Build update map
     const updateMap = new Map(updates.map((u) => [u.title_cp, u]));
 
-    if (type === 'showtimes' && snapshot.showtimes_parsed) {
-      const updated: CinePointShowtime[] = snapshot.showtimes_parsed.map((item) => {
+    if (type === 'showtimes' && snapshot.showtimes?.parsed) {
+      const updated: CinePointShowtime[] = snapshot.showtimes.parsed.map((item) => {
         const u = updateMap.get(item.title_cp);
         if (u) {
           return { ...item, matched_movie_id: u.matched_movie_id, matched_title: u.matched_title };
@@ -53,11 +53,16 @@ export async function PATCH(
         return item;
       });
 
+      const updatedPoint: ShowtimeDataPoint = {
+        ...snapshot.showtimes,
+        parsed: updated,
+      };
+
       await firestoreRestClient.updateDocument(COMPETITOR_COLLECTION, date, {
-        showtimes_parsed: updated,
+        showtimes: updatedPoint,
       });
-    } else if (type === 'admissions' && snapshot.admissions_parsed) {
-      const updated: CinePointAdmission[] = snapshot.admissions_parsed.map((item) => {
+    } else if (type === 'admissions' && snapshot.admissions?.parsed) {
+      const updated: CinePointAdmission[] = snapshot.admissions.parsed.map((item) => {
         const u = updateMap.get(item.title_cp);
         if (u) {
           return { ...item, matched_movie_id: u.matched_movie_id, matched_title: u.matched_title };
@@ -65,8 +70,13 @@ export async function PATCH(
         return item;
       });
 
+      const updatedPoint: AdmissionDataPoint = {
+        ...snapshot.admissions,
+        parsed: updated,
+      };
+
       await firestoreRestClient.updateDocument(COMPETITOR_COLLECTION, date, {
-        admissions_parsed: updated,
+        admissions: updatedPoint,
       });
     }
 

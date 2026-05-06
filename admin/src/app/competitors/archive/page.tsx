@@ -16,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { CompetitorTweet, TweetSourceSummary, TweetType } from '@/features/competitors/types';
+import type { DateCoverage } from './components/CalendarSidebar';
 import { useScrollSpy } from '@/features/competitors/hooks/useScrollSpy';
 import { useTweetImport } from '@/features/competitors/hooks/useTweetImport';
 import { TweetCard } from './components/TweetCard';
@@ -40,6 +41,9 @@ export default function TweetArchivePage() {
   const [activeSource, setActiveSource] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<TweetType | null>(null);
 
+  // Snapshot coverage (for calendar sidebar)
+  const [coverageData, setCoverageData] = useState<DateCoverage[]>([]);
+
   const fetchTweets = useCallback(async () => {
     setLoading(true);
     try {
@@ -58,9 +62,22 @@ export default function TweetArchivePage() {
     }
   }, [activeSource, activeType]);
 
+  const fetchCoverage = useCallback(async () => {
+    try {
+      const res = await fetch('/api/competitors');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) setCoverageData(json.data || []);
+      }
+    } catch {
+      // Silent — calendar just won't show coverage dots
+    }
+  }, []);
+
   useEffect(() => {
     fetchTweets();
-  }, [fetchTweets]);
+    fetchCoverage();
+  }, [fetchTweets, fetchCoverage]);
 
   // Scroll spy
   const { currentDateInView, scrollToDate } = useScrollSpy({
@@ -104,11 +121,6 @@ export default function TweetArchivePage() {
 
     return new Map([...groups.entries()].sort((a, b) => b[0].localeCompare(a[0])));
   }, [data]);
-
-  const availableDates = useMemo(
-    () => new Set(Array.from(groupedTweets.keys()).filter(d => d !== 'unknown')),
-    [groupedTweets],
-  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -254,11 +266,12 @@ export default function TweetArchivePage() {
                     className="space-y-4 scroll-mt-24"
                   >
                     <div className="sticky top-20 z-20 flex items-center gap-4 py-2 pointer-events-none">
-                      <div className="bg-background/80 backdrop-blur-md border border-border/40 px-4 py-1.5 rounded-full shadow-lg pointer-events-auto">
+                      <div className="bg-background/80 backdrop-blur-md border border-border/40 px-4 py-1.5 rounded-full shadow-lg pointer-events-auto flex items-center gap-2">
                         <span className="text-[11px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
                           <Calendar className="w-3.5 h-3.5" />
                           {date !== 'unknown' ? format(parseISO(date), 'EEEE, MMM d, yyyy') : 'Uncategorized'}
                         </span>
+                        <DateCoverageBadge date={date} coverageData={coverageData} />
                       </div>
                       <div className="h-px flex-1 bg-gradient-to-r from-border/40 to-transparent" />
                     </div>
@@ -286,13 +299,35 @@ export default function TweetArchivePage() {
 
           {/* Right: Calendar Navigation */}
           <CalendarSidebar
-            availableDates={availableDates}
+            coverageData={coverageData}
             currentDateInView={currentDateInView}
             onDateSelect={scrollToDate}
-            onImportComplete={fetchTweets}
+            onImportComplete={() => { fetchTweets(); fetchCoverage(); }}
           />
         </div>
       </div>
     </div>
+  );
+}
+
+// ─── Date Coverage Badge ───────────────────────────────────
+
+function DateCoverageBadge({ date, coverageData }: { date: string; coverageData: DateCoverage[] }) {
+  const coverage = coverageData.find((c) => c.date === date);
+  if (!coverage || coverage.status === 'empty') return null;
+
+  const config: Record<string, { label: string; className: string }> = {
+    complete: { label: 'Complete', className: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20' },
+    showtimes_only: { label: 'Showtimes', className: 'text-amber-600 bg-amber-500/10 border-amber-500/20' },
+    admissions_only: { label: 'Admissions', className: 'text-blue-600 bg-blue-500/10 border-blue-500/20' },
+  };
+
+  const { label, className } = config[coverage.status] || { label: '', className: '' };
+  if (!label) return null;
+
+  return (
+    <span className={`text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded border ${className}`}>
+      {label}
+    </span>
   );
 }

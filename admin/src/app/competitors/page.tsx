@@ -389,15 +389,18 @@ export default function CompetitorsDashboard() {
               const d = subDays(new Date(), 13 - i);
               return format(d, 'yyyy-MM-dd');
             });
-            const missingRecent = recent14.filter(d => !trendDays.find(t => t.date === d));
-            if (missingRecent.length === 0) return null;
+            const needsData = recent14.filter((d) => {
+              const t = trendDays.find((td) => td.date === d);
+              return !t || t.status === 'empty' || t.status === 'showtimes_only' || t.status === 'admissions_only';
+            });
+            if (needsData.length === 0) return null;
             return (
               <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-amber-500/20 bg-amber-500/5">
                 <div className="flex items-center gap-3">
                   <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
                   <div>
                     <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400">
-                      {missingRecent.length} date{missingRecent.length > 1 ? 's' : ''} in the last 14 days need data
+                      {needsData.length} date{needsData.length > 1 ? 's' : ''} in the last 14 days need data
                     </span>
                   </div>
                 </div>

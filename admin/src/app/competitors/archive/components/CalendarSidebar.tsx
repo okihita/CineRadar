@@ -1,33 +1,68 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { format, parseISO, subDays, differenceInDays } from 'date-fns';
 import { Calendar as CalendarPicker } from '@/components/ui/calendar';
 import { TrendingUp, ExternalLink } from 'lucide-react';
 import { BatchUrlImport } from './BatchUrlImport';
+import type { SnapshotStatus } from '@/features/competitors/types';
+
+// ─── Coverage Data ─────────────────────────────────────────
+
+export interface DateCoverage {
+  date: string;
+  status: SnapshotStatus;
+}
 
 interface CalendarSidebarProps {
-  availableDates: Set<string>;
+  /** Coverage data derived from snapshots API */
+  coverageData: DateCoverage[];
   currentDateInView: Date | undefined;
   onDateSelect: (date: Date) => void;
   onImportComplete: () => void;
 }
 
+// ─── Component ─────────────────────────────────────────────
+
 export function CalendarSidebar({
-  availableDates,
+  coverageData,
   currentDateInView,
   onDateSelect,
   onImportComplete,
 }: CalendarSidebarProps) {
   const [showImporter, setShowImporter] = useState(false);
-  const missingDates = computeMissingDates(availableDates);
+
+  // Build sets by status
+  const coverageMap = useMemo(() => {
+    const map = new Map<string, SnapshotStatus>();
+    for (const c of coverageData) {
+      if (c.status !== 'empty') map.set(c.date, c.status);
+    }
+    return map;
+  }, [coverageData]);
+
+  const completeDates = useMemo(
+    () => new Set(
+      coverageData.filter((c) => c.status === 'complete').map((c) => c.date),
+    ),
+    [coverageData],
+  );
+
+  const partialDates = useMemo(
+    () => new Set(
+      coverageData.filter((c) => c.status === 'showtimes_only' || c.status === 'admissions_only').map((c) => c.date),
+    ),
+    [coverageData],
+  );
+
+  const missingDates = useMemo(() => computeMissingDates(coverageMap), [coverageMap]);
 
   return (
     <aside className="lg:col-span-3 space-y-8 lg:sticky lg:top-24 h-fit">
       <div className="bg-card border border-border/40 rounded-[2.5rem] p-6 shadow-sm">
         <h3 className="px-2 mb-4 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40 flex items-center justify-between">
           Temporal Navigation
-          <span className="text-primary/60 font-mono">{availableDates.size} Days</span>
+          <span className="text-primary/60 font-mono">{coverageMap.size} Days</span>
         </h3>
 
         <div className="border border-border/20 rounded-2xl overflow-hidden bg-muted/5 p-1">
@@ -42,11 +77,13 @@ export function CalendarSidebar({
               onDateSelect(date);
             }}
             modifiers={{
-              hasData: (date) => availableDates.has(format(date, 'yyyy-MM-dd')),
+              complete: (date) => completeDates.has(format(date, 'yyyy-MM-dd')),
+              partial: (date) => partialDates.has(format(date, 'yyyy-MM-dd')),
               missingData: (date) => missingDates.has(format(date, 'yyyy-MM-dd')),
             }}
             modifiersClassNames={{
-              hasData: "relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-primary after:rounded-full font-bold text-foreground",
+              complete: "relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-emerald-500 after:rounded-full font-bold text-foreground",
+              partial: "relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-amber-500 after:rounded-full font-bold text-foreground",
               missingData: "relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-red-400 after:rounded-full text-red-400/80 font-medium",
             }}
             className="w-full"
@@ -55,10 +92,14 @@ export function CalendarSidebar({
 
         {/* Legend */}
         <div className="mt-4 space-y-2 px-2">
-          <div className="flex items-center gap-3 text-[10px] font-bold">
+          <div className="flex items-center gap-3 text-[10px] font-bold flex-wrap">
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-primary" />
-              <span className="text-muted-foreground">Has Data ({availableDates.size} days)</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="text-muted-foreground">Complete ({completeDates.size})</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-500" />
+              <span className="text-muted-foreground">Partial ({partialDates.size})</span>
             </span>
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-red-400" />
@@ -66,11 +107,11 @@ export function CalendarSidebar({
             </span>
           </div>
 
-          {/* Gap CTA — actionable card when missing dates exist */}
-          {missingDates.size > 0 && !showImporter && (
+          {/* Gap CTA — actionable card when missing/partial dates exist */}
+          {(missingDates.size > 0 || partialDates.size > 0) && !showImporter && (
             <div className="px-3 py-3 rounded-xl bg-red-500/5 border border-red-500/15 space-y-2">
               <p className="text-[10px] font-bold text-red-600/80 uppercase tracking-wider">
-                {missingDates.size} Date{missingDates.size > 1 ? 's' : ''} Missing
+                {missingDates.size + partialDates.size} Date{(missingDates.size + partialDates.size) > 1 ? 's' : ''} Need Data
               </p>
               <p className="text-[10px] text-muted-foreground leading-relaxed">
                 Paste CinePoint tweet URLs to fill the gaps.
@@ -134,8 +175,8 @@ export function CalendarSidebar({
 
 // ─── Helper ────────────────────────────────────────────────
 
-function computeMissingDates(availableDates: Set<string>): Set<string> {
-  const dates = Array.from(availableDates).sort();
+function computeMissingDates(coverageMap: Map<string, SnapshotStatus>): Set<string> {
+  const dates = Array.from(coverageMap.keys()).sort();
   if (dates.length < 2) return new Set<string>();
 
   const earliest = parseISO(dates[0]);
@@ -145,7 +186,7 @@ function computeMissingDates(availableDates: Set<string>): Set<string> {
   const missing = new Set<string>();
   for (let i = 0; i < totalDays; i++) {
     const d = format(subDays(latest, i), 'yyyy-MM-dd');
-    if (!availableDates.has(d)) {
+    if (!coverageMap.has(d)) {
       missing.add(d);
     }
   }

@@ -142,28 +142,32 @@ export async function scrapeAndImportTweet(url: string): Promise<ScrapeResult> {
       const existing = await firestoreRestClient.getDocument(COMPETITOR_COLLECTION, date);
       const data: Record<string, unknown> = { date, source: 'cinepoint' };
 
+      // Showtimes: write nested object if present, otherwise preserve existing
       const showtimeItems = items.filter((i) => i.type === 'showtimes');
       if (showtimeItems.length > 0) {
         const latest = showtimeItems[showtimeItems.length - 1];
-        data.showtimes_raw = latest.raw_text;
-        data.showtimes_parsed = latest.parsed;
-        data.showtimes_parsed_at = now;
-      } else if (existing?.showtimes_raw) {
-        data.showtimes_raw = existing.showtimes_raw;
-        data.showtimes_parsed = existing.showtimes_parsed;
-        data.showtimes_parsed_at = existing.showtimes_parsed_at;
+        data.showtimes = {
+          raw: latest.raw_text,
+          parsed: latest.parsed,
+          source_tweet_id: tweetId,
+          updated_at: now,
+        };
+      } else {
+        data.showtimes = existing?.showtimes ?? null;
       }
 
+      // Admissions: write nested object if present, otherwise preserve existing
       const admissionItems = items.filter((i) => i.type === 'admissions');
       if (admissionItems.length > 0) {
         const latest = admissionItems[admissionItems.length - 1];
-        data.admissions_raw = latest.raw_text;
-        data.admissions_parsed = latest.parsed;
-        data.admissions_parsed_at = now;
-      } else if (existing?.admissions_raw) {
-        data.admissions_raw = existing.admissions_raw;
-        data.admissions_parsed = existing.admissions_parsed;
-        data.admissions_parsed_at = existing.admissions_parsed_at;
+        data.admissions = {
+          raw: latest.raw_text,
+          parsed: latest.parsed,
+          source_tweet_id: tweetId,
+          updated_at: now,
+        };
+      } else {
+        data.admissions = existing?.admissions ?? null;
       }
 
       if (existing) {
@@ -273,21 +277,15 @@ async function fetchTweetFromSyndication(tweetId: string): Promise<SyndicationTw
     // Step 2: Check for note_tweet (indicates truncated long-form text).
     // The syndication API may include note_tweet with just an id (no is_expandable),
     // or with is_expandable=true. Either way, if note_tweet exists, resolve full text.
-    const hasNoteTweet = !!(data.note_tweet?.id || data.note_tweet?.is_expandable);
-    if (hasNoteTweet) {
-      console.log(`[scrape-tweet] note_tweet detected for ${tweetId}, resolving via GraphQL...`);
+    if (data.note_tweet?.id || data.note_tweet?.is_expandable) {
       const fullText = await resolveNoteTweet(tweetId);
       if (fullText) {
-        console.log(`[scrape-tweet] resolved full text (${fullText.length} chars) via GraphQL`);
         tweet.text = fullText;
-      } else {
-        console.warn(`[scrape-tweet] GraphQL note_tweet resolution failed for ${tweetId}`);
       }
     }
 
     return tweet;
-  } catch (err) {
-    console.error(`[scrape-tweet] fetchTweetFromSyndication failed:`, err);
+  } catch {
     return null;
   }
 }
@@ -318,16 +316,10 @@ async function resolveNoteTweet(tweetId: string): Promise<string | null> {
       next: { revalidate: 0 },
     });
 
-    if (!gtRes.ok) {
-      console.warn(`[scrape-tweet] guest token request failed: ${gtRes.status}`);
-      return null;
-    }
+    if (!gtRes.ok) return null;
     const gtData = await gtRes.json();
     const guestToken = gtData.guest_token as string;
-    if (!guestToken) {
-      console.warn(`[scrape-tweet] no guest_token in response`);
-      return null;
-    }
+    if (!guestToken) return null;
 
     // 2. Fetch tweet via GraphQL
     const variables = JSON.stringify({
@@ -355,10 +347,7 @@ async function resolveNoteTweet(tweetId: string): Promise<string | null> {
       next: { revalidate: 0 },
     });
 
-    if (!gqlRes.ok) {
-      console.warn(`[scrape-tweet] GraphQL request failed: ${gqlRes.status}`);
-      return null;
-    }
+    if (!gqlRes.ok) return null;
     const gqlData = await gqlRes.json();
 
     // 3. Navigate to note_tweet text
@@ -366,13 +355,8 @@ async function resolveNoteTweet(tweetId: string): Promise<string | null> {
     const tweet = result?.tweet || result;
     const noteText = tweet?.note_tweet?.note_tweet_results?.result?.text;
 
-    if (!noteText) {
-      console.warn(`[scrape-tweet] no note_tweet text found. result keys: ${result ? Object.keys(result).join(',') : 'null'}, tweet keys: ${tweet ? Object.keys(tweet).join(',') : 'null'}`);
-    }
-
     return typeof noteText === 'string' && noteText.length > 0 ? noteText : null;
-  } catch (err) {
-    console.error(`[scrape-tweet] resolveNoteTweet failed:`, err);
+  } catch {
     return null;
   }
 }

@@ -42,7 +42,7 @@ export async function GET() {
 
     for (const snap of snapshots) {
       const date = snap.date || snap.id;
-      const admissions = snap.admissions_parsed;
+      const admissions = snap.admissions?.parsed;
       if (!admissions || admissions.length === 0) continue;
 
       for (const adm of admissions) {
