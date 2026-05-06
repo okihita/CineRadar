@@ -13,6 +13,7 @@
  *   - Date extraction from header: `SHOWTIMES - MON, 4/5/26` (D/M/YY)
  */
 
+import { parse, format as fmt } from 'date-fns';
 import type { CinePointShowtime, CinePointAdmission, TwitterTimelineResponse } from './types';
 
 export interface RawTwitterEntry {
@@ -150,23 +151,87 @@ export function parseAdmissionsTweet(raw: string): CinePointAdmission[] {
 
 // ─── Date Extraction ───────────────────────────────────────
 
-const HEADER_DATE = /(?:SHOWTIMES|ESTIMATED ADMISSION)\s*-\s*\w+,\s*(\d{1,2})\/(\d{1,2})\/(\d{2,4})/i;
+/**
+ * CinePoint header date formats observed in the wild:
+ *
+ *   Numeric with day:   SHOWTIMES - MON, 4/5/26                  → D/M/YY
+ *   Numeric no day:     SHOWTIMES - 16/04/26                      → D/M/YY
+ *   Textual with day:   Estimated Admission - Sun, 12 Apr 2026   → d MMM yyyy
+ *   Textual no day:     SHOWTIMES - 16 APR 2026                   → d MMM yyyy
+ *   Textual ordinal:    Estimated Admission - Mon, Apr 6th 2026  → d MMM yyyy (with st/nd/rd/th)
+ *
+ * All prefixes: "SHOWTIMES" or "ESTIMATED ADMISSION" or "Estimated Admission"
+ */
+
+// Common prefix: matches the header keyword + dash
+const HEADER_PREFIX = /(?:SHOWTIMES|ESTIMATED\s+ADMISSION)\s*-\s*/i;
+
+// Day-of-week prefix (optional): "MON, " or "Sun, "
+const OPT_DAY = /(?:\w{2,3},\s*)?/;
+
+// Numeric date: D/M/YY or D/M/YYYY
+const NUMERIC_DATE = /(\d{1,2})\/(\d{1,2})\/(\d{2,4})/;
+
+// Textual date: "12 Apr 2026" or "Apr 6th 2026" (day and month may be swapped)
+const TEXTUAL_DATE = /(\d{1,2})\s+([A-Za-z]{3,9})\s+(\d{2,4})|([A-Za-z]{3,9})\s+(\d{1,2})(?:st|nd|rd|th)?\s*,?\s*(\d{2,4})/;
+
+// Combined regexes
+const HEADER_DATE_NUMERIC = new RegExp(
+  HEADER_PREFIX.source + OPT_DAY.source + NUMERIC_DATE.source, 'i'
+);
+const HEADER_DATE_TEXTUAL_DMY = new RegExp(
+  HEADER_PREFIX.source + OPT_DAY.source + TEXTUAL_DATE.source, 'i'
+);
+
+const TEXTUAL_DATE_FORMATS = ['d MMM yyyy', 'd MMMM yyyy', 'dd MMM yyyy', 'dd MMMM yyyy'];
 
 /**
  * Extract the data date from a tweet's header text.
- * Format: "SHOWTIMES - MON, 4/5/26" → D/M/YY → "2026-05-04"
  *
- * @param text     Tweet text with header
- * @param fallback Fallback date (YYYY-MM-DD) if header is unparseable/wrong
- * Returns null if neither source works.
+ * Handles multiple CinePoint date formats:
+ *   - Numeric:     "SHOWTIMES - MON, 4/5/26"            → D/M/YY
+ *   - Numeric:     "SHOWTIMES - 16/04/26"               → D/M/YY (no day-of-week)
+ *   - Textual DMY: "Estimated Admission - Sun, 12 Apr 2026" → d MMM yyyy
+ *   - Textual MDY: "Estimated Admission - Mon, Apr 6th 2026" → MMM d yyyy (ordinal suffix)
+ *   - Textual:     "SHOWTIMES - 16 APR 2026"            → d MMM yyyy (no day-of-week)
+ *
+ * Falls back to the tweet's posting date if the header can't be parsed.
+ * The 2-day validation window accounts for late-night or early-morning posts.
  */
 export function extractDateFromHeader(text: string, fallback?: string): string | null {
-  const match = text.match(HEADER_DATE);
+  // Try textual month format first (more specific, less ambiguous)
+  const textualMatch = text.match(HEADER_DATE_TEXTUAL_DMY);
+  if (textualMatch) {
+    let dayStr: string;
+    let monthStr: string;
+    let yearStr: string;
 
-  if (match) {
-    let day = parseInt(match[1], 10);
-    let month = parseInt(match[2], 10);
-    let year = parseInt(match[3], 10);
+    if (textualMatch[1]) {
+      // Format: D MMM YYYY (e.g. "12 Apr 2026")
+      dayStr = textualMatch[1];
+      monthStr = textualMatch[2];
+      yearStr = textualMatch[3];
+    } else if (textualMatch[4]) {
+      // Format: MMM D[th] YYYY (e.g. "Apr 6th 2026")
+      monthStr = textualMatch[4];
+      dayStr = textualMatch[5];
+      yearStr = textualMatch[6];
+    } else {
+      dayStr = ''; monthStr = ''; yearStr = '';
+    }
+
+    const dateStr = parseTextualDateParts(dayStr, monthStr, yearStr);
+    if (dateStr && isValidAgainstFallback(dateStr, fallback)) {
+      return dateStr;
+    }
+  }
+
+  // Try numeric format
+  const numericMatch = text.match(HEADER_DATE_NUMERIC);
+  if (numericMatch) {
+    let day = parseInt(numericMatch[1], 10);
+    let month = parseInt(numericMatch[2], 10);
+    let year = parseInt(numericMatch[3], 10);
     if (year < 100) year += 2000;
 
     // If month > 12, swap (M/D/Y format detected)
@@ -175,22 +240,66 @@ export function extractDateFromHeader(text: string, fallback?: string): string |
     }
 
     const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const d = new Date(dateStr + 'T00:00:00');
-
-    if (!isNaN(d.getTime())) {
-      // Validate: if fallback exists, the parsed date should be within 2 days
-      if (fallback) {
-        const fallbackD = new Date(fallback + 'T00:00:00');
-        const diffDays = Math.abs((d.getTime() - fallbackD.getTime()) / (1000 * 60 * 60 * 24));
-        if (diffDays <= 2) return dateStr;
-        // Header date too far from posting date — use fallback
-      } else {
-        return dateStr;
-      }
+    if (isValidAgainstFallback(dateStr, fallback)) {
+      return dateStr;
     }
   }
 
   return fallback || null;
+}
+
+/** Parse textual date parts into YYYY-MM-DD */
+function parseTextualDateParts(dayStr: string, monthStr: string, yearStr: string): string | null {
+  const year = parseInt(yearStr, 10);
+  if (year < 100) {
+    const fullYear = year + 2000;
+    const composed = `${dayStr} ${monthStr} ${fullYear}`;
+    return parseFlexibleDate(composed);
+  }
+  const composed = `${dayStr} ${monthStr} ${year}`;
+  return parseFlexibleDate(composed);
+}
+
+/** Parse a flexible textual date like "12 Apr 2026" or "5 May 26" */
+function parseFlexibleDate(raw: string): string | null {
+  const trimmed = raw.trim();
+
+  for (const fmt_ of TEXTUAL_DATE_FORMATS) {
+    try {
+      const d = parse(trimmed, fmt_, new Date());
+      if (!isNaN(d.getTime())) {
+        return fmt(d, 'yyyy-MM-dd');
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  // Last resort: try native Date parsing (handles "12 Apr 2026")
+  try {
+    const d = new Date(trimmed);
+    if (!isNaN(d.getTime()) && d.getFullYear() > 2000) {
+      return fmt(d, 'yyyy-MM-dd');
+    }
+  } catch {
+    // fall through
+  }
+
+  return null;
+}
+
+/** Validate that a parsed date is within 2 days of the fallback (posting date) */
+function isValidAgainstFallback(dateStr: string, fallback?: string): boolean {
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d.getTime())) return false;
+
+  if (fallback) {
+    const fallbackD = new Date(fallback + 'T00:00:00');
+    const diffDays = Math.abs((d.getTime() - fallbackD.getTime()) / (1000 * 60 * 60 * 24));
+    return diffDays <= 2;
+  }
+
+  return true;
 }
 
 /**

@@ -5,6 +5,7 @@ import { format, parseISO, subDays, differenceInDays } from 'date-fns';
 import { Calendar as CalendarPicker } from '@/components/ui/calendar';
 import { TrendingUp, ExternalLink, ClipboardPaste } from 'lucide-react';
 import { TweetUrlImport } from '@/features/competitors/components/TweetUrlImport';
+import { buildCinepointVerifyUrl } from '@/features/competitors/lib/verify-link';
 import type { SnapshotStatus } from '@/features/competitors/types';
 
 // ─── Coverage Data ─────────────────────────────────────────
@@ -74,6 +75,26 @@ export function CalendarSidebar({
 
   const needsAttention = missingDates.size + partialDates.size;
 
+  // Build a prioritized list of dates needing attention (for the gap CTA)
+  const attentionDates = useMemo(() => {
+    const items: { date: string; missing: string }[] = [];
+
+    // Missing dates (in range, no data at all)
+    for (const date of Array.from(missingDates).sort().reverse().slice(0, 5)) {
+      items.push({ date, missing: 'showtimes + admissions' });
+    }
+
+    // Partial dates
+    for (const date of Array.from(partialDates).sort().reverse()) {
+      const hasS = showtimeDates.has(date);
+      const hasA = admissionDates.has(date);
+      if (!hasS && hasA) items.push({ date, missing: 'showtimes' });
+      if (hasS && !hasA) items.push({ date, missing: 'admissions' });
+    }
+
+    return items.slice(0, 5); // Show at most 5
+  }, [missingDates, partialDates, showtimeDates, admissionDates]);
+
   /** Scroll to the import section with a brief highlight */
   const scrollToImport = () => {
     if (!importRef.current) return;
@@ -142,11 +163,11 @@ export function CalendarSidebar({
         <div className="mt-4 space-y-2 px-2">
           <div className="flex items-center gap-3 text-[10px] font-bold flex-wrap">
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="w-2 h-2 rounded-full bg-blue-500" />
               <span className="text-muted-foreground">Showtimes</span>
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-blue-500" />
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
               <span className="text-muted-foreground">Admissions</span>
             </span>
             <span className="flex items-center gap-1.5">
@@ -155,19 +176,50 @@ export function CalendarSidebar({
             </span>
           </div>
 
-          {/* Gap CTA — drives attention to the import section below */}
+          {/* Data gaps — informational (CinePoint commonly skips posts) */}
           {needsAttention > 0 && (
-            <button
-              onClick={scrollToImport}
-              className="w-full px-3 py-2.5 rounded-xl bg-amber-500/5 border border-amber-500/15 text-left hover:bg-amber-500/10 transition-colors group"
-            >
-              <p className="text-[10px] font-bold text-amber-600/80 uppercase tracking-wider">
-                {needsAttention} Date{needsAttention > 1 ? 's' : ''} Need Data
-              </p>
-              <p className="text-[10px] text-muted-foreground leading-relaxed mt-0.5">
-                Paste tweet URLs below to fill the gaps →
-              </p>
-            </button>
+            <div className="px-3 py-2 rounded-xl bg-muted/5 border border-border/30 space-y-2">
+              <button
+                onClick={scrollToImport}
+                className="w-full text-left"
+              >
+                <p className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-wider">
+                  {needsAttention} Gap{needsAttention > 1 ? 's' : ''} in Coverage
+                </p>
+                <p className="text-[10px] text-muted-foreground/50 leading-relaxed mt-0.5">
+                  CinePoint may not have posted — or data hasn&apos;t been imported yet
+                </p>
+              </button>
+
+              {/* Per-date list with check links */}
+              {attentionDates.length > 0 && (
+                <div className="space-y-1 pt-1 border-t border-border/20">
+                  {attentionDates.map((item) => (
+                    <div key={item.date} className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-mono text-muted-foreground/50">
+                        {format(parseISO(item.date), 'MMM d')}
+                        <span className="font-medium"> — no {item.missing}</span>
+                      </span>
+                      <a
+                        href={buildCinepointVerifyUrl(item.date)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[9px] tracking-wider text-muted-foreground/25 hover:text-muted-foreground/60 transition-colors flex items-center gap-0.5 flex-shrink-0"
+                        title={`Check @cinepoint_ posts around ${item.date}`}
+                      >
+                        <ExternalLink className="w-2.5 h-2.5" />
+                        check
+                      </a>
+                    </div>
+                  ))}
+                  {needsAttention > 5 && (
+                    <p className="text-[9px] text-muted-foreground/25">
+                      +{needsAttention - 5} more
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
           )}
         </div>
 
@@ -249,9 +301,9 @@ function computeMissingDates(coverageMap: Map<string, SnapshotStatus>): Set<stri
  * CSS for per-day data indicators on the calendar.
  *
  * Three states via pseudo-element ::after:
- * - .rdp-dot-both: two dots (green + blue) — has showtimes AND admissions
- * - .rdp-dot-showtimes: single green dot — has showtimes only
- * - .rdp-dot-admissions: single blue dot — has admissions only
+ * - .rdp-dot-both: two dots (blue + green) — has showtimes AND admissions
+ * - .rdp-dot-showtimes: single blue dot — has showtimes only
+ * - .rdp-dot-admissions: single green dot — has admissions only
  * - .ring-1.ring-red-400/40: red ring — missing (in range, no data)
  */
 const DOT_STYLES = `
@@ -270,8 +322,8 @@ const DOT_STYLES = `
   width: 8px;
   height: 4px;
   background:
-    radial-gradient(circle at 2px 2px, #22c55e 1.5px, transparent 1.5px),
-    radial-gradient(circle at 6px 2px, #3b82f6 1.5px, transparent 1.5px);
+    radial-gradient(circle at 2px 2px, #3b82f6 1.5px, transparent 1.5px),
+    radial-gradient(circle at 6px 2px, #22c55e 1.5px, transparent 1.5px);
 }
 .rdp-dot-showtimes::after {
   content: '';
@@ -281,7 +333,7 @@ const DOT_STYLES = `
   transform: translateX(-50%);
   width: 4px;
   height: 4px;
-  background: #22c55e;
+  background: #3b82f6;
   border-radius: 50%;
 }
 .rdp-dot-admissions::after {
@@ -292,7 +344,7 @@ const DOT_STYLES = `
   transform: translateX(-50%);
   width: 4px;
   height: 4px;
-  background: #3b82f6;
+  background: #22c55e;
   border-radius: 50%;
 }
 `;

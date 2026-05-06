@@ -11,6 +11,7 @@ import {
   ClipboardPaste,
   Loader2,
   Calendar,
+  RefreshCw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -39,6 +40,8 @@ export default function TweetArchivePage() {
   const [loading, setLoading] = useState(true);
   const [activeSource, setActiveSource] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<TweetType | null>(null);
+  const [reparsing, setReparsing] = useState(false);
+  const [reparseResult, setReparseResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
   // Snapshot coverage (for calendar sidebar)
   const [coverageData, setCoverageData] = useState<DateCoverage[]>([]);
@@ -123,6 +126,29 @@ export default function TweetArchivePage() {
     await Promise.all([fetchTweets(), fetchCoverage()]);
   }, [fetchTweets, fetchCoverage]);
 
+  const handleReparse = useCallback(async () => {
+    setReparsing(true);
+    setReparseResult(null);
+    try {
+      const res = await fetch('/api/competitors/reparse', { method: 'POST' });
+      const json = await res.json();
+      if (json.success) {
+        const d = json.data;
+        setReparseResult({
+          ok: true,
+          msg: `Scanned ${d.tweets_scanned} tweets → ${d.dates_total} dates${d.dates_changed > 0 ? ` (${d.dates_changed} corrected)` : ''}`,
+        });
+        await handleImportComplete();
+      } else {
+        setReparseResult({ ok: false, msg: json.error || 'Reparse failed' });
+      }
+    } catch {
+      setReparseResult({ ok: false, msg: 'Network error' });
+    } finally {
+      setReparsing(false);
+    }
+  }, [handleImportComplete]);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Sticky Header */}
@@ -147,6 +173,16 @@ export default function TweetArchivePage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleReparse}
+              disabled={reparsing}
+              className="h-8 gap-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl border-border/60 hover:bg-muted transition-all"
+            >
+              <RefreshCw className={cn('w-3.5 h-3.5', reparsing && 'animate-spin')} />
+              Re-parse All
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -209,6 +245,26 @@ export default function TweetArchivePage() {
                     {importResult.msg}
                   </div>
                   <button onClick={() => setImportResult(null)} className="opacity-40 hover:opacity-100 p-1 rounded-md hover:bg-muted transition-colors">
+                    ×
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Reparse status banner */}
+            {reparseResult && (
+              <div
+                className={cn(
+                  'p-4 rounded-2xl border text-[11px] font-bold leading-relaxed animate-in fade-in slide-in-from-top-2 duration-500',
+                  reparseResult.ok
+                    ? 'bg-blue-500/[0.03] border-blue-500/20 text-blue-700 dark:text-blue-400'
+                    : 'bg-red-500/[0.03] border-red-500/20 text-red-700 dark:text-red-400',
+                )}
+              >
+                <div className="flex items-start gap-2">
+                  <RefreshCw className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">{reparseResult.msg}</div>
+                  <button onClick={() => setReparseResult(null)} className="opacity-40 hover:opacity-100 p-1 rounded-md hover:bg-muted transition-colors">
                     ×
                   </button>
                 </div>
@@ -303,8 +359,8 @@ function DateCoverageBadge({ date, coverageData }: { date: string; coverageData:
 
   const config: Record<string, { label: string; className: string }> = {
     complete: { label: 'Complete', className: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20' },
-    showtimes_only: { label: 'Showtimes', className: 'text-amber-600 bg-amber-500/10 border-amber-500/20' },
-    admissions_only: { label: 'Admissions', className: 'text-blue-600 bg-blue-500/10 border-blue-500/20' },
+    showtimes_only: { label: 'Showtimes', className: 'text-blue-600 bg-blue-500/10 border-blue-500/20' },
+    admissions_only: { label: 'Admissions', className: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20' },
   };
 
   const { label, className } = config[coverage.status] || { label: '', className: '' };

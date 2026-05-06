@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   Target,
   TrendingUp,
+  ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -32,6 +33,7 @@ import type {
   CumulativeMovieTrack,
 } from '@/features/competitors/types';
 import { computeConfidenceScore } from '@/features/competitors/comparison';
+import { buildCinepointVerifyUrl } from '@/features/competitors/lib/verify-link';
 import { Badge } from '@/components/ui/badge';
 
 interface PageData {
@@ -163,6 +165,12 @@ export default function CompetitorDatePage() {
     m.data_points.some((p) => p.date === date),
   ).sort((a, b) => b.latest_cumulative - a.latest_cumulative);
 
+  // Coverage state for this date
+  const hasShowtimes = (data?.snapshot?.showtimes?.parsed?.length ?? 0) > 0;
+  const hasAdmissions = (data?.snapshot?.admissions?.parsed?.length ?? 0) > 0;
+  const isPartial = (hasShowtimes && !hasAdmissions) || (!hasShowtimes && hasAdmissions);
+  const isMissing = !hasShowtimes && !hasAdmissions;
+
   function confidenceColor(level: string): string {
     switch (level) {
       case 'excellent': return 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20';
@@ -282,6 +290,26 @@ export default function CompetitorDatePage() {
                 <TweetUrlImport onImported={fetchData} />
               </CardContent>
             </Card>
+
+            {/* Check CinePoint — shown when data is partial or missing */}
+            {(isPartial || isMissing) && (
+              <a
+                href={buildCinepointVerifyUrl(date)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-border/20 bg-muted/3 hover:bg-muted/8 transition-colors group"
+              >
+                <span className="text-[10px] text-muted-foreground/50 leading-relaxed">
+                  {isMissing
+                    ? 'CinePoint may not have posted this date — '
+                    : `Missing ${hasShowtimes ? 'admissions' : 'showtimes'} — `}
+                  <span className="text-muted-foreground/40 group-hover:text-muted-foreground/70 transition-colors">
+                    check their timeline →
+                  </span>
+                </span>
+                <ExternalLink className="w-3 h-3 text-muted-foreground/20 group-hover:text-muted-foreground/50 transition-colors flex-shrink-0" />
+              </a>
+            )}
 
             {/* Manual Paste Areas */}
             <Card className="overflow-hidden border-border/50">

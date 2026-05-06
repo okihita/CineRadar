@@ -154,7 +154,7 @@ function extractTweetsWithGreedyScour(json: unknown): { text: string; created_at
     scour(res);
 
     const validReports = reportTexts.filter(t =>
-      t.startsWith('SHOWTIMES') || t.startsWith('ESTIMATED ADMISSION')
+      t.startsWith('SHOWTIMES') || /admission/i.test(t)
     );
 
     if (validReports.length > 0) {
