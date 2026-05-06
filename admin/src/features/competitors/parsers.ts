@@ -260,9 +260,8 @@ export function parseTweetBatch(tweets: RawTwitterEntry[]): ParsedImportResult[]
       if (date && parsed.length > 0) {
         results.push({ date, type: 'showtimes', parsed, raw_text: text, source_tweet_id: tweet.id });
       }
-    } else if (text.startsWith('ESTIMATED ADMISSION')) {
-      // Admission tweets are often posted late night or early next morning
-      // for the previous day's data. Use posting date as fallback.
+    } else if (/admission/i.test(text)) {
+      // Any tweet containing "admission" is treated as an admissions tweet
       const date = extractDateFromHeader(text, postingDate);
       const parsed = parseAdmissionsTweet(text);
       if (date && parsed.length > 0) {

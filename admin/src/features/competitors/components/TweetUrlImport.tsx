@@ -118,6 +118,14 @@ export function TweetUrlImport({ onImported }: TweetUrlImportProps) {
               </span>
             )}
           </div>
+          {result.ok && (
+            <button
+              onClick={() => setResult(null)}
+              className="text-[9px] font-bold uppercase tracking-wider text-emerald-600/60 hover:text-emerald-600 px-2 py-1 rounded hover:bg-emerald-500/10 transition-colors flex-shrink-0"
+            >
+              Fetch Another
+            </button>
+          )}
         </div>
       )}
     </div>

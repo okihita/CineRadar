@@ -146,7 +146,7 @@ export async function POST(req: NextRequest) {
 
 function detectTweetType(text: string): TweetType {
   if (text.startsWith('SHOWTIMES')) return 'showtimes';
-  if (text.startsWith('ESTIMATED ADMISSION')) return 'admissions';
+  if (/admission/i.test(text)) return 'admissions';
   return 'other';
 }
 
@@ -200,8 +200,8 @@ function extractTweetsWithMeta(json: unknown): { tweets: TweetWithMedia[]; sourc
     scour(result);
     
     // Filter for only CinePoint reports and pick the absolute longest one
-    const validReports = reportTexts.filter(t => 
-      t.startsWith('SHOWTIMES') || t.startsWith('ESTIMATED ADMISSION')
+    const validReports = reportTexts.filter(t =>
+      t.startsWith('SHOWTIMES') || /admission/i.test(t)
     );
     
     const rawText = validReports.length > 0 

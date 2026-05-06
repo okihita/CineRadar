@@ -241,7 +241,7 @@ const GRAPHQL_FEATURES: Record<string, boolean> = {
 
 function detectTweetType(text: string): TweetType {
   if (text.startsWith('SHOWTIMES')) return 'showtimes';
-  if (text.startsWith('ESTIMATED ADMISSION')) return 'admissions';
+  if (/admission/i.test(text)) return 'admissions';
   return 'other';
 }
 
