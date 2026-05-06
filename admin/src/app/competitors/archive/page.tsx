@@ -10,8 +10,8 @@ import {
   AlertCircle,
   ClipboardPaste,
   Loader2,
-  Upload,
   Calendar,
+  ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -97,8 +97,6 @@ export default function TweetArchivePage() {
     scanReport,
     handleScan,
     handlePasteImport,
-    handleFileImport,
-    fileInputRef,
   } = useTweetImport({ onImportSuccess: fetchTweets });
 
   // Derived: group tweets by date
@@ -146,17 +144,6 @@ export default function TweetArchivePage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".json"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleFileImport(file);
-                e.target.value = '';
-              }}
-            />
             <Button
               variant="outline"
               size="sm"
@@ -166,20 +153,6 @@ export default function TweetArchivePage() {
             >
               <ClipboardPaste className="w-3.5 h-3.5" />
               Import Twitter JSON
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={importing}
-              className="h-8 gap-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl hover:bg-muted transition-all"
-            >
-              {importing ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Upload className="w-3.5 h-3.5" />
-              )}
-              Upload
             </Button>
           </div>
         </div>
@@ -285,14 +258,37 @@ export default function TweetArchivePage() {
                 ))}
               </div>
             ) : (
-              <div className="py-24 text-center border-2 border-dashed rounded-[2.5rem] border-border/40 bg-muted/5">
+              <div className="py-16 text-center border-2 border-dashed rounded-[2.5rem] border-border/40 bg-muted/5">
                 <div className="w-12 h-12 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
                   <Archive className="w-6 h-6 text-muted-foreground/40" />
                 </div>
                 <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest">No signals found in the archive.</p>
                 <p className="text-muted-foreground/50 text-[10px] mt-2 uppercase tracking-tight font-medium">
-                  Use &quot;Paste Tweet URLs&quot; in the sidebar, or &quot;Import JSON&quot; for bulk data.
+                  Import CinePoint tweet data to get started.
                 </p>
+
+                {/* Action CTAs for empty state */}
+                <div className="flex items-center justify-center gap-3 mt-6">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => setIsImportModalOpen(true)}
+                    disabled={importing}
+                    className="h-8 gap-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl"
+                  >
+                    <ClipboardPaste className="w-3.5 h-3.5" />
+                    Import Twitter JSON
+                  </Button>
+                  <a
+                    href="https://x.com/cinepoint_"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="h-8 px-4 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 rounded-xl border border-border/40 text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    Open @cinepoint_
+                  </a>
+                </div>
               </div>
             )}
           </div>
