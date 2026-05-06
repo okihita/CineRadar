@@ -209,14 +209,28 @@ export function extractTweetsFromTwitterJson(json: unknown): RawTwitterEntry[] {
 
      // eslint-disable-next-line @typescript-eslint/no-explicit-any
      return (entries as any[])
-       .filter((e) => e?.content?.itemContent?.tweet_results?.result?.legacy?.full_text)
-       .map((e) => {
-         const result = e.content.itemContent.tweet_results.result;
+      .filter((e) => {
+        const r = e?.content?.itemContent?.tweet_results?.result;
+        if (!r) return false;
+        const target = r.tweet || r;
+        return !!(target?.legacy?.full_text || target?.note_tweet?.note_tweet_results?.result?.text);
+      })
+      .map((e) => {
+        let result = e.content.itemContent.tweet_results.result;
+        
+        // Handle "TweetWithVisibilityResults" wrapper
+        if (result.tweet) {
+          result = result.tweet;
+        }
 
-         const text: string = result.legacy.full_text
-           .replace(/https:\/\/t\.co\/\S+/g, '')
-           .replace(/[🔥🔻]/g, '')
-           .trim();
+        const noteText = result?.note_tweet?.note_tweet_results?.result?.text;
+        const legacyText = result?.legacy?.full_text;
+        const rawText: string = noteText || legacyText || '';
+        
+        const text: string = rawText
+          .replace(/https:\/\/t\.co\/\S+/g, '')
+          .replace(/[🔥🔻]/g, '')
+          .trim();
          return {
            id: result.rest_id as string,
            created_at: result.legacy.created_at as string,

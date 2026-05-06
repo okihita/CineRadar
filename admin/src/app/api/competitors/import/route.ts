@@ -176,35 +176,73 @@ function extractTweetsWithMeta(json: unknown): { tweets: TweetWithMedia[]; sourc
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const e of entries as any[]) {
     const result = e?.content?.itemContent?.tweet_results?.result;
-    if (!result?.legacy?.full_text) continue;
+    if (!result) continue;
 
-    // Extract source meta from the first tweet's user data (same for all tweets from this account)
-    if (!sourceMeta.handle && result?.core?.user_results?.result) {
-      const user = result.core.user_results.result;
-      sourceMeta = {
-        handle: user?.core?.screen_name || user?.legacy?.screen_name || '',
-        name: user?.core?.name || user?.legacy?.name || '',
-        avatar: user?.avatar?.image_url || user?.legacy?.profile_image_url_https || '',
-      };
+    // 1. Greedy Text Extraction: Scour the entire object for the longest report text
+    // (This finds full note_tweet text even if buried in nested visibility or quote wrappers)
+    const reportTexts: string[] = [];
+    
+    // Recursive searcher for anything that looks like a report
+    const scour = (obj: unknown) => {
+      if (!obj || typeof obj !== 'object') return;
+      
+      const record = obj as Record<string, unknown>;
+      if (typeof record.full_text === 'string') reportTexts.push(record.full_text);
+      if (typeof record.text === 'string') reportTexts.push(record.text);
+      
+      Object.values(record).forEach(val => scour(val));
+    };
+    
+    scour(result);
+    
+    // Filter for only CinePoint reports and pick the absolute longest one
+    const validReports = reportTexts.filter(t => 
+      t.startsWith('SHOWTIMES') || t.startsWith('ESTIMATED ADMISSION')
+    );
+    
+    const rawText = validReports.length > 0 
+      ? validReports.reduce((a, b) => a.length > b.length ? a : b) 
+      : '';
+      
+    if (!rawText) continue;
+
+    // 2. Resolve Target Result (prioritize unwrapped tweet for metadata)
+    const target = result.tweet || result;
+
+    // Extract source meta (read from the first valid user found)
+    if (!sourceMeta.handle) {
+      const user = target?.core?.user_results?.result || target?.user_results?.result;
+      if (user) {
+        sourceMeta = {
+          handle: user?.core?.screen_name || user?.legacy?.screen_name || '',
+          name: user?.core?.name || user?.legacy?.name || '',
+          avatar: user?.avatar?.image_url || user?.legacy?.profile_image_url_https || '',
+        };
+      }
     }
 
-    // Extract media URLs
+    // Extract all media URLs from anywhere in the result
     const mediaUrls: string[] = [];
-    const extendedMedia = result?.legacy?.extended_entities?.media || result?.legacy?.entities?.media || [];
-    for (const m of extendedMedia) {
-      if (m?.media_url_https) mediaUrls.push(m.media_url_https);
-    }
+    const collectMedia = (obj: unknown) => {
+      if (!obj || typeof obj !== 'object') return;
+      const record = obj as Record<string, unknown>;
+      if (record.media_url_https && typeof record.media_url_https === 'string') {
+        mediaUrls.push(record.media_url_https);
+      }
+      Object.values(record).forEach(val => collectMedia(val));
+    };
+    collectMedia(result);
 
-    const text: string = result.legacy.full_text
+    const text = rawText
       .replace(/https:\/\/t\.co\/\S+/g, '')
       .replace(/[🔥🔻]/g, '')
       .trim();
 
     tweets.push({
-      id: result.rest_id,
-      created_at: result.legacy.created_at,
+      id: target.rest_id || result.rest_id,
+      created_at: target.legacy?.created_at || result.legacy?.created_at,
       text,
-      media_urls: mediaUrls,
+      media_urls: [...new Set(mediaUrls)],
     });
   }
 
