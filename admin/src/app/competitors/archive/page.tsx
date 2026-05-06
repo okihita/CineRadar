@@ -278,7 +278,7 @@ export default function TweetArchivePage() {
                 </div>
                 <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest">No signals found in the archive.</p>
                 <p className="text-muted-foreground/50 text-[10px] mt-2 uppercase tracking-tight font-medium">
-                  Use &quot;Paste JSON&quot; or &quot;Upload File&quot; to populate the timeline.
+                  Use &quot;Paste Tweet URLs&quot; in the sidebar, or &quot;Import JSON&quot; for bulk data.
                 </p>
               </div>
             )}
@@ -289,6 +289,7 @@ export default function TweetArchivePage() {
             availableDates={availableDates}
             currentDateInView={currentDateInView}
             onDateSelect={scrollToDate}
+            onImportComplete={fetchTweets}
           />
         </div>
       </div>

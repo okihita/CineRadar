@@ -1,21 +1,25 @@
 'use client';
 
+import { useState } from 'react';
 import { format, parseISO, subDays, differenceInDays } from 'date-fns';
 import { Calendar as CalendarPicker } from '@/components/ui/calendar';
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp, ExternalLink } from 'lucide-react';
+import { BatchUrlImport } from './BatchUrlImport';
 
 interface CalendarSidebarProps {
   availableDates: Set<string>;
   currentDateInView: Date | undefined;
   onDateSelect: (date: Date) => void;
+  onImportComplete: () => void;
 }
 
 export function CalendarSidebar({
   availableDates,
   currentDateInView,
   onDateSelect,
+  onImportComplete,
 }: CalendarSidebarProps) {
-  // Compute missing dates
+  const [showImporter, setShowImporter] = useState(false);
   const missingDates = computeMissingDates(availableDates);
 
   return (
@@ -61,17 +65,54 @@ export function CalendarSidebar({
               <span className="text-muted-foreground">Missing ({missingDates.size})</span>
             </span>
           </div>
-          {missingDates.size > 0 && (
-            <div className="px-3 py-2 rounded-xl bg-red-500/5 border border-red-500/15">
+
+          {/* Gap CTA — actionable card when missing dates exist */}
+          {missingDates.size > 0 && !showImporter && (
+            <div className="px-3 py-3 rounded-xl bg-red-500/5 border border-red-500/15 space-y-2">
               <p className="text-[10px] font-bold text-red-600/80 uppercase tracking-wider">
-                Gap Detected
+                {missingDates.size} Date{missingDates.size > 1 ? 's' : ''} Missing
               </p>
-              <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">
-                {missingDates.size} date{missingDates.size > 1 ? 's' : ''} within the archive range lack tweet data. Fetch the missing JSON from the source account and import to fill gaps.
+              <p className="text-[10px] text-muted-foreground leading-relaxed">
+                Paste CinePoint tweet URLs to fill the gaps.
               </p>
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  onClick={() => setShowImporter(true)}
+                  className="flex-1 py-1.5 rounded-lg bg-primary text-primary-foreground text-[9px] font-bold uppercase tracking-wider hover:bg-primary/90 transition-colors"
+                >
+                  Paste Tweet URLs
+                </button>
+                <a
+                  href="https://x.com/cinepoint_"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg border border-border/40 text-[9px] font-bold text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
+                >
+                  <ExternalLink className="w-2.5 h-2.5" />
+                  Open @cinepoint_
+                </a>
+              </div>
             </div>
           )}
         </div>
+
+        {/* Inline batch URL importer */}
+        {showImporter && (
+          <div className="mt-4 px-2 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">
+                Import from URLs
+              </span>
+              <button
+                onClick={() => setShowImporter(false)}
+                className="text-[9px] text-muted-foreground/40 hover:text-muted-foreground"
+              >
+                Close
+              </button>
+            </div>
+            <BatchUrlImport onComplete={onImportComplete} />
+          </div>
+        )}
 
         <div className="mt-6 space-y-4 px-2">
           <div className="flex items-start gap-3">

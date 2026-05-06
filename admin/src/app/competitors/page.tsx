@@ -15,6 +15,7 @@ import {
   CalendarDays,
   Archive,
   ArrowRight,
+  ExternalLink,
   Shield,
 } from 'lucide-react';
 import {
@@ -321,17 +322,106 @@ export default function CompetitorsDashboard() {
         </div>
       ) : daysWithData.length === 0 ? (
         <Card className="overflow-hidden border-border/50">
-          <CardContent className="py-16 text-center">
-            <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">
-              No competitor data yet.
-            </p>
-            <p className="text-[10px] text-muted-foreground/50 mt-2">
-              Import tweets or paste data on a date page to get started.
-            </p>
+          <CardContent className="py-12 px-8">
+            <div className="max-w-lg mx-auto text-center space-y-6">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+                <Swords className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-sm font-black uppercase tracking-tighter">Getting Started with Competitor Tracking</h2>
+                <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed">
+                  CineRadar compares your cinema data against <span className="font-bold text-foreground">@cinepoint_</span> on X/Twitter.
+                  Import their tweets to start benchmarking.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
+                <div className="p-4 rounded-xl border border-border/40 bg-muted/5 hover:bg-muted/10 transition-colors">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-6 h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                      <ExternalLink className="w-3 h-3 text-emerald-600" />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-wider">Easy Import</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    Paste individual tweet URLs. No developer tools needed.
+                  </p>
+                </div>
+                <div className="p-4 rounded-xl border border-border/40 bg-muted/5 hover:bg-muted/10 transition-colors">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-6 h-6 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                      <Archive className="w-3 h-3 text-blue-600" />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-wider">Advanced Import</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    Paste raw Twitter API JSON from browser DevTools. Best for bulk initial import.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-center gap-3 pt-2">
+                <Link href="/competitors/archive">
+                  <Button size="sm" className="h-8 gap-2 px-5 text-[10px] font-bold uppercase tracking-wider">
+                    Open Tweet Archive
+                    <ArrowRight className="w-3 h-3" />
+                  </Button>
+                </Link>
+                <a
+                  href="https://x.com/cinepoint_"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button variant="outline" size="sm" className="h-8 gap-2 px-4 text-[10px] font-bold uppercase tracking-wider">
+                    <ExternalLink className="w-3 h-3" />
+                    Open @cinepoint_
+                  </Button>
+                </a>
+              </div>
+            </div>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-6">
+          {/* Gap Nudge Banner */}
+          {(() => {
+            const recent14 = Array.from({ length: 14 }, (_, i) => {
+              const d = subDays(new Date(), 13 - i);
+              return format(d, 'yyyy-MM-dd');
+            });
+            const missingRecent = recent14.filter(d => !trendDays.find(t => t.date === d));
+            if (missingRecent.length === 0) return null;
+            return (
+              <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-amber-500/20 bg-amber-500/5">
+                <div className="flex items-center gap-3">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                  <div>
+                    <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400">
+                      {missingRecent.length} date{missingRecent.length > 1 ? 's' : ''} in the last 14 days need data
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <a
+                    href="https://x.com/cinepoint_"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="h-7 px-3 text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 rounded-lg border border-border/40 text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    @cinepoint_
+                  </a>
+                  <Link href="/competitors/archive">
+                    <Button variant="outline" size="sm" className="h-7 gap-1.5 px-3 text-[9px] font-bold uppercase tracking-wider">
+                      <Archive className="w-3 h-3" />
+                      Backfill in Archive
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Summary Cards Row */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {/* Coverage Ratio */}

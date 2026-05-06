@@ -25,6 +25,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { PasteArea } from '@/features/competitors/components/PasteArea';
 import { ComparisonTable } from '@/features/competitors/components/ComparisonTable';
+import { TweetUrlImport } from '@/features/competitors/components/TweetUrlImport';
 import type {
   CompetitorSnapshot,
   ComparisonRow,
@@ -275,9 +276,18 @@ export default function CompetitorDatePage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          {/* Left: Paste Areas */}
-          <Card className="overflow-hidden border-border/50">
-            <CardContent className="p-4 space-y-6">
+          {/* Left: URL Import + Paste Areas */}
+          <div className="space-y-4">
+            {/* Quick Import from Tweet URL */}
+            <Card className="overflow-hidden border-border/50">
+              <CardContent className="p-4">
+                <TweetUrlImport onImported={fetchData} />
+              </CardContent>
+            </Card>
+
+            {/* Manual Paste Areas */}
+            <Card className="overflow-hidden border-border/50">
+              <CardContent className="p-4 space-y-6">
               <PasteArea
                 label="Showtime Count"
                 placeholder={`Paste CinePoint showtime tweet here...\n\nExample:\n#Salmokji 2,466 (-3.90%)\n#GhostinTheCell 2,444 (+1.20%)`}
@@ -297,6 +307,7 @@ export default function CompetitorDatePage() {
               />
             </CardContent>
           </Card>
+          </div>
 
           {/* Right: Comparison Table */}
           <Card className="overflow-hidden border-border/50">
