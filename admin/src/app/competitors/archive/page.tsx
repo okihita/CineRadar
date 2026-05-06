@@ -53,6 +53,7 @@ export default function TweetArchivePage() {
   // Navigation State
   const [currentDateInView, setCurrentDateInView] = useState<Date | undefined>(new Date());
   const isManualScrolling = useRef(false);
+  const suppressObserverUntil = useRef(0); // timestamp: ignore observer entries before this time
 
   // Import state
   const [importing, setImporting] = useState(false);
@@ -125,6 +126,9 @@ export default function TweetArchivePage() {
         (entries) => {
           if (isManualScrolling.current) return;
 
+          const now = Date.now();
+          if (now < suppressObserverUntil.current) return;
+
           // Find the topmost visible section (closest to viewport top)
           let topEntry: { element: Element; dateStr: string } | null = null;
           
@@ -133,7 +137,6 @@ export default function TweetArchivePage() {
               const dateStr = entry.target.getAttribute('data-date');
               if (dateStr && dateStr !== 'unknown') {
                 const rect = entry.boundingClientRect;
-                // Pick the section whose top is closest to 0 (just past the header)
                 if (!topEntry || Math.abs(rect.top) < Math.abs(topEntry.element.getBoundingClientRect().top)) {
                   topEntry = { element: entry.target, dateStr };
                 }
@@ -169,56 +172,34 @@ export default function TweetArchivePage() {
 
   const scrollToDate = useCallback((date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    const element = document.getElementById(`date-section-${dateStr}`);
-    
-    if (element) {
-      isManualScrolling.current = true;
-      setCurrentDateInView(date);
-      
-      // Disconnect observer during programmatic scroll
-      if (scrollObserverRef.current) {
-        scrollObserverRef.current.disconnect();
-      }
-      
-      const y = element.getBoundingClientRect().top + window.scrollY - 80;
-      window.scrollTo({ top: y, behavior: 'smooth' });
-      
-      // Release lock and re-connect observer after animation
-      setTimeout(() => {
-        isManualScrolling.current = false;
+    const element = document.getElementById(`date-section-${dateStr}`)
+      || document.querySelector(`section[data-date="${dateStr}"]`);
 
-        // Re-observe all sections
-        const sections = Array.from(document.querySelectorAll('section[data-date]'));
-        if (scrollObserverRef.current) {
-          sections.forEach(section => scrollObserverRef.current!.observe(section));
-        } else {
-          // If observer was cleaned up, re-create
-          const observer = new IntersectionObserver(
-            (entries) => {
-              if (isManualScrolling.current) return;
-              let topEntry: { element: Element; dateStr: string } | null = null;
-              for (const entry of entries) {
-                if (entry.isIntersecting) {
-                  const dateStr = entry.target.getAttribute('data-date');
-                  if (dateStr && dateStr !== 'unknown') {
-                    const rect = entry.boundingClientRect;
-                    if (!topEntry || Math.abs(rect.top) < Math.abs(topEntry.element.getBoundingClientRect().top)) {
-                      topEntry = { element: entry.target, dateStr };
-                    }
-                  }
-                }
-              }
-              if (topEntry) {
-                setCurrentDateInView(parseISO(topEntry.dateStr));
-              }
-            },
-            { threshold: 0, rootMargin: '-80px 0px -60% 0px' }
-          );
-          sections.forEach(section => observer.observe(section));
-          scrollObserverRef.current = observer;
-        }
-      }, 1500);
+    if (!element) return;
+
+    isManualScrolling.current = true;
+    setCurrentDateInView(date);
+    suppressObserverUntil.current = Date.now() + 2500;
+
+    if (scrollObserverRef.current) {
+      scrollObserverRef.current.disconnect();
     }
+
+    // Find the DashboardLayout's scrollable <main> — now the only <main> in the DOM.
+    const scrollContainer = document.querySelector('main') as HTMLElement | null;
+    if (scrollContainer) {
+      const rect = element.getBoundingClientRect();
+      const containerRect = scrollContainer.getBoundingClientRect();
+      scrollContainer.scrollTop = scrollContainer.scrollTop + rect.top - containerRect.top - 80;
+    }
+
+    setTimeout(() => {
+      isManualScrolling.current = false;
+      const sections = Array.from(document.querySelectorAll('section[data-date]'));
+      if (scrollObserverRef.current) {
+        sections.forEach(section => scrollObserverRef.current!.observe(section));
+      }
+    }, 1500);
   }, []);
 
   // Group tweets by date
@@ -242,7 +223,8 @@ export default function TweetArchivePage() {
     });
     
     // Sort keys descending
-    return new Map([...groups.entries()].sort((a, b) => b[0].localeCompare(a[0])));
+    const sorted = new Map([...groups.entries()].sort((a, b) => b[0].localeCompare(a[0])));
+    return sorted;
   }, [data]);
 
   const availableDates = useMemo(() => 
@@ -494,7 +476,7 @@ export default function TweetArchivePage() {
         </DialogContent>
       </Dialog>
 
-      <main className="max-w-[1600px] mx-auto px-6 py-8">
+      <div className="max-w-[1600px] mx-auto px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* 2. Left Sidebar: Filters */}
           <aside className="lg:col-span-2 space-y-8 lg:sticky lg:top-24 h-fit">
@@ -658,8 +640,12 @@ export default function TweetArchivePage() {
                 <CalendarPicker
                   mode="single"
                   selected={currentDateInView}
-                  onSelect={setCurrentDateInView}
-                  onDayClick={scrollToDate}
+                  onSelect={(date) => {
+                    if (date) setCurrentDateInView(date);
+                  }}
+                  onDayClick={(date) => {
+                    scrollToDate(date);
+                  }}
                   modifiers={{
                     hasData: (date) => availableDates.has(format(date, 'yyyy-MM-dd')),
                     missingData: (date) => missingDates.has(format(date, 'yyyy-MM-dd')),
@@ -712,7 +698,7 @@ export default function TweetArchivePage() {
             </div>
           </aside>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
