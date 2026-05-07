@@ -24,7 +24,7 @@ export interface RawTwitterEntry {
 
 export interface ParsedImportResult {
   date: string;
-  type: 'showtimes' | 'admissions';
+  type: 'showtimes' | 'admissions' | 'other';
   parsed: CinePointShowtime[] | CinePointAdmission[];
   raw_text: string;
   source_tweet_id: string;
@@ -355,6 +355,13 @@ export function extractTweetsFromTwitterJson(json: unknown): RawTwitterEntry[] {
 /**
  * Parse a batch of extracted tweets into structured import data,
  * grouped by date.
+ *
+ * Returns one result per tweet:
+ *   - 'showtimes' / 'admissions' for successfully parsed data tweets
+ *   - 'other' for non-data tweets (milestones, commentary) AND data tweets
+ *     that failed to parse (e.g. unrecognized date format, empty results).
+ *
+ * Callers should filter out 'other' results before creating snapshots.
  */
 export function parseTweetBatch(tweets: RawTwitterEntry[]): ParsedImportResult[] {
   const results: ParsedImportResult[] = [];
@@ -368,16 +375,23 @@ export function parseTweetBatch(tweets: RawTwitterEntry[]): ParsedImportResult[]
       const parsed = parseShowtimeTweet(text);
       if (date && parsed.length > 0) {
         results.push({ date, type: 'showtimes', parsed, raw_text: text, source_tweet_id: tweet.id });
+      } else {
+        // Showtime header matched but parsing failed — flag as 'other' for review
+        results.push({ date: postingDate, type: 'other', parsed: [], raw_text: text, source_tweet_id: tweet.id });
       }
     } else if (/admission/i.test(text)) {
-      // Any tweet containing "admission" is treated as an admissions tweet
       const date = extractDateFromHeader(text, postingDate);
       const parsed = parseAdmissionsTweet(text);
       if (date && parsed.length > 0) {
         results.push({ date, type: 'admissions', parsed, raw_text: text, source_tweet_id: tweet.id });
+      } else {
+        // Admission header matched but parsing failed — flag as 'other' for review
+        results.push({ date: postingDate, type: 'other', parsed: [], raw_text: text, source_tweet_id: tweet.id });
       }
+    } else {
+      // Non-data tweet (milestone, commentary, etc.)
+      results.push({ date: postingDate, type: 'other', parsed: [], raw_text: text, source_tweet_id: tweet.id });
     }
-    // Skip non-data tweets (milestones, commentary, etc.)
   }
 
   return results;

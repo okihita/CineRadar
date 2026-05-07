@@ -129,11 +129,13 @@ export async function scrapeAndImportTweet(url: string): Promise<ScrapeResult> {
   // Parse and upsert snapshot
   const rawEntry: RawTwitterEntry = { id: tweetId, created_at: createdAt, text: cleanedText };
   const parsed = parseTweetBatch([rawEntry]);
+  // Only process data tweets for snapshot creation (skip 'other')
+  const dataParsed = parsed.filter((i) => i.type !== 'other');
 
   let snapshotResult: ScrapeResult['snapshot'] = null;
-  if (parsed.length > 0) {
+  if (dataParsed.length > 0) {
     const byDate = new Map<string, ParsedImportResult[]>();
-    for (const item of parsed) {
+    for (const item of dataParsed) {
       if (!byDate.has(item.date)) byDate.set(item.date, []);
       byDate.get(item.date)!.push(item);
     }

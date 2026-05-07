@@ -3,7 +3,7 @@
 import { useRef, useMemo } from 'react';
 import { format, parseISO, subDays, differenceInDays } from 'date-fns';
 import { Calendar as CalendarPicker } from '@/components/ui/calendar';
-import { TrendingUp, ExternalLink, ClipboardPaste } from 'lucide-react';
+import { TrendingUp, ExternalLink, ClipboardPaste, AlertTriangle } from 'lucide-react';
 import { TweetUrlImport } from '@/features/competitors/components/TweetUrlImport';
 import { buildCinepointVerifyUrl } from '@/features/competitors/lib/verify-link';
 import type { SnapshotStatus } from '@/features/competitors/types';
@@ -18,6 +18,8 @@ export interface DateCoverage {
 interface CalendarSidebarProps {
   /** Coverage data derived from snapshots API */
   coverageData: DateCoverage[];
+  /** Dates that have "other" (non-data) tweets */
+  otherDates: Set<string>;
   currentDateInView: Date | undefined;
   onDateSelect: (date: Date) => void;
   onImportComplete: () => void;
@@ -29,6 +31,7 @@ interface CalendarSidebarProps {
 
 export function CalendarSidebar({
   coverageData,
+  otherDates,
   currentDateInView,
   onDateSelect,
   onImportComplete,
@@ -36,7 +39,7 @@ export function CalendarSidebar({
 }: CalendarSidebarProps) {
   const importRef = useRef<HTMLDivElement>(null);
 
-  // Build sets by status
+  // Build per-data-point sets for dot rendering
   const coverageMap = useMemo(() => {
     const map = new Map<string, SnapshotStatus>();
     for (const c of coverageData) {
@@ -45,14 +48,6 @@ export function CalendarSidebar({
     return map;
   }, [coverageData]);
 
-  const partialDates = useMemo(
-    () => new Set(
-      coverageData.filter((c) => c.status === 'showtimes_only' || c.status === 'admissions_only').map((c) => c.date),
-    ),
-    [coverageData],
-  );
-
-  // Build per-data-point sets for 2-dot indicator
   const showtimeDates = useMemo(
     () => new Set(
       coverageData
@@ -71,11 +66,29 @@ export function CalendarSidebar({
     [coverageData],
   );
 
+  const partialDates = useMemo(
+    () => new Set(
+      coverageData.filter((c) => c.status === 'showtimes_only' || c.status === 'admissions_only').map((c) => c.date),
+    ),
+    [coverageData],
+  );
+
   const missingDates = useMemo(() => computeMissingDates(coverageMap), [coverageMap]);
 
   const needsAttention = missingDates.size + partialDates.size;
 
-  // Build a prioritized list of dates needing attention (for the gap CTA)
+  // "Other-only" dates: CinePoint posted but we captured zero data — highest-value audit signal
+  const otherOnlyDates = useMemo(() => {
+    const dates: string[] = [];
+    for (const d of otherDates) {
+      if (!showtimeDates.has(d) && !admissionDates.has(d)) {
+        dates.push(d);
+      }
+    }
+    return dates.sort().reverse();
+  }, [otherDates, showtimeDates, admissionDates]);
+
+  // Build prioritized list of dates needing attention (for the gap CTA)
   const attentionDates = useMemo(() => {
     const items: { date: string; missing: string }[] = [];
 
@@ -103,7 +116,6 @@ export function CalendarSidebar({
     setTimeout(() => {
       importRef.current?.classList.remove('ring-2', 'ring-primary/30');
     }, 1500);
-    // Focus the input inside TweetUrlImport
     const input = importRef.current.querySelector('input');
     if (input) setTimeout(() => input.focus(), 300);
   };
@@ -128,28 +140,46 @@ export function CalendarSidebar({
               onDateSelect(date);
             }}
             modifiers={{
-              // Both data points
-              complete: (date) => {
+              // 7 combined dot states (mutually exclusive)
+              dotSAO: (date) => {
                 const ds = format(date, 'yyyy-MM-dd');
-                return showtimeDates.has(ds) && admissionDates.has(ds);
+                return showtimeDates.has(ds) && admissionDates.has(ds) && otherDates.has(ds);
               },
-              // Only showtimes
-              showtimesOnly: (date) => {
+              dotSO: (date) => {
                 const ds = format(date, 'yyyy-MM-dd');
-                return showtimeDates.has(ds) && !admissionDates.has(ds);
+                return showtimeDates.has(ds) && !admissionDates.has(ds) && otherDates.has(ds);
               },
-              // Only admissions
-              admissionsOnly: (date) => {
+              dotAO: (date) => {
                 const ds = format(date, 'yyyy-MM-dd');
-                return !showtimeDates.has(ds) && admissionDates.has(ds);
+                return !showtimeDates.has(ds) && admissionDates.has(ds) && otherDates.has(ds);
+              },
+              dotSA: (date) => {
+                const ds = format(date, 'yyyy-MM-dd');
+                return showtimeDates.has(ds) && admissionDates.has(ds) && !otherDates.has(ds);
+              },
+              dotS: (date) => {
+                const ds = format(date, 'yyyy-MM-dd');
+                return showtimeDates.has(ds) && !admissionDates.has(ds) && !otherDates.has(ds);
+              },
+              dotA: (date) => {
+                const ds = format(date, 'yyyy-MM-dd');
+                return !showtimeDates.has(ds) && admissionDates.has(ds) && !otherDates.has(ds);
+              },
+              dotO: (date) => {
+                const ds = format(date, 'yyyy-MM-dd');
+                return !showtimeDates.has(ds) && !admissionDates.has(ds) && otherDates.has(ds);
               },
               // Missing (in range but no data)
               missingData: (date) => missingDates.has(format(date, 'yyyy-MM-dd')),
             }}
             modifiersClassNames={{
-              complete: "rdp-dot-both",
-              showtimesOnly: "rdp-dot-showtimes",
-              admissionsOnly: "rdp-dot-admissions",
+              dotSAO: "rdp-dot-sao",
+              dotSO: "rdp-dot-so",
+              dotAO: "rdp-dot-ao",
+              dotSA: "rdp-dot-sa",
+              dotS: "rdp-dot-s",
+              dotA: "rdp-dot-a",
+              dotO: "rdp-dot-o",
               missingData: "ring-1 ring-red-400/40 ring-inset rounded text-red-400/70 font-medium",
             }}
             className="w-full"
@@ -159,7 +189,7 @@ export function CalendarSidebar({
         {/* Custom dot styles for per-day data indicators */}
         <style dangerouslySetInnerHTML={{ __html: DOT_STYLES }} />
 
-        {/* Legend + Gap CTA */}
+        {/* Legend */}
         <div className="mt-4 space-y-2 px-2">
           <div className="flex items-center gap-3 text-[10px] font-bold flex-wrap">
             <span className="flex items-center gap-1.5">
@@ -171,10 +201,54 @@ export function CalendarSidebar({
               <span className="text-muted-foreground">Admissions</span>
             </span>
             <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-orange-500" />
+              <span className="text-muted-foreground">Other ({otherDates.size})</span>
+            </span>
+            <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full border border-red-400/40 bg-transparent" />
               <span className="text-muted-foreground">Missing ({missingDates.size})</span>
             </span>
           </div>
+
+          {/* Non-Data Signals — orange-only dates */}
+          {otherOnlyDates.length > 0 && (
+            <div className="px-3 py-2 rounded-xl bg-orange-500/[0.03] border border-orange-500/15 space-y-2">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-3 h-3 text-orange-500/70 flex-shrink-0" />
+                <p className="text-[10px] font-bold text-orange-600/70 uppercase tracking-wider">
+                  {otherOnlyDates.length} Non-Data Signal{otherOnlyDates.length > 1 ? 's' : ''}
+                </p>
+              </div>
+              <p className="text-[10px] text-muted-foreground/50 leading-relaxed">
+                CinePoint posted on these dates but no showtimes or admissions were captured. Review for missed data or collaboration signals.
+              </p>
+              <div className="space-y-1 pt-1 border-t border-orange-500/10">
+                {otherOnlyDates.slice(0, 5).map((date) => (
+                  <div key={date} className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-mono text-muted-foreground/50">
+                      {format(parseISO(date), 'EEE, MMM d')}
+                      <span className="font-medium text-orange-600/50"> — other only</span>
+                    </span>
+                    <a
+                      href={buildCinepointVerifyUrl(date)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[9px] tracking-wider text-muted-foreground/25 hover:text-muted-foreground/60 transition-colors flex items-center gap-0.5 flex-shrink-0"
+                      title={`Check @cinepoint_ posts around ${date}`}
+                    >
+                      <ExternalLink className="w-2.5 h-2.5" />
+                      check
+                    </a>
+                  </div>
+                ))}
+                {otherOnlyDates.length > 5 && (
+                  <p className="text-[9px] text-muted-foreground/25">
+                    +{otherOnlyDates.length - 5} more
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Data gaps — informational (CinePoint commonly skips posts) */}
           {needsAttention > 0 && (
@@ -278,11 +352,8 @@ export function CalendarSidebar({
 // ─── Helper ────────────────────────────────────────────────
 
 function computeMissingDates(coverageMap: Map<string, SnapshotStatus>): Set<string> {
-  const dates = Array.from(coverageMap.keys()).sort();
-  if (dates.length < 2) return new Set<string>();
-
-  const earliest = parseISO(dates[0]);
-  const latest = parseISO(dates[dates.length - 1]);
+  const latest = new Date(); // Today
+  const earliest = new Date(2026, 0, 1); // Jan 1st, 2026 (canonical start)
   const totalDays = differenceInDays(latest, earliest) + 1;
 
   const missing = new Set<string>();
@@ -300,20 +371,73 @@ function computeMissingDates(coverageMap: Map<string, SnapshotStatus>): Set<stri
 /**
  * CSS for per-day data indicators on the calendar.
  *
- * Three states via pseudo-element ::after:
- * - .rdp-dot-both: two dots (blue + green) — has showtimes AND admissions
- * - .rdp-dot-showtimes: single blue dot — has showtimes only
- * - .rdp-dot-admissions: single green dot — has admissions only
- * - .ring-1.ring-red-400/40: red ring — missing (in range, no data)
+ * 7 mutually exclusive states via pseudo-element ::after:
+ *   - .rdp-dot-sao: 3 dots (blue + green + orange) — showtimes, admissions AND other
+ *   - .rdp-dot-so:  2 dots (blue + orange) — showtimes + other
+ *   - .rdp-dot-ao:  2 dots (green + orange) — admissions + other
+ *   - .rdp-dot-sa:  2 dots (blue + green) — showtimes + admissions
+ *   - .rdp-dot-s:   1 dot (blue) — showtimes only
+ *   - .rdp-dot-a:   1 dot (green) — admissions only
+ *   - .rdp-dot-o:   1 dot (orange) — other only (highest audit value)
+ *   - .ring-1.ring-red-400/40: red ring — missing (in range, no data)
  */
 const DOT_STYLES = `
-.rdp-dot-both,
-.rdp-dot-showtimes,
-.rdp-dot-admissions {
+.rdp-dot-sao,
+.rdp-dot-so,
+.rdp-dot-ao,
+.rdp-dot-sa,
+.rdp-dot-s,
+.rdp-dot-a,
+.rdp-dot-o {
   position: relative;
   font-weight: 700;
 }
-.rdp-dot-both::after {
+
+/* ── 3 dots: blue + green + orange ── */
+.rdp-dot-sao::after {
+  content: '';
+  position: absolute;
+  bottom: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 4px;
+  background:
+    radial-gradient(circle at 2px 2px, #3b82f6 1.5px, transparent 1.5px),
+    radial-gradient(circle at 7px 2px, #22c55e 1.5px, transparent 1.5px),
+    radial-gradient(circle at 12px 2px, #f97316 1.5px, transparent 1.5px);
+}
+
+/* ── 2 dots: blue + orange ── */
+.rdp-dot-so::after {
+  content: '';
+  position: absolute;
+  bottom: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 4px;
+  background:
+    radial-gradient(circle at 2px 2px, #3b82f6 1.5px, transparent 1.5px),
+    radial-gradient(circle at 8px 2px, #f97316 1.5px, transparent 1.5px);
+}
+
+/* ── 2 dots: green + orange ── */
+.rdp-dot-ao::after {
+  content: '';
+  position: absolute;
+  bottom: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 4px;
+  background:
+    radial-gradient(circle at 2px 2px, #22c55e 1.5px, transparent 1.5px),
+    radial-gradient(circle at 8px 2px, #f97316 1.5px, transparent 1.5px);
+}
+
+/* ── 2 dots: blue + green ── */
+.rdp-dot-sa::after {
   content: '';
   position: absolute;
   bottom: 1px;
@@ -325,7 +449,9 @@ const DOT_STYLES = `
     radial-gradient(circle at 2px 2px, #3b82f6 1.5px, transparent 1.5px),
     radial-gradient(circle at 6px 2px, #22c55e 1.5px, transparent 1.5px);
 }
-.rdp-dot-showtimes::after {
+
+/* ── 1 dot: blue (showtimes) ── */
+.rdp-dot-s::after {
   content: '';
   position: absolute;
   bottom: 1px;
@@ -336,7 +462,9 @@ const DOT_STYLES = `
   background: #3b82f6;
   border-radius: 50%;
 }
-.rdp-dot-admissions::after {
+
+/* ── 1 dot: green (admissions) ── */
+.rdp-dot-a::after {
   content: '';
   position: absolute;
   bottom: 1px;
@@ -345,6 +473,19 @@ const DOT_STYLES = `
   width: 4px;
   height: 4px;
   background: #22c55e;
+  border-radius: 50%;
+}
+
+/* ── 1 dot: orange (other) ── */
+.rdp-dot-o::after {
+  content: '';
+  position: absolute;
+  bottom: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background: #f97316;
   border-radius: 50%;
 }
 `;

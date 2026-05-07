@@ -78,6 +78,17 @@ export async function GET(req: NextRequest) {
       };
     });
 
+    // Compute type counts from source-filtered (but NOT type-filtered) data
+    // so the sidebar badges stay stable as the user switches type filters.
+    const sourceFiltered = sourceFilter
+      ? tweets.filter((t) => t.source_handle === sourceFilter)
+      : tweets;
+    const type_counts = {
+      showtimes: sourceFiltered.filter((t) => t.tweet_type === 'showtimes').length,
+      admissions: sourceFiltered.filter((t) => t.tweet_type === 'admissions').length,
+      other: sourceFiltered.filter((t) => t.tweet_type === 'other').length,
+    };
+
     return NextResponse.json({
       success: true,
       data: {
@@ -94,6 +105,7 @@ export async function GET(req: NextRequest) {
           imported_at: t.imported_at,
         })),
         sources,
+        type_counts,
         total: filtered.length,
       },
     });

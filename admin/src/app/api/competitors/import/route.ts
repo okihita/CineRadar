@@ -61,12 +61,14 @@ export async function POST(req: NextRequest) {
       if (ok) tweetsStored++;
     }));
 
-    // 3. Parse data tweets into structured showtime/admission data
+    // 3. Parse tweets into structured data (showtimes, admissions, or other)
     const parsed = parseTweetBatch(tweets);
+    const dataParsed = parsed.filter((i) => i.type !== 'other');
+    const otherParsed = parsed.filter((i) => i.type === 'other');
 
-    // 4. Group by date and upsert snapshots
+    // 4. Group data tweets by date and upsert snapshots (skip 'other')
     const byDate = new Map<string, ParsedImportResult[]>();
-    for (const item of parsed) {
+    for (const item of dataParsed) {
       if (!byDate.has(item.date)) byDate.set(item.date, []);
       byDate.get(item.date)!.push(item);
     }
@@ -131,7 +133,9 @@ export async function POST(req: NextRequest) {
         source: sourceMeta.handle,
         tweets_extracted: tweets.length,
         tweets_stored: tweetsStored,
-        tweets_parsed: parsed.length,
+        tweets_parsed: dataParsed.length,
+        tweets_other: otherParsed.length,
+        other_previews: otherParsed.map((i) => i.raw_text.substring(0, 120)),
         dates_upserted: upserted,
         details: results.sort((a, b) => b.date.localeCompare(a.date)),
       },
@@ -145,7 +149,7 @@ export async function POST(req: NextRequest) {
 // ─── Helpers ───────────────────────────────────────────────
 
 function detectTweetType(text: string): TweetType {
-  if (text.startsWith('SHOWTIMES')) return 'showtimes';
+  if (/^showtimes/i.test(text)) return 'showtimes';
   if (/admission/i.test(text)) return 'admissions';
   return 'other';
 }
@@ -199,16 +203,21 @@ function extractTweetsWithMeta(json: unknown): { tweets: TweetWithMedia[]; sourc
     
     scour(result);
     
-    // Filter for only CinePoint reports and pick the absolute longest one
-    const validReports = reportTexts.filter(t =>
-      t.startsWith('SHOWTIMES') || /admission/i.test(t)
+    // Pick the longest data report text (showtimes/admissions) if available,
+    // otherwise fall back to the longest text of any kind (non-data tweets).
+    const dataReports = reportTexts.filter(t =>
+      /^showtimes/i.test(t) || /admission/i.test(t)
     );
     
-    const rawText = validReports.length > 0 
-      ? validReports.reduce((a, b) => a.length > b.length ? a : b) 
-      : '';
-      
-    if (!rawText) continue;
+    let rawText: string;
+    if (dataReports.length > 0) {
+      rawText = dataReports.reduce((a, b) => a.length > b.length ? a : b);
+    } else if (reportTexts.length > 0) {
+      // Non-data tweet (milestone, commentary, etc.) — still extract for storage
+      rawText = reportTexts.reduce((a, b) => a.length > b.length ? a : b);
+    } else {
+      continue;
+    }
 
     // 2. Resolve Target Result (prioritize unwrapped tweet for metadata)
     const target = result.tweet || result;

@@ -20,6 +20,8 @@ interface ScanSignal {
 
 interface ScanReport {
   total: number;
+  data_count: number;
+  other_count: number;
   signals: ScanSignal[];
 }
 
@@ -95,58 +97,74 @@ export function ImportModal({
 
           {scanReport && (
             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-3">
                 <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-primary/60">Total Signals Found</p>
-                  <p className="text-2xl font-black">{scanReport.total}</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-primary/60">Data Signals</p>
+                  <p className="text-2xl font-black">{scanReport.data_count}</p>
+                  <p className="text-[8px] font-bold text-primary/40 mt-0.5">Showtimes + Admissions</p>
                 </div>
                 <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10">
                   <p className="text-[9px] font-black uppercase tracking-widest text-amber-600/60">Integrity Risk</p>
-                  <p className="text-2xl font-black">{scanReport.signals.filter(s => s.truncated).length} Truncated</p>
+                  <p className="text-2xl font-black">{scanReport.signals.filter(s => s.truncated).length} <span className="text-sm">Truncated</span></p>
+                </div>
+                <div className={cn(
+                  "p-4 rounded-2xl border",
+                  scanReport.other_count > 0
+                    ? "bg-orange-500/5 border-orange-500/10"
+                    : "bg-muted/30 border-border/20"
+                )}>
+                  <p className={cn(
+                    "text-[9px] font-black uppercase tracking-widest",
+                    scanReport.other_count > 0 ? "text-orange-600/60" : "text-muted-foreground/40"
+                  )}>Other Tweets</p>
+                  <p className="text-2xl font-black">{scanReport.other_count}</p>
+                  <p className={cn(
+                    "text-[8px] font-bold mt-0.5",
+                    scanReport.other_count > 0 ? "text-orange-500/50" : "text-muted-foreground/30"
+                  )}>Non-data / unclassified</p>
                 </div>
               </div>
 
               <div className="rounded-2xl border border-border/40 overflow-hidden bg-muted/5">
-                <table className="w-full text-[10px]">
-                  <thead className="bg-muted/10 border-b border-border/40">
-                    <tr className="text-left font-black uppercase tracking-widest text-muted-foreground/60">
-                      <th className="px-4 py-2">Signal Date</th>
-                      <th className="px-4 py-2">Type</th>
-                      <th className="px-4 py-2">Length</th>
-                      <th className="px-4 py-2 text-right">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/20">
-                    {scanReport.signals.map((s, i) => (
-                      <tr key={i} className="hover:bg-muted/10 transition-colors font-medium">
-                        <td className="px-4 py-2 opacity-80">{s.date}</td>
-                        <td className="px-4 py-2">
-                          <span className={cn(
-                            "px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter",
-                            s.type === 'Show' ? "bg-blue-500/10 text-blue-600" : "bg-emerald-500/10 text-emerald-600"
-                          )}>{s.type}</span>
-                        </td>
-                        <td className="px-4 py-2 font-mono">{s.len} chars</td>
-                        <td className="px-4 py-2 text-right">
-                          {s.truncated ? (
-                            <span className="text-red-500 flex items-center justify-end gap-1 font-black uppercase tracking-tighter text-[8px]">
-                              <AlertCircle className="w-2.5 h-2.5" /> Truncated
-                            </span>
-                          ) : (
-                            <span className="text-emerald-500 flex items-center justify-end gap-1 font-black uppercase tracking-tighter text-[8px]">
-                              <CheckCircle2 className="w-2.5 h-2.5" /> Full Text
-                            </span>
-                          )}
-                        </td>
+                <div className="max-h-[420px] overflow-y-auto custom-scrollbar">
+                  <table className="w-full text-[10px]">
+                    <thead className="bg-muted/10 border-b border-border/40 sticky top-0 z-10">
+                      <tr className="text-left font-black uppercase tracking-widest text-muted-foreground/60">
+                        <th className="px-4 py-2">Signal Date</th>
+                        <th className="px-4 py-2">Type</th>
+                        <th className="px-4 py-2">Length</th>
+                        <th className="px-4 py-2 text-right">Status</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {scanReport.total > 10 && (
-                  <div className="px-4 py-2 bg-muted/10 text-[9px] font-black uppercase tracking-widest text-center text-muted-foreground/40 italic">
-                    + {scanReport.total - 10} more forensic signals identified
-                  </div>
-                )}
+                    </thead>
+                    <tbody className="divide-y divide-border/20">
+                      {scanReport.signals.map((s, i) => (
+                        <tr key={i} className="hover:bg-muted/10 transition-colors font-medium">
+                          <td className="px-4 py-2 opacity-80">{s.date}</td>
+                          <td className="px-4 py-2">
+                            <span className={cn(
+                              "px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter",
+                              s.type === 'Show' ? "bg-blue-500/10 text-blue-600" :
+                              s.type === 'Adm' ? "bg-emerald-500/10 text-emerald-600" :
+                              "bg-orange-500/10 text-orange-600"
+                            )}>{s.type === 'Other' ? 'Other' : s.type}</span>
+                          </td>
+                          <td className="px-4 py-2 font-mono">{s.len} chars</td>
+                          <td className="px-4 py-2 text-right">
+                            {s.truncated ? (
+                              <span className="text-red-500 flex items-center justify-end gap-1 font-black uppercase tracking-tighter text-[8px]">
+                                <AlertCircle className="w-2.5 h-2.5" /> Truncated
+                              </span>
+                            ) : (
+                              <span className="text-emerald-500 flex items-center justify-end gap-1 font-black uppercase tracking-tighter text-[8px]">
+                                <CheckCircle2 className="w-2.5 h-2.5" /> Full Text
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
               <Button

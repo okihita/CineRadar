@@ -43,6 +43,8 @@ export async function POST() {
 
     // 3. Re-parse all tweets with the improved date parser
     const parsed = parseTweetBatch(rawEntries);
+    // Only process data tweets for snapshot recreation (skip 'other')
+    const dataParsed = parsed.filter((i) => i.type !== 'other');
 
     // 4. Load all existing snapshots to preserve match data
     const existingSnapshots = await firestoreRestClient.getCollectionWithQuery<CompetitorSnapshot>(
@@ -77,9 +79,9 @@ export async function POST() {
       }
     }
 
-    // 5. Group parsed results by date
+    // 5. Group data-parsed results by date
     const byDate = new Map<string, ParsedImportResult[]>();
-    for (const item of parsed) {
+    for (const item of dataParsed) {
       if (!byDate.has(item.date)) byDate.set(item.date, []);
       byDate.get(item.date)!.push(item);
     }
@@ -201,7 +203,8 @@ export async function POST() {
       success: true,
       data: {
         tweets_scanned: tweets.length,
-        tweets_parsed: parsed.length,
+        tweets_parsed: dataParsed.length,
+        tweets_other: parsed.length - dataParsed.length,
         dates_total: datesTotal,
         dates_changed: datesChanged,
         orphans_removed: orphansRemoved,

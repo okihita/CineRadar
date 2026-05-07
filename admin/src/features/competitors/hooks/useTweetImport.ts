@@ -14,6 +14,8 @@ interface ScanSignal {
 
 interface ScanReport {
   total: number;
+  data_count: number;
+  other_count: number;
   signals: ScanSignal[];
 }
 
@@ -66,14 +68,27 @@ export function useTweetImport({ onImportSuccess }: UseTweetImportOptions) {
       const json = JSON.parse(jsonPaste);
       const tweets = extractTweetsWithGreedyScour(json);
 
-      const signals = tweets.map(t => ({
-        date: t.created_at.split(' ').slice(1, 4).join(' '),
-        type: t.text.startsWith('SHOWTIMES') ? 'Show' : 'Adm',
-        len: t.text.length,
-        truncated: t.text.endsWith('...') || t.text.length < 100,
-      }));
+      const signals = tweets.map(t => {
+        let type: string;
+        if (/^showtimes/i.test(t.text)) {
+          type = 'Show';
+        } else if (/admission/i.test(t.text)) {
+          type = 'Adm';
+        } else {
+          type = 'Other';
+        }
+        return {
+          date: t.created_at.split(' ').slice(1, 4).join(' '),
+          type,
+          len: t.text.length,
+          truncated: t.text.endsWith('...') || t.text.length < 100,
+        };
+      });
 
-      setScanReport({ total: tweets.length, signals: signals.slice(0, 10) });
+      const dataCount = signals.filter(s => s.type !== 'Other').length;
+      const otherCount = signals.filter(s => s.type === 'Other').length;
+
+      setScanReport({ total: tweets.length, data_count: dataCount, other_count: otherCount, signals });
     } catch {
       setImportResult({ ok: false, msg: 'Invalid JSON for scanning' });
     }
@@ -153,20 +168,28 @@ function extractTweetsWithGreedyScour(json: unknown): { text: string; created_at
     };
     scour(res);
 
-    const validReports = reportTexts.filter(t =>
-      t.startsWith('SHOWTIMES') || /admission/i.test(t)
+    // Pick the longest data report (showtimes/admissions) if available,
+    // otherwise fall back to the longest text of any kind (non-data tweets).
+    const dataReports = reportTexts.filter(t =>
+      /^showtimes/i.test(t) || /admission/i.test(t)
     );
 
-    if (validReports.length > 0) {
-      const longest = validReports.reduce((a, b) => a.length > b.length ? a : b);
-      const target = (res.tweet as Record<string, unknown>) || res;
-      const legacy = target.legacy as Record<string, unknown>;
-
-      results.push({
-        text: longest,
-        created_at: (legacy?.created_at as string) || '',
-      });
+    let longest: string;
+    if (dataReports.length > 0) {
+      longest = dataReports.reduce((a, b) => a.length > b.length ? a : b);
+    } else if (reportTexts.length > 0) {
+      longest = reportTexts.reduce((a, b) => a.length > b.length ? a : b);
+    } else {
+      continue;
     }
+
+    const target = (res.tweet as Record<string, unknown>) || res;
+    const legacy = target.legacy as Record<string, unknown>;
+
+    results.push({
+      text: longest,
+      created_at: (legacy?.created_at as string) || '',
+    });
   }
 
   return results;

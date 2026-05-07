@@ -29,6 +29,7 @@ import { CalendarSidebar } from './components/CalendarSidebar';
 interface TweetsResponse {
   tweets: CompetitorTweet[];
   sources: TweetSourceSummary[];
+  type_counts: Record<TweetType, number>;
   total: number;
 }
 
@@ -45,6 +46,7 @@ export default function TweetArchivePage() {
 
   // Snapshot coverage (for calendar sidebar)
   const [coverageData, setCoverageData] = useState<DateCoverage[]>([]);
+  const [otherDates, setOtherDates] = useState<Set<string>>(new Set());
 
   const fetchTweets = useCallback(async () => {
     setLoading(true);
@@ -69,7 +71,10 @@ export default function TweetArchivePage() {
       const res = await fetch('/api/competitors');
       if (res.ok) {
         const json = await res.json();
-        if (json.success) setCoverageData(json.data || []);
+        if (json.success) {
+          setCoverageData(json.data || []);
+          setOtherDates(new Set(json.other_dates || []));
+        }
       }
     } catch {
       // Silent — calendar just won't show coverage dots
@@ -221,6 +226,7 @@ export default function TweetArchivePage() {
             onSourceChange={setActiveSource}
             activeType={activeType}
             onTypeChange={setActiveType}
+            typeCounts={data?.type_counts}
           />
 
           {/* Center: Timeline */}
@@ -324,6 +330,7 @@ export default function TweetArchivePage() {
           {/* Right: Calendar Navigation — canonical import location */}
           <CalendarSidebar
             coverageData={coverageData}
+            otherDates={otherDates}
             currentDateInView={currentDateInView}
             onDateSelect={scrollToDate}
             onImportComplete={handleImportComplete}

@@ -31,6 +31,7 @@ interface FilterSidebarProps {
   onSourceChange: (source: string | null) => void;
   activeType: TweetType | null;
   onTypeChange: (type: TweetType | null) => void;
+  typeCounts?: Record<TweetType, number>;
 }
 
 export function FilterSidebar({
@@ -39,6 +40,7 @@ export function FilterSidebar({
   onSourceChange,
   activeType,
   onTypeChange,
+  typeCounts,
 }: FilterSidebarProps) {
   const hasActiveFilter = activeSource !== null || activeType !== null;
 
@@ -136,24 +138,32 @@ export function FilterSidebar({
           </button>
 
           {/* Per-type chips with their canonical colors */}
-          {(Object.entries(TYPE_CONFIG) as [TweetType, typeof TYPE_CONFIG.showtimes][]).map(([type, cfg]) => (
-            <button
-              key={type}
-              onClick={() => onTypeChange(activeType === type ? null : type)}
-              className={cn(
-                'flex items-center gap-2 px-3 py-2 rounded-lg border text-[11px] font-bold transition-all',
-                activeType === type
-                  ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                  : `${cfg.color} hover:opacity-80`,
-              )}
-            >
-              <cfg.icon className={cn('w-3 h-3', activeType === type ? 'text-primary-foreground' : 'opacity-70')} />
-              {cfg.label}
-              {activeType === type && (
-                <X className="w-3 h-3 ml-auto opacity-60 hover:opacity-100" />
-              )}
-            </button>
-          ))}
+          {(Object.entries(TYPE_CONFIG) as [TweetType, typeof TYPE_CONFIG.showtimes][]).map(([type, cfg]) => {
+            const count = typeCounts?.[type] ?? 0;
+            return (
+              <button
+                key={type}
+                onClick={() => onTypeChange(activeType === type ? null : type)}
+                className={cn(
+                  'flex items-center justify-between px-3 py-2 rounded-lg border text-[11px] font-bold transition-all',
+                  activeType === type
+                    ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                    : `${cfg.color} hover:opacity-80`,
+                )}
+              >
+                <span className="flex items-center gap-2">
+                  <cfg.icon className={cn('w-3 h-3', activeType === type ? 'text-primary-foreground' : 'opacity-70')} />
+                  {cfg.label}
+                </span>
+                <span className={cn(
+                  'font-mono text-[10px] px-1.5 py-0.5 rounded-md',
+                  activeType === type ? 'bg-white/20' : 'bg-black/5',
+                )}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </aside>
