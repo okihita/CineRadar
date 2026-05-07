@@ -46,6 +46,20 @@ export async function POST() {
     // Only process data tweets for snapshot recreation (skip 'other')
     const dataParsed = parsed.filter((i) => i.type !== 'other');
 
+    // 3b. Re-classify tweet types (e.g. "Showtime Distribution" tweets now recognized as showtimes)
+    let reclassified = 0;
+    await Promise.all(parsed.map(async (p) => {
+      const tweet = tweets.find((t) => t.id === p.source_tweet_id);
+      if (tweet && tweet.tweet_type !== p.type) {
+        const newType = p.type as 'showtimes' | 'admissions' | 'other';
+        await firestoreRestClient.updateDocument(TWEET_COLLECTION, tweet.id, {
+          tweet_type: newType,
+          data_date: p.type !== 'other' ? p.date : tweet.data_date,
+        } as Record<string, unknown>);
+        reclassified++;
+      }
+    }));
+
     // 4. Load all existing snapshots to preserve match data
     const existingSnapshots = await firestoreRestClient.getCollectionWithQuery<CompetitorSnapshot>(
       COMPETITOR_COLLECTION,
@@ -205,6 +219,7 @@ export async function POST() {
         tweets_scanned: tweets.length,
         tweets_parsed: dataParsed.length,
         tweets_other: parsed.length - dataParsed.length,
+        tweets_reclassified: reclassified,
         dates_total: datesTotal,
         dates_changed: datesChanged,
         orphans_removed: orphansRemoved,

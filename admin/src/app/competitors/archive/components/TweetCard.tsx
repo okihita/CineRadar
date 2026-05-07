@@ -11,12 +11,14 @@ import {
   Film,
   ImageIcon,
   MessageSquare,
+  PencilLine,
   TrendingUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { CompetitorTweet, TweetType } from '@/features/competitors/types';
 import { LightboxCarousel } from './LightboxCarousel';
+import { ManualEntryForm } from './ManualEntryForm';
 
 const TYPE_CONFIG: Record<TweetType, { label: string; icon: typeof Film; color: string }> = {
   showtimes: { label: 'Showtimes', icon: Film, color: 'bg-blue-500/10 text-blue-600 border-blue-500/20' },
@@ -26,11 +28,13 @@ const TYPE_CONFIG: Record<TweetType, { label: string; icon: typeof Film; color: 
 
 interface TweetCardProps {
   tweet: CompetitorTweet;
+  onManualEntry?: () => void;
 }
 
-export function TweetCard({ tweet }: TweetCardProps) {
+export function TweetCard({ tweet, onManualEntry }: TweetCardProps) {
   const [showRaw, setShowRaw] = useState(false);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const [showManualEntry, setShowManualEntry] = useState(false);
   const cfg = TYPE_CONFIG[tweet.tweet_type];
   const TypeIcon = cfg.icon;
   const mediaUrls = tweet.media_urls ?? [];
@@ -125,6 +129,19 @@ export function TweetCard({ tweet }: TweetCardProps) {
               <Braces className="w-3 h-3" />
               Raw Source
             </button>
+
+            <button
+              onClick={() => setShowManualEntry(!showManualEntry)}
+              className={cn(
+                "flex items-center gap-2 text-[9px] font-black uppercase tracking-widest border px-2 py-1 rounded-lg transition-all",
+                showManualEntry
+                  ? "bg-primary/10 text-primary border-primary/30"
+                  : "bg-muted/5 text-muted-foreground/30 border-border/30 hover:text-primary/60 hover:border-primary/30"
+              )}
+            >
+              <PencilLine className="w-3 h-3" />
+              Enter Data
+            </button>
           </div>
 
           <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0 duration-500">
@@ -180,6 +197,19 @@ export function TweetCard({ tweet }: TweetCardProps) {
               <JsonViewer data={sortObjectKeys(tweet)} />
             </div>
           </div>
+        )}
+
+        {/* Manual Data Entry */}
+        {showManualEntry && (
+          <ManualEntryForm
+            tweetId={tweet.id}
+            postingDate={tweet.created_at}
+            onSaved={() => {
+              setShowManualEntry(false);
+              onManualEntry?.();
+            }}
+            onCancel={() => setShowManualEntry(false)}
+          />
         )}
       </div>
     </div>

@@ -46,7 +46,7 @@ export function parseShowtimeTweet(raw: string): CinePointShowtime[] {
 
   for (const line of raw.split('\n')) {
     const trimmed = line.trim();
-    if (!trimmed || /^showtimes/i.test(trimmed) || trimmed === '-' || trimmed === '---') continue;
+    if (!trimmed || /^(?:showtimes|showtime\s+distribution)/i.test(trimmed) || trimmed === '-' || trimmed === '---') continue;
 
     const match = trimmed.match(SHOWTIME_LINE);
     if (!match) continue;
@@ -160,11 +160,12 @@ export function parseAdmissionsTweet(raw: string): CinePointAdmission[] {
  *   Textual no day:     SHOWTIMES - 16 APR 2026                   → d MMM yyyy
  *   Textual ordinal:    Estimated Admission - Mon, Apr 6th 2026  → d MMM yyyy (with st/nd/rd/th)
  *
- * All prefixes: "SHOWTIMES" or "ESTIMATED ADMISSION" or "Estimated Admission"
+ * All prefixes: "SHOWTIMES", "Showtime Distribution", "ESTIMATED ADMISSION", "Estimated Admission"
  */
 
 // Common prefix: matches the header keyword + dash
-const HEADER_PREFIX = /(?:SHOWTIMES|ESTIMATED\s+ADMISSION)\s*-\s*/i;
+// Fuzzy: "Admisson" (typo), "Admission" (correct) both matched via admis{1,2}ion
+const HEADER_PREFIX = /(?:showtime(?:s|\s+distribution)?|estimated\s+admissi?on)\s*-\s*/i;
 
 // Day-of-week prefix (optional): "MON, " or "Sun, "
 const OPT_DAY = /(?:\w{2,3},\s*)?/;
@@ -370,7 +371,7 @@ export function parseTweetBatch(tweets: RawTwitterEntry[]): ParsedImportResult[]
     const text = tweet.text;
     const postingDate = twitterDateToYYYYMMDD(tweet.created_at);
 
-    if (/^showtimes/i.test(text)) {
+    if (/^(?:showtimes|showtime\s+distribution)/i.test(text)) {
       const date = extractDateFromHeader(text, postingDate);
       const parsed = parseShowtimeTweet(text);
       if (date && parsed.length > 0) {
@@ -379,7 +380,7 @@ export function parseTweetBatch(tweets: RawTwitterEntry[]): ParsedImportResult[]
         // Showtime header matched but parsing failed — flag as 'other' for review
         results.push({ date: postingDate, type: 'other', parsed: [], raw_text: text, source_tweet_id: tweet.id });
       }
-    } else if (/admission/i.test(text)) {
+    } else if (/admissi?on/i.test(text)) {
       const date = extractDateFromHeader(text, postingDate);
       const parsed = parseAdmissionsTweet(text);
       if (date && parsed.length > 0) {

@@ -70,9 +70,9 @@ export function useTweetImport({ onImportSuccess }: UseTweetImportOptions) {
 
       const signals = tweets.map(t => {
         let type: string;
-        if (/^showtimes/i.test(t.text)) {
+        if (/^(?:showtimes|showtime\s+distribution)/i.test(t.text)) {
           type = 'Show';
-        } else if (/admission/i.test(t.text)) {
+        } else if (/admissi?on/i.test(t.text)) {
           type = 'Adm';
         } else {
           type = 'Other';
@@ -171,7 +171,7 @@ function extractTweetsWithGreedyScour(json: unknown): { text: string; created_at
     // Pick the longest data report (showtimes/admissions) if available,
     // otherwise fall back to the longest text of any kind (non-data tweets).
     const dataReports = reportTexts.filter(t =>
-      /^showtimes/i.test(t) || /admission/i.test(t)
+      /^(?:showtimes|showtime\s+distribution)/i.test(t) || /admissi?on/i.test(t)
     );
 
     let longest: string;

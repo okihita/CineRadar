@@ -149,8 +149,8 @@ export async function POST(req: NextRequest) {
 // ─── Helpers ───────────────────────────────────────────────
 
 function detectTweetType(text: string): TweetType {
-  if (/^showtimes/i.test(text)) return 'showtimes';
-  if (/admission/i.test(text)) return 'admissions';
+  if (/^(?:showtimes|showtime\s+distribution)/i.test(text)) return 'showtimes';
+  if (/admissi?on/i.test(text)) return 'admissions';
   return 'other';
 }
 
@@ -206,7 +206,7 @@ function extractTweetsWithMeta(json: unknown): { tweets: TweetWithMedia[]; sourc
     // Pick the longest data report text (showtimes/admissions) if available,
     // otherwise fall back to the longest text of any kind (non-data tweets).
     const dataReports = reportTexts.filter(t =>
-      /^showtimes/i.test(t) || /admission/i.test(t)
+      /^(?:showtimes|showtime\s+distribution)/i.test(t) || /admissi?on/i.test(t)
     );
     
     let rawText: string;

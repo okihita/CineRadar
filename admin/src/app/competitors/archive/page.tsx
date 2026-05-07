@@ -316,7 +316,7 @@ export default function TweetArchivePage() {
 
                     <div className="space-y-6">
                       {tweets.map((tweet) => (
-                        <TweetCard key={tweet.id} tweet={tweet} />
+                        <TweetCard key={tweet.id} tweet={tweet} onManualEntry={handleImportComplete} />
                       ))}
                     </div>
                   </section>
