@@ -1,0 +1,308 @@
+{
+  "response_schema": {
+    "response_code": "CINEPOINT-MOVIE-TOP-BOX-OFFICE-200",
+    "response_message": "SUCCESS"
+  },
+  "response_output": {
+    "list": {
+      "pagination": {
+        "limit": 100,
+        "page": 0,
+        "total": 14
+      },
+      "content": [
+        {
+          "id": 3965,
+          "title": "Mortal Kombat II",
+          "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-1777778287.png",
+          "movie_genre": [
+            "Action",
+            "Adventure"
+          ],
+          "duration": 116,
+          "release_date": "2026-05-05T17:00:00.000Z",
+          "type": "international",
+          "admission": 80059,
+          "total_admission": 80059,
+          "change": 0,
+          "showtimes": 2536,
+          "score": 7.6,
+          "rank": {
+            "current_rank": 1
+          }
+        },
+        {
+          "id": 3687,
+          "title": "Ghost In The Cell",
+          "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-3687.png",
+          "movie_genre": [
+            "Horror",
+            "Comedy"
+          ],
+          "duration": 106,
+          "release_date": "2026-04-15T17:00:00.000Z",
+          "type": "local",
+          "admission": 54839,
+          "total_admission": 2780350,
+          "change": -10,
+          "showtimes": 58960,
+          "score": 8.3,
+          "rank": {
+            "current_rank": 2,
+            "last_rank": 170
+          }
+        },
+        {
+          "id": 3953,
+          "title": "Salmokji: Whispering Water",
+          "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-1777120067.png",
+          "movie_genre": [
+            "Horror"
+          ],
+          "duration": 95,
+          "release_date": "2026-04-30T17:00:00.000Z",
+          "type": "international",
+          "admission": 32799,
+          "total_admission": 465016,
+          "change": -21,
+          "showtimes": 13632,
+          "score": 7.1,
+          "rank": {
+            "current_rank": 3,
+            "last_rank": 185
+          }
+        },
+        {
+          "id": 3781,
+          "title": "Dilan ITB 1997",
+          "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-3781.png",
+          "movie_genre": [
+            "Drama",
+            "Romance"
+          ],
+          "duration": 110,
+          "release_date": "2026-04-29T17:00:00.000Z",
+          "type": "local",
+          "admission": 22164,
+          "total_admission": 361265,
+          "change": -15,
+          "showtimes": 12441,
+          "score": 7.2,
+          "rank": {
+            "current_rank": 4,
+            "last_rank": 179
+          }
+        },
+        {
+          "id": 3690,
+          "title": "Tiba Tiba Setan",
+          "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-3690.png",
+          "movie_genre": [
+            "Horror",
+            "Comedy"
+          ],
+          "duration": 118,
+          "release_date": "2026-04-15T17:00:00.000Z",
+          "type": "local",
+          "admission": 13814,
+          "total_admission": 1065157,
+          "change": -5,
+          "showtimes": 25918,
+          "score": 6,
+          "rank": {
+            "current_rank": 5,
+            "last_rank": 173
+          }
+        },
+        {
+          "id": 3951,
+          "title": "The Devil Wears Prada 2",
+          "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-1777041305.png",
+          "movie_genre": [
+            "Comedy",
+            "Drama"
+          ],
+          "duration": 119,
+          "release_date": "2026-04-28T17:00:00.000Z",
+          "type": "international",
+          "admission": 13183,
+          "total_admission": 232946,
+          "change": -15,
+          "showtimes": 9882,
+          "score": 8.2,
+          "rank": {
+            "current_rank": 6,
+            "last_rank": 184
+          }
+        },
+        {
+          "id": 3688,
+          "title": "Ayah, Ini Arahnya Ke Mana, Ya?",
+          "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-3688.png",
+          "movie_genre": [
+            "Family",
+            "Drama"
+          ],
+          "duration": 103,
+          "release_date": "2026-04-08T17:00:00.000Z",
+          "type": "local",
+          "admission": 12270,
+          "total_admission": 1541725,
+          "change": -21,
+          "showtimes": 39836,
+          "score": 7.3,
+          "rank": {
+            "current_rank": 7,
+            "last_rank": 174
+          }
+        },
+        {
+          "id": 3859,
+          "title": "Kupeluk Kamu Selamanya",
+          "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-3859.png",
+          "movie_genre": [
+            "Drama",
+            "Family"
+          ],
+          "duration": 103,
+          "release_date": "2026-04-29T17:00:00.000Z",
+          "type": "local",
+          "admission": 6461,
+          "total_admission": 86954,
+          "change": -38,
+          "showtimes": 3846,
+          "score": 7.1,
+          "rank": {
+            "current_rank": 8,
+            "last_rank": 180
+          }
+        },
+        {
+          "id": 3780,
+          "title": "Ikatan Darah",
+          "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-3780.png",
+          "movie_genre": [
+            "Action"
+          ],
+          "duration": 119,
+          "release_date": "2026-04-29T17:00:00.000Z",
+          "type": "local",
+          "admission": 5333,
+          "total_admission": 63663,
+          "change": -21,
+          "showtimes": 3996,
+          "score": 7.8,
+          "rank": {
+            "current_rank": 9,
+            "last_rank": 178
+          }
+        },
+        {
+          "id": 3925,
+          "title": "Lee Cronin's The Mummy",
+          "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-1775054070.png",
+          "movie_genre": [
+            "Horror"
+          ],
+          "duration": 134,
+          "release_date": "2026-04-14T17:00:00.000Z",
+          "type": "international",
+          "admission": 4722,
+          "total_admission": 724055,
+          "change": -20,
+          "showtimes": 23942,
+          "score": 7.8,
+          "rank": {
+            "current_rank": 10,
+            "last_rank": 177
+          }
+        },
+        {
+          "id": 3947,
+          "title": "Michael",
+          "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-1776527367.png",
+          "movie_genre": [
+            "Biography"
+          ],
+          "duration": 127,
+          "release_date": "2026-04-21T17:00:00.000Z",
+          "type": "international",
+          "admission": 4355,
+          "total_admission": 134112,
+          "change": -15,
+          "showtimes": 6701,
+          "score": 8.1,
+          "rank": {
+            "current_rank": 11,
+            "last_rank": 183
+          }
+        },
+        {
+          "id": 3778,
+          "title": "Para Perasuk",
+          "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-3778.png",
+          "movie_genre": [
+            "Drama"
+          ],
+          "duration": 119,
+          "release_date": "2026-04-22T17:00:00.000Z",
+          "type": "local",
+          "admission": 1470,
+          "total_admission": 152898,
+          "change": -12,
+          "showtimes": 7746,
+          "score": 8.4,
+          "rank": {
+            "current_rank": 12,
+            "last_rank": 175
+          }
+        },
+        {
+          "id": 3901,
+          "title": "Project Hail Mary",
+          "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-1773356735.png",
+          "movie_genre": [
+            "Science Fiction"
+          ],
+          "duration": 157,
+          "release_date": "2026-04-07T17:00:00.000Z",
+          "type": "international",
+          "admission": 1416,
+          "total_admission": 630418,
+          "change": -47,
+          "showtimes": 19890,
+          "score": 8.9,
+          "rank": {
+            "current_rank": 13,
+            "last_rank": 181
+          }
+        },
+        {
+          "id": 3962,
+          "title": "Umamusume: Pretty Derby - Beginning of A New Era",
+          "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-1777513678.png",
+          "movie_genre": [
+            "Animation",
+            "Adventure"
+          ],
+          "duration": 107,
+          "release_date": "2026-04-30T17:00:00.000Z",
+          "type": "international",
+          "admission": 145,
+          "total_admission": 5905,
+          "change": -39,
+          "showtimes": 292,
+          "score": 7,
+          "rank": {
+            "current_rank": 14,
+            "last_rank": 187
+          }
+        }
+      ]
+    },
+    "meta": {
+      "date_start": "2026-05-04",
+      "date_end": "2026-05-10"
+    }
+  }
+}

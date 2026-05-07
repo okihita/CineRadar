@@ -6,7 +6,7 @@ import {
     MapPin, ChevronLeft, ChevronRight, ChevronDown,
     Database, Calendar, Clapperboard, Sun, Moon, Monitor,
     LogOut, Users as UsersIcon, Share2, ArrowRightLeft,
-    TrendingUp, Rss, Settings, Shield, BookOpen, Radio, Swords, Library,
+    TrendingUp, Rss, Settings, Shield, BookOpen, Radio, Swords, Library, BarChart3,
     type LucideIcon,
 } from 'lucide-react';
 import { useState, useCallback } from 'react';
@@ -97,6 +97,13 @@ const menuGroups: MenuGroup[] = [
                 description: 'Movie database sync',
                 href: '/competitors/cinepoint',
                 icon: Library,
+                adminOnly: false,
+            },
+            {
+                title: 'CinePoint Insights',
+                description: 'Daily box office intelligence',
+                href: '/competitors/cinepoint/insights',
+                icon: BarChart3,
                 adminOnly: false,
             },
             {

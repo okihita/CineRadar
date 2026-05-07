@@ -1,0 +1,16 @@
+curl 'https://cinepoint.com/bff/v1/movies/top-box-office/daily/detail?date_end=2026-05-06&date_start=2026-05-06&type=all&limit=100&order=desc&sort=admission' \
+  -H 'accept: application/msgpack' \
+  -H 'accept-language: en-US,en;q=0.9' \
+  -H 'content-type: application/json' \
+  -b '_ga=GA1.1.1671343436.1777972026; _hjSessionUser_6502521=eyJpZCI6IjIzMGE1ZTgwLTFjNjAtNTJjNi04ZjcxLTg0ZWIzYTIxYzY1ZiIsImNyZWF0ZWQiOjE3Nzc5NzIwMjY3NzIsImV4aXN0aW5nIjp0cnVlfQ==; _clck=10xxo4%5E2%5Eg5u%5E0%5E2316; cinepoint_access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoicHJpdmF0ZSIsInN1YiI6NTA1OTgsIm5hbWUiOiJPa2loaXRhIFNpaGFsb2hvIiwiaWQiOjUwNTk4LCJlbWFpbCI6Im9raWhpdGFAZ21haWwuY29tIiwicGhvbmUiOiIrNjI4MTMzNTYwNzQ0NyIsInNlc3Npb25faWQiOiIxM2Q4ZjNiYzBmMjFkMjA3N2Y1ODQzMmM0ZjViMWU2ZjQ2NWUzNjMwIiwiaWF0IjoxNzc4MTc2ODI5LCJleHAiOjE3NzgyNjMyMjl9.zuovnwZYw3bTzMe_eBB_eE_GQ--sXEJJg-nyFh_sXTU; f918fa68fadd513c708432e948a4f2cd2c179aa5f0f0df2fe7e74c17a1f52e3c=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoicHJpdmF0ZSIsInN1YiI6NTA1OTgsImlhdCI6MTc3ODE3NjgyOSwiZXhwIjoxNzc5Mzg2NDI5fQ.oE0WMHxuX2-hkbN3fCZ0nb9aG6hbD1T8ExRGkrWFfOg; b1f2794342562468e95578fda3230eeff65bebb7471216cdfb3df3007fbfe218=%7B%22user_id%22%3A50598%2C%22email%22%3A%22okihita%40gmail.com%22%2C%22phone%22%3A%7B%22code%22%3A%22%2B62%22%2C%22number%22%3A%2281335607447%22%7D%2C%22is_having_password%22%3Atrue%2C%22is_email_verified%22%3Atrue%2C%22subscription%22%3A%7B%22is_expired%22%3Atrue%2C%22start_date%22%3A%222026-02-11%22%2C%22end_date%22%3A%222026-03-11%22%7D%2C%22dob%22%3Anull%2C%22gender%22%3Anull%2C%22image%22%3A%22%22%2C%22usingEmail%22%3Afalse%7D; _hjSession_6502521=eyJpZCI6Ijc0MjVjODJlLTlhMzctNGI3Ni1hMWUwLTZkOWQ1MmY4ZmNiYiIsImMiOjE3NzgxODMxNzAxNTAsInMiOjAsInIiOjAsInNiIjowLCJzciI6MCwic2UiOjAsImZzIjowfQ==; _ga_1G80ZCKTL8=GS2.1.s1778183170$o5$g0$t1778188263$j60$l0$h0; _ga_YTDZ48PKH8=GS2.1.s1778183169$o6$g1$t1778188263$j60$l0$h0; _clsk=1690ovw%5E1778188264018%5E16%5E1%5Ep.clarity.ms%2Fcollect' \
+  -H 'dnt: 1' \
+  -H 'priority: u=1, i' \
+  -H 'referer: https://cinepoint.com/' \
+  -H 'sec-ch-ua: "Google Chrome";v="147", "Not.A/Brand";v="8", "Chromium";v="147"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "macOS"' \
+  -H 'sec-fetch-dest: empty' \
+  -H 'sec-fetch-mode: cors' \
+  -H 'sec-fetch-site: same-origin' \
+  -H 'user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36' \
+  -H 'x-app-request: true'

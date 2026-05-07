@@ -1,0 +1,175 @@
+{
+  "response_schema": {
+    "response_code": "CINEPOINT-MOVIE-200",
+    "response_message": "SUCCESS"
+  },
+  "response_output": {
+    "detail": {
+      "rating_category": [
+        "PG-13"
+      ],
+      "casts": [
+        {
+          "role": "casts",
+          "names": [
+            "Jackie Chan",
+            "Pan Binlong",
+            "Wang Yinglu",
+            "Ma Li",
+            "Qiao Shan",
+            "Yu Yang",
+            "Song Muzi",
+            "Wang Xing",
+            "Wang Chengsi",
+            "Zhang Zidong",
+            "Ke Da",
+            "Feng Man",
+            "Yu Rongguang",
+            "Hu Xiaoyuan",
+            "JJ Lin"
+          ]
+        },
+        {
+          "role": "directors",
+          "names": [
+            "Derek Hui Wang-Yu"
+          ]
+        },
+        {
+          "role": "producers",
+          "names": [
+            "Derek Hui Wang-Yu"
+          ]
+        },
+        {
+          "role": "writers",
+          "names": [
+            "Pan Keyang"
+          ]
+        }
+      ],
+      "user_ratings": [
+        {
+          "rating": "1",
+          "value": 0
+        },
+        {
+          "rating": "2",
+          "value": 0
+        },
+        {
+          "rating": "3",
+          "value": 0
+        },
+        {
+          "rating": "4",
+          "value": 0
+        },
+        {
+          "rating": "5",
+          "value": 8.3
+        },
+        {
+          "rating": "6",
+          "value": 8.3
+        },
+        {
+          "rating": "7",
+          "value": 12.5
+        },
+        {
+          "rating": "8",
+          "value": 41.7
+        },
+        {
+          "rating": "9",
+          "value": 20.8
+        },
+        {
+          "rating": "10",
+          "value": 4.2
+        }
+      ],
+      "comparison": [
+        {
+          "periode": "7_days",
+          "other_movie": {
+            "periode": "7_days",
+            "other_movie": null,
+            "id": 2680,
+            "title": "Venom: The Last Dance",
+            "admission": 1099085,
+            "gross": 3275693,
+            "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-1727653475.png"
+          },
+          "id": 3719,
+          "title": "Panda Plan: The Magical Tribe",
+          "admission": 144729,
+          "gross": 399773,
+          "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-1771735818.png"
+        },
+        {
+          "periode": "14_days",
+          "other_movie": {
+            "periode": "14_days",
+            "other_movie": null,
+            "id": 328,
+            "title": "Ayat-Ayat Cinta 2",
+            "admission": 2387048,
+            "gross": 0,
+            "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-328.png"
+          },
+          "id": 3719,
+          "title": "Panda Plan: The Magical Tribe",
+          "admission": 207070,
+          "gross": 570773,
+          "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-1771735818.png"
+        }
+      ],
+      "playing_at": [],
+      "similar_movies": [
+        {
+          "id": 1163,
+          "title": "Due Date",
+          "image_title": null,
+          "description": "High-strung father-to-be Peter Highman is forced to hitch a ride with aspiring actor Ethan Tremblay on a road trip in order to make it to his child's birth on time."
+        },
+        {
+          "id": 1100,
+          "title": "The Bounty Hunter",
+          "image_title": null,
+          "description": "Film The Bounty Hunter mengisahkan seorang bounty hunter yang mengetahui bahwa target selanjutnya adalah mantan istrinya, seorang reporter yang bekerja dalam sebuah kasus pembunuhan. Mantan suami istri ini kemudian terlibat dalam aksi hidup dan mati. Setiap pekerjaan tentu memiliki risiko dan konsekuensi masing-masing. Begitu pula dengan pekerjaan Milo Boyd (Gerard Butler) sebagai bounty hunter atau orang yang mendapat bayaran untuk membawa pulang para buronan. Milo bukan orang terbaik di bidang pekerjaannya. Bahkan dia termasuk orang yang sering sial. Ada beberapa pekerjaan yang tidak berjalan dengan baik. Suatu ketika Milo mendapat sebuah tugas. Milo berpikir pekerjaan kali ini akan berjalan dengan mudah. Bagaimana tidak? Dia mendapat tugas untuk menangkap Nicole Hurly (Jennifer Aniston), mantan istri Milo. Tentu saja Milo mengetahui rumah serta kegiatan sehari-hari Nicole. Milo menemui Nicole di sebuah acara. Setelah berbincang dan bercanda sebentar, Milo membawa Nicole dan memasukkannya ke dalam bagasi mobil. Kini Milo perlu mangamankan Nicole dalam rentang waktu tertentu. Kini Milo dan Nicole hidup “bersama” lagi termasuk dalam satu tempat tinggal. Di sebuah perjalanan, Nicole bercerita bahwa dia sedang dalam bahaya. Ada sekelompok pembunuh bayaran yang sedang mengejarnya. Milo tidak percaya. Namun tidak lama berselang, ada orang yang menembakkan peluru ke arah mereka. Kini keadaan menjadi rumit."
+        },
+        {
+          "id": 2041,
+          "title": "Jatuh Cinta Seperti di Film-Film",
+          "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-1701324025.png",
+          "description": "Seorang penulis film adaptasi ingin menulis film naskah asli pertamanya dengan diam-diam menuliskan kisah nyata ia jatuh cinta dengan seorang yang baru saja menjanda.\r\n\r\nA film adaptation writer wants to write his first original scripted film by secretly writing the true story of him falling in love with a recently widowed man."
+        }
+      ],
+      "id": 3719,
+      "title": "Panda Plan: The Magical Tribe",
+      "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-1771735818.png",
+      "release_date": "2026-02-25",
+      "trailer_url": "https://www.youtube.com/watch?v=CXYixLauBgg",
+      "type": "international",
+      "language": "English",
+      "movie_genre": [
+        "Comedy",
+        "Action"
+      ],
+      "duration": 100,
+      "description": "Panda raksasa Hu Hu dan Jackie Chan secara tak sengaja bertemu dengan sebuah suku primitif misterius, memulai petualangan yang belum pernah terjadi sebelumnya dan sangat lucu.",
+      "production_status": "released",
+      "score": 6.8,
+      "admission": 0,
+      "total_admission": 291635,
+      "change": 100,
+      "showtimes": 23678,
+      "movie_rating": {
+        "imdb": null,
+        "rotten_tomatoes": null
+      }
+    }
+  }
+}
