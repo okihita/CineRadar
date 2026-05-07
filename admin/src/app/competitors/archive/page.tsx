@@ -12,17 +12,18 @@ import {
   Loader2,
   Calendar,
   RefreshCw,
+  Link as LinkIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { CompetitorTweet, TweetSourceSummary, TweetType } from '@/features/competitors/types';
-import type { DateCoverage } from './components/CalendarSidebar';
+import type { DateCoverage } from './components/FilterSidebar';
 import { useScrollSpy } from '@/features/competitors/hooks/useScrollSpy';
 import { useTweetImport } from '@/features/competitors/hooks/useTweetImport';
+import { TweetUrlImport } from '@/features/competitors/components/TweetUrlImport';
 import { TweetCard } from './components/TweetCard';
 import { ImportModal } from './components/ImportModal';
 import { FilterSidebar } from './components/FilterSidebar';
-import { CalendarSidebar } from './components/CalendarSidebar';
 
 // ─── Types ─────────────────────────────────────────────────
 
@@ -92,7 +93,7 @@ export default function TweetArchivePage() {
     dataDep: data,
   });
 
-  // Import (JSON modal only — URL import lives in CalendarSidebar)
+  // Import (JSON modal — URL import lives in header)
   const {
     importing,
     importResult,
@@ -177,7 +178,13 @@ export default function TweetArchivePage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {/* URL Import — inline compact */}
+            <div className="hidden md:flex items-center gap-2 bg-muted/30 border border-border/40 rounded-xl px-3 py-1">
+              <LinkIcon className="w-3 h-3 text-muted-foreground/40 flex-shrink-0" />
+              <TweetUrlImport onImported={handleImportComplete} hideHeading />
+            </div>
+
             <Button
               variant="outline"
               size="sm"
@@ -196,7 +203,7 @@ export default function TweetArchivePage() {
               className="h-8 gap-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl border-border/60 hover:bg-muted transition-all"
             >
               <ClipboardPaste className="w-3.5 h-3.5" />
-              Import Twitter JSON
+              Import JSON
             </Button>
           </div>
         </div>
@@ -219,7 +226,7 @@ export default function TweetArchivePage() {
       {/* Main Layout */}
       <div className="px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Left: Filters */}
+          {/* Left: Filters + Calendar */}
           <FilterSidebar
             sources={data?.sources ?? []}
             activeSource={activeSource}
@@ -227,10 +234,14 @@ export default function TweetArchivePage() {
             activeType={activeType}
             onTypeChange={setActiveType}
             typeCounts={data?.type_counts}
+            coverageData={coverageData}
+            otherDates={otherDates}
+            currentDateInView={currentDateInView}
+            onDateSelect={scrollToDate}
           />
 
           {/* Center: Timeline */}
-          <div className="lg:col-span-7 space-y-6">
+          <div className="lg:col-span-6 space-y-6">
             {/* Import status banner */}
             {importResult && (
               <div
@@ -327,15 +338,8 @@ export default function TweetArchivePage() {
             )}
           </div>
 
-          {/* Right: Calendar Navigation — canonical import location */}
-          <CalendarSidebar
-            coverageData={coverageData}
-            otherDates={otherDates}
-            currentDateInView={currentDateInView}
-            onDateSelect={scrollToDate}
-            onImportComplete={handleImportComplete}
-            onOpenJsonImport={() => setIsImportModalOpen(true)}
-          />
+          {/* Right: Reserved for future audit panel */}
+          <div className="lg:col-span-3" />
         </div>
       </div>
     </div>
