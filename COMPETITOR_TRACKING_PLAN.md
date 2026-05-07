@@ -28,7 +28,7 @@ Both are trivially parseable with regex. No NLP needed.
 
 ## Data Model
 
-**Collection:** `beta_competitor_snapshots`
+**Collection:** `competitor_snapshots`
 
 ```
 Document ID: {date}  e.g. "2026-05-05"
@@ -262,7 +262,7 @@ Icon: `Swords` from lucide-react (competitive/battle metaphor).
 ## Implementation Phases
 
 ### Phase 1: Core (This PR)
-- [ ] Firestore types + `beta_competitor_snapshots` collection
+- [ ] Firestore types + `competitor_snapshots` collection
 - [ ] Paste-and-parse component with live preview
 - [ ] Showtime tweet parser (regex)
 - [ ] Admissions tweet parser (regex)

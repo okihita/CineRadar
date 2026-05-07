@@ -6,7 +6,7 @@ Each date has two data points: **showtimes** and **admissions**. The admin needs
 
 ## Schema Redesign
 
-### Collection: `beta_competitor_tweets/{tweet_id}` — immutable audit log
+### Collection: `competitor_tweets/{tweet_id}` — immutable audit log
 
 **No structural changes.** This collection is fine as-is. Add `data_date` field if missing (already exists on most documents).
 
@@ -25,7 +25,7 @@ Each date has two data points: **showtimes** and **admissions**. The admin needs
 }
 ```
 
-### Collection: `beta_competitor_snapshots/{date}` — materialized view per content date
+### Collection: `competitor_snapshots/{date}` — materialized view per content date
 
 **Restructure from flat fields to nested objects.** Each data point (showtimes, admissions) becomes a self-contained object with its own metadata and source link.
 
@@ -100,7 +100,7 @@ Each date has two data points: **showtimes** and **admissions**. The admin needs
 - Access `snap.admissions?.parsed` with optional chaining.
 
 **`api/competitors/tweets/route.ts`** (browse tweets):
-- No changes needed. This reads from `beta_competitor_tweets`, not snapshots.
+- No changes needed. This reads from `competitor_tweets`, not snapshots.
 
 ### Layer 4: Frontend
 
@@ -155,8 +155,8 @@ Each date has two data points: **showtimes** and **admissions**. The admin needs
 ## Firestore Data Migration
 
 **You can safely delete both collections:**
-- `beta_competitor_snapshots` — will be rebuilt from scratch by re-importing tweets.
-- `beta_competitor_tweets` — will be rebuilt from scratch by re-importing tweets.
+- `competitor_snapshots` — will be rebuilt from scratch by re-importing tweets.
+- `competitor_tweets` — will be rebuilt from scratch by re-importing tweets.
 
 These two collections are **only used by the competitor feature** (not by theatres, movies, schedules, performance, scraper, social feed, or auth). Deleting them has zero impact on the rest of the admin.
 

@@ -3,7 +3,7 @@
  *
  * Accepts the full Twitter API timeline JSON (as captured from browser DevTools),
  * extracts all tweets, stores each individually, parses showtime + admission data,
- * and upserts into Firestore beta_competitor_snapshots.
+ * and upserts into Firestore competitor_snapshots.
  *
  * Admin-only.
  */

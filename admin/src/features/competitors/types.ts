@@ -2,14 +2,14 @@
  * Competitor tracking types and Firestore schema.
  *
  * Collections:
- *   beta_competitor_snapshots/{date}  — parsed showtime/admission data per date
- *   beta_competitor_tweets/{tweet_id} — raw imported tweets per source
+ *   competitor_snapshots/{date}  — parsed showtime/admission data per date
+ *   competitor_tweets/{tweet_id} — raw imported tweets per source
  */
 
 // ─── Firestore Collections ─────────────────────────────────
 
-export const COMPETITOR_COLLECTION = 'beta_competitor_snapshots';
-export const TWEET_COLLECTION = 'beta_competitor_tweets';
+export const COMPETITOR_COLLECTION = 'competitor_snapshots';
+export const TWEET_COLLECTION = 'competitor_tweets';
 
 // ─── Snapshot Document ─────────────────────────────────────
 

@@ -1,7 +1,7 @@
 /**
  * POST /api/competitors/reparse — re-parse all stored tweets with updated parsers
  *
- * Reads all tweets from beta_competitor_tweets, re-runs parseTweetBatch()
+ * Reads all tweets from competitor_tweets, re-runs parseTweetBatch()
  * with the improved date parser, and upserts snapshots. Preserves existing
  * match data (matched_movie_id, matched_title) by title_cp key.
  *

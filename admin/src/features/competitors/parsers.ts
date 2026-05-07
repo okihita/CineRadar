@@ -39,14 +39,14 @@ function cleanTitle(raw: string): string {
 
 // ─── Showtime Parser ───────────────────────────────────────
 
-const SHOWTIME_LINE = /^#([\S]+?)\s+([\d,]+)\s+\(([+-][\d.]+)%\)/;
+const SHOWTIME_LINE = /^#([\S]+?)\s+([\d,]+)\s*(?:\(([+-][\d.]+)%\)|\((?:estimated\s+)?opening\)|-(?:estimated\s+)?opening)/i;
 
 export function parseShowtimeTweet(raw: string): CinePointShowtime[] {
   const results: CinePointShowtime[] = [];
 
   for (const line of raw.split('\n')) {
     const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('SHOWTIMES') || trimmed === '-' || trimmed === '---') continue;
+    if (!trimmed || /^showtimes/i.test(trimmed) || trimmed === '-' || trimmed === '---') continue;
 
     const match = trimmed.match(SHOWTIME_LINE);
     if (!match) continue;
@@ -54,7 +54,7 @@ export function parseShowtimeTweet(raw: string): CinePointShowtime[] {
     results.push({
       title_cp: cleanTitle(match[1]),
       showtimes: parseInt(match[2].replace(/,/g, ''), 10),
-      daily_change_pct: parseFloat(match[3]),
+      daily_change_pct: match[3] ? parseFloat(match[3]) : 0,
     });
   }
 
@@ -363,7 +363,7 @@ export function parseTweetBatch(tweets: RawTwitterEntry[]): ParsedImportResult[]
     const text = tweet.text;
     const postingDate = twitterDateToYYYYMMDD(tweet.created_at);
 
-    if (text.startsWith('SHOWTIMES')) {
+    if (/^showtimes/i.test(text)) {
       const date = extractDateFromHeader(text, postingDate);
       const parsed = parseShowtimeTweet(text);
       if (date && parsed.length > 0) {
