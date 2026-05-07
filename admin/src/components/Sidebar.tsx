@@ -6,7 +6,7 @@ import {
     MapPin, ChevronLeft, ChevronRight, ChevronDown,
     Database, Calendar, Clapperboard, Sun, Moon, Monitor,
     LogOut, Users as UsersIcon, Share2, ArrowRightLeft,
-    TrendingUp, Rss, Settings, Shield, BookOpen, Radio, Swords,
+    TrendingUp, Rss, Settings, Shield, BookOpen, Radio, Swords, Library,
     type LucideIcon,
 } from 'lucide-react';
 import { useState, useCallback } from 'react';
@@ -90,6 +90,13 @@ const menuGroups: MenuGroup[] = [
                 description: 'CinePoint benchmarking',
                 href: '/competitors',
                 icon: Swords,
+                adminOnly: false,
+            },
+            {
+                title: 'CinePoint Catalog',
+                description: 'Movie database sync',
+                href: '/competitors/cinepoint',
+                icon: Library,
                 adminOnly: false,
             },
             {
@@ -177,7 +184,10 @@ function isItemActive(href: string, pathname: string): boolean {
         return pathname === '/social-feed' || /^\/social-feed\/\d{4}/.test(pathname);
     }
     if (href === '/competitors') {
-        return pathname === '/competitors' || pathname.startsWith('/competitors/');
+        return pathname === '/competitors' || pathname.startsWith('/competitors/archive') || /^\/competitors\/\d{4}/.test(pathname);
+    }
+    if (href === '/competitors/cinepoint') {
+        return pathname === '/competitors/cinepoint' || pathname.startsWith('/competitors/cinepoint/');
     }
     return pathname.startsWith(href);
 }

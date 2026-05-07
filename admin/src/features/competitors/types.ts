@@ -10,6 +10,8 @@
 
 export const COMPETITOR_COLLECTION = 'competitor_snapshots';
 export const TWEET_COLLECTION = 'competitor_tweets';
+export const CINEPOINT_CATALOG = 'cinepoint_movies';
+export const CINEPOINT_SYNC_META = 'cinepoint_sync_meta';
 
 // ─── Snapshot Document ─────────────────────────────────────
 
@@ -248,4 +250,37 @@ export interface TwitterTimelineResponse {
       };
     };
   };
+}
+
+// ─── CinePoint Movie Catalog ────────────────────────────────
+
+export type CinePointMovieType = 'local' | 'international';
+
+export interface CinePointMovie {
+  id: number;                          // CinePoint movie ID (doc ID = string)
+  title: string;                       // "Cek Khodam"
+  title_cp: string;                    // normalized: "cek khodam" (for matching)
+  image_title: string | null;          // S3 poster URL
+  movie_genre: string[];               // ["Comedy", "Horror"]
+  duration: number;                    // minutes (0 = unknown)
+  release_date: string;                // "2026-07-16"
+  type: CinePointMovieType;            // "local" | "international"
+  scraped_at: string;                  // ISO timestamp
+  matched_movie_id?: string | null;    // CineRadar movie_id
+  matched_title?: string | null;       // CineRadar display title
+}
+
+export interface CinePointSyncMeta {
+  id: string;                          // always "current"
+  status: 'idle' | 'running' | 'paused' | 'complete' | 'error';
+  total_movies: number;                // total from API
+  total_pages: number;                 // Math.ceil(total / limit)
+  last_scraped_page: number;           // resume checkpoint
+  limit: number;                       // page size (25)
+  movies_scraped: number;              // running count
+  pages_scraped: number;
+  started_at: string | null;
+  completed_at: string | null;
+  error_message: string | null;
+  auth_token: string;                  // stored for resume
 }
