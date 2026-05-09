@@ -593,9 +593,13 @@ export default function CinePointInsightsPage() {
                 const groupMap = new Map<number, YearSummary[]>();
                 for (const y of reversed) {
                   const mod10 = y.year % 10;
-                  const groupStart = (mod10 >= 1 && mod10 <= 5)
-                    ? Math.floor(y.year / 10) * 10 + 1
-                    : Math.floor(y.year / 10) * 10 + 6;
+                  const decade = Math.floor(y.year / 10) * 10;
+                  // Half-decades: 1-5 and 6-0 (year ending 0 is the LAST year of 6-0 group)
+                  const groupStart = mod10 === 0
+                    ? decade - 4    // 2000→1996, 2010→2006, 2020→2016
+                    : mod10 >= 1 && mod10 <= 5
+                      ? decade + 1  // 2021→2021, 2001→2001
+                      : decade + 6; // 2006→2006, 2016→2016
                   if (!groupMap.has(groupStart)) groupMap.set(groupStart, []);
                   groupMap.get(groupStart)!.push(y);
                 }
