@@ -587,88 +587,100 @@ export default function CinePointInsightsPage() {
 
           {!yearsLoading && yearsData && yearsData.years.length > 0 && (
             <>
-              {/* Year cards — newest first */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {[...yearsData.years].reverse().map((y) => {
-                  const isChampionLocal = y.top_movie?.type === 'local';
-                  return (
-                    <Card key={y.year} className="relative overflow-hidden">
-                      {/* Year accent bar */}
-                      <div className={cn(
-                        'absolute top-0 left-0 right-0 h-1',
-                        isChampionLocal ? 'bg-indigo-500' : 'bg-amber-500',
-                      )} />
+              {/* Year cards — grouped in half-decade rows */}
+              {(() => {
+                const reversed = [...yearsData.years].reverse();
+                const groupMap = new Map<number, YearSummary[]>();
+                for (const y of reversed) {
+                  const mod10 = y.year % 10;
+                  const groupStart = (mod10 >= 1 && mod10 <= 5)
+                    ? Math.floor(y.year / 10) * 10 + 1
+                    : Math.floor(y.year / 10) * 10 + 6;
+                  if (!groupMap.has(groupStart)) groupMap.set(groupStart, []);
+                  groupMap.get(groupStart)!.push(y);
+                }
+                const groups = [...groupMap.entries()]
+                  .sort(([a], [b]) => b - a)
+                  .map(([start, years]) => ({ start, end: start + 4, label: `${start}–${start + 4}`, years }));
 
-                      <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-2xl font-black tracking-tight">{y.year}</CardTitle>
-                          <Badge variant="outline" className="text-[10px]">
-                            {y.dates_with_data} {y.dates_with_data === 1 ? 'day' : 'days'}
-                          </Badge>
+                return (
+                  <div className="space-y-6">
+                    {groups.map((group) => (
+                      <div key={group.start}>
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">{group.label}</span>
+                          <div className="flex-1 h-px bg-border/40" />
                         </div>
-                        <div className="flex gap-3 text-[10px] text-muted-foreground/60">
-                          <span>{formatAdmissions(y.total_admissions)} total</span>
-                          <span>{y.unique_movies} movies</span>
+                        <div className="grid grid-cols-5 gap-4">
+                          {group.years.map((y) => {
+                            const isChampionLocal = y.top_movie?.type === 'local';
+                            return (
+                              <Card key={y.year} className="relative overflow-hidden">
+                                <div className={cn('absolute top-0 left-0 right-0 h-1', isChampionLocal ? 'bg-indigo-500' : 'bg-amber-500')} />
+                                <CardHeader className="pb-2">
+                                  <div className="flex items-center justify-between">
+                                    <CardTitle className="text-2xl font-black tracking-tight">{y.year}</CardTitle>
+                                    <Badge variant="outline" className="text-[10px]">{y.dates_with_data}d</Badge>
+                                  </div>
+                                  <div className="flex gap-3 text-[10px] text-muted-foreground/60">
+                                    <span>{formatAdmissions(y.total_admissions)}</span>
+                                    <span>{y.unique_movies} movies</span>
+                                  </div>
+                                </CardHeader>
+                                <CardContent className="space-y-3">
+                                  {y.top_movie && (
+                                    <div className="flex items-start gap-2">
+                                      <Crown className={cn('w-4 h-4 mt-0.5 shrink-0', isChampionLocal ? 'text-indigo-500' : 'text-amber-500')} />
+                                      <div className="min-w-0">
+                                        <p className="text-sm font-bold truncate">{y.top_movie.title}</p>
+                                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                                          <span className="font-mono">{y.top_movie.total_admissions.toLocaleString()}</span>
+                                          <Badge variant="outline" className={cn('text-[9px] px-1 py-0', isChampionLocal ? 'border-indigo-500/20 text-indigo-600' : 'border-amber-500/20 text-amber-600')}>
+                                            {y.top_movie.type === 'local' ? 'Local' : 'Intl'}
+                                          </Badge>
+                                        </div>
+                                        {y.top_movie.movie_genre.length > 0 && (
+                                          <p className="text-[10px] text-muted-foreground/40 truncate">{y.top_movie.movie_genre.join(', ')}</p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                  <div className="space-y-1">
+                                    <div className="flex h-1.5 rounded-full overflow-hidden bg-muted">
+                                      <div className="bg-indigo-500 rounded-l-full" style={{ width: `${(y.local_admissions / (y.total_admissions || 1)) * 100}%` }} />
+                                      <div className="bg-amber-500 rounded-r-full" style={{ width: `${(y.international_admissions / (y.total_admissions || 1)) * 100}%` }} />
+                                    </div>
+                                    <div className="flex justify-between text-[9px] text-muted-foreground/50 font-mono">
+                                      <span>{((y.local_admissions / (y.total_admissions || 1)) * 100).toFixed(0)}%</span>
+                                      <span>{((y.international_admissions / (y.total_admissions || 1)) * 100).toFixed(0)}%</span>
+                                    </div>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-2 pt-1 border-t">
+                                    {y.top_local && (
+                                      <div className="min-w-0">
+                                        <p className="text-[9px] font-black uppercase tracking-widest text-indigo-500/60">Local</p>
+                                        <p className="text-[11px] font-medium truncate">{y.top_local.title}</p>
+                                        <p className="text-[10px] text-muted-foreground font-mono">{formatAdmissions(y.top_local.total_admissions)}</p>
+                                      </div>
+                                    )}
+                                    {y.top_international && (
+                                      <div className="min-w-0">
+                                        <p className="text-[9px] font-black uppercase tracking-widest text-amber-500/60">Intl</p>
+                                        <p className="text-[11px] font-medium truncate">{y.top_international.title}</p>
+                                        <p className="text-[10px] text-muted-foreground font-mono">{formatAdmissions(y.top_international.total_admissions)}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            );
+                          })}
                         </div>
-                      </CardHeader>
-
-                      <CardContent className="space-y-3">
-                        {/* Champion */}
-                        {y.top_movie && (
-                          <div className="flex items-start gap-2">
-                            <Crown className={cn('w-4 h-4 mt-0.5 shrink-0', isChampionLocal ? 'text-indigo-500' : 'text-amber-500')} />
-                            <div className="min-w-0">
-                              <p className="text-sm font-bold truncate">{y.top_movie.title}</p>
-                              <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                                <span className="font-mono">{y.top_movie.total_admissions.toLocaleString()}</span>
-                                <Badge variant="outline" className={cn(
-                                  'text-[9px] px-1 py-0',
-                                  isChampionLocal ? 'border-indigo-500/20 text-indigo-600' : 'border-amber-500/20 text-amber-600',
-                                )}>
-                                  {y.top_movie.type === 'local' ? 'Local' : 'Intl'}
-                                </Badge>
-                              </div>
-                              {y.top_movie.movie_genre.length > 0 && (
-                                <p className="text-[10px] text-muted-foreground/40 truncate">{y.top_movie.movie_genre.join(', ')}</p>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Market split bar */}
-                        <div className="space-y-1">
-                          <div className="flex h-1.5 rounded-full overflow-hidden bg-muted">
-                            <div className="bg-indigo-500 rounded-l-full" style={{ width: `${(y.local_admissions / (y.total_admissions || 1)) * 100}%` }} />
-                            <div className="bg-amber-500 rounded-r-full" style={{ width: `${(y.international_admissions / (y.total_admissions || 1)) * 100}%` }} />
-                          </div>
-                          <div className="flex justify-between text-[9px] text-muted-foreground/50 font-mono">
-                            <span>{((y.local_admissions / (y.total_admissions || 1)) * 100).toFixed(0)}% local</span>
-                            <span>{((y.international_admissions / (y.total_admissions || 1)) * 100).toFixed(0)}% intl</span>
-                          </div>
-                        </div>
-
-                        {/* Sub-champions */}
-                        <div className="grid grid-cols-2 gap-2 pt-1 border-t">
-                          {y.top_local && (
-                            <div className="min-w-0">
-                              <p className="text-[9px] font-black uppercase tracking-widest text-indigo-500/60">Top Local</p>
-                              <p className="text-[11px] font-medium truncate">{y.top_local.title}</p>
-                              <p className="text-[10px] text-muted-foreground font-mono">{formatAdmissions(y.top_local.total_admissions)}</p>
-                            </div>
-                          )}
-                          {y.top_international && (
-                            <div className="min-w-0">
-                              <p className="text-[9px] font-black uppercase tracking-widest text-amber-500/60">Top Intl</p>
-                              <p className="text-[11px] font-medium truncate">{y.top_international.title}</p>
-                              <p className="text-[10px] text-muted-foreground font-mono">{formatAdmissions(y.top_international.total_admissions)}</p>
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
 
               {/* Yearly totals table */}
               <Card>
