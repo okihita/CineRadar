@@ -4,16 +4,20 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  ResponsiveContainer, PieChart, Pie, Cell, RadarChart, PolarGrid,
-  PolarAngleAxis, PolarRadiusAxis, Radar,
+  ResponsiveContainer, PieChart, Pie, Cell,
 } from 'recharts';
 import { format, parseISO, subDays } from 'date-fns';
 import {
   Loader2, Film, TrendingUp, Trophy, Users, BarChart3,
-  ArrowUpRight, ArrowDownRight, Minus, Sparkles, CalendarDays,
-  Globe, Popcorn, Calendar, Star, ChevronRight,
+  ArrowUpRight, ArrowDownRight, Minus, CalendarDays,
+  Star, ChevronRight, Crown, Globe, Popcorn,
+  Calendar, Sparkles, Flame,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PageHeader } from '@/components/PageHeader';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -58,6 +62,26 @@ interface TopMover extends MovieRanking {
   last_rank: number;
 }
 
+interface YearSummary {
+  year: number;
+  dates_with_data: number;
+  total_admissions: number;
+  local_admissions: number;
+  international_admissions: number;
+  unique_movies: number;
+  top_movie: {
+    movie_id: number;
+    title: string;
+    type: string;
+    total_admissions: number;
+    movie_genre: string[];
+    release_date: string;
+    score: number;
+  } | null;
+  top_local: { movie_id: number; title: string; total_admissions: number; movie_genre: string[] } | null;
+  top_international: { movie_id: number; title: string; total_admissions: number; movie_genre: string[] } | null;
+}
+
 interface BoxOfficeData {
   success: boolean;
   has_data: boolean;
@@ -86,49 +110,45 @@ interface BoxOfficeData {
   } | null;
 }
 
-// ─── Colors ─────────────────────────────────────────────────
+// ─── Constants ──────────────────────────────────────────────
 
-const COLORS = [
-  '#6366f1', '#8b5cf6', '#a78bfa', '#f59e0b', '#10b981',
-  '#f87171', '#38bdf8', '#fb923c', '#e879f9', '#34d399',
-  '#f472b6', '#22d3ee', '#a3e635', '#fbbf24', '#6ee7b7',
-];
 const LOCAL_COLOR = '#6366f1';
 const INTL_COLOR = '#f59e0b';
-const GENRE_COLORS = ['#6366f1', '#f59e0b', '#10b981', '#f87171', '#38bdf8', '#e879f9', '#fb923c', '#34d399', '#f472b6', '#a3e635'];
+const CHART_COLORS = ['#6366f1', '#f59e0b', '#10b981', '#f87171', '#38bdf8', '#e879f9', '#fb923c', '#34d399'];
 
-// ─── Date Range Presets ─────────────────────────────────────
-
-type RangePreset = '7d' | '14d' | '30d' | '90d' | 'all';
+type RangePreset = '7d' | '14d' | '30d' | '90d';
 
 const RANGE_PRESETS: { value: RangePreset; label: string }[] = [
   { value: '7d', label: '7D' },
   { value: '14d', label: '14D' },
   { value: '30d', label: '30D' },
   { value: '90d', label: '90D' },
-  { value: 'all', label: 'All' },
 ];
 
-function getPresetRange(preset: RangePreset): { from: string; to: string } {
+function getPresetRange(preset: RangePreset) {
   const today = new Date();
   const to = format(today, 'yyyy-MM-dd');
-  switch (preset) {
-    case '7d': return { from: format(subDays(today, 7), 'yyyy-MM-dd'), to };
-    case '14d': return { from: format(subDays(today, 14), 'yyyy-MM-dd'), to };
-    case '30d': return { from: format(subDays(today, 30), 'yyyy-MM-dd'), to };
-    case '90d': return { from: format(subDays(today, 90), 'yyyy-MM-dd'), to };
-    case 'all': return { from: '2024-01-01', to };
-  }
+  const days = { '7d': 7, '14d': 14, '30d': 30, '90d': 90 }[preset];
+  return { from: format(subDays(today, days), 'yyyy-MM-dd'), to };
 }
 
-// ─── Component ──────────────────────────────────────────────
+function formatAdmissions(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
+  return n.toLocaleString();
+}
+
+// ─── Page ───────────────────────────────────────────────────
 
 export default function CinePointInsightsPage() {
   const [data, setData] = useState<BoxOfficeData | null>(null);
+  const [yearsData, setYearsData] = useState<{ success: boolean; years: YearSummary[]; total_years: number } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [yearsLoading, setYearsLoading] = useState(false);
   const [range, setRange] = useState<RangePreset>('30d');
   const [selectedMovie, setSelectedMovie] = useState<number | null>(null);
 
+  // Load date-range analytics
   const loadData = useCallback(async (preset: RangePreset) => {
     setLoading(true);
     try {
@@ -140,553 +160,577 @@ export default function CinePointInsightsPage() {
     setLoading(false);
   }, []);
 
+  // Load yearly summaries
+  const loadYears = useCallback(async () => {
+    setYearsLoading(true);
+    try {
+      const res = await fetch('/api/competitors/cinepoint/boxoffice/years');
+      const json = await res.json();
+      setYearsData(json);
+    } catch { /* ignore */ }
+    setYearsLoading(false);
+  }, []);
+
   useEffect(() => { loadData(range); }, [range, loadData]);
 
-  const handleRangeChange = (preset: RangePreset) => {
-    setRange(preset);
-    setSelectedMovie(null);
-  };
-
   const meta = data?.meta;
-
-  // Computed: market share percentages
-  const localTotal = data?.movie_rankings
-    .filter((m) => m.type === 'local')
-    .reduce((s, m) => s + m.total_period_admissions, 0) ?? 0;
-  const intlTotal = data?.movie_rankings
-    .filter((m) => m.type === 'international')
-    .reduce((s, m) => s + m.total_period_admissions, 0) ?? 0;
+  const localTotal = data?.movie_rankings.filter((m) => m.type === 'local').reduce((s, m) => s + m.total_period_admissions, 0) ?? 0;
+  const intlTotal = data?.movie_rankings.filter((m) => m.type === 'international').reduce((s, m) => s + m.total_period_admissions, 0) ?? 0;
   const marketTotal = localTotal + intlTotal || 1;
-  const localPct = ((localTotal / marketTotal) * 100).toFixed(1);
-  const intlPct = ((intlTotal / marketTotal) * 100).toFixed(1);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-indigo-500" />
-            Box Office Intelligence
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Daily box office insights from CinePoint data stored in Firestore
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {meta && (
-            <span className="text-xs text-muted-foreground hidden sm:inline">
-              {meta.date_range.start} → {meta.date_range.end} ({meta.days_with_data} days)
-            </span>
-          )}
+    <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
+      <PageHeader
+        title="Box Office Intelligence"
+        description="Historical box office analytics from CinePoint data"
+        icon={
+          <div className="p-2 bg-primary/10 rounded-xl">
+            <BarChart3 className="w-6 h-6 text-primary" />
+          </div>
+        }
+      />
+
+      <Tabs defaultValue="dashboard" onValueChange={(v) => { if (v === 'hall-of-fame' && !yearsData) loadYears(); }}>
+        <TabsList>
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="hall-of-fame">Hall of Fame</TabsTrigger>
+        </TabsList>
+
+        {/* ── DASHBOARD TAB ── */}
+        <TabsContent value="dashboard" className="space-y-6 mt-6">
           {/* Date range selector */}
-          <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
-            {RANGE_PRESETS.map((p) => (
-              <button
-                key={p.value}
-                onClick={() => handleRangeChange(p.value)}
-                className={cn(
-                  'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
-                  range === p.value
-                    ? 'bg-background shadow-sm text-foreground'
-                    : 'text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Loading state */}
-      {loading && (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      )}
-
-      {/* No data state */}
-      {!loading && (!data || !data.has_data) && (
-        <div className="text-center py-20 text-muted-foreground">
-          <Film className="h-12 w-12 mx-auto mb-3 opacity-50" />
-          <p className="text-lg font-medium">No box office data yet</p>
-          {data?.sync_meta ? (
-            <>
-              <p className="text-sm mt-2">
-                Backfill status: <span className="font-medium">{data.sync_meta.status}</span>
-                {' · '}{data.sync_meta.dates_scraped} dates scraped
-                {' · '}{data.sync_meta.docs_written?.toLocaleString()} docs written
-              </p>
-              <p className="text-sm mt-1">
-                Last scraped: {data.sync_meta.last_scraped_date ?? 'N/A'}
-                {' · '}Range: {data.sync_meta.date_start} → {data.sync_meta.date_end}
-              </p>
-            </>
-          ) : (
-            <p className="text-sm mt-2">Run the backfill script to populate Firestore.</p>
-          )}
-        </div>
-      )}
-
-      {/* Data available */}
-      {data && data.has_data && meta && (
-        <>
-          {/* KPI Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <KPICard
-              icon={<Users className="h-5 w-5" />}
-              label="Total Admissions"
-              value={meta.grand_total_admissions.toLocaleString()}
-              sub={`${meta.avg_daily_admissions.toLocaleString()}/day avg`}
-              color="indigo"
-            />
-            <KPICard
-              icon={<Film className="h-5 w-5" />}
-              label="Unique Movies"
-              value={meta.unique_movies.toString()}
-              sub={`${meta.days_with_data} days tracked`}
-              color="purple"
-            />
-            <KPICard
-              icon={<Trophy className="h-5 w-5" />}
-              label="Peak Day"
-              value={meta.peak_day?.admissions?.toLocaleString() ?? '-'}
-              sub={meta.peak_day?.date ? format(parseISO(meta.peak_day.date), 'EEE, MMM d') : '-'}
-              color="amber"
-            />
-            <KPICard
-              icon={<BarChart3 className="h-5 w-5" />}
-              label="Top Movie"
-              value={meta.top_movie?.total_period_admissions?.toLocaleString() ?? '-'}
-              sub={meta.top_movie?.title ?? '-'}
-              color="emerald"
-            />
-          </div>
-
-          {/* Market share + Daily trend row */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Daily admissions trend */}
-            <div className="lg:col-span-2">
-              <ChartCard title="Daily Admissions Trend" subtitle="Local vs International">
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={data.daily_totals}>
-                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                    <XAxis
-                      dataKey="date"
-                      tickFormatter={(v) => format(parseISO(String(v)), 'MMM d')}
-                      tick={{ fontSize: 11 }}
-                    />
-                    <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(Number(v) / 1000).toFixed(0)}k`} />
-                    <Tooltip
-                      labelFormatter={(v) => format(parseISO(String(v)), 'EEEE, MMM d, yyyy')}
-                      formatter={(v) => Number(v).toLocaleString()}
-                    />
-                    <Area
-                      type="monotone" dataKey="local_admissions" stackId="1"
-                      stroke={LOCAL_COLOR} fill={LOCAL_COLOR} fillOpacity={0.6} name="Local"
-                    />
-                    <Area
-                      type="monotone" dataKey="international_admissions" stackId="1"
-                      stroke={INTL_COLOR} fill={INTL_COLOR} fillOpacity={0.6} name="International"
-                    />
-                    <Legend />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </ChartCard>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground font-medium">Period</span>
             </div>
-
-            {/* Market share donut */}
-            <ChartCard title="Market Share">
-              <div className="flex flex-col items-center">
-                <ResponsiveContainer width="100%" height={200}>
-                  <PieChart>
-                    <Pie
-                      data={[
-                        { name: 'Local', value: localTotal },
-                        { name: 'International', value: intlTotal },
-                      ]}
-                      cx="50%" cy="50%"
-                      outerRadius={80} innerRadius={50}
-                      dataKey="value"
-                      label={({ name, percent }: { name?: string; percent?: number }) =>
-                        `${name ?? ''} ${((percent ?? 0) * 100).toFixed(0)}%`
-                      }
-                    >
-                      <Cell fill={LOCAL_COLOR} />
-                      <Cell fill={INTL_COLOR} />
-                    </Pie>
-                    <Tooltip formatter={(v) => Number(v).toLocaleString()} />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="flex gap-6 mt-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: LOCAL_COLOR }} />
-                    <span>Local {localPct}%</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: INTL_COLOR }} />
-                    <span>Intl {intlPct}%</span>
-                  </div>
-                </div>
-              </div>
-            </ChartCard>
+            <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
+              {RANGE_PRESETS.map((p) => (
+                <button
+                  key={p.value}
+                  onClick={() => { setRange(p.value); setSelectedMovie(null); }}
+                  className={cn(
+                    'px-3 py-1.5 text-xs font-medium rounded-md transition-all',
+                    range === p.value
+                      ? 'bg-background shadow-sm text-foreground'
+                      : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Genre breakdown + Day-of-week pattern row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Genre breakdown */}
-            {data.genre_breakdown.length > 0 && (
-              <ChartCard title="Genre Breakdown" subtitle="Admissions by genre across all movies">
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={data.genre_breakdown.slice(0, 10)} layout="vertical" margin={{ left: 10 }}>
-                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                    <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `${(Number(v) / 1000).toFixed(0)}k`} />
-                    <YAxis type="category" dataKey="genre" width={100} tick={{ fontSize: 11 }} />
-                    <Tooltip formatter={(v) => Number(v).toLocaleString()} />
-                    <Bar dataKey="admissions" name="Admissions" radius={[0, 4, 4, 0]}>
-                      {data.genre_breakdown.slice(0, 10).map((_, i) => (
-                        <Cell key={i} fill={GENRE_COLORS[i % GENRE_COLORS.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartCard>
-            )}
-
-            {/* Day-of-week pattern */}
-            {data.day_of_week.length > 0 && (
-              <ChartCard title="Day-of-Week Pattern" subtitle="Average daily admissions by weekday">
-                <ResponsiveContainer width="100%" height={300}>
-                  <RadarChart data={data.day_of_week}>
-                    <PolarGrid />
-                    <PolarAngleAxis dataKey="day" tick={{ fontSize: 12 }} />
-                    <PolarRadiusAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `${(Number(v) / 1000).toFixed(0)}k`} />
-                    <Radar
-                      name="Avg Admissions" dataKey="avg_admissions"
-                      stroke="#6366f1" fill="#6366f1" fillOpacity={0.3}
-                    />
-                    <Tooltip formatter={(v) => Number(v).toLocaleString()} />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </ChartCard>
-            )}
-          </div>
-
-          {/* Top 10 bar chart */}
-          <ChartCard title="Top 10 Movies by Admissions" subtitle="Period total for selected date range">
-            <ResponsiveContainer width="100%" height={400}>
-              <BarChart
-                data={data.movie_rankings.slice(0, 10).map((m) => ({
-                  title: m.title.length > 25 ? m.title.slice(0, 25) + '…' : m.title,
-                  admissions: m.total_period_admissions,
-                  type: m.type,
-                }))}
-                layout="vertical"
-                margin={{ left: 20 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `${(Number(v) / 1000).toFixed(0)}k`} />
-                <YAxis type="category" dataKey="title" width={180} tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(v) => Number(v).toLocaleString()} />
-                <Bar dataKey="admissions" name="Admissions" radius={[0, 4, 4, 0]}>
-                  {data.movie_rankings.slice(0, 10).map((m, i) => (
-                    <Cell key={i} fill={m.type === 'local' ? LOCAL_COLOR : INTL_COLOR} />
-                  ))}
-                </Bar>
-                <Legend formatter={(v) => v} />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartCard>
-
-          {/* New Releases */}
-          {data.new_releases.length > 0 && (
-            <ChartCard title="New Releases" subtitle={`Movies released in this period (${data.new_releases.length} titles)`}>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b text-left text-muted-foreground">
-                      <th className="py-2 px-3">#</th>
-                      <th className="py-2 px-3">Movie</th>
-                      <th className="py-2 px-3">Release</th>
-                      <th className="py-2 px-3 text-right">Period Adm.</th>
-                      <th className="py-2 px-3 text-right">Opening</th>
-                      <th className="py-2 px-3 text-right">Peak</th>
-                      <th className="py-2 px-3 text-right">Score</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.new_releases.map((m, i) => (
-                      <tr
-                        key={m.id}
-                        className="border-b hover:bg-muted/50 cursor-pointer"
-                        onClick={() => setSelectedMovie(selectedMovie === m.id ? null : m.id)}
-                      >
-                        <td className="py-2 px-3 font-medium">{i + 1}</td>
-                        <td className="py-2 px-3">
-                          <div className="font-medium">{m.title}</div>
-                          <div className="text-xs text-muted-foreground">{m.movie_genre.join(', ')}</div>
-                        </td>
-                        <td className="py-2 px-3 text-muted-foreground text-xs">
-                          {m.release_date ? format(parseISO(m.release_date.slice(0, 10)), 'MMM d') : '-'}
-                        </td>
-                        <td className="py-2 px-3 text-right font-mono">{m.total_period_admissions.toLocaleString()}</td>
-                        <td className="py-2 px-3 text-right font-mono text-muted-foreground">
-                          {m.opening_admission?.toLocaleString() ?? '-'}
-                        </td>
-                        <td className="py-2 px-3 text-right font-mono text-muted-foreground">
-                          {m.peak_admission?.toLocaleString() ?? '-'}
-                        </td>
-                        <td className="py-2 px-3 text-right font-mono">{m.latest_score.toFixed(1)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </ChartCard>
+          {loading && (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
           )}
 
-          {/* Rank movers */}
-          {data.top_movers.length > 0 && (
-            <ChartCard title="Rank Movers" subtitle="Biggest rank improvements in this period">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b text-left text-muted-foreground">
-                      <th className="py-2 px-3">#</th>
-                      <th className="py-2 px-3">Movie</th>
-                      <th className="py-2 px-3">Type</th>
-                      <th className="py-2 px-3 text-right">Period Admissions</th>
-                      <th className="py-2 px-3 text-center">Rank Change</th>
-                      <th className="py-2 px-3 text-right">Score</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.top_movers.map((m, i) => (
-                      <tr
-                        key={m.id}
-                        className="border-b hover:bg-muted/50 cursor-pointer"
-                        onClick={() => setSelectedMovie(selectedMovie === m.id ? null : m.id)}
-                      >
-                        <td className="py-2 px-3 font-medium">{i + 1}</td>
-                        <td className="py-2 px-3">
-                          <div className="font-medium">{m.title}</div>
-                          <div className="text-xs text-muted-foreground">{m.movie_genre.join(', ')}</div>
-                        </td>
-                        <td className="py-2 px-3">
-                          <TypeBadge type={m.type} />
-                        </td>
-                        <td className="py-2 px-3 text-right font-mono">{m.total_period_admissions.toLocaleString()}</td>
-                        <td className="py-2 px-3 text-center">
-                          <RankChange change={m.rank_change} first={m.first_rank} last={m.last_rank} />
-                        </td>
-                        <td className="py-2 px-3 text-right font-mono">{m.latest_score.toFixed(1)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </ChartCard>
+          {!loading && (!data || !data.has_data) && (
+            <div className="flex flex-col items-center justify-center py-20 gap-4 border-2 border-dashed rounded-xl bg-muted/5">
+              <Film className="w-12 h-12 text-muted-foreground/20" />
+              <p className="text-muted-foreground font-medium">No box office data yet</p>
+              {data?.sync_meta && (
+                <p className="text-xs text-muted-foreground">
+                  Backfill: {data.sync_meta.status} · {data.sync_meta.dates_scraped} dates · {data.sync_meta.docs_written?.toLocaleString()} docs
+                </p>
+              )}
+            </div>
           )}
 
-          {/* Selected movie drill-down */}
-          {selectedMovie && (() => {
-            const movie = data.movie_rankings.find((m) => m.id === selectedMovie);
-            if (!movie) return null;
+          {!loading && data && data.has_data && meta && (
+            <>
+              {/* KPI Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-indigo-500/10 rounded-lg"><Users className="w-5 h-5 text-indigo-500" /></div>
+                      <div>
+                        <p className="text-2xl font-black">{meta.grand_total_admissions.toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground font-medium">Total Admissions</p>
+                        <p className="text-[10px] text-muted-foreground/60">{meta.avg_daily_admissions.toLocaleString()}/day avg</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-purple-500/10 rounded-lg"><Film className="w-5 h-5 text-purple-500" /></div>
+                      <div>
+                        <p className="text-2xl font-black">{meta.unique_movies}</p>
+                        <p className="text-xs text-muted-foreground font-medium">Unique Movies</p>
+                        <p className="text-[10px] text-muted-foreground/60">{meta.days_with_data} days tracked</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-amber-500/10 rounded-lg"><Trophy className="w-5 h-5 text-amber-500" /></div>
+                      <div>
+                        <p className="text-2xl font-black">{meta.peak_day?.admissions?.toLocaleString() ?? '-'}</p>
+                        <p className="text-xs text-muted-foreground font-medium">Peak Day</p>
+                        <p className="text-[10px] text-muted-foreground/60">{meta.peak_day?.date ? format(parseISO(meta.peak_day.date), 'EEE, MMM d') : '-'}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-emerald-500/10 rounded-lg"><Crown className="w-5 h-5 text-emerald-500" /></div>
+                      <div>
+                        <p className="text-2xl font-black">{meta.top_movie?.total_period_admissions?.toLocaleString() ?? '-'}</p>
+                        <p className="text-xs text-muted-foreground font-medium">Top Movie</p>
+                        <p className="text-[10px] text-muted-foreground/60 truncate max-w-[140px]">{meta.top_movie?.title ?? '-'}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
 
-            // Compute week-over-week drops
-            const weekBuckets = new Map<number, { total: number; count: number }>();
-            for (const d of movie.daily) {
-              const weekNum = Math.floor(
-                (new Date(d.date).getTime() - new Date(movie.daily[0].date).getTime()) / (7 * 86400000)
-              );
-              if (!weekBuckets.has(weekNum)) weekBuckets.set(weekNum, { total: 0, count: 0 });
-              const bucket = weekBuckets.get(weekNum)!;
-              bucket.total += d.admission;
-              bucket.count += 1;
-            }
-            const weeklyAvg = [...weekBuckets.entries()]
-              .sort(([a], [b]) => a - b)
-              .map(([week, { total }]) => ({ week: `W${week + 1}`, admissions: total }));
-            const wowDrop = weeklyAvg.length >= 2
-              ? ((weeklyAvg[0].admissions - weeklyAvg[1].admissions) / weeklyAvg[0].admissions * 100).toFixed(1)
-              : null;
-
-            return (
-              <ChartCard title={movie.title}>
-                <div className="flex flex-wrap items-center gap-3 mb-4">
-                  <TypeBadge type={movie.type} />
-                  <StatChip icon={<Star className="h-3 w-3" />} label="Score" value={movie.latest_score.toFixed(1)} />
-                  <StatChip icon={<Users className="h-3 w-3" />} label="Lifetime" value={movie.latest_total_admission.toLocaleString()} />
-                  <StatChip icon={<TrendingUp className="h-3 w-3" />} label="Period" value={movie.total_period_admissions.toLocaleString()} />
-                  <StatChip icon={<Popcorn className="h-3 w-3" />} label="Peak Day" value={movie.peak_admission.toLocaleString()} />
-                  {movie.opening_admission !== null && (
-                    <StatChip icon={<CalendarDays className="h-3 w-3" />} label="Opening" value={movie.opening_admission.toLocaleString()} />
-                  )}
-                  {wowDrop !== null && (
-                    <StatChip
-                      icon={Number(wowDrop) > 0 ? <TrendingUp className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                      label="W1→W2"
-                      value={`${wowDrop}%`}
-                      color={Number(wowDrop) > 0 ? 'text-green-600' : 'text-red-600'}
-                    />
-                  )}
-                  <button onClick={() => setSelectedMovie(null)} className="ml-auto text-muted-foreground hover:text-foreground text-sm">✕ Close</button>
-                </div>
-                <ResponsiveContainer width="100%" height={280}>
-                  <LineChart data={movie.daily}>
-                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                    <XAxis dataKey="date" tickFormatter={(v) => format(parseISO(String(v)), 'MMM d')} tick={{ fontSize: 11 }} />
-                    <YAxis yAxisId="left" tick={{ fontSize: 11 }} tickFormatter={(v) => `${(Number(v) / 1000).toFixed(0)}k`} />
-                    <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} reversed domain={[1, 'auto']} />
-                    <Tooltip
-                      labelFormatter={(v) => format(parseISO(String(v)), 'EEE, MMM d')}
-                      formatter={(v, name) => name === 'Rank' ? `#${v}` : Number(v).toLocaleString()}
-                    />
-                    <Legend />
-                    <Line yAxisId="left" type="monotone" dataKey="admission" stroke="#6366f1" strokeWidth={2} name="Admissions" dot={{ r: 3 }} />
-                    <Line yAxisId="right" type="monotone" dataKey="rank" stroke="#f59e0b" strokeWidth={2} name="Rank" strokeDasharray="5 5" dot={{ r: 3 }} />
-                  </LineChart>
-                </ResponsiveContainer>
-                {/* Cumulative line */}
-                {movie.daily.length > 1 && (
-                  <div className="mt-4">
-                    <h4 className="text-xs font-medium text-muted-foreground mb-2">Cumulative Admissions</h4>
-                    <ResponsiveContainer width="100%" height={150}>
-                      <AreaChart data={movie.daily}>
-                        <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+              {/* Daily trend + Market share */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <Card className="lg:col-span-2">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-black uppercase tracking-[0.2em]">Daily Admissions</CardTitle>
+                    <CardDescription>Local vs International</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={280}>
+                      <AreaChart data={data.daily_totals}>
+                        <CartesianGrid strokeDasharray="3 3" className="opacity-20" />
                         <XAxis dataKey="date" tickFormatter={(v) => format(parseISO(String(v)), 'MMM d')} tick={{ fontSize: 10 }} />
-                        <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `${(Number(v) / 1000000).toFixed(1)}M`} />
-                        <Tooltip formatter={(v) => Number(v).toLocaleString()} />
-                        <Area type="monotone" dataKey="total_admission" stroke="#10b981" fill="#10b981" fillOpacity={0.15} name="Cumulative" />
+                        <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => formatAdmissions(Number(v))} />
+                        <Tooltip labelFormatter={(v) => format(parseISO(String(v)), 'EEE, MMM d, yyyy')} formatter={(v) => Number(v).toLocaleString()} />
+                        <Area type="monotone" dataKey="local_admissions" stackId="1" stroke={LOCAL_COLOR} fill={LOCAL_COLOR} fillOpacity={0.5} name="Local" />
+                        <Area type="monotone" dataKey="international_admissions" stackId="1" stroke={INTL_COLOR} fill={INTL_COLOR} fillOpacity={0.5} name="International" />
+                        <Legend />
                       </AreaChart>
                     </ResponsiveContainer>
-                  </div>
-                )}
-              </ChartCard>
-            );
-          })()}
+                  </CardContent>
+                </Card>
 
-          {/* Full rankings table */}
-          <ChartCard title="Full Rankings" subtitle={`${data.movie_rankings.length} movies · Click any row for daily trend`}>
-            <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
-              <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-background z-10">
-                  <tr className="border-b text-left text-muted-foreground">
-                    <th className="py-2 px-3 w-12">Rank</th>
-                    <th className="py-2 px-3">Movie</th>
-                    <th className="py-2 px-3 w-16">Type</th>
-                    <th className="py-2 px-3 text-right">Period</th>
-                    <th className="py-2 px-3 text-right">Lifetime</th>
-                    <th className="py-2 px-3 text-right w-14">Score</th>
-                    <th className="py-2 px-3 text-center w-14">Days</th>
-                    <th className="py-2 px-3 w-8" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.movie_rankings.map((m) => (
-                    <tr
-                      key={m.id}
-                      className={cn(
-                        'border-b hover:bg-muted/50 cursor-pointer transition-colors',
-                        selectedMovie === m.id && 'bg-indigo-50 dark:bg-indigo-950',
-                      )}
-                      onClick={() => setSelectedMovie(selectedMovie === m.id ? null : m.id)}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-black uppercase tracking-[0.2em]">Market Share</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col items-center">
+                      <ResponsiveContainer width="100%" height={180}>
+                        <PieChart>
+                          <Pie
+                            data={[
+                              { name: 'Local', value: localTotal },
+                              { name: 'International', value: intlTotal },
+                            ]}
+                            cx="50%" cy="50%" outerRadius={70} innerRadius={45} dataKey="value"
+                            label={({ name, percent }: { name?: string; percent?: number }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
+                          >
+                            <Cell fill={LOCAL_COLOR} />
+                            <Cell fill={INTL_COLOR} />
+                          </Pie>
+                          <Tooltip formatter={(v) => Number(v).toLocaleString()} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="flex gap-4 text-xs text-muted-foreground mt-2">
+                        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: LOCAL_COLOR }} /> Local</span>
+                        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: INTL_COLOR }} /> Intl</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Genre breakdown + Day-of-week */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {data.genre_breakdown.length > 0 && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-indigo-500" /> Genre Breakdown
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={250}>
+                        <BarChart data={data.genre_breakdown.slice(0, 8)} layout="vertical" margin={{ left: 10 }}>
+                          <CartesianGrid strokeDasharray="3 3" className="opacity-20" />
+                          <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={(v) => formatAdmissions(Number(v))} />
+                          <YAxis type="category" dataKey="genre" width={90} tick={{ fontSize: 10 }} />
+                          <Tooltip formatter={(v) => Number(v).toLocaleString()} />
+                          <Bar dataKey="admissions" name="Admissions" radius={[0, 4, 4, 0]}>
+                            {data.genre_breakdown.slice(0, 8).map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {data.day_of_week.length > 0 && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-amber-500" /> Day-of-Week
+                      </CardTitle>
+                      <CardDescription>Average daily admissions by weekday</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={250}>
+                        <BarChart data={data.day_of_week}>
+                          <CartesianGrid strokeDasharray="3 3" className="opacity-20" />
+                          <XAxis dataKey="day" tick={{ fontSize: 11 }} />
+                          <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => formatAdmissions(Number(v))} />
+                          <Tooltip formatter={(v) => Number(v).toLocaleString()} />
+                          <Bar dataKey="avg_admissions" name="Avg Admissions" radius={[4, 4, 0, 0]} fill="#6366f1" fillOpacity={0.7} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+
+              {/* Top 10 */}
+              <Card>
+                <CardHeader className="pb-3 border-b">
+                  <CardTitle className="text-sm font-black uppercase tracking-[0.2em]">Top 10 Movies</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <ResponsiveContainer width="100%" height={350}>
+                    <BarChart
+                      data={data.movie_rankings.slice(0, 10).map((m) => ({
+                        title: m.title.length > 22 ? m.title.slice(0, 22) + '…' : m.title,
+                        admissions: m.total_period_admissions,
+                        type: m.type,
+                      }))}
+                      layout="vertical" margin={{ left: 20 }}
                     >
-                      <td className="py-2 px-3 font-mono font-bold">{m.latest_rank ?? '-'}</td>
-                      <td className="py-2 px-3">
-                        <div className="font-medium">{m.title}</div>
-                        <div className="text-xs text-muted-foreground">{m.movie_genre.join(', ')}</div>
-                      </td>
-                      <td className="py-2 px-3"><TypeBadge type={m.type} /></td>
-                      <td className="py-2 px-3 text-right font-mono">{m.total_period_admissions.toLocaleString()}</td>
-                      <td className="py-2 px-3 text-right font-mono text-muted-foreground">{m.latest_total_admission.toLocaleString()}</td>
-                      <td className="py-2 px-3 text-right font-mono">{m.latest_score.toFixed(1)}</td>
-                      <td className="py-2 px-3 text-center text-muted-foreground">{m.daily.length}</td>
-                      <td className="py-2 px-3"><ChevronRight className="h-3 w-3 text-muted-foreground" /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      <CartesianGrid strokeDasharray="3 3" className="opacity-20" />
+                      <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={(v) => formatAdmissions(Number(v))} />
+                      <YAxis type="category" dataKey="title" width={160} tick={{ fontSize: 10 }} />
+                      <Tooltip formatter={(v) => Number(v).toLocaleString()} />
+                      <Bar dataKey="admissions" name="Admissions" radius={[0, 4, 4, 0]}>
+                        {data.movie_rankings.slice(0, 10).map((m, i) => (
+                          <Cell key={i} fill={m.type === 'local' ? LOCAL_COLOR : INTL_COLOR} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Selected movie drill-down */}
+              {selectedMovie && (() => {
+                const movie = data.movie_rankings.find((m) => m.id === selectedMovie);
+                if (!movie) return null;
+
+                const weekBuckets = new Map<number, { total: number }>();
+                for (const d of movie.daily) {
+                  const weekNum = Math.floor((new Date(d.date).getTime() - new Date(movie.daily[0].date).getTime()) / (7 * 86400000));
+                  const existing = weekBuckets.get(weekNum);
+                  if (existing) existing.total += d.admission;
+                  else weekBuckets.set(weekNum, { total: d.admission });
+                }
+                const weeklyTotals = [...weekBuckets.entries()].sort(([a], [b]) => a - b).map(([w, { total }]) => ({ week: `W${w + 1}`, admissions: total }));
+                const wowDrop = weeklyTotals.length >= 2
+                  ? (((weeklyTotals[0].admissions - weeklyTotals[1].admissions) / weeklyTotals[0].admissions) * 100).toFixed(1)
+                  : null;
+
+                return (
+                  <Card>
+                    <CardHeader className="pb-2 border-b">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-sm font-black uppercase tracking-[0.2em]">{movie.title}</CardTitle>
+                        <button onClick={() => setSelectedMovie(null)} className="text-xs text-muted-foreground hover:text-foreground">✕ Close</button>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        <Badge variant="outline" className={movie.type === 'local' ? 'border-indigo-500/30 text-indigo-600' : 'border-amber-500/30 text-amber-600'}>
+                          {movie.type === 'local' ? 'Local' : 'International'}
+                        </Badge>
+                        <MetaChip icon={<Star className="w-3 h-3" />} value={`${movie.latest_score.toFixed(1)} score`} />
+                        <MetaChip icon={<Users className="w-3 h-3" />} value={`${movie.latest_total_admission.toLocaleString()} lifetime`} />
+                        <MetaChip icon={<Popcorn className="w-3 h-3" />} value={`${movie.peak_admission.toLocaleString()} peak`} />
+                        {wowDrop !== null && (
+                          <MetaChip
+                            icon={Number(wowDrop) > 0 ? <TrendingUp className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                            value={`W1→W2: ${wowDrop}%`}
+                            className={Number(wowDrop) > 0 ? 'text-green-600' : 'text-red-600'}
+                          />
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <div className="p-6">
+                        <ResponsiveContainer width="100%" height={220}>
+                          <LineChart data={movie.daily}>
+                            <CartesianGrid strokeDasharray="3 3" className="opacity-20" />
+                            <XAxis dataKey="date" tickFormatter={(v) => format(parseISO(String(v)), 'MMM d')} tick={{ fontSize: 10 }} />
+                            <YAxis yAxisId="left" tick={{ fontSize: 10 }} tickFormatter={(v) => formatAdmissions(Number(v))} />
+                            <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} reversed domain={[1, 'auto']} />
+                            <Tooltip labelFormatter={(v) => format(parseISO(String(v)), 'EEE, MMM d')} formatter={(v, name) => name === 'Rank' ? `#${v}` : Number(v).toLocaleString()} />
+                            <Legend />
+                            <Line yAxisId="left" type="monotone" dataKey="admission" stroke="#6366f1" strokeWidth={2} name="Admissions" dot={{ r: 2 }} />
+                            <Line yAxisId="right" type="monotone" dataKey="rank" stroke="#f59e0b" strokeWidth={1.5} name="Rank" strokeDasharray="4 4" dot={{ r: 2 }} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                      {movie.daily.length > 1 && (
+                        <div className="border-t px-6 pb-6 pt-4">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-2">Cumulative Admissions</p>
+                          <ResponsiveContainer width="100%" height={120}>
+                            <AreaChart data={movie.daily}>
+                              <CartesianGrid strokeDasharray="3 3" className="opacity-20" />
+                              <XAxis dataKey="date" tickFormatter={(v) => format(parseISO(String(v)), 'MMM d')} tick={{ fontSize: 9 }} />
+                              <YAxis tick={{ fontSize: 9 }} tickFormatter={(v) => formatAdmissions(Number(v))} />
+                              <Tooltip formatter={(v) => Number(v).toLocaleString()} />
+                              <Area type="monotone" dataKey="total_admission" stroke="#10b981" fill="#10b981" fillOpacity={0.12} name="Cumulative" />
+                            </AreaChart>
+                          </ResponsiveContainer>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })()}
+
+              {/* Full rankings */}
+              <Card>
+                <CardHeader className="pb-3 border-b">
+                  <CardTitle className="text-sm font-black uppercase tracking-[0.2em]">
+                    Full Rankings
+                    <span className="text-muted-foreground/60 font-normal normal-case tracking-normal ml-2">{data.movie_rankings.length} movies</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+                    <table className="w-full text-sm">
+                      <thead className="sticky top-0 bg-background z-10">
+                        <tr className="border-b text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                          <th className="p-4 text-left w-12">#</th>
+                          <th className="p-4 text-left">Movie</th>
+                          <th className="p-4 text-left w-20">Type</th>
+                          <th className="p-4 text-right">Period</th>
+                          <th className="p-4 text-right">Lifetime</th>
+                          <th className="p-4 text-right w-14">Score</th>
+                          <th className="p-4 text-center w-14">Days</th>
+                          <th className="p-4 w-6" />
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {data.movie_rankings.map((m) => (
+                          <tr
+                            key={m.id}
+                            className={cn(
+                              'border-b last:border-0 hover:bg-muted/30 transition-colors cursor-pointer',
+                              selectedMovie === m.id && 'bg-indigo-500/5',
+                            )}
+                            onClick={() => setSelectedMovie(selectedMovie === m.id ? null : m.id)}
+                          >
+                            <td className="p-4 font-mono font-bold">{m.latest_rank ?? '-'}</td>
+                            <td className="p-4">
+                              <p className="font-medium">{m.title}</p>
+                              <p className="text-[10px] text-muted-foreground/60">{m.movie_genre.join(', ')}</p>
+                            </td>
+                            <td className="p-4">
+                              <Badge variant="outline" className={cn(
+                                'text-[10px]',
+                                m.type === 'local' ? 'border-indigo-500/20 text-indigo-600' : 'border-amber-500/20 text-amber-600',
+                              )}>
+                                {m.type === 'local' ? 'Local' : 'Intl'}
+                              </Badge>
+                            </td>
+                            <td className="p-4 text-right font-mono">{m.total_period_admissions.toLocaleString()}</td>
+                            <td className="p-4 text-right font-mono text-muted-foreground">{m.latest_total_admission.toLocaleString()}</td>
+                            <td className="p-4 text-right font-mono">{m.latest_score.toFixed(1)}</td>
+                            <td className="p-4 text-center text-muted-foreground">{m.daily.length}</td>
+                            <td className="p-4"><ChevronRight className="w-3 h-3 text-muted-foreground/40" /></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </TabsContent>
+
+        {/* ── HALL OF FAME TAB ── */}
+        <TabsContent value="hall-of-fame" className="space-y-6 mt-6">
+          <div className="flex items-center gap-3">
+            <div className="h-4 w-1 bg-primary rounded-full" />
+            <h2 className="text-sm font-black uppercase tracking-[0.2em] text-foreground/80">
+              Best Movies by Year
+            </h2>
+            <span className="text-[10px] font-mono text-muted-foreground/40">
+              {yearsData ? `${yearsData.total_years} years with data` : ''}
+            </span>
+          </div>
+
+          {yearsLoading && (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
-          </ChartCard>
-        </>
-      )}
+          )}
+
+          {!yearsLoading && yearsData && yearsData.years.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-20 gap-4 border-2 border-dashed rounded-xl bg-muted/5">
+              <Flame className="w-12 h-12 text-muted-foreground/20" />
+              <p className="text-muted-foreground font-medium">No yearly data yet</p>
+            </div>
+          )}
+
+          {!yearsLoading && yearsData && yearsData.years.length > 0 && (
+            <>
+              {/* Year cards — newest first */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {[...yearsData.years].reverse().map((y) => {
+                  const isChampionLocal = y.top_movie?.type === 'local';
+                  return (
+                    <Card key={y.year} className="relative overflow-hidden">
+                      {/* Year accent bar */}
+                      <div className={cn(
+                        'absolute top-0 left-0 right-0 h-1',
+                        isChampionLocal ? 'bg-indigo-500' : 'bg-amber-500',
+                      )} />
+
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-2xl font-black tracking-tight">{y.year}</CardTitle>
+                          <Badge variant="outline" className="text-[10px]">
+                            {y.dates_with_data} {y.dates_with_data === 1 ? 'day' : 'days'}
+                          </Badge>
+                        </div>
+                        <div className="flex gap-3 text-[10px] text-muted-foreground/60">
+                          <span>{formatAdmissions(y.total_admissions)} total</span>
+                          <span>{y.unique_movies} movies</span>
+                        </div>
+                      </CardHeader>
+
+                      <CardContent className="space-y-3">
+                        {/* Champion */}
+                        {y.top_movie && (
+                          <div className="flex items-start gap-2">
+                            <Crown className={cn('w-4 h-4 mt-0.5 shrink-0', isChampionLocal ? 'text-indigo-500' : 'text-amber-500')} />
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold truncate">{y.top_movie.title}</p>
+                              <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                                <span className="font-mono">{y.top_movie.total_admissions.toLocaleString()}</span>
+                                <Badge variant="outline" className={cn(
+                                  'text-[9px] px-1 py-0',
+                                  isChampionLocal ? 'border-indigo-500/20 text-indigo-600' : 'border-amber-500/20 text-amber-600',
+                                )}>
+                                  {y.top_movie.type === 'local' ? 'Local' : 'Intl'}
+                                </Badge>
+                              </div>
+                              {y.top_movie.movie_genre.length > 0 && (
+                                <p className="text-[10px] text-muted-foreground/40 truncate">{y.top_movie.movie_genre.join(', ')}</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Market split bar */}
+                        <div className="space-y-1">
+                          <div className="flex h-1.5 rounded-full overflow-hidden bg-muted">
+                            <div className="bg-indigo-500 rounded-l-full" style={{ width: `${(y.local_admissions / (y.total_admissions || 1)) * 100}%` }} />
+                            <div className="bg-amber-500 rounded-r-full" style={{ width: `${(y.international_admissions / (y.total_admissions || 1)) * 100}%` }} />
+                          </div>
+                          <div className="flex justify-between text-[9px] text-muted-foreground/50 font-mono">
+                            <span>{((y.local_admissions / (y.total_admissions || 1)) * 100).toFixed(0)}% local</span>
+                            <span>{((y.international_admissions / (y.total_admissions || 1)) * 100).toFixed(0)}% intl</span>
+                          </div>
+                        </div>
+
+                        {/* Sub-champions */}
+                        <div className="grid grid-cols-2 gap-2 pt-1 border-t">
+                          {y.top_local && (
+                            <div className="min-w-0">
+                              <p className="text-[9px] font-black uppercase tracking-widest text-indigo-500/60">Top Local</p>
+                              <p className="text-[11px] font-medium truncate">{y.top_local.title}</p>
+                              <p className="text-[10px] text-muted-foreground font-mono">{formatAdmissions(y.top_local.total_admissions)}</p>
+                            </div>
+                          )}
+                          {y.top_international && (
+                            <div className="min-w-0">
+                              <p className="text-[9px] font-black uppercase tracking-widest text-amber-500/60">Top Intl</p>
+                              <p className="text-[11px] font-medium truncate">{y.top_international.title}</p>
+                              <p className="text-[10px] text-muted-foreground font-mono">{formatAdmissions(y.top_international.total_admissions)}</p>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+
+              {/* Yearly totals table */}
+              <Card>
+                <CardHeader className="pb-3 border-b">
+                  <CardTitle className="text-sm font-black uppercase tracking-[0.2em]">Yearly Overview</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                          <th className="p-4 text-left">Year</th>
+                          <th className="p-4 text-left">Champion</th>
+                          <th className="p-4 text-right">Total Admissions</th>
+                          <th className="p-4 text-right">Local</th>
+                          <th className="p-4 text-right">International</th>
+                          <th className="p-4 text-right">Movies</th>
+                          <th className="p-4 text-right">Days</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[...yearsData.years].reverse().map((y) => (
+                          <tr key={y.year} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                            <td className="p-4 font-black">{y.year}</td>
+                            <td className="p-4">
+                              <p className="font-medium">{y.top_movie?.title ?? '-'}</p>
+                              {y.top_movie && (
+                                <Badge variant="outline" className={cn(
+                                  'text-[9px] px-1 py-0 mt-1',
+                                  y.top_movie.type === 'local' ? 'border-indigo-500/20 text-indigo-600' : 'border-amber-500/20 text-amber-600',
+                                )}>
+                                  {y.top_movie.type === 'local' ? 'Local' : 'Intl'}
+                                </Badge>
+                              )}
+                            </td>
+                            <td className="p-4 text-right font-mono font-bold">{y.total_admissions.toLocaleString()}</td>
+                            <td className="p-4 text-right font-mono text-indigo-600">{y.local_admissions.toLocaleString()}</td>
+                            <td className="p-4 text-right font-mono text-amber-600">{y.international_admissions.toLocaleString()}</td>
+                            <td className="p-4 text-right font-mono">{y.unique_movies}</td>
+                            <td className="p-4 text-right font-mono text-muted-foreground">{y.dates_with_data}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
 
 // ─── Sub-components ─────────────────────────────────────────
 
-function KPICard({ icon, label, value, sub, color }: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  sub: string;
-  color: string;
-}) {
-  const colorMap: Record<string, string> = {
-    indigo: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400',
-    purple: 'bg-purple-50 text-purple-600 dark:bg-purple-950 dark:text-purple-400',
-    amber: 'bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400',
-    emerald: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400',
-  };
-
+function MetaChip({ icon, value, className }: { icon: React.ReactNode; value: string; className?: string }) {
   return (
-    <div className="border rounded-lg p-4 space-y-2">
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <div className={cn('p-1.5 rounded-md', colorMap[color])}>{icon}</div>
-        <span className="text-xs font-medium">{label}</span>
-      </div>
-      <div className="text-2xl font-bold">{value}</div>
-      <div className="text-xs text-muted-foreground">{sub}</div>
-    </div>
-  );
-}
-
-function ChartCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
-  return (
-    <div className="border rounded-lg p-5">
-      <div className="mb-4">
-        <h3 className="text-sm font-semibold">{title}</h3>
-        {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function TypeBadge({ type }: { type: string }) {
-  return (
-    <span className={cn(
-      'text-xs px-2 py-0.5 rounded-full',
-      type === 'local'
-        ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300'
-        : 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300',
-    )}>
-      {type === 'local' ? 'Local' : 'Intl'}
-    </span>
-  );
-}
-
-function RankChange({ change, first, last }: { change: number; first: number; last: number }) {
-  return (
-    <span className={cn(
-      'inline-flex items-center gap-1 text-xs font-medium',
-      change > 0 ? 'text-green-600' : change < 0 ? 'text-red-600' : 'text-gray-500',
-    )}>
-      {change > 0 ? <ArrowUpRight className="h-3 w-3" /> : change < 0 ? <ArrowDownRight className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
-      {Math.abs(change)} ({first} → {last})
-    </span>
-  );
-}
-
-function StatChip({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color?: string }) {
-  return (
-    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+    <div className={cn('flex items-center gap-1 text-[10px] text-muted-foreground', className)}>
       {icon}
-      <span>{label}:</span>
-      <span className={cn('font-medium', color)}>{value}</span>
+      <span className="font-medium">{value}</span>
     </div>
   );
 }
