@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
-  ArrowLeft, Loader2, Star, Clapperboard, Film, TrendingUp,
-  Trophy, ExternalLink,
+  ArrowLeft, Loader2, Star, Clapperboard,
+  Trophy,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -13,40 +13,16 @@ import {
 } from 'recharts';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
-interface AnalysisMovie {
-  id: number; title: string; type: string; language: string; genres: string[];
-  duration: number; total_admission: number; score: number; rating_category: string[];
-  directors: string[]; actors: string[]; release_year: number;
-}
-
-function formatAdm(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
-  return n.toLocaleString();
-}
+import {
+  useAnalysisData,
+  formatAdm,
+  TIER_COLORS,
+} from '@/lib/cinepoint';
 
 export default function PersonDetailPage() {
   const params = useParams();
   const name = decodeURIComponent(params.name as string);
-
-  const [allMovies, setAllMovies] = useState<AnalysisMovie[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch('/api/competitors/cinepoint/analysis')
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then((json) => {
-        if (json.success) setAllMovies(json.data);
-        else throw new Error(json.error || 'Failed to load');
-      })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, []);
+  const { movies: allMovies, loading, error } = useAnalysisData();
 
   // Detect role: check directors first, then actors
   const role = useMemo(() => {
@@ -55,7 +31,6 @@ export default function PersonDetailPage() {
     return asDirector >= asActor ? 'director' : 'actor';
   }, [allMovies, name]);
 
-  // Find all movies this person worked on
   const filmography = useMemo(() => {
     const key = role === 'director' ? 'directors' : 'actors';
     return allMovies

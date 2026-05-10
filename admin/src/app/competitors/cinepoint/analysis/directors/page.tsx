@@ -1,86 +1,44 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
-  Loader2, Clapperboard, ArrowLeft, Search, ChevronRight, Eye,
+  Clapperboard, ArrowLeft, Search, Eye,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+  useAnalysisData,
+  computePersonRankings,
+  formatAdm,
+} from '@/lib/cinepoint';
+import type { AnalysisMovie } from '@/lib/cinepoint';
 
-interface AnalysisMovie {
-  id: number; title: string; type: string; language: string; genres: string[];
-  duration: number; total_admission: number; score: number; rating_category: string[];
-  directors: string[]; actors: string[]; release_year: number;
-}
-
-interface PersonRow {
-  name: string; movie_count: number; avg_admission: number; median_admission: number;
-  total_admission: number; best_movie: { id: number; title: string; total_admission: number } | null;
-  hit_rate: number;
-}
-
-function formatAdm(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
-  return n.toLocaleString();
+function buildDirectorRankings(movies: AnalysisMovie[], typeFilter: 'all' | 'local' | 'international') {
+  const filtered = typeFilter === 'all'
+    ? movies.filter((m) => m.total_admission > 0)
+    : movies.filter((m) => m.total_admission > 0 && m.type === typeFilter);
+  // Filter junk director names
+  const junkNames = new Set(['abc', 'dir']);
+  return computePersonRankings(
+    filtered.map((m) => ({ ...m, directors: m.directors.filter((d) => !junkNames.has(d) && d.length >= 2) })),
+    'directors',
+    2,
+  );
 }
 
 export default function DirectorsPage() {
-  const [movies, setMovies] = useState<AnalysisMovie[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { movies, loading, error } = useAnalysisData();
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'local' | 'international'>('all');
 
-  useEffect(() => {
-    fetch('/api/competitors/cinepoint/analysis')
-      .then((r) => r.json())
-      .then((json) => { if (json.success) setMovies(json.data); })
-      .finally(() => setLoading(false));
-  }, []);
-
-  const rankings = useMemo(() => {
-    const map = new Map<string, { id: number; title: string; total_admission: number; type: string }[]>();
-    const filtered = typeFilter === 'all'
-      ? movies.filter((m) => m.total_admission > 0)
-      : movies.filter((m) => m.total_admission > 0 && m.type === typeFilter);
-
-    for (const m of filtered) {
-      for (const name of m.directors) {
-        if (!name || name.length < 2 || name === 'abc' || name === 'dir') continue;
-        if (!map.has(name)) map.set(name, []);
-        map.get(name)!.push({ id: m.id, title: m.title, total_admission: m.total_admission, type: m.type });
-      }
-    }
-
-    const result: PersonRow[] = [];
-    for (const [name, ms] of map) {
-      if (ms.length < 2) continue;
-      const adm = ms.map((m) => m.total_admission);
-      const sorted = [...adm].sort((a, b) => a - b);
-      const mid = Math.floor(sorted.length / 2);
-      const med = sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
-      const best = ms.reduce((a, b) => a.total_admission > b.total_admission ? a : b);
-      result.push({
-        name, movie_count: ms.length,
-        avg_admission: Math.round(adm.reduce((s, v) => s + v, 0) / adm.length),
-        median_admission: Math.round(med),
-        total_admission: adm.reduce((s, v) => s + v, 0),
-        best_movie: best,
-        hit_rate: Math.round((adm.filter((v) => v >= 500_000).length / adm.length) * 1000) / 10,
-      });
-    }
-    return result.sort((a, b) => b.avg_admission - a.avg_admission);
-  }, [movies, typeFilter]);
-
-  const filtered = search
-    ? rankings.filter((r) => r.name.toLowerCase().includes(search.toLowerCase()))
-    : rankings;
+  const rankings = useMemo(() => buildDirectorRankings(movies, typeFilter), [movies, typeFilter]);
+  const filtered = search ? rankings.filter((r) => r.name.toLowerCase().includes(search.toLowerCase())) : rankings;
 
   if (loading) {
     return (
       <div className="min-h-screen">
-        <div className="px-6 py-8 space-y-6 max-w-[1400px] mx-auto">
+        <div className="px-6 py-8 space-y-6 max-w-full mx-auto">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
               <Clapperboard className="w-5 h-5 text-amber-500 animate-pulse" />
@@ -166,12 +124,12 @@ export default function DirectorsPage() {
                   <th className="p-3 text-right">Hit Rate</th>
                   <th className="p-3 text-right">Total</th>
                   <th className="p-3 text-left">Best Movie</th>
-                  <th className="p-3 text-center w-28"></th>
+                  <th className="p-3 text-center w-28" />
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((p, i) => (
-                  <tr key={p.name} className="border-b last:border-0 hover:bg-muted/20 transition-colors group">
+                  <tr key={p.name} className="border-b last:border-0 hover:bg-muted/20 transition-colors">
                     <td className="p-3 text-muted-foreground/30 font-mono">{i + 1}</td>
                     <td className="p-3 font-bold">{p.name}</td>
                     <td className="p-3 text-right font-mono text-muted-foreground">{p.movie_count}</td>

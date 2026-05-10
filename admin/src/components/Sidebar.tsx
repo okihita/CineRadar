@@ -86,6 +86,34 @@ const menuGroups: MenuGroup[] = [
                 adminOnly: false,
             },
             {
+                title: 'Showtime Intelligence',
+                description: 'Daily coverage & analysis',
+                href: '/schedules',
+                icon: Calendar,
+                adminOnly: false,
+            },
+        ],
+    },
+    {
+        id: 'knowledge',
+        label: 'Knowledge Base',
+        icon: BookOpen,
+        items: [
+            {
+                title: 'Movie Registry',
+                description: 'All movies & details',
+                href: '/movies',
+                icon: Clapperboard,
+                adminOnly: false,
+            },
+            {
+                title: 'Cinema Intelligence',
+                description: 'Theatre locations & chains',
+                href: '/cinemas',
+                icon: MapPin,
+                adminOnly: false,
+            },
+            {
                 title: 'Competitor Data',
                 description: 'CinePoint benchmarking',
                 href: '/competitors',
@@ -125,34 +153,6 @@ const menuGroups: MenuGroup[] = [
                 description: 'Director performance',
                 href: '/competitors/cinepoint/analysis/directors',
                 icon: Clapperboard,
-                adminOnly: false,
-            },
-            {
-                title: 'Showtime Intelligence',
-                description: 'Daily coverage & analysis',
-                href: '/schedules',
-                icon: Calendar,
-                adminOnly: false,
-            },
-        ],
-    },
-    {
-        id: 'knowledge',
-        label: 'Knowledge Base',
-        icon: BookOpen,
-        items: [
-            {
-                title: 'Movie Registry',
-                description: 'All movies & details',
-                href: '/movies',
-                icon: Clapperboard,
-                adminOnly: false,
-            },
-            {
-                title: 'Cinema Intelligence',
-                description: 'Theatre locations & chains',
-                href: '/cinemas',
-                icon: MapPin,
                 adminOnly: false,
             },
         ],
@@ -202,34 +202,26 @@ function saveCollapsedGroups(groups: Set<string>) {
 
 /** Check if a menu item's route matches the current pathname */
 function isItemActive(href: string, pathname: string): boolean {
-    if (href === '/performances') {
-        return pathname === '/performances' || pathname.startsWith('/performances/');
+    // Exact-match routes (don't match sub-paths)
+    const exactRoutes = ['/social-feed/settings'];
+    if (exactRoutes.includes(href)) return pathname === href;
+
+    // Prefix match: href must match pathname exactly or as a path prefix
+    return pathname === href || pathname.startsWith(href + '/');
+}
+
+/**
+ * Find the most specific (longest) matching href for the current pathname.
+ * Used to highlight only the most specific menu item.
+ */
+function findMostSpecificActive(items: MenuItem[], pathname: string): string | null {
+    let best: string | null = null;
+    for (const item of items) {
+        if (isItemActive(item.href, pathname)) {
+            if (!best || item.href.length > best.length) best = item.href;
+        }
     }
-    if (href === '/schedules') {
-        return pathname === '/schedules' || pathname.startsWith('/schedules/');
-    }
-    if (href === '/social-feed') {
-        return pathname === '/social-feed' || /^\/social-feed\/\d{4}/.test(pathname);
-    }
-    if (href === '/competitors') {
-        return pathname === '/competitors' || pathname.startsWith('/competitors/archive') || /^\/competitors\/\d{4}/.test(pathname);
-    }
-    if (href === '/competitors/cinepoint/analysis/actors') {
-        return pathname === '/competitors/cinepoint/analysis/actors' || pathname.startsWith('/competitors/cinepoint/analysis/person/');
-    }
-    if (href === '/competitors/cinepoint/analysis/directors') {
-        return pathname === '/competitors/cinepoint/analysis/directors';
-    }
-    if (href === '/competitors/cinepoint/analysis') {
-        return pathname === '/competitors/cinepoint/analysis';
-    }
-    if (href === '/competitors/cinepoint/insights') {
-        return pathname === '/competitors/cinepoint/insights';
-    }
-    if (href === '/competitors/cinepoint') {
-        return pathname === '/competitors/cinepoint' || pathname.startsWith('/competitors/cinepoint/movies');
-    }
-    return pathname.startsWith(href);
+    return best;
 }
 
 /** Check if any item in a group is active */
@@ -302,7 +294,7 @@ export function Sidebar() {
             <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
                 {/* Standalone items (pinned at top) */}
                 {standaloneItems.map((item) => {
-                    const isActive = isItemActive(item.href, pathname);
+                    const isActive = item.href === findMostSpecificActive(standaloneItems, pathname);
                     const Icon = item.icon;
                     return (
                         <Link
@@ -341,6 +333,7 @@ export function Sidebar() {
                         collapsed={collapsed}
                         pathname={pathname}
                         onToggle={() => toggleGroup(group.id)}
+                        mostSpecificActive={findMostSpecificActive(group.items, pathname)}
                     />
                 ))}
             </nav>
@@ -354,6 +347,7 @@ export function Sidebar() {
                         collapsed={collapsed}
                         pathname={pathname}
                         onToggle={() => toggleGroup(adminGroup.id)}
+                        mostSpecificActive={findMostSpecificActive(visibleAdminItems, pathname)}
                     />
                 </div>
             )}
@@ -449,12 +443,14 @@ function MenuSection({
     collapsed,
     pathname,
     onToggle,
+    mostSpecificActive,
 }: {
     group: MenuGroup;
     expanded: boolean;
     collapsed: boolean;
     pathname: string;
     onToggle: () => void;
+    mostSpecificActive: string | null;
 }) {
     const groupActive = isGroupActive(group, pathname);
     const GroupIcon = group.icon;
@@ -492,7 +488,7 @@ function MenuSection({
             {expanded && (
                 <div className="space-y-0.5 mt-0.5">
                     {group.items.map((item) => {
-                        const isActive = isItemActive(item.href, pathname);
+                        const isActive = item.href === mostSpecificActive;
                         const Icon = item.icon;
 
                         return (
