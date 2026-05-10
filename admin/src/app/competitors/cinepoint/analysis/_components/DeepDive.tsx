@@ -5,7 +5,7 @@ import { Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { formatAdm, TIER_COLORS, TIER_LABELS } from '@/lib/cinepoint';
+import { formatAdm, classifyTier, TIER_COLORS, TIER_LABELS } from '@/lib/cinepoint';
 import type { AnalysisMovie, OverviewStats } from '@/lib/cinepoint';
 
 interface DeepDiveProps {
@@ -174,7 +174,7 @@ function buildProfile(movie: AnalysisMovie, filtered: AnalysisMovie[]) {
   });
   const durAvg = durMovies.length ? Math.round(durMovies.reduce((s, f) => s + f.total_admission, 0) / durMovies.length) : 0;
 
-  const tier = movie.total_admission >= 1_000_000 ? 'mega_hit' : movie.total_admission >= 500_000 ? 'hit' : movie.total_admission >= 100_000 ? 'moderate' : movie.total_admission >= 10_000 ? 'niche' : 'flop';
+  const tier = classifyTier(movie.total_admission);
 
   return {
     movie,

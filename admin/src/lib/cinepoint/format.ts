@@ -1,8 +1,6 @@
 /**
- * Shared formatters and pure utility functions for CinePoint analysis.
+ * Shared formatters and pure utility functions for CinePoint.
  */
-
-import type { AnalysisMovie } from './types';
 
 /** Format admission number to human-readable string (1.2M, 450K, 832) */
 export function formatAdm(n: number): string {
@@ -46,3 +44,8 @@ export const TIER_LABELS: Record<string, string> = {
 };
 
 export const TIER_KEYS = ['mega_hit', 'hit', 'moderate', 'niche', 'flop'] as const;
+
+/** Movie type color constants used across insights and detail pages */
+export const LOCAL_COLOR = '#6366f1';
+export const INTL_COLOR = '#f59e0b';
+export const CHART_COLORS = ['#6366f1', '#f59e0b', '#10b981', '#f87171', '#38bdf8', '#e879f9', '#fb923c', '#34d399'];

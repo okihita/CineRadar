@@ -97,3 +97,94 @@ export interface FactorState {
   duration: boolean;
   rating: boolean;
 }
+
+// ─── Box Office API Types ───────────────────────────────────
+
+export interface DailyTotal {
+  date: string;
+  total_admissions: number;
+  total_showtimes: number;
+  movie_count: number;
+  local_admissions: number;
+  international_admissions: number;
+}
+
+export interface MovieDaily {
+  date: string;
+  admission: number;
+  rank: number;
+  change: number;
+  total_admission: number;
+  showtimes: number;
+  score: number;
+}
+
+export interface MovieRanking {
+  id: number;
+  title: string;
+  type: string;
+  image_title: string | null;
+  movie_genre: string[];
+  release_date: string;
+  daily: MovieDaily[];
+  total_period_admissions: number;
+  latest_total_admission: number;
+  latest_score: number;
+  latest_rank: number | null;
+  peak_admission: number;
+  opening_admission: number | null;
+}
+
+export interface TopMover extends MovieRanking {
+  rank_change: number;
+  first_rank: number;
+  last_rank: number;
+}
+
+export interface YearSummary {
+  year: number;
+  dates_with_data: number;
+  total_admissions: number;
+  local_admissions: number;
+  international_admissions: number;
+  unique_movies: number;
+  top_movie: {
+    movie_id: number;
+    title: string;
+    type: string;
+    total_admissions: number;
+    movie_genre: string[];
+    release_date: string;
+    score: number;
+  } | null;
+  top_local: { movie_id: number; title: string; total_admissions: number; movie_genre: string[] } | null;
+  top_international: { movie_id: number; title: string; total_admissions: number; movie_genre: string[] } | null;
+}
+
+export interface BoxOfficeData {
+  success: boolean;
+  has_data: boolean;
+  meta: {
+    date_range: { start: string; end: string };
+    days_with_data: number;
+    unique_movies: number;
+    grand_total_admissions: number;
+    avg_daily_admissions: number;
+    peak_day: { date: string; admissions: number } | null;
+    top_movie: { title: string; total_period_admissions: number; latest_total_admission: number } | null;
+  };
+  daily_totals: DailyTotal[];
+  movie_rankings: MovieRanking[];
+  top_movers: TopMover[];
+  genre_breakdown: { genre: string; admissions: number }[];
+  day_of_week: { day: string; avg_admissions: number; total_admissions: number; days_count: number }[];
+  new_releases: MovieRanking[];
+  sync_meta?: {
+    status: string;
+    date_start: string;
+    date_end: string;
+    last_scraped_date: string | null;
+    docs_written: number;
+    dates_scraped: number;
+  } | null;
+}

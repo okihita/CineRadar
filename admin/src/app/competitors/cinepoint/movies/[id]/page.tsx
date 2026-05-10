@@ -9,27 +9,20 @@ import {
 } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import {
-  ArrowLeft, Loader2, Film, Star, ChevronRight, Crown,
-  Clapperboard, Languages, Clock, Play, Eye, Video,
-  PenTool, Megaphone, UserCircle, ArrowUpRight,
-  TrendingUp, ArrowDownRight, Popcorn, Users,
+  ArrowLeft, Loader2, Film, ChevronRight,
+  Languages, Clock, Play, Eye, ArrowUpRight,
+  TrendingUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import type { CinePointMovie } from '@/features/competitors/types';
-
-// ─── Constants ─────────────────────────────────────────────
-
-const LOCAL_COLOR = '#6366f1';
-const INTL_COLOR = '#f59e0b';
-
-function formatAdmissions(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
-  return n.toLocaleString();
-}
+import { formatAdm, LOCAL_COLOR, INTL_COLOR } from '@/lib/cinepoint';
+import {
+  extractCrew, MovieSynopsis, MovieCastCrew, MovieAudienceRating,
+  MovieWhereToWatch,
+} from '@/components/cinepoint/MovieDetailSections';
 
 // ─── Page ──────────────────────────────────────────────────
 
@@ -192,14 +185,7 @@ export default function CinePointMovieDetailPage({
 // ─── Enriched Content ──────────────────────────────────────
 
 function EnrichedContent({ movie }: { movie: CinePointMovie }) {
-  const casts = movie.casts?.find((c) => c.role === 'casts')?.names ?? [];
-  const directors = movie.casts?.find((c) => c.role === 'directors')?.names ?? [];
-  const producers = movie.casts?.find((c) => c.role === 'producers')?.names ?? [];
-  const writers = movie.casts?.find((c) => c.role === 'writers')?.names ?? [];
-  const userRatings = movie.user_ratings ?? [];
-  const topRating = userRatings.length > 0
-    ? userRatings.reduce((best, r) => r.value > best.value ? r : best, userRatings[0])
-    : null;
+  const { casts, directors, producers, writers, userRatings, topRating } = extractCrew(movie);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -298,79 +284,10 @@ function EnrichedContent({ movie }: { movie: CinePointMovie }) {
         </div>
 
         {/* Synopsis */}
-        {movie.description && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2">
-                <Film className="w-4 h-4 text-indigo-500" /> Synopsis
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm leading-relaxed text-muted-foreground">{movie.description}</p>
-            </CardContent>
-          </Card>
-        )}
+        <MovieSynopsis description={movie.description} />
 
         {/* Cast & Crew */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2">
-              <Clapperboard className="w-4 h-4 text-amber-500" /> Cast & Crew
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {directors.length > 0 && (
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-1 mb-1.5">
-                  <Megaphone className="w-3 h-3" /> Director{directors.length > 1 ? 's' : ''}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {directors.map((name) => (
-                    <Badge key={name} variant="outline" className="border-amber-500/20 text-amber-700 text-xs">{name}</Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-            {writers.length > 0 && (
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-1 mb-1.5">
-                  <PenTool className="w-3 h-3" /> Writer{writers.length > 1 ? 's' : ''}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {writers.map((name) => (
-                    <Badge key={name} variant="outline" className="border-indigo-500/20 text-indigo-700 text-xs">{name}</Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-            {casts.length > 0 && (
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-1 mb-1.5">
-                  <UserCircle className="w-3 h-3" /> Cast ({casts.length})
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {casts.map((name) => (
-                    <span key={name} className="text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-md">{name}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-            {producers.length > 0 && (
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-1 mb-1.5">
-                  <Star className="w-3 h-3" /> Producer{producers.length > 1 ? 's' : ''}
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {producers.map((name, i) => (
-                    <span key={name} className="text-[10px] text-muted-foreground/70">
-                      {name}{i < producers.length - 1 ? ' ·' : ''}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <MovieCastCrew casts={casts} directors={directors} writers={writers} producers={producers} />
 
         {/* Similar movies */}
         {movie.similar_movies && movie.similar_movies.length > 0 && (
@@ -412,66 +329,10 @@ function EnrichedContent({ movie }: { movie: CinePointMovie }) {
       {/* ── Right sidebar ── */}
       <div className="space-y-6">
         {/* Audience Rating */}
-        {userRatings.length > 0 && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2">
-                <Star className="w-4 h-4 text-amber-500" /> Audience Rating
-              </CardTitle>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black">{movie.score?.toFixed(1) ?? '?'}</span>
-                <span className="text-xs text-muted-foreground">/ 10</span>
-                {topRating && (
-                  <span className="text-[10px] text-muted-foreground/50 ml-auto">
-                    Peak: {topRating.rating}/10 ({topRating.value}%)
-                  </span>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-1.5">
-                {userRatings.map((r) => (
-                  <div key={r.rating} className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono w-4 text-right text-muted-foreground/50">{r.rating}</span>
-                    <div className="flex-1 h-2.5 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all"
-                        style={{ width: `${Math.max(r.value, 0.5)}%` }}
-                      />
-                    </div>
-                    <span className="text-[10px] font-mono w-10 text-right text-muted-foreground/60">{r.value}%</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        <MovieAudienceRating score={movie.score} userRatings={userRatings} topRating={topRating} />
 
         {/* Where to Watch */}
-        {movie.playing_at && movie.playing_at.length > 0 && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-black uppercase tracking-[0.2em]">Where to Watch</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {movie.playing_at.map((p) => (
-                <a
-                  key={p.title}
-                  href={p.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted/50 transition-colors border border-border/10"
-                >
-                  {p.image && (
-                    <img src={p.image} alt={p.title} className="w-8 h-8 rounded object-contain bg-muted/20 p-0.5" referrerPolicy="no-referrer" />
-                  )}
-                  <span className="text-sm font-medium">{p.title}</span>
-                  <ArrowUpRight className="w-3 h-3 text-muted-foreground/30 ml-auto" />
-                </a>
-              ))}
-            </CardContent>
-          </Card>
-        )}
+        <MovieWhereToWatch playingAt={movie.playing_at ?? []} />
 
         {/* Comparison */}
         {movie.comparison && movie.comparison.length > 0 && (
@@ -555,7 +416,7 @@ function ComparisonBar({ title, admission, isHighlight, color }: { title: string
       <div className="flex-1 h-2 bg-muted/30 rounded-full overflow-hidden">
         <div className="h-full rounded-full" style={{ backgroundColor: color, width: '100%' }} />
       </div>
-      <span className="text-[10px] font-mono text-muted-foreground/60 w-14 text-right">{formatAdmissions(admission)}</span>
+      <span className="text-[10px] font-mono text-muted-foreground/60 w-14 text-right">{formatAdm(admission)}</span>
     </div>
   );
 }

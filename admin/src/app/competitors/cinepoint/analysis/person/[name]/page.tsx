@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   useAnalysisData,
   formatAdm,
+  median,
   TIER_COLORS,
 } from '@/lib/cinepoint';
 
@@ -42,14 +43,12 @@ export default function PersonDetailPage() {
     const withAdm = filmography.filter((m) => m.total_admission > 0);
     const admissions = withAdm.map((m) => m.total_admission);
     const total = admissions.reduce((s, v) => s + v, 0);
-    const sorted = [...admissions].sort((a, b) => a - b);
-    const mid = Math.floor(sorted.length / 2);
     return {
       total_movies: filmography.length,
       with_admissions: withAdm.length,
       total_admissions: total,
       avg_admission: withAdm.length ? Math.round(total / withAdm.length) : 0,
-      median_admission: withAdm.length ? Math.round(sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2) : 0,
+      median_admission: withAdm.length ? Math.round(median(admissions)) : 0,
       best_movie: withAdm.length ? withAdm.reduce((a, b) => a.total_admission > b.total_admission ? a : b) : null,
       hit_count: admissions.filter((v) => v >= 500_000).length,
       hit_rate: withAdm.length ? Math.round((admissions.filter((v) => v >= 500_000).length / withAdm.length) * 1000) / 10 : 0,
