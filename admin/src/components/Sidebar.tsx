@@ -113,22 +113,29 @@ const menuGroups: MenuGroup[] = [
                 icon: MapPin,
                 adminOnly: false,
             },
+        ],
+    },
+    {
+        id: 'cinepoint',
+        label: 'CinePoint Intelligence',
+        icon: Swords,
+        items: [
             {
                 title: 'Competitor Data',
-                description: 'CinePoint benchmarking',
+                description: 'Raw tweets & snapshots',
                 href: '/competitors',
-                icon: Swords,
+                icon: Radio,
                 adminOnly: false,
             },
             {
-                title: 'CinePoint Catalog',
+                title: 'Catalog',
                 description: 'Movie database sync',
                 href: '/competitors/cinepoint',
                 icon: Library,
                 adminOnly: false,
             },
             {
-                title: 'CinePoint Insights',
+                title: 'Insights',
                 description: 'Daily box office intelligence',
                 href: '/competitors/cinepoint/insights',
                 icon: BarChart3,
