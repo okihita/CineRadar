@@ -6,7 +6,7 @@ import {
     MapPin, ChevronLeft, ChevronRight, ChevronDown,
     Database, Calendar, Clapperboard, Sun, Moon, Monitor,
     LogOut, Users as UsersIcon, Share2, ArrowRightLeft,
-    TrendingUp, Rss, Settings, Shield, BookOpen, Radio, Swords, Library, BarChart3,
+    TrendingUp, Rss, Settings, Shield, BookOpen, Radio, Swords, Library, BarChart3, Target, Star,
     type LucideIcon,
 } from 'lucide-react';
 import { useState, useCallback } from 'react';
@@ -107,6 +107,27 @@ const menuGroups: MenuGroup[] = [
                 adminOnly: false,
             },
             {
+                title: 'Success Predictor',
+                description: 'What makes a movie succeed?',
+                href: '/competitors/cinepoint/analysis',
+                icon: Target,
+                adminOnly: false,
+            },
+            {
+                title: 'Actor Database',
+                description: 'Star power rankings',
+                href: '/competitors/cinepoint/analysis/actors',
+                icon: Star,
+                adminOnly: false,
+            },
+            {
+                title: 'Director Database',
+                description: 'Director performance',
+                href: '/competitors/cinepoint/analysis/directors',
+                icon: Clapperboard,
+                adminOnly: false,
+            },
+            {
                 title: 'Showtime Intelligence',
                 description: 'Daily coverage & analysis',
                 href: '/schedules',
@@ -193,8 +214,20 @@ function isItemActive(href: string, pathname: string): boolean {
     if (href === '/competitors') {
         return pathname === '/competitors' || pathname.startsWith('/competitors/archive') || /^\/competitors\/\d{4}/.test(pathname);
     }
+    if (href === '/competitors/cinepoint/analysis/actors') {
+        return pathname === '/competitors/cinepoint/analysis/actors' || pathname.startsWith('/competitors/cinepoint/analysis/person/');
+    }
+    if (href === '/competitors/cinepoint/analysis/directors') {
+        return pathname === '/competitors/cinepoint/analysis/directors';
+    }
+    if (href === '/competitors/cinepoint/analysis') {
+        return pathname === '/competitors/cinepoint/analysis';
+    }
+    if (href === '/competitors/cinepoint/insights') {
+        return pathname === '/competitors/cinepoint/insights';
+    }
     if (href === '/competitors/cinepoint') {
-        return pathname === '/competitors/cinepoint' || pathname.startsWith('/competitors/cinepoint/');
+        return pathname === '/competitors/cinepoint' || pathname.startsWith('/competitors/cinepoint/movies');
     }
     return pathname.startsWith(href);
 }

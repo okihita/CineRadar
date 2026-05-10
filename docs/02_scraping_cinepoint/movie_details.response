@@ -6,45 +6,46 @@
   "response_output": {
     "detail": {
       "rating_category": [
-        "PG-13"
+        "17+"
       ],
       "casts": [
         {
           "role": "casts",
           "names": [
-            "Jackie Chan",
-            "Pan Binlong",
-            "Wang Yinglu",
-            "Ma Li",
-            "Qiao Shan",
-            "Yu Yang",
-            "Song Muzi",
-            "Wang Xing",
-            "Wang Chengsi",
-            "Zhang Zidong",
-            "Ke Da",
-            "Feng Man",
-            "Yu Rongguang",
-            "Hu Xiaoyuan",
-            "JJ Lin"
+            "Joe Taslim",
+            "Hiroyuki Sanada",
+            "Karl Urban",
+            "Damon Herriman",
+            "Lewis Tan",
+            "Tati Gabrielle",
+            "Adeline Rudolph",
+            "Jessica McNamee",
+            "Josh Lawson",
+            "Ludi Lin",
+            "Chin Han",
+            "Tadanobu Asano"
           ]
         },
         {
           "role": "directors",
           "names": [
-            "Derek Hui Wang-Yu"
+            "Simon McQuoid"
           ]
         },
         {
           "role": "producers",
           "names": [
-            "Derek Hui Wang-Yu"
+            "James Wan",
+            "Toby Emmerich",
+            "Todd Garner",
+            "E. Bennett Walsh ",
+            "Simon McQuoid"
           ]
         },
         {
           "role": "writers",
           "names": [
-            "Pan Keyang"
+            "Jeremy Slater"
           ]
         }
       ],
@@ -67,27 +68,27 @@
         },
         {
           "rating": "5",
-          "value": 8.3
+          "value": 0
         },
         {
           "rating": "6",
-          "value": 8.3
+          "value": 4.9
         },
         {
           "rating": "7",
-          "value": 12.5
+          "value": 11.5
         },
         {
           "rating": "8",
-          "value": 41.7
+          "value": 23
         },
         {
           "rating": "9",
-          "value": 20.8
+          "value": 42.6
         },
         {
           "rating": "10",
-          "value": 4.2
+          "value": 13.1
         }
       ],
       "comparison": [
@@ -96,76 +97,87 @@
           "other_movie": {
             "periode": "7_days",
             "other_movie": null,
-            "id": 2680,
-            "title": "Venom: The Last Dance",
-            "admission": 1099085,
-            "gross": 3275693,
-            "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-1727653475.png"
+            "id": 1080,
+            "title": "Akibat Pergaulan Bebas",
+            "admission": 403271,
+            "gross": 0,
+            "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-1080.png"
           },
-          "id": 3719,
-          "title": "Panda Plan: The Magical Tribe",
-          "admission": 144729,
-          "gross": 399773,
-          "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-1771735818.png"
+          "id": 3965,
+          "title": "Mortal Kombat II",
+          "admission": 188909,
+          "gross": 505527,
+          "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-1777778287.png"
         },
         {
           "periode": "14_days",
           "other_movie": {
             "periode": "14_days",
             "other_movie": null,
-            "id": 328,
-            "title": "Ayat-Ayat Cinta 2",
-            "admission": 2387048,
+            "id": 1879,
+            "title": "Jendela Seribu Sungai",
+            "admission": 27431,
             "gross": 0,
-            "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-328.png"
+            "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-1689825462.png"
           },
-          "id": 3719,
-          "title": "Panda Plan: The Magical Tribe",
-          "admission": 207070,
-          "gross": 570773,
-          "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-1771735818.png"
+          "id": 3965,
+          "title": "Mortal Kombat II",
+          "admission": 188909,
+          "gross": 505527,
+          "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-1777778287.png"
         }
       ],
-      "playing_at": [],
+      "playing_at": [
+        {
+          "title": "CGV Cinemas",
+          "image": "https://cinepoint-assets.s3.amazonaws.com/image-cinema/Wpmbk5ezJn.png",
+          "link": "https://www.cgv.id"
+        },
+        {
+          "title": "Cinépolis",
+          "image": "https://cinepoint-assets.s3.amazonaws.com/image-cinema/4w9aAOdvMR.png",
+          "link": "https://cinepolis.co.id"
+        }
+      ],
       "similar_movies": [
         {
-          "id": 1163,
-          "title": "Due Date",
+          "id": 525,
+          "title": "Tomb Raider",
           "image_title": null,
-          "description": "High-strung father-to-be Peter Highman is forced to hitch a ride with aspiring actor Ethan Tremblay on a road trip in order to make it to his child's birth on time."
+          "description": "2018"
         },
         {
-          "id": 1100,
-          "title": "The Bounty Hunter",
+          "id": 526,
+          "title": "Skyscraper",
           "image_title": null,
-          "description": "Film The Bounty Hunter mengisahkan seorang bounty hunter yang mengetahui bahwa target selanjutnya adalah mantan istrinya, seorang reporter yang bekerja dalam sebuah kasus pembunuhan. Mantan suami istri ini kemudian terlibat dalam aksi hidup dan mati. Setiap pekerjaan tentu memiliki risiko dan konsekuensi masing-masing. Begitu pula dengan pekerjaan Milo Boyd (Gerard Butler) sebagai bounty hunter atau orang yang mendapat bayaran untuk membawa pulang para buronan. Milo bukan orang terbaik di bidang pekerjaannya. Bahkan dia termasuk orang yang sering sial. Ada beberapa pekerjaan yang tidak berjalan dengan baik. Suatu ketika Milo mendapat sebuah tugas. Milo berpikir pekerjaan kali ini akan berjalan dengan mudah. Bagaimana tidak? Dia mendapat tugas untuk menangkap Nicole Hurly (Jennifer Aniston), mantan istri Milo. Tentu saja Milo mengetahui rumah serta kegiatan sehari-hari Nicole. Milo menemui Nicole di sebuah acara. Setelah berbincang dan bercanda sebentar, Milo membawa Nicole dan memasukkannya ke dalam bagasi mobil. Kini Milo perlu mangamankan Nicole dalam rentang waktu tertentu. Kini Milo dan Nicole hidup “bersama” lagi termasuk dalam satu tempat tinggal. Di sebuah perjalanan, Nicole bercerita bahwa dia sedang dalam bahaya. Ada sekelompok pembunuh bayaran yang sedang mengejarnya. Milo tidak percaya. Namun tidak lama berselang, ada orang yang menembakkan peluru ke arah mereka. Kini keadaan menjadi rumit."
+          "description": "2018"
         },
         {
-          "id": 2041,
-          "title": "Jatuh Cinta Seperti di Film-Film",
-          "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-1701324025.png",
-          "description": "Seorang penulis film adaptasi ingin menulis film naskah asli pertamanya dengan diam-diam menuliskan kisah nyata ia jatuh cinta dengan seorang yang baru saja menjanda.\r\n\r\nA film adaptation writer wants to write his first original scripted film by secretly writing the true story of him falling in love with a recently widowed man."
+          "id": 843,
+          "title": "Onward",
+          "image_title": null,
+          "description": "Alkisah di dunia fantasi dimana mahluk gaib tinggal di sana. Dua peri remaja, Ian Lightfoot (Tom Holland) dan Barley Lightfoot (Chris Pratt) memulai sebuah pencarian ke tempat-tempat magis untuk menemukan sebuah jawaban."
         }
       ],
-      "id": 3719,
-      "title": "Panda Plan: The Magical Tribe",
-      "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-1771735818.png",
-      "release_date": "2026-02-25",
-      "trailer_url": "https://www.youtube.com/watch?v=CXYixLauBgg",
+      "id": 3965,
+      "title": "Mortal Kombat II",
+      "image_title": "https://cinepoint-assets.s3.amazonaws.com/image-movie/title-1777778287.png",
+      "release_date": "2026-05-06",
+      "trailer_url": "https://www.youtube.com/watch?v=b24oG7qCwp4",
       "type": "international",
       "language": "English",
       "movie_genre": [
-        "Comedy",
-        "Action"
+        "Action",
+        "Adventure"
       ],
-      "duration": 100,
-      "description": "Panda raksasa Hu Hu dan Jackie Chan secara tak sengaja bertemu dengan sebuah suku primitif misterius, memulai petualangan yang belum pernah terjadi sebelumnya dan sangat lucu.",
+      "duration": 116,
+      "description": "Kali ini, para juara favorit penggemar—yang kini juga termasuk Johnny Cage sendiri—saling berhadapan dalam pertempuran pamungkas tanpa aturan dan penuh darah untuk mengalahkan kekuasaan gelap Shao Kahn yang mengancam keberadaan Earthrealm dan para pembelanya.",
       "production_status": "released",
-      "score": 6.8,
-      "admission": 0,
-      "total_admission": 291635,
+      "score": 7.6,
+      "admission": 188909,
+      "total_admission": 188909,
       "change": 100,
-      "showtimes": 23678,
+      "showtimes": 9228,
       "movie_rating": {
         "imdb": null,
         "rotten_tomatoes": null

@@ -1,7 +1,8 @@
 'use client';
 
-import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   Library,
@@ -21,6 +22,7 @@ import {
   ChevronRight,
   Bug,
   Timer,
+  BarChart3,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -56,6 +58,7 @@ interface CatalogData {
 // ─── Page Component ────────────────────────────────────────
 
 export default function CinePointCatalogPage() {
+  const router = useRouter();
   const [data, setData] = useState<CatalogData | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -70,7 +73,6 @@ export default function CinePointCatalogPage() {
   const [sortCol, setSortCol] = useState<string>('release_date');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [showDebugCols, setShowDebugCols] = useState(false);
-  const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [gatePending, setGatePending] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -272,6 +274,16 @@ export default function CinePointCatalogPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <Link href="/competitors/cinepoint/analysis">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl border-border/60 hover:bg-muted transition-all"
+              >
+                <BarChart3 className="w-3.5 h-3.5" />
+                Analysis
+              </Button>
+            </Link>
             <Button
               variant="outline"
               size="sm"
@@ -557,7 +569,6 @@ export default function CinePointCatalogPage() {
                 sortCol={sortCol}
                 sortDir={sortDir}
                 showDebugCols={showDebugCols}
-                expandedRow={expandedRow}
                 onSort={(col) => {
                   if (sortCol === col) {
                     setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
@@ -567,7 +578,7 @@ export default function CinePointCatalogPage() {
                   }
                   setPage(0);
                 }}
-                onRowClick={(id) => setExpandedRow(expandedRow === id ? null : id)}
+                onRowClick={(id) => router.push(`/competitors/cinepoint/movies/${id}`)}
               />
             )}
 
@@ -648,7 +659,6 @@ interface DataTableProps {
   sortCol: string;
   sortDir: 'asc' | 'desc';
   showDebugCols: boolean;
-  expandedRow: number | null;
   onSort: (col: string) => void;
   onRowClick: (id: number) => void;
 }
@@ -667,7 +677,7 @@ const COLUMNS: ColDef[] = [
   { key: 'matched', label: 'matched', align: 'center' },
 ];
 
-function DataTable({ movies, sortCol, sortDir, showDebugCols, expandedRow, onSort, onRowClick }: DataTableProps) {
+function DataTable({ movies, sortCol, sortDir, showDebugCols, onSort, onRowClick }: DataTableProps) {
   const visibleCols = COLUMNS.filter((c) => !c.debug || showDebugCols);
 
   return (
@@ -676,7 +686,6 @@ function DataTable({ movies, sortCol, sortDir, showDebugCols, expandedRow, onSor
         <table className="w-full text-left">
           <thead>
             <tr className="border-b border-border/30 bg-muted/20">
-              <th className="px-3 py-2.5 w-8" />
               {visibleCols.map((col) => (
                 <th
                   key={col.key}
@@ -696,158 +705,121 @@ function DataTable({ movies, sortCol, sortDir, showDebugCols, expandedRow, onSor
                   </span>
                 </th>
               ))}
+              <th className="px-3 w-6" />
             </tr>
           </thead>
 
           <tbody>
-            {movies.map((movie) => {
-              const isExpanded = expandedRow === movie.id;
-              return (
-                <Fragment key={movie.id}>
-                  <tr
-                    key={movie.id}
-                    onClick={() => onRowClick(movie.id)}
-                    className="border-b border-border/10 hover:bg-primary/[0.02] transition-colors group cursor-pointer"
-                  >
-                    <td className="px-3 py-2 text-center">
-                      <ChevronRight className={cn(
-                        'w-3 h-3 text-muted-foreground/20 transition-transform',
-                        isExpanded && 'rotate-90',
-                      )} />
-                    </td>
+            {movies.map((movie) => (
+              <tr
+                key={movie.id}
+                onClick={() => onRowClick(movie.id)}
+                className="border-b border-border/10 hover:bg-primary/[0.02] transition-colors group cursor-pointer"
+              >
+                {/* id */}
+                <td className="px-3 py-2 text-[10px] font-mono text-muted-foreground/50 text-right">
+                  {movie.id}
+                </td>
 
-                    {/* id */}
-                    <td className="px-3 py-2 text-[10px] font-mono text-muted-foreground/50 text-right">
-                      {movie.id}
-                    </td>
-
-                    {/* poster */}
-                    <td className="px-3 py-1.5 text-center">
-                      <div className="w-6 h-8 rounded overflow-hidden bg-muted/30 mx-auto relative">
-                        {movie.image_title ? (
-                          <NextImage
-                            src={movie.image_title}
-                            alt=""
-                            fill
-                            className="object-cover"
-                            sizes="24px"
-                            referrerPolicy="no-referrer"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Film className="w-2.5 h-2.5 text-muted-foreground/20" />
-                          </div>
-                        )}
+                {/* poster */}
+                <td className="px-3 py-1.5 text-center">
+                  <div className="w-6 h-8 rounded overflow-hidden bg-muted/30 mx-auto relative">
+                    {movie.image_title ? (
+                      <NextImage
+                        src={movie.image_title}
+                        alt=""
+                        fill
+                        className="object-cover"
+                        sizes="24px"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Film className="w-2.5 h-2.5 text-muted-foreground/20" />
                       </div>
-                    </td>
-
-                    {/* title */}
-                    <td className="px-3 py-2">
-                      <span className="text-[11px] font-bold text-foreground/90 group-hover:text-primary transition-colors">
-                        {movie.title}
-                      </span>
-                    </td>
-
-                    {/* title_cp (debug) */}
-                    {showDebugCols && (
-                      <td className="px-3 py-2">
-                        <span className="text-[10px] font-mono text-amber-500/40">
-                          {movie.title_cp}
-                        </span>
-                      </td>
                     )}
+                  </div>
+                </td>
 
-                    {/* type */}
-                    <td className="px-3 py-2 text-center">
-                      <span className={cn(
-                        'inline-block text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full',
-                        movie.type === 'local'
-                          ? 'bg-blue-500/10 text-blue-600 border border-blue-500/20'
-                          : 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20',
-                      )}>
-                        {movie.type}
+                {/* title */}
+                <td className="px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold text-foreground/90 group-hover:text-primary transition-colors">
+                      {movie.title}
+                    </span>
+                    {movie.details_fetched_at && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="Details enriched" />
+                    )}
+                  </div>
+                </td>
+
+                {/* title_cp (debug) */}
+                {showDebugCols && (
+                  <td className="px-3 py-2">
+                    <span className="text-[10px] font-mono text-amber-500/40">
+                      {movie.title_cp}
+                    </span>
+                  </td>
+                )}
+
+                {/* type */}
+                <td className="px-3 py-2 text-center">
+                  <span className={cn(
+                    'inline-block text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full',
+                    movie.type === 'local'
+                      ? 'bg-blue-500/10 text-blue-600 border border-blue-500/20'
+                      : 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20',
+                  )}>
+                    {movie.type}
+                  </span>
+                </td>
+
+                {/* genre */}
+                <td className="px-3 py-2">
+                  <div className="flex flex-wrap gap-1">
+                    {movie.movie_genre.map((g) => (
+                      <span key={g} className="text-[8px] font-medium text-muted-foreground/40 bg-muted/30 px-1.5 py-0.5 rounded">
+                        {g}
                       </span>
-                    </td>
+                    ))}
+                    {movie.movie_genre.length === 0 && (
+                      <span className="text-[8px] text-muted-foreground/20">—</span>
+                    )}
+                  </div>
+                </td>
 
-                    {/* genre */}
-                    <td className="px-3 py-2">
-                      <div className="flex flex-wrap gap-1">
-                        {movie.movie_genre.map((g) => (
-                          <span key={g} className="text-[8px] font-medium text-muted-foreground/40 bg-muted/30 px-1.5 py-0.5 rounded">
-                            {g}
-                          </span>
-                        ))}
-                        {movie.movie_genre.length === 0 && (
-                          <span className="text-[8px] text-muted-foreground/20">—</span>
-                        )}
-                      </div>
-                    </td>
+                {/* release_date */}
+                <td className="px-3 py-2">
+                  <span className="text-[10px] font-mono text-muted-foreground/50">
+                    {movie.release_date}
+                  </span>
+                </td>
 
-                    {/* release_date */}
-                    <td className="px-3 py-2">
-                      <span className="text-[10px] font-mono text-muted-foreground/50">
-                        {movie.release_date}
-                      </span>
-                    </td>
+                {/* duration */}
+                <td className="px-3 py-2 text-right">
+                  <span className="text-[10px] font-mono text-muted-foreground/40">
+                    {movie.duration > 0 ? `${movie.duration}m` : '—'}
+                  </span>
+                </td>
 
-                    {/* duration */}
-                    <td className="px-3 py-2 text-right">
-                      <span className="text-[10px] font-mono text-muted-foreground/40">
-                        {movie.duration > 0 ? `${movie.duration}m` : '—'}
-                      </span>
-                    </td>
-
-                    {/* matched */}
-                    <td className="px-3 py-2 text-center">
-                      {movie.matched_movie_id ? (
-                        <span className="inline-flex items-center gap-1 text-[8px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                          <CheckCircle2 className="w-2.5 h-2.5" />
-                          Yes
-                        </span>
-                      ) : (
-                        <span className="text-[8px] text-muted-foreground/20">—</span>
-                      )}
-                    </td>
-                  </tr>
-
-                  {/* Expanded detail row */}
-                  {isExpanded && (
-                    <tr key={`${movie.id}-detail`} className="border-b border-border/10 bg-muted/5">
-                      <td colSpan={visibleCols.length + 1} className="px-6 py-4">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          {movie.image_title && (
-                            <div className="relative w-20 h-28 rounded-lg overflow-hidden border border-border/20">
-                              <NextImage
-                                src={movie.image_title}
-                                alt={movie.title}
-                                fill
-                                className="object-cover"
-                                sizes="80px"
-                                referrerPolicy="no-referrer"
-                              />
-                            </div>
-                          )}
-                          <div className="space-y-1.5">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/30">Raw Data</p>
-                            <p className="text-[10px] font-mono text-muted-foreground/50">
-                              id: {movie.id}<br />
-                              title: &quot;{movie.title}&quot;<br />
-                              title_cp: &quot;{movie.title_cp}&quot;<br />
-                              type: {movie.type}<br />
-                              duration: {movie.duration || 'null'}<br />
-                              release_date: {movie.release_date}<br />
-                              genre: [{movie.movie_genre.join(', ')}]<br />
-                              matched_movie_id: {movie.matched_movie_id ?? 'null'}<br />
-                              scraped_at: {movie.scraped_at}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
+                {/* matched */}
+                <td className="px-3 py-2 text-center">
+                  {movie.matched_movie_id ? (
+                    <span className="inline-flex items-center gap-1 text-[8px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                      <CheckCircle2 className="w-2.5 h-2.5" />
+                      Yes
+                    </span>
+                  ) : (
+                    <span className="text-[8px] text-muted-foreground/20">—</span>
                   )}
-                </Fragment>
-              );
-            })}
+                </td>
+
+                {/* chevron */}
+                <td className="px-3">
+                  <ChevronRight className="w-3 h-3 text-muted-foreground/20 group-hover:text-primary/40 transition-colors" />
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
@@ -878,7 +850,7 @@ function StatCard({ icon: Icon, label, value, color }: { icon: typeof Database; 
 
 function MovieCard({ movie }: { movie: CinePointMovie }) {
   return (
-    <div className="group rounded-2xl border border-border/40 bg-card overflow-hidden shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-300">
+    <Link href={`/competitors/cinepoint/movies/${movie.id}`} className="group rounded-2xl border border-border/40 bg-card overflow-hidden shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-300 block">
       <div className="relative aspect-[2/3] bg-muted/20 overflow-hidden">
         {movie.image_title ? (
           <NextImage
@@ -928,6 +900,6 @@ function MovieCard({ movie }: { movie: CinePointMovie }) {
           </div>
         )}
       </div>
-    </div>
+    </Link>
   );
 }

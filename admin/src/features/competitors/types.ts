@@ -256,6 +256,54 @@ export interface TwitterTimelineResponse {
 
 export type CinePointMovieType = 'local' | 'international';
 
+// ─── Enriched Detail Types ────────────────────────────────
+
+export interface CinePointCastGroup {
+  role: 'casts' | 'directors' | 'producers' | 'writers';
+  names: string[];
+}
+
+export interface CinePointUserRating {
+  rating: string;                       // "1" – "10"
+  value: number;                        // percentage
+}
+
+export interface CinePointPlayingAt {
+  title: string;                        // "CGV Cinemas"
+  image: string;                        // cinema logo URL
+  link: string;                         // cinema website
+}
+
+export interface CinePointSimilarMovie {
+  id: number;
+  title: string;
+  image_title: string | null;
+  description: string;
+}
+
+export interface CinePointMovieRating {
+  imdb: number | null;
+  rotten_tomatoes: number | null;
+}
+
+export interface CinePointComparison {
+  periode: string;                      // "7_days" | "14_days"
+  id: number;
+  title: string;
+  admission: number;
+  gross: number;
+  image_title: string;
+  other_movie: {
+    periode: string;
+    other_movie: null;
+    id: number;
+    title: string;
+    admission: number;
+    gross: number;
+    image_title: string;
+  } | null;
+}
+
 export interface CinePointMovie {
   id: number;                          // CinePoint movie ID (doc ID = string)
   title: string;                       // "Cek Khodam"
@@ -268,6 +316,26 @@ export interface CinePointMovie {
   scraped_at: string;                  // ISO timestamp
   matched_movie_id?: string | null;    // CineRadar movie_id
   matched_title?: string | null;       // CineRadar display title
+
+  // ── Enriched fields (from /movies/detail) ──
+  casts?: CinePointCastGroup[];
+  description?: string;                // Full synopsis in Bahasa Indonesia
+  language?: string;                   // "English", "Indonesia"
+  trailer_url?: string | null;         // YouTube link
+  rating_category?: string[];          // ["17+"], ["13+"]
+  user_ratings?: CinePointUserRating[];
+  playing_at?: CinePointPlayingAt[];
+  similar_movies?: CinePointSimilarMovie[];
+  movie_rating?: CinePointMovieRating;
+  production_status?: string;          // "released", "upcoming"
+  score?: number;                      // CinePoint audience score (1-10)
+  total_admission?: number;            // Lifetime cumulative admissions
+  admission?: number;                  // Daily admissions (from detail endpoint)
+  change?: number;                     // Day-over-day %
+  showtimes?: number;                  // Showtime count
+  comparison?: CinePointComparison[];
+  details_fetched_at?: string;         // ISO timestamp — enrichment marker
+  _detail_hash?: string;               // content hash for idempotency
 }
 
 export interface CinePointSyncMeta {

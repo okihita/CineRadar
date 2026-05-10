@@ -11,13 +11,15 @@ import {
   Loader2, Film, TrendingUp, Trophy, Users, BarChart3,
   ArrowUpRight, ArrowDownRight, Minus, CalendarDays,
   Star, ChevronRight, Crown, Globe, Popcorn,
-  Calendar, Sparkles, Flame,
+  Calendar, Sparkles, Flame, Clapperboard, Languages,
+  Clock, Play, Eye, Video, PenTool, Megaphone, UserCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import type { CinePointMovie } from '@/features/competitors/types';
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -147,6 +149,8 @@ export default function CinePointInsightsPage() {
   const [yearsLoading, setYearsLoading] = useState(false);
   const [range, setRange] = useState<RangePreset>('30d');
   const [selectedMovie, setSelectedMovie] = useState<number | null>(null);
+  const [enrichedMovie, setEnrichedMovie] = useState<CinePointMovie | null>(null);
+  const [enrichedLoading, setEnrichedLoading] = useState(false);
 
   // Load date-range analytics
   const loadData = useCallback(async (preset: RangePreset) => {
@@ -172,6 +176,26 @@ export default function CinePointInsightsPage() {
   }, []);
 
   useEffect(() => { loadData(range); }, [range, loadData]);
+
+  // Fetch enriched detail when movie is selected
+  useEffect(() => {
+    if (selectedMovie === null) {
+      setEnrichedMovie(null);
+      return;
+    }
+    setEnrichedLoading(true);
+    fetch(`/api/competitors/cinepoint/movies/${selectedMovie}/detail`)
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success && json.data?.details_fetched_at) {
+          setEnrichedMovie(json.data);
+        } else {
+          setEnrichedMovie(null);
+        }
+      })
+      .catch(() => setEnrichedMovie(null))
+      .finally(() => setEnrichedLoading(false));
+  }, [selectedMovie]);
 
   const meta = data?.meta;
   const localTotal = data?.movie_rankings.filter((m) => m.type === 'local').reduce((s, m) => s + m.total_period_admissions, 0) ?? 0;
@@ -442,59 +466,74 @@ export default function CinePointInsightsPage() {
                   : null;
 
                 return (
-                  <Card>
-                    <CardHeader className="pb-2 border-b">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-sm font-black uppercase tracking-[0.2em]">{movie.title}</CardTitle>
-                        <button onClick={() => setSelectedMovie(null)} className="text-xs text-muted-foreground hover:text-foreground">✕ Close</button>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2 mt-2">
-                        <Badge variant="outline" className={movie.type === 'local' ? 'border-indigo-500/30 text-indigo-600' : 'border-amber-500/30 text-amber-600'}>
-                          {movie.type === 'local' ? 'Local' : 'International'}
-                        </Badge>
-                        <MetaChip icon={<Star className="w-3 h-3" />} value={`${movie.latest_score.toFixed(1)} score`} />
-                        <MetaChip icon={<Users className="w-3 h-3" />} value={`${movie.latest_total_admission.toLocaleString()} lifetime`} />
-                        <MetaChip icon={<Popcorn className="w-3 h-3" />} value={`${movie.peak_admission.toLocaleString()} peak`} />
-                        {wowDrop !== null && (
-                          <MetaChip
-                            icon={Number(wowDrop) > 0 ? <TrendingUp className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                            value={`W1→W2: ${wowDrop}%`}
-                            className={Number(wowDrop) > 0 ? 'text-green-600' : 'text-red-600'}
-                          />
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                      <div className="p-6">
-                        <ResponsiveContainer width="100%" height={220}>
-                          <LineChart data={movie.daily}>
-                            <CartesianGrid strokeDasharray="3 3" className="opacity-20" />
-                            <XAxis dataKey="date" tickFormatter={(v) => format(parseISO(String(v)), 'MMM d')} tick={{ fontSize: 10 }} />
-                            <YAxis yAxisId="left" tick={{ fontSize: 10 }} tickFormatter={(v) => formatAdmissions(Number(v))} />
-                            <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} reversed domain={[1, 'auto']} />
-                            <Tooltip labelFormatter={(v) => format(parseISO(String(v)), 'EEE, MMM d')} formatter={(v, name) => name === 'Rank' ? `#${v}` : Number(v).toLocaleString()} />
-                            <Legend />
-                            <Line yAxisId="left" type="monotone" dataKey="admission" stroke="#6366f1" strokeWidth={2} name="Admissions" dot={{ r: 2 }} />
-                            <Line yAxisId="right" type="monotone" dataKey="rank" stroke="#f59e0b" strokeWidth={1.5} name="Rank" strokeDasharray="4 4" dot={{ r: 2 }} />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
-                      {movie.daily.length > 1 && (
-                        <div className="border-t px-6 pb-6 pt-4">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-2">Cumulative Admissions</p>
-                          <ResponsiveContainer width="100%" height={120}>
-                            <AreaChart data={movie.daily}>
+                  <>
+                    <Card>
+                      <CardHeader className="pb-2 border-b">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-sm font-black uppercase tracking-[0.2em]">{movie.title}</CardTitle>
+                          <button onClick={() => setSelectedMovie(null)} className="text-xs text-muted-foreground hover:text-foreground">✕ Close</button>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                          <Badge variant="outline" className={movie.type === 'local' ? 'border-indigo-500/30 text-indigo-600' : 'border-amber-500/30 text-amber-600'}>
+                            {movie.type === 'local' ? 'Local' : 'International'}
+                          </Badge>
+                          <MetaChip icon={<Star className="w-3 h-3" />} value={`${movie.latest_score.toFixed(1)} score`} />
+                          <MetaChip icon={<Users className="w-3 h-3" />} value={`${movie.latest_total_admission.toLocaleString()} lifetime`} />
+                          <MetaChip icon={<Popcorn className="w-3 h-3" />} value={`${movie.peak_admission.toLocaleString()} peak`} />
+                          {wowDrop !== null && (
+                            <MetaChip
+                              icon={Number(wowDrop) > 0 ? <TrendingUp className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                              value={`W1→W2: ${wowDrop}%`}
+                              className={Number(wowDrop) > 0 ? 'text-green-600' : 'text-red-600'}
+                            />
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-0">
+                        <div className="p-6">
+                          <ResponsiveContainer width="100%" height={220}>
+                            <LineChart data={movie.daily}>
                               <CartesianGrid strokeDasharray="3 3" className="opacity-20" />
-                              <XAxis dataKey="date" tickFormatter={(v) => format(parseISO(String(v)), 'MMM d')} tick={{ fontSize: 9 }} />
-                              <YAxis tick={{ fontSize: 9 }} tickFormatter={(v) => formatAdmissions(Number(v))} />
-                              <Tooltip formatter={(v) => Number(v).toLocaleString()} />
-                              <Area type="monotone" dataKey="total_admission" stroke="#10b981" fill="#10b981" fillOpacity={0.12} name="Cumulative" />
-                            </AreaChart>
+                              <XAxis dataKey="date" tickFormatter={(v) => format(parseISO(String(v)), 'MMM d')} tick={{ fontSize: 10 }} />
+                              <YAxis yAxisId="left" tick={{ fontSize: 10 }} tickFormatter={(v) => formatAdmissions(Number(v))} />
+                              <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} reversed domain={[1, 'auto']} />
+                              <Tooltip labelFormatter={(v) => format(parseISO(String(v)), 'EEE, MMM d')} formatter={(v, name) => name === 'Rank' ? `#${v}` : Number(v).toLocaleString()} />
+                              <Legend />
+                              <Line yAxisId="left" type="monotone" dataKey="admission" stroke="#6366f1" strokeWidth={2} name="Admissions" dot={{ r: 2 }} />
+                              <Line yAxisId="right" type="monotone" dataKey="rank" stroke="#f59e0b" strokeWidth={1.5} name="Rank" strokeDasharray="4 4" dot={{ r: 2 }} />
+                            </LineChart>
                           </ResponsiveContainer>
                         </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                        {movie.daily.length > 1 && (
+                          <div className="border-t px-6 pb-6 pt-4">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-2">Cumulative Admissions</p>
+                            <ResponsiveContainer width="100%" height={120}>
+                              <AreaChart data={movie.daily}>
+                                <CartesianGrid strokeDasharray="3 3" className="opacity-20" />
+                                <XAxis dataKey="date" tickFormatter={(v) => format(parseISO(String(v)), 'MMM d')} tick={{ fontSize: 9 }} />
+                                <YAxis tick={{ fontSize: 9 }} tickFormatter={(v) => formatAdmissions(Number(v))} />
+                                <Tooltip formatter={(v) => Number(v).toLocaleString()} />
+                                <Area type="monotone" dataKey="total_admission" stroke="#10b981" fill="#10b981" fillOpacity={0.12} name="Cumulative" />
+                              </AreaChart>
+                            </ResponsiveContainer>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    {/* Enriched Movie Detail Panel */}
+                    {enrichedLoading && (
+                      <Card>
+                        <CardContent className="flex items-center justify-center py-12 gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">Loading movie details…</span>
+                        </CardContent>
+                      </Card>
+                    )}
+                    {!enrichedLoading && enrichedMovie && (
+                      <MovieDetailPanel movie={enrichedMovie} />
+                    )}
+                  </>
                 );
               })()}
 
@@ -747,6 +786,248 @@ function MetaChip({ icon, value, className }: { icon: React.ReactNode; value: st
     <div className={cn('flex items-center gap-1 text-[10px] text-muted-foreground', className)}>
       {icon}
       <span className="font-medium">{value}</span>
+    </div>
+  );
+}
+
+/** Enriched movie detail panel — shows when a movie with details_fetched_at is selected */
+function MovieDetailPanel({ movie }: { movie: CinePointMovie }) {
+  const casts = movie.casts?.find((c) => c.role === 'casts')?.names ?? [];
+  const directors = movie.casts?.find((c) => c.role === 'directors')?.names ?? [];
+  const producers = movie.casts?.find((c) => c.role === 'producers')?.names ?? [];
+  const writers = movie.casts?.find((c) => c.role === 'writers')?.names ?? [];
+  const userRatings = movie.user_ratings ?? [];
+  const topRating = userRatings.length > 0
+    ? userRatings.reduce((best, r) => r.value > best.value ? r : best, userRatings[0])
+    : null;
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* ── Left: Synopsis + Cast & Crew ── */}
+      <div className="lg:col-span-2 space-y-4">
+        {/* Synopsis */}
+        {movie.description && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2">
+                <Film className="w-4 h-4 text-indigo-500" /> Synopsis
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm leading-relaxed text-muted-foreground">{movie.description}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Cast & Crew */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2">
+              <Clapperboard className="w-4 h-4 text-amber-500" /> Cast & Crew
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {directors.length > 0 && (
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-1 mb-1">
+                  <Megaphone className="w-3 h-3" /> Director{directors.length > 1 ? 's' : ''}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {directors.map((name) => (
+                    <Badge key={name} variant="outline" className="border-amber-500/20 text-amber-700 text-xs">{name}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            {writers.length > 0 && (
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-1 mb-1">
+                  <PenTool className="w-3 h-3" /> Writer{writers.length > 1 ? 's' : ''}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {writers.map((name) => (
+                    <Badge key={name} variant="outline" className="border-indigo-500/20 text-indigo-700 text-xs">{name}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            {casts.length > 0 && (
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-1 mb-1">
+                  <UserCircle className="w-3 h-3" /> Cast ({casts.length})
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {casts.map((name) => (
+                    <span key={name} className="text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-md">{name}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {producers.length > 0 && (
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-1 mb-1">
+                  <Star className="w-3 h-3" /> Producer{producers.length > 1 ? 's' : ''}
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {producers.map((name) => (
+                    <span key={name} className="text-[10px] text-muted-foreground/70">{name}</span>
+                  )).reduce<React.ReactNode[]>((acc, el, i) => i === 0 ? [el] : [...acc, ' · ', el], [])}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Trailer */}
+        {movie.trailer_url && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2">
+                <Video className="w-4 h-4 text-red-500" /> Trailer
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <a
+                href={movie.trailer_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+              >
+                <Play className="w-4 h-4" />
+                Watch on YouTube
+                <ArrowUpRight className="w-3 h-3" />
+              </a>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* ── Right: Meta + Ratings + Cinema + Similar ── */}
+      <div className="space-y-4">
+        {/* Meta card */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-black uppercase tracking-[0.2em]">Movie Info</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {movie.language && (
+              <div className="flex items-center gap-2">
+                <Languages className="w-4 h-4 text-muted-foreground/60" />
+                <span className="text-xs text-muted-foreground">Language</span>
+                <span className="text-sm font-medium ml-auto">{movie.language}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-muted-foreground/60" />
+              <span className="text-xs text-muted-foreground">Duration</span>
+              <span className="text-sm font-medium ml-auto">{movie.duration || '?'} min</span>
+            </div>
+            {movie.rating_category && movie.rating_category.length > 0 && (
+              <div className="flex items-center gap-2">
+                <Eye className="w-4 h-4 text-muted-foreground/60" />
+                <span className="text-xs text-muted-foreground">Rating</span>
+                <Badge variant="outline" className="ml-auto text-xs border-red-500/30 text-red-600">
+                  {movie.rating_category[0]}
+                </Badge>
+              </div>
+            )}
+            {movie.movie_rating && (movie.movie_rating.imdb || movie.movie_rating.rotten_tomatoes) && (
+              <div className="flex items-center gap-2 pt-2 border-t">
+                <span className="text-xs font-bold text-amber-600">IMDb</span>
+                <span className="text-sm font-mono ml-1">{movie.movie_rating.imdb ?? '—'}</span>
+                <span className="text-xs font-bold text-red-600 ml-auto">RT</span>
+                <span className="text-sm font-mono ml-1">{movie.movie_rating.rotten_tomatoes != null ? `${movie.movie_rating.rotten_tomatoes}%` : '—'}</span>
+              </div>
+            )}
+            {movie.movie_genre && movie.movie_genre.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-2 border-t">
+                {movie.movie_genre.map((g) => (
+                  <Badge key={g} variant="secondary" className="text-[10px]">{g}</Badge>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Audience Rating Distribution */}
+        {userRatings.length > 0 && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2">
+                <Star className="w-4 h-4 text-amber-500" /> Audience Rating
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-black">{movie.score?.toFixed(1) ?? '?'}</span>
+                <span className="text-[10px] text-muted-foreground">/ 10</span>
+                {topRating && (
+                  <span className="text-[10px] text-muted-foreground/60 ml-auto">
+                    Peak: {topRating.rating}/10 ({topRating.value}%)
+                  </span>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-1">
+                {userRatings.map((r) => (
+                  <div key={r.rating} className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono w-4 text-right text-muted-foreground/60">{r.rating}</span>
+                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all"
+                        style={{ width: `${Math.max(r.value, 0.5)}%` }}
+                      />
+                    </div>
+                    <span className="text-[10px] font-mono w-10 text-right text-muted-foreground">{r.value}%</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Playing at */}
+        {movie.playing_at && movie.playing_at.length > 0 && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-black uppercase tracking-[0.2em]">Where to Watch</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {movie.playing_at.map((p) => (
+                <a
+                  key={p.title}
+                  href={p.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                >
+                  {p.image && (
+                    <img src={p.image} alt={p.title} className="w-8 h-8 rounded object-contain bg-muted/30" />
+                  )}
+                  <span className="text-sm font-medium">{p.title}</span>
+                  <ArrowUpRight className="w-3 h-3 text-muted-foreground/40 ml-auto" />
+                </a>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Similar movies */}
+        {movie.similar_movies && movie.similar_movies.length > 0 && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-black uppercase tracking-[0.2em]">Similar Movies</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {movie.similar_movies.map((sm) => (
+                <div key={sm.id} className="space-y-1">
+                  <p className="text-sm font-medium">{sm.title}</p>
+                  <p className="text-[11px] text-muted-foreground/60 line-clamp-2">{sm.description}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }
