@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import {
   Loader2, BarChart3, Film, Star, Users,
   Trophy, TrendingUp, Clapperboard, Sparkles, Target, Filter,

@@ -11,6 +11,7 @@ import {
   useAnalysisData,
   computePersonRankings,
   formatAdm,
+  HIT_THRESHOLD,
 } from '@/lib/cinepoint';
 import type { AnalysisMovie } from '@/lib/cinepoint';
 
@@ -63,7 +64,7 @@ export default function ActorsPage() {
   }
 
   const totalActors = rankings.length;
-  const bankable = rankings.filter((r) => r.avg_admission >= 500_000).length;
+  const bankable = rankings.filter((r) => r.avg_admission >= HIT_THRESHOLD).length;
 
   return (
     <div className="px-6 py-8 space-y-6">
@@ -76,7 +77,7 @@ export default function ActorsPage() {
           <div>
             <h1 className="text-base font-black uppercase tracking-tighter">Actor Database</h1>
             <p className="text-[10px] text-muted-foreground/60 uppercase tracking-widest font-bold">
-              {totalActors.toLocaleString()} actors (min 3 movies) · {bankable} bankable (avg ≥500K)
+              {totalActors.toLocaleString()} actors (min 3 movies) · {bankable} bankable (avg ≥{formatAdm(HIT_THRESHOLD)})
             </p>
           </div>
         </div>

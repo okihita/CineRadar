@@ -11,6 +11,7 @@ import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { CINEPOINT_CATALOG } from '@/features/competitors/types';
+import type { AnalysisMovie } from '@/lib/cinepoint/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,21 +33,6 @@ interface RawMovie {
   rating_category: string[];
   casts: { role: string; names: string[] }[];
   release_date: string;
-}
-
-interface AnalysisMovie {
-  id: number;
-  title: string;
-  type: string;
-  language: string;
-  genres: string[];
-  duration: number;
-  total_admission: number;
-  score: number;
-  rating_category: string[];
-  directors: string[];
-  actors: string[];
-  release_year: number;
 }
 
 export async function GET() {

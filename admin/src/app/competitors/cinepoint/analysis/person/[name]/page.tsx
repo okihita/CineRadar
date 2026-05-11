@@ -17,6 +17,8 @@ import {
   useAnalysisData,
   formatAdm,
   median,
+  computeHitRate,
+  HIT_THRESHOLD,
   TIER_COLORS,
 } from '@/lib/cinepoint';
 
@@ -50,8 +52,8 @@ export default function PersonDetailPage() {
       avg_admission: withAdm.length ? Math.round(total / withAdm.length) : 0,
       median_admission: withAdm.length ? Math.round(median(admissions)) : 0,
       best_movie: withAdm.length ? withAdm.reduce((a, b) => a.total_admission > b.total_admission ? a : b) : null,
-      hit_count: admissions.filter((v) => v >= 500_000).length,
-      hit_rate: withAdm.length ? Math.round((admissions.filter((v) => v >= 500_000).length / withAdm.length) * 1000) / 10 : 0,
+      hit_count: admissions.filter((v) => v >= HIT_THRESHOLD).length,
+      hit_rate: computeHitRate(admissions),
       genres: [...new Set(filmography.flatMap((m) => m.genres))].sort(),
       avg_score: filmography.filter((m) => m.score > 0).length
         ? Math.round((filmography.filter((m) => m.score > 0).reduce((s, m) => s + m.score, 0) / filmography.filter((m) => m.score > 0).length) * 10) / 10

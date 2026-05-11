@@ -15,7 +15,7 @@ import type {
   DurationBucket,
   GenreCombo,
 } from './types';
-import { median } from './format';
+import { median, classifyTier, computeHitRate } from './format';
 
 /** Compute overview statistics */
 export function computeStats(movies: AnalysisMovie[]): OverviewStats {
@@ -25,11 +25,7 @@ export function computeStats(movies: AnalysisMovie[]): OverviewStats {
 
   const tiers: Record<string, number> = { mega_hit: 0, hit: 0, moderate: 0, niche: 0, flop: 0 };
   for (const a of admissions) {
-    if (a >= 1_000_000) tiers.mega_hit++;
-    else if (a >= 500_000) tiers.hit++;
-    else if (a >= 100_000) tiers.moderate++;
-    else if (a >= 10_000) tiers.niche++;
-    else tiers.flop++;
+    tiers[classifyTier(a)]++;
   }
 
   return {
@@ -68,7 +64,7 @@ export function computeGenreStats(movies: AnalysisMovie[]): GenreStat[] {
       with_admissions: d.admissions.length,
       avg_admission: d.admissions.length ? Math.round(d.admissions.reduce((s, v) => s + v, 0) / d.admissions.length) : 0,
       median_admission: Math.round(median(d.admissions)),
-      hit_rate_pct: d.admissions.length ? Math.round((d.admissions.filter((v) => v >= 500_000).length / d.admissions.length) * 1000) / 10 : 0,
+      hit_rate_pct: computeHitRate(d.admissions),
       avg_score: d.scores.length ? Math.round((d.scores.reduce((s, v) => s + v, 0) / d.scores.length) * 10) / 10 : 0,
       total_admission: d.admissions.reduce((s, v) => s + v, 0),
     }))
@@ -103,7 +99,7 @@ export function computePersonRankings(
         median_admission: Math.round(median(adm)),
         total_admission: adm.reduce((s, v) => s + v, 0),
         best_movie: best,
-        hit_rate: Math.round((adm.filter((v) => v >= 500_000).length / adm.length) * 1000) / 10,
+        hit_rate: computeHitRate(adm),
       };
     })
     .sort((a, b) => b.avg_admission - a.avg_admission);
@@ -143,7 +139,7 @@ export function computeLanguageStats(movies: AnalysisMovie[]): Record<string, La
         avg_admission: adm.length ? Math.round(adm.reduce((s, v) => s + v, 0) / adm.length) : 0,
         median_admission: Math.round(median(adm)),
         total_admission: adm.reduce((s, v) => s + v, 0),
-        hit_rate_pct: adm.length ? Math.round((adm.filter((v) => v >= 500_000).length / adm.length) * 1000) / 10 : 0,
+        hit_rate_pct: computeHitRate(adm),
         top_genres,
       }];
     })

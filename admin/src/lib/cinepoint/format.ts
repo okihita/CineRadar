@@ -19,11 +19,26 @@ export function median(values: number[]): number {
 
 /** Classify an admission number into a success tier */
 export function classifyTier(a: number): string {
-  if (a >= 1_000_000) return 'mega_hit';
-  if (a >= 500_000) return 'hit';
-  if (a >= 100_000) return 'moderate';
-  if (a >= 10_000) return 'niche';
+  if (a >= TIER_THRESHOLDS.mega_hit) return 'mega_hit';
+  if (a >= TIER_THRESHOLDS.hit) return 'hit';
+  if (a >= TIER_THRESHOLDS.moderate) return 'moderate';
+  if (a >= TIER_THRESHOLDS.niche) return 'niche';
   return 'flop';
+}
+
+/** Centralized thresholds — single source of truth */
+export const HIT_THRESHOLD = 500_000;
+export const TIER_THRESHOLDS = {
+  mega_hit: 1_000_000,
+  hit: 500_000,
+  moderate: 100_000,
+  niche: 10_000,
+} as const;
+
+/** Compute hit rate percentage (fraction of admissions >= HIT_THRESHOLD) */
+export function computeHitRate(admissions: number[]): number {
+  if (!admissions.length) return 0;
+  return Math.round((admissions.filter((v) => v >= HIT_THRESHOLD).length / admissions.length) * 1000) / 10;
 }
 
 /** Tier constants used across analysis pages */
