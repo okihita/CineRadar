@@ -91,7 +91,7 @@ export default function PersonDetailPage() {
 
   if (filmography.length === 0 && allMovies.length > 0) {
     return (
-      <div className="px-6 py-8 space-y-6 max-w-full mx-auto">
+      <div className="px-6 py-8 space-y-6">
         <div className="flex items-center gap-3">
           <Link href={backHref} className="w-9 h-9 rounded-xl border border-border/40 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
             <ArrowLeft className="w-4 h-4" />
@@ -117,7 +117,7 @@ export default function PersonDetailPage() {
   }
 
   return (
-    <div className="px-6 py-8 space-y-6 max-w-full mx-auto">
+    <div className="px-6 py-8 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link href={backHref} className="w-9 h-9 rounded-xl border border-border/40 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">

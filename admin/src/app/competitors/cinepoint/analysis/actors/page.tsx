@@ -32,7 +32,7 @@ export default function ActorsPage() {
   if (loading) {
     return (
       <div className="min-h-screen">
-        <div className="px-6 py-8 space-y-6 max-w-full mx-auto">
+        <div className="px-6 py-8 space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
               <Star className="w-5 h-5 text-indigo-500 animate-pulse" />
@@ -66,7 +66,7 @@ export default function ActorsPage() {
   const bankable = rankings.filter((r) => r.avg_admission >= 500_000).length;
 
   return (
-    <div className="px-6 py-8 space-y-6 max-w-full mx-auto">
+    <div className="px-6 py-8 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

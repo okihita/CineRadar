@@ -96,7 +96,7 @@ export default function CinePointMovieDetailPage({
           <div className="flex items-center gap-3 min-w-0 flex-1">
             {movie.image_title && (
               <div className="w-8 h-11 rounded overflow-hidden shrink-0 relative border border-border/20">
-                <img src={movie.image_title} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                <img src={movie.image_title} alt="" className="w-full h-full object-cover" loading="eager" referrerPolicy="no-referrer" />
               </div>
             )}
             <div className="min-w-0">
@@ -142,7 +142,7 @@ export default function CinePointMovieDetailPage({
         </div>
       </header>
 
-      <div className="px-6 py-8 space-y-6 max-w-[1600px] mx-auto">
+      <div className="px-6 py-8 space-y-6">
         {/* Not enriched notice */}
         {!isEnriched && (
           <div className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 text-sm text-amber-600 flex items-center gap-3">

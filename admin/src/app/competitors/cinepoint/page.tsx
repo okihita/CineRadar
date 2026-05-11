@@ -250,81 +250,77 @@ export default function CinePointCatalogPage() {
   const movies = data?.movies ?? [];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="px-6 py-8 space-y-6">
       {/* Header */}
-      <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-background/95 backdrop-blur-md">
-        <div className="px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
-              <Library className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-base font-black uppercase tracking-tighter">CinePoint Catalog</h1>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold opacity-60">
-                Movie Database Sync
-              </p>
-            </div>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+            <Library className="w-5 h-5 text-primary" />
           </div>
-
-          <div className="flex items-center gap-2">
-            <Link href="/competitors/cinepoint/analysis">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 gap-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl border-border/60 hover:bg-muted transition-all"
-              >
-                <BarChart3 className="w-3.5 h-3.5" />
-                Analysis
-              </Button>
-            </Link>
+          <div>
+            <h1 className="text-base font-black uppercase tracking-tighter">CinePoint Catalog</h1>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold opacity-60">
+              Movie Database Sync
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link href="/competitors/cinepoint/analysis">
             <Button
               variant="outline"
               size="sm"
-              onClick={resetSync}
-              disabled={syncing}
               className="h-8 gap-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl border-border/60 hover:bg-muted transition-all"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
-              Reset
+              <BarChart3 className="w-3.5 h-3.5" />
+              Analysis
             </Button>
-            {syncing && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={stopSync}
-                className="h-8 gap-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl"
-              >
-                Stop
-              </Button>
-            )}
+          </Link>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={resetSync}
+            disabled={syncing}
+            className="h-8 gap-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl border-border/60 hover:bg-muted transition-all"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            Reset
+          </Button>
+          {syncing && (
             <Button
-              variant={syncing ? 'secondary' : 'default'}
+              variant="destructive"
               size="sm"
-              onClick={() => {
-                if (syncing) return;
-                setShowTokenInput(!showTokenInput);
-              }}
-              disabled={syncing}
-              className="h-8 gap-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all"
+              onClick={stopSync}
+              className="h-8 gap-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl"
             >
-              {syncing ? (
-                <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  Syncing...
-                </>
-              ) : (
-                <>
-                  <Play className="w-3.5 h-3.5" />
-                  Start Sync
-                </>
-              )}
+              Stop
             </Button>
-          </div>
+          )}
+          <Button
+            variant={syncing ? 'secondary' : 'default'}
+            size="sm"
+            onClick={() => {
+              if (syncing) return;
+              setShowTokenInput(!showTokenInput);
+            }}
+            disabled={syncing}
+            className="h-8 gap-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all"
+          >
+            {syncing ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                Syncing...
+              </>
+            ) : (
+              <>
+                <Play className="w-3.5 h-3.5" />
+                Start Sync
+              </>
+            )}
+          </Button>
         </div>
-      </header>
+      </div>
 
-      <div className="px-6 py-8 space-y-6">
-        {/* Token input */}
+      {/* Token input */}
         {showTokenInput && !syncing && (
           <div className="p-4 rounded-2xl border border-border/40 bg-card shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 mb-3">
@@ -592,7 +588,6 @@ export default function CinePointCatalogPage() {
             </p>
           </div>
         )}
-      </div>
     </div>
   );
 }
