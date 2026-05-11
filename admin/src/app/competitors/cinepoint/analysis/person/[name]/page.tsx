@@ -97,8 +97,8 @@ export default function PersonDetailPage() {
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
-            <h1 className="text-lg font-black tracking-tight">{name}</h1>
-            <p className="text-[10px] text-muted-foreground/60 uppercase tracking-widest font-bold">{label}</p>
+            <h1 className="text-base font-black tracking-tight">{name}</h1>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold opacity-60">{label}</p>
           </div>
         </div>
         <Card className="border-dashed">
@@ -127,8 +127,8 @@ export default function PersonDetailPage() {
           <Icon className={cn('w-5 h-5', role === 'director' ? 'text-amber-500' : 'text-indigo-500')} />
         </div>
         <div>
-          <h1 className="text-lg font-black tracking-tight">{name}</h1>
-          <p className="text-[10px] text-muted-foreground/60 uppercase tracking-widest font-bold">
+          <h1 className="text-base font-black tracking-tight">{name}</h1>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold opacity-60">
             {label} · {stats.total_movies} movies · {formatAdm(stats.total_admissions)} total admissions
           </p>
         </div>

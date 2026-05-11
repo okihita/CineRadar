@@ -111,7 +111,7 @@ export default function CinePointAnalysisPage() {
   if (loading) {
     return (
       <div className="min-h-screen">
-        <div className="px-6 py-8 space-y-6 max-w-[1600px] mx-auto">
+        <div className="px-6 py-8 space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
               <Target className="w-5 h-5 text-primary animate-pulse" />
@@ -140,7 +140,7 @@ export default function CinePointAnalysisPage() {
 
   // ── Loaded state ──
   return (
-    <div className="px-6 py-8 space-y-6 max-w-[1600px] mx-auto">
+    <div className="px-6 py-8 space-y-6">
       {/* Header + Filter Toggle */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

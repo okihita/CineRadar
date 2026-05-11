@@ -15,7 +15,6 @@ import {
   Clock, Eye,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -110,16 +109,18 @@ export default function CinePointInsightsPage() {
   const marketTotal = localTotal + intlTotal || 1;
 
   return (
-    <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
-      <PageHeader
-        title="Box Office Intelligence"
-        description="Historical box office analytics from CinePoint data"
-        icon={
-          <div className="p-2 bg-primary/10 rounded-xl">
-            <BarChart3 className="w-6 h-6 text-primary" />
-          </div>
-        }
-      />
+    <div className="px-6 py-8 space-y-6">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+          <BarChart3 className="w-5 h-5 text-primary" />
+        </div>
+        <div>
+          <h1 className="text-base font-black uppercase tracking-tighter">Box Office Intelligence</h1>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold opacity-60">
+            Historical box office analytics from CinePoint data
+          </p>
+        </div>
+      </div>
 
       <Tabs defaultValue="dashboard" onValueChange={(v) => { if (v === 'hall-of-fame' && !yearsData) loadYears(); }}>
         <TabsList>

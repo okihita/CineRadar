@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  ArrowLeft,
   Library,
   Loader2,
   Play,
@@ -256,12 +255,6 @@ export default function CinePointCatalogPage() {
       <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-background/95 backdrop-blur-md">
         <div className="px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link
-              href="/competitors"
-              className="w-9 h-9 rounded-xl border border-border/40 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
             <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
               <Library className="w-5 h-5 text-primary" />
             </div>
@@ -436,29 +429,6 @@ export default function CinePointCatalogPage() {
             <StatCard icon={CheckCircle2} label="Matched" value={stats.matched} color="text-emerald-500" />
             <StatCard icon={AlertCircle} label="Unmatched" value={stats.unmatched} color="text-amber-500" />
             <StatCard icon={Film} label="With Poster" value={stats.with_poster} />
-          </div>
-        )}
-
-        {/* Sync status banner */}
-        {syncMeta && syncMeta.status !== 'complete' && (
-          <div className={cn(
-            'p-3 rounded-xl border text-[10px] font-bold flex items-center gap-2',
-            syncMeta.status === 'error'
-              ? 'bg-red-500/5 border-red-500/20 text-red-600'
-              : syncMeta.status === 'running'
-                ? 'bg-blue-500/5 border-blue-500/20 text-blue-600'
-                : 'bg-amber-500/5 border-amber-500/20 text-amber-600',
-          )}>
-            {syncMeta.status === 'running' ? <Loader2 className="w-3 h-3 animate-spin" /> : <AlertCircle className="w-3 h-3" />}
-            {syncMeta.error_message || `Sync ${syncMeta.status} — ${syncMeta.movies_scraped}/${syncMeta.total_movies} movies scraped`}
-          </div>
-        )}
-
-        {/* Partial sync indicator */}
-        {syncMeta && syncMeta.status === 'complete' && stats && syncMeta.movies_scraped < syncMeta.total_movies && (
-          <div className="p-3 rounded-xl border border-amber-500/20 bg-amber-500/5 text-[10px] font-bold text-amber-600 flex items-center gap-2">
-            <AlertCircle className="w-3 h-3" />
-            Partial sync: {syncMeta.movies_scraped} of {syncMeta.total_movies} movies scraped. Click &quot;Start Sync&quot; to resume.
           </div>
         )}
 

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
-  Star, ArrowLeft, Search, Eye,
+  Star, Search, Eye,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
@@ -53,6 +53,15 @@ export default function ActorsPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="px-6 py-8 flex flex-col items-center justify-center min-h-[50vh] gap-3">
+        <p className="text-sm text-red-500 font-bold">Failed to load data</p>
+        <p className="text-xs text-muted-foreground">{error}</p>
+      </div>
+    );
+  }
+
   const totalActors = rankings.length;
   const bankable = rankings.filter((r) => r.avg_admission >= 500_000).length;
 
@@ -61,9 +70,6 @@ export default function ActorsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link href="/competitors/cinepoint/analysis" className="w-9 h-9 rounded-xl border border-border/40 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
           <div className="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
             <Star className="w-5 h-5 text-indigo-500" />
           </div>

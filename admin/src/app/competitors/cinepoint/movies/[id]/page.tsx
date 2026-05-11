@@ -100,7 +100,7 @@ export default function CinePointMovieDetailPage({
               </div>
             )}
             <div className="min-w-0">
-              <h1 className="text-base font-black tracking-tight truncate">{movie.title}</h1>
+              <h1 className="text-base font-black uppercase tracking-tighter truncate">{movie.title}</h1>
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className={cn(
                   'text-[8px] px-1.5 py-0',
