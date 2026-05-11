@@ -29,7 +29,8 @@ export function PageHeader({ icon, title, subtitle, titleNoUppercase, backHref, 
             <ArrowLeft className="w-4 h-4" />
           </Link>
         )}
-        <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center border', icon)}>
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center border bg-primary/10 border-primary/20">
+          {icon}
         </div>
         <div>
           <h1 className={cn(

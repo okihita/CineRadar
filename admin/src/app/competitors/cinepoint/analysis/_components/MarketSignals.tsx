@@ -3,7 +3,7 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatAdm } from '@/lib/cinepoint';
+import { formatAdm, LOCAL_COLOR, INTL_COLOR, TIER_COLORS, COMBO_COLOR } from '@/lib/cinepoint';
 import type { FactorState, LanguageStat, RatingStat, DurationBucket } from '@/lib/cinepoint';
 
 interface MarketSignalsProps {
@@ -36,7 +36,7 @@ export function MarketSignals({ factors, languageStats, ratingStats, durationBuc
                     <XAxis dataKey="genre" tick={{ fontSize: 9 }} />
                     <YAxis tick={{ fontSize: 9 }} tickFormatter={(v) => formatAdm(Number(v))} />
                     <Tooltip formatter={(v) => Number(v).toLocaleString()} />
-                    <Bar dataKey="avg_admission" radius={[3, 3, 0, 0]} fill={lang === 'Indonesia' ? '#6366f1' : '#f59e0b'} fillOpacity={0.7} />
+                    <Bar dataKey="avg_admission" radius={[3, 3, 0, 0]} fill={lang === 'Indonesia' ? LOCAL_COLOR : INTL_COLOR} fillOpacity={0.7} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -61,7 +61,7 @@ export function MarketSignals({ factors, languageStats, ratingStats, durationBuc
                   <Bar dataKey="avg_admission" radius={[3, 3, 0, 0]}>
                     {durationBuckets.map((d, i) => {
                       const max = Math.max(...durationBuckets.map((x) => x.avg_admission));
-                      return <Cell key={i} fill={d.avg_admission === max ? '#10b981' : '#6366f1'} fillOpacity={d.avg_admission === max ? 1 : 0.4} />;
+                      return <Cell key={i} fill={d.avg_admission === max ? TIER_COLORS.mega_hit : LOCAL_COLOR} fillOpacity={d.avg_admission === max ? 1 : 0.4} />;
                     })}
                   </Bar>
                 </BarChart>
@@ -82,7 +82,7 @@ export function MarketSignals({ factors, languageStats, ratingStats, durationBuc
                   <XAxis type="number" tick={{ fontSize: 9 }} tickFormatter={(v) => formatAdm(Number(v))} />
                   <YAxis type="category" dataKey="rating" width={50} tick={{ fontSize: 10 }} />
                   <Tooltip formatter={(v) => Number(v).toLocaleString()} />
-                  <Bar dataKey="avg_admission" radius={[0, 3, 3, 0]} fill="#8b5cf6" fillOpacity={0.7} />
+                  <Bar dataKey="avg_admission" radius={[0, 3, 3, 0]} fill={COMBO_COLOR} fillOpacity={0.7} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

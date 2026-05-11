@@ -11,7 +11,8 @@ import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { CINEPOINT_CATALOG } from '@/features/competitors/types';
-import type { AnalysisMovie } from '@/lib/cinepoint/types';
+import type { AnalysisMovie } from '@/lib/cinepoint';
+import { JUNK_DIRECTOR_NAMES } from '@/lib/cinepoint';
 
 export const dynamic = 'force-dynamic';
 
@@ -65,7 +66,7 @@ export async function GET() {
         total_admission: m.total_admission ?? 0,
         score: m.score ?? 0,
         rating_category: m.rating_category ?? [],
-        directors: casts.find((c) => c.role === 'directors')?.names?.filter((n) => n && n.length > 1 && n !== 'abc' && n !== 'dir') ?? [],
+        directors: casts.find((c) => c.role === 'directors')?.names?.filter((n) => n && n.length > 1 && !JUNK_DIRECTOR_NAMES.has(n)) ?? [],
         actors: casts.find((c) => c.role === 'casts')?.names?.filter((n) => n && n.length > 1) ?? [],
         release_year: releaseYear,
       };

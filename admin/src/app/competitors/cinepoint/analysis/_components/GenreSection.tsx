@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatAdm, admissionColor, TIER_THRESHOLDS } from '@/lib/cinepoint';
+import { formatAdm, admissionColor, TIER_THRESHOLDS, TIER_COLORS, COMBO_COLOR } from '@/lib/cinepoint';
 import type { FactorState, GenreStat, GenreCombo } from '@/lib/cinepoint';
 
 interface GenreSectionProps {
@@ -36,7 +36,7 @@ export function GenreSection({ factors, genreStats, genreCombos }: GenreSectionP
                   <Tooltip formatter={(v) => Number(v).toLocaleString()} />
                   <Bar dataKey="avg_admission" radius={[0, 3, 3, 0]}>
                     {genreStats.slice(0, 15).map((g, i) => (
-                      <Cell key={i} fill={g.avg_admission >= TIER_THRESHOLDS.hit ? admissionColor(g.avg_admission) : '#94a3b8'} />
+                      <Cell key={i} fill={g.avg_admission >= TIER_THRESHOLDS.hit ? admissionColor(g.avg_admission) : TIER_COLORS.niche} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -94,7 +94,7 @@ export function GenreSection({ factors, genreStats, genreCombos }: GenreSectionP
                 <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={(v) => formatAdm(Number(v))} />
                 <YAxis type="category" dataKey="combo" width={160} tick={{ fontSize: 9 }} />
                 <Tooltip formatter={(v) => Number(v).toLocaleString()} />
-                <Bar dataKey="avg_admission" radius={[0, 3, 3, 0]} fill="#8b5cf6" fillOpacity={0.7} />
+                <Bar dataKey="avg_admission" radius={[0, 3, 3, 0]} fill={COMBO_COLOR} fillOpacity={0.7} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

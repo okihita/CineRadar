@@ -21,6 +21,7 @@ export type {
   TopMover,
   YearSummary,
   BoxOfficeData,
+  BoxOfficeDoc,
 } from './types';
 
 export {
@@ -38,7 +39,9 @@ export {
   TIER_KEYS,
   LOCAL_COLOR,
   INTL_COLOR,
+  COMBO_COLOR,
   CHART_COLORS,
+  JUNK_DIRECTOR_NAMES,
 } from './format';
 
 export {

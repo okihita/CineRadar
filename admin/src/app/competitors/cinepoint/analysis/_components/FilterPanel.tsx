@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { TypeFilterBar } from '@/components/cinepoint/SharedUi';
 import type { FactorState } from '@/lib/cinepoint';
 
 interface FilterPanelProps {
@@ -52,15 +53,7 @@ export function FilterPanel({
         {/* Type filter */}
         <div className="flex items-center gap-4">
           <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Type</p>
-          <div className="flex gap-1">
-            {(['all', 'local', 'international'] as const).map((t) => (
-              <button key={t} onClick={() => setTypeFilter(t)}
-                className={cn('px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all',
-                  typeFilter === t ? 'bg-primary text-primary-foreground' : 'bg-muted/30 text-muted-foreground hover:bg-muted/50')}>
-                {t === 'all' ? 'All' : t === 'local' ? 'Local' : 'International'}
-              </button>
-            ))}
-          </div>
+          <TypeFilterBar value={typeFilter} onChange={setTypeFilter} />
         </div>
 
         {/* Genre filter */}

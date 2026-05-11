@@ -4,6 +4,15 @@ import { Film, Users, TrendingUp, BarChart3, Trophy } from 'lucide-react';
 import { formatAdm } from '@/lib/cinepoint';
 import type { OverviewStats } from '@/lib/cinepoint';
 
+/** Static color map — avoids dynamic Tailwind classes that get purged in production */
+const KPI_COLORS: Record<string, string> = {
+  indigo: 'text-indigo-500',
+  emerald: 'text-emerald-500',
+  amber: 'text-amber-500',
+  purple: 'text-purple-500',
+  rose: 'text-rose-500',
+};
+
 interface KpiRowProps {
   overview: OverviewStats;
 }
@@ -20,7 +29,7 @@ export function KpiRow({ overview }: KpiRowProps) {
       ].map(({ label, value, color, icon: Icon }) => (
         <div key={label} className="px-4 py-3 rounded-xl border border-border/30 bg-card">
           <div className="flex items-center gap-2 mb-1">
-            <Icon className={`w-3.5 h-3.5 text-${color}-500`} />
+            <Icon className={`w-3.5 h-3.5 ${KPI_COLORS[color]}`} />
             <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">{label}</span>
           </div>
           <p className="text-xl font-black tracking-tight">{value}</p>

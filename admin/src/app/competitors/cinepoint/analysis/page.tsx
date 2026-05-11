@@ -1,9 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
-  Loader2, BarChart3, Film, Star, Users,
-  Trophy, TrendingUp, Clapperboard, Sparkles, Target, Filter,
+  Film, Star,
+  Clapperboard, Target, Filter,
   Globe, Clock, Eye, SlidersHorizontal,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -102,8 +102,11 @@ export default function CinePointAnalysisPage() {
   };
 
   // Trigger tier bar animation after load
-  useMemo(() => {
-    if (!loading) setTimeout(() => setTierAnimated(true), 50);
+  useEffect(() => {
+    if (!loading) {
+      const t = setTimeout(() => setTierAnimated(true), 50);
+      return () => clearTimeout(t);
+    }
   }, [loading]);
 
   // ── Loading state ──
@@ -210,7 +213,7 @@ export default function CinePointAnalysisPage() {
       )}
 
       {/* Deep Dive */}
-      <DeepDive movies={movies} filtered={filtered} query={deepDiveQuery} setQuery={setDeepDiveQuery} selectedMovie={deepDiveMovie} setSelectedMovie={setDeepDiveMovie}
+      <DeepDive movies={movies} overallAvg={overview.avg_admission} query={deepDiveQuery} setQuery={setDeepDiveQuery} selectedMovie={deepDiveMovie} setSelectedMovie={setDeepDiveMovie}
         genreStats={genreStats} languageStats={languageStats} durationBuckets={durationBuckets} />
     </div>
   );

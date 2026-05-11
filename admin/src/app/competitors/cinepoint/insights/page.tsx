@@ -7,13 +7,11 @@ import {
 } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import {
-  Loader2, Film, TrendingUp, Trophy, Users, BarChart3,
-  ArrowDownRight, Star, ChevronRight, Crown, Popcorn,
-  Calendar, Sparkles,
+  Film, TrendingUp, Trophy, Users, BarChart3,
+  Crown, Calendar, Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   formatAdm, LOCAL_COLOR, INTL_COLOR, CHART_COLORS,
@@ -21,8 +19,10 @@ import {
 import { PageLoader } from '@/components/cinepoint/PageShell';
 import { useBoxOfficeData, RANGE_PRESETS } from './_components/useBoxOfficeData';
 import type { RangePreset } from './_components/useBoxOfficeData';
-import { MovieDetailPanel, MetaChip } from './_components/MovieDetailPanel';
+import { MovieDetailPanel } from './_components/MovieDetailPanel';
 import { HallOfFameTab } from './_components/HallOfFameTab';
+import { MovieDrillDown } from './_components/MovieDrillDown';
+import { FullRankings } from './_components/FullRankings';
 
 // ─── Page (Thin Orchestrator) ────────────────────────────────
 
@@ -142,7 +142,7 @@ function DashboardContent({
   );
 }
 
-// ─── Sub-sections ────────────────────────────────────────────
+// ─── Sub-sections (remain inline — small enough) ────────────
 
 function KpiCards({ meta }: { meta: NonNullable<ReturnType<typeof useBoxOfficeData>['data']>['meta'] }) {
   return (
@@ -248,7 +248,7 @@ function GenreAndDay({ data }: { data: NonNullable<ReturnType<typeof useBoxOffic
                 <XAxis dataKey="day" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => formatAdm(Number(v))} />
                 <Tooltip formatter={(v) => Number(v).toLocaleString()} />
-                <Bar dataKey="avg_admissions" name="Avg Admissions" radius={[4, 4, 0, 0]} fill="#6366f1" fillOpacity={0.7} />
+                <Bar dataKey="avg_admissions" name="Avg Admissions" radius={[4, 4, 0, 0]} fill={LOCAL_COLOR} fillOpacity={0.7} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -274,144 +274,6 @@ function Top10Chart({ data }: { data: NonNullable<ReturnType<typeof useBoxOffice
             </Bar>
           </BarChart>
         </ResponsiveContainer>
-      </CardContent>
-    </Card>
-  );
-}
-
-function MovieDrillDown({
-  data, selectedMovie, setSelectedMovie, enrichedMovie, enrichedLoading,
-}: {
-  data: NonNullable<ReturnType<typeof useBoxOfficeData>['data']>;
-  selectedMovie: number | null;
-  setSelectedMovie: (id: number | null) => void;
-  enrichedMovie: ReturnType<typeof useBoxOfficeData>['enrichedMovie'];
-  enrichedLoading: boolean;
-}) {
-  if (!selectedMovie) return null;
-  const movie = data.movie_rankings.find((m) => m.id === selectedMovie);
-  if (!movie) return null;
-
-  // Week bucket computation
-  const weekBuckets = new Map<number, { total: number }>();
-  for (const d of movie.daily) {
-    const weekNum = Math.floor((new Date(d.date).getTime() - new Date(movie.daily[0].date).getTime()) / (7 * 86400000));
-    const existing = weekBuckets.get(weekNum);
-    if (existing) existing.total += d.admission;
-    else weekBuckets.set(weekNum, { total: d.admission });
-  }
-  const weeklyTotals = [...weekBuckets.entries()].sort(([a], [b]) => a - b).map(([w, { total }]) => ({ week: `W${w + 1}`, admissions: total }));
-  const wowDrop = weeklyTotals.length >= 2 ? (((weeklyTotals[0].admissions - weeklyTotals[1].admissions) / weeklyTotals[0].admissions) * 100).toFixed(1) : null;
-
-  return (
-    <>
-      <Card>
-        <CardHeader className="pb-2 border-b">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-black uppercase tracking-[0.2em]">{movie.title}</CardTitle>
-            <button onClick={() => setSelectedMovie(null)} className="text-xs text-muted-foreground hover:text-foreground">✕ Close</button>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 mt-2">
-            <Badge variant="outline" className={movie.type === 'local' ? 'border-indigo-500/30 text-indigo-600' : 'border-amber-500/30 text-amber-600'}>
-              {movie.type === 'local' ? 'Local' : 'International'}
-            </Badge>
-            <MetaChip icon={<Star className="w-3 h-3" />} value={`${movie.latest_score.toFixed(1)} score`} />
-            <MetaChip icon={<Users className="w-3 h-3" />} value={`${movie.latest_total_admission.toLocaleString()} lifetime`} />
-            <MetaChip icon={<Popcorn className="w-3 h-3" />} value={`${movie.peak_admission.toLocaleString()} peak`} />
-            {wowDrop !== null && (
-              <MetaChip icon={Number(wowDrop) > 0 ? <TrendingUp className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                value={`W1→W2: ${wowDrop}%`} className={Number(wowDrop) > 0 ? 'text-green-600' : 'text-red-600'} />
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="p-6">
-            <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={movie.daily}>
-                <CartesianGrid strokeDasharray="3 3" className="opacity-20" />
-                <XAxis dataKey="date" tickFormatter={(v) => format(parseISO(String(v)), 'MMM d')} tick={{ fontSize: 10 }} />
-                <YAxis yAxisId="left" tick={{ fontSize: 10 }} tickFormatter={(v) => formatAdm(Number(v))} />
-                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} reversed domain={[1, 'auto']} />
-                <Tooltip labelFormatter={(v) => format(parseISO(String(v)), 'EEE, MMM d')} formatter={(v, name) => name === 'Rank' ? `#${v}` : Number(v).toLocaleString()} />
-                <Legend />
-                <Line yAxisId="left" type="monotone" dataKey="admission" stroke="#6366f1" strokeWidth={2} name="Admissions" dot={{ r: 2 }} />
-                <Line yAxisId="right" type="monotone" dataKey="rank" stroke="#f59e0b" strokeWidth={1.5} name="Rank" strokeDasharray="4 4" dot={{ r: 2 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-          {movie.daily.length > 1 && (
-            <div className="border-t px-6 pb-6 pt-4">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-2">Cumulative Admissions</p>
-              <ResponsiveContainer width="100%" height={120}>
-                <AreaChart data={movie.daily}>
-                  <CartesianGrid strokeDasharray="3 3" className="opacity-20" />
-                  <XAxis dataKey="date" tickFormatter={(v) => format(parseISO(String(v)), 'MMM d')} tick={{ fontSize: 9 }} />
-                  <YAxis tick={{ fontSize: 9 }} tickFormatter={(v) => formatAdm(Number(v))} />
-                  <Tooltip formatter={(v) => Number(v).toLocaleString()} />
-                  <Area type="monotone" dataKey="total_admission" stroke="#10b981" fill="#10b981" fillOpacity={0.12} name="Cumulative" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      {enrichedLoading && (
-        <Card><CardContent className="flex items-center justify-center py-12 gap-2">
-          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">Loading movie details…</span>
-        </CardContent></Card>
-      )}
-      {!enrichedLoading && enrichedMovie && <MovieDetailPanel movie={enrichedMovie} />}
-    </>
-  );
-}
-
-function FullRankings({ data, selectedMovie, setSelectedMovie }: {
-  data: NonNullable<ReturnType<typeof useBoxOfficeData>['data']>;
-  selectedMovie: number | null;
-  setSelectedMovie: (id: number | null) => void;
-}) {
-  return (
-    <Card>
-      <CardHeader className="pb-3 border-b">
-        <CardTitle className="text-sm font-black uppercase tracking-[0.2em]">
-          Full Rankings
-          <span className="text-muted-foreground/60 font-normal normal-case tracking-normal ml-2">{data.movie_rankings.length} movies</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
-          <table className="w-full text-sm">
-            <thead className="sticky top-0 bg-background z-10">
-              <tr className="border-b text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
-                <th className="p-4 text-left w-12">#</th>
-                <th className="p-4 text-left">Movie</th>
-                <th className="p-4 text-left w-20">Type</th>
-                <th className="p-4 text-right">Period</th>
-                <th className="p-4 text-right">Lifetime</th>
-                <th className="p-4 text-right w-14">Score</th>
-                <th className="p-4 text-center w-14">Days</th>
-                <th className="p-4 w-6" />
-              </tr>
-            </thead>
-            <tbody>
-              {data.movie_rankings.map((m) => (
-                <tr key={m.id}
-                  className={cn('border-b last:border-0 hover:bg-muted/30 transition-colors cursor-pointer', selectedMovie === m.id && 'bg-indigo-500/5')}
-                  onClick={() => setSelectedMovie(selectedMovie === m.id ? null : m.id)}>
-                  <td className="p-4 font-mono font-bold">{m.latest_rank ?? '-'}</td>
-                  <td className="p-4"><p className="font-medium">{m.title}</p><p className="text-[10px] text-muted-foreground/60">{m.movie_genre.join(', ')}</p></td>
-                  <td className="p-4"><Badge variant="outline" className={cn('text-[10px]', m.type === 'local' ? 'border-indigo-500/20 text-indigo-600' : 'border-amber-500/20 text-amber-600')}>{m.type === 'local' ? 'Local' : 'Intl'}</Badge></td>
-                  <td className="p-4 text-right font-mono">{m.total_period_admissions.toLocaleString()}</td>
-                  <td className="p-4 text-right font-mono text-muted-foreground">{m.latest_total_admission.toLocaleString()}</td>
-                  <td className="p-4 text-right font-mono">{m.latest_score.toFixed(1)}</td>
-                  <td className="p-4 text-center text-muted-foreground">{m.daily.length}</td>
-                  <td className="p-4"><ChevronRight className="w-3 h-3 text-muted-foreground/40" /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
       </CardContent>
     </Card>
   );

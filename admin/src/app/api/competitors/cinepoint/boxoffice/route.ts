@@ -15,29 +15,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { CINEPOINT_BOX_OFFICE, CINEPOINT_BO_SYNC_META } from '@/features/competitors/types';
+import type { BoxOfficeDoc } from '@/lib/cinepoint';
 
 export const dynamic = 'force-dynamic';
-
-interface BoxOfficeDoc {
-  id: string;
-  date: string;
-  movie_id: number;
-  title: string;
-  image_title: string | null;
-  movie_genre: string[];
-  duration: number;
-  release_date: string;
-  type: 'local' | 'international';
-  admission: number;
-  total_admission: number;
-  change: number;
-  showtimes: number;
-  score: number;
-  current_rank: number;
-  last_rank: number | null;
-  scraped_at: string;
-  batch_id: string;
-}
 
 export async function GET(req: NextRequest) {
   const authError = await requireAdmin();

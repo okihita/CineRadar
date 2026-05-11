@@ -202,3 +202,27 @@ export interface BoxOfficeData {
     dates_scraped: number;
   } | null;
 }
+
+// ─── Firestore Box Office Doc ────────────────────────────────
+
+/** Raw box office document shape from Firestore `cinepoint_box_office` collection */
+export interface BoxOfficeDoc {
+  id: string;
+  date: string;
+  movie_id: number;
+  title: string;
+  image_title: string | null;
+  movie_genre: string[];
+  duration: number;
+  release_date: string;
+  type: 'local' | 'international';
+  admission: number;
+  total_admission: number;
+  change: number;
+  showtimes: number;
+  score: number;
+  current_rank: number;
+  last_rank: number | null;
+  scraped_at: string;
+  batch_id: string;
+}

@@ -85,4 +85,8 @@ export const TIER_KEYS = ['mega_hit', 'hit', 'moderate', 'niche', 'flop'] as con
 /** Movie type color constants used across insights and detail pages */
 export const LOCAL_COLOR = '#6366f1';
 export const INTL_COLOR = '#f59e0b';
+export const COMBO_COLOR = '#8b5cf6';
 export const CHART_COLORS = ['#6366f1', '#f59e0b', '#10b981', '#f87171', '#38bdf8', '#e879f9', '#fb923c', '#34d399'];
+
+/** Junk director names to filter out of rankings */
+export const JUNK_DIRECTOR_NAMES = new Set(['abc', 'dir']);

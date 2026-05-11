@@ -11,52 +11,9 @@ import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { CINEPOINT_BOX_OFFICE } from '@/features/competitors/types';
+import type { BoxOfficeDoc, YearSummary } from '@/lib/cinepoint';
 
 export const dynamic = 'force-dynamic';
-
-interface BoxOfficeDoc {
-  id: string;
-  date: string;
-  movie_id: number;
-  title: string;
-  type: 'local' | 'international';
-  admission: number;
-  total_admission: number;
-  movie_genre: string[];
-  release_date: string;
-  score: number;
-  current_rank: number;
-}
-
-interface YearSummary {
-  year: number;
-  dates_with_data: number;
-  total_admissions: number;
-  local_admissions: number;
-  international_admissions: number;
-  unique_movies: number;
-  top_movie: {
-    movie_id: number;
-    title: string;
-    type: string;
-    total_admissions: number;
-    movie_genre: string[];
-    release_date: string;
-    score: number;
-  } | null;
-  top_local: {
-    movie_id: number;
-    title: string;
-    total_admissions: number;
-    movie_genre: string[];
-  } | null;
-  top_international: {
-    movie_id: number;
-    title: string;
-    total_admissions: number;
-    movie_genre: string[];
-  } | null;
-}
 
 export async function GET() {
   const authError = await requireAdmin();

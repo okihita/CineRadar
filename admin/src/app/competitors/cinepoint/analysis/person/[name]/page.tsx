@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ArrowLeft, Star, Clapperboard,
@@ -20,6 +20,7 @@ import {
   admissionColor,
   classifyTier,
 } from '@/lib/cinepoint';
+import { StatCard } from '@/components/cinepoint/SharedUi';
 
 export default function PersonDetailPage() {
   const params = useParams();
@@ -116,26 +117,11 @@ export default function PersonDetailPage() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <div className="px-4 py-3 rounded-xl border border-border/30 bg-card">
-          <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">Movies</p>
-          <p className="text-xl font-black">{stats.total_movies}</p>
-        </div>
-        <div className="px-4 py-3 rounded-xl border border-border/30 bg-card">
-          <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">Avg Admissions</p>
-          <p className="text-xl font-black">{formatAdm(stats.avg_admission)}</p>
-        </div>
-        <div className="px-4 py-3 rounded-xl border border-border/30 bg-card">
-          <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">Median</p>
-          <p className="text-xl font-black">{formatAdm(stats.median_admission)}</p>
-        </div>
-        <div className="px-4 py-3 rounded-xl border border-border/30 bg-card">
-          <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">Hit Rate</p>
-          <p className="text-xl font-black">{stats.hit_rate}% <span className="text-xs text-muted-foreground">({stats.hit_count}/{stats.with_admissions})</span></p>
-        </div>
-        <div className="px-4 py-3 rounded-xl border border-border/30 bg-card">
-          <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">Avg Score</p>
-          <p className="text-xl font-black">{stats.avg_score || '—'}</p>
-        </div>
+        <StatCard label="Movies" value={stats.total_movies} />
+        <StatCard label="Avg Admissions" value={formatAdm(stats.avg_admission)} />
+        <StatCard label="Median" value={formatAdm(stats.median_admission)} />
+        <StatCard label="Hit Rate" value={`${stats.hit_rate}%`} sub={`${stats.hit_count}/${stats.with_admissions}`} />
+        <StatCard label="Avg Score" value={stats.avg_score || '—'} />
       </div>
 
       {/* Genres + Best Movie */}
