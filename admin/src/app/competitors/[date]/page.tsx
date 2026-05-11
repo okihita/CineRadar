@@ -10,7 +10,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
-  CalendarDays,
   Info,
   Archive,
   AlertTriangle,
@@ -192,16 +191,22 @@ export default function CompetitorDatePage() {
   }
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="px-6 py-8 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Swords className="w-4 h-4 text-primary" />
+          <Link
+            href="/competitors"
+            className="w-9 h-9 rounded-xl border border-border/40 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Link>
+          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+            <Swords className="w-5 h-5 text-primary" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-sm font-bold tracking-tight">CinePoint Benchmark</h1>
+              <h1 className="text-base font-black uppercase tracking-tighter">CinePoint Benchmark</h1>
               {confidence && (
                 <Badge variant="outline" className={cn('text-[9px] h-5 px-2 gap-1 border font-bold uppercase tracking-wider', confidenceColor(confidence.level))}>
                   {confidenceIcon(confidence.level)}
@@ -209,8 +214,8 @@ export default function CompetitorDatePage() {
                 </Badge>
               )}
             </div>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-              Competitor Quick Count Analysis
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold opacity-60">
+              {displayDate}
             </p>
           </div>
         </div>
@@ -221,39 +226,38 @@ export default function CompetitorDatePage() {
             variant="ghost"
             size="sm"
             onClick={() => navigateDate(-1)}
-            className="h-7 w-7 p-0"
+            className="h-8 w-8 p-0 rounded-xl"
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-muted/50 border border-border/50">
-            <CalendarDays className="w-3 h-3 text-muted-foreground" />
-            <span className="text-[11px] font-bold font-mono">{displayDate}</span>
-          </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigateDate(1)}
-            className="h-7 w-7 p-0"
+            className="h-8 w-8 p-0 rounded-xl"
           >
             <ChevronRight className="w-4 h-4" />
           </Button>
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={() => {
               const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Jakarta' });
               router.push(`/competitors/${today}`);
             }}
-            className="h-7 px-2 text-[10px] font-bold uppercase"
+            className="h-8 gap-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl border-border/60 hover:bg-muted transition-all"
           >
             Today
           </Button>
-          <Link
-            href="/competitors/archive"
-            className="h-7 px-2 text-[10px] font-bold uppercase flex items-center gap-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Archive className="w-3 h-3" />
-            Archive
+          <Link href="/competitors/archive">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl border-border/60 hover:bg-muted transition-all"
+            >
+              <Archive className="w-3.5 h-3.5" />
+              Archive
+            </Button>
           </Link>
         </div>
       </div>

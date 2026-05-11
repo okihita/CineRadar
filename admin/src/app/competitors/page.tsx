@@ -254,16 +254,16 @@ export default function CompetitorsDashboard() {
   const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Jakarta' });
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="px-6 py-8 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Swords className="w-4 h-4 text-primary" />
+          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+            <Swords className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-sm font-bold tracking-tight">Competitor Intelligence</h1>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+            <h1 className="text-base font-black uppercase tracking-tighter">Competitor Intelligence</h1>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold opacity-60">
               CinePoint Benchmark Dashboard
             </p>
           </div>
@@ -271,14 +271,22 @@ export default function CompetitorsDashboard() {
 
         <div className="flex items-center gap-2">
           <Link href={`/competitors/${today}`}>
-            <Button variant="outline" size="sm" className="h-7 gap-1.5 px-3 text-[10px] font-bold uppercase">
-              <CalendarDays className="w-3 h-3" />
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl border-border/60 hover:bg-muted transition-all"
+            >
+              <CalendarDays className="w-3.5 h-3.5" />
               Today&apos;s Detail
             </Button>
           </Link>
           <Link href="/competitors/archive">
-            <Button variant="outline" size="sm" className="h-7 gap-1.5 px-3 text-[10px] font-bold uppercase">
-              <Archive className="w-3 h-3" />
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl border-border/60 hover:bg-muted transition-all"
+            >
+              <Archive className="w-3.5 h-3.5" />
               Tweet Archive
             </Button>
           </Link>
