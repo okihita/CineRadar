@@ -50,6 +50,28 @@ export const TIER_COLORS: Record<string, string> = {
   flop: '#f87171',
 };
 
+/** Get the CSS color for an admission value based on its tier */
+export function admissionColor(admission: number): string {
+  return TIER_COLORS[classifyTier(admission)] ?? '#94a3b8';
+}
+
+/** Duration bucket boundaries — single source of truth */
+export const DURATION_THRESHOLDS = [
+  { range: '< 80 min', min: 0, max: 80 },
+  { range: '80–100', min: 80, max: 100 },
+  { range: '100–120', min: 100, max: 120 },
+  { range: '120–140', min: 120, max: 140 },
+  { range: '140+', min: 140, max: 999 },
+] as const;
+
+/** Find the duration bucket range label for a given duration */
+export function durationBucket(duration: number): string {
+  for (const b of DURATION_THRESHOLDS) {
+    if (duration >= b.min && duration < b.max) return b.range;
+  }
+  return '140+';
+}
+
 export const TIER_LABELS: Record<string, string> = {
   mega_hit: 'Mega Hit (≥1M)',
   hit: 'Hit (500K–1M)',

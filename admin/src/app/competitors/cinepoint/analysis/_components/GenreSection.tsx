@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatAdm } from '@/lib/cinepoint';
+import { formatAdm, admissionColor, TIER_THRESHOLDS } from '@/lib/cinepoint';
 import type { FactorState, GenreStat, GenreCombo } from '@/lib/cinepoint';
 
 interface GenreSectionProps {
@@ -36,7 +36,7 @@ export function GenreSection({ factors, genreStats, genreCombos }: GenreSectionP
                   <Tooltip formatter={(v) => Number(v).toLocaleString()} />
                   <Bar dataKey="avg_admission" radius={[0, 3, 3, 0]}>
                     {genreStats.slice(0, 15).map((g, i) => (
-                      <Cell key={i} fill={g.avg_admission >= 500_000 ? '#10b981' : g.avg_admission >= 200_000 ? '#6366f1' : '#94a3b8'} />
+                      <Cell key={i} fill={g.avg_admission >= TIER_THRESHOLDS.hit ? admissionColor(g.avg_admission) : '#94a3b8'} />
                     ))}
                   </Bar>
                 </BarChart>

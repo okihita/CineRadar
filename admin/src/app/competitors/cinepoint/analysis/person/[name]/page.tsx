@@ -3,8 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import {
-  ArrowLeft, Loader2, Star, Clapperboard,
+import { ArrowLeft, Star, Clapperboard,
   Trophy,
 } from 'lucide-react';
 import {
@@ -13,13 +12,13 @@ import {
 } from 'recharts';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageError } from '@/components/cinepoint/PageShell';
 import {
   useAnalysisData,
   formatAdm,
-  median,
-  computeHitRate,
-  HIT_THRESHOLD,
-  TIER_COLORS,
+  computePersonDetail,
+  admissionColor,
+  classifyTier,
 } from '@/lib/cinepoint';
 
 export default function PersonDetailPage() {
@@ -41,25 +40,7 @@ export default function PersonDetailPage() {
       .sort((a, b) => b.release_year - a.release_year);
   }, [allMovies, name, role]);
 
-  const stats = useMemo(() => {
-    const withAdm = filmography.filter((m) => m.total_admission > 0);
-    const admissions = withAdm.map((m) => m.total_admission);
-    const total = admissions.reduce((s, v) => s + v, 0);
-    return {
-      total_movies: filmography.length,
-      with_admissions: withAdm.length,
-      total_admissions: total,
-      avg_admission: withAdm.length ? Math.round(total / withAdm.length) : 0,
-      median_admission: withAdm.length ? Math.round(median(admissions)) : 0,
-      best_movie: withAdm.length ? withAdm.reduce((a, b) => a.total_admission > b.total_admission ? a : b) : null,
-      hit_count: admissions.filter((v) => v >= HIT_THRESHOLD).length,
-      hit_rate: computeHitRate(admissions),
-      genres: [...new Set(filmography.flatMap((m) => m.genres))].sort(),
-      avg_score: filmography.filter((m) => m.score > 0).length
-        ? Math.round((filmography.filter((m) => m.score > 0).reduce((s, m) => s + m.score, 0) / filmography.filter((m) => m.score > 0).length) * 10) / 10
-        : 0,
-    };
-  }, [filmography]);
+  const stats = useMemo(() => computePersonDetail(filmography), [filmography]);
 
   const chartData = useMemo(() =>
     filmography
@@ -75,20 +56,17 @@ export default function PersonDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="px-6 py-8">
+        <div className="flex flex-col items-center justify-center py-32 gap-4">
+          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 animate-pulse" />
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/40">Loading…</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-3">
-        <p className="text-sm text-red-500 font-bold">Failed to load data</p>
-        <p className="text-xs text-muted-foreground">{error}</p>
-        <Link href={backHref} className="text-xs text-primary hover:underline">← Back</Link>
-      </div>
-    );
+    return <div className="px-6 py-8"><PageError error={error} backHref={backHref} /></div>;
   }
 
   if (filmography.length === 0 && allMovies.length > 0) {
@@ -213,7 +191,7 @@ export default function PersonDetailPage() {
                 <Tooltip formatter={(v) => Number(v).toLocaleString()} />
                 <Bar dataKey="admissions" radius={[0, 3, 3, 0]}>
                   {chartData.map((d, i) => (
-                    <Cell key={i} fill={d.admissions >= 1_000_000 ? '#10b981' : d.admissions >= 500_000 ? '#6366f1' : '#94a3b8'} />
+                    <Cell key={i} fill={admissionColor(d.admissions)} />
                   ))}
                 </Bar>
               </BarChart>
@@ -251,7 +229,7 @@ export default function PersonDetailPage() {
                     <td className="p-3 text-right font-mono text-muted-foreground">{m.release_year || '—'}</td>
                     <td className="p-3 text-right font-mono font-bold">
                       {m.total_admission > 0 ? (
-                        <span className={m.total_admission >= 1_000_000 ? 'text-emerald-600' : ''}>{formatAdm(m.total_admission)}</span>
+                        <span className={classifyTier(m.total_admission) === 'mega_hit' ? 'text-emerald-600' : ''}>{formatAdm(m.total_admission)}</span>
                       ) : '—'}
                     </td>
                     <td className="p-3 text-right font-mono">{m.score > 0 ? m.score.toFixed(1) : '—'}</td>

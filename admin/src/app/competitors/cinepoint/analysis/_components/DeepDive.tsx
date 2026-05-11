@@ -5,8 +5,8 @@ import { Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { formatAdm, classifyTier, TIER_COLORS, TIER_LABELS } from '@/lib/cinepoint';
-import type { AnalysisMovie, OverviewStats } from '@/lib/cinepoint';
+import { formatAdm, classifyTier, TIER_COLORS, TIER_LABELS, admissionColor } from '@/lib/cinepoint';
+import type { AnalysisMovie, GenreStat, LanguageStat, DurationBucket } from '@/lib/cinepoint';
 
 interface DeepDiveProps {
   movies: AnalysisMovie[];
@@ -15,16 +15,19 @@ interface DeepDiveProps {
   setQuery: (q: string) => void;
   selectedMovie: AnalysisMovie | null;
   setSelectedMovie: (m: AnalysisMovie | null) => void;
+  genreStats: GenreStat[];
+  languageStats: Record<string, LanguageStat>;
+  durationBuckets: DurationBucket[];
 }
 
-export function DeepDive({ movies, filtered, query, setQuery, selectedMovie, setSelectedMovie }: DeepDiveProps) {
+export function DeepDive({ movies, filtered, query, setQuery, selectedMovie, setSelectedMovie, genreStats, languageStats, durationBuckets }: DeepDiveProps) {
   // Search results
   const results = query.trim()
     ? movies.filter((m) => m.title.toLowerCase().includes(query.toLowerCase().trim())).slice(0, 8)
     : [];
 
-  // Comparison profile
-  const profile = selectedMovie ? buildProfile(selectedMovie, filtered) : null;
+  // Comparison profile — uses pre-computed stats from parent
+  const profile = selectedMovie ? buildProfile(selectedMovie, filtered, genreStats, languageStats, durationBuckets) : null;
 
   return (
     <Card>
@@ -54,7 +57,7 @@ export function DeepDive({ movies, filtered, query, setQuery, selectedMovie, set
                   <p className="text-[10px] text-muted-foreground">{m.release_year || '—'} · {m.language} · {m.genres.slice(0, 3).join(', ')}</p>
                 </div>
                 {m.total_admission > 0 && (
-                  <span className={cn('text-xs font-mono font-bold', m.total_admission >= 1_000_000 ? 'text-emerald-600' : m.total_admission >= 500_000 ? 'text-indigo-600' : 'text-muted-foreground')}>
+                  <span className="text-xs font-mono font-bold" style={{ color: admissionColor(m.total_admission) }}>
                     {formatAdm(m.total_admission)}
                   </span>
                 )}
@@ -151,28 +154,38 @@ function ComparisonCard({ label, movieValue, avgValue }: { label: string; movieV
   );
 }
 
-function buildProfile(movie: AnalysisMovie, filtered: AnalysisMovie[]) {
+/** Build comparison profile using pre-computed shared stats */
+function buildProfile(
+  movie: AnalysisMovie,
+  filtered: AnalysisMovie[],
+  genreStats: GenreStat[],
+  languageStats: Record<string, LanguageStat>,
+  durationBuckets: DurationBucket[],
+) {
   const withAdm = filtered.filter((f) => f.total_admission > 0);
   const overallAvg = withAdm.length ? Math.round(withAdm.reduce((s, f) => s + f.total_admission, 0) / withAdm.length) : 0;
 
+  // Look up pre-computed genre averages
   const genreAvgs: Record<string, number> = {};
   for (const g of movie.genres) {
-    const gMovies = withAdm.filter((f) => f.genres.includes(g));
-    genreAvgs[g] = gMovies.length ? Math.round(gMovies.reduce((s, f) => s + f.total_admission, 0) / gMovies.length) : 0;
+    const stat = genreStats.find((s) => s.genre === g);
+    genreAvgs[g] = stat?.avg_admission ?? 0;
   }
 
-  const langMovies = withAdm.filter((f) => f.language === movie.language);
-  const langAvg = langMovies.length ? Math.round(langMovies.reduce((s, f) => s + f.total_admission, 0) / langMovies.length) : 0;
+  // Look up pre-computed language average
+  const langStat = languageStats[movie.language];
+  const langAvg = langStat?.avg_admission ?? 0;
 
-  const durBucket = movie.duration < 80 ? '<80' : movie.duration < 100 ? '80-100' : movie.duration < 120 ? '100-120' : movie.duration < 140 ? '120-140' : '140+';
-  const durMovies = withAdm.filter((f) => {
-    if (durBucket === '<80') return f.duration < 80;
-    if (durBucket === '80-100') return f.duration >= 80 && f.duration < 100;
-    if (durBucket === '100-120') return f.duration >= 100 && f.duration < 120;
-    if (durBucket === '120-140') return f.duration >= 120 && f.duration < 140;
-    return f.duration >= 140;
+  // Look up pre-computed duration bucket average
+  const durBucket = durationBuckets.find((b) => {
+    if (movie.duration < 80) return b.range === '< 80 min';
+    if (movie.duration < 100) return b.range === '80–100';
+    if (movie.duration < 120) return b.range === '100–120';
+    if (movie.duration < 140) return b.range === '120–140';
+    return b.range === '140+';
   });
-  const durAvg = durMovies.length ? Math.round(durMovies.reduce((s, f) => s + f.total_admission, 0) / durMovies.length) : 0;
+  const durAvg = durBucket?.avg_admission ?? 0;
+  const durLabel = durBucket?.range ? `${durBucket.range} min` : '';
 
   const tier = classifyTier(movie.total_admission);
 
@@ -182,6 +195,6 @@ function buildProfile(movie: AnalysisMovie, filtered: AnalysisMovie[]) {
     genreAvgs,
     vsOverall: movie.total_admission > 0 ? { value: movie.total_admission, avg: overallAvg } : null,
     vsLanguage: movie.total_admission > 0 ? { value: movie.total_admission, avg: langAvg, label: movie.language } : null,
-    vsDuration: movie.total_admission > 0 ? { value: movie.total_admission, avg: durAvg, label: `${durBucket} min` } : null,
+    vsDuration: movie.total_admission > 0 && durLabel ? { value: movie.total_admission, avg: durAvg, label: durLabel } : null,
   };
 }

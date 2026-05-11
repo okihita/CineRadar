@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
+import { PageLoader, PageError } from '@/components/cinepoint/PageShell';
 import {
   useAnalysisData,
   computePersonRankings,
@@ -38,14 +39,13 @@ export default function DirectorsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen">
-        <div className="px-6 py-8 space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
-              <Clapperboard className="w-5 h-5 text-amber-500 animate-pulse" />
-            </div>
-            <div>
-              <h1 className="text-base font-black uppercase tracking-tighter">Director Database</h1>
+      <div className="px-6 py-8 space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
+            <Clapperboard className="w-5 h-5 text-amber-500 animate-pulse" />
+          </div>
+          <div>
+            <h1 className="text-base font-black uppercase tracking-tighter">Director Database</h1>
             <p className="text-[10px] text-muted-foreground/60">Loading director performance data…</p>
           </div>
         </div>
@@ -55,18 +55,12 @@ export default function DirectorsPage() {
           ))}
         </div>
         <div className="h-96 rounded-xl border border-border/20 animate-pulse bg-muted/10" />
-        </div>
       </div>
     );
   }
 
   if (error) {
-    return (
-      <div className="px-6 py-8 flex flex-col items-center justify-center min-h-[50vh] gap-3">
-        <p className="text-sm text-red-500 font-bold">Failed to load data</p>
-        <p className="text-xs text-muted-foreground">{error}</p>
-      </div>
-    );
+    return <div className="px-6 py-8"><PageError error={error} /></div>;
   }
 
   const totalDirectors = rankings.length;

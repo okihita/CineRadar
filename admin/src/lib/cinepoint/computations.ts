@@ -10,12 +10,13 @@ import type {
   OverviewStats,
   GenreStat,
   PersonRanking,
+  PersonDetailStats,
   LanguageStat,
   RatingStat,
   DurationBucket,
   GenreCombo,
 } from './types';
-import { median, classifyTier, computeHitRate } from './format';
+import { median, classifyTier, computeHitRate, HIT_THRESHOLD, DURATION_THRESHOLDS } from './format';
 
 /** Compute overview statistics */
 export function computeStats(movies: AnalysisMovie[]): OverviewStats {
@@ -168,14 +169,7 @@ export function computeRatingStats(movies: AnalysisMovie[]): RatingStat[] {
 
 /** Compute duration bucket statistics */
 export function computeDurationBuckets(movies: AnalysisMovie[]): DurationBucket[] {
-  const buckets = [
-    { range: '< 80 min', min: 0, max: 80 },
-    { range: '80–100', min: 80, max: 100 },
-    { range: '100–120', min: 100, max: 120 },
-    { range: '120–140', min: 120, max: 140 },
-    { range: '140+', min: 140, max: 999 },
-  ];
-  return buckets.map((b) => {
+  return DURATION_THRESHOLDS.map((b) => {
     const matching = movies.filter((m) => m.total_admission > 0 && m.duration >= b.min && m.duration < b.max);
     const adm = matching.map((m) => m.total_admission);
     return {
@@ -206,4 +200,24 @@ export function computeGenreCombos(movies: AnalysisMovie[]): GenreCombo[] {
     }))
     .sort((a, b) => b.avg_admission - a.avg_admission)
     .slice(0, 20);
+}
+
+/** Compute detailed stats for a person's filmography */
+export function computePersonDetail(filmography: AnalysisMovie[]): PersonDetailStats {
+  const withAdm = filmography.filter((m) => m.total_admission > 0);
+  const admissions = withAdm.map((m) => m.total_admission);
+  const total = admissions.reduce((s, v) => s + v, 0);
+  const scored = filmography.filter((m) => m.score > 0);
+  return {
+    total_movies: filmography.length,
+    with_admissions: withAdm.length,
+    total_admissions: total,
+    avg_admission: withAdm.length ? Math.round(total / withAdm.length) : 0,
+    median_admission: withAdm.length ? Math.round(median(admissions)) : 0,
+    best_movie: withAdm.length ? withAdm.reduce((a, b) => a.total_admission > b.total_admission ? a : b) : null,
+    hit_count: admissions.filter((v) => v >= HIT_THRESHOLD).length,
+    hit_rate: computeHitRate(admissions),
+    genres: [...new Set(filmography.flatMap((m) => m.genres))].sort(),
+    avg_score: scored.length ? Math.round((scored.reduce((s, m) => s + m.score, 0) / scored.length) * 10) / 10 : 0,
+  };
 }

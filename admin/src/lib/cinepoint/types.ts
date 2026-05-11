@@ -31,6 +31,20 @@ export interface PersonRanking {
   hit_rate: number;
 }
 
+/** Computed stats for a person's detail page */
+export interface PersonDetailStats {
+  total_movies: number;
+  with_admissions: number;
+  total_admissions: number;
+  avg_admission: number;
+  median_admission: number;
+  best_movie: AnalysisMovie | null;
+  hit_count: number;
+  hit_rate: number;
+  genres: string[];
+  avg_score: number;
+}
+
 /** Computed overview statistics */
 export interface OverviewStats {
   total_movies: number;

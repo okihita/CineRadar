@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
+import { PageLoader, PageError } from '@/components/cinepoint/PageShell';
 import {
   useAnalysisData,
   computePersonRankings,
@@ -32,35 +33,28 @@ export default function ActorsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen">
-        <div className="px-6 py-8 space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
-              <Star className="w-5 h-5 text-indigo-500 animate-pulse" />
-            </div>
-            <div>
-              <h1 className="text-base font-black uppercase tracking-tighter">Actor Database</h1>
-              <p className="text-[10px] text-muted-foreground/60">Loading actor performance data…</p>
-            </div>
+      <div className="px-6 py-8 space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
+            <Star className="w-5 h-5 text-indigo-500 animate-pulse" />
           </div>
-          <div className="grid grid-cols-3 gap-4">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-16 rounded-xl border border-border/20 animate-pulse bg-muted/20" />
-            ))}
+          <div>
+            <h1 className="text-base font-black uppercase tracking-tighter">Actor Database</h1>
+            <p className="text-[10px] text-muted-foreground/60">Loading actor performance data…</p>
           </div>
-          <div className="h-96 rounded-xl border border-border/20 animate-pulse bg-muted/10" />
         </div>
+        <div className="grid grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="h-16 rounded-xl border border-border/20 animate-pulse bg-muted/20" />
+          ))}
+        </div>
+        <div className="h-96 rounded-xl border border-border/20 animate-pulse bg-muted/10" />
       </div>
     );
   }
 
   if (error) {
-    return (
-      <div className="px-6 py-8 flex flex-col items-center justify-center min-h-[50vh] gap-3">
-        <p className="text-sm text-red-500 font-bold">Failed to load data</p>
-        <p className="text-xs text-muted-foreground">{error}</p>
-      </div>
-    );
+    return <div className="px-6 py-8"><PageError error={error} /></div>;
   }
 
   const totalActors = rankings.length;

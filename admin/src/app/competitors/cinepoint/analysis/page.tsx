@@ -210,7 +210,8 @@ export default function CinePointAnalysisPage() {
       )}
 
       {/* Deep Dive */}
-      <DeepDive movies={movies} filtered={filtered} query={deepDiveQuery} setQuery={setDeepDiveQuery} selectedMovie={deepDiveMovie} setSelectedMovie={setDeepDiveMovie} />
+      <DeepDive movies={movies} filtered={filtered} query={deepDiveQuery} setQuery={setDeepDiveQuery} selectedMovie={deepDiveMovie} setSelectedMovie={setDeepDiveMovie}
+        genreStats={genreStats} languageStats={languageStats} durationBuckets={durationBuckets} />
     </div>
   );
 }
