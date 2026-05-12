@@ -1,8 +1,8 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { TypeBadge } from '@/components/cinepoint/SharedUi';
 import { ChevronRight } from 'lucide-react';
 
 export function FullRankings({ data, selectedMovie, setSelectedMovie }: {
@@ -40,7 +40,7 @@ export function FullRankings({ data, selectedMovie, setSelectedMovie }: {
                   onClick={() => setSelectedMovie(selectedMovie === m.id ? null : m.id)}>
                   <td className="p-4 font-mono font-bold">{m.latest_rank ?? '-'}</td>
                   <td className="p-4"><p className="font-medium">{m.title}</p><p className="text-[10px] text-muted-foreground/60">{m.movie_genre.join(', ')}</p></td>
-                  <td className="p-4"><Badge variant="outline" className={cn('text-[10px]', m.type === 'local' ? 'border-indigo-500/20 text-indigo-600' : 'border-amber-500/20 text-amber-600')}>{m.type === 'local' ? 'Local' : 'Intl'}</Badge></td>
+                  <td className="p-4"><TypeBadge type={m.type} /></td>
                   <td className="p-4 text-right font-mono">{m.total_period_admissions.toLocaleString()}</td>
                   <td className="p-4 text-right font-mono text-muted-foreground">{m.latest_total_admission.toLocaleString()}</td>
                   <td className="p-4 text-right font-mono">{m.latest_score.toFixed(1)}</td>

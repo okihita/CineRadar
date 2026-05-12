@@ -166,7 +166,7 @@ export function MovieCard({ movie }: { movie: CinePointMovie }) {
   );
 }
 
-export function StatCard({ icon: Icon, label, value, color }: { icon: typeof Film; label: string; value: number; color?: string }) {
+export function CatalogStatCard({ icon: Icon, label, value, color }: { icon: typeof Film; label: string; value: number; color?: string }) {
   return (
     <div className="px-4 py-3 rounded-xl border border-border/40 bg-card">
       <div className="flex items-center gap-2 mb-1">

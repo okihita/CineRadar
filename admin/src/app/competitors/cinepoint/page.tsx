@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { PageLoader } from '@/components/cinepoint/PageShell';
 import { useCatalogData, useSyncStream } from './_components/useCatalogData';
-import { DataTable, MovieCard, StatCard } from './_components/CatalogViews';
+import { DataTable, MovieCard, CatalogStatCard } from './_components/CatalogViews';
 
 // ─── Page Component (Thin Orchestrator) ─────────────────────
 
@@ -127,12 +127,12 @@ export default function CinePointCatalogPage() {
       {/* Stats bar */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          <StatCard icon={Database} label="Total" value={stats.total_movies} />
-          <StatCard icon={Film} label="Local" value={stats.local} />
-          <StatCard icon={Globe} label="International" value={stats.international} />
-          <StatCard icon={CheckCircle2} label="Matched" value={stats.matched} color="text-emerald-500" />
-          <StatCard icon={AlertCircle} label="Unmatched" value={stats.unmatched} color="text-amber-500" />
-          <StatCard icon={Film} label="With Poster" value={stats.with_poster} />
+          <CatalogStatCard icon={Database} label="Total" value={stats.total_movies} />
+          <CatalogStatCard icon={Film} label="Local" value={stats.local} />
+          <CatalogStatCard icon={Globe} label="International" value={stats.international} />
+          <CatalogStatCard icon={CheckCircle2} label="Matched" value={stats.matched} color="text-emerald-500" />
+          <CatalogStatCard icon={AlertCircle} label="Unmatched" value={stats.unmatched} color="text-amber-500" />
+          <CatalogStatCard icon={Film} label="With Poster" value={stats.with_poster} />
         </div>
       )}
 

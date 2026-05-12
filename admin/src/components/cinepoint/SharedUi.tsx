@@ -8,9 +8,24 @@
 import Link from 'next/link';
 import { Eye, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatAdm } from '@/lib/cinepoint';
 import type { PersonRanking } from '@/lib/cinepoint';
+
+// ─── TypeBadge ──────────────────────────────────────────────
+
+export function TypeBadge({ type, short }: { type: string; short?: boolean }) {
+  const isLocal = type === 'local';
+  return (
+    <Badge variant="outline" className={cn(
+      short ? 'text-[9px] px-1 py-0' : 'text-[10px]',
+      isLocal ? 'border-indigo-500/20 text-indigo-600' : 'border-amber-500/20 text-amber-600',
+    )}>
+      {short ? (isLocal ? 'Local' : 'Intl') : (isLocal ? 'Local' : 'International')}
+    </Badge>
+  );
+}
 
 // ─── StatCard ────────────────────────────────────────────────
 

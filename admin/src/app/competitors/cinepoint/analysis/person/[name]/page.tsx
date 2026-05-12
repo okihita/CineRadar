@@ -20,7 +20,7 @@ import {
   admissionColor,
   classifyTier,
 } from '@/lib/cinepoint';
-import { StatCard } from '@/components/cinepoint/SharedUi';
+import { StatCard, TypeBadge } from '@/components/cinepoint/SharedUi';
 
 export default function PersonDetailPage() {
   const params = useParams();
@@ -227,9 +227,7 @@ export default function PersonDetailPage() {
                       </div>
                     </td>
                     <td className="p-3 text-right">
-                      <span className={cn('text-[9px] font-bold uppercase', m.type === 'local' ? 'text-indigo-600' : 'text-amber-600')}>
-                        {m.type === 'local' ? 'Local' : 'Intl'}
-                      </span>
+                      <TypeBadge type={m.type} short />
                     </td>
                   </tr>
                 ))}

@@ -9,9 +9,8 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth-helpers';
-import { firestoreRestClient } from '@/lib/firestore-rest';
-import { CINEPOINT_BOX_OFFICE } from '@/features/competitors/types';
-import type { BoxOfficeDoc, YearSummary } from '@/lib/cinepoint';
+import { queryBoxOfficeDocs, aggregateYearlyTotals } from '@/lib/cinepoint/firestore-queries';
+import type { YearSummary } from '@/lib/cinepoint';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,59 +23,20 @@ export async function GET() {
   for (let y = 2000; y <= currentYear; y++) years.push(y);
 
   try {
-    // Query each year in parallel
     const results = await Promise.all(
       years.map(async (year): Promise<YearSummary> => {
         const from = `${year}-01-01`;
         const to = `${year}-12-31`;
 
-        const docs = await firestoreRestClient.runQuery<BoxOfficeDoc>({
-          from: [{ collectionId: CINEPOINT_BOX_OFFICE }],
-          where: {
-            compositeFilter: {
-              op: 'AND',
-              filters: [
-                { fieldFilter: { field: { fieldPath: 'date' }, op: 'GREATER_THAN_OR_EQUAL', value: { stringValue: from } } },
-                { fieldFilter: { field: { fieldPath: 'date' }, op: 'LESS_THAN_OR_EQUAL', value: { stringValue: to } } },
-              ],
-            },
-          },
-          orderBy: [{ field: { fieldPath: 'date' }, direction: 'DESCENDING' }],
-          limit: 10000,
-        });
+        const docs = await queryBoxOfficeDocs(from, to);
 
         if (docs.length === 0) {
           return { year, dates_with_data: 0, total_admissions: 0, local_admissions: 0, international_admissions: 0, unique_movies: 0, top_movie: null, top_local: null, top_international: null };
         }
 
-        // Aggregate per movie
-        const datesSet = new Set<string>();
-        const movieMap = new Map<number, { title: string; type: string; total: number; genre: string[]; release_date: string; score: number }>();
-        let localTotal = 0;
-        let intlTotal = 0;
+        // Shared aggregation
+        const { datesSet, movieMap, localTotal, intlTotal } = aggregateYearlyTotals(docs);
 
-        for (const doc of docs) {
-          datesSet.add(doc.date);
-          const existing = movieMap.get(doc.movie_id);
-          if (existing) {
-            existing.total += doc.admission;
-            // Keep latest score
-            existing.score = doc.score;
-          } else {
-            movieMap.set(doc.movie_id, {
-              title: doc.title,
-              type: doc.type,
-              total: doc.admission,
-              genre: doc.movie_genre,
-              release_date: doc.release_date,
-              score: doc.score,
-            });
-          }
-          if (doc.type === 'local') localTotal += doc.admission;
-          else intlTotal += doc.admission;
-        }
-
-        // Sort movies by total admissions
         const sorted = [...movieMap.entries()].sort((a, b) => b[1].total - a[1].total);
         const top = sorted[0];
         const topLocal = sorted.filter(([, m]) => m.type === 'local')[0];
@@ -96,7 +56,6 @@ export async function GET() {
       }),
     );
 
-    // Only return years that have data
     const yearsWithData = results.filter((y) => y.dates_with_data > 0);
 
     return NextResponse.json({

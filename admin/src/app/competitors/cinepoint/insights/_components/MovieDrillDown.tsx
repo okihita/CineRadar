@@ -9,9 +9,9 @@ import { format, parseISO } from 'date-fns';
 import {
   Loader2, TrendingUp, ArrowDownRight, Star, Users, Popcorn,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { formatAdm, LOCAL_COLOR, INTL_COLOR, TIER_COLORS } from '@/lib/cinepoint';
+import { TypeBadge } from '@/components/cinepoint/SharedUi';
 import { MetaChip } from './MovieDetailPanel';
 import { MovieDetailPanel } from './MovieDetailPanel';
 
@@ -50,9 +50,7 @@ export function MovieDrillDown({
             <button onClick={() => setSelectedMovie(null)} className="text-xs text-muted-foreground hover:text-foreground">✕ Close</button>
           </div>
           <div className="flex flex-wrap items-center gap-2 mt-2">
-            <Badge variant="outline" className={movie.type === 'local' ? 'border-indigo-500/30 text-indigo-600' : 'border-amber-500/30 text-amber-600'}>
-              {movie.type === 'local' ? 'Local' : 'International'}
-            </Badge>
+            <TypeBadge type={movie.type} />
             <MetaChip icon={<Star className="w-3 h-3" />} value={`${movie.latest_score.toFixed(1)} score`} />
             <MetaChip icon={<Users className="w-3 h-3" />} value={`${movie.latest_total_admission.toLocaleString()} lifetime`} />
             <MetaChip icon={<Popcorn className="w-3 h-3" />} value={`${movie.peak_admission.toLocaleString()} peak`} />

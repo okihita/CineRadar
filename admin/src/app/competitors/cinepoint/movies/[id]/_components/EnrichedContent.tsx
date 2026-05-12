@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { CinePointMovie } from '@/features/competitors/types';
 import { formatAdm, LOCAL_COLOR, INTL_COLOR, TIER_COLORS } from '@/lib/cinepoint';
 import { extractCrew, MovieSynopsis, MovieCastCrew, MovieAudienceRating, MovieWhereToWatch } from '@/components/cinepoint/MovieDetailSections';
+import { TypeBadge } from '@/components/cinepoint/SharedUi';
 import { format, parseISO } from 'date-fns';
 
 export function EnrichedContent({ movie }: { movie: CinePointMovie }) {
@@ -47,11 +48,7 @@ export function EnrichedContent({ movie }: { movie: CinePointMovie }) {
               )}
               <div className="flex-1 space-y-2">
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline" className={cn(
-                    movie.type === 'local' ? 'border-indigo-500/30 text-indigo-600' : 'border-amber-500/30 text-amber-600',
-                  )}>
-                    {movie.type === 'local' ? 'Local' : 'International'}
-                  </Badge>
+                  <TypeBadge type={movie.type} />
                   {movie.rating_category?.map((r) => (
                     <Badge key={r} variant="outline" className="border-red-500/30 text-red-600">{r}</Badge>
                   ))}

@@ -31,6 +31,7 @@ export interface CatalogData {
 export function useCatalogData() {
   const [data, setData] = useState<CatalogData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -39,6 +40,7 @@ export function useCatalogData() {
 
   const fetchCatalog = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams();
       params.set('page', String(page));
@@ -51,9 +53,11 @@ export function useCatalogData() {
       if (res.ok) {
         const json = await res.json();
         setData(json.data);
+      } else {
+        setError(`Failed to load catalog (HTTP ${res.status})`);
       }
     } catch (err) {
-      console.error('[Catalog fetch error]', err);
+      setError((err as Error).message || 'Failed to load catalog');
     } finally {
       setLoading(false);
     }
@@ -62,7 +66,7 @@ export function useCatalogData() {
   useEffect(() => { fetchCatalog(); }, [fetchCatalog]);
 
   return {
-    data, loading, page, setPage, typeFilter, setTypeFilter,
+    data, loading, error, page, setPage, typeFilter, setTypeFilter,
     search, setSearch, sortCol, setSortCol, sortDir, setSortDir,
     fetchCatalog,
   };

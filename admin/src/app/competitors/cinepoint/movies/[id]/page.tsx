@@ -6,11 +6,11 @@ import {
   ArrowLeft, Loader2, Film, ChevronRight, Eye,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import type { CinePointMovie } from '@/features/competitors/types';
 import { EnrichedContent } from './_components/EnrichedContent';
+import { TypeBadge } from '@/components/cinepoint/SharedUi';
 
 // ─── Page ──────────────────────────────────────────────────
 
@@ -90,12 +90,7 @@ export default function CinePointMovieDetailPage({
             <div className="min-w-0">
               <h1 className="text-base font-black uppercase tracking-tighter truncate">{movie.title}</h1>
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className={cn(
-                  'text-[8px] px-1.5 py-0',
-                  movie.type === 'local' ? 'border-indigo-500/30 text-indigo-600' : 'border-amber-500/30 text-amber-600',
-                )}>
-                  {movie.type === 'local' ? 'Local' : 'International'}
-                </Badge>
+                <TypeBadge type={movie.type} short />
                 {movie.movie_genre.map((g) => (
                   <span key={g} className="text-[8px] text-muted-foreground/40 font-medium uppercase tracking-wider">{g}</span>
                 ))}

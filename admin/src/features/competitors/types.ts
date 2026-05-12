@@ -358,27 +358,6 @@ export interface CinePointSyncMeta {
 export const CINEPOINT_BOX_OFFICE = 'cinepoint_box_office';
 export const CINEPOINT_BO_SYNC_META = 'cinepoint_bo_sync_meta';
 
-export interface CinePointBoxOfficeDoc {
-  date: string;                         // "2026-05-01" (partition key)
-  movie_id: number;                     // CinePoint movie ID
-  title: string;
-  image_title: string | null;
-  movie_genre: string[];
-  duration: number;
-  release_date: string;
-  type: CinePointMovieType;
-  admission: number;                    // daily
-  total_admission: number;              // lifetime cumulative
-  change: number;                       // day-over-day %
-  showtimes: number;
-  score: number;
-  current_rank: number;
-  last_rank: number | null;
-  scraped_at: string;
-  batch_id: string;
-  _hash?: string;
-}
-
 export interface CinePointBOSyncMeta {
   id: 'current';
   status: 'idle' | 'running' | 'paused' | 'complete' | 'error';

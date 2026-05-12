@@ -9,6 +9,8 @@ import {
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { PageError } from '@/components/cinepoint/PageShell';
+import { CinePointErrorBoundary } from '@/components/cinepoint/ErrorBoundary';
 import {
   useAnalysisData,
   formatAdm,
@@ -43,7 +45,7 @@ const FACTOR_CONFIG = [
 ];
 
 export default function CinePointAnalysisPage() {
-  const { movies, loading } = useAnalysisData();
+  const { movies, loading, error } = useAnalysisData();
 
   // Filters
   const [factors, setFactors] = useState<FactorState>({
@@ -108,6 +110,21 @@ export default function CinePointAnalysisPage() {
       return () => clearTimeout(t);
     }
   }, [loading]);
+
+  // ── Error state ──
+  if (error) {
+    return (
+      <div className="px-6 py-8">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+            <Target className="w-5 h-5 text-primary" />
+          </div>
+          <h1 className="text-base font-black uppercase tracking-tighter">Success Predictor</h1>
+        </div>
+        <PageError error={error} />
+      </div>
+    );
+  }
 
   // ── Loading state ──
   if (loading) {
@@ -205,11 +222,11 @@ export default function CinePointAnalysisPage() {
 
       {/* Analysis sections */}
       {filtered.length > 0 && (
-        <>
+        <CinePointErrorBoundary>
           <GenreSection factors={factors} genreStats={genreStats} genreCombos={genreCombos} />
           <StarPower factors={factors} directorRankings={directorRankings} actorRankings={actorRankings} />
           <MarketSignals factors={factors} languageStats={languageStats} ratingStats={ratingStats} durationBuckets={durationBuckets} />
-        </>
+        </CinePointErrorBoundary>
       )}
 
       {/* Deep Dive */}

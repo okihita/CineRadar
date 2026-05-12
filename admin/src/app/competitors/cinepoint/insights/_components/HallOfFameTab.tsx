@@ -4,16 +4,19 @@ import { Loader2, Crown, Flame } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { PageError } from '@/components/cinepoint/PageShell';
+import { TypeBadge } from '@/components/cinepoint/SharedUi';
 import type { YearSummary } from '@/lib/cinepoint';
 import { formatAdm } from '@/lib/cinepoint';
 
 interface HallOfFameTabProps {
   yearsLoading: boolean;
+  yearsError: string | null;
   yearsData: { success: boolean; years: YearSummary[]; total_years: number } | null;
   loadYears: () => void;
 }
 
-export function HallOfFameTab({ yearsLoading, yearsData, loadYears }: HallOfFameTabProps) {
+export function HallOfFameTab({ yearsLoading, yearsError, yearsData, loadYears }: HallOfFameTabProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -26,14 +29,16 @@ export function HallOfFameTab({ yearsLoading, yearsData, loadYears }: HallOfFame
         <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
       )}
 
-      {!yearsLoading && yearsData && yearsData.years.length === 0 && (
+      {!yearsLoading && yearsError && <PageError error={yearsError} />}
+
+      {!yearsLoading && !yearsError && yearsData && yearsData.years.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 gap-4 border-2 border-dashed rounded-xl bg-muted/5">
           <Flame className="w-12 h-12 text-muted-foreground/20" />
           <p className="text-muted-foreground font-medium">No yearly data yet</p>
         </div>
       )}
 
-      {!yearsLoading && yearsData && yearsData.years.length > 0 && (
+      {!yearsLoading && !yearsError && yearsData && yearsData.years.length > 0 && (
         <>
           {/* Year cards */}
           <YearCards years={yearsData.years} />
@@ -93,9 +98,7 @@ function YearCards({ years }: { years: YearSummary[] }) {
                           <p className="text-sm font-bold truncate">{y.top_movie.title}</p>
                           <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
                             <span className="font-mono">{y.top_movie.total_admissions.toLocaleString()}</span>
-                            <Badge variant="outline" className={cn('text-[9px] px-1 py-0', isChampionLocal ? 'border-indigo-500/20 text-indigo-600' : 'border-amber-500/20 text-amber-600')}>
-                              {y.top_movie.type === 'local' ? 'Local' : 'Intl'}
-                            </Badge>
+                            <TypeBadge type={y.top_movie.type} short />
                           </div>
                           {y.top_movie.movie_genre.length > 0 && <p className="text-[10px] text-muted-foreground/40 truncate">{y.top_movie.movie_genre.join(', ')}</p>}
                         </div>
@@ -165,9 +168,7 @@ function YearlyTable({ years }: { years: YearSummary[] }) {
                   <td className="p-4">
                     <p className="font-medium">{y.top_movie?.title ?? '-'}</p>
                     {y.top_movie && (
-                      <Badge variant="outline" className={cn('text-[9px] px-1 py-0 mt-1', y.top_movie.type === 'local' ? 'border-indigo-500/20 text-indigo-600' : 'border-amber-500/20 text-amber-600')}>
-                        {y.top_movie.type === 'local' ? 'Local' : 'Intl'}
-                      </Badge>
+                      <TypeBadge type={y.top_movie.type} short />
                     )}
                   </td>
                   <td className="p-4 text-right font-mono font-bold">{y.total_admissions.toLocaleString()}</td>

@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -16,7 +17,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   formatAdm, LOCAL_COLOR, INTL_COLOR, CHART_COLORS,
 } from '@/lib/cinepoint';
-import { PageLoader } from '@/components/cinepoint/PageShell';
+import { PageLoader, PageError } from '@/components/cinepoint/PageShell';
+import { CinePointErrorBoundary } from '@/components/cinepoint/ErrorBoundary';
 import { useBoxOfficeData, RANGE_PRESETS } from './_components/useBoxOfficeData';
 import type { RangePreset } from './_components/useBoxOfficeData';
 import { MovieDetailPanel } from './_components/MovieDetailPanel';
@@ -28,13 +30,13 @@ import { FullRankings } from './_components/FullRankings';
 
 export default function CinePointInsightsPage() {
   const {
-    data, yearsData, loading, yearsLoading, range, setRange,
+    data, yearsData, loading, yearsLoading, error, yearsError, range, setRange,
     selectedMovie, setSelectedMovie, enrichedMovie, enrichedLoading,
     loadData, loadYears,
   } = useBoxOfficeData();
 
-  const localTotal = data?.movie_rankings.filter((m) => m.type === 'local').reduce((s, m) => s + m.total_period_admissions, 0) ?? 0;
-  const intlTotal = data?.movie_rankings.filter((m) => m.type === 'international').reduce((s, m) => s + m.total_period_admissions, 0) ?? 0;
+  const localTotal = useMemo(() => data?.movie_rankings.filter((m) => m.type === 'local').reduce((s, m) => s + m.total_period_admissions, 0) ?? 0, [data]);
+  const intlTotal = useMemo(() => data?.movie_rankings.filter((m) => m.type === 'international').reduce((s, m) => s + m.total_period_admissions, 0) ?? 0, [data]);
 
   return (
     <div className="px-6 py-8 space-y-6">
@@ -58,16 +60,18 @@ export default function CinePointInsightsPage() {
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-6 mt-6">
-          <DashboardContent
-            data={data} loading={loading} range={range} setRange={setRange}
-            localTotal={localTotal} intlTotal={intlTotal}
-            selectedMovie={selectedMovie} setSelectedMovie={setSelectedMovie}
-            enrichedMovie={enrichedMovie} enrichedLoading={enrichedLoading}
-          />
+          <CinePointErrorBoundary>
+            <DashboardContent
+              data={data} loading={loading} error={error} range={range} setRange={setRange}
+              localTotal={localTotal} intlTotal={intlTotal}
+              selectedMovie={selectedMovie} setSelectedMovie={setSelectedMovie}
+              enrichedMovie={enrichedMovie} enrichedLoading={enrichedLoading}
+            />
+          </CinePointErrorBoundary>
         </TabsContent>
 
         <TabsContent value="hall-of-fame" className="space-y-6 mt-6">
-          <HallOfFameTab yearsLoading={yearsLoading} yearsData={yearsData} loadYears={loadYears} />
+          <HallOfFameTab yearsLoading={yearsLoading} yearsError={yearsError} yearsData={yearsData} loadYears={loadYears} />
         </TabsContent>
       </Tabs>
     </div>
@@ -79,6 +83,7 @@ export default function CinePointInsightsPage() {
 interface DashboardContentProps {
   data: ReturnType<typeof useBoxOfficeData>['data'];
   loading: boolean;
+  error: string | null;
   range: RangePreset;
   setRange: (r: RangePreset) => void;
   localTotal: number;
@@ -90,7 +95,7 @@ interface DashboardContentProps {
 }
 
 function DashboardContent({
-  data, loading, range, setRange,
+  data, loading, error, range, setRange,
   localTotal, intlTotal, selectedMovie, setSelectedMovie,
   enrichedMovie, enrichedLoading,
 }: DashboardContentProps) {
@@ -115,7 +120,9 @@ function DashboardContent({
 
       {loading && <PageLoader />}
 
-      {!loading && (!data || !data.has_data) && (
+      {!loading && error && <PageError error={error} />}
+
+      {!loading && !error && (!data || !data.has_data) && (
         <div className="flex flex-col items-center justify-center py-20 gap-4 border-2 border-dashed rounded-xl bg-muted/5">
           <Film className="w-12 h-12 text-muted-foreground/20" />
           <p className="text-muted-foreground font-medium">No box office data yet</p>
@@ -125,7 +132,7 @@ function DashboardContent({
         </div>
       )}
 
-      {!loading && data && data.has_data && meta && (
+      {!loading && !error && data && data.has_data && meta && (
         <>
           <KpiCards meta={meta} />
           <ChartsRow data={data} localTotal={localTotal} intlTotal={intlTotal} />

@@ -14,8 +14,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { firestoreRestClient } from '@/lib/firestore-rest';
-import { CINEPOINT_BOX_OFFICE, CINEPOINT_BO_SYNC_META } from '@/features/competitors/types';
-import type { BoxOfficeDoc } from '@/lib/cinepoint';
+import { CINEPOINT_BO_SYNC_META } from '@/features/competitors/types';
+import { queryBoxOfficeDocs, aggregateByMovie } from '@/lib/cinepoint/firestore-queries';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,38 +29,10 @@ export async function GET(req: NextRequest) {
   const toDate = searchParams.get('to') || today;
 
   try {
-    // Query Firestore for box office docs in date range
-    const docs = await firestoreRestClient.runQuery<BoxOfficeDoc>({
-      from: [{ collectionId: CINEPOINT_BOX_OFFICE }],
-      where: {
-        compositeFilter: {
-          op: 'AND',
-          filters: [
-            {
-              fieldFilter: {
-                field: { fieldPath: 'date' },
-                op: 'GREATER_THAN_OR_EQUAL',
-                value: { stringValue: fromDate },
-              },
-            },
-            {
-              fieldFilter: {
-                field: { fieldPath: 'date' },
-                op: 'LESS_THAN_OR_EQUAL',
-                value: { stringValue: toDate },
-              },
-            },
-          ],
-        },
-      },
-      orderBy: [{ field: { fieldPath: 'date' }, direction: 'DESCENDING' }],
-      limit: 10000,
-    });
+    const docs = await queryBoxOfficeDocs(fromDate, toDate);
 
     if (docs.length === 0) {
-      // Also load sync meta to show backfill status
       const syncMeta = await firestoreRestClient.getDocument(CINEPOINT_BO_SYNC_META, 'current');
-
       return NextResponse.json({
         success: false,
         has_data: false,
@@ -78,14 +50,13 @@ export async function GET(req: NextRequest) {
 
     // ── Compute analytics ──
 
-    // Group by date
-    const dateMap = new Map<string, BoxOfficeDoc[]>();
+    // 1. Daily totals
+    const dateMap = new Map<string, typeof docs>();
     for (const doc of docs) {
       if (!dateMap.has(doc.date)) dateMap.set(doc.date, []);
       dateMap.get(doc.date)!.push(doc);
     }
 
-    // 1. Daily totals (sorted ascending for charts)
     const dailyTotals = [...dateMap.entries()]
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, movies]) => ({
@@ -97,72 +68,11 @@ export async function GET(req: NextRequest) {
         international_admissions: movies.filter((m) => m.type === 'international').reduce((s, m) => s + m.admission, 0),
       }));
 
-    // 2. Per-movie time series
-    const movieMap = new Map<number, {
-      id: number;
-      title: string;
-      type: string;
-      image_title: string | null;
-      movie_genre: string[];
-      release_date: string;
-      daily: { date: string; admission: number; rank: number; change: number; total_admission: number; showtimes: number; score: number }[];
-      total_period_admissions: number;
-      latest_total_admission: number;
-      latest_score: number;
-      latest_rank: number | null;
-      peak_admission: number;
-      opening_admission: number | null;
-    }>();
-
-    for (const doc of docs) {
-      if (!movieMap.has(doc.movie_id)) {
-        movieMap.set(doc.movie_id, {
-          id: doc.movie_id,
-          title: doc.title,
-          type: doc.type,
-          image_title: doc.image_title,
-          movie_genre: doc.movie_genre,
-          release_date: doc.release_date,
-          daily: [],
-          total_period_admissions: 0,
-          latest_total_admission: 0,
-          latest_score: 0,
-          latest_rank: null,
-          peak_admission: 0,
-          opening_admission: null,
-        });
-      }
-      const entry = movieMap.get(doc.movie_id)!;
-      entry.daily.push({
-        date: doc.date,
-        admission: doc.admission,
-        rank: doc.current_rank,
-        change: doc.change,
-        total_admission: doc.total_admission,
-        showtimes: doc.showtimes,
-        score: doc.score,
-      });
-      entry.total_period_admissions += doc.admission;
-      entry.latest_total_admission = doc.total_admission;
-      entry.latest_score = doc.score;
-      entry.latest_rank = doc.current_rank;
-      if (doc.admission > entry.peak_admission) entry.peak_admission = doc.admission;
-    }
-
-    // Sort daily arrays ascending for each movie
-    for (const entry of movieMap.values()) {
-      entry.daily.sort((a, b) => a.date.localeCompare(b.date));
-      // Opening admission = first day's admission
-      entry.opening_admission = entry.daily[0]?.admission ?? null;
-    }
-
-    // Sort movies by total period admissions
-    const movieRankings = [...movieMap.values()].sort(
-      (a, b) => b.total_period_admissions - a.total_period_admissions,
-    );
+    // 2. Per-movie time series (shared aggregation)
+    const movieRankings = aggregateByMovie(docs);
 
     // 3. Summary stats
-    const uniqueMovies = movieMap.size;
+    const uniqueMovies = movieRankings.length;
     const grandTotalAdmissions = movieRankings.reduce((s, m) => s + m.total_period_admissions, 0);
     const datesWithData = dailyTotals.length;
     const avgDailyAdmissions = datesWithData > 0 ? Math.round(grandTotalAdmissions / datesWithData) : 0;
@@ -171,7 +81,7 @@ export async function GET(req: NextRequest) {
       dailyTotals[0] as (typeof dailyTotals)[0] | undefined,
     );
 
-    // 4. Top movers (rank improvement)
+    // 4. Top movers
     const topMovers = movieRankings
       .filter((m) => m.daily.length >= 2)
       .map((m) => {
@@ -215,7 +125,7 @@ export async function GET(req: NextRequest) {
         };
       });
 
-    // 7. New releases (movies whose first appearance in the period has opening-like characteristics)
+    // 7. New releases
     const newReleases = movieRankings
       .filter((m) => {
         if (!m.release_date) return false;
