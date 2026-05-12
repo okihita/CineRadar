@@ -1,37 +1,30 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Theatre } from '../types';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/api';
+import type { Theatre } from '../types';
 
-export function useCinemaDetails(theatreId: string) {
-    const [theatre, setTheatre] = useState<Theatre | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+interface TheatreResponse {
+  success?: boolean;
+  data?: Theatre;
+  error?: string;
+}
 
-    useEffect(() => {
-        async function fetchData() {
-            setLoading(true);
-            try {
-                const res = await fetch(`/api/theatres/${theatreId}`);
+export function useCinemaDetails(theatreId: string | null) {
+  const { data, error, isLoading, mutate } = useSWR<TheatreResponse>(
+    theatreId ? `/api/theatres/${theatreId}` : null,
+    fetcher,
+    { dedupingInterval: 60_000 },
+  );
 
-                if (!res.ok) {
-                    if (res.status === 404) throw new Error('Cinema not found');
-                    throw new Error('Failed to fetch cinema details');
-                }
-
-                const theatreData = await res.json();
-                setTheatre(theatreData);
-            } catch (err: unknown) {
-                setError(err instanceof Error ? err.message : 'An unknown error occurred');
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        if (theatreId) {
-            fetchData();
-        }
-    }, [theatreId]);
-
-    return { theatre, loading, error };
+  return {
+    theatre: data?.data ?? null,
+    loading: isLoading,
+    error: error
+      ? error.message
+      : data && data.error
+        ? data.error
+        : null,
+    refresh: mutate,
+  };
 }

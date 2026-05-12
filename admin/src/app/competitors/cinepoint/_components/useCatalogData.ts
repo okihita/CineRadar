@@ -1,6 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/api';
+import { toast } from 'sonner';
 import type { CinePointMovie, CinePointSyncMeta } from '@/features/competitors/types';
 
 export interface CatalogData {
@@ -27,46 +30,39 @@ export interface CatalogData {
   } | null;
 }
 
-/** Hook for catalog data fetching, pagination, search, sort */
+/** Hook for catalog data fetching, pagination, search, sort — backed by SWR */
 export function useCatalogData() {
-  const [data, setData] = useState<CatalogData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [sortCol, setSortCol] = useState<string>('release_date');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
-  const fetchCatalog = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = new URLSearchParams();
-      params.set('page', String(page));
-      params.set('limit', '24');
-      params.set('sort', sortCol);
-      params.set('dir', sortDir);
-      if (typeFilter) params.set('type', typeFilter);
-      if (search) params.set('search', search);
-      const res = await fetch(`/api/competitors/cinepoint/movies?${params}`);
-      if (res.ok) {
-        const json = await res.json();
-        setData(json.data);
-      } else {
-        setError(`Failed to load catalog (HTTP ${res.status})`);
-      }
-    } catch (err) {
-      setError((err as Error).message || 'Failed to load catalog');
-    } finally {
-      setLoading(false);
-    }
-  }, [page, typeFilter, search, sortCol, sortDir]);
+  // Build SWR key from filter state
+  const swrKey = (() => {
+    const params = new URLSearchParams();
+    params.set('page', String(page));
+    params.set('limit', '24');
+    params.set('sort', sortCol);
+    params.set('dir', sortDir);
+    if (typeFilter) params.set('type', typeFilter);
+    if (search) params.set('search', search);
+    return `/api/competitors/cinepoint/movies?${params}`;
+  })();
 
-  useEffect(() => { fetchCatalog(); }, [fetchCatalog]);
+  const { data, error, isLoading, mutate } = useSWR<{ success: boolean; data: CatalogData }>(
+    swrKey,
+    fetcher,
+    { dedupingInterval: 30_000, keepPreviousData: true },
+  );
+
+  const fetchCatalog = useCallback(async () => { await mutate(); }, [mutate]);
 
   return {
-    data, loading, error, page, setPage, typeFilter, setTypeFilter,
+    data: data?.success ? data.data : null,
+    loading: isLoading,
+    error: error ? error.message : null,
+    page, setPage, typeFilter, setTypeFilter,
     search, setSearch, sortCol, setSortCol, sortDir, setSortDir,
     fetchCatalog,
   };
@@ -214,11 +210,16 @@ export function useSyncStream(fetchCatalog: () => Promise<void>) {
   }, [syncToken, addLog, handleSSEEvent]);
 
   const resetSync = useCallback(async () => {
-    await fetch('/api/competitors/cinepoint/reset', { method: 'POST' });
-    setSyncLogs([]);
-    setSyncProgress(null);
-    setGatePending(false);
-    fetchCatalog();
+    try {
+      await fetch('/api/competitors/cinepoint/reset', { method: 'POST' });
+      setSyncLogs([]);
+      setSyncProgress(null);
+      setGatePending(false);
+      fetchCatalog();
+      toast.success('Sync state reset');
+    } catch {
+      toast.error('Failed to reset sync state');
+    }
   }, [fetchCatalog]);
 
   const stopSync = useCallback(() => {

@@ -32,6 +32,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { fetcher } from '@/lib/api';
+import { toast } from 'sonner';
 import { getJakartaToday, getJakartaCurrentHour } from '@/lib/auth-helpers';
 import {
     CONTENT_TYPE_LABELS,
@@ -548,11 +549,12 @@ export default function SocialFeedPage() {
             const result = await res.json();
             if (result.success) {
                 mutate();
+                toast.success('Data deleted', { description: `${formatDate(selectedDate)} — ${posts.length} posts removed` });
             } else {
-                console.error('Delete failed:', result.error);
+                toast.error('Delete failed', { description: result.error });
             }
         } catch (err) {
-            console.error('Delete error:', err);
+            toast.error('Delete failed', { description: 'Network error' });
         } finally {
             setDeleting(false);
         }
@@ -568,7 +570,14 @@ export default function SocialFeedPage() {
                 body: JSON.stringify({ date: selectedDate, hours: [hour] }),
             });
             const result = await res.json();
-            if (result.success) mutate();
+            if (result.success) {
+                mutate();
+                toast.success(`Hour ${formatHour(hour)} analysis regenerated`);
+            } else {
+                toast.error('Retry failed', { description: result.error });
+            }
+        } catch {
+            toast.error('Retry failed', { description: 'Network error' });
         } finally {
             setRetryingHours(prev => {
                 const next = new Set(prev);
@@ -588,7 +597,14 @@ export default function SocialFeedPage() {
                 body: JSON.stringify({ date: selectedDate }),
             });
             const result = await res.json();
-            if (result.success) mutate();
+            if (result.success) {
+                mutate();
+                toast.success('All hours regenerated');
+            } else {
+                toast.error('Batch retry failed', { description: result.error });
+            }
+        } catch {
+            toast.error('Batch retry failed', { description: 'Network error' });
         } finally {
             setBatchRetrying(false);
         }

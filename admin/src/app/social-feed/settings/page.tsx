@@ -11,6 +11,7 @@ import { ShieldAlert, Settings, Plus, Trash2, Loader2, Search, ExternalLink, Che
 import { fetcher } from '@/lib/api';
 import { YouTubeIcon } from '@/components/BrandIcons';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import { SOURCE_CATEGORIES, type SourceCategory } from '@/lib/firestore-social';
 
 // ─── Types ──────────────────────────────────────────────
@@ -330,7 +331,14 @@ export default function SourceSettingsPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: source.id, active: !source.active }),
             });
-            if (res.ok) mutate();
+            if (res.ok) {
+                mutate();
+                toast.success(source.active ? 'Source deactivated' : 'Source activated', { description: source.display_name });
+            } else {
+                toast.error('Failed to update source');
+            }
+        } catch {
+            toast.error('Network error');
         } finally {
             setSavingId(null);
         }
@@ -344,7 +352,14 @@ export default function SourceSettingsPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: sourceId, category }),
             });
-            if (res.ok) mutate();
+            if (res.ok) {
+                mutate();
+                toast.success('Category updated', { description: `Moved to ${COLUMN_MAP[category]?.label ?? category}` });
+            } else {
+                toast.error('Failed to update category');
+            }
+        } catch {
+            toast.error('Network error');
         } finally {
             setSavingId(null);
         }
@@ -361,7 +376,12 @@ export default function SourceSettingsPage() {
             if (res.ok) {
                 mutate();
                 setEditId(null);
+                toast.success('Notes saved');
+            } else {
+                toast.error('Failed to save notes');
             }
+        } catch {
+            toast.error('Network error');
         } finally {
             setSavingId(null);
         }
@@ -372,7 +392,14 @@ export default function SourceSettingsPage() {
         setDeletingId(source.id);
         try {
             const res = await fetch(`/api/social-feed/sources/${encodeURIComponent(source.id)}`, { method: 'DELETE' });
-            if (res.ok) mutate();
+            if (res.ok) {
+                mutate();
+                toast.success('Source deleted', { description: source.display_name });
+            } else {
+                toast.error('Failed to delete source');
+            }
+        } catch {
+            toast.error('Network error');
         } finally {
             setDeletingId(null);
         }
@@ -422,9 +449,12 @@ export default function SourceSettingsPage() {
                 setAddDialogOpen(false);
                 setLookupId('');
                 setLookupResult(null);
+                toast.success('Source added', { description: lookupResult.display_name });
             } else {
-                alert(data.error || 'Failed to create source');
+                toast.error(data.error || 'Failed to create source');
             }
+        } catch {
+            toast.error('Network error');
         } finally {
             setCreating(false);
         }
@@ -496,21 +526,27 @@ export default function SourceSettingsPage() {
         // Batch update sort_order for all cards in the column
         const updates = targetList.map((s, i) => ({ id: s.id, sort_order: i }));
 
-        // Update category + sort_order for the moved source, and sort_order for the rest
-        await Promise.all([
-            // Update category if changed
-            ...(!sameCategory ? [updateCategory(sourceId, newCategory)] : []),
-            // Update sort_order for all cards in column
-            ...updates.map(u =>
-                fetch('/api/social-feed/sources', {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: u.id, sort_order: u.sort_order }),
-                })
-            ),
-        ]);
+        try {
+            // Update category + sort_order for the moved source, and sort_order for the rest
+            await Promise.all([
+                // Update category if changed
+                ...(!sameCategory ? [updateCategory(sourceId, newCategory)] : []),
+                // Update sort_order for all cards in column
+                ...updates.map(u =>
+                    fetch('/api/social-feed/sources', {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: u.id, sort_order: u.sort_order }),
+                    })
+                ),
+            ]);
 
-        mutate();
+            mutate();
+            toast.success('Sources reordered');
+        } catch {
+            toast.error('Failed to reorder sources');
+            mutate();
+        }
     }, [sources, dropInsertIndex, updateCategory, mutate]);
 
     // ── Filter & group ──

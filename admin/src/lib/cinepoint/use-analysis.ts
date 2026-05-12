@@ -1,39 +1,32 @@
 /**
  * Shared hook for fetching CinePoint analysis data.
  *
- * Single source of truth for the API call — all consumer pages use this hook
- * instead of copy-pasting fetch + loading + error state.
+ * Uses SWR for automatic caching, deduplication, and revalidation.
  */
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/api';
 import type { AnalysisMovie } from './types';
 
-interface UseAnalysisDataReturn {
-  movies: AnalysisMovie[];
-  loading: boolean;
-  error: string | null;
+interface AnalysisResponse {
+  success: boolean;
+  data: AnalysisMovie[];
+  error?: string;
 }
 
-export function useAnalysisData(): UseAnalysisDataReturn {
-  const [movies, setMovies] = useState<AnalysisMovie[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export function useAnalysisData() {
+  const { data, error, isLoading, mutate } = useSWR<AnalysisResponse>(
+    '/api/competitors/cinepoint/analysis',
+    fetcher,
+    { dedupingInterval: 60_000 },
+  );
 
-  useEffect(() => {
-    fetch('/api/competitors/cinepoint/analysis')
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then((json) => {
-        if (json.success) setMovies(json.data);
-        else throw new Error(json.error || 'Failed to load');
-      })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, []);
-
-  return { movies, loading, error };
+  return {
+    movies: data?.success ? data.data : [],
+    loading: isLoading,
+    error: error ? error.message : data && !data.success ? (data.error ?? 'Failed to load') : null,
+    refresh: mutate,
+  };
 }

@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { format, parseISO, addDays, subDays } from 'date-fns';
 import { Info, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { ComparisonTable } from '@/features/competitors/components/ComparisonTable';
 import { computeConfidenceScore } from '@/features/competitors/comparison';
@@ -63,21 +64,26 @@ export default function CompetitorDatePage() {
       const hasAdmissions = (data?.snapshot?.admissions?.parsed?.length || 0) > 0;
       const updates = [{ title_cp: titleCp, matched_movie_id: movieId, matched_title: movieTitle }];
 
-      if (hasShowtimes) {
-        await fetch(`/api/competitors/${date}/match`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: 'showtimes', updates }),
-        });
+      try {
+        if (hasShowtimes) {
+          await fetch(`/api/competitors/${date}/match`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: 'showtimes', updates }),
+          });
+        }
+        if (hasAdmissions) {
+          await fetch(`/api/competitors/${date}/match`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: 'admissions', updates }),
+          });
+        }
+        await fetchData();
+        toast.success('Match updated', { description: `${titleCp} → ${movieTitle}` });
+      } catch {
+        toast.error('Failed to update match');
       }
-      if (hasAdmissions) {
-        await fetch(`/api/competitors/${date}/match`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: 'admissions', updates }),
-        });
-      }
-      await fetchData();
     },
     [date, data, fetchData],
   );

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Loader2, Users as UsersIcon, CheckCircle2, XCircle, ShieldCheck, ShieldAlert, UserCog, Clock, Ban, Pause } from 'lucide-react';
 import { fetcher } from '@/lib/api';
+import { toast } from 'sonner';
 import { useSession } from 'next-auth/react';
 
 interface AdminUser {
@@ -59,7 +60,19 @@ export default function UsersPage() {
             const result = await res.json();
             if (result.success) {
                 mutate();
+                const actionLabels: Record<string, string> = {
+                    approve: 'approved',
+                    reject: 'rejected',
+                    suspend: 'suspended',
+                    unsuspend: 'reactivated',
+                    update_role: `promoted to ${role ?? 'admin'}`,
+                };
+                toast.success(`User ${actionLabels[action] ?? action}`, { description: email });
+            } else {
+                toast.error(result.error || 'Action failed');
             }
+        } catch {
+            toast.error('Network error');
         } finally {
             setActionLoading(null);
         }
