@@ -131,6 +131,25 @@ export function getSnapshotStatus(snap: { showtimes?: ShowtimeDataPoint | null; 
 
 export type TweetType = 'showtimes' | 'admissions' | 'other';
 
+/** Shared tweet-type display configuration (icon, label, colors) */
+export const TWEET_TYPE_CONFIG: Record<TweetType, { label: string; color: string; dotColor: string }> = {
+  showtimes: {
+    label: 'Showtimes',
+    color: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+    dotColor: 'bg-blue-500',
+  },
+  admissions: {
+    label: 'Admissions',
+    color: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+    dotColor: 'bg-emerald-500',
+  },
+  other: {
+    label: 'Other',
+    color: 'bg-muted/50 text-muted-foreground border-border/30',
+    dotColor: 'bg-muted-foreground/40',
+  },
+};
+
 export interface CompetitorTweet {
   id: string;                          // tweet rest_id
   source_handle: string;               // "cinepoint_"
@@ -234,8 +253,35 @@ export interface HeatmapCell {
 
 export interface TwitterInstruction {
   type: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  entries?: any[];
+  entries?: TwitterEntry[];
+}
+
+/** Minimal representation of a Twitter timeline entry */
+export interface TwitterEntry {
+  content?: {
+    itemContent?: {
+      tweet_results?: {
+        result?: {
+          rest_id?: string;
+          tweet?: TwitterTweetResult;
+          legacy?: TwitterLegacyTweet;
+          note_tweet?: { id?: string; is_expandable?: boolean; note_tweet_results?: { result?: { text?: string } } };
+        };
+      };
+    };
+  };
+  [key: string]: unknown;
+}
+
+export interface TwitterLegacyTweet {
+  full_text?: string;
+  created_at?: string;
+}
+
+export interface TwitterTweetResult {
+  rest_id?: string;
+  legacy?: TwitterLegacyTweet;
+  note_tweet?: { id?: string; is_expandable?: boolean; note_tweet_results?: { result?: { text?: string } } };
 }
 
 export interface TwitterTimelineResponse {

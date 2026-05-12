@@ -7,6 +7,7 @@ import { Calendar as CalendarPicker } from '@/components/ui/calendar';
 import { buildCinepointVerifyUrl } from '@/features/competitors/lib/verify-link';
 import { cn } from '@/lib/utils';
 import type { TweetSourceSummary, TweetType, SnapshotStatus } from '@/features/competitors/types';
+import { TWEET_TYPE_CONFIG } from '@/features/competitors/types';
 
 // ─── Coverage Data ─────────────────────────────────────────
 
@@ -17,25 +18,10 @@ export interface DateCoverage {
 
 // ─── Type Config ───────────────────────────────────────────
 
-const TYPE_CONFIG: Record<TweetType, { label: string; icon: typeof Film; color: string; dotColor: string }> = {
-  showtimes: {
-    label: 'Showtimes',
-    icon: Film,
-    color: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
-    dotColor: 'bg-blue-500',
-  },
-  admissions: {
-    label: 'Admissions',
-    icon: TrendingUp,
-    color: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
-    dotColor: 'bg-emerald-500',
-  },
-  other: {
-    label: 'Other',
-    icon: MessageSquare,
-    color: 'bg-muted/50 text-muted-foreground border-border/30',
-    dotColor: 'bg-muted-foreground/40',
-  },
+const TYPE_ICONS: Record<TweetType, typeof Film> = {
+  showtimes: Film,
+  admissions: TrendingUp,
+  other: MessageSquare,
 };
 
 // ─── Props ─────────────────────────────────────────────────
@@ -147,7 +133,7 @@ export function FilterSidebar({
               Filtered
               {activeSource && <span className="font-normal text-muted-foreground"> · @{activeSource}</span>}
               {activeType && (
-                <span className="font-normal text-muted-foreground"> · {TYPE_CONFIG[activeType].label}</span>
+                <span className="font-normal text-muted-foreground"> · {TWEET_TYPE_CONFIG[activeType].label}</span>
               )}
             </span>
           </div>
@@ -345,7 +331,8 @@ export function FilterSidebar({
             All Types
           </button>
 
-          {(Object.entries(TYPE_CONFIG) as [TweetType, typeof TYPE_CONFIG.showtimes][]).map(([type, cfg]) => {
+          {(Object.entries(TWEET_TYPE_CONFIG) as [TweetType, typeof TWEET_TYPE_CONFIG.showtimes][]).map(([type, cfg]) => {
+            const Icon = TYPE_ICONS[type];
             const count = typeCounts?.[type] ?? 0;
             return (
               <button
@@ -359,7 +346,7 @@ export function FilterSidebar({
                 )}
               >
                 <span className="flex items-center gap-2">
-                  <cfg.icon className={cn('w-3 h-3', activeType === type ? 'text-primary-foreground' : 'opacity-70')} />
+                  <Icon className={cn('w-3 h-3', activeType === type ? 'text-primary-foreground' : 'opacity-70')} />
                   {cfg.label}
                 </span>
                 <span className={cn(

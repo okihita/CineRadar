@@ -42,6 +42,12 @@ export {
   COMBO_COLOR,
   CHART_COLORS,
   JUNK_DIRECTOR_NAMES,
+  confidenceColor,
+  confidenceIcon,
+  deltaColor,
+  formatDelta,
+  heatmapCellBg,
+  heatmapCellLabel,
 } from './format';
 
 export {

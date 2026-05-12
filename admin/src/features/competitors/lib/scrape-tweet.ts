@@ -201,16 +201,20 @@ export async function scrapeAndImportTweet(url: string): Promise<ScrapeResult> {
 /**
  * Twitter public bearer token — embedded in every browser session.
  * Used for guest token activation + GraphQL queries.
+ *
+ * Prefer TWITTER_BEARER env var. Falls back to the public embedded token.
+ * To find the current ID: search main.*.js on x.com for "TweetResultByRestId"
+ * and extract the queryId from the same module.
  */
-const TWITTER_BEARER = 'AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA';
+const TWITTER_BEARER = process.env.TWITTER_BEARER ||
+  'AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA';
 
 /**
  * GraphQL query ID for TweetResultByRestId.
  * Extracted from Twitter's main.js bundle. May need updating when Twitter rotates it.
- * To find the current ID: search main.*.js on x.com for "TweetResultByRestId"
- * and extract the queryId from the same module.
+ * Override via TWITTER_GRAPHQL_QUERY_ID env var if rotated.
  */
-const GRAPHQL_QUERY_ID = '2pq8P2wfwUBo2hqukWqdIA';
+const GRAPHQL_QUERY_ID = process.env.TWITTER_GRAPHQL_QUERY_ID || '2pq8P2wfwUBo2hqukWqdIA';
 
 /**
  * Features required by the GraphQL endpoint.

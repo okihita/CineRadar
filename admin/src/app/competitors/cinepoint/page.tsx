@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { PageLoader } from '@/components/cinepoint/PageShell';
+import { PageLoader, PageError } from '@/components/cinepoint/PageShell';
 import { useCatalogData, useSyncStream } from './_components/useCatalogData';
 import { DataTable, MovieCard, CatalogStatCard } from './_components/CatalogViews';
 
@@ -19,7 +19,7 @@ import { DataTable, MovieCard, CatalogStatCard } from './_components/CatalogView
 export default function CinePointCatalogPage() {
   const router = useRouter();
   const {
-    data, loading, page, setPage, typeFilter, setTypeFilter,
+    data, loading, error, page, setPage, typeFilter, setTypeFilter,
     search, setSearch, sortCol, setSortCol, sortDir, setSortDir, fetchCatalog,
   } = useCatalogData();
 
@@ -114,7 +114,7 @@ export default function CinePointCatalogPage() {
               <span className="text-[10px] font-bold text-amber-600">⏸ 3 pages validated. Ready to continue full backfill?</span>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" onClick={stopSync} className="h-7 text-[9px] rounded-lg">Cancel</Button>
-                <Button size="sm" onClick={() => {}} className="h-7 text-[9px] rounded-lg">Continue All</Button>
+                <Button size="sm" onClick={startSync} className="h-7 text-[9px] rounded-lg">Continue All</Button>
               </div>
             </div>
           )}
@@ -182,6 +182,8 @@ export default function CinePointCatalogPage() {
       {/* Content */}
       {loading ? (
         <PageLoader message="Loading Catalog..." />
+      ) : error ? (
+        <PageError error={error} />
       ) : movies.length > 0 ? (
         <>
           {viewMode === 'grid' ? (
