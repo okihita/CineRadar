@@ -393,7 +393,7 @@ def dispatch_jobs(request: Any) -> Any:
                 # Append phase to showtime_id for logging uniqueness within the same batch
                 s["job_log_id"] = f"{s.get('showtime_id')}_{s.get('scrape_phase')}"
 
-                log_job_creation(db, batch_id, s)  # Log job creation for lifecycle tracking
+                # log_job_creation(db, batch_id, s)  # Log job creation for lifecycle tracking
 
             # Publish to Pub/Sub
             count = publish_to_pubsub(publisher, all_showtimes)

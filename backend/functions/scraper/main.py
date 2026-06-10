@@ -156,28 +156,8 @@ def log_error_to_firestore(
 
 
 def log_success_to_firestore(batch_id: str, scrape_phase: str = "T-30") -> None:
-    """Atomically increment total_successes on scraper_logs/{date}/dispatches/{HH-MM}.
-
-    Called after a successful scrape to track completion rate per dispatch batch.
-    """
-    try:
-        db = get_firestore_client()
-        date_str, dispatch_slot = _parse_batch_id(batch_id)
-        dispatch_ref = _get_dispatch_ref(db, date_str, dispatch_slot)
-
-        # Mapping phase to field name
-        phase_key = scrape_phase.lower().replace("-", "")
-        success_field = f"{phase_key}_success"
-
-        dispatch_ref.set(
-            {
-                "total_successes": firestore.Increment(1),
-                success_field: firestore.Increment(1),
-            },
-            merge=True,
-        )
-    except Exception as e:
-        logger.warning(f"Failed to log success to Firestore: {e}")
+    """Bypassed to reduce Firestore writes and avoid document write contention."""
+    pass
 
 
 # ============================================================================
@@ -245,12 +225,12 @@ class JobLogger:
         return time.time() * 1000
 
     def _update(self, data: dict[str, Any]) -> None:
-        """Update job document with new data (fire-and-forget)."""
+        """Update job log (route to Cloud Logging instead of Firestore)."""
         try:
             data["updated_at"] = self._now()
-            self.job_ref.set(data, merge=True)
+            logger.info(f"[JOB_LOG][{self.showtime_id}] {json.dumps(data)}")
         except Exception as e:
-            logger.warning(f"JobLogger: Failed to update job doc: {e}")
+            logger.warning(f"JobLogger: Failed to write log: {e}")
 
     # -------------------------------------------------------------------------
     # Checkpoint Methods
@@ -1096,25 +1076,10 @@ def save_snapshot(
     date = showtime_data["date"]
     showtime_id = showtime_data["showtime_id"]
 
-    document_path = f"movie_performance/{movie_id}/days/{date}/showtimes/{showtime_id}"
-
-    # Compress layout
-    layout_json_str = json.dumps(layout)
-    layout_compressed = gzip.compress(layout_json_str.encode("utf-8"))
-
-    # V1 document reference (existing - keep for backward compatibility)
-    doc_ref = (
-        db.collection("movie_performance")
-        .document(movie_id)
-        .collection("days")
-        .document(date)
-        .collection("showtimes")
-        .document(showtime_id)
-    )
-
     # V2 document reference (new - only if metadata_id available)
     doc_ref_v2 = None
     if metadata_id:
+        document_path = f"movie_performance_v2/{metadata_id}/days/{date}/showtimes/{showtime_id}"
         doc_ref_v2 = (
             db.collection("movie_performance_v2")
             .document(metadata_id)
@@ -1123,6 +1088,12 @@ def save_snapshot(
             .collection("showtimes")
             .document(showtime_id)
         )
+    else:
+        document_path = f"movie_performance/{movie_id}/days/{date}/showtimes/{showtime_id}"
+
+    # Compress layout
+    layout_json_str = json.dumps(layout)
+    layout_compressed = gzip.compress(layout_json_str.encode("utf-8"))
 
     # --- Delta Calculation: True Audience Count (JIT Occupied Model) ---
     # We are moving away from the "1 AM Delta" model because it fails to capture early presales.
@@ -1227,16 +1198,13 @@ def save_snapshot(
     }
 
     try:
-        # V1 write (existing - keep for backward compatibility)
-        # Use merge=True to preserve initial_layout_compressed from morning scrape
-        doc_ref.set(snapshot_data, merge=True)
-        logger.info(f"Saved V1 snapshot for {showtime_id}")
-
         # V2 write (new - only if metadata_id available)
         if doc_ref_v2:
             v2_snapshot_data = {**snapshot_data, "schedule_id": movie_id}
             doc_ref_v2.set(v2_snapshot_data, merge=True)
             logger.info(f"Saved V2 snapshot for {showtime_id} (metadata_id={metadata_id})")
+        else:
+            logger.warning(f"Skipping snapshot for {showtime_id}: metadata_id is missing (V1 writes are disabled)")
 
         return True, document_path
     except Exception as e:
