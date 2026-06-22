@@ -21,9 +21,9 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: astral-sh/setup-uv@v8.0.0
+      - uses: astral-sh/setup-uv@v8.2.0
 
       - uses: actions/setup-python@v6
         with:
@@ -44,7 +44,7 @@ jobs:
 #          PYTHONPATH: ${{ github.workspace }}
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         if: always()
         with:
           fail_ci_if_error: false
@@ -60,7 +60,7 @@ jobs:
         working-directory: admin
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: pnpm/action-setup@v6
         # Version is optional since it's pinned in root package.json
@@ -95,7 +95,7 @@ jobs:
         working-directory: web
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: pnpm/action-setup@v6
         # Version is optional since it's pinned in root package.json
