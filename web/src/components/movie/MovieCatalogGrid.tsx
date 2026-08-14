@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
-import { Search, X, Sparkles, MapPin, Film, Flame, SlidersHorizontal } from 'lucide-react';
+import { Search, X, Sparkles, MapPin, Film, Flame } from 'lucide-react';
 import { CHAIN_COLORS, ChainName } from '@/lib/constants';
 import { TheaterSchedule } from '@/types';
 import { AdmissionStats } from './MovieBrowser';
@@ -28,19 +28,57 @@ interface MovieCatalogGridProps {
 
 type FilterTab = 'all' | 'now_showing' | 'presale';
 
+const GENRE_EMOJIS: Record<string, string> = {
+  Action: '💥',
+  Horror: '👻',
+  Comedy: '😂',
+  Drama: '🎭',
+  Adventure: '🧗',
+  Fantasy: '🧙',
+  Thriller: '🔪',
+  'Sci-fi': '🚀',
+  Animation: '🎨',
+  Mystery: '🕵️',
+  Family: '👨‍👩‍👧',
+  Music: '🎵',
+  Sport: '⚽',
+  History: '📜',
+  Survival: '🏕️',
+  'Psychological thriller': '🧠',
+};
+
 export default function MovieCatalogGrid({ movies, onSelectMovie }: MovieCatalogGridProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [selectedGenre, setSelectedGenre] = useState<string>('all');
 
-  // Extract all unique genres
-  const allGenres = useMemo(() => {
-    const genres = new Set<string>();
-    movies.forEach(m => (m.genres || []).forEach(g => genres.add(g)));
-    return Array.from(genres).sort();
+  // Extract all unique normalized genres with counts
+  const genresWithCounts = useMemo(() => {
+    const genreMap = new Map<string, number>();
+
+    movies.forEach(movie => {
+      (movie.genres || []).forEach(rawGenre => {
+        if (!rawGenre) return;
+        // Handle comma-separated strings if any
+        const tokens = rawGenre.split(',').map(s => s.trim()).filter(Boolean);
+        tokens.forEach(g => {
+          // Normalize capitalization (e.g. "Action", "Sci-fi")
+          const normalized = g.charAt(0).toUpperCase() + g.slice(1);
+          genreMap.set(normalized, (genreMap.get(normalized) || 0) + 1);
+        });
+      });
+    });
+
+    return Array.from(genreMap.entries())
+      .sort((a, b) => b[1] - a[1]) // Sort by highest frequency
+      .map(([name, count]) => ({
+        name,
+        count,
+        emoji: GENRE_EMOJIS[name] || '🎬',
+      }));
   }, [movies]);
 
-  // Counts for tabs
+  // Counts for status tabs
   const counts = useMemo(() => {
     const presale = movies.filter(m => m.is_presale).length;
     const nowShowing = movies.length - presale;
@@ -55,8 +93,11 @@ export default function MovieCatalogGrid({ movies, onSelectMovie }: MovieCatalog
       if (activeTab === 'now_showing' && movie.is_presale) return false;
 
       // Genre filter
-      if (selectedGenre !== 'all' && !(movie.genres || []).includes(selectedGenre)) {
-        return false;
+      if (selectedGenre !== 'all') {
+        const matchesGenre = (movie.genres || []).some(g =>
+          g.toLowerCase().includes(selectedGenre.toLowerCase())
+        );
+        if (!matchesGenre) return false;
       }
 
       // Search query
@@ -74,66 +115,45 @@ export default function MovieCatalogGrid({ movies, onSelectMovie }: MovieCatalog
   }, [movies, activeTab, selectedGenre, searchQuery]);
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-gray-950">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Hero Banner / Header for Discovery */}
-        <div className="relative rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-purple-950/40 via-gray-900/60 to-black border border-white/10 backdrop-blur-xl overflow-hidden shadow-2xl">
+    <div className="flex-1 overflow-y-auto p-3.5 sm:p-6 lg:p-8 bg-gray-950">
+      <div className="max-w-7xl mx-auto space-y-5 sm:space-y-6">
+        {/* Hero Banner for Discovery */}
+        <div className="relative rounded-3xl p-5 sm:p-8 bg-gradient-to-br from-purple-950/40 via-gray-900/60 to-black border border-white/10 backdrop-blur-xl overflow-hidden shadow-2xl">
           <div className="absolute top-0 right-0 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="relative z-10 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-300 text-xs font-bold mb-3 shadow-sm">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-300 text-xs font-bold mb-2.5 shadow-sm">
               <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-              <span>Indonesia Cinema Radar</span>
+              <span>Cinema Telemetry Indonesia</span>
             </div>
-            <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight mb-2">
+            <h1 className="text-xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight mb-2">
               Explore All Movies in Theatres
             </h1>
             <p className="text-xs sm:text-sm text-gray-300">
-              Browse showtimes, live seat occupancy, and ticket prices across XXI, CGV, and Cinépolis nationwide.
+              Live showtimes, ticket prices, and seat occupancy across 80+ cities and all major cinema chains.
             </p>
           </div>
         </div>
 
-        {/* Search & Filters Controls */}
+        {/* Search & Filter Section */}
         <div className="space-y-3">
-          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-            {/* Search Input */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Search by title, genre, city, or country..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-9 py-2.5 bg-white/[0.05] border border-white/15 rounded-2xl text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 hover:border-white/30 transition-all shadow-inner"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-white"
-                  aria-label="Clear search"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-
-            {/* Genre Filter */}
-            {allGenres.length > 0 && (
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <SlidersHorizontal className="w-4 h-4 text-gray-400 hidden sm:block" />
-                <select
-                  value={selectedGenre}
-                  onChange={(e) => setSelectedGenre(e.target.value)}
-                  className="bg-black/50 border border-white/15 rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 hover:border-white/30 transition-all cursor-pointer"
-                >
-                  <option value="all" className="bg-gray-900 text-gray-400">All Genres ({allGenres.length})</option>
-                  {allGenres.map(g => (
-                    <option key={g} value={g} className="bg-gray-900 text-white">
-                      {g}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          {/* Search Input */}
+          <div className="relative w-full">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search movies, genres, cities, or actors..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-9 py-2.5 bg-white/[0.05] border border-white/15 rounded-2xl text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 hover:border-white/30 transition-all shadow-inner"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-white transition-colors"
+                aria-label="Clear search"
+              >
+                <X className="w-4 h-4" />
+              </button>
             )}
           </div>
 
@@ -141,19 +161,19 @@ export default function MovieCatalogGrid({ movies, onSelectMovie }: MovieCatalog
           <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
             <button
               onClick={() => setActiveTab('all')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 flex-shrink-0 ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 flex-shrink-0 active:scale-95 ${
                 activeTab === 'all'
                   ? 'bg-white/20 text-white border border-white/30 shadow-md backdrop-blur-md'
                   : 'bg-white/[0.03] text-gray-400 border border-white/10 hover:text-white hover:bg-white/[0.07]'
               }`}
             >
               <span>🍿 All Movies</span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10">{counts.all}</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 font-mono">{counts.all}</span>
             </button>
 
             <button
               onClick={() => setActiveTab('now_showing')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 flex-shrink-0 ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 flex-shrink-0 active:scale-95 ${
                 activeTab === 'now_showing'
                   ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 shadow-md backdrop-blur-md'
                   : 'bg-white/[0.03] text-gray-400 border border-white/10 hover:text-white hover:bg-white/[0.07]'
@@ -161,24 +181,70 @@ export default function MovieCatalogGrid({ movies, onSelectMovie }: MovieCatalog
             >
               <span className="w-2 h-2 rounded-full bg-emerald-400" />
               <span>Now Showing</span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10">{counts.nowShowing}</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 font-mono">{counts.nowShowing}</span>
             </button>
 
             {counts.presale > 0 && (
               <button
                 onClick={() => setActiveTab('presale')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 flex-shrink-0 ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 flex-shrink-0 active:scale-95 ${
                   activeTab === 'presale'
                     ? 'bg-amber-500/25 text-amber-300 border border-amber-500/40 shadow-md backdrop-blur-md'
                     : 'bg-white/[0.03] text-gray-400 border border-white/10 hover:text-white hover:bg-white/[0.07]'
                 }`}
               >
-                <Sparkles className="w-3 h-3 text-amber-400" />
-                <span>Pre-Sale Active</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10">{counts.presale}</span>
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>Pre-Sale</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 font-mono">{counts.presale}</span>
               </button>
             )}
           </div>
+
+          {/* Genre Filter Carousel Pills */}
+          {genresWithCounts.length > 0 && (
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar pt-1 border-t border-white/5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mr-1 flex-shrink-0">
+                Genre:
+              </span>
+
+              {/* All Genres Pill */}
+              <button
+                onClick={() => setSelectedGenre('all')}
+                className={`px-3 py-1 rounded-xl text-xs font-medium transition-all duration-200 cursor-pointer flex items-center gap-1 flex-shrink-0 active:scale-95 ${
+                  selectedGenre === 'all'
+                    ? 'bg-purple-600 text-white font-bold shadow-md shadow-purple-500/30 border border-purple-400/40'
+                    : 'bg-white/[0.04] text-gray-400 border border-white/10 hover:text-white hover:bg-white/[0.08]'
+                }`}
+              >
+                <span>✨ All</span>
+              </button>
+
+              {/* Individual Genre Pills with Emojis & Counts */}
+              {genresWithCounts.map(({ name, count, emoji }) => {
+                const isSelected = selectedGenre.toLowerCase() === name.toLowerCase();
+
+                return (
+                  <button
+                    key={name}
+                    onClick={() => setSelectedGenre(isSelected ? 'all' : name)}
+                    className={`px-2.5 sm:px-3 py-1 rounded-xl text-xs font-medium transition-all duration-200 cursor-pointer flex items-center gap-1.5 flex-shrink-0 active:scale-95 ${
+                      isSelected
+                        ? 'bg-purple-600 text-white font-bold shadow-md shadow-purple-500/30 border border-purple-400/40'
+                        : 'bg-white/[0.04] text-gray-400 border border-white/10 hover:text-white hover:bg-white/[0.08]'
+                    }`}
+                  >
+                    <span>{emoji}</span>
+                    <span>{name}</span>
+                    <span className={`text-[10px] px-1 py-0.2 rounded-full font-mono ${
+                      isSelected ? 'bg-white/20 text-white' : 'bg-white/5 text-gray-500'
+                    }`}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Movies Grid */}
@@ -187,13 +253,13 @@ export default function MovieCatalogGrid({ movies, onSelectMovie }: MovieCatalog
             <Film className="w-12 h-12 mx-auto mb-3 text-gray-500 opacity-50" />
             <h3 className="text-base font-bold text-white mb-1">No movies found</h3>
             <p className="text-xs text-gray-400 max-w-sm mx-auto mb-4">
-              We couldn&apos;t find any titles matching your filter. Try adjusting your search query.
+              We couldn&apos;t find any titles matching your filter. Try adjusting your search query or selected genre.
             </p>
             <button
               onClick={() => { setSearchQuery(''); setActiveTab('all'); setSelectedGenre('all'); }}
               className="px-4 py-2 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 border border-purple-500/40 text-purple-200 text-xs font-bold transition-colors cursor-pointer"
             >
-              Reset Filters
+              Reset All Filters
             </button>
           </div>
         ) : (
