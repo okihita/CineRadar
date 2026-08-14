@@ -8,7 +8,7 @@ This document establishes the official branching, commit, and release convention
 
 CineRadar contains three distinct deployment targets in a single repository:
 * **`admin`**: Next.js 16 Admin Dashboard (Deployed on Vercel: `cineradar-admin.vercel.app`)
-* **`web`**: Next.js 16 Public Consumer App (Deployed on Vercel: `cineradar-id.vercel.app`)
+* **`web`**: Next.js 16 Public Consumer App (Deployed on Vercel: `cineradar.id`)
 * **`backend`**: Python 3.13 Scraper CLI & GCP Cloud Functions (Deployed on GCP `cineradar-481014`)
 
 To isolate preview deployments and provide immediate clarity on blast radius, all branches must declare their target scope.

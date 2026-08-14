@@ -114,7 +114,7 @@ Explore the full technical manuals in [`docs/`](./docs/README.md):
 | Environment | Application | URL |
 | :--- | :--- | :--- |
 | **Production** | Admin Dashboard | [cineradar-admin.vercel.app](https://cineradar-admin.vercel.app) |
-| **Production** | Public Web | [cineradar-id.vercel.app](https://cineradar-id.vercel.app) |
+| **Production** | Public Web | [cineradar.id](https://cineradar.id) |
 | **Staging** | *Preview Deployments* | *Triggered automatically on PRs to `dev`* |
 
 ---

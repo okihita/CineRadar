@@ -66,7 +66,7 @@ flowchart LR
     end
     
     click AD "https://cineradar-admin.vercel.app"
-    click PW "https://cineradar-id.vercel.app"
+    click PW "https://cineradar.id"
 ```
 
 ### Infrastructure Components
@@ -311,7 +311,7 @@ Although `web` and `admin` live in the same repository, they are deployed as sep
 
 | Project | Root Directory | Hosting | URL |
 |---------|----------------|---------|-----|
-| **cineradar-web** | `web` | Vercel | `cineradar-id.vercel.app` |
+| **cineradar-web** | `web` | Vercel | `cineradar.id` |
 | **cineradar-admin** | `admin` | Vercel | `cineradar-admin.vercel.app` |
 
 ### Shared Cache Efficiency
