@@ -53,9 +53,9 @@ ignore = [
 known-first-party = ["backend"]
 
 [tool.ruff.lint.per-file-ignores]
-"scripts/*.py" = ["T201"]
 "backend/scripts/*.py" = ["T201"]
 "admin/scripts/*.py" = ["T201"]
+"docs/archive/**/*.py" = ["T201"]
 
 [tool.mypy]
 python_version = "3.13"
@@ -67,9 +67,7 @@ ignore_missing_imports = true
 # Scripts can be less strict
 [[tool.mypy.overrides]]
 module = [
-    "scripts.*",
     "backend.scripts.*",
-    "v1_v2_gap_analysis",
 ]
 disallow_untyped_defs = false
 disallow_untyped_calls = false
@@ -78,12 +76,6 @@ disallow_untyped_calls = false
 [[tool.mypy.overrides]]
 module = "backend.domain.*"
 strict = true
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-addopts = "-v --tb=short"
-asyncio_mode = "auto"
 
 [dependency-groups]
 dev = [

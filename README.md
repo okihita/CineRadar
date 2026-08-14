@@ -7,7 +7,7 @@
 
 ![CI](https://github.com/okihita/CineRadar/actions/workflows/ci.yml/badge.svg)
 ![Daily Scrape](https://github.com/okihita/CineRadar/actions/workflows/daily-initial-scrape.yml/badge.svg)
-![API Smoke Tests](https://github.com/okihita/CineRadar/actions/workflows/api-smoke-tests.yml/badge.svg)
+![Security Scan](https://github.com/okihita/CineRadar/actions/workflows/security-scan.yml/badge.svg)
 
 ---
 

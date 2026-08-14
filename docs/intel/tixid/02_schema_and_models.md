@@ -9,8 +9,8 @@ Used to fetch the list of available cities and their internal IDs.
 
 > [!NOTE] 
 > **Ground Truth Payloads:**
-> - Request: [`raw_payloads/06_cities.request`](file:///Users/okihita/ArcaneSanctum/CineRadar/docs/00_scraping_tixid/raw_payloads/06_cities.request)
-> - Response: [`raw_payloads/06_cities.response`](file:///Users/okihita/ArcaneSanctum/CineRadar/docs/00_scraping_tixid/raw_payloads/06_cities.response)
+> - Request: [`raw_payloads/06_cities.request`](./raw_payloads/06_cities.request)
+> - Response: [`raw_payloads/06_cities.response`](./raw_payloads/06_cities.response)
 
 ### JSON Sample
 ```json
@@ -61,8 +61,8 @@ Used to fetch all movies currently playing or upcoming in a given city.
 
 > [!NOTE] 
 > **Ground Truth Payloads:**
-> - Request: [`raw_payloads/03_movies_now_playing.request`](file:///Users/okihita/ArcaneSanctum/CineRadar/docs/00_scraping_tixid/raw_payloads/03_movies_now_playing.request)
-> - Response: [`raw_payloads/03_movies_now_playing.response`](file:///Users/okihita/ArcaneSanctum/CineRadar/docs/00_scraping_tixid/raw_payloads/03_movies_now_playing.response)
+> - Request: [`raw_payloads/03_movie_schedules.request`](./raw_payloads/03_movie_schedules.request)
+> - Response: [`raw_payloads/03_movie_schedules.response`](./raw_payloads/03_movie_schedules.response)
 
 ### JSON Sample (Abridged)
 ```json
@@ -143,8 +143,8 @@ Used to check which dates a specific movie is airing in a city.
 
 > [!NOTE] 
 > **Ground Truth Payloads:**
-> - Request: [`raw_payloads/04_movie_schedule_dates.request`](file:///Users/okihita/ArcaneSanctum/CineRadar/docs/00_scraping_tixid/raw_payloads/04_movie_schedule_dates.request)
-> - Response: [`raw_payloads/04_movie_schedule_dates.response`](file:///Users/okihita/ArcaneSanctum/CineRadar/docs/00_scraping_tixid/raw_payloads/04_movie_schedule_dates.response)
+> - Request: [`raw_payloads/04_movie_schedule_dates.request`](./raw_payloads/04_movie_schedule_dates.request)
+> - Response: [`raw_payloads/04_movie_schedule_dates.response`](./raw_payloads/04_movie_schedule_dates.response)
 
 ### JSON Sample
 ```json
@@ -190,8 +190,8 @@ Fetches actual showtimes and pricing.
 
 > [!NOTE] 
 > **Ground Truth Payloads:**
-> - Request: [`raw_payloads/05_movie_showtimes.request`](file:///Users/okihita/ArcaneSanctum/CineRadar/docs/00_scraping_tixid/raw_payloads/05_movie_showtimes.request)
-> - Response: [`raw_payloads/05_movie_showtimes.response`](file:///Users/okihita/ArcaneSanctum/CineRadar/docs/00_scraping_tixid/raw_payloads/05_movie_showtimes.response)
+> - Request: [`raw_payloads/05_movie_showtimes.request`](./raw_payloads/05_movie_showtimes.request)
+> - Response: [`raw_payloads/05_movie_showtimes.response`](./raw_payloads/05_movie_showtimes.response)
 
 ### JSON Sample (Abridged)
 ```json

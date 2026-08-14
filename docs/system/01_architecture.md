@@ -248,25 +248,19 @@ erDiagram
     }
 ```
 
-### Firestore Collections
+### Firestore V2 Collections
 
 | Collection | Document ID | Purpose |
 |------------|-------------|---------|
-| `theatres` | `{theatre_id}` | Master list of cinema locations |
-| `snapshots` | `latest` or `{YYYY-MM-DD}` | Daily movie data (slim) |
-| `schedules/{date}/movies` | `{id}` (TIX Schedule ID) | Full showtime data by date |
-| `movies` | `{movie_id}` (TIX Metadata ID) | Full, enriched movie details (cast, synopsis, trailers) |
-| `movie_performance` | `{id}` (TIX Schedule ID) | Aggregated seat and occupancy statistics |
-| `scraper_logs` | `{YYYY-MM-DD}` | Dispatcher and scraper job history |
-| `scraper_runs` | `{timestamp}_{type}` | Scraper run logs |
-| `auth_tokens` | `tix_jwt` | JWT token storage |
-
-> 🚨 **Critical Schema Warning: Movie Identifiers**
-> The TIX API provides two distinct identifiers for a film:
-> - **`id`** (Schedule ID, e.g., `2021094806305984512` for KOKUHO): This fundamentally tracks the schedule allocation. It is historically the primary key used across `schedules` and `movie_performance`.
-> - **`movie_id`** (Metadata ID, e.g., `2021094805467123712` for KOKUHO): This tracks the movie's descriptive entity. It is the primary key used in the root `movies` collection.
->
-> **Do not mix these up**. Scripts dealing with tickets/seats must key by `id` (or `schedule_id`). Scripts dealing with fetching actor names or synopsis must query the root `movies` collection by `movie_id` (`tix_metadata_id`).
+| `theatres` | `{theatre_id}` | Master list of geocoded cinema locations and studio capacities |
+| `schedules_v2/{date}/movies` | `{movie_id}` | Full showtime data, formats, and room categories by date |
+| `movie_performance_v2/{metadata_id}` | Root doc | Movie metadata entity (title, poster, age category) |
+| `.../days/{date}` | Daily Performance | Aggregated daily admissions, showtimes, and occupancy percentage |
+| `.../showtimes/{showtime_id}` | JIT Snapshot | JIT seat layout snapshot, occupancy, and compressed layout |
+| `cinepoint_daily_boxoffice` | `{YYYY-MM-DD}` | CinePoint daily admissions, showtimes, and rankings |
+| `cinepoint_movies` | `{movie_id}` | Normalized competitor movie catalog with creator credits |
+| `social_feed_sources` | `{source_id}` | YouTube & social intelligence channels tracked by CineRadar |
+| `auth_tokens` | `tix_jwt` | TIX ID Bearer and 91-day refresh token storage |
 
 ---
 
@@ -276,11 +270,12 @@ erDiagram
 
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
-| `ci.yml` | Push/PR to `backend/**` | Lint, test, type-check Python |
-| `api-smoke-tests.yml` | Push to `admin/**` + daily | Test production APIs |
-| `security-scan.yml` | Push/PR + weekly | CodeQL security analysis |
-| `failure-reporter.yml` | Workflow failures | Auto-create GitHub issues |
-| `daily-initial-scrape.yml` | Daily 6 AM WIB | Movie + seat scraping |
+| `ci.yml` | Push/PR to `main` / `dev` | Type-check & build Next.js apps, Ruff & Mypy Python checks |
+| `daily-initial-scrape.yml` | Daily 05:30 & 09:00 WIB | Scrape nationwide schedules & initialize daily performance |
+| `daily-initial-layouts.yml` | Daily 04:15 WIB | Scrape baseline seat maps to detect pre-blocked seats |
+| `scrape-movie-details.yml` | Scheduled / On-demand | Enrich new movies with cast, synopsis, and posters |
+| `token-refresh.yml` | 1st of month 02:50 WIB | Automatic RSA login for fresh 91-day long-term token |
+| `security-scan.yml` | Push/PR + weekly | CodeQL static application security testing |
 
 ### Quality Gates (Required for Merge)
 

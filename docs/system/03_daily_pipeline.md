@@ -96,7 +96,7 @@ Ensures any newly discovered movies from Phase 2 have full metadata (posters, ge
 Scrape a baseline seat map for every single showtime available that day. Used to identify seats blocked out by the cinema before any tickets are organically sold.
 
 ### Workflow File
-[`.github/workflows/daily-initial-layouts.yml`](../.github/workflows/daily-initial-layouts.yml) (Runs at `21:15 UTC` / `04:15 AM WIB`)
+[`.github/workflows/daily-initial-layouts.yml`](../../.github/workflows/daily-initial-layouts.yml) (Runs at `21:15 UTC` / `04:15 AM WIB`)
 
 ---
 
@@ -106,7 +106,7 @@ Scrape a baseline seat map for every single showtime available that day. Used to
 Scrape seat availability in three high-granularity phases (**30, 20, and 10 minutes before**) a showtime begins to capture final occupancy and sales velocity. 
 
 ### Architecture
-Runs on **Google Cloud Functions**.
+Runs on **Google Cloud Functions (Gen 2)**.
 
 ```mermaid
 graph TD
@@ -122,7 +122,7 @@ graph TD
     subgraph "Scraper Logic"
         Scraper -- "1. Auto-Refresh Token if Expired" --> TixAPI
         Scraper -- "2. GET /layout" --> TixAPI
-        Scraper -- "3. Save Snapshot" --> Firestore[(movie_performance)]
+        Scraper -- "3. Save Snapshot" --> Firestore[(movie_performance_v2)]
     end
 ```
 
@@ -133,7 +133,7 @@ graph TD
 2. **Scraper (`scrape-seat-jit`)**:
    - **Trigger**: Pub/Sub Message.
    - **Task**: Handles its own token refresh lock, fetches layout, and saves to Firestore.
-   - **Scale**: Up to 5 concurrent instances.
+   - **Scale**: Scales up to 10 concurrent instances during peak schedule bursts.
 
 ---
 
@@ -143,14 +143,14 @@ graph TD
 Periodically aggregates the individual JIT snapshots from Phase 5 into daily movie performance totals.
 
 ### Component (`backend/functions/sweeper/`)
-- **Trigger**: Cloud Scheduler (`0,30 10-23 * * *` WIB - Every 30 mins).
-- **Task**: Reads newly created `ShowtimeSnapshot` docs and recalculates `DailyPerformance` rollups.
+- **Trigger**: Cloud Scheduler (`*/15 10-23 * * *` WIB - Every 15 mins).
+- **Task**: Reads newly created `ShowtimeSnapshot` docs and recalculates `DailyPerformance` rollups in `movie_performance_v2`.
 
 ### Domain Models
 
 | Model | Firestore Path | Key Fields |
 |-------|----------------|------------|
-| `MovieMetadata` | `movie_performance/{movie_id}` | `title`, `poster`, `age_category` |
+| `MovieMetadata` | `movie_performance_v2/{metadata_id}` | `title`, `poster`, `age_category` |
 | `DailyPerformance` | `.../days/{YYYY-MM-DD}` | `total_showtimes`, `avg_occupancy_pct`, `total_seats` |
 | `ShowtimeSnapshot` | `.../showtimes/{id}` | `occupancy_pct`, `sold_seats`, `raw_api_response` |
 
@@ -161,7 +161,7 @@ Periodically aggregates the individual JIT snapshots from Phase 5 into daily mov
 The Admin Dashboard `/scraper` page consumes `scraper_logs` via Next.js API routes:
 - `GET /api/scraper` (30 days of logs)
 - `GET /api/scraper/today` (Current status)
-- `GET /api/scraper/jit` (JIT granularity monitor)
+- `GET /api/scraper/errors` (Pipeline error logs)
 
 ---
 
@@ -169,7 +169,7 @@ The Admin Dashboard `/scraper` page consumes `scraper_logs` via Next.js API rout
 
 ### Check Token Status
 ```bash
-uv run python -m backend.cli.refresh_token --check
+uv run python backend/cli/refresh_token.py --check
 ```
 
 ### Run Seat Scrape Locally

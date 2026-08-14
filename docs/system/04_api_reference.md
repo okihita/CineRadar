@@ -28,33 +28,15 @@ uv run python backend/scripts/run_national_scrape.py
 uv run python backend/scripts/post_process.py
 ```
 
-### Inspect Showtime (Raw API Response)
-**Entry Point:** [`backend/cli/inspect_showtime.py`](../backend/cli/inspect_showtime.py)
+### Token Refresh & Auth Check
+**Entry Point:** [`backend/cli/refresh_token.py`](../../backend/cli/refresh_token.py)
 
 ```bash
-# Inspect a specific showtime's raw API response
-python backend/cli/inspect_showtime.py \
-  --showtime-id <SHOWTIME_ID> \
-  --movie-id <MOVIE_ID> \
-  --date YYYY-MM-DD
+# Refresh token via RSA login
+uv run python backend/cli/refresh_token.py
 
-# Show full JSON output
-python backend/cli/inspect_showtime.py \
-  --showtime-id <SHOWTIME_ID> \
-  --movie-id <MOVIE_ID> \
-  --date YYYY-MM-DD \
-  --verbose
-```
-
-### Token Refresh
-**Entry Point:** [`backend/cli/refresh_token.py`](../backend/cli/refresh_token.py)
-
-```bash
-# Refresh token (headless)
-uv run python -m backend.cli.refresh_token
-
-# Check token status
-uv run python -m backend.cli.refresh_token --check
+# Check current JWT token validity
+uv run python backend/cli/refresh_token.py --check
 ```
 
 ---
@@ -167,10 +149,10 @@ All data passing through the pipeline is validated using Pydantic V2 schemas.
 
 | Schema | Source File | Purpose |
 |--------|-------------|---------|
-| **MovieSchema** | [`backend/schemas/movie.py`](../backend/schemas/movie.py) | Complete movie object with optional schedules |
-| **TheatreSchema** | [`backend/schemas/theatre.py`](../backend/schemas/theatre.py) | Geocoded theatre location data |
-| **TokenSchema** | [`backend/schemas/token.py`](../backend/schemas/token.py) | JWT payload structure and TTL validation |
-| **MovieDetailsResponseSchema** | [`backend/schemas/movie_details.py`](../backend/schemas/movie_details.py) | Movie details (cast, synopsis, ratings) |
+| **MovieSchema** | [`backend/schemas/movie.py`](../../backend/schemas/movie.py) | Complete movie object with optional schedules |
+| **TheatreSchema** | [`backend/schemas/theatre.py`](../../backend/schemas/theatre.py) | Geocoded theatre location data |
+| **TokenSchema** | [`backend/schemas/token.py`](../../backend/schemas/token.py) | JWT payload structure and TTL validation |
+| **MovieDetailsResponseSchema** | [`backend/schemas/movie_details.py`](../../backend/schemas/movie_details.py) | Movie details (cast, synopsis, ratings) |
 
 ### Quick Import Snippet
 For testing in `ipython` or scripts:

@@ -17,12 +17,12 @@ class FirestoreMoviePerformanceRepository:
     """Firestore repository for movie performance data.
 
     Schema:
-        movie_performance/{movie_id}                                <- MovieMetadata
-        movie_performance/{movie_id}/days/{date}                    <- DailyPerformance
-        movie_performance/{movie_id}/days/{date}/showtimes/{id}     <- ShowtimeSnapshot
+        movie_performance_v2/{metadata_id}                                <- MovieMetadata
+        movie_performance_v2/{metadata_id}/days/{date}                    <- DailyPerformance
+        movie_performance_v2/{metadata_id}/days/{date}/showtimes/{id}     <- ShowtimeSnapshot
     """
 
-    COLLECTION = "movie_performance"
+    COLLECTION = "movie_performance_v2"
     DAYS_SUBCOLLECTION = "days"
     SHOWTIMES_SUBCOLLECTION = "showtimes"
 

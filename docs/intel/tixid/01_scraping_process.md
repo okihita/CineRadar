@@ -29,8 +29,8 @@ sequenceDiagram
 
 > [!NOTE] 
 > **Ground Truth Login Payload:**
-> - Request: [`raw_payloads/02_auth_login.request`](file:///Users/okihita/ArcaneSanctum/CineRadar/docs/00_scraping_tixid/raw_payloads/02_auth_login.request)
-> - Response: [`raw_payloads/02_auth_login.response`](file:///Users/okihita/ArcaneSanctum/CineRadar/docs/00_scraping_tixid/raw_payloads/02_auth_login.response)
+> - Request: [`raw_payloads/02_auth_login.request`](./raw_payloads/02_auth_login.request)
+> - Response: [`raw_payloads/02_auth_login.response`](./raw_payloads/02_auth_login.response)
 
 ### Encryption Details
 - The client encapsulates the `password` in a 344-character Base64 encoded payload.
