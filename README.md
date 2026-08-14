@@ -25,10 +25,14 @@ Start here to understand the system.
 - **[03 Daily Pipeline](./docs/03_daily_pipeline.md)**: How data flows from 6 AM to Midnight (T+0).
 - **[04 API Reference](./docs/04_api_reference.md)**: CLI commands & data contracts.
 - **[05 Frontend Guidelines](./docs/05_frontend_guidelines.md)**: Design system & regional config.
-- [06 Troubleshooting (Strategic)](./docs/06_troubleshooting.md): Architecture failure modes & recovery.
-- [07 Product Roadmap](./docs/07_product_roadmap.md): Future vision & engineering "Why".
-- [09 Head-to-Head Comparison](./docs/09_feature_movie_comparison.md): Movie performance comparison feature.
+- **[06 Troubleshooting & Recovery](./docs/06_troubleshooting.md)**: Architecture failure modes & disaster recovery.
+- **[07 Product Roadmap](./docs/07_product_roadmap.md)**: Future vision & engineering "Why".
+- **[08 Monitoring & Alerts](./docs/08_monitoring_and_alerts.md)**: Cloud monitoring & uptime alerts.
+- **[09 Head-to-Head Comparison](./docs/09_feature_movie_comparison.md)**: Movie performance comparison feature.
+- **[10 Studio Layout Specification](./docs/10_studio_layout_technical_specification.md)**: Cinema studio matrix & layout intelligence.
 - **[11 Git Workflow & Branching](./docs/11_git_workflow.md)**: Monorepo scoped branching standards & hotfix protocol.
+- **[12 Social Pulse Pipeline](./docs/12_social_pulse_pipeline.md)**: Social media intelligence, YouTube ingestion & AI pulse.
+- **[13 Competitor Tracking & CinePoint](./docs/13_competitor_tracking_cinepoint.md)**: CinePoint scraping, matching, and benchmark engine.
 
 ### 📦 Component Guides
 
