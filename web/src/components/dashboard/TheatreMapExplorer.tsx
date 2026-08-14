@@ -5,6 +5,7 @@ import { TheaterSchedule } from '@/types';
 import { CHAIN_COLORS, getChainColor } from '@/lib/constants';
 import { formatRupiah } from '@/lib/utils';
 import { extractPricesFromTheaters } from '@/lib/showtime-utils';
+import { useTranslation } from '@/i18n';
 
 interface TheatreMapExplorerProps {
     cityData: { city: string; theatres: number }[];
@@ -12,6 +13,7 @@ interface TheatreMapExplorerProps {
 }
 
 export default function TheatreMapExplorer({ cityData, schedulesByCity }: TheatreMapExplorerProps) {
+    const { t } = useTranslation();
     const [selectedCity, setSelectedCity] = useState<string | null>(null);
 
     // Get city stats
@@ -24,8 +26,6 @@ export default function TheatreMapExplorer({ cityData, schedulesByCity }: Theatr
 
         // Use shared helper for price extraction
         const allPrices = extractPricesFromTheaters(theatres);
-        // Filter outliers if needed, or just use as is. Keeping consistent with previous logic roughly
-        // but trusting the util's parsing.
         const prices = allPrices.filter(p => p > 0 && p < 500000);
 
         theatres.forEach(t => {
@@ -51,10 +51,11 @@ export default function TheatreMapExplorer({ cityData, schedulesByCity }: Theatr
             {/* Header */}
             <div className="p-4 border-b border-gray-200 bg-gray-50">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    🎭 Theatre Coverage Explorer
+                    <span>🎭</span>
+                    <span>{t('dashboard.theatreMapTitle')}</span>
                 </h3>
                 <p className="text-sm text-gray-500 mt-1">
-                    Browse theatres by city • {cityData.length} cities across Indonesia
+                    {t('dashboard.theatreMapSubtitle')}
                 </p>
             </div>
 
@@ -62,17 +63,20 @@ export default function TheatreMapExplorer({ cityData, schedulesByCity }: Theatr
             <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-gray-200">
                 {/* Column 1: City Selection */}
                 <div className="p-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">🏙️ Select City</h4>
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">
+                        <span>🏙️</span>
+                        <span>{t('dashboard.selectCity')}</span>
+                    </h4>
                     <div className="h-[400px] overflow-y-auto space-y-2 pr-2">
                         {cityData.map(city => {
                             const isSelected = selectedCity === city.city;
-                            const theaterCountText = `${city.theatres} ${city.theatres === 1 ? 'theatre' : 'theatres'}`;
+                            const theaterCountText = t('common.theatresCount', { count: city.theatres });
 
                             return (
                                 <button
                                     key={city.city}
                                     onClick={() => setSelectedCity(city.city)}
-                                    className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-200 ${isSelected
+                                    className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-200 cursor-pointer ${isSelected
                                         ? 'bg-blue-600 text-white shadow-md'
                                         : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200'
                                         }`}
@@ -97,8 +101,15 @@ export default function TheatreMapExplorer({ cityData, schedulesByCity }: Theatr
                 {/* Column 2: Theatre List */}
                 <div className="p-4">
                     <h4 className="text-sm font-medium text-gray-700 mb-2">
-                        📍 {selectedCity || 'Select a City'}
-                        {cityStats && <span className="text-gray-400 font-normal ml-2">({cityStats.theatreCount} theatres)</span>}
+                        <span>📍</span>
+                        <span>{selectedCity || t('dashboard.selectCity')}</span>
+                        {cityStats && (
+                            <span className="text-gray-400 font-normal ml-2">
+                                <span>(</span>
+                                <span>{t('common.theatresCount', { count: cityStats.theatreCount })}</span>
+                                <span>)</span>
+                            </span>
+                        )}
                     </h4>
                     <div className="h-[400px] overflow-y-auto">
                         {selectedCity && cityStats ? (
@@ -130,11 +141,10 @@ export default function TheatreMapExplorer({ cityData, schedulesByCity }: Theatr
                                             <div className="flex items-center gap-1 text-blue-600">
                                                 <span>🕒</span>
                                                 <span className="font-medium">
-                                                    {theatre.rooms.reduce((acc, r) => acc + r.showtimes.length, 0)} showtimes
+                                                    {t('showtimes.card.showtimesCount', {
+                                                        count: theatre.rooms.reduce((acc, r) => acc + r.showtimes.length, 0)
+                                                    })}
                                                 </span>
-                                            </div>
-                                            <div className="text-gray-400">
-                                                {theatre.rooms.length} {theatre.rooms.length === 1 ? 'screen' : 'screens'}
                                             </div>
                                         </div>
                                     </div>
@@ -144,8 +154,7 @@ export default function TheatreMapExplorer({ cityData, schedulesByCity }: Theatr
                             <div className="h-full flex items-center justify-center text-gray-400">
                                 <div className="text-center">
                                     <span className="text-4xl block mb-3">🏙️</span>
-                                    <p className="text-sm">Select a city from the list</p>
-                                    <p className="text-xs mt-1">to see theatres and details</p>
+                                    <p className="text-sm">{t('dashboard.selectCityHint')}</p>
                                 </div>
                             </div>
                         )}
@@ -169,12 +178,12 @@ export default function TheatreMapExplorer({ cityData, schedulesByCity }: Theatr
                         {/* Theatre Count */}
                         <div className="bg-white rounded-lg p-4 border border-gray-200 text-center">
                             <div className="text-3xl font-bold text-blue-600">{cityStats.theatreCount}</div>
-                            <div className="text-sm text-gray-600">Theatres</div>
+                            <div className="text-sm text-gray-600">{t('header.theatres')}</div>
                         </div>
 
                         {/* Chain Breakdown */}
                         <div className="bg-white rounded-lg p-4 border border-gray-200">
-                            <div className="text-xs font-medium text-gray-500 mb-2">BY CHAIN</div>
+                            <div className="text-xs font-medium text-gray-500 mb-2">{t('dashboard.byChain')}</div>
                             <div className="space-y-1">
                                 {Object.entries(cityStats.chainCounts).map(([chain, count]) => (
                                     <div key={chain} className="flex items-center justify-between">
@@ -194,7 +203,7 @@ export default function TheatreMapExplorer({ cityData, schedulesByCity }: Theatr
                         {/* Showtime Count */}
                         <div className="bg-white rounded-lg p-4 border border-gray-200 text-center">
                             <div className="text-3xl font-bold text-purple-600">{cityStats.totalShowtimes.toLocaleString()}</div>
-                            <div className="text-sm text-gray-600">Showtimes</div>
+                            <div className="text-sm text-gray-600">{t('showtimes.hero.stats.dailyShowtimes')}</div>
                         </div>
 
                         {/* Price Range */}
@@ -204,15 +213,17 @@ export default function TheatreMapExplorer({ cityData, schedulesByCity }: Theatr
                                     <div className="text-lg font-bold text-emerald-600">
                                         {formatRupiah(cityStats.minPrice)} - {formatRupiah(cityStats.maxPrice)}
                                     </div>
-                                    <div className="text-sm text-gray-600">Price Range</div>
-                                    <div className="text-xs text-gray-400 mt-1">
-                                        Avg: {formatRupiah(cityStats.avgPrice)}
+                                    <div className="text-sm text-gray-600">{t('showtimes.hero.stats.priceRange')}</div>
+                                    <div className="text-xs text-gray-400 mt-1 flex items-center justify-center gap-1">
+                                        <span>{t('dashboard.avgPrice')}</span>
+                                        <span>:</span>
+                                        <span>{formatRupiah(cityStats.avgPrice)}</span>
                                     </div>
                                 </>
                             ) : (
                                 <>
                                     <div className="text-lg font-bold text-gray-400">-</div>
-                                    <div className="text-sm text-gray-500">No price data</div>
+                                    <div className="text-sm text-gray-500">{t('dashboard.noPriceData')}</div>
                                 </>
                             )}
                         </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Film, ChevronDown, ArrowLeft, LayoutGrid } from 'lucide-react';
+import { Film, ChevronDown, ArrowLeft, LayoutGrid, BarChart3 } from 'lucide-react';
 import MovieSidebar from './MovieSidebar';
 import CityShowtimes from './CityShowtimes';
 import MovieCatalogGrid from './MovieCatalogGrid';
@@ -178,7 +178,10 @@ async function fetchMovieAdmissions(movieId: string, date: string): Promise<Admi
     }
 }
 
+import { useTranslation } from '@/i18n';
+
 export default function MovieBrowser({ movies, initialMovieId }: MovieBrowserProps) {
+    const { t } = useTranslation();
     const [selectedMovie, setSelectedMovie] = useState<Movie | null>(() => {
         if (initialMovieId) {
             const found = movies.find(m => m.id === initialMovieId);
@@ -250,7 +253,7 @@ export default function MovieBrowser({ movies, initialMovieId }: MovieBrowserPro
                         }`}
                     >
                         <LayoutGrid className="w-3.5 h-3.5" />
-                        <span>All Movies ({movies.length})</span>
+                        <span>{t('nav.allMovies', { count: movies.length })}</span>
                     </button>
                     <button
                         onClick={() => setViewMode('showtimes')}
@@ -261,7 +264,7 @@ export default function MovieBrowser({ movies, initialMovieId }: MovieBrowserPro
                         }`}
                     >
                         <Film className="w-3.5 h-3.5" />
-                        <span>Showtimes</span>
+                        <span>{t('nav.showtimes')}</span>
                     </button>
                     <button
                         onClick={() => setViewMode('dashboard')}
@@ -271,7 +274,8 @@ export default function MovieBrowser({ movies, initialMovieId }: MovieBrowserPro
                                 : 'text-gray-400 hover:text-white'
                         }`}
                     >
-                        <span>📊 Insights</span>
+                        <BarChart3 className="w-3.5 h-3.5" />
+                        <span>{t('nav.insights')}</span>
                     </button>
                 </div>
 
@@ -280,7 +284,7 @@ export default function MovieBrowser({ movies, initialMovieId }: MovieBrowserPro
                     <button
                         onClick={() => setIsMobileDrawerOpen(true)}
                         className="lg:hidden flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-white text-xs font-semibold shadow-md active:scale-95 transition-all max-w-[170px] truncate cursor-pointer"
-                        aria-label="Change current movie"
+                        aria-label={t('common.changeMovie')}
                     >
                         <span className="truncate font-bold">{selectedMovie.title}</span>
                         <ChevronDown className="w-3.5 h-3.5 text-purple-300 flex-shrink-0" />
@@ -314,7 +318,7 @@ export default function MovieBrowser({ movies, initialMovieId }: MovieBrowserPro
                                 className="inline-flex items-center gap-1.5 text-xs font-bold text-purple-300 hover:text-white bg-purple-500/15 border border-purple-500/30 px-3 py-1.5 rounded-xl shadow-sm active:scale-95 transition-all cursor-pointer"
                             >
                                 <ArrowLeft className="w-3.5 h-3.5" />
-                                <span>All Movies</span>
+                                <span>{t('common.backToMovies')}</span>
                             </button>
 
                             <span className="text-[11px] text-gray-400 font-medium truncate max-w-[160px]">
@@ -328,8 +332,8 @@ export default function MovieBrowser({ movies, initialMovieId }: MovieBrowserPro
                                     <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mx-auto mb-4 text-2xl animate-spin shadow-lg">
                                         🎬
                                     </div>
-                                    <p className="text-sm font-bold text-white">Loading showtimes...</p>
-                                    <p className="text-xs text-gray-500 mt-1">Aggregating live schedules</p>
+                                    <p className="text-sm font-bold text-white">{t('common.loadingShowtimes')}</p>
+                                    <p className="text-xs text-gray-500 mt-1">{t('common.loadingTelemetry')}</p>
                                 </div>
                             </div>
                         ) : (

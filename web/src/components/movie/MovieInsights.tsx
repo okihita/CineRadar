@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { TrendingUp, BarChart3, Target, Ticket, Lightbulb, Sparkles, CheckCircle2, AlertCircle, Info } from 'lucide-react';
+import { useTranslation } from '@/i18n';
 
 interface TheaterSchedule {
     theatre_id: string;
@@ -278,6 +279,7 @@ function generateInsights(movie: Movie, allMovies: Movie[] = []): {
 }
 
 export default function MovieInsights({ movie, allMovies = [] }: MovieInsightsProps) {
+    const { t } = useTranslation();
     const insights = useMemo(() => generateInsights(movie, allMovies), [movie, allMovies]);
     const performance = useMemo(() => getPerformanceTier(movie, allMovies), [movie, allMovies]);
 
@@ -321,8 +323,8 @@ export default function MovieInsights({ movie, allMovies = [] }: MovieInsightsPr
                         <Sparkles className="w-4 h-4" />
                     </div>
                     <div>
-                        <h3 className="text-sm font-bold text-white tracking-wide uppercase">CineRadar Intelligence</h3>
-                        <p className="text-[11px] text-gray-400">Automated distribution & box-office telemetry</p>
+                        <h3 className="text-sm font-bold text-white tracking-wide uppercase">{t('insights.title')}</h3>
+                        <p className="text-[11px] text-gray-400">{t('insights.subtitle')}</p>
                     </div>
                 </div>
 
@@ -333,7 +335,7 @@ export default function MovieInsights({ movie, allMovies = [] }: MovieInsightsPr
                     </div>
                     {performance.tier !== 'presale' && performance.percentile > 0 && (
                         <span className="text-xs text-gray-400 font-medium hidden sm:inline">
-                            Top <span className="text-emerald-400 font-bold">{Math.max(1, 100 - performance.percentile)}%</span> coverage
+                            {t('insights.topCoverage', { percentile: Math.max(1, 100 - performance.percentile) })}
                         </span>
                     )}
                 </div>
@@ -346,7 +348,7 @@ export default function MovieInsights({ movie, allMovies = [] }: MovieInsightsPr
                     <div>
                         <div className="flex items-center gap-2 mb-2 text-xs font-bold uppercase tracking-wider text-purple-300">
                             <BarChart3 className="w-3.5 h-3.5" />
-                            <span>Market Overview</span>
+                            <span>{t('insights.marketOverview')}</span>
                         </div>
                         <p className="text-gray-300 text-xs sm:text-sm leading-relaxed">{insights.description}</p>
                     </div>
@@ -357,7 +359,7 @@ export default function MovieInsights({ movie, allMovies = [] }: MovieInsightsPr
                     <div>
                         <div className="flex items-center gap-2 mb-2 text-xs font-bold uppercase tracking-wider text-pink-300">
                             <TierIcon className="w-3.5 h-3.5" />
-                            <span>Demand Projection</span>
+                            <span>{t('insights.demandProjection')}</span>
                         </div>
                         <p className="text-gray-200 text-xs sm:text-sm leading-relaxed">{insights.prediction}</p>
                     </div>
@@ -367,7 +369,7 @@ export default function MovieInsights({ movie, allMovies = [] }: MovieInsightsPr
                 <div className="p-3.5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors rounded-xl border border-white/5">
                     <div className="flex items-center gap-2 mb-2.5 text-xs font-bold uppercase tracking-wider text-sky-300">
                         <Info className="w-3.5 h-3.5" />
-                        <span>Key Contributing Factors</span>
+                        <span>{t('insights.factors')}</span>
                     </div>
                     <div className="space-y-2">
                         {insights.factors.slice(0, 4).map((f, i) => (
@@ -393,12 +395,12 @@ export default function MovieInsights({ movie, allMovies = [] }: MovieInsightsPr
                     <div className="p-3.5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors rounded-xl border border-white/5">
                         <div className="flex items-center gap-2 mb-2.5 text-xs font-bold uppercase tracking-wider text-amber-300">
                             <Lightbulb className="w-3.5 h-3.5 text-yellow-400" />
-                            <span>Booking Recommendations</span>
+                            <span>{t('insights.recommendations')}</span>
                         </div>
                         <ul className="space-y-2">
                             {insights.recommendations.map((rec, i) => (
                                 <li key={i} className="text-gray-300 text-xs flex items-start gap-2">
-                                    <span className="text-yellow-400 font-bold">›</span>
+                                    <span className="text-yellow-400 font-bold">•</span>
                                     <span className="leading-snug">{rec}</span>
                                 </li>
                             ))}

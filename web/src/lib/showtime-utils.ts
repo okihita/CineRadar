@@ -87,3 +87,38 @@ export function getAllShowtimes(schedules: Record<string, TheaterSchedule[]> = {
     return times;
 }
 
+// Calculate comprehensive aggregated stats for movie schedules
+export function calculateShowtimeStats(schedules: Record<string, TheaterSchedule[]> = {}) {
+    let totalTheatres = 0;
+    const allShowtimes: string[] = [];
+    const prices: number[] = [];
+
+    Object.values(schedules).forEach(theaters => {
+        totalTheatres += (theaters || []).length;
+        (theaters || []).forEach(t => {
+            (t.rooms || []).forEach(r => {
+                if (Array.isArray(r.showtimes)) {
+                    allShowtimes.push(...r.showtimes);
+                }
+                if (r.price && typeof r.price === 'string') {
+                    const matches = r.price.match(/\d[\d.,]*/g);
+                    if (matches) {
+                        matches.forEach(m => {
+                            const num = parseInt(m.replace(/[.,]/g, ''), 10);
+                            if (!isNaN(num) && num > 0 && num < 5_000_000) prices.push(num);
+                        });
+                    }
+                }
+            });
+        });
+    });
+
+    const priceRange = prices.length > 0 ? { min: Math.min(...prices), max: Math.max(...prices) } : null;
+
+    return {
+        totalTheatres,
+        allShowtimes,
+        priceRange,
+    };
+}
+

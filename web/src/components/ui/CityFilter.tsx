@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from '@/i18n';
 
 interface CityFilterProps {
     cities: string[];
 }
 
 export default function CityFilter({ cities }: CityFilterProps) {
+    const { t } = useTranslation();
     const [selectedCity, setSelectedCity] = useState<string>('');
     const [search, setSearch] = useState('');
 
@@ -27,7 +29,7 @@ export default function CityFilter({ cities }: CityFilterProps) {
                 <div className="relative flex-1 max-w-md">
                     <input
                         type="text"
-                        placeholder="Search cities..."
+                        placeholder={t('sidebar.searchPlaceholder')}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="w-full px-4 py-3 pl-10 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
@@ -49,7 +51,7 @@ export default function CityFilter({ cities }: CityFilterProps) {
                     className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer appearance-none"
                     style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '20px', paddingRight: '40px' }}
                 >
-                    <option value="" className="bg-slate-900">All Cities</option>
+                    <option value="" className="bg-slate-900">{t('showtimes.filters.allCities', { count: cities.length })}</option>
                     {filteredCities.map(city => (
                         <option key={city} value={city} className="bg-slate-900">
                             {city}
@@ -60,9 +62,9 @@ export default function CityFilter({ cities }: CityFilterProps) {
                 {selectedCity && (
                     <button
                         onClick={() => handleCityChange('')}
-                        className="px-4 py-3 bg-purple-500/20 border border-purple-500/30 rounded-xl text-purple-300 hover:bg-purple-500/30 transition-colors flex items-center gap-2"
+                        className="px-4 py-3 bg-purple-500/20 border border-purple-500/30 rounded-xl text-purple-300 hover:bg-purple-500/30 transition-colors flex items-center gap-2 cursor-pointer"
                     >
-                        <span>Clear Filter</span>
+                        <span>{t('catalog.resetButton')}</span>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
@@ -71,8 +73,11 @@ export default function CityFilter({ cities }: CityFilterProps) {
             </div>
 
             {selectedCity && (
-                <div className="mt-4 px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-lg inline-block">
-                    <span className="text-purple-300">Showing movies in: </span>
+                <div className="mt-4 px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-lg inline-flex items-center gap-1.5">
+                    <span className="text-purple-300 flex items-center gap-0.5">
+                        <span>{t('showtimes.hero.nowShowing')}</span>
+                        <span>:</span>
+                    </span>
                     <span className="text-white font-semibold">{selectedCity}</span>
                 </div>
             )}

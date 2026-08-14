@@ -3,20 +3,18 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import ShowtimeView from '../showtimes/ShowtimeView';
+import { useTranslation } from '@/i18n';
 
-interface TheatreRoom {
-    category: string;
-    price: string;
-    showtimes?: string[];
-    past_showtimes?: string[];
-}
-
-interface TheatreSchedule {
+interface TheaterSchedule {
     theatre_id: string;
     theatre_name: string;
     merchant: string;
     address: string;
-    rooms: TheatreRoom[];
+    rooms: {
+        category: string;
+        price: string;
+        showtimes: string[];
+    }[];
 }
 
 interface Movie {
@@ -28,7 +26,8 @@ interface Movie {
     country: string;
     merchants: string[];
     cities: string[];
-    schedules?: Record<string, TheatreSchedule[]>; // Map of City -> Theatres
+    is_presale?: boolean;
+    schedules?: Record<string, TheaterSchedule[]>;
 }
 
 interface MovieGridProps {
@@ -37,33 +36,34 @@ interface MovieGridProps {
 
 const AGE_COLORS: Record<string, string> = {
     'SU': 'bg-green-500',
-    'P': 'bg-blue-500',
+    '13+': 'bg-yellow-500',
     'R': 'bg-yellow-500',
+    '17+': 'bg-orange-500',
     'D': 'bg-red-500',
+    '21+': 'bg-red-600',
 };
 
 const MERCHANT_COLORS: Record<string, string> = {
-    'XXI': 'bg-yellow-600',
+    'XXI': 'bg-blue-600',
     'CGV': 'bg-red-600',
-    'Cinépolis': 'bg-blue-600',
+    'Cinépolis': 'bg-yellow-600',
 };
 
 export default function MovieGrid({ movies }: MovieGridProps) {
-    const [filteredMovies, setFilteredMovies] = useState(movies);
-    const [selectedCity, setSelectedCity] = useState('');
+    const { t } = useTranslation();
+    const [selectedCity, setSelectedCity] = useState<string>('');
     const [expandedMovie, setExpandedMovie] = useState<string | null>(null);
     const [showtimeMovie, setShowtimeMovie] = useState<Movie | null>(null);
 
-    useEffect(() => {
-        const handleCityFilter = (e: CustomEvent) => {
-            const city = e.detail;
-            setSelectedCity(city);
+    // Filter movies by city
+    const filteredMovies = selectedCity
+        ? movies.filter(m => m.cities.includes(selectedCity))
+        : movies;
 
-            if (city) {
-                setFilteredMovies(movies.filter(m => m.cities.includes(city)));
-            } else {
-                setFilteredMovies(movies);
-            }
+    // Listen for custom event from CityFilter component
+    useEffect(() => {
+        const handleCityFilter = (e: CustomEvent<string>) => {
+            setSelectedCity(e.detail);
         };
 
         window.addEventListener('cityFilter', handleCityFilter as EventListener);
@@ -74,9 +74,9 @@ export default function MovieGrid({ movies }: MovieGridProps) {
         <div>
             <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-white">
-                    {selectedCity ? `Movies in ${selectedCity}` : 'All Movies'}
+                    {selectedCity ? `${t('header.movies')} • ${selectedCity}` : t('catalog.tabs.all')}
                 </h2>
-                <span className="text-gray-400">{filteredMovies.length} movies</span>
+                <span className="text-gray-400">{t('common.moviesCount', { count: filteredMovies.length })}</span>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
@@ -109,7 +109,7 @@ export default function MovieGrid({ movies }: MovieGridProps) {
 
                             {/* City Count Badge */}
                             <div className="absolute top-2 right-2 px-2 py-1 rounded-md text-xs font-medium bg-black/70 text-white backdrop-blur-sm">
-                                {movie.cities.length} cities
+                                {t('catalog.citiesCount', { count: movie.cities.length })}
                             </div>
 
                             {/* Merchants */}
@@ -144,8 +144,9 @@ export default function MovieGrid({ movies }: MovieGridProps) {
                             {/* Schedule info if city selected */}
                             {selectedCity && movie.schedules && movie.schedules[selectedCity] && (
                                 <div className="mt-2 pt-2 border-t border-white/10">
-                                    <p className="text-[10px] text-green-400 font-medium">
-                                        📅 {movie.schedules[selectedCity].length} Theatres Available
+                                    <p className="text-[10px] text-green-400 font-medium flex items-center gap-1">
+                                        <span>📅</span>
+                                        <span>{t('common.theatresCount', { count: movie.schedules[selectedCity].length })}</span>
                                     </p>
                                 </div>
                             )}
@@ -156,7 +157,7 @@ export default function MovieGrid({ movies }: MovieGridProps) {
                             <div className="absolute inset-0 bg-black/95 p-4 overflow-auto z-10 animate-fadeIn flex flex-col">
                                 <button
                                     onClick={(e) => { e.stopPropagation(); setExpandedMovie(null); }}
-                                    className="absolute top-2 right-2 p-1 text-gray-400 hover:text-white"
+                                    className="absolute top-2 right-2 p-1 text-gray-400 hover:text-white cursor-pointer"
                                 >
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -173,20 +174,24 @@ export default function MovieGrid({ movies }: MovieGridProps) {
                                                     e.stopPropagation();
                                                     setShowtimeMovie(movie);
                                                 }}
-                                                className="w-full py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2"
+                                                className="w-full py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"
                                             >
-                                                <span>View Showtimes</span>
+                                                <span>{t('nav.showtimes')}</span>
                                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
                                             </button>
-                                            <p className="mt-2 text-xs text-gray-400 text-center">
-                                                For {selectedCity}
+                                            <p className="mt-2 text-xs text-gray-400 text-center flex items-center justify-center gap-1">
+                                                <span>•</span>
+                                                <span>{selectedCity}</span>
                                             </p>
                                         </div>
                                     ) : (
                                         <>
-                                            <p className="text-xs text-gray-400 mb-2">Available in {movie.cities.length} cities:</p>
+                                            <p className="text-xs text-gray-400 mb-2 flex items-center gap-1">
+                                                <span>{t('showtimes.hero.availableAt')}</span>
+                                                <span>{t('catalog.citiesCount', { count: movie.cities.length })}</span>
+                                            </p>
                                             <div className="flex flex-wrap gap-1">
                                                 {movie.cities.sort().map((city) => (
                                                     <span
@@ -221,7 +226,7 @@ export default function MovieGrid({ movies }: MovieGridProps) {
 
             {filteredMovies.length === 0 && (
                 <div className="text-center py-16">
-                    <p className="text-gray-400 text-lg">No movies found for this city</p>
+                    <p className="text-gray-400 text-lg">{t('catalog.emptyTitle')}</p>
                 </div>
             )}
         </div>

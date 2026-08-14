@@ -12,6 +12,8 @@ interface CityShowtimesFiltersProps {
     toggleChain: (chain: string) => void;
 }
 
+import { useTranslation } from '@/i18n';
+
 export default function CityShowtimesFilters({
     cities,
     selectedCity,
@@ -20,6 +22,8 @@ export default function CityShowtimesFilters({
     isChainEnabled,
     toggleChain,
 }: CityShowtimesFiltersProps) {
+    const { t } = useTranslation();
+
     return (
         <div className="mb-6 p-3 sm:p-4 bg-white/[0.03] rounded-2xl border border-white/10 backdrop-blur-md shadow-lg">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
@@ -29,7 +33,7 @@ export default function CityShowtimesFilters({
                     <div className="flex items-center gap-2 w-full sm:w-auto">
                         <label htmlFor="city-jump-select" className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-400 flex-shrink-0">
                             <MapPin className="w-3.5 h-3.5 text-blue-400" />
-                            <span>City:</span>
+                            <span>{t('showtimes.filters.cityLabel')}</span>
                         </label>
                         <div className="relative flex-1 sm:flex-initial">
                             <select
@@ -38,7 +42,9 @@ export default function CityShowtimesFilters({
                                 onChange={(e) => onCityJump(e.target.value)}
                                 className="w-full sm:w-auto bg-black/50 border border-white/15 rounded-xl px-3 py-1.5 pr-8 text-xs sm:text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 hover:border-white/30 transition-all cursor-pointer appearance-none shadow-inner"
                             >
-                                <option value="" className="bg-gray-900 text-gray-400">All Cities ({cities.length})</option>
+                                <option value="" className="bg-gray-900 text-gray-400">
+                                    {t('showtimes.filters.allCities', { count: cities.length })}
+                                </option>
                                 {cities.map(city => (
                                     <option key={city} value={city} className="bg-gray-900 text-white">
                                         {city}
@@ -61,7 +67,7 @@ export default function CityShowtimesFilters({
                         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 no-scrollbar max-w-full">
                             <span className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-gray-400 mr-1 flex-shrink-0">
                                 <SlidersHorizontal className="w-3.5 h-3.5 text-purple-400" />
-                                <span className="hidden sm:inline">Chains:</span>
+                                <span className="hidden sm:inline">{t('showtimes.filters.chainsLabel')}</span>
                             </span>
                             <div className="flex items-center gap-1.5 flex-nowrap">
                                 {availableChains.map(chain => {
@@ -99,18 +105,20 @@ export default function CityShowtimesFilters({
 
                 {/* Right side: Showtime Period Legend */}
                 <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 no-scrollbar pt-2 md:pt-0 border-t md:border-t-0 border-white/5 w-full md:w-auto text-[10px] sm:text-[11px] text-gray-400">
-                    <span className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold flex-shrink-0">Slots:</span>
+                    <span className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold flex-shrink-0">
+                        {t('showtimes.filters.slotsLabel')}
+                    </span>
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300 font-medium flex-shrink-0">
-                        🌅 Morning
+                        🌅 {t('showtimes.filters.slots.morning')}
                     </span>
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-sky-500/10 border border-sky-500/20 text-sky-300 font-medium flex-shrink-0">
-                        ☀️ Afternoon
+                        ☀️ {t('showtimes.filters.slots.afternoon')}
                     </span>
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/20 text-purple-300 font-medium flex-shrink-0">
-                        🌆 Evening
+                        🌆 {t('showtimes.filters.slots.evening')}
                     </span>
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 font-medium flex-shrink-0">
-                        🌙 Night
+                        🌙 {t('showtimes.filters.slots.night')}
                     </span>
                 </div>
             </div>

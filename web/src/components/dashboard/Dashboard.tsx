@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useTranslation } from '@/i18n';
 import TheatreMapExplorer from './TheatreMapExplorer';
 
 interface TheaterSchedule {
@@ -208,21 +209,23 @@ export default function Dashboard({ movies }: DashboardProps) {
 
     const genreColors = ['#8b5cf6', '#ec4899', '#06b6d4', '#10b981', '#f59e0b', '#6366f1'];
 
+    const { t } = useTranslation();
+
     return (
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-gradient-to-b from-gray-900 to-black">
             {/* Header */}
             <div className="mb-6 sm:mb-8">
-                <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">📊 Market Insights</h1>
-                <p className="text-xs sm:text-sm text-gray-400">Bird&apos;s-eye view of Indonesia&apos;s cinema landscape</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">📊 {t('dashboard.title')}</h1>
+                <p className="text-xs sm:text-sm text-gray-400">{t('dashboard.subtitle')}</p>
             </div>
 
             {/* Quick Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
                 {[
-                    { label: 'Movies', value: stats.totalMovies, icon: '🎬', color: 'from-purple-500 to-pink-500' },
-                    { label: 'Cities', value: stats.totalCities, icon: '🏙️', color: 'from-blue-500 to-cyan-500' },
-                    { label: 'Theatres', value: stats.totalTheatres, icon: '🎭', color: 'from-amber-500 to-orange-500' },
-                    { label: 'Showtimes', value: stats.totalShowtimes.toLocaleString(), icon: '🎟️', color: 'from-emerald-500 to-teal-500' },
+                    { label: t('dashboard.stats.movies'), value: stats.totalMovies, icon: '🎬', color: 'from-purple-500 to-pink-500' },
+                    { label: t('dashboard.stats.cities'), value: stats.totalCities, icon: '🏙️', color: 'from-blue-500 to-cyan-500' },
+                    { label: t('dashboard.stats.theatres'), value: stats.totalTheatres, icon: '🎭', color: 'from-amber-500 to-orange-500' },
+                    { label: t('dashboard.stats.showtimes'), value: stats.totalShowtimes.toLocaleString(), icon: '🎟️', color: 'from-emerald-500 to-teal-500' },
                 ].map((stat, i) => (
                     <div key={i} className="p-3 sm:p-4 bg-white/5 rounded-xl border border-white/10 backdrop-blur-sm">
                         <div className="flex items-center gap-2.5 sm:gap-3">
@@ -242,71 +245,87 @@ export default function Dashboard({ movies }: DashboardProps) {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8">
                 {/* Chain Market Share */}
                 <div className="p-4 sm:p-6 bg-white/5 rounded-xl border border-white/10">
-                    <h3 className="text-base sm:text-lg font-semibold text-white mb-4">🎬 Chain Market Share</h3>
+                    <h3 className="text-base sm:text-lg font-semibold text-white mb-4">🎬 {t('dashboard.chainShare')}</h3>
                     <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
                         <DonutChart
                             data={Object.entries(stats.chainCounts).map(([label, value]) => ({ label, value }))}
                             colors={Object.keys(stats.chainCounts).map(k => chainColors[k] || '#6b7280')}
                         />
                         <div className="space-y-2 w-full sm:w-auto">
-                            {Object.entries(stats.chainCounts).sort((a, b) => b[1] - a[1]).map(([chain, count]) => (
-                                <div key={chain} className="flex items-center gap-2">
-                                    <div
-                                        className="w-3 h-3 rounded-full"
-                                        style={{ backgroundColor: chainColors[chain] || '#6b7280' }}
-                                    />
-                                    <span className="text-sm text-gray-300">{chain}</span>
-                                    <span className="text-sm text-white font-medium">{count}</span>
-                                    <span className="text-xs text-gray-500">
-                                        ({Math.round(count / Object.values(stats.chainCounts).reduce((a, b) => a + b, 0) * 100)}%)
-                                    </span>
-                                </div>
-                            ))}
+                            {Object.entries(stats.chainCounts).sort((a, b) => b[1] - a[1]).map(([chain, count]) => {
+                                const totalChains = Object.values(stats.chainCounts).reduce((a, b) => a + b, 0);
+                                const pct = totalChains > 0 ? Math.round((count / totalChains) * 100) : 0;
+                                return (
+                                    <div key={chain} className="flex items-center gap-2">
+                                        <div
+                                            className="w-3 h-3 rounded-full"
+                                            style={{ backgroundColor: chainColors[chain] || '#6b7280' }}
+                                        />
+                                        <span className="text-sm text-gray-300">{chain}</span>
+                                        <span className="text-sm text-white font-medium">{count}</span>
+                                        <span className="text-xs text-gray-500 flex items-center">
+                                            <span>(</span>
+                                            <span>{pct}</span>
+                                            <span>%</span>
+                                            <span>)</span>
+                                        </span>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>
 
                 {/* Price by Chain */}
-                <div className="p-6 bg-white/5 rounded-xl border border-white/10">
-                    <h3 className="text-lg font-semibold text-white mb-4">💰 Price by Chain</h3>
+                <div className="p-4 sm:p-6 bg-white/5 rounded-xl border border-white/10">
+                    <h3 className="text-base sm:text-lg font-semibold text-white mb-4">💰 {t('dashboard.priceByChain')}</h3>
                     <div className="space-y-4">
-                        {stats.avgPriceByChain.map((c, i) => (
-                            <div key={i}>
-                                <div className="flex items-center justify-between mb-1">
-                                    <span className="text-sm text-gray-300">{c.chain}</span>
-                                    <span className="text-sm font-medium" style={{ color: chainColors[c.chain] || '#9ca3af' }}>
-                                        Rp{(c.avg / 1000).toFixed(0)}k avg
-                                    </span>
+                        {stats.avgPriceByChain.map((c, i) => {
+                            const avgText = `Rp${(c.avg / 1000).toFixed(0)}k ${t('dashboard.avgPrice')}`;
+                            const minText = `Rp${(c.min / 1000).toFixed(0)}k`;
+                            const maxText = `Rp${(c.max / 1000).toFixed(0)}k`;
+
+                            return (
+                                <div key={i}>
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="text-sm text-gray-300">{c.chain}</span>
+                                        <span className="text-sm font-medium" style={{ color: chainColors[c.chain] || '#9ca3af' }}>
+                                            {avgText}
+                                        </span>
+                                    </div>
+                                    <div className="h-3 bg-white/5 rounded-full overflow-hidden relative">
+                                        <div
+                                            className="absolute h-full rounded-full opacity-30"
+                                            style={{
+                                                left: `${(c.min / 200000) * 100}%`,
+                                                right: `${100 - (c.max / 200000) * 100}%`,
+                                                backgroundColor: chainColors[c.chain] || '#6b7280'
+                                            }}
+                                        />
+                                        <div
+                                            className="absolute w-1 h-full"
+                                            style={{
+                                                left: `${(c.avg / 200000) * 100}%`,
+                                                backgroundColor: chainColors[c.chain] || '#6b7280'
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                                        <span>{minText}</span>
+                                        <span>{maxText}</span>
+                                    </div>
                                 </div>
-                                <div className="h-3 bg-white/5 rounded-full overflow-hidden relative">
-                                    <div
-                                        className="absolute h-full rounded-full opacity-30"
-                                        style={{
-                                            left: `${(c.min / 200000) * 100}%`,
-                                            right: `${100 - (c.max / 200000) * 100}%`,
-                                            backgroundColor: chainColors[c.chain] || '#6b7280'
-                                        }}
-                                    />
-                                    <div
-                                        className="absolute w-1 h-full"
-                                        style={{
-                                            left: `${(c.avg / 200000) * 100}%`,
-                                            backgroundColor: chainColors[c.chain] || '#6b7280'
-                                        }}
-                                    />
-                                </div>
-                                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                                    <span>Rp{(c.min / 1000).toFixed(0)}k</span>
-                                    <span>Rp{(c.max / 1000).toFixed(0)}k</span>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
 
                 {/* Top Movies by Coverage */}
                 <div className="p-6 bg-white/5 rounded-xl border border-white/10">
-                    <h3 className="text-lg font-semibold text-white mb-4">🏆 Top Movies by Coverage</h3>
+                    <h3 className="text-lg font-semibold text-white mb-4">
+                        <span>🏆</span>
+                        <span>{t('dashboard.topMovies')}</span>
+                    </h3>
                     <BarChart
                         data={stats.moviesByCoverage.map((m, i) => ({
                             label: m.title,
@@ -319,7 +338,10 @@ export default function Dashboard({ movies }: DashboardProps) {
 
                 {/* Top Cities by Theatres */}
                 <div className="p-6 bg-white/5 rounded-xl border border-white/10">
-                    <h3 className="text-lg font-semibold text-white mb-4">🏙️ Top Cities by Theatres</h3>
+                    <h3 className="text-lg font-semibold text-white mb-4">
+                        <span>🏙️</span>
+                        <span>{t('dashboard.topCities')}</span>
+                    </h3>
                     <BarChart
                         data={stats.topCities.map(([city, count], i) => ({
                             label: city,
@@ -343,7 +365,10 @@ export default function Dashboard({ movies }: DashboardProps) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 {/* Peak Hours */}
                 <div className="p-6 bg-white/5 rounded-xl border border-white/10">
-                    <h3 className="text-lg font-semibold text-white mb-4">⏰ Peak Showtime Hours</h3>
+                    <h3 className="text-lg font-semibold text-white mb-4">
+                        <span>⏰</span>
+                        <span>{t('dashboard.peakHours')}</span>
+                    </h3>
                     <div className="flex items-end gap-1 h-24">
                         {stats.hourCounts.slice(10, 24).map((count, i) => {
                             const maxCount = Math.max(...stats.hourCounts);
@@ -366,54 +391,70 @@ export default function Dashboard({ movies }: DashboardProps) {
 
                 {/* Genre Distribution */}
                 <div className="p-6 bg-white/5 rounded-xl border border-white/10">
-                    <h3 className="text-lg font-semibold text-white mb-4">🎭 Genre Distribution</h3>
+                    <h3 className="text-lg font-semibold text-white mb-4">
+                        <span>🎭</span>
+                        <span>{t('dashboard.genreDist')}</span>
+                    </h3>
                     <div className="flex flex-wrap gap-2">
                         {Object.entries(stats.genreCounts)
                             .sort((a, b) => b[1] - a[1])
                             .slice(0, 8)
-                            .map(([genre, count], i) => (
-                                <span
-                                    key={genre}
-                                    className="px-3 py-1 rounded-full text-sm font-medium"
-                                    style={{
-                                        backgroundColor: `${genreColors[i % genreColors.length]}30`,
-                                        color: genreColors[i % genreColors.length],
-                                        borderColor: `${genreColors[i % genreColors.length]}50`,
-                                        borderWidth: '1px'
-                                    }}
-                                >
-                                    {genre} ({count})
-                                </span>
-                            ))}
+                            .map(([genre, count], i) => {
+                                const genreLabel = `${genre} (${count})`;
+                                return (
+                                    <span
+                                        key={genre}
+                                        className="px-3 py-1 rounded-full text-sm font-medium"
+                                        style={{
+                                            backgroundColor: `${genreColors[i % genreColors.length]}30`,
+                                            color: genreColors[i % genreColors.length],
+                                            borderColor: `${genreColors[i % genreColors.length]}50`,
+                                            borderWidth: '1px'
+                                        }}
+                                    >
+                                        {genreLabel}
+                                    </span>
+                                );
+                            })}
                     </div>
                 </div>
 
                 {/* Pre-sale Movies */}
                 <div className="p-6 bg-white/5 rounded-xl border border-white/10">
-                    <h3 className="text-lg font-semibold text-white mb-4">🎟️ Pre-sale Movies</h3>
+                    <h3 className="text-lg font-semibold text-white mb-4">
+                        <span>🎟️</span>
+                        <span>{t('dashboard.presaleMovies')}</span>
+                    </h3>
                     {stats.presaleMovies.length > 0 ? (
                         <div className="space-y-2">
-                            {stats.presaleMovies.slice(0, 5).map((m, i) => (
-                                <div key={i} className="flex items-center gap-2">
-                                    <span className="text-amber-500">🎟️</span>
-                                    <span className="text-sm text-gray-300 truncate">{m.title}</span>
-                                    <span className="text-xs text-gray-500">({m.cities.length} cities)</span>
-                                </div>
-                            ))}
+                            {stats.presaleMovies.slice(0, 5).map((m, i) => {
+                                const cityText = `(${t('catalog.citiesCount', { count: m.cities.length })})`;
+                                return (
+                                    <div key={i} className="flex items-center gap-2">
+                                        <span className="text-amber-500">🎟️</span>
+                                        <span className="text-sm text-gray-300 truncate">{m.title}</span>
+                                        <span className="text-xs text-gray-500">{cityText}</span>
+                                    </div>
+                                );
+                            })}
                         </div>
                     ) : (
-                        <p className="text-gray-500 text-sm">No pre-sale movies currently</p>
+                        <p className="text-gray-500 text-sm">{t('dashboard.noPresale')}</p>
                     )}
                 </div>
             </div>
 
             {/* Age Rating */}
             <div className="p-6 bg-white/5 rounded-xl border border-white/10">
-                <h3 className="text-lg font-semibold text-white mb-4">👤 Age Rating Distribution</h3>
+                <h3 className="text-lg font-semibold text-white mb-4">
+                    <span>👤</span>
+                    <span>{t('dashboard.ageRating')}</span>
+                </h3>
                 <div className="flex gap-4">
                     {Object.entries(stats.ageCounts).map(([rating, count]) => {
                         const color = rating === 'SU' ? '#22c55e' : rating === 'R' ? '#eab308' : rating === 'D' ? '#ef4444' : '#6b7280';
                         const total = Object.values(stats.ageCounts).reduce((a, b) => a + b, 0);
+                        const pctText = `${Math.round(count / total * 100)}%`;
                         return (
                             <div key={rating} className="flex-1 text-center">
                                 <div
@@ -423,7 +464,7 @@ export default function Dashboard({ movies }: DashboardProps) {
                                     {count}
                                 </div>
                                 <div className="text-sm text-gray-400">{rating}</div>
-                                <div className="text-xs text-gray-500">{Math.round(count / total * 100)}%</div>
+                                <div className="text-xs text-gray-500">{pctText}</div>
                             </div>
                         );
                     })}

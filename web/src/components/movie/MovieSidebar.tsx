@@ -26,6 +26,8 @@ interface MovieSidebarProps {
   isMobile?: boolean;
 }
 
+import { useTranslation } from '@/i18n';
+
 export default function MovieSidebar({
   movies,
   selectedMovie,
@@ -33,6 +35,7 @@ export default function MovieSidebar({
   onClose,
   isMobile = false,
 }: MovieSidebarProps) {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredMovies = movies.filter(movie =>
@@ -46,7 +49,7 @@ export default function MovieSidebar({
         <div className="p-4 border-b border-white/10 flex items-center justify-between bg-black/40">
           <div className="flex items-center gap-2">
             <Film className="w-5 h-5 text-purple-400" />
-            <h2 className="text-base font-bold text-white tracking-tight">Select Movie</h2>
+            <h2 className="text-base font-bold text-white tracking-tight">{t('sidebar.title')}</h2>
             <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-gray-400 font-mono">
               {movies.length}
             </span>
@@ -54,7 +57,7 @@ export default function MovieSidebar({
           {onClose && (
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer"
               aria-label="Close movie selector"
             >
               <X className="w-5 h-5" />
@@ -69,7 +72,7 @@ export default function MovieSidebar({
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           <input
             type="text"
-            placeholder="Search 80+ movies..."
+            placeholder={t('sidebar.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-9 py-2 bg-white/[0.06] border border-white/15 rounded-xl text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all shadow-inner"
@@ -77,7 +80,7 @@ export default function MovieSidebar({
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-white"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-white cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -90,8 +93,8 @@ export default function MovieSidebar({
         {filteredMovies.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
             <Film className="w-8 h-8 mx-auto mb-2 opacity-40" />
-            <p className="text-sm font-medium">No movies found</p>
-            <p className="text-xs text-gray-600 mt-1">Try a different search term</p>
+            <p className="text-sm font-medium">{t('sidebar.emptyTitle')}</p>
+            <p className="text-xs text-gray-600 mt-1">{t('sidebar.emptySubtitle')}</p>
           </div>
         ) : (
           filteredMovies.map((movie, index) => {
@@ -132,7 +135,7 @@ export default function MovieSidebar({
                   )}
                   {movie.is_presale && (
                     <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[7px] font-extrabold text-center py-0.5 tracking-tighter">
-                      PRE-SALE
+                      {t('showtimes.hero.presale')}
                     </div>
                   )}
                 </div>
@@ -142,11 +145,11 @@ export default function MovieSidebar({
                   <div className="flex items-center gap-1.5 mb-0.5">
                     {movie.is_presale ? (
                       <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-amber-400 uppercase tracking-wider">
-                        <Sparkles className="w-2.5 h-2.5" /> Presale
+                        <Sparkles className="w-2.5 h-2.5" /> {t('sidebar.presale')}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-400 uppercase tracking-wider">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Showing
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> {t('sidebar.showing')}
                       </span>
                     )}
                   </div>
@@ -162,7 +165,7 @@ export default function MovieSidebar({
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-xs text-gray-400 flex items-center gap-1 truncate">
                       <MapPin className="w-3 h-3 text-blue-400 flex-shrink-0" />
-                      {movie.cities.length} {movie.cities.length === 1 ? 'city' : 'cities'}
+                      {movie.cities.length === 1 ? t('sidebar.singleCity') : t('sidebar.citiesCount', { count: movie.cities.length })}
                     </span>
                     {movie.age_category && (
                       <span
@@ -189,7 +192,7 @@ export default function MovieSidebar({
 
       {/* Sidebar Footer */}
       <div className="p-3 border-t border-white/10 bg-black/40 text-center text-xs text-gray-400 flex items-center justify-between px-4">
-        <span>Total Listings</span>
+        <span>{t('sidebar.totalListings')}</span>
         <span className="font-mono font-bold text-white">{filteredMovies.length}</span>
       </div>
     </div>

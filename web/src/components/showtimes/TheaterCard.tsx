@@ -1,5 +1,4 @@
-// Theater card component for displaying theatre details and showtimes
-
+import { useTranslation } from '@/i18n';
 import { getTimeStyle, getTimeIcon, getTimeOfDay } from '@/lib/showtime-utils';
 import { TheaterSchedule } from '@/types';
 import { CHAIN_COLORS, ChainName } from '@/lib/constants';
@@ -12,6 +11,7 @@ interface TheaterCardProps {
 }
 
 export default function TheaterCard({ theater, isBestValue, isMostShowtimes, showMostShowtimesBadge }: TheaterCardProps) {
+    const { t } = useTranslation();
     const chainColor = CHAIN_COLORS[theater.merchant as ChainName] || '#9CA3AF';
 
     return (
@@ -22,12 +22,12 @@ export default function TheaterCard({ theater, isBestValue, isMostShowtimes, sho
                         <h4 className="font-bold text-white text-base tracking-tight">{theater.theatre_name}</h4>
                         {isBestValue && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold bg-emerald-500/15 text-emerald-300 rounded-full border border-emerald-500/30 shadow-sm">
-                                💰 Best Value
+                                💰 {t('showtimes.card.bestValue')}
                             </span>
                         )}
                         {isMostShowtimes && showMostShowtimesBadge && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold bg-purple-500/15 text-purple-300 rounded-full border border-purple-500/30 shadow-sm">
-                                🎬 Most Showtimes
+                                🎬 {t('showtimes.hero.stats.dailyShowtimes')}
                             </span>
                         )}
                     </div>
