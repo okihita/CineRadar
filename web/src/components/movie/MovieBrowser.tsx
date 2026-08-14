@@ -325,7 +325,7 @@ export default function MovieBrowser({ movies, initialMovieId }: MovieBrowserPro
                                 </div>
                             </div>
                         ) : (
-                            <CityShowtimes movie={movieWithSchedules} allMovies={movies} />
+                            <CityShowtimes movie={movieWithSchedules} />
                         )}
                     </main>
 

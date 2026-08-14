@@ -19,7 +19,6 @@ import { CHAIN_COLORS, ChainName } from '@/lib/constants';
 import ShowtimeSparkline from '../showtimes/ShowtimeSparkline';
 import CityShowtimesFilters from '../showtimes/CityShowtimesFilters';
 import TheaterCard from '../showtimes/TheaterCard';
-import MovieInsights from './MovieInsights';
 import { TheaterSchedule } from '@/types';
 import { AdmissionStats } from './MovieBrowser';
 import { useTranslation } from '@/i18n';
@@ -42,10 +41,9 @@ interface Movie {
 
 interface CityShowtimesProps {
     movie: Movie | null;
-    allMovies?: Movie[];
 }
 
-export default function CityShowtimes({ movie, allMovies = [] }: CityShowtimesProps) {
+export default function CityShowtimes({ movie }: CityShowtimesProps) {
     const { t } = useTranslation();
     const [selectedCity, setSelectedCity] = useState('');
     const [expandedCity, setExpandedCity] = useState<string | null>(null);
@@ -333,11 +331,6 @@ export default function CityShowtimes({ movie, allMovies = [] }: CityShowtimesPr
                         isChainEnabled={isChainEnabled}
                         toggleChain={toggleChain}
                     />
-                )}
-
-                {/* AI Intelligence Insights Section */}
-                {allMovies.length > 0 && (
-                    <MovieInsights movie={movie} allMovies={allMovies} />
                 )}
 
                 {/* Cities & Showtimes Section */}
