@@ -28,6 +28,7 @@ Start here to understand the system.
 - [06 Troubleshooting (Strategic)](./docs/06_troubleshooting.md): Architecture failure modes & recovery.
 - [07 Product Roadmap](./docs/07_product_roadmap.md): Future vision & engineering "Why".
 - [09 Head-to-Head Comparison](./docs/09_feature_movie_comparison.md): Movie performance comparison feature.
+- **[11 Git Workflow & Branching](./docs/11_git_workflow.md)**: Monorepo scoped branching standards & hotfix protocol.
 
 ### 📦 Component Guides
 
