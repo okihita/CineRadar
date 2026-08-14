@@ -14,7 +14,7 @@ This directory contains research and raw data snapshots for scraping CinePoint's
 These files serve as a reference for:
 1. Identifying the GraphQL endpoint and required headers for timeline scraping.
 2. Understanding the nested JSON structure of Twitter's response for building a robust parser.
-3. Testing the regex patterns defined in `COMPETITOR_TRACKING_PLAN.md` against real-world tweet text.
+3. Testing the regex patterns defined in [`docs/features/03_competitor_tracking.md`](../../features/03_competitor_tracking.md) against real-world tweet text.
 
 ---
 *Note: The `.request` file contains session cookies. Handle with care.*

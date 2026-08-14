@@ -30,9 +30,9 @@ You can verify at: https://console.cloud.google.com/monitoring/notification-chan
 Metric Name: `jit_critical_errors`
 Type: Counter
 Log Filter:
-  resource.type="cloud_function"
-  AND resource.labels.function_name="scrape-seat-jit"
-  AND (severity="CRITICAL" OR protoPayload.message:"CRITICAL")
+  (resource.type="cloud_run_revision" OR resource.type="cloud_function")
+  AND (resource.labels.service_name="scrape-seat-jit" OR resource.labels.service_name="sweeper")
+  AND (severity="CRITICAL" OR protoPayload.message:"CRITICAL" OR textPayload:"CRITICAL")
 ```
 
 #### Metric 2: Warnings
@@ -40,9 +40,9 @@ Log Filter:
 Metric Name: `jit_warnings`
 Type: Counter
 Log Filter:
-  resource.type="cloud_function"
-  AND resource.labels.function_name="scrape-seat-jit"
-  AND (severity="WARNING" OR protoPayload.message:"WARNING")
+  (resource.type="cloud_run_revision" OR resource.type="cloud_function")
+  AND (resource.labels.service_name="scrape-seat-jit" OR resource.labels.service_name="sweeper")
+  AND (severity="WARNING" OR protoPayload.message:"WARNING" OR textPayload:"WARNING")
 ```
 
 #### Metric 3: All Errors
@@ -50,8 +50,8 @@ Log Filter:
 Metric Name: `jit_all_errors`
 Type: Counter
 Log Filter:
-  resource.type="cloud_function"
-  AND resource.labels.function_name="scrape-seat-jit"
+  (resource.type="cloud_run_revision" OR resource.type="cloud_function")
+  AND (resource.labels.service_name="scrape-seat-jit" OR resource.labels.service_name="sweeper" OR resource.labels.service_name="dispatch-jit-jobs")
   AND severity>=ERROR
 ```
 
