@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Film, ChevronDown, ArrowLeft, LayoutGrid, BarChart3 } from 'lucide-react';
+import { Film, ChevronDown, ArrowLeft, LayoutGrid } from 'lucide-react';
 import MovieSidebar from './MovieSidebar';
 import CityShowtimes from './CityShowtimes';
 import MovieCatalogGrid from './MovieCatalogGrid';
-import Dashboard from '../dashboard/Dashboard';
 
 interface TheaterSchedule {
     theatre_id: string;
@@ -52,7 +51,7 @@ interface MovieBrowserProps {
     initialMovieId?: string;
 }
 
-export type ViewMode = 'catalog' | 'showtimes' | 'dashboard';
+export type ViewMode = 'catalog' | 'showtimes';
 
 // Fetch movie schedule from Firestore
 async function fetchMovieSchedule(movieId: string, date: string): Promise<Record<string, TheaterSchedule[]> | null> {
@@ -266,17 +265,6 @@ export default function MovieBrowser({ movies, initialMovieId }: MovieBrowserPro
                         <Film className="w-3.5 h-3.5" />
                         <span>{t('nav.showtimes')}</span>
                     </button>
-                    <button
-                        onClick={() => setViewMode('dashboard')}
-                        className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 flex-shrink-0 ${
-                            viewMode === 'dashboard'
-                                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md shadow-purple-500/25'
-                                : 'text-gray-400 hover:text-white'
-                        }`}
-                    >
-                        <BarChart3 className="w-3.5 h-3.5" />
-                        <span>{t('nav.insights')}</span>
-                    </button>
                 </div>
 
                 {/* Mobile Quick Selector when in Showtimes mode */}
@@ -298,7 +286,7 @@ export default function MovieBrowser({ movies, initialMovieId }: MovieBrowserPro
                     movies={movies}
                     onSelectMovie={handleSelectMovieFromCatalog}
                 />
-            ) : viewMode === 'showtimes' ? (
+            ) : (
                 <div className="flex flex-1 overflow-hidden relative">
                     {/* Desktop Persistent Sidebar */}
                     <aside className="hidden lg:block w-80 xl:w-88 flex-shrink-0 h-full border-r border-white/10 bg-black/40">
@@ -364,10 +352,6 @@ export default function MovieBrowser({ movies, initialMovieId }: MovieBrowserPro
                             </div>
                         </div>
                     )}
-                </div>
-            ) : (
-                <div className="flex-1 overflow-y-auto bg-gray-950">
-                    <Dashboard movies={movies} />
                 </div>
             )}
         </div>
