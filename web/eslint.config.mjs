@@ -11,6 +11,21 @@ const eslintConfig = defineConfig([
         version: "19.0",
       },
     },
+    rules: {
+      "react/jsx-no-literals": [
+        "error",
+        {
+          noStrings: true,
+          allowedStrings: [
+            "🎬", "🍿", "🔥", "🟢", "📍", "🏢", "🎟️", "🎭", "💰", "📈", "🌅", "☀️", "🌆", "🌙", "✨", "🧠", "📜", "🏕️", "⚽", "🎵", "👨‍👩‍👧", "🕵️", "🎨", "🚀", "🔪", "🧙", "🧗", "😂", "👻", "💥",
+            "📊", "🏆", "🏙️", "⏰", "📅", "🕒", "🗺️", "👤", "🕐",
+            "•", ":", "/", "-", "—", "–", "|", "▼", "▲", "(", ")", ",", "%", "...", "x", "X", "+", "1-10", "11-30", "30+", "10:00–23:00"
+          ],
+          ignoreProps: true,
+          noAttributeStrings: false,
+        },
+      ],
+    },
   },
   // Override default ignores of eslint-config-next.
   globalIgnores([

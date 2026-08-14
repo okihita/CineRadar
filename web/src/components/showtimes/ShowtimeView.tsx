@@ -1,3 +1,5 @@
+import { useTranslation } from '@/i18n';
+
 interface TheatreRoom {
     category: string;
     price: string;
@@ -21,10 +23,12 @@ interface ShowtimeViewProps {
 }
 
 export default function ShowtimeView({ movieTitle, city, schedules, onClose }: ShowtimeViewProps) {
+    const { t } = useTranslation();
+
     if (!schedules || schedules.length === 0) {
         return (
             <div className="text-center py-8">
-                <p className="text-gray-400">No showtimes available for {city}</p>
+                <p className="text-gray-400">{t('showtimes.card.noShowtimes')}</p>
             </div>
         );
     }
@@ -36,8 +40,16 @@ export default function ShowtimeView({ movieTitle, city, schedules, onClose }: S
                 <div className="p-6 border-b border-white/10 flex justify-between items-start bg-gray-800/50">
                     <div>
                         <h2 className="text-2xl font-bold text-white mb-1">{movieTitle}</h2>
-                        <p className="text-purple-400 text-sm font-medium">
-                            📍 Now Showing in {city} ({schedules.length} Theatres)
+                        <p className="text-purple-400 text-sm font-medium flex items-center gap-1.5">
+                            <span>📍</span>
+                            <span>{t('showtimes.hero.nowShowing')}</span>
+                            <span>•</span>
+                            <span>{city}</span>
+                            <span className="text-gray-400">
+                                <span>(</span>
+                                <span>{t('common.theatresCount', { count: schedules.length })}</span>
+                                <span>)</span>
+                            </span>
                         </p>
                     </div>
                     <button

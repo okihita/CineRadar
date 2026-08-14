@@ -17,17 +17,21 @@ export const metadata: Metadata = {
   description: "Track movie availability across all Indonesian cities. See which movies are showing where.",
 };
 
+import { I18nProvider } from "@/i18n";
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="id">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <I18nProvider initialLocale="id">
+          {children}
+        </I18nProvider>
       </body>
     </html>
   );

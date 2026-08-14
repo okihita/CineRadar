@@ -1,11 +1,15 @@
 import { ImageResponse } from 'next/og';
+import { id } from '@/i18n/locales/id';
 
 export const runtime = 'edge';
-export const alt = 'CineRadar - Indonesia Movie Tracker';
+export const alt = `${id.common.appName} - ${id.common.tagline}`;
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
 export default function Image() {
+  const brandTitle = id.common.appName;
+  const brandTagline = id.common.tagline;
+
   return new ImageResponse(
     (
       <div
@@ -36,7 +40,7 @@ export default function Image() {
             letterSpacing: '-0.05em',
           }}
         >
-          CineRadar
+          {brandTitle}
         </div>
         <div
           style={{
@@ -45,7 +49,7 @@ export default function Image() {
             marginTop: 10,
           }}
         >
-          Indonesia Movie Intelligence
+          {brandTagline}
         </div>
       </div>
     ),
