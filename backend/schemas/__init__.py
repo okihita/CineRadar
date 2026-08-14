@@ -9,11 +9,13 @@ from backend.schemas.movie import (
     ShowtimeSchema,
     TheatreScheduleSchema,
 )
+from backend.schemas.movie_details import MovieDetailsResponseSchema
 from backend.schemas.theatre import TheatreSchema
 from backend.schemas.token import TokenSchema
 
 __all__ = [
     "DailySnapshotSchema",
+    "MovieDetailsResponseSchema",
     "MovieSchema",
     "RoomSchema",
     "ShowtimeSchema",

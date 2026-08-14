@@ -1,6 +1,6 @@
-# JIT Seat Scraper - Cloud Functions
+# JIT Seat Scraper & Sweeper — Cloud Functions
 
-Event-driven seat scraper using GCP Cloud Functions + Pub/Sub for T-30 precision at ~$1.30/month.
+Event-driven scraping and aggregation engine using GCP Gen 2 Cloud Functions (`dispatch-jit-jobs`, `scrape-seat-jit`, `sweeper`).
 
 ## Architecture
 
@@ -8,16 +8,19 @@ Event-driven seat scraper using GCP Cloud Functions + Pub/Sub for T-30 precision
 Cloud Scheduler (every 5 min)
          │
          ▼
-    Dispatcher Function
+    Dispatcher Function (dispatch-jit-jobs)
          │ (HTTP trigger)
          ▼
-    Pub/Sub Topic
+    Pub/Sub Topic (scrape-seat-jit)
          │
          ▼
-    Scraper Function (max 1 instance)
+    Scraper Function (max 10 instances for peak bursts)
          │
          ▼
-    Firestore (movie_performance)
+    Firestore (movie_performance_v2 showtime snapshots)
+         │
+         ▼
+    Sweeper Function (rolls up showtime stats into DailyPerformance)
 ```
 
 ### ⚠️ CRITICAL: Self-Contained Function constraint
@@ -67,10 +70,12 @@ cd backend/functions
 
 ### Deploy Individual Components
 ```bash
-./deploy.sh pubsub      # Create Pub/Sub topic
-./deploy.sh dispatcher  # Deploy dispatcher function
-./deploy.sh scraper     # Deploy scraper function
-./deploy.sh scheduler   # Create Cloud Scheduler job
+./deploy.sh pubsub            # Create Pub/Sub topic
+./deploy.sh dispatcher        # Deploy dispatcher function
+./deploy.sh scraper           # Deploy scraper function (max 10 instances)
+./deploy.sh sweeper           # Deploy streaming sweeper function
+./deploy.sh scheduler         # Create Cloud Scheduler job for dispatcher
+./deploy.sh sweeper-scheduler # Create Cloud Scheduler job for sweeper
 ```
 
 ## Configuration
@@ -87,13 +92,11 @@ The system uses a **Fan-out** pattern to handle variable load:
 
 1. **Scheduler (Timer)**: Triggers the Dispatcher every 5 minutes.
 2. **Dispatcher (Brain)**:
-   - Queries Firestore for showtimes starting in the [T+30, T+35) minute window.
-   - Example: Dispatch at 12:00 → captures showtimes from 12:30 to 12:34.
+   - Queries Firestore for showtimes starting in the [T+30, T+35), [T+20, T+25), and [T+10, T+15) minute windows.
    - Publishes **one message per showtime** to Pub/Sub.
-3. **Scraper (Sequential Worker)**:
+3. **Scraper (Worker Pool)**:
    - Triggered by Pub/Sub messages.
-   - **Processes sequentially** with `max-instances=1`.
-   - This ensures token refresh doesn't race and avoids API rate limiting.
+   - **Scales up to `max_instances=10`** during morning schedule bursts (800+ jobs) to clear queue in ~5 minutes while respecting TIX ID rate limits (~2.6 RPS).
 
 ### Timing Precision
 
