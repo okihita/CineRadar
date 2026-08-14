@@ -209,29 +209,29 @@ export default function Dashboard({ movies }: DashboardProps) {
     const genreColors = ['#8b5cf6', '#ec4899', '#06b6d4', '#10b981', '#f59e0b', '#6366f1'];
 
     return (
-        <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-gray-900 to-black">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-gradient-to-b from-gray-900 to-black">
             {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-white mb-2">📊 Market Insights</h1>
-                <p className="text-gray-400">Bird&apos;s-eye view of Indonesia&apos;s cinema landscape</p>
+            <div className="mb-6 sm:mb-8">
+                <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">📊 Market Insights</h1>
+                <p className="text-xs sm:text-sm text-gray-400">Bird&apos;s-eye view of Indonesia&apos;s cinema landscape</p>
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
                 {[
                     { label: 'Movies', value: stats.totalMovies, icon: '🎬', color: 'from-purple-500 to-pink-500' },
                     { label: 'Cities', value: stats.totalCities, icon: '🏙️', color: 'from-blue-500 to-cyan-500' },
                     { label: 'Theatres', value: stats.totalTheatres, icon: '🎭', color: 'from-amber-500 to-orange-500' },
                     { label: 'Showtimes', value: stats.totalShowtimes.toLocaleString(), icon: '🎟️', color: 'from-emerald-500 to-teal-500' },
                 ].map((stat, i) => (
-                    <div key={i} className="p-4 bg-white/5 rounded-xl border border-white/10 backdrop-blur-sm">
-                        <div className="flex items-center gap-3">
-                            <span className="text-3xl">{stat.icon}</span>
-                            <div>
-                                <div className={`text-2xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`}>
+                    <div key={i} className="p-3 sm:p-4 bg-white/5 rounded-xl border border-white/10 backdrop-blur-sm">
+                        <div className="flex items-center gap-2.5 sm:gap-3">
+                            <span className="text-2xl sm:text-3xl">{stat.icon}</span>
+                            <div className="min-w-0">
+                                <div className={`text-xl sm:text-2xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent truncate`}>
                                     {stat.value}
                                 </div>
-                                <div className="text-xs text-gray-500">{stat.label}</div>
+                                <div className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-wider">{stat.label}</div>
                             </div>
                         </div>
                     </div>
@@ -239,16 +239,16 @@ export default function Dashboard({ movies }: DashboardProps) {
             </div>
 
             {/* Main Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8">
                 {/* Chain Market Share */}
-                <div className="p-6 bg-white/5 rounded-xl border border-white/10">
-                    <h3 className="text-lg font-semibold text-white mb-4">🎬 Chain Market Share</h3>
-                    <div className="flex items-center gap-6">
+                <div className="p-4 sm:p-6 bg-white/5 rounded-xl border border-white/10">
+                    <h3 className="text-base sm:text-lg font-semibold text-white mb-4">🎬 Chain Market Share</h3>
+                    <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
                         <DonutChart
                             data={Object.entries(stats.chainCounts).map(([label, value]) => ({ label, value }))}
                             colors={Object.keys(stats.chainCounts).map(k => chainColors[k] || '#6b7280')}
                         />
-                        <div className="space-y-2">
+                        <div className="space-y-2 w-full sm:w-auto">
                             {Object.entries(stats.chainCounts).sort((a, b) => b[1] - a[1]).map(([chain, count]) => (
                                 <div key={chain} className="flex items-center gap-2">
                                     <div

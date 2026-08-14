@@ -206,36 +206,51 @@ export default async function Home({ searchParams }: Props) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-black/30 border-b border-white/10 h-20">
-        <div className="h-full px-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <span className="text-3xl">🎬</span>
-            <div>
-              <h1 className="text-xl font-bold text-white">CineRadar</h1>
-              <p className="text-xs text-gray-400">Indonesia Movie Showtimes</p>
+      {/* Responsive Header */}
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-black/40 border-b border-white/10 h-16 sm:h-20">
+        <div className="h-full px-3.5 sm:px-6 flex items-center justify-between max-w-7xl mx-auto">
+          <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+            <span className="text-2xl sm:text-3xl flex-shrink-0">🎬</span>
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-xl font-bold text-white tracking-tight truncate">CineRadar</h1>
+              <p className="text-[10px] sm:text-xs text-gray-400 hidden xs:block truncate">Indonesia Movie Showtimes</p>
             </div>
           </div>
 
           {/* Stats in header */}
-          <div className="flex items-center gap-6">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-white">{data.summary.total_movies}</p>
-              <p className="text-xs text-gray-400">Movies</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-white">{data.summary.total_cities}</p>
-              <p className="text-xs text-gray-400">Cities</p>
-            </div>
-            {totalTheatres > 0 && (
+          <div className="flex items-center gap-3 sm:gap-6 flex-shrink-0">
+            {/* Desktop Stats */}
+            <div className="hidden sm:flex items-center gap-5 md:gap-6">
               <div className="text-center">
-                <p className="text-2xl font-bold text-white">{totalTheatres}</p>
-                <p className="text-xs text-gray-400">Theatres</p>
+                <p className="text-xl md:text-2xl font-bold text-white leading-none">{data.summary.total_movies}</p>
+                <p className="text-[10px] md:text-xs text-gray-400 uppercase tracking-wider mt-0.5">Movies</p>
               </div>
-            )}
-            <div className="text-right text-sm border-l border-white/10 pl-6">
-              <p className="text-gray-400">{data.date}</p>
-              <p className="text-xs text-gray-500">{formatWIB(data.scraped_at)}</p>
+              <div className="text-center">
+                <p className="text-xl md:text-2xl font-bold text-white leading-none">{data.summary.total_cities}</p>
+                <p className="text-[10px] md:text-xs text-gray-400 uppercase tracking-wider mt-0.5">Cities</p>
+              </div>
+              {totalTheatres > 0 && (
+                <div className="text-center hidden md:block">
+                  <p className="text-xl md:text-2xl font-bold text-white leading-none">{totalTheatres}</p>
+                  <p className="text-[10px] md:text-xs text-gray-400 uppercase tracking-wider mt-0.5">Theatres</p>
+                </div>
+              )}
+            </div>
+
+            {/* Mobile Pill Badges */}
+            <div className="flex sm:hidden items-center gap-1.5">
+              <span className="px-2 py-0.5 rounded-md bg-white/10 border border-white/10 text-[11px] font-bold text-white">
+                {data.summary.total_movies} <span className="text-gray-400 font-normal">Movies</span>
+              </span>
+              <span className="px-2 py-0.5 rounded-md bg-white/10 border border-white/10 text-[11px] font-bold text-white">
+                {data.summary.total_cities} <span className="text-gray-400 font-normal">Cities</span>
+              </span>
+            </div>
+
+            {/* Timestamp */}
+            <div className="hidden lg:block text-right text-sm border-l border-white/10 pl-5">
+              <p className="text-gray-300 font-medium text-xs">{data.date}</p>
+              <p className="text-[10px] text-gray-500 font-mono">{formatWIB(data.scraped_at)}</p>
             </div>
           </div>
         </div>
