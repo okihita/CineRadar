@@ -1,10 +1,11 @@
-// Sparkline component for admission history
+import { useTranslation } from '@/i18n';
 
 interface AdmissionSparklineProps {
     history: { date: string; admissions: number }[];
 }
 
 export default function AdmissionSparkline({ history }: AdmissionSparklineProps) {
+    const { t } = useTranslation();
     if (!history || history.length === 0) return null;
 
     // Fill in last 7 days if history is incomplete
@@ -30,7 +31,9 @@ export default function AdmissionSparkline({ history }: AdmissionSparklineProps)
                     />
                 ))}
             </div>
-            <span className="text-[10px] text-gray-500 font-mono mt-1">7 DAYS TREND</span>
+            <span className="text-[10px] text-gray-500 font-mono mt-1 uppercase">
+                {t('insights.admissionsTrend')}
+            </span>
         </div>
     );
 }

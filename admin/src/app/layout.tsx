@@ -5,6 +5,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { DarkModeProvider } from "@/hooks";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/components/AuthProvider";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -86,6 +87,7 @@ export default function RootLayout({
               <DashboardLayout>
                 {children}
               </DashboardLayout>
+              <Toaster />
             </TooltipProvider>
           </DarkModeProvider>
         </AuthProvider>

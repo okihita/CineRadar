@@ -1,0 +1,36 @@
+{
+  "response_schema": {
+    "response_code": "CINEPOINT-MOVIE_COMPARE-200",
+    "response_message": "SUCCESS"
+  },
+  "response_output": {
+    "detail": [
+      {
+        "id": 3719,
+        "title": "Panda Plan: The Magical Tribe",
+        "data": [
+          {
+            "date": "Apr-06 - Apr-12",
+            "periode": "Apr-06 - Apr-12",
+            "value": 0
+          },
+          {
+            "date": "Apr-13 - Apr-19",
+            "periode": "Apr-13 - Apr-19",
+            "value": 0
+          },
+          {
+            "date": "Apr-20 - Apr-26",
+            "periode": "Apr-20 - Apr-26",
+            "value": 0
+          },
+          {
+            "date": "Apr-27 - May-03",
+            "periode": "Apr-27 - May-03",
+            "value": 0
+          }
+        ]
+      }
+    ]
+  }
+}

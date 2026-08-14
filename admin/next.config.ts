@@ -35,6 +35,11 @@ const nextConfig: NextConfig = {
         hostname: 'abs.twimg.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'cinepoint-assets.s3.amazonaws.com',
+        pathname: '/**',
+      },
     ],
   },
 };

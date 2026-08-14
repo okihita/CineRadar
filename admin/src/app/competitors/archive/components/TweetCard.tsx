@@ -17,13 +17,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { CompetitorTweet, TweetType } from '@/features/competitors/types';
+import { TWEET_TYPE_CONFIG } from '@/features/competitors/types';
 import { LightboxCarousel } from './LightboxCarousel';
 import { ManualEntryForm } from './ManualEntryForm';
 
-const TYPE_CONFIG: Record<TweetType, { label: string; icon: typeof Film; color: string }> = {
-  showtimes: { label: 'Showtimes', icon: Film, color: 'bg-blue-500/10 text-blue-600 border-blue-500/20' },
-  admissions: { label: 'Admissions', icon: TrendingUp, color: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' },
-  other: { label: 'Other', icon: MessageSquare, color: 'bg-muted/50 text-muted-foreground border-border/30' },
+const TYPE_ICONS: Record<TweetType, typeof Film> = {
+  showtimes: Film,
+  admissions: TrendingUp,
+  other: MessageSquare,
 };
 
 interface TweetCardProps {
@@ -35,8 +36,8 @@ export function TweetCard({ tweet, onManualEntry }: TweetCardProps) {
   const [showRaw, setShowRaw] = useState(false);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const [showManualEntry, setShowManualEntry] = useState(false);
-  const cfg = TYPE_CONFIG[tweet.tweet_type];
-  const TypeIcon = cfg.icon;
+  const cfg = TWEET_TYPE_CONFIG[tweet.tweet_type];
+  const TypeIcon = TYPE_ICONS[tweet.tweet_type];
   const mediaUrls = tweet.media_urls ?? [];
 
   let displayDate = tweet.created_at;
@@ -217,8 +218,6 @@ export function TweetCard({ tweet, onManualEntry }: TweetCardProps) {
 }
 
 // ─── Helpers ───────────────────────────────────────────────
-
-export { TYPE_CONFIG };
 
 /**
  * Highlight hashtags in tweet text with a blue, bold style.

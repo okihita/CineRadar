@@ -3,7 +3,9 @@ import { formatRupiah } from '@/lib/utils';
 
 // Time-of-day helper
 export function getTimeOfDay(time: string): 'morning' | 'afternoon' | 'evening' | 'night' {
+    if (!time || typeof time !== 'string') return 'afternoon';
     const hour = parseInt(time.split(':')[0], 10);
+    if (isNaN(hour)) return 'afternoon';
     if (hour < 12) return 'morning';
     if (hour < 17) return 'afternoon';
     if (hour < 21) return 'evening';
@@ -11,15 +13,15 @@ export function getTimeOfDay(time: string): 'morning' | 'afternoon' | 'evening' 
 }
 
 const TIME_STYLES = {
-    morning: 'from-amber-500 to-yellow-400 text-black shadow-amber-500/50',
-    afternoon: 'from-sky-500 to-blue-500 text-white shadow-blue-500/50',
-    evening: 'from-purple-600 to-pink-600 text-white shadow-purple-500/50',
-    night: 'from-indigo-800 to-purple-900 text-white shadow-indigo-500/50',
+    morning: 'from-amber-500 to-yellow-400 text-black shadow-amber-500/30',
+    afternoon: 'from-sky-500 to-blue-500 text-white shadow-blue-500/30',
+    evening: 'from-purple-600 to-pink-600 text-white shadow-purple-500/30',
+    night: 'from-indigo-700 to-purple-900 text-white shadow-indigo-500/30',
 } as const;
 
 export function getTimeStyle(time: string): string {
     const period = getTimeOfDay(time);
-    return TIME_STYLES[period];
+    return TIME_STYLES[period] || TIME_STYLES.afternoon;
 }
 
 const TIME_ICONS = {
@@ -31,20 +33,21 @@ const TIME_ICONS = {
 
 export function getTimeIcon(time: string): string {
     const period = getTimeOfDay(time);
-    return TIME_ICONS[period];
+    return TIME_ICONS[period] || '🎬';
 }
 
 // Helper to extract prices from a list of theaters
-export function extractPricesFromTheaters(theaters: TheaterSchedule[]): number[] {
+export function extractPricesFromTheaters(theaters: TheaterSchedule[] = []): number[] {
     const prices: number[] = [];
-    theaters.forEach(t => {
-        t.rooms.forEach(r => {
-            // Extract numbers from price string like "Rp50.000 - Rp75.000"
-            const matches = r.price.match(/\d+[.,]?\d*/g);
+    (theaters || []).forEach(t => {
+        (t.rooms || []).forEach(r => {
+            if (!r.price || typeof r.price !== 'string') return;
+            // Extract numbers from price string like "Rp 50.000 - Rp 75.000"
+            const matches = r.price.match(/\d[\d.,]*/g);
             if (matches) {
                 matches.forEach(m => {
                     const num = parseInt(m.replace(/[.,]/g, ''), 10);
-                    if (num > 0) prices.push(num);
+                    if (!isNaN(num) && num > 0 && num < 5_000_000) prices.push(num);
                 });
             }
         });
@@ -53,7 +56,8 @@ export function extractPricesFromTheaters(theaters: TheaterSchedule[]): number[]
 }
 
 // Price range extractor for all schedules
-export function extractPriceRange(schedules: Record<string, TheaterSchedule[]>): { min: number; max: number } | null {
+export function extractPriceRange(schedules: Record<string, TheaterSchedule[]> = {}): { min: number; max: number } | null {
+    if (!schedules) return null;
     const prices: number[] = [];
     Object.values(schedules).forEach(theaters => {
         prices.push(...extractPricesFromTheaters(theaters));
@@ -68,14 +72,53 @@ export function formatPrice(price: number): string {
 }
 
 // Get all showtimes from schedules
-export function getAllShowtimes(schedules: Record<string, TheaterSchedule[]>): string[] {
+export function getAllShowtimes(schedules: Record<string, TheaterSchedule[]> = {}): string[] {
+    if (!schedules) return [];
     const times: string[] = [];
     Object.values(schedules).forEach(theaters => {
-        theaters.forEach(t => {
-            t.rooms.forEach(r => {
-                times.push(...r.showtimes);
+        (theaters || []).forEach(t => {
+            (t.rooms || []).forEach(r => {
+                if (Array.isArray(r.showtimes)) {
+                    times.push(...r.showtimes);
+                }
             });
         });
     });
     return times;
 }
+
+// Calculate comprehensive aggregated stats for movie schedules
+export function calculateShowtimeStats(schedules: Record<string, TheaterSchedule[]> = {}) {
+    let totalTheatres = 0;
+    const allShowtimes: string[] = [];
+    const prices: number[] = [];
+
+    Object.values(schedules).forEach(theaters => {
+        totalTheatres += (theaters || []).length;
+        (theaters || []).forEach(t => {
+            (t.rooms || []).forEach(r => {
+                if (Array.isArray(r.showtimes)) {
+                    allShowtimes.push(...r.showtimes);
+                }
+                if (r.price && typeof r.price === 'string') {
+                    const matches = r.price.match(/\d[\d.,]*/g);
+                    if (matches) {
+                        matches.forEach(m => {
+                            const num = parseInt(m.replace(/[.,]/g, ''), 10);
+                            if (!isNaN(num) && num > 0 && num < 5_000_000) prices.push(num);
+                        });
+                    }
+                }
+            });
+        });
+    });
+
+    const priceRange = prices.length > 0 ? { min: Math.min(...prices), max: Math.max(...prices) } : null;
+
+    return {
+        totalTheatres,
+        allShowtimes,
+        priceRange,
+    };
+}
+

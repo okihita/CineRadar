@@ -40,6 +40,7 @@ export default function TweetArchivePage() {
   // Data fetching
   const [data, setData] = useState<TweetsResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeSource, setActiveSource] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<TweetType | null>(null);
   const [reparsing, setReparsing] = useState(false);
@@ -51,6 +52,7 @@ export default function TweetArchivePage() {
 
   const fetchTweets = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams();
       if (activeSource) params.set('source', activeSource);
@@ -59,9 +61,12 @@ export default function TweetArchivePage() {
       if (res.ok) {
         const json = await res.json();
         setData(json.data);
+      } else {
+        setError(`Failed to load tweets (HTTP ${res.status}). Please try refreshing.`);
       }
     } catch (err) {
       console.error('[Tweet archive fetch error]', err);
+      setError('Failed to load tweet archive. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -294,6 +299,14 @@ export default function TweetArchivePage() {
                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/40">
                   Streaming Archive...
                 </p>
+              </div>
+            ) : error ? (
+              <div className="py-16 text-center space-y-4">
+                <AlertCircle className="w-10 h-10 text-red-500/40 mx-auto" />
+                <p className="text-sm text-red-600 font-bold">{error}</p>
+                <button onClick={fetchTweets} className="text-[10px] font-bold text-primary hover:underline">
+                  Retry
+                </button>
               </div>
             ) : data && data.tweets.length > 0 ? (
               <div className="space-y-12 animate-in fade-in duration-700 pb-40">

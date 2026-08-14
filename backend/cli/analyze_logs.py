@@ -132,7 +132,11 @@ def analyze_logs(date_str: str, focus_errors: bool = False, verbose: bool = Fals
     # Summary stats
     total_showtimes = sum(d.get("showtimes_found", 0) for d in dispatches)
     total_jobs = sum(d.get("jobs_published", 0) for d in dispatches)
-    total_successes = sum(d.get("total_successes", 0) for d in dispatches)
+    total_successes = sum(
+        int(d.get("total_successes") or 0) if d.get("total_successes", 0) > 0
+        else int(max(0, d.get("jobs_published", 0) - d.get("total_errors", 0)))
+        for d in dispatches
+    )
     total_errors = sum(d.get("total_errors", 0) for d in dispatches)
     error_dispatches = [d for d in dispatches if d.get("status") == "error"]
 
@@ -157,8 +161,11 @@ def analyze_logs(date_str: str, focus_errors: bool = False, verbose: bool = Fals
             emoji = "✅" if status == "ok" else "❌"
             showtimes = d.get("showtimes_found", 0)
             jobs = d.get("jobs_published", 0)
-            successes = d.get("total_successes", 0)
             errors = d.get("total_errors", 0)
+            successes = (
+                d.get("total_successes") if d.get("total_successes", 0) > 0
+                else max(0, jobs - errors)
+            )
             logger.info(
                 f"   {slot}: {emoji} {showtimes} showtimes, {jobs} jobs ({successes}✅ {errors}❌)"
             )

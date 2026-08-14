@@ -14,7 +14,7 @@
  */
 
 import { parse, format as fmt } from 'date-fns';
-import type { CinePointShowtime, CinePointAdmission, TwitterTimelineResponse } from './types';
+import type { CinePointShowtime, CinePointAdmission, TwitterTimelineResponse, TwitterEntry } from './types';
 
 export interface RawTwitterEntry {
   id: string;
@@ -315,19 +315,21 @@ export function extractTweetsFromTwitterJson(json: unknown): RawTwitterEntry[] {
      if (!Array.isArray(instructions)) return [];
 
      const entries = instructions
-       .filter((i) => Array.isArray(i?.entries))
-       .flatMap((i) => i.entries || []);
+       .filter((i): i is { type: string; entries: TwitterEntry[] } => Array.isArray(i?.entries))
+       .flatMap((i) => i.entries);
 
-     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-     return (entries as any[])
-      .filter((e) => {
+     return entries
+      .filter((e): boolean => {
         const r = e?.content?.itemContent?.tweet_results?.result;
         if (!r) return false;
         const target = r.tweet || r;
         return !!(target?.legacy?.full_text || target?.note_tweet?.note_tweet_results?.result?.text);
       })
-      .map((e) => {
-        let result = e.content.itemContent.tweet_results.result;
+      .map((e): RawTwitterEntry => {
+        let result = e.content?.itemContent?.tweet_results?.result;
+        if (!result) {
+          return { id: '', created_at: '', text: '' };
+        }
         
         // Handle "TweetWithVisibilityResults" wrapper
         if (result.tweet) {
@@ -343,8 +345,8 @@ export function extractTweetsFromTwitterJson(json: unknown): RawTwitterEntry[] {
           .replace(/[🔥🔻]/g, '')
           .trim();
          return {
-           id: result.rest_id as string,
-           created_at: result.legacy.created_at as string,
+           id: result?.rest_id ?? '',
+           created_at: result?.legacy?.created_at ?? '',
            text,
          };
        });

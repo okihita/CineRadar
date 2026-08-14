@@ -134,27 +134,29 @@ export function useTweetImport({ onImportSuccess }: UseTweetImportOptions) {
 // ─── Greedy JSON Scour (local to this hook) ────────────────
 
 function extractTweetsWithGreedyScour(json: unknown): { text: string; created_at: string }[] {
+  if (typeof json !== 'object' || json === null) return [];
+
   const root = json as Record<string, unknown>;
-  const data = root?.data as Record<string, unknown>;
-  const user = data?.user as Record<string, unknown>;
-  const result = user?.result as Record<string, unknown>;
-  const timeline = result?.timeline as Record<string, unknown>;
-  const timelineInner = timeline?.timeline as Record<string, unknown>;
-  const instructions = timelineInner?.instructions as Record<string, unknown>[];
+  const data = root?.data as Record<string, unknown> | undefined;
+  const user = data?.user as Record<string, unknown> | undefined;
+  const result = user?.result as Record<string, unknown> | undefined;
+  const timeline = result?.timeline as Record<string, unknown> | undefined;
+  const timelineInner = timeline?.timeline as Record<string, unknown> | undefined;
+  const instructions = timelineInner?.instructions;
 
   if (!Array.isArray(instructions)) return [];
 
   const entries = instructions
-    .filter((i) => Array.isArray(i?.entries))
-    .flatMap((i) => (i.entries as Record<string, unknown>[]) || []);
+    .filter((i): boolean => Array.isArray((i as Record<string, unknown>)?.entries))
+    .flatMap((i): Record<string, unknown>[] => ((i as Record<string, unknown>).entries as Record<string, unknown>[]) || []);
 
   const results: { text: string; created_at: string }[] = [];
 
   for (const e of entries) {
-    const content = e?.content as Record<string, unknown>;
-    const itemContent = content?.itemContent as Record<string, unknown>;
-    const tweetResults = itemContent?.tweet_results as Record<string, unknown>;
-    const res = tweetResults?.result as Record<string, unknown>;
+    const content = (e as Record<string, unknown>)?.content as Record<string, unknown> | undefined;
+    const itemContent = content?.itemContent as Record<string, unknown> | undefined;
+    const tweetResults = itemContent?.tweet_results as Record<string, unknown> | undefined;
+    const res = tweetResults?.result as Record<string, unknown> | undefined;
 
     if (!res) continue;
 
@@ -183,8 +185,8 @@ function extractTweetsWithGreedyScour(json: unknown): { text: string; created_at
       continue;
     }
 
-    const target = (res.tweet as Record<string, unknown>) || res;
-    const legacy = target.legacy as Record<string, unknown>;
+    const target = (res.tweet as Record<string, unknown> | undefined) || res;
+    const legacy = target.legacy as Record<string, unknown> | undefined;
 
     results.push({
       text: longest,

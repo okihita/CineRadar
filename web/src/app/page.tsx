@@ -1,4 +1,6 @@
 import MovieBrowser from '@/components/movie/MovieBrowser';
+import AppHeader from '@/components/ui/AppHeader';
+import { id } from '@/i18n/locales/id';
 import type { Metadata } from 'next';
 
 interface TheaterSchedule {
@@ -181,13 +183,16 @@ export default async function Home({ searchParams }: Props) {
   const initialMovieId = params.movie as string;
 
   if (!data) {
+    const brandTitle = `🎬 ${id.common.appName}`;
+    const commandHelp = 'python tix_api.py --schedules';
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-        <div className="text-center text-white">
-          <h1 className="text-4xl font-bold mb-4">🎬 CineRadar</h1>
-          <p className="text-gray-300">No movie data available. Run the scraper first!</p>
-          <code className="mt-4 block bg-black/30 px-4 py-2 rounded-lg text-sm">
-            python tix_api.py --schedules
+        <div className="text-center text-white p-6">
+          <h1 className="text-4xl font-bold mb-4">{brandTitle}</h1>
+          <p className="text-gray-300">{id.common.noDataSubtitle}</p>
+          <code className="mt-4 block bg-black/30 px-4 py-2 rounded-lg text-sm font-mono">
+            {commandHelp}
           </code>
         </div>
       </div>
@@ -206,40 +211,14 @@ export default async function Home({ searchParams }: Props) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-black/30 border-b border-white/10 h-20">
-        <div className="h-full px-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <span className="text-3xl">🎬</span>
-            <div>
-              <h1 className="text-xl font-bold text-white">CineRadar</h1>
-              <p className="text-xs text-gray-400">Indonesia Movie Showtimes</p>
-            </div>
-          </div>
-
-          {/* Stats in header */}
-          <div className="flex items-center gap-6">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-white">{data.summary.total_movies}</p>
-              <p className="text-xs text-gray-400">Movies</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-white">{data.summary.total_cities}</p>
-              <p className="text-xs text-gray-400">Cities</p>
-            </div>
-            {totalTheatres > 0 && (
-              <div className="text-center">
-                <p className="text-2xl font-bold text-white">{totalTheatres}</p>
-                <p className="text-xs text-gray-400">Theatres</p>
-              </div>
-            )}
-            <div className="text-right text-sm border-l border-white/10 pl-6">
-              <p className="text-gray-400">{data.date}</p>
-              <p className="text-xs text-gray-500">{formatWIB(data.scraped_at)}</p>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* App Header with i18n */}
+      <AppHeader
+        totalMovies={data.summary.total_movies}
+        totalCities={data.summary.total_cities}
+        totalTheatres={totalTheatres}
+        date={data.date}
+        formattedTime={formatWIB(data.scraped_at)}
+      />
 
       {/* Movie Browser */}
       <MovieBrowser movies={data.movies} initialMovieId={initialMovieId} />

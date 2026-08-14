@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { format } from 'date-fns';
 import { Plus, Trash2, Loader2, CheckCircle2, PencilLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 // ─── Types ─────────────────────────────────────────────────
@@ -95,6 +96,9 @@ export function ManualEntryForm({ tweetId, postingDate, onSaved, onCancel }: Man
 
       const json = await res.json();
       if (json.success) {
+        toast.success(`${dataType === 'showtimes' ? 'Showtimes' : 'Admissions'} saved`, {
+          description: `${validRows.length} entries for ${date}`,
+        });
         onSaved();
       } else {
         setError(json.error || 'Save failed');

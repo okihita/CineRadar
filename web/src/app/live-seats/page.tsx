@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from '@/i18n';
 
 interface SeatRow {
     seat_row: string;
@@ -48,6 +49,7 @@ const STATUS_LABELS: Record<number, string> = {
 };
 
 export default function LiveSeatMapPage() {
+    const { t } = useTranslation();
     const [data, setData] = useState<SeatSnapshot | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -55,7 +57,7 @@ export default function LiveSeatMapPage() {
     useEffect(() => {
         fetch('/api/live-seats')
             .then(res => {
-                if (!res.ok) throw new Error('Failed to fetch');
+                if (!res.ok) throw new Error('No live seat data available');
                 return res.json();
             })
             .then(setData)
@@ -66,7 +68,7 @@ export default function LiveSeatMapPage() {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
-                <div className="text-xl">Loading seat map...</div>
+                <div className="text-xl">{t('common.loading')}</div>
             </div>
         );
     }
@@ -74,22 +76,40 @@ export default function LiveSeatMapPage() {
     if (error || !data) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
-                <div className="text-xl text-red-400">Error: {error || 'No data'}</div>
+                <div className="text-xl text-red-400">{error || t('sidebar.emptyTitle')}</div>
             </div>
         );
     }
+
+    const movieTitle = data.showtime.movie_title;
+    const theatreInfo = `${data.showtime.theatre_name} (${data.showtime.merchant})`;
+    const roomInfo = `${data.showtime.city} • ${data.showtime.room_name}`;
+    const timeInfo = data.showtime.time;
+    const scrapedInfo = `Scraped: ${new Date(data.scraped_at).toLocaleString()}`;
+    const totalLabel = 'Total';
+    const screenLabel = 'LAYAR / SCREEN';
+    const occPct = `${data.occupancy.occupancy_pct}%`;
 
     return (
         <div className="min-h-screen bg-gray-900 text-white p-8">
             <div className="max-w-4xl mx-auto">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold mb-2">{data.showtime.movie_title}</h1>
+                    <h1 className="text-3xl font-bold mb-2">{movieTitle}</h1>
                     <div className="text-gray-400 space-y-1">
-                        <p>🏢 {data.showtime.theatre_name} ({data.showtime.merchant})</p>
-                        <p>📍 {data.showtime.city} • {data.showtime.room_name}</p>
-                        <p>🕐 {data.showtime.time}</p>
-                        <p className="text-xs">Scraped: {new Date(data.scraped_at).toLocaleString()}</p>
+                        <p className="flex items-center gap-1.5">
+                            <span>🏢</span>
+                            <span>{theatreInfo}</span>
+                        </p>
+                        <p className="flex items-center gap-1.5">
+                            <span>📍</span>
+                            <span>{roomInfo}</span>
+                        </p>
+                        <p className="flex items-center gap-1.5">
+                            <span>🕐</span>
+                            <span>{timeInfo}</span>
+                        </p>
+                        <p className="text-xs">{scrapedInfo}</p>
                     </div>
                 </div>
 
@@ -97,15 +117,15 @@ export default function LiveSeatMapPage() {
                 <div className="grid grid-cols-3 gap-4 mb-8">
                     <div className="bg-gray-800 p-4 rounded-lg text-center">
                         <div className="text-2xl font-bold">{data.occupancy.total_seats}</div>
-                        <div className="text-gray-400 text-sm">Total</div>
+                        <div className="text-gray-400 text-sm font-semibold uppercase tracking-wider">{totalLabel}</div>
                     </div>
                     <div className="bg-green-900 p-4 rounded-lg text-center">
                         <div className="text-2xl font-bold text-green-400">{data.occupancy.available_seats}</div>
-                        <div className="text-gray-400 text-sm">Available</div>
+                        <div className="text-gray-400 text-sm font-semibold uppercase tracking-wider">{t('showtimes.hero.stats.cities')}</div>
                     </div>
                     <div className="bg-red-900 p-4 rounded-lg text-center">
                         <div className="text-2xl font-bold text-red-400">{data.occupancy.unavailable_seats}</div>
-                        <div className="text-gray-400 text-sm">Unavailable</div>
+                        <div className="text-gray-400 text-sm font-semibold uppercase tracking-wider">{t('showtimes.hero.stats.theatres')}</div>
                     </div>
                 </div>
 
@@ -124,8 +144,8 @@ export default function LiveSeatMapPage() {
 
                 {/* Screen indicator */}
                 <div className="text-center mb-4">
-                    <div className="inline-block bg-gray-700 px-12 py-2 rounded-t-lg text-sm text-gray-400">
-                        SCREEN
+                    <div className="inline-block bg-gray-700 px-12 py-2 rounded-t-lg text-sm text-gray-400 font-bold tracking-widest uppercase">
+                        {screenLabel}
                     </div>
                 </div>
 
@@ -157,8 +177,8 @@ export default function LiveSeatMapPage() {
                 {/* Occupancy Bar */}
                 <div className="mt-8">
                     <div className="flex justify-between text-sm text-gray-400 mb-2">
-                        <span>Occupancy</span>
-                        <span>{data.occupancy.occupancy_pct}%</span>
+                        <span>{t('showtimes.hero.stats.hourlyDensity')}</span>
+                        <span>{occPct}</span>
                     </div>
                     <div className="h-4 bg-gray-700 rounded-full overflow-hidden">
                         <div

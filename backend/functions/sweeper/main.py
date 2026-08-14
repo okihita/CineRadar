@@ -149,14 +149,6 @@ def aggregate_daily_stats(
             "last_swept_at": datetime.now(JAKARTA_TZ).isoformat(),
         }
 
-        # V1 write (existing - keep for backward compatibility)
-        daily_ref_v1 = (
-            db.collection("movie_performance")
-            .document(movie_id)
-            .collection("days")
-            .document(date_str)
-        )
-        daily_ref_v1.set(update_data, merge=True)
 
         # V2 write (always write if metadata_id available, even when using V1 data)
         if metadata_id:
@@ -247,9 +239,6 @@ def aggregate_all_time_stats(
             "last_swept_at": datetime.now(JAKARTA_TZ).isoformat(),
         }
 
-        # V1 write (existing - keep for backward compatibility)
-        root_ref_v1 = db.collection("movie_performance").document(movie_id)
-        root_ref_v1.set(root_update, merge=True)
 
         # V2 write (always write if metadata_id available, even when using V1 data)
         if metadata_id:

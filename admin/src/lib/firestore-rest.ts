@@ -241,6 +241,48 @@ export class FirestoreRestClient {
     }
 
     /**
+     * Get collection with field selection (lightweight query).
+     * Only returns specified fields, dramatically reducing payload size.
+     */
+    async getCollectionWithSelect<T = Record<string, unknown>>(
+        collectionName: string,
+        selectFields: string[],
+        orderByField: string,
+        limitCount: number = 10000,
+    ): Promise<T[]> {
+        try {
+            const query = {
+                structuredQuery: {
+                    from: [{ collectionId: collectionName }],
+                    select: { fields: selectFields.map((f) => ({ fieldPath: f })) },
+                    orderBy: [{ field: { fieldPath: orderByField }, direction: 'DESCENDING' }],
+                    limit: limitCount,
+                },
+            };
+
+            const response = await this._fetch(`${FIRESTORE_BASE_URL}:runQuery`, {
+                method: 'POST',
+                body: JSON.stringify(query),
+            });
+
+            if (!response.ok) {
+                console.error(`Query failed for ${collectionName}: ${response.status}`);
+                return [];
+            }
+
+            const results = await response.json();
+            return results
+                .filter((r: { document?: unknown }) => r.document)
+                .map((r: { document: { name: string; fields: Record<string, FirestoreValue> } }) =>
+                    parseDocument<T>(r.document)
+                );
+        } catch (error) {
+            console.error(`Error querying ${collectionName}:`, error);
+            return [];
+        }
+    }
+
+    /**
      * Get collection document count
      */
     async getCollectionCount(collectionName: string): Promise<number> {

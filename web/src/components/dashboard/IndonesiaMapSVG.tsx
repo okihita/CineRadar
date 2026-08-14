@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslation } from '@/i18n';
+
 // Simplified Indonesia map with main islands
 // Based on actual geography but simplified for web display
 
@@ -107,6 +109,7 @@ const ISLAND_PATHS = {
 };
 
 export default function IndonesiaMapSVG({ cityData, onCityClick }: IndonesiaMapSVGProps) {
+    const { t } = useTranslation();
     const maxTheatres = Math.max(...cityData.map(c => c.theatres), 1);
 
     // Group cities by region for better visualization
@@ -251,23 +254,29 @@ export default function IndonesiaMapSVG({ cityData, onCityClick }: IndonesiaMapS
                 <div className="flex items-center gap-3">
                     <div className="flex items-center gap-1.5">
                         <div className="w-2 h-2 rounded-full bg-indigo-500" />
-                        <span>1-10</span>
+                        <span>{'1-10'}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                         <div className="w-3 h-3 rounded-full bg-violet-500" />
-                        <span>11-30</span>
+                        <span>{'11-30'}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                         <div className="w-4 h-4 rounded-full bg-gradient-to-r from-pink-500 to-purple-600" />
-                        <span>30+</span>
+                        <span>{'30+'}</span>
                     </div>
                 </div>
             </div>
 
             {/* Title */}
             <div className="absolute top-3 left-3 text-white">
-                <h4 className="text-sm font-semibold">🗺️ Theatre Coverage</h4>
-                <p className="text-xs text-gray-400">{cityData.length} cities • Click to explore</p>
+                <h4 className="text-sm font-semibold flex items-center gap-1.5">
+                    <span>🗺️</span>
+                    <span>{t('map.theatreCoverage')}</span>
+                </h4>
+                <p className="text-xs text-gray-400 flex items-center gap-1">
+                    <span>{cityData.length}</span>
+                    <span>{t('map.exploreHint')}</span>
+                </p>
             </div>
 
             {/* Hover tooltip container */}

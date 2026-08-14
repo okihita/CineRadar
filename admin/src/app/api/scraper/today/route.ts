@@ -99,27 +99,45 @@ export async function GET(request: NextRequest) {
         const dispatches: Record<string, DispatchEntry> = {};
         for (const d of dispatchDocs) {
             const slot = (d.id as string) || '';
+            const jobsPublished = (d.jobs_published as number) || 0;
+            const totalErrors = (d.total_errors as number) || 0;
+            const t30Found = (d.t30_found as number) || 0;
+            const t30Error = (d.t30_error as number) || 0;
+            const t20Found = (d.t20_found as number) || 0;
+            const t20Error = (d.t20_error as number) || 0;
+            const t10Found = (d.t10_found as number) || 0;
+            const t10Error = (d.t10_error as number) || 0;
+
+            // Inferred successes: compute dynamically to avoid write costs & contention on Firestore.
+            // Fallback to Firestore total_successes value if it is greater (for legacy logs).
+            const inferredSuccesses = Math.max(0, jobsPublished - totalErrors);
+            const totalSuccesses = (d.total_successes as number) > 0 ? (d.total_successes as number) : inferredSuccesses;
+
+            const t30Success = (d.t30_success as number) > 0 ? (d.t30_success as number) : Math.max(0, t30Found - t30Error);
+            const t20Success = (d.t20_success as number) > 0 ? (d.t20_success as number) : Math.max(0, t20Found - t20Error);
+            const t10Success = (d.t10_success as number) > 0 ? (d.t10_success as number) : Math.max(0, t10Found - t10Error);
+
             dispatches[slot] = {
                 dispatched_at: (d.dispatched_at as string) || '',
                 time_slot: (d.time_slot as string) || slot.replace('-', ':'),
                 showtimes_found: (d.showtimes_found as number) || 0,
-                jobs_published: (d.jobs_published as number) || 0,
+                jobs_published: jobsPublished,
                 window_start: (d.window_start as string) || '',
                 window_end: (d.window_end as string) || '',
                 status: (d.status as string) || 'ok',
-                total_errors: (d.total_errors as number) || 0,
-                total_successes: (d.total_successes as number) || 0,
+                total_errors: totalErrors,
+                total_successes: totalSuccesses,
                 error: d.error as string | undefined,
                 // Phase-specific fields
-                t30_found: (d.t30_found as number) || 0,
-                t20_found: (d.t20_found as number) || 0,
-                t10_found: (d.t10_found as number) || 0,
-                t30_success: (d.t30_success as number) || 0,
-                t20_success: (d.t20_success as number) || 0,
-                t10_success: (d.t10_success as number) || 0,
-                t30_error: (d.t30_error as number) || 0,
-                t20_error: (d.t20_error as number) || 0,
-                t10_error: (d.t10_error as number) || 0,
+                t30_found: t30Found,
+                t20_found: t20Found,
+                t10_found: t10Found,
+                t30_success: t30Success,
+                t20_success: t20Success,
+                t10_success: t10Success,
+                t30_error: t30Error,
+                t20_error: t20Error,
+                t10_error: t10Error,
             };
         }
 

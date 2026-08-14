@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Film, ChevronDown, ArrowLeft, LayoutGrid } from 'lucide-react';
 import MovieSidebar from './MovieSidebar';
 import CityShowtimes from './CityShowtimes';
-import Dashboard from '../dashboard/Dashboard';
+import MovieCatalogGrid from './MovieCatalogGrid';
 
 interface TheaterSchedule {
     theatre_id: string;
@@ -50,7 +51,7 @@ interface MovieBrowserProps {
     initialMovieId?: string;
 }
 
-type ViewMode = 'browser' | 'dashboard';
+export type ViewMode = 'catalog' | 'showtimes';
 
 // Fetch movie schedule from Firestore
 async function fetchMovieSchedule(movieId: string, date: string): Promise<Record<string, TheaterSchedule[]> | null> {
@@ -176,7 +177,10 @@ async function fetchMovieAdmissions(movieId: string, date: string): Promise<Admi
     }
 }
 
+import { useTranslation } from '@/i18n';
+
 export default function MovieBrowser({ movies, initialMovieId }: MovieBrowserProps) {
+    const { t } = useTranslation();
     const [selectedMovie, setSelectedMovie] = useState<Movie | null>(() => {
         if (initialMovieId) {
             const found = movies.find(m => m.id === initialMovieId);
@@ -186,7 +190,9 @@ export default function MovieBrowser({ movies, initialMovieId }: MovieBrowserPro
     });
     const [movieWithSchedules, setMovieWithSchedules] = useState<Movie | null>(null);
     const [loadingSchedule, setLoadingSchedule] = useState(false);
-    const [viewMode, setViewMode] = useState<ViewMode>('browser');
+    // If user opened with initialMovieId, start in showtimes view; otherwise start in catalog grid
+    const [viewMode, setViewMode] = useState<ViewMode>(() => initialMovieId ? 'showtimes' : 'catalog');
+    const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
     // Fetch schedules when movie is selected
     useEffect(() => {
@@ -226,51 +232,127 @@ export default function MovieBrowser({ movies, initialMovieId }: MovieBrowserPro
         };
     }, [selectedMovie]);
 
+    const handleSelectMovieFromCatalog = (movie: Movie) => {
+        setSelectedMovie(movie);
+        setViewMode('showtimes');
+    };
+
     return (
-        <div className="flex flex-col h-[calc(100vh-5rem)]">
-            {/* View Mode Toggle */}
-            <div className="flex items-center justify-center gap-2 py-3 bg-black/20 border-b border-white/10">
-                <button
-                    onClick={() => setViewMode('browser')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewMode === 'browser'
-                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25'
-                        : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+        <div className="flex flex-col h-[calc(100vh-4rem)] sm:h-[calc(100vh-5rem)]">
+            {/* Navigation Tabs Bar */}
+            <div className="py-2 px-3 sm:px-6 bg-black/40 border-b border-white/10 flex items-center justify-between gap-2 max-w-7xl w-full mx-auto">
+                {/* Segmented Control */}
+                <div className="flex items-center gap-1 p-1 bg-white/[0.05] rounded-xl border border-white/10 shadow-inner overflow-x-auto no-scrollbar">
+                    <button
+                        onClick={() => setViewMode('catalog')}
+                        className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 flex-shrink-0 ${
+                            viewMode === 'catalog'
+                                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md shadow-purple-500/25'
+                                : 'text-gray-400 hover:text-white'
                         }`}
-                >
-                    🎬 Browse Movies
-                </button>
-                <button
-                    onClick={() => setViewMode('dashboard')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewMode === 'dashboard'
-                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25'
-                        : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                    >
+                        <LayoutGrid className="w-3.5 h-3.5" />
+                        <span>{t('nav.allMovies', { count: movies.length })}</span>
+                    </button>
+                    <button
+                        onClick={() => setViewMode('showtimes')}
+                        className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 flex-shrink-0 ${
+                            viewMode === 'showtimes'
+                                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md shadow-purple-500/25'
+                                : 'text-gray-400 hover:text-white'
                         }`}
-                >
-                    📊 Market Insights
-                </button>
+                    >
+                        <Film className="w-3.5 h-3.5" />
+                        <span>{t('nav.showtimes')}</span>
+                    </button>
+                </div>
+
+                {/* Mobile Quick Selector when in Showtimes mode */}
+                {viewMode === 'showtimes' && selectedMovie && (
+                    <button
+                        onClick={() => setIsMobileDrawerOpen(true)}
+                        className="lg:hidden flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-white text-xs font-semibold shadow-md active:scale-95 transition-all max-w-[170px] truncate cursor-pointer"
+                        aria-label={t('common.changeMovie')}
+                    >
+                        <span className="truncate font-bold">{selectedMovie.title}</span>
+                        <ChevronDown className="w-3.5 h-3.5 text-purple-300 flex-shrink-0" />
+                    </button>
+                )}
             </div>
 
-            {/* Content */}
-            {viewMode === 'browser' ? (
-                <div className="flex flex-1 overflow-hidden">
-                    <MovieSidebar
-                        movies={movies}
-                        selectedMovie={selectedMovie}
-                        onSelectMovie={setSelectedMovie}
-                    />
-                    {loadingSchedule ? (
-                        <div className="flex-1 flex items-center justify-center">
-                            <div className="text-center">
-                                <div className="animate-spin text-4xl mb-4">🎬</div>
-                                <p className="text-gray-400">Loading showtimes...</p>
+            {/* Main Dynamic View Content */}
+            {viewMode === 'catalog' ? (
+                <MovieCatalogGrid
+                    movies={movies}
+                    onSelectMovie={handleSelectMovieFromCatalog}
+                />
+            ) : (
+                <div className="flex flex-1 overflow-hidden relative">
+                    {/* Desktop Persistent Sidebar */}
+                    <aside className="hidden lg:block w-80 xl:w-88 flex-shrink-0 h-full border-r border-white/10 bg-black/40">
+                        <MovieSidebar
+                            movies={movies}
+                            selectedMovie={selectedMovie}
+                            onSelectMovie={setSelectedMovie}
+                        />
+                    </aside>
+
+                    {/* Main Showtimes Pane */}
+                    <main className="flex-1 flex flex-col overflow-hidden min-w-0 w-full bg-gray-950">
+                        {/* Mobile Drill-Down Back Bar */}
+                        <div className="lg:hidden flex items-center justify-between px-3.5 py-2.5 bg-black/50 border-b border-white/10">
+                            <button
+                                onClick={() => setViewMode('catalog')}
+                                className="inline-flex items-center gap-1.5 text-xs font-bold text-purple-300 hover:text-white bg-purple-500/15 border border-purple-500/30 px-3 py-1.5 rounded-xl shadow-sm active:scale-95 transition-all cursor-pointer"
+                            >
+                                <ArrowLeft className="w-3.5 h-3.5" />
+                                <span>{t('common.backToMovies')}</span>
+                            </button>
+
+                            <span className="text-[11px] text-gray-400 font-medium truncate max-w-[160px]">
+                                {selectedMovie?.title}
+                            </span>
+                        </div>
+
+                        {loadingSchedule ? (
+                            <div className="flex-1 flex items-center justify-center">
+                                <div className="text-center p-8">
+                                    <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mx-auto mb-4 text-2xl animate-spin shadow-lg">
+                                        🎬
+                                    </div>
+                                    <p className="text-sm font-bold text-white">{t('common.loadingShowtimes')}</p>
+                                    <p className="text-xs text-gray-500 mt-1">{t('common.loadingTelemetry')}</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <CityShowtimes movie={movieWithSchedules} />
+                        )}
+                    </main>
+
+                    {/* Mobile Slide-Over Drawer Modal */}
+                    {isMobileDrawerOpen && (
+                        <div className="lg:hidden fixed inset-0 z-50 flex">
+                            {/* Backdrop */}
+                            <div
+                                className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
+                                onClick={() => setIsMobileDrawerOpen(false)}
+                            />
+                            {/* Slide-over Drawer Panel */}
+                            <div className="relative w-[85vw] max-w-sm bg-gray-950 h-full shadow-2xl z-10 flex flex-col border-r border-white/10">
+                                <MovieSidebar
+                                    movies={movies}
+                                    selectedMovie={selectedMovie}
+                                    onSelectMovie={(movie) => {
+                                        setSelectedMovie(movie);
+                                        setIsMobileDrawerOpen(false);
+                                    }}
+                                    onClose={() => setIsMobileDrawerOpen(false)}
+                                    isMobile={true}
+                                />
                             </div>
                         </div>
-                    ) : (
-                        <CityShowtimes movie={movieWithSchedules} allMovies={movies} />
                     )}
                 </div>
-            ) : (
-                <Dashboard movies={movies} />
             )}
         </div>
     );
