@@ -6,6 +6,13 @@ import { Search, X, Sparkles, MapPin, Film, Flame } from 'lucide-react';
 import { CHAIN_COLORS, ChainName } from '@/lib/constants';
 import { TheaterSchedule } from '@/types';
 import { AdmissionStats } from './MovieBrowser';
+import {
+  extractCanonicalGenresFromMovies,
+  matchesGenreFilter,
+  normalizeGenre,
+} from '@/lib/genres';
+import { useTranslation } from '@/i18n';
+import { TranslationKey } from '@/i18n/types';
 
 interface Movie {
   id: string;
@@ -28,57 +35,15 @@ interface MovieCatalogGridProps {
 
 type FilterTab = 'all' | 'now_showing' | 'presale';
 
-const GENRE_EMOJIS: Record<string, string> = {
-  Action: '💥',
-  Horror: '👻',
-  Comedy: '😂',
-  Drama: '🎭',
-  Adventure: '🧗',
-  Fantasy: '🧙',
-  Thriller: '🔪',
-  'Sci-fi': '🚀',
-  Animation: '🎨',
-  Mystery: '🕵️',
-  Family: '👨‍👩‍👧',
-  Music: '🎵',
-  Sport: '⚽',
-  History: '📜',
-  Survival: '🏕️',
-  'Psychological thriller': '🧠',
-};
-
-import { useTranslation } from '@/i18n';
-
 export default function MovieCatalogGrid({ movies, onSelectMovie }: MovieCatalogGridProps) {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [selectedGenre, setSelectedGenre] = useState<string>('all');
 
-  // Extract all unique normalized genres with counts
+  // Extract all canonical genres with movie counts
   const genresWithCounts = useMemo(() => {
-    const genreMap = new Map<string, number>();
-
-    movies.forEach(movie => {
-      (movie.genres || []).forEach(rawGenre => {
-        if (!rawGenre) return;
-        // Handle comma-separated strings if any
-        const tokens = rawGenre.split(',').map(s => s.trim()).filter(Boolean);
-        tokens.forEach(g => {
-          // Normalize capitalization (e.g. "Action", "Sci-fi")
-          const normalized = g.charAt(0).toUpperCase() + g.slice(1);
-          genreMap.set(normalized, (genreMap.get(normalized) || 0) + 1);
-        });
-      });
-    });
-
-    return Array.from(genreMap.entries())
-      .sort((a, b) => b[1] - a[1]) // Sort by highest frequency
-      .map(([name, count]) => ({
-        name,
-        count,
-        emoji: GENRE_EMOJIS[name] || '🎬',
-      }));
+    return extractCanonicalGenresFromMovies(movies);
   }, [movies]);
 
   // Counts for status tabs
@@ -95,12 +60,10 @@ export default function MovieCatalogGrid({ movies, onSelectMovie }: MovieCatalog
       if (activeTab === 'presale' && !movie.is_presale) return false;
       if (activeTab === 'now_showing' && movie.is_presale) return false;
 
-      // Genre filter
+      // Genre filter with canonical mapping
       if (selectedGenre !== 'all') {
-        const matchesGenre = (movie.genres || []).some(g =>
-          g.toLowerCase().includes(selectedGenre.toLowerCase())
-        );
-        if (!matchesGenre) return false;
+        const matches = matchesGenreFilter(movie.genres, selectedGenre);
+        if (!matches) return false;
       }
 
       // Search query
@@ -223,13 +186,14 @@ export default function MovieCatalogGrid({ movies, onSelectMovie }: MovieCatalog
               </button>
 
               {/* Individual Genre Pills with Emojis & Counts */}
-              {genresWithCounts.map(({ name, count, emoji }) => {
-                const isSelected = selectedGenre.toLowerCase() === name.toLowerCase();
+              {genresWithCounts.map(({ key, canonicalName, count, emoji }) => {
+                const isSelected = selectedGenre.toLowerCase() === key.toLowerCase();
+                const localizedGenre = t(`genres.${key}` as TranslationKey) || canonicalName;
 
                 return (
                   <button
-                    key={name}
-                    onClick={() => setSelectedGenre(isSelected ? 'all' : name)}
+                    key={key}
+                    onClick={() => setSelectedGenre(isSelected ? 'all' : key)}
                     className={`px-2.5 sm:px-3 py-1 rounded-xl text-xs font-medium transition-all duration-200 cursor-pointer flex items-center gap-1.5 flex-shrink-0 active:scale-95 ${
                       isSelected
                         ? 'bg-purple-600 text-white font-bold shadow-md shadow-purple-500/30 border border-purple-400/40'
@@ -237,7 +201,7 @@ export default function MovieCatalogGrid({ movies, onSelectMovie }: MovieCatalog
                     }`}
                   >
                     <span>{emoji}</span>
-                    <span>{name}</span>
+                    <span>{localizedGenre}</span>
                     <span className={`text-[10px] px-1 py-0.2 rounded-full font-mono ${
                       isSelected ? 'bg-white/20 text-white' : 'bg-white/5 text-gray-500'
                     }`}>
@@ -325,7 +289,14 @@ export default function MovieCatalogGrid({ movies, onSelectMovie }: MovieCatalog
                       {movie.title}
                     </h3>
                     <p className="text-[10px] text-gray-400 mt-1 line-clamp-1">
-                      {movie.genres && movie.genres.length > 0 ? movie.genres.join(' • ') : movie.country || t('catalog.cinemaRelease')}
+                      {movie.genres && movie.genres.length > 0
+                        ? movie.genres
+                            .map(g => {
+                              const key = normalizeGenre(g);
+                              return t(`genres.${key}` as TranslationKey) || g;
+                            })
+                            .join(' • ')
+                        : movie.country || t('catalog.cinemaRelease')}
                     </p>
                   </div>
 

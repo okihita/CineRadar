@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import ShowtimeView from '../showtimes/ShowtimeView';
 import { useTranslation } from '@/i18n';
+import { TranslationKey } from '@/i18n/types';
+import { normalizeGenre, getGenreEmoji } from '@/lib/genres';
 
 interface TheaterSchedule {
     theatre_id: string;
@@ -131,14 +133,20 @@ export default function MovieGrid({ movies }: MovieGridProps) {
                                 {movie.title}
                             </h3>
                             <div className="mt-2 flex flex-wrap gap-1">
-                                {movie.genres.slice(0, 2).map((genre) => (
-                                    <span
-                                        key={genre}
-                                        className="px-2 py-0.5 bg-white/10 rounded-full text-xs text-gray-300"
-                                    >
-                                        {genre}
-                                    </span>
-                                ))}
+                                {movie.genres.slice(0, 2).map((genre) => {
+                                    const key = normalizeGenre(genre);
+                                    const localized = t(`genres.${key}` as TranslationKey) || genre;
+                                    const emoji = getGenreEmoji(key);
+                                    return (
+                                        <span
+                                            key={genre}
+                                            className="inline-flex items-center gap-0.5 px-2 py-0.5 bg-white/10 rounded-full text-xs text-gray-300"
+                                        >
+                                            <span>{emoji}</span>
+                                            <span>{localized}</span>
+                                        </span>
+                                    );
+                                })}
                             </div>
 
                             {/* Schedule info if city selected */}

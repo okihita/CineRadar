@@ -2,6 +2,8 @@
 
 import { useMemo } from 'react';
 import { useTranslation } from '@/i18n';
+import { TranslationKey } from '@/i18n/types';
+import { normalizeGenre, getGenreEmoji, CanonicalGenreKey } from '@/lib/genres';
 import TheatreMapExplorer from './TheatreMapExplorer';
 
 interface TheaterSchedule {
@@ -116,9 +118,14 @@ export default function Dashboard({ movies }: DashboardProps) {
         let totalTheatres = 0;
 
         movies.forEach(movie => {
-            // Genres
-            movie.genres.forEach(g => {
-                genreCounts[g] = (genreCounts[g] || 0) + 1;
+            // Canonical Genres
+            const movieGenresSet = new Set<CanonicalGenreKey>();
+            (movie.genres || []).forEach(g => {
+                const key = normalizeGenre(g);
+                movieGenresSet.add(key);
+            });
+            movieGenresSet.forEach(key => {
+                genreCounts[key] = (genreCounts[key] || 0) + 1;
             });
 
             // Age ratings
@@ -399,11 +406,13 @@ export default function Dashboard({ movies }: DashboardProps) {
                         {Object.entries(stats.genreCounts)
                             .sort((a, b) => b[1] - a[1])
                             .slice(0, 8)
-                            .map(([genre, count], i) => {
-                                const genreLabel = `${genre} (${count})`;
+                            .map(([genreKey, count], i) => {
+                                const localized = t(`genres.${genreKey}` as TranslationKey) || genreKey;
+                                const emoji = getGenreEmoji(genreKey);
+                                const genreLabel = `${emoji} ${localized} (${count})`;
                                 return (
                                     <span
-                                        key={genre}
+                                        key={genreKey}
                                         className="px-3 py-1 rounded-full text-sm font-medium"
                                         style={{
                                             backgroundColor: `${genreColors[i % genreColors.length]}30`,
