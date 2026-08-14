@@ -43,3 +43,12 @@ Commit messages must reflect the same `<type>(<scope>): <description>` format:
 * `feat(admin): add CinePoint tweet paste-and-parse tool`
 * `fix(functions): prevent OOM crash in sweeper via select projection`
 * `chore(all): update lockfiles and dependency versions`
+
+---
+
+## 5. Post-Merge Branch Cleanup Rule
+After any successful `--no-ff` merge into `dev` or `main`:
+1. Verify the branch is fully merged: `git branch --merged <target>`
+2. Safely delete the merged local branch: `git branch -d <branch-name>`
+3. Delete the remote branch if it was published: `git push origin --delete <branch-name>`
+

@@ -90,3 +90,22 @@ To prevent Vercel from building the Admin Dashboard when working on Web (and vic
 # For cineradar-admin: Skip build if branch is purely for web
 if [[ "$VERCEL_GIT_COMMIT_REF" =~ ^(feat|fix|hotfix|chore|perf)/web/ ]]; then exit 0; else exit 1; fi
 ```
+
+---
+
+## 6. Post-Merge Branch Cleanup Protocol
+
+To maintain repository hygiene and prevent stale branch buildup:
+1. **Verify Merge Status**: Confirm the feature/fix branch is fully incorporated into the target branch (`dev` or `main`):
+   ```bash
+   git branch --merged dev
+   ```
+2. **Delete Local Branch**: Once verified, safely delete the local branch:
+   ```bash
+   git branch -d <branch-name>
+   ```
+3. **Delete Remote Branch**: If the branch was published to GitHub, delete the remote tracking reference:
+   ```bash
+   git push origin --delete <branch-name>
+   ```
+
