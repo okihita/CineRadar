@@ -23,23 +23,16 @@ gantt
     dateFormat HH:mm
     axisFormat %H:%M
 
-    section Initial Data
-    Movie Scrape         :active, 01:15, 20m
-    Details Backfill     :active, 04:00, 15m
-    Initial Layouts      :active, 04:15, 60m
+    section Morning Scrapes
+    Primary National Scrape      :active, 05:30, 25m
+    Metadata & Details Backfill  :active, 06:00, 15m
+    Safety Net Scrape (Secondary):active, 09:00, 20m
 
-    section JIT Seats (3 Phases)
-    09:00 Dispatch (T-30,20,10) :active, 09:00, 2m
-    09:05 Dispatch (T-30,20,10) :active, 09:05, 2m
-    ...                         :done, 12:00, 1m
-    23:55 Dispatch (T-30,20,10) :active, 23:55, 2m
-```
+    section JIT Seat Dispatcher (Cloud Functions)
+    Hourly Showtimes Dispatch    :active, 09:00, 14h
 
-All times are **WIB (UTC+7)**. GitHub Action schedules use UTC.
-
-    10:30 Sweeper        :active, 10:30, 5m
-    ...                  :done, 12:00, 1m
-    23:30 Sweeper        :active, 23:30, 5m
+    section Data Sweeper (GCP)
+    Rollup Aggregation (every 10m):active, 10:00, 14h
 ```
 
 All times are **WIB (UTC+7)**. GitHub Action schedules use UTC.
@@ -52,47 +45,48 @@ All times are **WIB (UTC+7)**. GitHub Action schedules use UTC.
 Capture a fresh JWT token from TIX.id for authenticated API calls.
 
 ### Workflow Files & Logic
-- [`.github/workflows/token-refresh.yml`](../.github/workflows/token-refresh.yml) - Monthly Full RSA Login
+- [`.github/workflows/token-refresh.yml`](../../.github/workflows/token-refresh.yml) - Monthly Full RSA Login
 - Scraper Cloud Functions - Dynamic fast token refresh via API
 
 ### How It Works
 
-1. **Monthly RSA Login (1st of month @ 2:50 AM WIB)**: Performs the heavy RSA-encrypted guest login to capture a fresh 91-day long-term token. Stores in Firestore.
+1. **Monthly RSA Login (1st of month @ 2:50 AM WIB)**: Performs the heavy RSA-encrypted guest login to capture a fresh 91-day long-term token. Stores in Firestore `auth_tokens/tix_jwt`.
 2. **Dynamic JIT Refresh**: The Cloud Function Scraper dynamically and autonomously checks if the token is < 5 min from expiry and uses the fast `/refresh` API endpoint to get a new 30-min token during daily scraping.
 
 ### 🧑‍💻 Code References
 | Component | Source File | Purpose |
 |-----------|-------------|---------|
-| **CLI Login** | [`backend/cli/refresh_token.py`](../backend/cli/refresh_token.py) | Full RSA API login flow |
-| **JIT Refresh** | [`backend/infrastructure/token_refresher.py`](../backend/infrastructure/token_refresher.py) | Fast API refresh logic used by scrapers |
+| **CLI Login** | [`backend/cli/refresh_token.py`](../../backend/cli/refresh_token.py) | Full RSA API login flow |
+| **JIT Refresh** | [`backend/infrastructure/token_refresher.py`](../../backend/infrastructure/token_refresher.py) | Fast API refresh logic used by scrapers |
 
 ---
 
-## Phase 2: Morning Movie Scraping (1:15 AM WIB)
+## Phase 2: Morning Movie Scraping (05:30 AM & 09:00 AM WIB)
 
 ### Purpose
-Scrape all movies, showtimes, and theatre information for the day. Creates the initial baseline performance docs.
+Scrape all movies, showtimes, and theatre information for the day. Streams schedules into `schedules_v2` and initializes `movie_performance_v2`.
 
 ### Workflow File
-[`.github/workflows/daily-initial-scrape.yml`](../.github/workflows/daily-initial-scrape.yml) (Runs at `18:15 UTC` / `01:15 AM WIB`)
+[`.github/workflows/daily-initial-scrape.yml`](../../.github/workflows/daily-initial-scrape.yml) (Runs at `22:30 UTC` / `05:30 AM WIB` and `02:00 UTC` / `09:00 AM WIB`)
 
 ### How It Works
-The V2 API-based scraper runs sequentially across cities to fetch all `NOW_PLAYING` data and schedules. It ends by initializing the empty `movie_performance` documents.
+The V2 API-based scraper runs sequentially across cities to fetch all `NOW_PLAYING` data and schedules. It ends by linking theatre IDs and initializing empty `movie_performance_v2` rollup records.
 
 ### 🧑‍💻 Code References
 | Component | Source File | Purpose |
 |-----------|-------------|---------|
-| **Script** | [`backend/scripts/run_national_scrape.py`](../backend/scripts/run_national_scrape.py) | Runner |
+| **Scraper** | [`backend/scripts/run_national_scrape.py`](../../backend/scripts/run_national_scrape.py) | Main scraper |
+| **Post Process** | [`backend/scripts/post_process.py`](../../backend/scripts/post_process.py) | Theatre geocoding link & city index |
 
 ---
 
-## Phase 3: Metadata Backfill (4:00 AM WIB)
+## Phase 3: Metadata Backfill (Continuous & On-Demand)
 
 ### Purpose
 Ensures any newly discovered movies from Phase 2 have full metadata (posters, genres, age ratings) from the `/v1/movies/{id}` endpoint.
 
 ### Workflow File
-[`.github/workflows/scrape_movie_details.yml`](../.github/workflows/scrape_movie_details.yml) (Runs at `21:00 UTC` / `04:00 AM WIB`)
+[`.github/workflows/scrape-movie-details.yml`](../../.github/workflows/scrape-movie-details.yml)
 
 ---
 

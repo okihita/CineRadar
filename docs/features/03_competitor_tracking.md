@@ -279,44 +279,25 @@ Icon: `Swords` from lucide-react (competitive/battle metaphor).
 - [ ] Export comparison as CSV
 - [ ] Auto-date detection from tweet header
 
-### Phase 3: Automation (Future)
-- [ ] Cron job to scrape CinePoint Twitter (if API access)
-- [ ] Auto-compare notification when both datasets are available
+### Phase 3: Direct CinePoint API Integration (Implemented ✅)
+- Direct authenticated API ingestion via Bearer/Refresh token
+- Historical backfill script (`admin/scripts/cinepoint_backfill.py`)
+- Metadata & creator enrichment script (`admin/scripts/cinepoint_enrich.py`)
+- Box office rankings, director analysis, actor analysis, and insights dashboards
 
 ---
 
-## File Structure
+## Direct CinePoint API Architecture
 
-```
-admin/src/
-├── app/
-│   ├── competitors/
-│   │   ├── page.tsx                          # Landing: date list + accuracy
-│   │   └── [date]/
-│   │       └── page.tsx                      # Detail: paste + compare
-│   └── api/
-│       └── competitors/
-│           ├── route.ts                      # GET list
-│           ├── [date]/
-│           │   └── route.ts                  # GET snapshot
-│           ├── [date]/
-│           │   ├── showtimes/
-│           │   │   └── route.ts              # PUT paste+parse showtimes
-│           │   ├── admissions/
-│           │   │   └── route.ts              # PUT paste+parse admissions
-│           │   └── match/
-│           │       └── route.ts              # PATCH movie matching
-│           └── parse/
-│               └── route.ts                  # POST parse preview (no save)
-├── features/
-│   └── competitors/
-│       ├── types.ts                          # CompetitorSnapshot, parsers
-│       ├── parsers.ts                        # parseShowtimeTweet, parseAdmissionsTweet
-│       ├── matching.ts                       # matchToCineRadarMovies
-│       └── components/
-│           ├── PasteArea.tsx                  # Tweet paste + live preview
-│           ├── ComparisonTable.tsx            # Side-by-side delta table
-│           └── AccuracyOverview.tsx           # Date list with deltas
-└── components/
-    └── Sidebar.tsx                           # Add Competitor Data entry
-```
+In addition to manual tweet parsing, CineRadar integrates directly with the CinePoint REST API:
+
+### Collections:
+* **`cinepoint_daily_boxoffice`**: Historical daily admissions and gross figures keyed by `{date}`.
+* **`cinepoint_movies`**: Normalized movie catalog enriched with directors, cast, poster URLs, and cumulative admissions.
+
+### Admin Routes:
+* `/competitors/cinepoint`: Daily box office dashboard and date browser.
+* `/competitors/cinepoint/insights`: Market share and distributor performance.
+* `/competitors/cinepoint/analysis/directors`: Box office rankings by director.
+* `/competitors/cinepoint/analysis/actors`: Box office rankings by actor.
+* `/competitors/cinepoint/movies/[id]`: Individual film lifetime performance trajectory.

@@ -22,10 +22,10 @@ A date-navigable social feed for the CineRadar admin dashboard that:
 - Dynamic account directory derived from video data
 - Delete + re-backfill support per date
 
-### What's Weak (to fix in Phase 2+)
-- No settings page — channels managed via seed script
-- No per-channel backfill control — all-or-nothing per date
-- YouTube-only — need platform-agnostic schema for Twitter/IG/TikTok
+### Channel Management & Settings (Phase 2 ✅)
+- Dedicated settings dashboard at `/social-feed/settings`
+- Live channel search, source lookup, category tags, and active status toggling
+- Dynamic Firestore persistence for sources (`social_feed_sources`)
 
 ---
 

@@ -47,9 +47,9 @@ If TIX.id introduces aggressive WAF (Cloudflare Turnstile) preventing pure HTTP 
 Free tier allows 20,000 writes/day. We operate near this limit (12k seats + 1k schedules).
 - **Symptoms**: `ResourceExhausted` errors in logs.
 - **Strategic Response**:
-    1.  **Optimized Batching**: Ensure `populate_firestore.py` uses `batch.commit()` (max 500 writes/batch).
-    2.  **Delta Compression**: Only write seat data if `status` has changed (Reducing writes by ~60%).
-    3.  **Upgrade**: Enable Blaze Plan.
+    1.  **Optimized Batching & Streaming**: Ensure `post_process.py` and `sweeper` use bulk batch writes (max 500 writes/batch) with field projection masks.
+    2.  **Delta Compression**: Only write seat data when occupancy or status updates.
+    3.  **Upgrade**: Ensure project is on Blaze Plan (pay-as-you-go).
 
 ### Scenario 4: GitHub Actions IP Ban
 B2B APIs often block data center IP ranges (Azure/AWS/GitHub).

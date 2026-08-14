@@ -12,10 +12,10 @@ We enforce a **Premium/Corporate** aesthetic suitable for dashboard clients.
 -   **Components**: Shadcn UI (Radix Primitives)
 -   **Base Font**: `Inter` (Sans), `JetBrains Mono` (Code)
 
-### Package Management (Stability DNA)
--   **Lockfiles**: We trust `pnpm-lock.yaml` as the source of truth. Never manually edit it.
--   **Versioning**: We use `^` (caret) versioning for dependencies to allow non-breaking security patches.
--   **Upgrades**: Run `pnpm update` explicitly; do not rely on fresh installs to bump versions.
+### Package Management (Stability DNA & PNPM Catalog)
+-   **Catalog Protocol**: All shared packages across `admin` and `web` (Next.js, React, Tailwind, Lucide) MUST be referenced via `"catalog:"` in their respective `package.json` files and centrally defined in `pnpm-workspace.yaml`.
+-   **Lockfiles**: We trust `pnpm-lock.yaml` as the single source of truth. Never manually edit it.
+-   **Upgrades**: Update the version string in `pnpm-workspace.yaml` and run `pnpm install`. Both apps will automatically sync without version drift.
 
 ### Do's and Don'ts
 

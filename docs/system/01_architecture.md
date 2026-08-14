@@ -71,10 +71,10 @@ flowchart LR
 
 ### Infrastructure Components
 
-- **Backend**: Python 3.12+ using pure HTTP API for scraping and interactions.
-- **Database**: Google Cloud Firestore (NoSQL).
-- **Admin**: Next.js 16 (React 19) dashboard.
-- **Web**: Next.js 16 (React 19) consumer app.
+- **Backend**: Python 3.13+ using pure HTTP API for scraping and interactions.
+- **Database**: Google Cloud Firestore V2 (NoSQL).
+- **Admin**: Next.js 16 (React 19, Turbopack, Tailwind CSS v4) Studio dashboard.
+- **Web**: Next.js 16 (React 19, Turbopack, Tailwind CSS v4) Consumer web app.
 - **CI/CD**: GitHub Actions for daily scraping, testing, and deployment.
 
 ### Morning Scraper Environment
@@ -90,37 +90,24 @@ The morning pipeline operates on **GitHub Actions**, utilizing a single runner t
 
 | Workflow | Schedule | Python Entry Point | Description |
 |----------|----------|--------------------|-------------|
-| **`daily-initial-scrape.yml`** | Daily 06:00 WIB | `.cli`, `.movie_performance` | **Main Pipeline**. Scrapes movies and aggregates performance data. |
+| **`daily-initial-scrape.yml`** | Daily 05:30 WIB (`22:30 UTC`) & 09:00 WIB (`02:00 UTC`) | `run_national_scrape.py`, `post_process.py` | **Main Pipeline**. Scrapes nationwide movies, showtimes, and links metadata directly into Firestore V2. |
 
-#### Artifact Data Handover
+#### Direct Stream Persistence Layer
 
-Data is not persisted immediately. Instead, it flows through **GitHub Artifacts** to ensure atomic operations and easier debugging.
-
-1.  **Intermediate Artifacts** (1-day retention):
-    *   `raw-scrape-data`: Raw movie data from the API scraper.
-
-2.  **Final Artifacts** (7-day retention):
-    *   `scrape-data-{RUN_ID}`: Merged, validated movie dataset.
+Data is streamed directly into Firestore V2 using Google Cloud Service Account credentials:
+*   `run_national_scrape.py`: Scrapes and streams schedules into `schedules_v2/{date}/movies/{movieId}`.
+*   `post_process.py`: Links schedule documents with geocoded theatre IDs and city indices.
+*   `movie_performance --init-only`: Initializes daily rollup skeletons in `movie_performance_v2/{metadataId}/days/{date}`.
+*   `movie-details --all`: Enriches any newly discovered movies with synopsis, cast, and posters.
 
 ### JIT Scraper Environment (Real-Time)
 
-The **Just-In-Time (JIT) Scraper** captures seat occupancy data 30 minutes before a showtime starts (T-30) to get the final "sold" count.
+The **Just-In-Time (JIT) Scraper** captures seat occupancy data leading up to showtime (T-30, T-20, T-10) to compute final occupancy rates.
 
 #### Architecture
 *   **Platform**: Google Cloud Functions (Gen 2).
-*   **Trigger**: Event-driven architecture.
-
-#### Component Flow
-1.  **Cloud Scheduler**: Triggers the Dispatcher every 5 minutes.
-2.  **Dispatcher**: Queries Firestore for showtimes starting between T+30 and T+35 minutes.
-3.  **Pub/Sub**: Distributes individual scraping jobs (`scrape-seat-jit` topic).
-4.  **Scraper Function**: Consumes message, fetches seat layout, and updates Firestore.
-
-#### Persistence Layer
-Final persistence is handled by dedicated Python CLI tools at the end of the workflows:
-*   `populate_firestore`: Syncs merged movie/theatre data.
-*   `movie_performance`: Aggregates seat data into per-movie performance summaries.
-*   `refresh_token`: Updates auth tokens in `auth_tokens/tix_jwt`.
+*   **Trigger**: Cloud Scheduler $\rightarrow$ Dispatcher $\rightarrow$ Pub/Sub topic `scrape-seat-jit` $\rightarrow$ Scraper Function.
+*   **Sweeper**: Low-memory streaming generator function periodically rolling up JIT occupancy into `movie_performance_v2`.
 
 ---
 

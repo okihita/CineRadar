@@ -12,77 +12,61 @@ Unlock the repository only if you meet these exact requirements:
 | **Hardware** | 8GB RAM minimum | Required for Next.js build and memory-intensive Python operations |
 | **OS** | macOS (ARM64) or Linux | Standard dev environment compatibility |
 | **Node.js** | `v24.0.0+` (LTS) | Next.js 16+ & Stability DNA |
-| **pnpm** | `v10.0.0+` | Monorepo workspace protocol |
-| **Python** | `3.12.0+` | Type hinting features used in Scraper |
-| **uv** | `latest` | Python package resolution speed |
+| **pnpm** | `v10.0.0+` | Monorepo workspace & Catalog protocol |
+| **Python** | `3.13.0+` | Backend scraping & typing engine |
+| **uv** | `latest` | Python package & lockfile resolution |
 
 ---
 
 ## 🔐 Secrets & Environment Variables
 
-The application **will not start** without these configurations. We do not mock authentication.
+Copy the template from `.env.example`:
 
 ### 1. File Structure
-Create these files in the root directory:
-
-- `.env` (Global public config)
-- `.env.local` (Secrets - DO NOT COMMIT)
-
-
-### 2. Required Variables (`.env.local`)
-
-| Variable | Type | Description |
-|----------|------|-------------|
-| `FIREBASE_SERVICE_ACCOUNT_KEY` | **JSON String** | Minified Service Account JSON (Single Line) |
-| `TIX_JWT` | **String** | Initial TIX.id Bearer token (from browser) |
-| `TIX_REFRESH_TOKEN` | **String** | 90-day refresh token for rotation |
-| `NEXT_PUBLIC_API_URL` | **URL** | `http://localhost:3000/api` (Dev) |
-| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | **String** | For interactive Google Maps visualizations |
-
-### 3. Google Cloud Credentials
-Download the Service Account key from GCP IAM console (`cineradar-prod`).
-**Do NOT save this as a file.** Instead, minify the JSON and paste it into the `FIREBASE_SERVICE_ACCOUNT_KEY` variable in `.env.local`.
-
-> **Security Note**: This avoids "accidental commit" risk entirely.
+- **`./.env`**: Root environment file read by Python backend tools (`TIX_PHONE_NUMBER`, `TIX_PASSWORD`).
+- **`./admin/.env.local`**: Next.js Studio Admin secrets (`AUTH_SECRET`, `FIREBASE_PRIVATE_KEY`, `GEMINI_API_KEY`, `CINEPOINT_REFRESH_TOKEN`).
+- **`./web/.env.local`**: Public Consumer Web configuration (`NEXT_PUBLIC_FIREBASE_*`).
 
 ---
 
 ## 🛠️ Installation (Monorepo)
 
-We use `pnpm` workspace to manage dependencies across `admin`, `web`, and `backend`.
+Bootstrap the entire stack with a single command:
 
-### 1. Bootstrap Repository
 ```bash
-# Clone
+# 1. Clone
 git clone https://github.com/okihita/CineRadar.git
 cd CineRadar
 
-# Install Node dependencies (Root + Workspaces)
-pnpm install
+# 2. Bootstrap Node & Python environments
+pnpm run setup
+# (Runs pnpm install and uv sync)
 
-# Install Python environment
-uv sync
+# 3. Setup environment files
+cp .env.example .env
+cp .env.example admin/.env.local
 ```
 
 ---
 
 ## 🚀 Execution
 
+### Development Server
+Start the concurrent development servers:
+```bash
+pnpm dev
+```
+* 🌐 **Consumer Web**: [http://localhost:3000](http://localhost:3000)
+* 🛡️ **Studio Dashboard**: [http://localhost:3001](http://localhost:3001)
+
 ### Backend (Scraper & API)
 Run the scraper manually to verify read/write access to Firestore:
 ```bash
 # Verify Auth
-uv run python -m backend.cli.refresh_token --check
+uv run python backend/cli/refresh_token.py --check
 
 # Test Scrape (1 City)
-uv run python -m backend.cli --city BANDUNG
-```
-
-### Frontend (Admin & Web)
-Start the concurrent development server:
-```bash
-# Starts both Admin (3000) and Web (3001)
-pnpm dev
+uv run python backend/scripts/run_national_scrape.py
 ```
 
 ---
@@ -92,11 +76,14 @@ pnpm dev
 Before pushing any code, run this strictly typed verification:
 
 ```bash
-# 1. Type Check (Frontend)
-pnpm type-check
+# 1. Type Check & Production Build (Frontend)
+pnpm -r type-check
+pnpm -r build
 
-# 2. Type Check (Backend)
+# 2. Type Check & Lint (Backend)
 uv run mypy backend
+uv run ruff check
+```
 
 # 3. Linting
 pnpm lint

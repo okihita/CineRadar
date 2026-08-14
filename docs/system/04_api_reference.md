@@ -6,33 +6,26 @@
 
 | Pipeline | Schedule | Login Required | Output |
 |----------|----------|----------------|--------|
-| **Token Refresh** | Daily 5:50 AM | Yes (Headless) | `auth_token` in Firestore |
-| **Movie + Theatre** | Daily 6:00 AM | No | `snapshots/latest`, `schedules/*` |
-| **JIT Seats** | Every 15 min | No* | `seat_snapshots/*` |
-
-*Uses valid token stored by Token Refresh pipeline.
+| **Token Refresh** | Monthly / Dynamic JIT | Yes (RSA / API) | `auth_tokens/tix_jwt` in Firestore |
+| **Movie + Schedules** | Daily 05:30 & 09:00 WIB | No | `schedules_v2/{date}/movies/*`, `theatres/*` |
+| **JIT Seats** | Every 5-10 min (T-30,20,10) | Yes (Token) | `movie_performance_v2/{metadataId}/days/{date}/showtimes/*` |
+| **CinePoint Box Office** | Daily Morning / Backfill | Yes (CinePoint Bearer) | `cinepoint_daily_boxoffice/*`, `cinepoint_movies/*` |
 
 ---
 
 ## 💻 Command Line Interface (CLI)
 
-The backend is managed via a unified CLI.
+The backend is managed via Python CLI tools in `backend/` and `admin/scripts/`.
 
-### Movie Scraper
-**Entry Point:** [`backend/cli/cli.py`](../backend/cli/cli.py)
+### Nationwide Movie Scraper
+**Entry Point:** [`backend/scripts/run_national_scrape.py`](../../backend/scripts/run_national_scrape.py)
 
 ```bash
-# Basic scrape (all 83 cities, no showtimes)
-uv run python -m backend.cli
+# Full nationwide scrape (all 83 cities)
+uv run python backend/scripts/run_national_scrape.py
 
-# Include detailed showtimes (slower, ~45-75 min)
-uv run python -m backend.cli --schedules
-
-# Scrape single city with showtimes
-uv run python -m backend.cli --city JAKARTA --schedules
-
-# Show browser window (for debugging)
-uv run python -m backend.cli --visible
+# Post-processing rollup & theatre indexing
+uv run python backend/scripts/post_process.py
 ```
 
 ### Inspect Showtime (Raw API Response)
