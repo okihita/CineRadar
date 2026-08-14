@@ -324,7 +324,7 @@ def cmd_execute(db: firestore.Client, resume: bool = False) -> None:
         logger.info(f"  [{i+1}/{len(todo)}] {sid} → {mid}")
 
         # 4a. Copy root doc
-        v1_root = cast("DocumentSnapshot", db.collection(MOVIE_PERFORMANCE).document(sid).get())
+        v1_root = db.collection(MOVIE_PERFORMANCE).document(sid).get()
         if v1_root.exists:
             v1_data = v1_root.to_dict()
             # Remove schedule-specific fields, keep metadata

@@ -37,7 +37,7 @@ import json
 import os
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import requests
@@ -166,7 +166,7 @@ def main():
     elif args.all:
         print("📋 Scanning cinepoint_movies...")
         query = db.collection(COLLECTION).stream()
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         for doc in query:
             d = doc.to_dict()
             doc_id = int(doc.id)
@@ -244,7 +244,7 @@ def main():
                 continue
 
             update = {k: detail[k] for k in ENRICH_FIELDS if k in detail}
-            update["details_fetched_at"] = datetime.now(timezone.utc).isoformat()
+            update["details_fetched_at"] = datetime.now(UTC).isoformat()
             update["_detail_hash"] = content_hash
             doc_ref.set(update, merge=True)
             enriched += 1

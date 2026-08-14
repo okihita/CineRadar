@@ -55,6 +55,7 @@ known-first-party = ["backend"]
 [tool.ruff.lint.per-file-ignores]
 "scripts/*.py" = ["T201"]
 "backend/scripts/*.py" = ["T201"]
+"admin/scripts/*.py" = ["T201"]
 
 [tool.mypy]
 python_version = "3.13"
