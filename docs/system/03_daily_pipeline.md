@@ -32,7 +32,7 @@ gantt
     Hourly Showtimes Dispatch    :active, 09:00, 14h
 
     section Data Sweeper (GCP)
-    Rollup Aggregation (every 10m):active, 10:00, 14h
+    Rollup Aggregation (every 30m):active, 10:00, 14h
 ```
 
 All times are **WIB (UTC+7)**. GitHub Action schedules use UTC.
@@ -143,8 +143,9 @@ graph TD
 Periodically aggregates the individual JIT snapshots from Phase 5 into daily movie performance totals.
 
 ### Component (`backend/functions/sweeper/`)
-- **Trigger**: Cloud Scheduler (`*/15 10-23 * * *` WIB - Every 15 mins).
+- **Trigger**: Cloud Scheduler `jit-sweeper` (`0,30 10-23 * * *` WIB - Every 30 mins).
 - **Task**: Reads newly created `ShowtimeSnapshot` docs and recalculates `DailyPerformance` rollups in `movie_performance_v2`.
+- **Cost Design**: Scheduled at 30-minute intervals to reduce daily Firestore document reads by ~50% (~105,000 reads/day).
 
 ### Domain Models
 

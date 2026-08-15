@@ -67,7 +67,7 @@ flowchart TD
     SCR -->|Layout API| TIX[(TIX ID API)]
     SCR -->|Save Snapshot| FS[(Firestore V2: movie_performance_v2)]
     
-    SW_SCH[Cloud Scheduler: every 15m] -->|Trigger| SWEEP[sweeper]
+    SW_SCH[Cloud Scheduler: every 30m] -->|Trigger| SWEEP[sweeper]
     SWEEP -->|Streaming Rollup| FS
 ```
 

@@ -7,7 +7,12 @@ HTTP-triggered Cloud Function that:
 4. Updates the parent `DailyPerformance` document
 5. Aggregates ALL-TIME stats (root collection)
 
-Triggered by Cloud Scheduler every 30 minutes.
+Triggered by Cloud Scheduler every 30 minutes (`0,30 10-23 * * *` WIB).
+
+⚠️ ARCHITECTURAL & COST EFFICIENCY CONSTRAINT ⚠️
+The sweeper is scheduled at 30-minute intervals (not 15 minutes). This cuts daily
+Firestore document reads by ~50% (~105,000 reads/day) while preserving full accuracy
+for dashboard telemetry. DO NOT reduce this interval without assessing billing impact.
 
 ⚠️ SELF-CONTAINED FUNCTION CONSTRAINT ⚠️
 This function MUST be entirely self-contained. DO NOT:
