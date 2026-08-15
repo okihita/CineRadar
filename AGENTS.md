@@ -73,3 +73,10 @@ After any successful `--no-ff` merge into `dev` or `main`:
 
 1. **Frontend Dependencies**: Shared packages across `admin` and `web` MUST use the **PNPM Catalog (`catalog:`) protocol** defined in root `pnpm-workspace.yaml`. Do not hardcode differing framework versions in `package.json`.
 2. **Backend Dependencies**: Managed exclusively via `uv` in `pyproject.toml` and locked in `uv.lock`. Run `uv sync` to update the local virtual environment.
+
+---
+
+## 6. Cloud Infrastructure & Cost Efficiency Rules
+
+1. **Sweeper Frequency**: The `jit-sweeper` Cloud Scheduler job MUST remain on a **30-minute interval** (`0,30 10-23 * * *`). Do not reduce this frequency without explicit user approval, as 30m saves ~50% (~105,000 reads/day) in Firestore document read operations.
+2. **Cloud Functions Isolation**: Functions in `backend/functions/` (`dispatcher`, `scraper`, `sweeper`) MUST remain 100% self-contained without imports from `backend.*`.

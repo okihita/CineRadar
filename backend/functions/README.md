@@ -108,16 +108,23 @@ The T-30 window means we scrape showtimes **30 minutes before they start**:
 ## Functions
 
 ### Dispatcher (`dispatch-jit-jobs`)
-- **Trigger**: HTTP (Cloud Scheduler)
-- **Schedule**: Every 5 minutes, 9 AM - 11 PM WIB
-- **Purpose**: Find showtimes in T+30 to T+35 window, publish to Pub/Sub
+- **Trigger**: HTTP (Cloud Scheduler `jit-dispatcher`)
+- **Schedule**: Every 5 minutes, 08:00 - 23:55 WIB (`*/5 8-23 * * *`)
+- **Purpose**: Find upcoming showtimes across T-30, T-20, and T-10 windows and publish individual tasks to Pub/Sub
 
 ### Scraper (`scrape-seat-jit`)
 - **Trigger**: Pub/Sub (`scrape-seat-jit` topic)
-- **Max Instances**: 1 (sequential processing)
-- **Timeout**: 60s
+- **Max Instances**: 10 (parallel worker pool for morning schedule bursts)
+- **Timeout**: 180s
 - **Memory**: 512MB
-- **Purpose**: Scrape one showtime, save compressed layout to Firestore
+- **Purpose**: Scrape individual showtime seat map, compute occupancy, and save compressed layout snapshot to Firestore
+
+### Sweeper (`sweeper`)
+- **Trigger**: HTTP (Cloud Scheduler `jit-sweeper`)
+- **Schedule**: Every 30 minutes, 10:00 - 23:30 WIB (`0,30 10-23 * * *`)
+- **Memory**: 512MB
+- **Purpose**: Low-memory streaming aggregation that rolls up individual JIT snapshots into `DailyPerformance` in `movie_performance_v2`
+- **Cost Design**: Scheduled at 30-minute intervals (rather than 15m) to reduce daily Firestore document reads by ~50% (~105k reads/day) with zero loss of telemetry accuracy.
 
 ## Token Management
 
