@@ -60,3 +60,4 @@ firestore_dump_*
 _archive/
 .env.local
 .vercel/
+migration_checkpoint/
