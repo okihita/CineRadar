@@ -198,7 +198,6 @@ def main() -> None:
         doc_ref = db.collection("scraper_logs").document(date_str)
         logger.info(f"[{idx}/{len(pending_dates)}] Deleting scraper_logs/{date_str} and all subcollections...")
 
-        success = False
         for attempt in range(1, 4):
             try:
                 bulk_writer = db.bulk_writer()
@@ -208,7 +207,6 @@ def main() -> None:
                 completed_dates.add(date_str)
                 save_progress(completed_dates)
                 deleted_count += 1
-                success = True
                 break
             except Exception as e:
                 logger.warning(f"Attempt {attempt}/3 failed for scraper_logs/{date_str}: {e}")
