@@ -118,6 +118,7 @@ The T-30 window means we scrape showtimes **30 minutes before they start**:
 - **Timeout**: 180s
 - **Memory**: 512MB
 - **Purpose**: Scrape individual showtime seat map, compute occupancy, and save compressed layout snapshot to Firestore
+- **Cost & Payload Constraint**: Seat grids MUST be compressed using `layout_compressed` (gzipped binary bytes, <2 KB). Uncompressed `raw_api_response` dictionaries MUST NOT be written to Firestore documents to prevent index bloat and excessive holding costs.
 
 ### Sweeper (`sweeper`)
 - **Trigger**: HTTP (Cloud Scheduler `jit-sweeper`)

@@ -1186,7 +1186,6 @@ def save_snapshot(
         "sold_seats": sold_seats,
         "occupancy_pct": occupancy_pct,
         "layout_compressed": layout_compressed,
-        "raw_api_response": raw_api_response,
         "scraped_at": datetime.now(JAKARTA_TZ).isoformat(),
         "scrape_phase": showtime_data.get("scrape_phase", "T-30"),
         # True Audience Metrics

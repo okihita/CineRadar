@@ -111,10 +111,10 @@ python backend/cli/inspect_showtime.py \
 ```
 
 This shows:
-- Whether `raw_api_response` exists (may be missing for legacy data)
+- Whether `layout_compressed` exists and decompresses cleanly
 - Seat status codes found
 - Seat types detected
-- Full API structure
+- Full layout grid
 
 #### 2. Access via Admin API
 
@@ -122,19 +122,19 @@ This shows:
 GET /api/showtimes/[showtimeId]/raw?movieId=X&date=Y
 ```
 
-Returns the complete raw response stored in Firestore.
+Returns the decompressed layout grid and metadata from Firestore.
 
 #### 3. Check Firestore Directly
 
 Navigate to:
 ```
-movie_performance/{movie_id}/days/{date}/showtimes/{showtime_id}
+movie_performance_v2/{metadata_id}/days/{date}/showtimes/{showtime_id}
 ```
 
 Look for:
-- `raw_api_response` field present?
-- Status codes in the response match expected values (1, 5, 6)?
-- Any unexpected seat types?
+- `layout_compressed` field present (binary gzip bytes)
+- Status codes in the decompressed layout match expected values (1, 5, 6)
+- Any unexpected seat types
 
 #### 4. Compare with UI
 
@@ -181,5 +181,5 @@ If the API structure changes, the schema validation will log:
 |--------|------------|------|
 | Total seats = 0 | Seat status codes not recognized | Check status code interpretation in `calculate_occupancy()` |
 | Occupancy > 100% | Sold seats counted twice | Check status code filter logic |
-| Random 0% occupancy | Some showtimes missing raw_api_response | Legacy data - re-scrape or backfill |
+| Random 0% occupancy | Showtime missing layout_compressed | Legacy data - re-scrape or backfill |
 | All seats available | API token expired | Token refresh failed - check `auth_tokens` collection |

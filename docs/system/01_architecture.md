@@ -244,7 +244,6 @@ erDiagram
         string city
         float occupancy_pct
         bytes layout_compressed
-        object raw_api_response
     }
 ```
 
