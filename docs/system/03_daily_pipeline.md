@@ -153,7 +153,7 @@ Periodically aggregates the individual JIT snapshots from Phase 5 into daily mov
 |-------|----------------|------------|
 | `MovieMetadata` | `movie_performance_v2/{metadata_id}` | `title`, `poster`, `age_category` |
 | `DailyPerformance` | `.../days/{YYYY-MM-DD}` | `total_showtimes`, `avg_occupancy_pct`, `total_seats` |
-| `ShowtimeSnapshot` | `.../showtimes/{id}` | `occupancy_pct`, `sold_seats`, `raw_api_response` |
+| `ShowtimeSnapshot` | `.../showtimes/{id}` | `occupancy_pct`, `sold_seats`, `layout_compressed` |
 
 ---
 
