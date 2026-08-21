@@ -65,7 +65,7 @@ flowchart LR
         PUBSUB --> S_JIT
     end
     
-    click AD "https://cineradar-admin.vercel.app"
+    click AD "https://studio.cineradar.id"
     click PW "https://cineradar.id"
 ```
 
@@ -293,7 +293,7 @@ Although `web` and `admin` live in the same repository, they are deployed as sep
 | Project | Root Directory | Hosting | URL |
 |---------|----------------|---------|-----|
 | **cineradar-web** | `web` | Vercel | `cineradar.id` |
-| **cineradar-admin** | `admin` | Vercel | `cineradar-admin.vercel.app` |
+| **cineradar-admin** | `admin` | Vercel | `studio.cineradar.id` |
 
 ### Shared Cache Efficiency
 
