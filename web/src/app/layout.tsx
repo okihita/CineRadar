@@ -13,6 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://cineradar.id'),
   title: "CineRadar - Indonesia Movie Tracker",
   description: "Track movie availability across all Indonesian cities. See which movies are showing where.",
 };

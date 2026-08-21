@@ -18,6 +18,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXTAUTH_URL || 'https://studio.cineradar.id'),
   title: "CineRadar Admin | Intelligence Dashboard",
   description: "Manage and monitor Indonesian cinema theatre data with CineRadar's admin dashboard.",
   icons: {
