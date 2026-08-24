@@ -28,7 +28,6 @@ from google.cloud.firestore import AsyncClient
 
 from backend.domain.time import JAKARTA_TZ
 from backend.infrastructure.firestore_collections import (
-    MOVIE_PERFORMANCE,
     MOVIE_PERFORMANCE_V2,
     MOVIES,
     SCHEDULES,
@@ -241,43 +240,29 @@ async def load_showtimes_from_schedule(db: AsyncClient, date: str) -> list[dict[
     return showtimes
 
 
-async def check_checkpoint_async(
+async def check_existing_initial_layout(
     db: AsyncClient,
-    metadata_id: str | None,
     movie_id: str,
     date: str,
     showtime_id: str,
+    metadata_id: str | None = None,
     force: bool = False,
 ) -> bool:
-    """Check if showtime already has baseline data (async)."""
+    """Check if showtime already has baseline data in V2 (async)."""
     if force:
         return False
 
-    # Try V2 first if metadata_id available
-    if metadata_id:
-        doc_ref_v2 = (
-            db.collection(MOVIE_PERFORMANCE_V2)
-            .document(metadata_id)
-            .collection("days")
-            .document(date)
-            .collection("showtimes")
-            .document(showtime_id)
-        )
-        doc_v2 = await doc_ref_v2.get()
-        if doc_v2.exists and "initial_unavailable" in doc_v2.to_dict():
-            return True
-
-    # Fallback to V1
-    doc_ref_v1 = (
-        db.collection(MOVIE_PERFORMANCE)
-        .document(movie_id)
+    target_id = metadata_id or movie_id
+    doc_ref_v2 = (
+        db.collection(MOVIE_PERFORMANCE_V2)
+        .document(target_id)
         .collection("days")
         .document(date)
         .collection("showtimes")
         .document(showtime_id)
     )
-    doc_v1 = await doc_ref_v1.get()
-    return doc_v1.exists and "initial_unavailable" in doc_v1.to_dict()
+    doc_v2 = await doc_ref_v2.get()
+    return doc_v2.exists and "initial_unavailable" in (doc_v2.to_dict() or {})
 
 
 async def save_initial_layout_async(
@@ -289,23 +274,25 @@ async def save_initial_layout_async(
     price: int | None = None,
     raw_layout: dict[str, Any] | None = None,
 ) -> bool:
-    """Save initial layout to Firestore (dual-write to v1 and V2) - async.
+    """Save initial layout to Firestore (V2 exclusively) - async.
 
     Uses 'Surgical Merge' logic: if doc exists, preserve sold_seats/occupancy_pct.
     """
     movie_id = showtime["movie_id"]
     metadata_id = showtime.get("metadata_id")  # V2: immutable movie entity ID
+    target_id = metadata_id or movie_id
     date = showtime["date"]
     showtime_id = showtime["showtime_id"]
 
-    # Compress layout
+    # Compress layout (<300 bytes gzip binary)
     layout_json = json.dumps(layout_grid)
     layout_compressed = gzip.compress(layout_json.encode("utf-8"))
 
-    # Build document data
+    # Build lightweight document data (raw_layout omitted to prevent storage bloat)
     doc_data = {
         "showtime_id": showtime_id,
         "movie_id": movie_id,
+        "schedule_id": movie_id,
         "movie_title": showtime.get("movie_title", ""),
         "theatre_id": showtime.get("theatre_id"),
         "theatre_name": showtime.get("theatre_name"),
@@ -319,51 +306,28 @@ async def save_initial_layout_async(
         "price": price,
         # Initial state (morning scrape)
         "initial_layout_compressed": layout_compressed,
-        "initial_raw_layout": raw_layout,
         "initial_unavailable": unavailable,
         "initial_available": total_seats - unavailable,
         "initial_scraped_at": datetime.now(JAKARTA_TZ).isoformat(),
     }
 
     try:
-        # V1 write
-        doc_ref_v1 = (
-            db.collection(MOVIE_PERFORMANCE)
-            .document(movie_id)
+        # V2 write
+        doc_ref_v2 = (
+            db.collection(MOVIE_PERFORMANCE_V2)
+            .document(target_id)
             .collection("days")
             .document(date)
             .collection("showtimes")
             .document(showtime_id)
         )
 
-        # Surgical Merge: Only set placeholders if doc doesn't exist
-        doc_v1 = await doc_ref_v1.get()
-        if not doc_v1.exists:
+        doc_v2 = await doc_ref_v2.get()
+        if not doc_v2.exists:
             doc_data["sold_seats"] = 0
             doc_data["occupancy_pct"] = 0.0
 
-        await doc_ref_v1.set(doc_data, merge=True)
-
-        # V2 write (new - only if metadata_id available)
-        if metadata_id:
-            doc_ref_v2 = (
-                db.collection(MOVIE_PERFORMANCE_V2)
-                .document(metadata_id)
-                .collection("days")
-                .document(date)
-                .collection("showtimes")
-                .document(showtime_id)
-            )
-
-            # Same surgical check for V2
-            doc_v2 = await doc_ref_v2.get()
-            v2_doc_data = {**doc_data, "schedule_id": movie_id}
-            if not doc_v2.exists:
-                v2_doc_data["sold_seats"] = 0
-                v2_doc_data["occupancy_pct"] = 0.0
-
-            await doc_ref_v2.set(v2_doc_data, merge=True)
-
+        await doc_ref_v2.set(doc_data, merge=True)
         return True
     except Exception as e:
         logger.error(f"Failed to save {showtime_id}: {e}")
@@ -404,8 +368,13 @@ class LayoutScraper:
             date = showtime["date"]
 
             # 1. Async checkpoint check (with force override)
-            if await check_checkpoint_async(
-                self._db, metadata_id, movie_id, date, showtime_id, self.force
+            if await check_existing_initial_layout(
+                self._db,
+                movie_id,
+                date,
+                showtime_id,
+                metadata_id=metadata_id,
+                force=self.force,
             ):
                 await self.increment_stat("skipped")
                 return
