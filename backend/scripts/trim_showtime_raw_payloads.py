@@ -86,7 +86,10 @@ def stream_with_retry(query: Any, max_retries: int = 5) -> list[Any]:
     """Stream Firestore query results with exponential backoff for transient 503s."""
     for attempt in range(max_retries):
         try:
-            return list(query.stream())
+            docs = []
+            for doc in query.stream(timeout=120):
+                docs.append(doc)
+            return docs
         except Exception as e:
             if attempt == max_retries - 1:
                 raise
@@ -185,40 +188,31 @@ def trim_date_partition(
         if not day_ref.get().exists:
             continue
 
-        showtimes = stream_with_retry(day_ref.collection("showtimes"))
-        if not showtimes:
+        st_refs = list(day_ref.collection("showtimes").list_documents())
+        if not st_refs:
             continue
 
         movie_title = (movie.to_dict() or {}).get("title", "Unknown")
         logger.info(
             f"[{idx}/{len(movies)}] Movie {movie.id} ({movie_title}): "
-            f"{len(showtimes)} showtimes found on {date_str}"
+            f"{len(st_refs)} showtimes found on {date_str}"
         )
 
-        for st in showtimes:
+        for st_ref in st_refs:
             if limit and total_trimmed >= limit:
                 logger.info(f"Reached limit of {limit} documents. Stopping.")
                 break
 
             total_showtimes_scanned += 1
-            data = st.to_dict()
-            fields_present = [f for f in FIELDS_TO_DELETE if f in data]
+            total_trimmed += 1
+            total_bytes_saved += 35 * 1024  # ~35 KB per doc estimated
 
-            if fields_present:
-                total_trimmed += 1
-                doc_str_before = json.dumps({k: str(v) for k, v in data.items()})
-                bytes_before = len(doc_str_before.encode("utf-8"))
-
-                simulated_data = {k: v for k, v in data.items() if k not in FIELDS_TO_DELETE}
-                doc_str_after = json.dumps({k: str(v) for k, v in simulated_data.items()})
-                bytes_after = len(doc_str_after.encode("utf-8"))
-
-                saved = bytes_before - bytes_after
-                total_bytes_saved += saved
-
-                if not dry_run and bulk_writer:
-                    update_dict = dict.fromkeys(fields_present, firestore.DELETE_FIELD)
-                    bulk_writer.update(st.reference, update_dict)
+            if not dry_run and bulk_writer:
+                update_dict = {
+                    "raw_api_response": firestore.DELETE_FIELD,
+                    "initial_raw_layout": firestore.DELETE_FIELD,
+                }
+                bulk_writer.update(st_ref, update_dict)
 
         if limit and total_trimmed >= limit:
             break
