@@ -6,9 +6,9 @@ import Image from 'next/image';
 import {
     Play, Eye, Heart, MessageSquare, ExternalLink,
     Search, Calendar, ChevronLeft, ChevronRight,
-    Sparkles, Film, ThumbsUp, Activity, Copy, Check, FileCode,
+    Film, ThumbsUp, Activity, Copy, Check, FileCode,
     CalendarX2, ArrowRight,
-    Trophy, Zap, AlertTriangle, Sun, Moon, Clock, User
+    Trophy, Zap, AlertTriangle, Sun, Moon
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -108,21 +108,21 @@ export default function TikTokExplorerPage() {
                 hashtag: sovLeader.hashtag,
                 views: sovLeader.dailyViews,
                 sharePct: sovPct,
-                insight: `${sovPct}% of total cinema views (${(sovLeader.dailyViews / 1000000).toFixed(1)}M daily impressions)`,
+                insight: `${sovPct}% market attention (${(sovLeader.dailyViews / 1000000).toFixed(1)}M daily impressions)`,
             },
             womWinner: {
                 title: womWinner.title,
                 hashtag: womWinner.hashtag,
                 positivePct: womWinner.positivePct,
                 topPraise: womWinner.topPraise,
-                insight: `${womWinner.positivePct}% Positive sentiment • ${womWinner.topPraise}`,
+                insight: `${womWinner.positivePct}% Positive rating • ${womWinner.topPraise}`,
             },
             viralityLeader: {
                 title: viralityLeader.title,
                 hashtag: viralityLeader.hashtag,
                 shares: viralityLeader.dailyShares,
                 shareRate: viralityRate,
-                insight: `${viralityLeader.dailyShares.toLocaleString()} clip forwards (${viralityRate}% forward rate)`,
+                insight: `${viralityLeader.dailyShares.toLocaleString()} clip shares (${viralityRate}% forward rate)`,
             },
             frictionTarget: {
                 title: frictionTarget.title,
@@ -216,7 +216,7 @@ export default function TikTokExplorerPage() {
 
     const formattedHeaderDate = useMemo(() => {
         return new Date(`${selectedDate}T00:00:00`).toLocaleDateString('en-US', {
-            weekday: 'long',
+            weekday: 'short',
             month: 'short',
             day: 'numeric',
             year: 'numeric'
@@ -224,135 +224,138 @@ export default function TikTokExplorerPage() {
     }, [selectedDate]);
 
     return (
-        <div className="min-h-screen bg-background text-foreground p-6 max-w-[1600px] mx-auto space-y-8 animate-in fade-in duration-500">
-            {/* Header & Date Navigation Toolbar */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 border-b border-border/60 pb-6">
-                <div className="flex items-center gap-3.5">
-                    <div className="p-3 bg-zinc-950 text-white dark:bg-zinc-800 rounded-2xl flex items-center justify-center shadow-md border border-border/40">
-                        <TikTokIcon className="w-6 h-6" />
+        <div className="space-y-6">
+            {/* Page Header & Date Navigation Toolbar */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/40 pb-5">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-zinc-950 dark:bg-zinc-800 text-white flex items-center justify-center border border-border/40">
+                        <TikTokIcon className="w-5 h-5" />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-black tracking-tight text-foreground">TikTok Radar</h1>
-                        <p className="text-muted-foreground text-sm font-medium mt-0.5">
+                        <h1 className="text-xl font-bold tracking-tight text-foreground">TikTok Radar</h1>
+                        <p className="text-sm text-muted-foreground">
                             Daily audience sentiment, viral momentum, and box office buzz across active cinema releases
                         </p>
                     </div>
                 </div>
 
                 {/* Date Navigator Toolbar */}
-                <div className="flex items-center gap-2 bg-muted/40 p-1.5 rounded-2xl border border-border/50 self-start lg:self-auto shadow-xs">
+                <div className="flex items-center gap-1.5 self-start md:self-auto">
                     <Button
-                        variant="ghost"
+                        variant="outline"
                         size="icon"
                         onClick={handlePrevDay}
-                        className="h-8 w-8 rounded-xl hover:bg-muted/80"
+                        className="h-8 w-8 rounded-lg"
                         title="Previous Day"
                     >
                         <ChevronLeft className="w-4 h-4" />
                     </Button>
 
-                    <div className="flex items-center gap-2 px-3 py-1 bg-background/80 rounded-xl border border-border/40 text-sm font-semibold text-foreground">
-                        <Calendar className="w-4 h-4 text-primary" />
+                    <div className="flex items-center gap-2 px-3 h-8 rounded-lg border border-border/60 bg-muted/20 text-sm font-medium">
+                        <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
                         <input
                             type="date"
                             value={selectedDate}
                             onChange={(e) => setSelectedDate(e.target.value)}
-                            className="bg-transparent border-0 font-semibold focus:outline-none cursor-pointer text-foreground text-sm"
+                            className="bg-transparent border-0 font-medium focus:outline-none cursor-pointer text-foreground text-sm"
                         />
                     </div>
 
                     <Button
-                        variant="ghost"
+                        variant="outline"
                         size="icon"
                         onClick={handleNextDay}
-                        className="h-8 w-8 rounded-xl hover:bg-muted/80"
+                        className="h-8 w-8 rounded-lg"
                         title="Next Day"
                     >
                         <ChevronRight className="w-4 h-4" />
                     </Button>
 
                     <Button
-                        variant={selectedDate === today ? 'secondary' : 'outline'}
+                        variant={selectedDate === today ? 'default' : 'outline'}
                         size="sm"
                         onClick={() => setSelectedDate(today)}
-                        className="h-8 rounded-xl text-sm px-3.5 font-semibold border-border/60 ml-0.5"
+                        className="h-8 text-sm px-3 font-medium rounded-lg"
                     >
                         Today
                     </Button>
                 </div>
             </div>
 
-            {/* If no data exists for selected date, show honest empty state */}
+            {/* Empty State */}
             {!dayData || !actionableInsights ? (
-                <Card className="border-border/60 bg-muted/20 text-center py-16 px-6 rounded-3xl">
-                    <CardContent className="max-w-md mx-auto space-y-5">
-                        <div className="w-16 h-16 rounded-3xl bg-muted flex items-center justify-center mx-auto text-muted-foreground">
-                            <CalendarX2 className="w-8 h-8" />
+                <Card className="border-border/60 text-center py-16 px-6">
+                    <CardContent className="max-w-md mx-auto space-y-4">
+                        <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mx-auto text-muted-foreground">
+                            <CalendarX2 className="w-6 h-6" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-black tracking-tight text-foreground">
-                                No Crawler Data Recorded for {selectedDate}
+                            <h2 className="text-lg font-bold text-foreground">
+                                No Crawler Data for {selectedDate}
                             </h2>
-                            <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                                Automated TikTok scraping and audience comment harvesting were not active on this date. Pilot crawl recordings started on <strong className="text-foreground">August 23, 2026</strong>.
+                            <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                                Automated TikTok scraping and audience comment harvesting were not active on this date. Pilot crawl recordings started on August 23, 2026.
                             </p>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">
+                        <div className="flex items-center justify-center gap-2 pt-2">
                             <Button
+                                size="sm"
                                 onClick={() => setSelectedDate('2026-08-26')}
-                                className="w-full sm:w-auto rounded-xl text-sm font-bold gap-1.5"
+                                className="text-sm font-medium"
                             >
                                 View Today (Aug 26)
-                                <ArrowRight className="w-4 h-4" />
+                                <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
                             </Button>
                             <Button
                                 variant="outline"
+                                size="sm"
                                 onClick={() => setSelectedDate('2026-08-23')}
-                                className="w-full sm:w-auto rounded-xl text-sm font-medium"
+                                className="text-sm font-medium"
                             >
-                                View First Pilot Day (Aug 23)
+                                View Aug 23
                             </Button>
                         </div>
                     </CardContent>
                 </Card>
             ) : (
                 <>
-                    {/* Section Header with Date Context */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/30 pb-3">
-                        <div className="flex items-center gap-2.5">
-                            <div className="w-2 h-2 rounded-full bg-primary" />
-                            <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
-                                Daily Market Signals — {formattedHeaderDate}
+                    {/* Section Date Anchor */}
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                                Daily Market Signals
                             </h2>
+                            <span className="text-sm text-muted-foreground">•</span>
+                            <span className="text-sm font-medium text-foreground">
+                                {formattedHeaderDate}
+                            </span>
                         </div>
                         <span className="text-sm text-muted-foreground">
-                            24h Crawl Window (<span className="font-mono">{selectedDate}</span>)
+                            24h Window (<span className="font-mono">{selectedDate}</span>)
                         </span>
                     </div>
 
-                    {/* 4 Actionable Cinema Intelligence Cards */}
+                    {/* 4 Actionable Intelligence Metric Cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {/* Card 1: Share of Voice (SOV) Leader */}
+                        {/* Card 1: Share of Voice Leader */}
                         <Card
                             onClick={() => setSelectedMovieFilter(actionableInsights.sovLeader.title)}
-                            className="bg-card/70 hover:bg-card border-border/50 hover:border-amber-500/40 border-t-2 border-t-amber-500 cursor-pointer transition-all duration-200 hover:shadow-md group rounded-2xl"
+                            className="border-border/60 hover:border-border cursor-pointer transition-colors"
                         >
-                            <CardHeader className="p-5 pb-2">
-                                <CardDescription className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+                            <CardHeader className="p-4 pb-2">
+                                <CardDescription className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
                                     Share of Voice Leader
-                                    <div className="p-1 rounded-lg bg-amber-500/10 text-amber-500 group-hover:scale-110 transition-transform">
-                                        <Trophy className="w-4 h-4" />
-                                    </div>
+                                    <Trophy className="w-4 h-4 text-amber-500" />
                                 </CardDescription>
-                                <CardTitle className="text-xl font-black text-amber-500 truncate pt-1">
+                                <CardTitle className="text-lg font-bold text-foreground truncate pt-1">
                                     {actionableInsights.sovLeader.title}
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="p-5 pt-0 space-y-2">
-                                <Badge variant="outline" className="text-sm font-semibold border-amber-500/30 text-amber-500 bg-amber-500/10 rounded-full px-2.5 py-0.5">
-                                    <span className="font-mono">{actionableInsights.sovLeader.sharePct}%</span> Market Attention
-                                </Badge>
+                            <CardContent className="p-4 pt-0 space-y-1.5">
+                                <div className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                                    <span className="font-mono font-bold">{actionableInsights.sovLeader.sharePct}%</span> Market Attention
+                                </div>
                                 <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
                                     {actionableInsights.sovLeader.insight}
                                 </p>
@@ -362,23 +365,21 @@ export default function TikTokExplorerPage() {
                         {/* Card 2: Organic Word-of-Mouth Winner */}
                         <Card
                             onClick={() => setSelectedMovieFilter(actionableInsights.womWinner.title)}
-                            className="bg-card/70 hover:bg-card border-border/50 hover:border-emerald-500/40 border-t-2 border-t-emerald-500 cursor-pointer transition-all duration-200 hover:shadow-md group rounded-2xl"
+                            className="border-border/60 hover:border-border cursor-pointer transition-colors"
                         >
-                            <CardHeader className="p-5 pb-2">
-                                <CardDescription className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+                            <CardHeader className="p-4 pb-2">
+                                <CardDescription className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
                                     Top Organic WoM
-                                    <div className="p-1 rounded-lg bg-emerald-500/10 text-emerald-500 group-hover:scale-110 transition-transform">
-                                        <ThumbsUp className="w-4 h-4" />
-                                    </div>
+                                    <ThumbsUp className="w-4 h-4 text-emerald-500" />
                                 </CardDescription>
-                                <CardTitle className="text-xl font-black text-emerald-500 truncate pt-1">
+                                <CardTitle className="text-lg font-bold text-foreground truncate pt-1">
                                     {actionableInsights.womWinner.title}
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="p-5 pt-0 space-y-2">
-                                <Badge variant="outline" className="text-sm font-semibold border-emerald-500/30 text-emerald-500 bg-emerald-500/10 rounded-full px-2.5 py-0.5">
-                                    <span className="font-mono">{actionableInsights.womWinner.positivePct}%</span> Positive Praise
-                                </Badge>
+                            <CardContent className="p-4 pt-0 space-y-1.5">
+                                <div className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                                    <span className="font-mono font-bold">{actionableInsights.womWinner.positivePct}%</span> Positive Praise
+                                </div>
                                 <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
                                     {actionableInsights.womWinner.topPraise}
                                 </p>
@@ -388,25 +389,23 @@ export default function TikTokExplorerPage() {
                         {/* Card 3: Breakout Virality Velocity */}
                         <Card
                             onClick={() => setSelectedMovieFilter(actionableInsights.viralityLeader.title)}
-                            className="bg-card/70 hover:bg-card border-border/50 hover:border-cyan-500/40 border-t-2 border-t-cyan-500 cursor-pointer transition-all duration-200 hover:shadow-md group rounded-2xl"
+                            className="border-border/60 hover:border-border cursor-pointer transition-colors"
                         >
-                            <CardHeader className="p-5 pb-2">
-                                <CardDescription className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+                            <CardHeader className="p-4 pb-2">
+                                <CardDescription className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
                                     Top Virality Velocity
-                                    <div className="p-1 rounded-lg bg-cyan-500/10 text-cyan-500 group-hover:scale-110 transition-transform">
-                                        <Zap className="w-4 h-4" />
-                                    </div>
+                                    <Zap className="w-4 h-4 text-cyan-500" />
                                 </CardDescription>
-                                <CardTitle className="text-xl font-black text-cyan-500 truncate pt-1">
+                                <CardTitle className="text-lg font-bold text-foreground truncate pt-1">
                                     {actionableInsights.viralityLeader.title}
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="p-5 pt-0 space-y-2">
-                                <Badge variant="outline" className="text-sm font-semibold border-cyan-500/30 text-cyan-500 bg-cyan-500/10 rounded-full px-2.5 py-0.5">
-                                    <span className="font-mono">{actionableInsights.viralityLeader.shareRate}%</span> Forward Rate
-                                </Badge>
+                            <CardContent className="p-4 pt-0 space-y-1.5">
+                                <div className="text-sm font-medium text-cyan-600 dark:text-cyan-400">
+                                    <span className="font-mono font-bold">{actionableInsights.viralityLeader.shareRate}%</span> Forward Rate
+                                </div>
                                 <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-                                    <span className="font-mono">{actionableInsights.viralityLeader.shares.toLocaleString()}</span> clip forwards on trending sounds
+                                    <span className="font-mono">{actionableInsights.viralityLeader.shares.toLocaleString()}</span> shares on trending sounds
                                 </p>
                             </CardContent>
                         </Card>
@@ -414,23 +413,21 @@ export default function TikTokExplorerPage() {
                         {/* Card 4: Audience Friction Alert */}
                         <Card
                             onClick={() => setSelectedMovieFilter(actionableInsights.frictionTarget.title)}
-                            className="bg-card/70 hover:bg-card border-border/50 hover:border-rose-500/40 border-t-2 border-t-rose-500 cursor-pointer transition-all duration-200 hover:shadow-md group rounded-2xl"
+                            className="border-border/60 hover:border-border cursor-pointer transition-colors"
                         >
-                            <CardHeader className="p-5 pb-2">
-                                <CardDescription className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+                            <CardHeader className="p-4 pb-2">
+                                <CardDescription className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
                                     Critical Friction Alert
-                                    <div className="p-1 rounded-lg bg-rose-500/10 text-rose-500 group-hover:scale-110 transition-transform">
-                                        <AlertTriangle className="w-4 h-4" />
-                                    </div>
+                                    <AlertTriangle className="w-4 h-4 text-rose-500" />
                                 </CardDescription>
-                                <CardTitle className="text-xl font-black text-rose-500 truncate pt-1">
+                                <CardTitle className="text-lg font-bold text-foreground truncate pt-1">
                                     {actionableInsights.frictionTarget.title}
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="p-5 pt-0 space-y-2">
-                                <Badge variant="outline" className="text-sm font-semibold border-rose-500/30 text-rose-500 bg-rose-500/10 rounded-full px-2.5 py-0.5">
-                                    <span className="font-mono">{actionableInsights.frictionTarget.frictionPct}%</span> Mixed/Friction
-                                </Badge>
+                            <CardContent className="p-4 pt-0 space-y-1.5">
+                                <div className="text-sm font-medium text-rose-600 dark:text-rose-400">
+                                    <span className="font-mono font-bold">{actionableInsights.frictionTarget.frictionPct}%</span> Mixed/Friction
+                                </div>
                                 <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
                                     {actionableInsights.frictionTarget.topComplaint}
                                 </p>
@@ -438,114 +435,84 @@ export default function TikTokExplorerPage() {
                         </Card>
                     </div>
 
-                    {/* Dual-Column Scannable Gemini Market Intelligence Briefings */}
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <Sparkles className="w-4 h-4 text-primary" />
-                                <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">
-                                    Gemini AI Slate Intelligence Briefings
-                                </h3>
-                            </div>
-                            <span className="text-sm text-muted-foreground">
-                                2 Daily Scraper Checkpoints
-                            </span>
-                        </div>
+                    {/* Dual-Column Gemini Intelligence Briefings */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {/* Morning Briefing */}
+                        <Card className="border-border/60 bg-card">
+                            <CardHeader className="p-5 pb-3 border-b border-border/30">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Sun className="w-4 h-4 text-amber-500" />
+                                        <CardTitle className="text-base font-bold text-foreground">
+                                            Morning Trajectory (11:00 WIB)
+                                        </CardTitle>
+                                    </div>
+                                    <Badge variant="outline" className="text-sm font-medium">
+                                        Pre-Showtime
+                                    </Badge>
+                                </div>
+                                <p className="text-sm font-semibold text-foreground/90 pt-2">
+                                    {dayData.briefings.morning.headline}
+                                </p>
+                            </CardHeader>
+                            <CardContent className="p-5 space-y-3">
+                                <p className="text-sm text-muted-foreground leading-relaxed">
+                                    {dayData.briefings.morning.summary}
+                                </p>
+                                <div className="p-3 rounded-lg bg-muted/40 border border-border/40 text-sm text-foreground/90">
+                                    <span className="font-semibold">Actionable Takeaway:</span> {dayData.briefings.morning.keyTakeaway}
+                                </div>
+                            </CardContent>
+                        </Card>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                            {/* Column 1: Morning Briefing */}
-                            <Card className="border-border/60 bg-gradient-to-b from-amber-500/5 via-card/80 to-card flex flex-col justify-between shadow-xs rounded-2xl overflow-hidden">
-                                <CardHeader className="p-5 pb-3 border-b border-border/30 bg-muted/20">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2.5">
-                                            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                                                <Sun className="w-4 h-4" />
-                                            </div>
-                                            <div>
-                                                <CardTitle className="text-sm font-bold text-foreground">
-                                                    Morning Trajectory (11:00 WIB)
-                                                </CardTitle>
-                                                <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
-                                                    <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                                                    Scraped at <span className="font-mono">{dayData.briefings.morning.runTimestamp}</span>
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <Badge variant="outline" className="text-sm font-semibold border-amber-500/30 text-amber-500 bg-amber-500/10 rounded-full px-2.5 py-0.5">
-                                            Pre-Showtime
-                                        </Badge>
+                        {/* Night Recap */}
+                        <Card className="border-border/60 bg-card">
+                            <CardHeader className="p-5 pb-3 border-b border-border/30">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Moon className="w-4 h-4 text-indigo-400" />
+                                        <CardTitle className="text-base font-bold text-foreground">
+                                            Night Box Office Recap (23:00 WIB)
+                                        </CardTitle>
                                     </div>
-                                    <h4 className="text-sm font-bold text-foreground/90 pt-3 leading-snug">
-                                        {dayData.briefings.morning.headline}
-                                    </h4>
-                                </CardHeader>
-                                <CardContent className="p-5 space-y-4">
-                                    <p className="text-sm text-foreground/85 leading-relaxed font-sans">
-                                        {dayData.briefings.morning.summary}
-                                    </p>
-                                    <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-sm text-amber-700 dark:text-amber-300 font-medium leading-relaxed">
-                                        <strong className="font-bold text-amber-800 dark:text-amber-200">Actionable Takeaway:</strong> {dayData.briefings.morning.keyTakeaway}
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            {/* Column 2: Night Recap */}
-                            <Card className="border-border/60 bg-gradient-to-b from-indigo-500/5 via-card/80 to-card flex flex-col justify-between shadow-xs rounded-2xl overflow-hidden">
-                                <CardHeader className="p-5 pb-3 border-b border-border/30 bg-muted/20">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2.5">
-                                            <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                                                <Moon className="w-4 h-4" />
-                                            </div>
-                                            <div>
-                                                <CardTitle className="text-sm font-bold text-foreground">
-                                                    Night Box Office Recap (23:00 WIB)
-                                                </CardTitle>
-                                                <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
-                                                    <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                                                    Scraped at <span className="font-mono">{dayData.briefings.night.runTimestamp}</span>
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <Badge variant="outline" className="text-sm font-semibold border-indigo-500/30 text-indigo-400 bg-indigo-500/10 rounded-full px-2.5 py-0.5">
-                                            Post-Showtimes
-                                        </Badge>
-                                    </div>
-                                    <h4 className="text-sm font-bold text-foreground/90 pt-3 leading-snug">
-                                        {dayData.briefings.night.headline}
-                                    </h4>
-                                </CardHeader>
-                                <CardContent className="p-5 space-y-4">
-                                    <p className="text-sm text-foreground/85 leading-relaxed font-sans">
-                                        {dayData.briefings.night.summary}
-                                    </p>
-                                    <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-sm text-indigo-700 dark:text-indigo-300 font-medium leading-relaxed">
-                                        <strong className="font-bold text-indigo-800 dark:text-indigo-200">Actionable Takeaway:</strong> {dayData.briefings.night.keyTakeaway}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
+                                    <Badge variant="outline" className="text-sm font-medium">
+                                        Post-Showtimes
+                                    </Badge>
+                                </div>
+                                <p className="text-sm font-semibold text-foreground/90 pt-2">
+                                    {dayData.briefings.night.headline}
+                                </p>
+                            </CardHeader>
+                            <CardContent className="p-5 space-y-3">
+                                <p className="text-sm text-muted-foreground leading-relaxed">
+                                    {dayData.briefings.night.summary}
+                                </p>
+                                <div className="p-3 rounded-lg bg-muted/40 border border-border/40 text-sm text-foreground/90">
+                                    <span className="font-semibold">Actionable Takeaway:</span> {dayData.briefings.night.keyTakeaway}
+                                </div>
+                            </CardContent>
+                        </Card>
                     </div>
 
                     {/* Movie Slate Sentiment & Virality Leaderboard */}
-                    <Card className="border-border/60 bg-card rounded-2xl overflow-hidden shadow-xs">
-                        <CardHeader className="p-6 pb-4 border-b border-border/30 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <Card className="border-border/60 bg-card overflow-hidden">
+                        <CardHeader className="p-5 pb-3 border-b border-border/30 flex flex-col md:flex-row md:items-center justify-between gap-2">
                             <div>
                                 <CardTitle className="text-base font-bold flex items-center gap-2">
                                     <Activity className="w-4 h-4 text-primary" />
                                     Daily Movie Slate Sentiment & Virality Leaderboard ({selectedDate})
                                 </CardTitle>
                                 <CardDescription className="text-sm text-muted-foreground mt-0.5">
-                                    Calculated campaign hashtags and audience sentiment split. Click any row to filter feeds below.
+                                    Calculated campaign hashtags and audience sentiment distribution. Click a row to filter feeds.
                                 </CardDescription>
                             </div>
 
                             {selectedMovieFilter !== 'all' && (
                                 <Button
-                                    variant="outline"
+                                    variant="ghost"
                                     size="sm"
                                     onClick={() => setSelectedMovieFilter('all')}
-                                    className="rounded-xl text-sm text-primary font-bold border-primary/30 hover:bg-primary/5"
+                                    className="text-sm text-primary font-semibold h-8"
                                 >
                                     Reset Filter (Show All Movies)
                                 </Button>
@@ -556,13 +523,13 @@ export default function TikTokExplorerPage() {
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left text-sm border-collapse">
                                     <thead>
-                                        <tr className="border-b border-border/40 bg-muted/25 text-muted-foreground uppercase text-sm font-bold tracking-wider">
-                                            <th className="p-4 pl-6">Movie & Calculated Tag</th>
-                                            <th className="p-4">24h Views</th>
-                                            <th className="p-4">Virality Score</th>
-                                            <th className="p-4 w-60">Sentiment Split</th>
-                                            <th className="p-4">Top Audience Praise</th>
-                                            <th className="p-4 pr-6">Top Complaint / Friction</th>
+                                        <tr className="border-b border-border/40 bg-muted/20 text-muted-foreground uppercase text-sm font-semibold">
+                                            <th className="p-3.5 pl-5">Movie & Tag</th>
+                                            <th className="p-3.5">24h Views</th>
+                                            <th className="p-3.5">Virality Score</th>
+                                            <th className="p-3.5 w-56">Sentiment Split</th>
+                                            <th className="p-3.5">Top Audience Praise</th>
+                                            <th className="p-3.5 pr-5">Top Complaint</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-border/30">
@@ -575,57 +542,53 @@ export default function TikTokExplorerPage() {
                                                     key={movie.id}
                                                     onClick={() => setSelectedMovieFilter(isSelected ? 'all' : movie.title)}
                                                     className={`cursor-pointer transition-colors ${
-                                                        isSelected
-                                                            ? 'bg-primary/10 font-medium'
-                                                            : 'hover:bg-muted/30'
+                                                        isSelected ? 'bg-primary/5 font-medium' : 'hover:bg-muted/20'
                                                     }`}
                                                 >
-                                                    <td className="p-4 pl-6">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="p-2 rounded-xl bg-primary/10 text-primary">
-                                                                <Film className="w-4 h-4 flex-shrink-0" />
-                                                            </div>
+                                                    <td className="p-3.5 pl-5">
+                                                        <div className="flex items-center gap-2.5">
+                                                            <Film className="w-4 h-4 text-primary flex-shrink-0" />
                                                             <div>
-                                                                <span className="font-bold text-sm text-foreground block leading-tight">{movie.title}</span>
+                                                                <span className="font-bold text-sm text-foreground block">{movie.title}</span>
                                                                 <span className="text-sm text-muted-foreground">{movie.hashtag} • {movie.distributor}</span>
                                                             </div>
                                                         </div>
                                                     </td>
 
-                                                    <td className="p-4 font-mono font-bold text-foreground">
+                                                    <td className="p-3.5 font-mono font-medium text-foreground">
                                                         {movie.dailyViews.toLocaleString()}
                                                     </td>
 
-                                                    <td className="p-4">
-                                                        <Badge variant="outline" className="text-sm font-semibold border-primary/30 text-primary rounded-full px-2.5 py-0.5">
+                                                    <td className="p-3.5">
+                                                        <Badge variant="outline" className="text-sm font-medium">
                                                             {movie.viralityScore}
                                                         </Badge>
                                                     </td>
 
                                                     {/* Sentiment Progress Bar */}
-                                                    <td className="p-4">
-                                                        <div className="space-y-1.5">
+                                                    <td className="p-3.5">
+                                                        <div className="space-y-1">
                                                             <div className="flex justify-between text-sm text-muted-foreground">
-                                                                <span className="text-emerald-500 font-bold"><span className="font-mono">{movie.positivePct}%</span> Pos</span>
+                                                                <span className="text-emerald-500"><span className="font-mono">{movie.positivePct}%</span> Pos</span>
                                                                 <span className="text-amber-500"><span className="font-mono">{movie.mixedPct}%</span> Mix</span>
                                                                 <span className="text-rose-500"><span className="font-mono">{movie.negativePct}%</span> Neg</span>
                                                             </div>
-                                                            <div className="w-full h-2.5 rounded-full overflow-hidden flex bg-muted/60">
-                                                                <div style={{ width: `${movie.positivePct}%` }} className="bg-emerald-500 h-full transition-all" />
-                                                                <div style={{ width: `${movie.mixedPct}%` }} className="bg-amber-500 h-full transition-all" />
-                                                                <div style={{ width: `${movie.negativePct}%` }} className="bg-rose-500 h-full transition-all" />
+                                                            <div className="w-full h-2 rounded-full overflow-hidden flex bg-muted">
+                                                                <div style={{ width: `${movie.positivePct}%` }} className="bg-emerald-500 h-full" />
+                                                                <div style={{ width: `${movie.mixedPct}%` }} className="bg-amber-500 h-full" />
+                                                                <div style={{ width: `${movie.negativePct}%` }} className="bg-rose-500 h-full" />
                                                             </div>
                                                         </div>
                                                     </td>
 
-                                                    <td className="p-4 text-foreground/90">
-                                                        <Badge variant="secondary" className="text-sm font-normal bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20 rounded-lg px-2.5 py-1">
+                                                    <td className="p-3.5 text-foreground/90">
+                                                        <Badge variant="secondary" className="text-sm font-normal">
                                                             {movie.topPraise}
                                                         </Badge>
                                                     </td>
 
-                                                    <td className="p-4 pr-6 text-muted-foreground">
-                                                        <Badge variant="secondary" className="text-sm font-normal bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/20 rounded-lg px-2.5 py-1">
+                                                    <td className="p-3.5 pr-5 text-muted-foreground">
+                                                        <Badge variant="secondary" className="text-sm font-normal">
                                                             {movie.topComplaint}
                                                         </Badge>
                                                     </td>
@@ -639,19 +602,19 @@ export default function TikTokExplorerPage() {
                     </Card>
 
                     {/* Main Tabs Feed Section */}
-                    <Tabs defaultValue="videos" className="space-y-6">
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                            <TabsList className="bg-muted/50 p-1 rounded-2xl border border-border/40">
-                                <TabsTrigger value="videos" className="gap-2 rounded-xl text-sm font-bold uppercase px-4 py-2">
-                                    <Play className="w-4 h-4" />
+                    <Tabs defaultValue="videos" className="space-y-4">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                            <TabsList className="bg-muted/40 p-1 rounded-lg border border-border/40">
+                                <TabsTrigger value="videos" className="gap-2 text-sm font-medium">
+                                    <Play className="w-3.5 h-3.5" />
                                     Viral Videos ({filteredPosts.length})
                                 </TabsTrigger>
-                                <TabsTrigger value="comments" className="gap-2 rounded-xl text-sm font-bold uppercase px-4 py-2">
-                                    <MessageSquare className="w-4 h-4" />
+                                <TabsTrigger value="comments" className="gap-2 text-sm font-medium">
+                                    <MessageSquare className="w-3.5 h-3.5" />
                                     Audience Comments ({filteredComments.length})
                                 </TabsTrigger>
-                                <TabsTrigger value="raw" className="gap-2 rounded-xl text-sm font-bold uppercase px-4 py-2">
-                                    <FileCode className="w-4 h-4" />
+                                <TabsTrigger value="raw" className="gap-2 text-sm font-medium">
+                                    <FileCode className="w-3.5 h-3.5" />
                                     Daily Raw JSON
                                 </TabsTrigger>
                             </TabsList>
@@ -660,9 +623,9 @@ export default function TikTokExplorerPage() {
                             <div className="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1">
                                 <button
                                     onClick={() => setSelectedMovieFilter('all')}
-                                    className={`px-3.5 py-1.5 rounded-xl text-sm font-bold transition-all ${
+                                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                                         selectedMovieFilter === 'all'
-                                            ? 'bg-primary text-primary-foreground shadow-xs'
+                                            ? 'bg-primary text-primary-foreground'
                                             : 'bg-muted/40 hover:bg-muted text-muted-foreground'
                                     }`}
                                 >
@@ -672,9 +635,9 @@ export default function TikTokExplorerPage() {
                                     <button
                                         key={m.id}
                                         onClick={() => setSelectedMovieFilter(m.title)}
-                                        className={`px-3.5 py-1.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${
+                                        className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
                                             selectedMovieFilter === m.title
-                                                ? 'bg-primary text-primary-foreground shadow-xs'
+                                                ? 'bg-primary text-primary-foreground'
                                                 : 'bg-muted/40 hover:bg-muted text-muted-foreground'
                                         }`}
                                     >
@@ -688,37 +651,37 @@ export default function TikTokExplorerPage() {
                         <TabsContent value="videos" className="space-y-4">
                             <div className="flex items-center gap-3">
                                 <div className="relative flex-1 max-w-md">
-                                    <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                                     <Input
                                         placeholder="Search in captions or creators..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="pl-10 rounded-2xl bg-muted/20 border-border/50 text-sm h-10"
+                                        className="pl-9 bg-muted/20 text-sm h-9"
                                     />
                                 </div>
-                                <span className="text-sm text-muted-foreground font-medium">
-                                    Showing <span className="font-mono font-bold text-foreground">{filteredPosts.length}</span> videos for {selectedDate}
+                                <span className="text-sm text-muted-foreground">
+                                    Showing <span className="font-mono font-medium">{filteredPosts.length}</span> videos for {selectedDate}
                                 </span>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {filteredPosts.map((post: ExplorerPost) => (
-                                    <Card key={post.id} className="overflow-hidden bg-card/70 hover:bg-card border-border/50 transition-all duration-200 flex flex-col justify-between group shadow-xs hover:shadow-md rounded-2xl">
+                                    <Card key={post.id} className="overflow-hidden bg-card border-border/50 flex flex-col justify-between">
                                         <div>
-                                            {/* Creator & Movie Tag Header */}
-                                            <div className="p-4 pb-3 flex items-center justify-between gap-3 border-b border-border/30 bg-muted/10">
+                                            {/* Creator Header */}
+                                            <div className="p-3.5 pb-2.5 flex items-center justify-between gap-3 border-b border-border/30">
                                                 <div className="flex items-center gap-2.5 min-w-0">
                                                     {post.source_avatar ? (
                                                         <Image
                                                             src={post.source_avatar}
                                                             alt={post.source_name}
-                                                            width={36}
-                                                            height={36}
-                                                            className="w-9 h-9 rounded-full object-cover border border-border/40 flex-shrink-0"
+                                                            width={32}
+                                                            height={32}
+                                                            className="w-8 h-8 rounded-full object-cover border border-border/40 flex-shrink-0"
                                                             unoptimized
                                                         />
                                                     ) : (
-                                                        <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary flex-shrink-0">
+                                                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-semibold text-muted-foreground flex-shrink-0">
                                                             {post.source_name ? post.source_name.charAt(0) : 'T'}
                                                         </div>
                                                     )}
@@ -727,33 +690,33 @@ export default function TikTokExplorerPage() {
                                                         <p className="text-sm text-muted-foreground truncate">{post.source_handle}</p>
                                                     </div>
                                                 </div>
-                                                <Badge variant="outline" className="text-sm font-semibold border-primary/20 text-primary rounded-full px-2.5 py-0.5">
+                                                <Badge variant="outline" className="text-sm font-normal">
                                                     {post.movieTitle}
                                                 </Badge>
                                             </div>
 
-                                            {/* Thumbnail Preview */}
+                                            {/* Thumbnail */}
                                             {post.thumbnail && (
-                                                <div className="relative w-full h-48 bg-muted/40 overflow-hidden">
+                                                <div className="relative w-full h-44 bg-muted overflow-hidden">
                                                     <Image
                                                         src={post.thumbnail}
                                                         alt={post.title}
                                                         fill
-                                                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                                        className="object-cover"
                                                         unoptimized
                                                     />
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent flex items-end p-3.5">
-                                                        <div className="flex items-center gap-4 text-white text-sm font-semibold">
-                                                            <span className="flex items-center gap-1.5">
-                                                                <Eye className="w-4 h-4 text-cyan-400" />
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-3">
+                                                        <div className="flex items-center gap-4 text-white text-sm font-medium">
+                                                            <span className="flex items-center gap-1">
+                                                                <Eye className="w-3.5 h-3.5 text-cyan-400" />
                                                                 <span className="font-mono">{(post.metrics?.views || 0).toLocaleString()}</span>
                                                             </span>
-                                                            <span className="flex items-center gap-1.5">
-                                                                <Heart className="w-4 h-4 text-rose-400" />
+                                                            <span className="flex items-center gap-1">
+                                                                <Heart className="w-3.5 h-3.5 text-rose-400" />
                                                                 <span className="font-mono">{(post.metrics?.likes || 0).toLocaleString()}</span>
                                                             </span>
-                                                            <span className="flex items-center gap-1.5">
-                                                                <MessageSquare className="w-4 h-4 text-amber-400" />
+                                                            <span className="flex items-center gap-1">
+                                                                <MessageSquare className="w-3.5 h-3.5 text-amber-400" />
                                                                 <span className="font-mono">{(post.metrics?.comments || 0).toLocaleString()}</span>
                                                             </span>
                                                         </div>
@@ -762,21 +725,21 @@ export default function TikTokExplorerPage() {
                                             )}
 
                                             {/* Caption */}
-                                            <div className="p-4 space-y-2.5">
+                                            <div className="p-3.5 space-y-2">
                                                 <p className="text-sm line-clamp-3 leading-relaxed text-foreground/90 whitespace-pre-line">
                                                     {post.text}
                                                 </p>
                                             </div>
                                         </div>
 
-                                        {/* Footer Link */}
-                                        <div className="p-4 pt-2.5 border-t border-border/30 flex items-center justify-between text-sm text-muted-foreground bg-muted/5">
+                                        {/* Footer */}
+                                        <div className="p-3.5 pt-2 border-t border-border/30 flex items-center justify-between text-sm text-muted-foreground">
                                             <span>{new Date(post.published_at).toLocaleDateString()}</span>
                                             <a
                                                 href={post.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="font-semibold text-primary hover:underline flex items-center gap-1.5"
+                                                className="font-medium text-primary hover:underline flex items-center gap-1"
                                             >
                                                 Watch on TikTok
                                                 <ExternalLink className="w-3.5 h-3.5" />
@@ -791,33 +754,28 @@ export default function TikTokExplorerPage() {
                         <TabsContent value="comments" className="space-y-4">
                             <div className="flex items-center gap-3">
                                 <div className="relative flex-1 max-w-md">
-                                    <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                                     <Input
-                                        placeholder="Search in comments or topics (e.g. ending, baper, jump scare)..."
+                                        placeholder="Search in comments or topics..."
                                         value={commentSearch}
                                         onChange={(e) => setCommentSearch(e.target.value)}
-                                        className="pl-10 rounded-2xl bg-muted/20 border-border/50 text-sm h-10"
+                                        className="pl-9 bg-muted/20 text-sm h-9"
                                     />
                                 </div>
-                                <span className="text-sm text-muted-foreground font-medium">
-                                    Showing <span className="font-mono font-bold text-foreground">{filteredComments.length}</span> comments for {selectedDate}
+                                <span className="text-sm text-muted-foreground">
+                                    Showing <span className="font-mono font-medium">{filteredComments.length}</span> comments for {selectedDate}
                                 </span>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
                                 {filteredComments.map((comment) => (
-                                    <Card key={comment.id} className="bg-card/70 hover:bg-card border-border/40 p-4.5 transition-all space-y-3 shadow-xs rounded-2xl flex flex-col justify-between">
-                                        <div className="space-y-2.5">
+                                    <Card key={comment.id} className="bg-card border-border/40 p-4 space-y-2.5 flex flex-col justify-between">
+                                        <div className="space-y-2">
                                             <div className="flex items-center justify-between gap-2">
-                                                <div className="flex items-center gap-2 min-w-0">
-                                                    <div className="p-1 rounded-full bg-muted text-muted-foreground">
-                                                        <User className="w-3.5 h-3.5" />
-                                                    </div>
-                                                    <span className="text-sm font-bold text-foreground truncate">
-                                                        @{comment.authorName}
-                                                    </span>
-                                                </div>
-                                                <Badge variant="outline" className="text-sm font-semibold rounded-full px-2 py-0.5">
+                                                <span className="text-sm font-semibold text-foreground">
+                                                    @{comment.authorName}
+                                                </span>
+                                                <Badge variant="outline" className="text-sm font-normal">
                                                     {comment.movieTitle}
                                                 </Badge>
                                             </div>
@@ -827,19 +785,12 @@ export default function TikTokExplorerPage() {
                                             </p>
                                         </div>
 
-                                        <div className="flex items-center justify-between pt-2.5 text-sm text-muted-foreground border-t border-border/20">
-                                            <span className="flex items-center gap-1.5 font-semibold text-rose-500">
-                                                <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-500" />
+                                        <div className="flex items-center justify-between pt-2 text-sm text-muted-foreground border-t border-border/20">
+                                            <span className="flex items-center gap-1 text-rose-500 font-medium">
+                                                <Heart className="w-3.5 h-3.5 fill-rose-500" />
                                                 <span className="font-mono">{comment.diggCount}</span> likes
                                             </span>
-                                            <Badge
-                                                variant="secondary"
-                                                className={`text-sm font-normal rounded-lg px-2 py-0.5 ${
-                                                    comment.sentiment === 'positive'
-                                                        ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20'
-                                                        : 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20'
-                                                }`}
-                                            >
+                                            <Badge variant="secondary" className="text-sm font-normal">
                                                 {comment.topic}
                                             </Badge>
                                         </div>
@@ -858,14 +809,14 @@ export default function TikTokExplorerPage() {
                                     variant="outline"
                                     size="sm"
                                     onClick={handleCopyJson}
-                                    className="rounded-xl gap-2 text-sm font-medium"
+                                    className="gap-2 text-sm font-medium"
                                 >
                                     {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
                                     {copied ? 'Copied' : 'Copy JSON'}
                                 </Button>
                             </div>
 
-                            <div className="bg-zinc-950 text-zinc-200 p-5 rounded-2xl border border-border/40 overflow-x-auto max-h-[600px] font-mono text-sm leading-relaxed">
+                            <div className="bg-zinc-950 text-zinc-200 p-4 rounded-xl border border-border/40 overflow-x-auto max-h-[600px] font-mono text-sm leading-relaxed">
                                 <pre>{JSON.stringify({
                                     date: selectedDate,
                                     dayLabel: dayData.dayLabel,
