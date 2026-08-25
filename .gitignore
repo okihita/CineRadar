@@ -62,3 +62,7 @@ _archive/
 .env.local
 .vercel/
 migration_checkpoint/
+
+# Playwright Test Artifacts
+test-results/
+playwright-report/
