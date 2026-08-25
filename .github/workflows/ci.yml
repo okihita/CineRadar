@@ -8,7 +8,7 @@ on:
     paths:
       - 'backend/**'
       - 'tests/**'
-      - 'admin/**'
+      - 'studio/**'
       - 'web/**'
   pull_request:
     branches: [main]
@@ -49,15 +49,15 @@ jobs:
         with:
           fail_ci_if_error: false
 
-  # Admin Frontend
-  admin-frontend:
-    name: Admin Frontend
+  # Studio Frontend
+  studio-frontend:
+    name: Studio Frontend
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     defaults:
       run:
-        working-directory: admin
+        working-directory: studio
 
     steps:
       - uses: actions/checkout@v7

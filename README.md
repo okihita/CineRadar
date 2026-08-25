@@ -35,7 +35,7 @@ flowchart TB
     end
 
     subgraph Frontend ["🚀 Monorepo Frontend Applications"]
-        Admin["🛡️ Studio Admin Dashboard (admin: Port 3001)"]
+        Studio["🛡️ Studio Dashboard (studio: Port 3001)"]
         Web["🌐 Consumer Web App (web: Port 3000)"]
     end
 
@@ -43,7 +43,7 @@ flowchart TB
     CP --> Backend
     YT --> Backend
     Disp & Sweep & JIT --> Storage
-    Storage --> Admin
+    Storage --> Studio
     Storage --> Web
 ```
 
@@ -62,7 +62,7 @@ pnpm run setup
 ### 2. Configure Environment
 ```bash
 cp .env.example .env
-cp .env.example admin/.env.local
+cp .env.example studio/.env.local
 ```
 
 ### 3. Launch Local Development
@@ -78,8 +78,8 @@ pnpm dev
 
 ```text
 CineRadar/
-├── admin/          # 🛡️ Studio / Admin Dashboard (Next.js 16, Tailwind CSS v4, React 19, SWR)
-│   └── scripts/    # 🛠️ CinePoint backfill and enrichment scripts (see admin/scripts/README.md)
+├── studio/         # 🛡️ Studio Dashboard (Next.js 16, Tailwind CSS v4, React 19, SWR)
+│   └── scripts/    # 🛠️ CinePoint backfill and enrichment scripts (see studio/scripts/README.md)
 ├── web/            # 🌐 Consumer Web App (Next.js 16, React 19, Live showtimes)
 ├── backend/        # 🐍 Python 3.13 Scraping Engine (uv, httpx, Firestore 2.28)
 │   ├── functions/  # ⚡ Gen 2 Cloud Functions (dispatcher, sweeper, scrape_seat_jit)

@@ -30,9 +30,9 @@ updates:
     commit-message:
       prefix: "deps"
 
-  # npm (admin frontend)
+  # npm (studio frontend)
   - package-ecosystem: "npm"
-    directory: "/admin"
+    directory: "/studio"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -41,4 +41,4 @@ updates:
         patterns:
           - "*"
     commit-message:
-      prefix: "deps(admin)"
+      prefix: "deps(studio)"
