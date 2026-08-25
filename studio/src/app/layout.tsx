@@ -19,19 +19,19 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXTAUTH_URL || 'https://studio.cineradar.id'),
-  title: "CineRadar Admin | Intelligence Dashboard",
-  description: "Manage and monitor Indonesian cinema theatre data with CineRadar's admin dashboard.",
+  title: "CineRadar Studio | Intelligence Dashboard",
+  description: "Manage and monitor Indonesian cinema theatre data with CineRadar's Studio dashboard.",
   icons: {
     icon: "/icon.svg",
   },
   openGraph: {
-    title: "CineRadar Admin",
+    title: "CineRadar Studio",
     description: "Forensic Market Intelligence Dashboard",
     images: ['/opengraph-image'],
   },
   twitter: {
     card: 'summary_large_image',
-    title: "CineRadar Admin",
+    title: "CineRadar Studio",
     images: ['/opengraph-image'],
   }
 };

@@ -28,7 +28,7 @@ Resume algorithm:
     On --resume: re-scrapes last_scraped_date (for partial-day safety),
     then continues backward to date_start.
 
-Env vars (from admin/.env.local):
+Env vars (from studio/.env.local):
     FIREBASE_PROJECT_ID
     FIREBASE_CLIENT_EMAIL
     FIREBASE_PRIVATE_KEY
