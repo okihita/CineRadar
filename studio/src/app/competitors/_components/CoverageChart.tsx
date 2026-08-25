@@ -18,7 +18,7 @@ export function CoverageChart({ data, daysCount }: { data: CoverageChartDatum[];
   return (
     <Card className="overflow-hidden border-border/50">
       <CardContent className="p-6">
-        <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-4">
+        <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-4">
           CineRadar Coverage Ratio vs CinePoint — Last {daysCount} Days
         </h3>
         <div className="h-[300px] w-full">
@@ -65,7 +65,7 @@ export function CoverageChart({ data, daysCount }: { data: CoverageChartDatum[];
             </LineChart>
           </ResponsiveContainer>
         </div>
-        <div className="mt-4 px-4 py-3 rounded-lg border border-border/40 bg-muted/5 text-[11px] text-muted-foreground leading-relaxed">
+        <div className="mt-4 px-4 py-3 rounded-lg border border-border/40 bg-muted/5 text-sm text-muted-foreground leading-relaxed">
           <span className="font-semibold text-foreground">Reading this chart:</span> The coverage ratio shows what fraction of CinePoint&apos;s total each CineRadar captures. 
           A <span className="font-semibold">stable line</span> means CineRadar is a reliable sample of the market — useful for extrapolation. 
           A <span className="font-semibold">volatile line</span> indicates inconsistent scraping coverage.
@@ -79,11 +79,11 @@ function CoverageTooltip({ active, payload, label }: { active?: boolean; payload
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-background/95 backdrop-blur-md border border-border/40 rounded-xl shadow-2xl p-3 min-w-[160px]">
-      <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-2 border-b border-border/20 pb-1">{label}</p>
+      <p className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-2 border-b border-border/20 pb-1">{label}</p>
       {payload.map((entry, i) => (
         <div key={i} className="flex items-center justify-between gap-4 py-0.5">
-          <span className="text-[10px] font-bold text-muted-foreground">{entry.name}</span>
-          <span className="font-mono text-[11px] font-black">{typeof entry.value === 'number' ? `${entry.value.toFixed(1)}%` : '—'}</span>
+          <span className="text-sm font-bold text-muted-foreground">{entry.name}</span>
+          <span className="font-mono text-sm font-black">{typeof entry.value === 'number' ? `${entry.value.toFixed(1)}%` : '—'}</span>
         </div>
       ))}
     </div>

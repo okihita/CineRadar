@@ -68,7 +68,7 @@ export async function DailyPerformanceDetail({
             <div className="hidden lg:flex items-center gap-8 px-8 py-2 border-x border-border/30">
                 {/* Occupancy */}
                 <div className="flex flex-col items-center">
-                    <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
+                    <div className="flex items-center gap-1.5 text-sm font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
                         <Target className="w-3 h-3" />
                         OCR
                     </div>
@@ -79,13 +79,13 @@ export async function DailyPerformanceDetail({
                         )}>
                             {formatOccupancy(dailyStats.avg_occupancy_pct)}
                         </span>
-                        <span className="text-[10px] font-bold opacity-40 uppercase">%</span>
+                        <span className="text-sm font-bold opacity-40 uppercase">%</span>
                     </div>
                 </div>
 
                 {/* Audience */}
                 <div className="flex flex-col items-center">
-                    <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
+                    <div className="flex items-center gap-1.5 text-sm font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
                         <Users className="w-3 h-3" />
                         Audience
                     </div>
@@ -96,7 +96,7 @@ export async function DailyPerformanceDetail({
 
                 {/* Capacity */}
                 <div className="flex flex-col items-center">
-                    <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
+                    <div className="flex items-center gap-1.5 text-sm font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
                         <Armchair className="w-3 h-3" />
                         Inventory
                     </div>
@@ -107,7 +107,7 @@ export async function DailyPerformanceDetail({
 
                 {/* Markets */}
                 <div className="flex flex-col items-center">
-                    <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
+                    <div className="flex items-center gap-1.5 text-sm font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
                         <MapPin className="w-3 h-3" />
                         Markets
                     </div>

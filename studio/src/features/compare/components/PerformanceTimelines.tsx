@@ -19,9 +19,9 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
                         <div key={index} className="flex items-center justify-between gap-6" style={{ color: entry.stroke || entry.color }}>
                             <div className="flex items-center gap-2">
                                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.stroke || entry.color }} />
-                                <span className="text-xs font-medium">{abbreviateTitle(entry.name)}:</span>
+                                <span className="text-sm font-medium">{abbreviateTitle(entry.name)}:</span>
                             </div>
-                            <span className="text-xs font-bold text-right">
+                            <span className="text-sm font-bold text-right">
                                 {entry.dataKey.includes('occupancy')
                                     ? `${entry.value.toFixed(1)}%`
                                     : entry.value.toLocaleString()}

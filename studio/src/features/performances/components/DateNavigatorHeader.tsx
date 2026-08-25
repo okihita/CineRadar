@@ -47,7 +47,7 @@ export function DateNavigatorHeader({ date, movieId }: DateNavigatorHeaderProps)
                     <button className="flex flex-col items-end px-6 py-2.5 hover:bg-primary/[0.02] transition-colors text-right min-w-[180px]">
                         <div className="flex items-center gap-2 text-muted-foreground mb-0.5">
                             <CalendarIcon className="w-3.5 h-3.5" />
-                            <span className="text-[9px] font-black uppercase tracking-widest">
+                            <span className="text-sm font-black uppercase tracking-widest">
                                 Intelligence For
                             </span>
                         </div>

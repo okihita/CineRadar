@@ -44,7 +44,7 @@ export function DataEntryPanel({
           rel="noopener noreferrer"
           className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-border/20 bg-muted/3 hover:bg-muted/8 transition-colors group"
         >
-          <span className="text-[10px] text-muted-foreground/50 leading-relaxed">
+          <span className="text-sm text-muted-foreground/50 leading-relaxed">
             {isMissing
               ? 'CinePoint may not have posted this date — '
               : `Missing ${hasShowtimes ? 'admissions' : 'showtimes'} — `}

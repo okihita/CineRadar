@@ -58,7 +58,7 @@ export function MovieSummaryCard({ movie }: MovieSummaryCardProps) {
                     </div>
 
                     {/* Enriched Metadata */}
-                    <div className="mt-4 space-y-2 text-xs">
+                    <div className="mt-4 space-y-2 text-sm">
                         <div className="flex items-center gap-2">
                             <Film className="w-3.5 h-3.5 text-muted-foreground/70" />
                             <span className="font-semibold text-muted-foreground">Production:</span>

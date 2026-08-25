@@ -20,7 +20,7 @@ export function ScheduleStats({ totalMovies, totalShowtimes, totalAvailableShowt
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{totalMovies}</div>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                         Scheduled for this date
                     </p>
                 </CardContent>
@@ -49,12 +49,12 @@ export function ScheduleStats({ totalMovies, totalShowtimes, totalAvailableShowt
                                     style={{ width: `${(totalAvailableShowtimes / totalShowtimes) * 100}%` }}
                                 />
                             </div>
-                            <p className="text-[10px] text-muted-foreground">
+                            <p className="text-sm text-muted-foreground">
                                 {((totalAvailableShowtimes / totalShowtimes) * 100).toFixed(1)}% bookable
                             </p>
                         </div>
                     ) : (
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-sm text-muted-foreground mt-1">
                             Individual screenings
                         </p>
                     )}
@@ -69,7 +69,7 @@ export function ScheduleStats({ totalMovies, totalShowtimes, totalAvailableShowt
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{totalTheatres}</div>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                         Across all cities
                     </p>
                 </CardContent>

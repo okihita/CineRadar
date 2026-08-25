@@ -29,7 +29,7 @@ export function ForensicAuditProgress({ auditedCount, totalCount, size = 'md' }:
                     style={{ width: `${progress}%` }}
                 />
             </div>
-            <span className="text-[9px] font-black font-mono text-muted-foreground/60">
+            <span className="text-sm font-black font-mono text-muted-foreground/60">
                 {progress.toFixed(0)}%
             </span>
         </div>

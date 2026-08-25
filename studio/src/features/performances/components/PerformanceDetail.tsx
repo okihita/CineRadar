@@ -97,7 +97,7 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
                 <div className="hidden lg:flex items-center gap-8 px-8 py-2 border-x border-border/30">
                     {/* All-Time Occupancy */}
                     <div className="flex flex-col items-center">
-                        <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
+                        <div className="flex items-center gap-1.5 text-sm font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
                             <Target className="w-3 h-3" />
                             ALL-TIME OCR
                         </div>
@@ -109,13 +109,13 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
                                 {formatOccupancy(movie.avg_occupancy_pct)}
                             </span>
 
-                            <span className="text-[10px] font-bold opacity-40 uppercase">%</span>
+                            <span className="text-sm font-bold opacity-40 uppercase">%</span>
                         </div>
                     </div>
 
                     {/* Total Audience */}
                     <div className="flex flex-col items-center">
-                        <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
+                        <div className="flex items-center gap-1.5 text-sm font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
                             <Users className="w-3 h-3" />
                             Total Audience
                         </div>
@@ -126,7 +126,7 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
 
                     {/* Total Inventory */}
                     <div className="flex flex-col items-center">
-                        <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
+                        <div className="flex items-center gap-1.5 text-sm font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
                             <Armchair className="w-3 h-3" />
                             Total Inventory
                         </div>
@@ -137,7 +137,7 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
 
                     {/* Showtimes Count */}
                     <div className="flex flex-col items-center">
-                        <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
+                        <div className="flex items-center gap-1.5 text-sm font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
                             <Globe className="w-3 h-3" />
                             <span>Total Showtimes</span>
                             <TooltipProvider>
@@ -146,7 +146,7 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
                                         <Info className="w-2.5 h-2.5 text-primary/40 cursor-help hover:text-primary transition-colors" />
                                     </TooltipTrigger>
                                     <TooltipContent className="max-w-[200px] bg-background/95 backdrop-blur-md border-border/40 p-3 rounded-xl shadow-xl">
-                                        <p className="text-[10px] leading-relaxed font-medium text-foreground">
+                                        <p className="text-sm leading-relaxed font-medium text-foreground">
                                             <strong className="text-primary uppercase block mb-1">Cumulative Supply</strong>
                                             The total number of individual showtimes (units) tracked for this title since its release date.
                                         </p>
@@ -165,7 +165,7 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
                     <div className="flex flex-col items-end">
                         <div className="flex items-center gap-2 text-muted-foreground">
                             <Globe className="w-3.5 h-3.5 opacity-60" />
-                            <span className="text-[10px] font-black uppercase tracking-widest opacity-60">
+                            <span className="text-sm font-black uppercase tracking-widest opacity-60">
                                 National Aggregated View
                             </span>
                         </div>
@@ -173,7 +173,7 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
                             href={getFirestoreConsoleUrl('movie_performance_v2', movieId)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-[8px] font-black uppercase text-primary hover:underline mt-0.5"
+                            className="text-sm font-black uppercase text-primary hover:underline mt-0.5"
                         >
                             View in Firestore
                         </a>

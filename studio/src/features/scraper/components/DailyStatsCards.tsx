@@ -42,7 +42,7 @@ export const DailyStatsCards: React.FC<DailyStatsCardsProps> = ({
 
     // Build error breakdown subtitle
     const errorSublabel = totalErrors > 0 ? (
-        <span className="text-xs ml-1">
+        <span className="text-sm ml-1">
             <span className="text-red-500">{errorPct.auth}% 401</span>
             <span className="text-muted-foreground">, </span>
             <span className="text-amber-500">{errorPct.closed}% 400</span>
@@ -56,7 +56,7 @@ export const DailyStatsCards: React.FC<DailyStatsCardsProps> = ({
             label: 'Available Today',
             value: availableSchedules > 0 ? availableSchedules.toLocaleString() : '-',
             sublabel: totalSchedules > availableSchedules
-                ? <span className="text-xs text-muted-foreground ml-1">out of {totalSchedules.toLocaleString()} showtimes</span>
+                ? <span className="text-sm text-muted-foreground ml-1">out of {totalSchedules.toLocaleString()} showtimes</span>
                 : undefined,
             icon: Calendar,
             color: 'text-purple-500 dark:text-purple-400',
@@ -66,7 +66,7 @@ export const DailyStatsCards: React.FC<DailyStatsCardsProps> = ({
             label: 'Scraped',
             value: totalSuccesses > 0 ? totalSuccesses.toLocaleString() : '0',
             sublabel: availableSchedules > 0
-                ? <span className="text-xs text-muted-foreground ml-1">{scrapeSuccessRate}% success</span>
+                ? <span className="text-sm text-muted-foreground ml-1">{scrapeSuccessRate}% success</span>
                 : undefined,
             icon: CheckCircle,
             color: totalSuccesses > 0
@@ -110,7 +110,7 @@ export const DailyStatsCards: React.FC<DailyStatsCardsProps> = ({
                             <div className={`p-2 rounded-lg ${bgColor}`}>
                                 <Icon className={`w-4 h-4 ${color}`} />
                             </div>
-                            <div className="text-xs font-medium text-muted-foreground">{label}</div>
+                            <div className="text-sm font-medium text-muted-foreground">{label}</div>
                         </div>
                         <div>
                             <div className="text-2xl font-bold text-foreground">

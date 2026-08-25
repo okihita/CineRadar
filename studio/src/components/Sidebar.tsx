@@ -321,7 +321,7 @@ export function Sidebar() {
                 {!collapsed && (
                     <div className="overflow-hidden">
                         <h1 className="text-lg font-bold tracking-tight">CineRadar</h1>
-                        <p className="text-xs text-muted-foreground">Intelligence Dashboard</p>
+                        <p className="text-sm text-muted-foreground">Intelligence Dashboard</p>
                     </div>
                 )}
             </div>
@@ -349,7 +349,7 @@ export function Sidebar() {
                                 <div className="overflow-hidden">
                                     <p className="text-sm font-medium">{item.title}</p>
                                     <p className={cn(
-                                        'text-xs',
+                                        'text-sm',
                                         isActive ? 'text-primary-foreground/70' : 'text-muted-foreground'
                                     )}>
                                         {item.description}
@@ -397,15 +397,15 @@ export function Sidebar() {
                             <Image src={session.user.image} alt="" width={24} height={24} className="rounded-full flex-shrink-0" />
                         ) : (
                             <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                                <span className="text-[10px] font-bold text-primary-foreground">
+                                <span className="text-sm font-bold text-primary-foreground">
                                     {session.user.name?.[0]?.toUpperCase() || 'U'}
                                 </span>
                             </div>
                         )}
                         {!collapsed && (
                             <div className="flex-1 min-w-0">
-                                <p className="text-xs font-medium truncate">{session.user.name}</p>
-                                <p className="text-[10px] text-muted-foreground truncate">{session.user.email}</p>
+                                <p className="text-sm font-medium truncate">{session.user.name}</p>
+                                <p className="text-sm text-muted-foreground truncate">{session.user.email}</p>
                             </div>
                         )}
                         {!collapsed && (
@@ -432,7 +432,7 @@ export function Sidebar() {
                         <Moon className="w-5 h-5" />
                     )}
                     {!collapsed && (
-                        <span className="text-xs">
+                        <span className="text-sm">
                             {darkMode ? 'Light Mode' : 'Dark Mode'}
                         </span>
                     )}
@@ -447,7 +447,7 @@ export function Sidebar() {
                     >
                         <Monitor className="w-5 h-5" />
                         {!collapsed && (
-                            <span className="text-xs">Auto</span>
+                            <span className="text-sm">Auto</span>
                         )}
                     </button>
                 )}
@@ -462,7 +462,7 @@ export function Sidebar() {
                     ) : (
                         <>
                             <ChevronLeft className="w-4 h-4" />
-                            <span className="text-xs">Collapse</span>
+                            <span className="text-sm">Collapse</span>
                         </>
                     )}
                 </button>
@@ -513,7 +513,7 @@ function MenuSection({
                                 !expanded && '-rotate-90'
                             )}
                         />
-                        <span className="text-[11px] font-semibold uppercase tracking-wider">
+                        <span className="text-sm font-semibold uppercase tracking-wider">
                             {group.label}
                         </span>
                     </>

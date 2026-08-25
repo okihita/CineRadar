@@ -42,7 +42,7 @@ export function EnrichedContent({ movie }: { movie: CinePointMovie }) {
                     'bg-red-500/10 border-red-500/20',
                   )}>
                     <span className="text-xl font-black">{movie.score.toFixed(1)}</span>
-                    <span className="text-[8px] text-muted-foreground/60 uppercase tracking-widest">/ 10</span>
+                    <span className="text-sm text-muted-foreground/60 uppercase tracking-widest">/ 10</span>
                   </div>
                 </div>
               )}
@@ -61,7 +61,7 @@ export function EnrichedContent({ movie }: { movie: CinePointMovie }) {
                     </Badge>
                   )}
                 </div>
-                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   {movie.duration > 0 && (
                     <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{movie.duration} min</span>
                   )}
@@ -74,13 +74,13 @@ export function EnrichedContent({ movie }: { movie: CinePointMovie }) {
                 {movie.movie_rating && (movie.movie_rating.imdb || movie.movie_rating.rotten_tomatoes) && (
                   <div className="flex items-center gap-3 pt-1">
                     {movie.movie_rating.rotten_tomatoes != null && (
-                      <span className="flex items-center gap-1 text-xs">
+                      <span className="flex items-center gap-1 text-sm">
                         <span className="font-black text-red-600">RT</span>
                         <span className="font-mono">{movie.movie_rating.rotten_tomatoes}%</span>
                       </span>
                     )}
                     {movie.movie_rating.imdb != null && (
-                      <span className="flex items-center gap-1 text-xs">
+                      <span className="flex items-center gap-1 text-sm">
                         <span className="font-black text-amber-600">IMDb</span>
                         <span className="font-mono">{movie.movie_rating.imdb}</span>
                       </span>
@@ -137,8 +137,8 @@ export function EnrichedContent({ movie }: { movie: CinePointMovie }) {
                         </div>
                       )}
                       <div className="min-w-0">
-                        <p className="text-xs font-bold group-hover:text-primary transition-colors truncate">{sm.title}</p>
-                        <p className="text-[10px] text-muted-foreground/50 line-clamp-2 mt-0.5">{sm.description}</p>
+                        <p className="text-sm font-bold group-hover:text-primary transition-colors truncate">{sm.title}</p>
+                        <p className="text-sm text-muted-foreground/50 line-clamp-2 mt-0.5">{sm.description}</p>
                       </div>
                     </div>
                   </Link>
@@ -168,7 +168,7 @@ export function EnrichedContent({ movie }: { movie: CinePointMovie }) {
             <CardContent className="space-y-4">
               {movie.comparison.map((c) => (
                 <div key={c.periode}>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 mb-2">{c.periode.replace('_', ' ')}</p>
+                  <p className="text-sm font-black uppercase tracking-widest text-muted-foreground/40 mb-2">{c.periode.replace('_', ' ')}</p>
                   <div className="space-y-1.5">
                     <ComparisonBar
                       title={c.title}
@@ -196,7 +196,7 @@ export function EnrichedContent({ movie }: { movie: CinePointMovie }) {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-black uppercase tracking-[0.2em]">Metadata</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-1.5 text-xs">
+          <CardContent className="space-y-1.5 text-sm">
             <MetaRow label="CinePoint ID" value={String(movie.id)} mono />
             <MetaRow label="Release Date" value={movie.release_date} mono />
             <MetaRow label="Duration" value={movie.duration ? `${movie.duration} min` : 'Unknown'} />
@@ -224,13 +224,13 @@ function MetaRow({ label, value, mono }: { label: string; value: string; mono?: 
 function ComparisonBar({ title, admission, isHighlight, color }: { title: string; admission: number; isHighlight: boolean; color: string }) {
   return (
     <div className="flex items-center gap-2">
-      <span className={cn('text-[10px] truncate w-24', isHighlight ? 'font-bold' : 'text-muted-foreground/60')}>
+      <span className={cn('text-sm truncate w-24', isHighlight ? 'font-bold' : 'text-muted-foreground/60')}>
         {title}
       </span>
       <div className="flex-1 h-2 bg-muted/30 rounded-full overflow-hidden">
         <div className="h-full rounded-full" style={{ backgroundColor: color, width: '100%' }} />
       </div>
-      <span className="text-[10px] font-mono text-muted-foreground/60 w-14 text-right">{formatAdm(admission)}</span>
+      <span className="text-sm font-mono text-muted-foreground/60 w-14 text-right">{formatAdm(admission)}</span>
     </div>
   );
 }

@@ -74,16 +74,16 @@ export function TweetCard({ tweet, onManualEntry }: TweetCardProps) {
             <span className="font-black text-[15px] text-foreground truncate uppercase tracking-tighter group-hover:text-primary transition-colors cursor-pointer">
               {tweet.source_name}
             </span>
-            <span className="text-muted-foreground/50 text-xs truncate lowercase tracking-tight">
+            <span className="text-muted-foreground/50 text-sm truncate lowercase tracking-tight">
               @{tweet.source_handle}
             </span>
-            <span className="text-muted-foreground/20 text-xs px-1">·</span>
-            <span className="text-muted-foreground/40 text-[11px] whitespace-nowrap font-mono tracking-tighter">
+            <span className="text-muted-foreground/20 text-sm px-1">·</span>
+            <span className="text-muted-foreground/40 text-sm whitespace-nowrap font-mono tracking-tighter">
               {displayDate}
             </span>
           </div>
           <div className={cn(
-            'flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[9px] font-black uppercase tracking-widest transition-all shrink-0 shadow-inner',
+            'flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-sm font-black uppercase tracking-widest transition-all shrink-0 shadow-inner',
             cfg.color
           )}>
             <TypeIcon className="w-3 h-3" />
@@ -105,14 +105,14 @@ export function TweetCard({ tweet, onManualEntry }: TweetCardProps) {
         <div className="flex items-center justify-between pt-2">
           <div className="flex items-center gap-4">
             {mediaUrls.length > 0 && (
-              <div className="flex items-center gap-2 text-muted-foreground/40 text-[9px] font-black uppercase tracking-widest border border-border/30 px-2 py-1 rounded-lg bg-muted/5">
+              <div className="flex items-center gap-2 text-muted-foreground/40 text-sm font-black uppercase tracking-widest border border-border/30 px-2 py-1 rounded-lg bg-muted/5">
                 <ImageIcon className="w-3.5 h-3.5 opacity-60" />
                 {mediaUrls.length} visuals
               </div>
             )}
 
             {tweet.data_date && (
-              <div className="flex items-center gap-2 text-primary/40 text-[9px] font-black uppercase tracking-widest border border-primary/10 px-2 py-1 rounded-lg bg-primary/5">
+              <div className="flex items-center gap-2 text-primary/40 text-sm font-black uppercase tracking-widest border border-primary/10 px-2 py-1 rounded-lg bg-primary/5">
                 <Calendar className="w-3 h-3 opacity-60" />
                 Data: {tweet.data_date}
               </div>
@@ -121,7 +121,7 @@ export function TweetCard({ tweet, onManualEntry }: TweetCardProps) {
             <button
               onClick={() => setShowRaw(!showRaw)}
               className={cn(
-                "flex items-center gap-2 text-[9px] font-black uppercase tracking-widest border px-2 py-1 rounded-lg transition-all",
+                "flex items-center gap-2 text-sm font-black uppercase tracking-widest border px-2 py-1 rounded-lg transition-all",
                 showRaw
                   ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
                   : "bg-muted/5 text-muted-foreground/30 border-border/30 hover:text-muted-foreground/60 hover:border-border/60"
@@ -134,7 +134,7 @@ export function TweetCard({ tweet, onManualEntry }: TweetCardProps) {
             <button
               onClick={() => setShowManualEntry(!showManualEntry)}
               className={cn(
-                "flex items-center gap-2 text-[9px] font-black uppercase tracking-widest border px-2 py-1 rounded-lg transition-all",
+                "flex items-center gap-2 text-sm font-black uppercase tracking-widest border px-2 py-1 rounded-lg transition-all",
                 showManualEntry
                   ? "bg-primary/10 text-primary border-primary/30"
                   : "bg-muted/5 text-muted-foreground/30 border-border/30 hover:text-primary/60 hover:border-primary/30"
@@ -146,7 +146,7 @@ export function TweetCard({ tweet, onManualEntry }: TweetCardProps) {
           </div>
 
           <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0 duration-500">
-            <Button variant="ghost" size="sm" className="h-7 px-3 text-[10px] font-black uppercase gap-2 rounded-xl text-primary/60 hover:text-primary hover:bg-primary/5 border border-transparent hover:border-primary/20" asChild>
+            <Button variant="ghost" size="sm" className="h-7 px-3 text-sm font-black uppercase gap-2 rounded-xl text-primary/60 hover:text-primary hover:bg-primary/5 border border-transparent hover:border-primary/20" asChild>
               <a href={`https://x.com/${tweet.source_handle}/status/${tweet.id}`} target="_blank" rel="noopener noreferrer">
                 Verify Source <ExternalLink className="w-3 h-3" />
               </a>
@@ -189,12 +189,12 @@ export function TweetCard({ tweet, onManualEntry }: TweetCardProps) {
         {showRaw && (
           <div className="mt-6 pt-6 border-t border-border/10 animate-in fade-in zoom-in-95 duration-300">
             <div className="flex items-center justify-between mb-3 px-2">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-600/60">
+              <span className="text-sm font-black uppercase tracking-[0.2em] text-amber-600/60">
                 Firestore Document Source
               </span>
-              <span className="text-[9px] font-mono text-muted-foreground/30">ID: {tweet.id}</span>
+              <span className="text-sm font-mono text-muted-foreground/30">ID: {tweet.id}</span>
             </div>
-            <div className="bg-background/50 backdrop-blur-sm border border-border/20 rounded-2xl p-4 overflow-auto max-h-[400px] shadow-inner font-mono text-[11px]">
+            <div className="bg-background/50 backdrop-blur-sm border border-border/20 rounded-2xl p-4 overflow-auto max-h-[400px] shadow-inner font-mono text-sm">
               <JsonViewer data={sortObjectKeys(tweet)} />
             </div>
           </div>

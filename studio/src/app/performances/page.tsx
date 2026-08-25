@@ -113,7 +113,7 @@ export default function PerformancePage() {
                     <Button variant="outline" size="sm" className="h-9 px-4 gap-2 rounded-xl border-border/60 hover:bg-muted transition-all" asChild>
                         <Link href="/performances/all-time">
                             <Trophy className="w-4 h-4 text-amber-500" />
-                            <span className="text-xs font-bold uppercase tracking-wider">All-Time Leaders</span>
+                            <span className="text-sm font-bold uppercase tracking-wider">All-Time Leaders</span>
                         </Link>
                     </Button>
                 </div>
@@ -153,7 +153,7 @@ export default function PerformancePage() {
                                     }
                                 `}
                             >
-                                <span className="text-[9px] font-bold uppercase tracking-wider opacity-60">{weekday}</span>
+                                <span className="text-sm font-bold uppercase tracking-wider opacity-60">{weekday}</span>
                                 <span className="text-sm font-black font-mono leading-tight">{day}</span>
                                 {isDateToday && !isActive && (
                                     <div className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-primary" />
@@ -182,7 +182,7 @@ export default function PerformancePage() {
                         max={today}
                         value={selectedDate}
                         onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
-                        className="h-8 pl-7 pr-2 rounded-lg border border-border/60 bg-background text-[10px] font-bold uppercase tracking-wider text-foreground cursor-pointer hover:bg-muted transition-colors"
+                        className="h-8 pl-7 pr-2 rounded-lg border border-border/60 bg-background text-sm font-bold uppercase tracking-wider text-foreground cursor-pointer hover:bg-muted transition-colors"
                     />
                 </div>
 
@@ -190,7 +190,7 @@ export default function PerformancePage() {
                     <Button
                         variant="outline"
                         size="sm"
-                        className="ml-1 h-8 px-3 gap-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider"
+                        className="ml-1 h-8 px-3 gap-1.5 rounded-lg text-sm font-bold uppercase tracking-wider"
                         onClick={goToday}
                     >
                         Today

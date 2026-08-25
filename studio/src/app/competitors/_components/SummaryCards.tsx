@@ -22,7 +22,7 @@ export function SummaryCards({ summary7d, marketEstimate, latestDay }: SummaryCa
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-2">
             <Target className="w-3.5 h-3.5 text-primary/60" />
-            <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">
+            <span className="text-sm font-black uppercase tracking-widest text-muted-foreground/60">
               Avg Coverage (7d)
             </span>
           </div>
@@ -32,7 +32,7 @@ export function SummaryCards({ summary7d, marketEstimate, latestDay }: SummaryCa
               : '—'}
           </p>
           {summary7d && (
-            <p className="text-[10px] text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {summary7d.days_with_data} days tracked
             </p>
           )}
@@ -44,7 +44,7 @@ export function SummaryCards({ summary7d, marketEstimate, latestDay }: SummaryCa
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-2">
             <Shield className="w-3.5 h-3.5 text-primary/60" />
-            <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">
+            <span className="text-sm font-black uppercase tracking-widest text-muted-foreground/60">
               Avg Confidence (7d)
             </span>
           </div>
@@ -54,7 +54,7 @@ export function SummaryCards({ summary7d, marketEstimate, latestDay }: SummaryCa
               : '—'}
           </p>
           {latestDay?.confidence && (
-            <Badge variant="outline" className={cn('text-[8px] h-5 px-1.5 mt-1 border', confidenceColor(latestDay.confidence.level))}>
+            <Badge variant="outline" className={cn('text-sm h-5 px-1.5 mt-1 border', confidenceColor(latestDay.confidence.level))}>
               {latestDay.confidence.level}
             </Badge>
           )}
@@ -66,7 +66,7 @@ export function SummaryCards({ summary7d, marketEstimate, latestDay }: SummaryCa
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-2">
             <BarChart3 className="w-3.5 h-3.5 text-primary/60" />
-            <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">
+            <span className="text-sm font-black uppercase tracking-widest text-muted-foreground/60">
               Showtime Delta (7d)
             </span>
           </div>
@@ -81,7 +81,7 @@ export function SummaryCards({ summary7d, marketEstimate, latestDay }: SummaryCa
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="w-3.5 h-3.5 text-primary/60" />
-            <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">
+            <span className="text-sm font-black uppercase tracking-widest text-muted-foreground/60">
               Market Estimate (Latest)
             </span>
           </div>
@@ -91,7 +91,7 @@ export function SummaryCards({ summary7d, marketEstimate, latestDay }: SummaryCa
               : '—'}
           </p>
           {marketEstimate && (
-            <p className="text-[10px] text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               from {marketEstimate.cr_admissions.toLocaleString()} at {marketEstimate.coverage_pct}% coverage
             </p>
           )}

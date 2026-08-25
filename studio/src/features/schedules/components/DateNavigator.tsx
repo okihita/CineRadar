@@ -59,13 +59,13 @@ export function DateNavigator({ date, setDate, isLoading }: DateNavigatorProps) 
                 variant="outline"
                 size="sm"
                 onClick={() => setDate(new Date())}
-                className="ml-2 text-xs font-semibold"
+                className="ml-2 text-sm font-semibold"
             >
                 Today
             </Button>
 
             {isLoading && (
-                <span className="ml-2 text-[10px] text-muted-foreground animate-pulse">Loading…</span>
+                <span className="ml-2 text-sm text-muted-foreground animate-pulse">Loading…</span>
             )}
         </div>
     );

@@ -37,13 +37,13 @@ export function ShowtimesSkeleton() {
                 <p className="text-sm font-black uppercase tracking-widest text-foreground">
                     Assembling Forensic Market Data
                 </p>
-                <p className="text-xs opacity-60 max-w-[300px]">
+                <p className="text-sm opacity-60 max-w-[300px]">
                     CineRadar is aggregating seating snapshots from all cinema chains nationwide.
                 </p>
             </div>
             
             {elapsed > 15 && (
-                <p className="text-[10px] font-bold text-amber-600 uppercase tracking-tight animate-in slide-in-from-bottom-2">
+                <p className="text-sm font-bold text-amber-600 uppercase tracking-tight animate-in slide-in-from-bottom-2">
                     ⚡ This is a massive blockbuster dataset. Hang tight.
                 </p>
             )}

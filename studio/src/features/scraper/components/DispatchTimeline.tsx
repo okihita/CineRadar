@@ -47,21 +47,21 @@ const ErrorTypeBadges: React.FC<{
         <div className="flex items-center gap-1">
             {/* 401 errors - DANGER (auth/token issues) */}
             {errorCounts["401"] > 0 && (
-                <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-red-500/20 text-red-500 dark:text-red-400">
+                <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-sm font-medium bg-red-500/20 text-red-500 dark:text-red-400">
                     <AlertCircle className="w-3 h-3" />
                     401:{errorCounts["401"]}
                 </span>
             )}
             {/* 400 errors - WARNING (operational) */}
             {errorCounts["400"] > 0 && (
-                <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-sm font-medium bg-amber-500/20 text-amber-600 dark:text-amber-400">
                     <AlertTriangle className="w-3 h-3" />
                     400:{errorCounts["400"]}
                 </span>
             )}
             {/* Other errors */}
             {errorCounts["other"] > 0 && (
-                <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-gray-500/20 text-gray-600 dark:text-gray-400">
+                <span className="px-1.5 py-0.5 rounded text-sm font-medium bg-gray-500/20 text-gray-600 dark:text-gray-400">
                     ?:{errorCounts["other"]}
                 </span>
             )}
@@ -103,7 +103,7 @@ const ErrorDetailList: React.FC<{
 
     return (
         <div className="mt-2 space-y-1 max-h-60 overflow-y-auto">
-            <div className="text-xs text-muted-foreground mb-2">
+            <div className="text-sm text-muted-foreground mb-2">
                 {filterStatus === 400 
                     ? '🔴 Closed Showtimes (click to verify on TIX):'
                     : 'All Errors:'
@@ -113,7 +113,7 @@ const ErrorDetailList: React.FC<{
                 {filteredErrors.map((err, idx) => (
                     <div 
                         key={idx}
-                        className="flex items-center gap-2 p-2 bg-muted/50 rounded text-xs group hover:bg-muted transition-colors"
+                        className="flex items-center gap-2 p-2 bg-muted/50 rounded text-sm group hover:bg-muted transition-colors"
                     >
                         <div className="flex-1 min-w-0">
                             <div className="font-medium text-foreground truncate">
@@ -123,7 +123,7 @@ const ErrorDetailList: React.FC<{
                                 {err.theatre} • {extractCity(err.theatre)}
                             </div>
                             {err.api_error && (
-                                <div className="text-amber-600 dark:text-amber-400 truncate text-[10px]">
+                                <div className="text-amber-600 dark:text-amber-400 truncate text-sm">
                                     {err.api_error}
                                 </div>
                             )}
@@ -274,7 +274,7 @@ export const DispatchTimeline: React.FC<DispatchTimelineProps> = ({
                     <Clock className="w-4 h-4 text-blue-500" />
                     Showtime Coverage
                 </h3>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-sm text-muted-foreground">
                     {timeline.length} time slots
                 </span>
             </div>
@@ -342,11 +342,11 @@ export const DispatchTimeline: React.FC<DispatchTimelineProps> = ({
 
                                     <div className={`flex items-center gap-2 px-2 py-1 rounded-lg ${status.bgColor} border ${status.borderColor}`}>
                                         <StatusIcon className={`w-3.5 h-3.5 ${status.color}`} />
-                                        <span className={`text-xs font-medium ${status.color}`}>
+                                        <span className={`text-sm font-medium ${status.color}`}>
                                             {status.label}
                                         </span>
                                         {dispatch.total_errors > 0 && !cachedErrors && (
-                                            <span className="text-xs text-red-500 dark:text-red-400">
+                                            <span className="text-sm text-red-500 dark:text-red-400">
                                                 {dispatch.total_errors} err
                                             </span>
                                         )}
@@ -364,13 +364,13 @@ export const DispatchTimeline: React.FC<DispatchTimelineProps> = ({
                                 <div className="bg-muted/30 px-4 py-3 border-t border-border/50">
                                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                                         <div>
-                                            <span className="text-muted-foreground text-xs">Dispatch Time</span>
+                                            <span className="text-muted-foreground text-sm">Dispatch Time</span>
                                             <div className="text-foreground font-mono">
                                                 {dispatch.time_slot || '-'}
                                             </div>
                                         </div>
                                         <div>
-                                            <span className="text-muted-foreground text-xs">Dispatched At</span>
+                                            <span className="text-muted-foreground text-sm">Dispatched At</span>
                                             <div className="text-foreground font-mono">
                                                 {dispatch.dispatched_at
                                                     ? new Date(dispatch.dispatched_at).toLocaleTimeString('en-US', {
@@ -382,15 +382,15 @@ export const DispatchTimeline: React.FC<DispatchTimelineProps> = ({
                                             </div>
                                         </div>
                                         <div>
-                                            <span className="text-muted-foreground text-xs">Jobs Published</span>
+                                            <span className="text-muted-foreground text-sm">Jobs Published</span>
                                             <div className="text-foreground">{dispatch.jobs_published || 0}</div>
                                         </div>
                                         <div>
-                                            <span className="text-muted-foreground text-xs">Successes</span>
+                                            <span className="text-muted-foreground text-sm">Successes</span>
                                             <div className="text-green-500 dark:text-green-400">{dispatch.total_successes || 0}</div>
                                         </div>
                                         <div>
-                                            <span className="text-muted-foreground text-xs">Errors</span>
+                                            <span className="text-muted-foreground text-sm">Errors</span>
                                             <div className={dispatch.total_errors > 0 ? 'text-red-500 dark:text-red-400' : 'text-muted-foreground'}>
                                                 {dispatch.total_errors || 0}
                                             </div>
@@ -401,7 +401,7 @@ export const DispatchTimeline: React.FC<DispatchTimelineProps> = ({
                                     {cachedErrors && dispatch.total_errors > 0 && (
                                         <div className="mt-3 p-2 bg-red-500/5 border border-red-500/10 rounded-lg">
                                             <div className="flex items-center justify-between mb-1">
-                                                <div className="text-xs text-muted-foreground">Error Breakdown:</div>
+                                                <div className="text-sm text-muted-foreground">Error Breakdown:</div>
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -425,7 +425,7 @@ export const DispatchTimeline: React.FC<DispatchTimelineProps> = ({
                                                         a.click();
                                                         URL.revokeObjectURL(url);
                                                     }}
-                                                    className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded transition-colors"
+                                                    className="flex items-center gap-1 px-2 py-1 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded transition-colors"
                                                     title="Download error logs as JSON"
                                                 >
                                                     <Download className="w-3 h-3" />
@@ -434,17 +434,17 @@ export const DispatchTimeline: React.FC<DispatchTimelineProps> = ({
                                             </div>
                                             <div className="flex flex-wrap gap-2">
                                                 {cachedErrors["401"] > 0 && (
-                                                    <span className="text-xs text-red-500 dark:text-red-400">
+                                                    <span className="text-sm text-red-500 dark:text-red-400">
                                                         🔴 {cachedErrors["401"]} auth/token issues (401)
                                                     </span>
                                                 )}
                                                 {cachedErrors["400"] > 0 && (
-                                                    <span className="text-xs text-amber-600 dark:text-amber-400">
+                                                    <span className="text-sm text-amber-600 dark:text-amber-400">
                                                         🟡 {cachedErrors["400"]} operational (400)
                                                     </span>
                                                 )}
                                                 {cachedErrors["other"] > 0 && (
-                                                    <span className="text-xs text-gray-600 dark:text-gray-400">
+                                                    <span className="text-sm text-gray-600 dark:text-gray-400">
                                                         ⚪ {cachedErrors["other"]} other
                                                     </span>
                                                 )}
@@ -462,7 +462,7 @@ export const DispatchTimeline: React.FC<DispatchTimelineProps> = ({
 
                                     {dispatch.error && (
                                         <div className="mt-3 p-2 bg-red-500/10 border border-red-500/20 rounded-lg">
-                                            <span className="text-xs text-red-500 dark:text-red-400 font-mono">{dispatch.error}</span>
+                                            <span className="text-sm text-red-500 dark:text-red-400 font-mono">{dispatch.error}</span>
                                         </div>
                                     )}
                                 </div>

@@ -21,23 +21,23 @@ export default function TheaterCard({ theater, isBestValue, isMostShowtimes, sho
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                         <h4 className="font-bold text-white text-base tracking-tight">{theater.theatre_name}</h4>
                         {isBestValue && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold bg-emerald-500/15 text-emerald-300 rounded-full border border-emerald-500/30 shadow-sm">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-semibold bg-emerald-500/15 text-emerald-300 rounded-full border border-emerald-500/30 shadow-sm">
                                 💰 {t('showtimes.card.bestValue')}
                             </span>
                         )}
                         {isMostShowtimes && showMostShowtimesBadge && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold bg-purple-500/15 text-purple-300 rounded-full border border-purple-500/30 shadow-sm">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-semibold bg-purple-500/15 text-purple-300 rounded-full border border-purple-500/30 shadow-sm">
                                 🎬 {t('showtimes.hero.stats.dailyShowtimes')}
                             </span>
                         )}
                     </div>
                     {theater.address && (
-                        <p className="text-xs text-gray-400 line-clamp-1">{theater.address}</p>
+                        <p className="text-sm text-gray-400 line-clamp-1">{theater.address}</p>
                     )}
                 </div>
 
                 <span
-                    className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg font-bold border backdrop-blur-sm shadow-sm flex-shrink-0"
+                    className="inline-flex items-center gap-1.5 text-sm px-2.5 py-1 rounded-lg font-bold border backdrop-blur-sm shadow-sm flex-shrink-0"
                     style={{
                         backgroundColor: `${chainColor}20`,
                         borderColor: `${chainColor}50`,
@@ -56,7 +56,7 @@ export default function TheaterCard({ theater, isBestValue, isMostShowtimes, sho
                 {(theater.rooms || []).map((room, idx) => (
                     <div key={idx} className="bg-white/[0.03] rounded-xl p-3.5 border border-white/5 hover:border-white/10 transition-colors">
                         <div className="flex items-center justify-between gap-2 mb-2.5">
-                            <span className="text-xs font-semibold text-gray-300 tracking-wide uppercase">{room.category || 'Standard Hall'}</span>
+                            <span className="text-sm font-semibold text-gray-300 tracking-wide uppercase">{room.category || 'Standard Hall'}</span>
                             <span className="text-sm font-bold text-emerald-400 font-mono">{room.price}</span>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -64,7 +64,7 @@ export default function TheaterCard({ theater, isBestValue, isMostShowtimes, sho
                             {room.past_showtimes?.map((time: string, timeIdx: number) => (
                                 <span
                                     key={`past-${timeIdx}`}
-                                    className="px-3 py-1.5 text-xs sm:text-sm rounded-lg font-medium bg-white/[0.03] border border-white/5 text-gray-500 line-through cursor-not-allowed select-none"
+                                    className="px-3 py-1.5 text-sm sm:text-sm rounded-lg font-medium bg-white/[0.03] border border-white/5 text-gray-500 line-through cursor-not-allowed select-none"
                                     title="Past showtime"
                                 >
                                     {time}
@@ -74,7 +74,7 @@ export default function TheaterCard({ theater, isBestValue, isMostShowtimes, sho
                             {(room.showtimes || []).map((time: string, timeIdx: number) => (
                                 <span
                                     key={timeIdx}
-                                    className={`inline-flex items-center gap-1 px-3 py-1.5 text-xs sm:text-sm rounded-lg font-bold cursor-pointer transition-all duration-200 bg-gradient-to-r ${getTimeStyle(time)} hover:scale-105 hover:shadow-lg shadow-md active:scale-95`}
+                                    className={`inline-flex items-center gap-1 px-3 py-1.5 text-sm sm:text-sm rounded-lg font-bold cursor-pointer transition-all duration-200 bg-gradient-to-r ${getTimeStyle(time)} hover:scale-105 hover:shadow-lg shadow-md active:scale-95`}
                                     title={`${getTimeIcon(time)} ${getTimeOfDay(time)} slot`}
                                 >
                                     <span>{time}</span>

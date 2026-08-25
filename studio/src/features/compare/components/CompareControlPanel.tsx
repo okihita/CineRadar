@@ -129,12 +129,12 @@ export function CompareControlPanel({
                                                 </div>
                                             ) : (
                                                 <div className="w-16 h-24 bg-muted rounded flex items-center justify-center border border-dashed flex-shrink-0">
-                                                    <span className="text-xs text-muted-foreground">No poster</span>
+                                                    <span className="text-sm text-muted-foreground">No poster</span>
                                                 </div>
                                             )}
                                             <div className="flex-1 overflow-hidden">
                                                 <div className="font-bold text-base mb-1 truncate">{movie.title}</div>
-                                                <div className="text-xs text-muted-foreground font-mono">ID: {movie.id}</div>
+                                                <div className="text-sm text-muted-foreground font-mono">ID: {movie.id}</div>
                                             </div>
                                         </div>
                                     ))
@@ -155,7 +155,7 @@ export function CompareControlPanel({
                                         </PopoverTrigger>
                                         <PopoverContent className="w-auto p-3" align="start">
                                             <div className="space-y-3">
-                                                <p className="text-xs font-medium">Pick a color for {movie.title}</p>
+                                                <p className="text-sm font-medium">Pick a color for {movie.title}</p>
                                                 <div className="grid grid-cols-6 gap-1">
                                                     {CHART_COLORS.map(color => (
                                                         <button
@@ -167,7 +167,7 @@ export function CompareControlPanel({
                                                     ))}
                                                 </div>
                                                 <div className="flex items-center gap-2 pt-2 border-t">
-                                                    <label className="text-[10px] uppercase text-muted-foreground font-bold">Custom</label>
+                                                    <label className="text-sm uppercase text-muted-foreground font-bold">Custom</label>
                                                     <input
                                                         type="color"
                                                         value={movieColorsMap[movie.id]}
@@ -204,7 +204,7 @@ export function CompareControlPanel({
                     {/* Date Pickers */}
                     <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-xs font-medium text-muted-foreground ml-1">Start Date</label>
+                            <label className="text-sm font-medium text-muted-foreground ml-1">Start Date</label>
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <Button
@@ -237,7 +237,7 @@ export function CompareControlPanel({
                         </div>
 
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-xs font-medium text-muted-foreground ml-1">End Date</label>
+                            <label className="text-sm font-medium text-muted-foreground ml-1">End Date</label>
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <Button

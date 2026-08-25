@@ -57,7 +57,7 @@ export function TweetUrlImport({ onImported, hideHeading }: TweetUrlImportProps)
   return (
     <div className="space-y-3">
       {!hideHeading && (
-        <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+        <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground">
           Import from Tweet URL
         </h3>
       )}
@@ -77,7 +77,7 @@ export function TweetUrlImport({ onImported, hideHeading }: TweetUrlImportProps)
               if (e.key === 'Enter' && isValidUrl && !fetching) handleFetch();
             }}
             className={cn(
-              'w-full rounded-md border bg-muted/5 pl-9 pr-3 py-2 text-xs font-mono',
+              'w-full rounded-md border bg-muted/5 pl-9 pr-3 py-2 text-sm font-mono',
               'placeholder:text-muted-foreground/30',
               'focus:outline-none focus:ring-1 focus:ring-primary/30',
               'border-border/50',
@@ -89,7 +89,7 @@ export function TweetUrlImport({ onImported, hideHeading }: TweetUrlImportProps)
           variant="outline"
           onClick={handleFetch}
           disabled={!isValidUrl || fetching}
-          className="h-[34px] gap-1.5 px-4 text-[10px] font-bold uppercase tracking-wider"
+          className="h-[34px] gap-1.5 px-4 text-sm font-bold uppercase tracking-wider"
         >
           {fetching ? (
             <Loader2 className="w-3 h-3 animate-spin" />
@@ -103,7 +103,7 @@ export function TweetUrlImport({ onImported, hideHeading }: TweetUrlImportProps)
       {result && (
         <div
           className={cn(
-            'flex items-start gap-2 px-3 py-2 rounded-lg border text-[11px] font-medium animate-in fade-in slide-in-from-top-1 duration-300',
+            'flex items-start gap-2 px-3 py-2 rounded-lg border text-sm font-medium animate-in fade-in slide-in-from-top-1 duration-300',
             result.ok
               ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-700 dark:text-emerald-400'
               : 'bg-red-500/5 border-red-500/20 text-red-700 dark:text-red-400',
@@ -125,7 +125,7 @@ export function TweetUrlImport({ onImported, hideHeading }: TweetUrlImportProps)
           {result.ok && (
             <button
               onClick={() => setResult(null)}
-              className="text-[9px] font-bold uppercase tracking-wider text-emerald-600/60 hover:text-emerald-600 px-2 py-1 rounded hover:bg-emerald-500/10 transition-colors flex-shrink-0"
+              className="text-sm font-bold uppercase tracking-wider text-emerald-600/60 hover:text-emerald-600 px-2 py-1 rounded hover:bg-emerald-500/10 transition-colors flex-shrink-0"
             >
               Fetch Another
             </button>

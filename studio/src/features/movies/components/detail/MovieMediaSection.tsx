@@ -60,7 +60,7 @@ export function MovieMediaSection({ movie }: MovieMediaSectionProps) {
                                     </div>
                                 </div>
                                 <div className="p-3 bg-card border-t border-border group-hover:bg-muted/30 transition-colors">
-                                    <p className="text-xs font-medium line-clamp-2 text-foreground/80 leading-tight">{title}</p>
+                                    <p className="text-sm font-medium line-clamp-2 text-foreground/80 leading-tight">{title}</p>
                                 </div>
                             </a>
                         );

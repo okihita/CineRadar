@@ -40,7 +40,7 @@ export function PageHeader({ icon, title, subtitle, titleNoUppercase, backHref, 
             {title}
           </h1>
           {subtitle && (
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold opacity-60">
+            <p className="text-sm text-muted-foreground uppercase tracking-widest font-bold opacity-60">
               {subtitle}
             </p>
           )}
@@ -62,7 +62,7 @@ export function PageLoader({ message }: PageLoaderProps) {
     <div className="flex flex-col items-center justify-center py-32 gap-4">
       <Loader2 className="w-8 h-8 animate-spin text-primary opacity-40" />
       {message && (
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/40">
+        <p className="text-sm font-black uppercase tracking-[0.3em] text-muted-foreground/40">
           {message}
         </p>
       )}
@@ -81,9 +81,9 @@ export function PageError({ error, backHref }: PageErrorProps) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[50vh] gap-3">
       <p className="text-sm text-red-500 font-bold">Failed to load data</p>
-      {error && <p className="text-xs text-muted-foreground">{error}</p>}
+      {error && <p className="text-sm text-muted-foreground">{error}</p>}
       {backHref && (
-        <Link href={backHref} className="text-xs text-primary hover:underline">← Back</Link>
+        <Link href={backHref} className="text-sm text-primary hover:underline">← Back</Link>
       )}
     </div>
   );

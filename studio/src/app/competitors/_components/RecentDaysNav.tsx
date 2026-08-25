@@ -12,10 +12,10 @@ export function RecentDaysNav({ trendDays, daysWithDataCount }: { trendDays: Tre
       <CardContent className="p-3">
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">
+            <span className="text-sm font-black uppercase tracking-widest text-muted-foreground/50">
               Recent 14 Days
             </span>
-            <span className="text-[9px] font-bold text-muted-foreground/40">
+            <span className="text-sm font-bold text-muted-foreground/40">
               {daysWithDataCount} days with data
             </span>
           </div>
@@ -35,13 +35,13 @@ export function RecentDaysNav({ trendDays, daysWithDataCount }: { trendDays: Tre
                   key={dateStr}
                   href={`/competitors/${dateStr}`}
                   className={cn(
-                    'flex-1 flex flex-col items-center gap-0.5 py-1.5 px-0.5 rounded-md border text-[9px] font-bold transition-colors',
+                    'flex-1 flex flex-col items-center gap-0.5 py-1.5 px-0.5 rounded-md border text-sm font-bold transition-colors',
                     statusColor,
                     'hover:bg-primary/10 hover:border-primary/20',
                   )}
                 >
                   <span className="font-mono">{format(d, 'dd')}</span>
-                  <span className="uppercase tracking-wider text-muted-foreground/50 text-[8px]">
+                  <span className="uppercase tracking-wider text-muted-foreground/50 text-sm">
                     {format(d, 'EEE')}
                   </span>
                   {dayData?.confidence && (

@@ -60,7 +60,7 @@ export function PerformanceTab({ movies, diagnostic, isLoading, error }: Perform
                 <p className="text-muted-foreground font-medium uppercase tracking-widest text-sm">
                     No performance data available for this date
                 </p>
-                <p className="text-[11px] text-muted-foreground/50">
+                <p className="text-sm text-muted-foreground/50">
                     Data collection started December 2025
                 </p>
                 {diagnostic && <ForensicHealthSheet diagnostic={diagnostic} />}

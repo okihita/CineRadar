@@ -47,7 +47,7 @@ export function MovieDrillDown({
         <CardHeader className="pb-2 border-b">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-black uppercase tracking-[0.2em]">{movie.title}</h3>
-            <button onClick={() => setSelectedMovie(null)} className="text-xs text-muted-foreground hover:text-foreground">✕ Close</button>
+            <button onClick={() => setSelectedMovie(null)} className="text-sm text-muted-foreground hover:text-foreground">✕ Close</button>
           </div>
           <div className="flex flex-wrap items-center gap-2 mt-2">
             <TypeBadge type={movie.type} />
@@ -77,7 +77,7 @@ export function MovieDrillDown({
           </div>
           {movie.daily.length > 1 && (
             <div className="border-t px-6 pb-6 pt-4">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-2">Cumulative Admissions</p>
+              <p className="text-sm font-black uppercase tracking-widest text-muted-foreground/60 mb-2">Cumulative Admissions</p>
               <ResponsiveContainer width="100%" height={120}>
                 <AreaChart data={movie.daily}>
                   <CartesianGrid strokeDasharray="3 3" className="opacity-20" />

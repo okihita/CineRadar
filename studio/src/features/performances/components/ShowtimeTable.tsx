@@ -126,7 +126,7 @@ export function ShowtimeTable({ showtimes, loading = false, movieId, date }: Sho
                     <h2 className="text-sm font-black uppercase tracking-widest text-foreground">Global Forensic Audit Feed</h2>
                 </div>
                 {showtimes.length > 200 && (
-                    <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest text-amber-600 border-amber-500/20 bg-amber-500/5">
+                    <Badge variant="outline" className="text-sm font-black uppercase tracking-widest text-amber-600 border-amber-500/20 bg-amber-500/5">
                         Performance Limit: Showing Top 200 Anomalies
                     </Badge>
                 )}
@@ -134,7 +134,7 @@ export function ShowtimeTable({ showtimes, loading = false, movieId, date }: Sho
 
             <Card className="border-primary/10 shadow-sm">
                 <CardHeader className="pb-3 px-4 pt-4 border-b bg-muted/5">
-                    <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 text-muted-foreground/60">
+                    <CardTitle className="text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2 text-muted-foreground/60">
                         <Filter className="w-3.5 h-3.5" />
                         Intelligence Filters
                     </CardTitle>
@@ -142,28 +142,28 @@ export function ShowtimeTable({ showtimes, loading = false, movieId, date }: Sho
                 <CardContent className="px-4 py-4">
                     <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-4">
                         <Select value={filterCity} onValueChange={(v) => { setFilterCity(v); setCurrentPage(1); }}>
-                            <SelectTrigger className="h-9 text-xs font-bold uppercase tracking-tighter"><SelectValue placeholder="City" /></SelectTrigger>
+                            <SelectTrigger className="h-9 text-sm font-bold uppercase tracking-tighter"><SelectValue placeholder="City" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Cities</SelectItem>
                                 {filterOptions.cities.map(city => <SelectItem key={city} value={city}>{city}</SelectItem>)}
                             </SelectContent>
                         </Select>
                         <Select value={filterMerchant} onValueChange={(v) => { setFilterMerchant(v); setCurrentPage(1); }}>
-                            <SelectTrigger className="h-9 text-xs font-bold uppercase tracking-tighter"><SelectValue placeholder="Merchant" /></SelectTrigger>
+                            <SelectTrigger className="h-9 text-sm font-bold uppercase tracking-tighter"><SelectValue placeholder="Merchant" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Merchants</SelectItem>
                                 {filterOptions.merchants.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                             </SelectContent>
                         </Select>
                         <Select value={filterRoom} onValueChange={(v) => { setFilterRoom(v); setCurrentPage(1); }}>
-                            <SelectTrigger className="h-9 text-xs font-bold uppercase tracking-tighter"><SelectValue placeholder="Room" /></SelectTrigger>
+                            <SelectTrigger className="h-9 text-sm font-bold uppercase tracking-tighter"><SelectValue placeholder="Room" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Rooms</SelectItem>
                                 {filterOptions.rooms.map(room => <SelectItem key={room} value={room}>{room}</SelectItem>)}
                             </SelectContent>
                         </Select>
                         <Select value={groupBy} onValueChange={(v) => setGroupBy(v as GroupBy)}>
-                            <SelectTrigger className="h-9 text-xs font-bold uppercase tracking-tighter"><Layers className="w-3 h-3 mr-1" /><SelectValue placeholder="Group by" /></SelectTrigger>
+                            <SelectTrigger className="h-9 text-sm font-bold uppercase tracking-tighter"><Layers className="w-3 h-3 mr-1" /><SelectValue placeholder="Group by" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="none">No Grouping</SelectItem>
                                 <SelectItem value="theatre">By Theatre</SelectItem>
@@ -172,20 +172,20 @@ export function ShowtimeTable({ showtimes, loading = false, movieId, date }: Sho
                             </SelectContent>
                         </Select>
                         <Select value={showAll ? 'all' : String(pageSize)} onValueChange={(v) => { if (v === 'all') setShowAll(true); else { setShowAll(false); setPageSize(Number(v)); } }}>
-                            <SelectTrigger className="h-9 text-xs font-bold uppercase tracking-tighter"><SelectValue placeholder="Show" /></SelectTrigger>
+                            <SelectTrigger className="h-9 text-sm font-bold uppercase tracking-tighter"><SelectValue placeholder="Show" /></SelectTrigger>
                             <SelectContent>
                                 {PAGE_SIZES.map(size => <SelectItem key={size} value={String(size)}>{size} rows</SelectItem>)}
                                 <SelectItem value="all">Show All</SelectItem>
                             </SelectContent>
                         </Select>
-                        <div className="flex items-center justify-end text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 tabular-nums">
+                        <div className="flex items-center justify-end text-sm font-black uppercase tracking-widest text-muted-foreground/40 tabular-nums">
                             {processedShowtimes.length} Matches
                         </div>
                     </div>
 
                     {/* Hour Filter Pills */}
                     <div className="flex flex-col gap-2 pt-2 border-t border-border/40">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50 flex items-center gap-1.5 ml-1">
+                        <span className="text-sm font-black uppercase tracking-widest text-muted-foreground/50 flex items-center gap-1.5 ml-1">
                             <Clock className="w-2.5 h-2.5" />
                             Filter by Hour
                         </span>
@@ -194,7 +194,7 @@ export function ShowtimeTable({ showtimes, loading = false, movieId, date }: Sho
                                 variant={filterHour === 'all' ? 'default' : 'outline'}
                                 size="sm"
                                 className={cn(
-                                    "h-7 px-3 text-[10px] font-bold rounded-full transition-all",
+                                    "h-7 px-3 text-sm font-bold rounded-full transition-all",
                                     filterHour === 'all' ? "shadow-md scale-105" : "text-muted-foreground hover:text-foreground"
                                 )}
                                 onClick={() => { setFilterHour('all'); setCurrentPage(1); }}
@@ -207,7 +207,7 @@ export function ShowtimeTable({ showtimes, loading = false, movieId, date }: Sho
                                     variant={filterHour === hour ? 'default' : 'outline'}
                                     size="sm"
                                     className={cn(
-                                        "h-7 px-3 text-[10px] font-bold rounded-full transition-all",
+                                        "h-7 px-3 text-sm font-bold rounded-full transition-all",
                                         filterHour === hour ? "shadow-md scale-105" : "text-muted-foreground hover:text-foreground"
                                     )}
                                     onClick={() => { setFilterHour(hour); setCurrentPage(1); }}
@@ -225,7 +225,7 @@ export function ShowtimeTable({ showtimes, loading = false, movieId, date }: Sho
                     {loading ? (
                         <div className="py-20 flex flex-col items-center justify-center gap-4 border rounded-xl bg-muted/5 border-dashed">
                             <Loader2 className="w-10 h-10 animate-spin text-primary/30" />
-                            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground/40">Analyzing National Showtimes...</p>
+                            <p className="text-sm font-black uppercase tracking-widest text-muted-foreground/40">Analyzing National Showtimes...</p>
                         </div>
                     ) : processedShowtimes.length === 0 ? (
                         <div className="py-20 text-center border rounded-xl bg-muted/5 border-dashed">
@@ -236,7 +236,7 @@ export function ShowtimeTable({ showtimes, loading = false, movieId, date }: Sho
                             <div className="overflow-x-auto rounded-xl border border-primary/5 shadow-sm bg-card">
                                 <table className="w-full text-sm">
                                     <thead>
-                                        <tr className="bg-muted/30 border-b text-left text-muted-foreground/60 uppercase text-[9px] font-black tracking-widest">
+                                        <tr className="bg-muted/30 border-b text-left text-muted-foreground/60 uppercase text-sm font-black tracking-widest">
                                             <th className="py-4 px-4 w-24 cursor-pointer hover:text-primary transition-colors" role="button" tabIndex={0} onClick={() => toggleSort('showtime')} onKeyDown={(e) => e.key === 'Enter' && toggleSort('showtime')}>
                                                 <div className="flex items-center gap-1.5"><Clock className="w-3 h-3" />Time</div>
                                             </th>
@@ -259,7 +259,7 @@ export function ShowtimeTable({ showtimes, loading = false, movieId, date }: Sho
                                         ))}
                                     </tbody>
                                     <tfoot>
-                                        <tr className="bg-muted/5 border-t font-black uppercase text-[10px] tracking-widest text-muted-foreground/60">
+                                        <tr className="bg-muted/5 border-t font-black uppercase text-sm tracking-widest text-muted-foreground/60">
                                             <td className="py-4 px-4" colSpan={5}>National Daily Aggregation ({summaryStats.totalShowtimes} units)</td>
                                             <td className="py-4 px-4">
                                                 <div className="flex items-center gap-3">
@@ -346,35 +346,35 @@ export const ShowtimeRow = memo(({ showtime: st, movieId: propMovieId, date: pro
     return (
         <>
             <tr className={cn("border-b last:border-0 hover:bg-muted/20 transition-colors cursor-pointer group", expanded && "bg-primary/[0.02]")} onClick={toggleExpand}>
-                <td className="py-4 px-4 font-mono font-bold text-foreground text-xs">{st.showtime}</td>
+                <td className="py-4 px-4 font-mono font-bold text-foreground text-sm">{st.showtime}</td>
                 <td className="py-4 px-4">
                     <div className="flex items-center gap-3">
                         <div className={cn("w-1 h-4 rounded-full", merchantColor)} />
-                        <span className="font-bold tracking-tight uppercase text-xs group-hover:text-primary transition-colors">{st.theatre_name}</span>
-                        {st.studio_id && <span className="text-[9px] font-black uppercase text-muted-foreground/40 bg-muted/50 px-1.5 py-0.5 rounded border border-border/50">Std {st.studio_id}</span>}
+                        <span className="font-bold tracking-tight uppercase text-sm group-hover:text-primary transition-colors">{st.theatre_name}</span>
+                        {st.studio_id && <span className="text-sm font-black uppercase text-muted-foreground/40 bg-muted/50 px-1.5 py-0.5 rounded border border-border/50">Std {st.studio_id}</span>}
                     </div>
                 </td>
-                <td className="py-4 px-4 text-muted-foreground font-bold text-[10px] uppercase tracking-tighter">{st.city}</td>
-                <td className="py-4 px-4"><Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 border-muted-foreground/20">{st.room_category}</Badge></td>
+                <td className="py-4 px-4 text-muted-foreground font-bold text-sm uppercase tracking-tighter">{st.city}</td>
+                <td className="py-4 px-4"><Badge variant="outline" className="text-sm font-black uppercase tracking-widest text-muted-foreground/60 border-muted-foreground/20">{st.room_category}</Badge></td>
                 <td className="py-4 px-4 font-mono">
                     {st.audience_count !== undefined ? (
                         <div className="flex flex-col">
                             <span className={cn(
-                                "text-[10px] font-black uppercase tracking-widest",
+                                "text-sm font-black uppercase tracking-widest",
                                 (st.sold_seats - st.audience_count) > 0 ? "text-amber-600" : "text-green-600"
                             )}>
                                 {(st.sold_seats - st.audience_count) > 0 ? `+${st.sold_seats - st.audience_count}` : "0"} Delta
                             </span>
-                            <span className="text-[8px] font-bold text-muted-foreground/40 uppercase tracking-tighter">Verified Audit</span>
+                            <span className="text-sm font-bold text-muted-foreground/40 uppercase tracking-tighter">Verified Audit</span>
                         </div>
                     ) : (
-                        <span className="text-[9px] font-black uppercase text-muted-foreground/20 italic tracking-widest">Pending</span>
+                        <span className="text-sm font-black uppercase text-muted-foreground/20 italic tracking-widest">Pending</span>
                     )}
                 </td>
                 <td className="py-4 px-4">
                     <div className="flex flex-col gap-1 w-32">
                         <SeatProgressBar totalSeats={st.total_seats} blockedSeats={initialBlocked} soldSeats={finalSold} size="sm" showLabels={false} />
-                        <div className="flex justify-between text-[8px] font-black uppercase tracking-tighter text-muted-foreground/40">
+                        <div className="flex justify-between text-sm font-black uppercase tracking-tighter text-muted-foreground/40">
                             <span>{formatOccupancy(finalPct)}% Occupancy</span>
                             {st.audience_count !== undefined && <span className="text-primary/60 italic">Forensic Audit</span>}
                         </div>
@@ -383,7 +383,7 @@ export const ShowtimeRow = memo(({ showtime: st, movieId: propMovieId, date: pro
                 <td className="py-4 px-4 text-right">
                     <div className="flex items-center justify-end gap-3">
                         <div className="flex flex-col items-end">
-                            <span className="text-xs font-bold font-mono text-foreground tabular-nums">{finalSold}<span className="opacity-20">/{(st.total_seats ?? 0)}</span></span>
+                            <span className="text-sm font-bold font-mono text-foreground tabular-nums">{finalSold}<span className="opacity-20">/{(st.total_seats ?? 0)}</span></span>
                         </div>
                         <Button variant="outline" className="h-7 w-7 p-0 rounded-lg border-primary/10 hover:bg-primary/5">
                             <Microscope className={cn("w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-all", expanded && "text-primary scale-110")} />
@@ -399,10 +399,10 @@ export const ShowtimeRow = memo(({ showtime: st, movieId: propMovieId, date: pro
                                 <div className="flex items-center gap-4">
                                     <div className="p-2.5 bg-primary/10 rounded-2xl shadow-sm border border-primary/10"><Microscope className="w-5 h-5 text-primary" /></div>
                                     <div>
-                                        <h3 className="text-xs font-black uppercase tracking-widest text-foreground">Forensic Seat Audit</h3>
+                                        <h3 className="text-sm font-black uppercase tracking-widest text-foreground">Forensic Seat Audit</h3>
                                         <div className="flex items-center gap-2 mt-1">
                                             <div className="flex items-center gap-1.5">
-                                                <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">Showtime ID: {st.showtime_id}</p>
+                                                <p className="text-sm text-muted-foreground font-bold uppercase tracking-tight">Showtime ID: {st.showtime_id}</p>
                                                 <button 
                                                     onClick={copyId}
                                                     className="p-1 hover:bg-muted rounded transition-colors"
@@ -411,13 +411,13 @@ export const ShowtimeRow = memo(({ showtime: st, movieId: propMovieId, date: pro
                                                     {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3 text-muted-foreground/40" />}
                                                 </button>
                                             </div>
-                                            <span className="text-[10px] text-muted-foreground/40">•</span>
-                                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">Phase: {st.scrape_phase || 'N/A'}</p>
+                                            <span className="text-sm text-muted-foreground/40">•</span>
+                                            <p className="text-sm text-muted-foreground font-bold uppercase tracking-tight">Phase: {st.scrape_phase || 'N/A'}</p>
                                             <a 
                                                 href={getFirestoreConsoleUrl('movie_performance_v2', propMovieId || st.metadata_id || st.movie_id || 'unknown', 'days', propDate || st.date || 'unknown', 'showtimes', st.showtime_id)}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="flex items-center gap-1.5 text-[9px] font-black uppercase text-primary hover:bg-primary/10 bg-primary/5 px-2 py-0.5 rounded-full border border-primary/10 transition-all shadow-sm"
+                                                className="flex items-center gap-1.5 text-sm font-black uppercase text-primary hover:bg-primary/10 bg-primary/5 px-2 py-0.5 rounded-full border border-primary/10 transition-all shadow-sm"
                                             >
                                                 <Layers className="w-2.5 h-2.5" />
                                                 View In Firestore
@@ -430,22 +430,22 @@ export const ShowtimeRow = memo(({ showtime: st, movieId: propMovieId, date: pro
                                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-green-500/5 border border-green-500/10 shadow-sm transition-all hover:bg-green-500/10 group">
                                         <Users className="w-3 h-3 text-green-500" />
                                         <div className="flex flex-col">
-                                            <span className="text-xs font-black text-green-600 leading-none">{finalSold}</span>
-                                            <span className="text-[8px] font-bold text-green-600/60 uppercase tracking-tighter mt-0.5">Tickets Sold</span>
+                                            <span className="text-sm font-black text-green-600 leading-none">{finalSold}</span>
+                                            <span className="text-sm font-bold text-green-600/60 uppercase tracking-tighter mt-0.5">Tickets Sold</span>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-red-500/5 border border-red-500/10 shadow-sm transition-all hover:bg-green-500/10 group">
                                         <Ban className="w-3 h-3 text-red-500" />
                                         <div className="flex flex-col">
-                                            <span className="text-xs font-black text-red-600 leading-none">{initialBlocked}</span>
-                                            <span className="text-[8px] font-bold text-red-600/60 uppercase tracking-tighter mt-0.5">Static Block</span>
+                                            <span className="text-sm font-black text-red-600 leading-none">{initialBlocked}</span>
+                                            <span className="text-sm font-bold text-red-600/60 uppercase tracking-tighter mt-0.5">Static Block</span>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-500/5 border border-zinc-500/10 shadow-sm transition-all hover:bg-green-500/10 group">
                                         <CheckCircle2 className="w-3 h-3 text-zinc-500" />
                                         <div className="flex flex-col">
-                                            <span className="text-xs font-black text-zinc-600 leading-none">{availableSeats}</span>
-                                            <span className="text-[8px] font-bold text-zinc-600/60 uppercase tracking-tighter mt-0.5">Available</span>
+                                            <span className="text-sm font-black text-zinc-600 leading-none">{availableSeats}</span>
+                                            <span className="text-sm font-bold text-zinc-600/60 uppercase tracking-tighter mt-0.5">Available</span>
                                         </div>
                                     </div>
                                     <div className={cn(
@@ -455,14 +455,14 @@ export const ShowtimeRow = memo(({ showtime: st, movieId: propMovieId, date: pro
                                     )}>
                                         <Percent className={cn("w-3 h-3", getOccupancyColor(finalPct))} />
                                         <div className="flex flex-col">
-                                            <span className={cn("text-xs font-black leading-none", getOccupancyColor(finalPct))}>{formatOccupancy(finalPct)}%</span>
-                                            <span className={cn("text-[8px] font-bold uppercase tracking-tighter mt-0.5 opacity-60", getOccupancyColor(finalPct))}>True Occ</span>
+                                            <span className={cn("text-sm font-black leading-none", getOccupancyColor(finalPct))}>{formatOccupancy(finalPct)}%</span>
+                                            <span className={cn("text-sm font-bold uppercase tracking-tighter mt-0.5 opacity-60", getOccupancyColor(finalPct))}>True Occ</span>
                                         </div>
                                     </div>
                                     <div className="h-8 w-px bg-border/50 mx-1 hidden md:block" />
                                     <div className="flex items-center gap-2.5 pl-1">
                                         <ShieldCheck className="w-4 h-4 text-green-500 drop-shadow-sm" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-green-600">State Verified</span>
+                                        <span className="text-sm font-black uppercase tracking-widest text-green-600">State Verified</span>
                                     </div>
                                 </div>
                             </div>
@@ -471,12 +471,12 @@ export const ShowtimeRow = memo(({ showtime: st, movieId: propMovieId, date: pro
                                 {isLoadingLayout ? (
                                     <div className="h-[450px] flex flex-col items-center justify-center border rounded-2xl bg-muted/5 border-dashed">
                                         <Loader2 className="w-8 h-8 animate-spin text-primary/20 mb-4" />
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Decrypting Spatial Layout...</p>
+                                        <p className="text-sm font-black uppercase tracking-widest text-muted-foreground/40">Decrypting Spatial Layout...</p>
                                     </div>
                                 ) : rawData ? (
                                     <TriPanelAudit initialLayout={rawData.initialLayout} finalLayout={rawData.finalLayout} masterLayout={rawData.masterLayout} theatreId={st.theatre_id} studioId={st.studio_id} />
                                 ) : (
-                                    <div className="h-[450px] flex items-center justify-center border rounded-2xl bg-red-500/5 border-red-500/10"><p className="text-xs font-bold text-red-500/60 uppercase tracking-widest">{errorMsg || "Forensic Data Unavailable"}</p></div>
+                                    <div className="h-[450px] flex items-center justify-center border rounded-2xl bg-red-500/5 border-red-500/10"><p className="text-sm font-bold text-red-500/60 uppercase tracking-widest">{errorMsg || "Forensic Data Unavailable"}</p></div>
                                 )}
                             </div>
                         </div>

@@ -22,7 +22,7 @@ export function HallOfFameTab({ yearsLoading, yearsError, yearsData, loadYears }
       <div className="flex items-center gap-3">
         <div className="h-4 w-1 bg-primary rounded-full" />
         <h2 className="text-sm font-black uppercase tracking-[0.2em] text-foreground/80">Best Movies by Year</h2>
-        <span className="text-[10px] font-mono text-muted-foreground/40">{yearsData ? `${yearsData.total_years} years with data` : ''}</span>
+        <span className="text-sm font-mono text-muted-foreground/40">{yearsData ? `${yearsData.total_years} years with data` : ''}</span>
       </div>
 
       {yearsLoading && (
@@ -71,7 +71,7 @@ function YearCards({ years }: { years: YearSummary[] }) {
       {groups.map((group) => (
         <div key={group.start}>
           <div className="flex items-center gap-2 mb-3">
-            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">{group.label}</span>
+            <span className="text-sm font-black uppercase tracking-widest text-muted-foreground/40">{group.label}</span>
             <div className="flex-1 h-px bg-border/40" />
           </div>
           <div className="grid grid-cols-5 gap-4">
@@ -83,9 +83,9 @@ function YearCards({ years }: { years: YearSummary[] }) {
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-2xl font-black tracking-tight">{y.year}</CardTitle>
-                      <Badge variant="outline" className="text-[10px]">{y.dates_with_data}d</Badge>
+                      <Badge variant="outline" className="text-sm">{y.dates_with_data}d</Badge>
                     </div>
-                    <div className="flex gap-3 text-[10px] text-muted-foreground/60">
+                    <div className="flex gap-3 text-sm text-muted-foreground/60">
                       <span>{formatAdm(y.total_admissions)}</span>
                       <span>{y.unique_movies} movies</span>
                     </div>
@@ -96,11 +96,11 @@ function YearCards({ years }: { years: YearSummary[] }) {
                         <Crown className={cn('w-4 h-4 mt-0.5 shrink-0', isChampionLocal ? 'text-indigo-500' : 'text-amber-500')} />
                         <div className="min-w-0">
                           <p className="text-sm font-bold truncate">{y.top_movie.title}</p>
-                          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <span className="font-mono">{y.top_movie.total_admissions.toLocaleString()}</span>
                             <TypeBadge type={y.top_movie.type} short />
                           </div>
-                          {y.top_movie.movie_genre.length > 0 && <p className="text-[10px] text-muted-foreground/40 truncate">{y.top_movie.movie_genre.join(', ')}</p>}
+                          {y.top_movie.movie_genre.length > 0 && <p className="text-sm text-muted-foreground/40 truncate">{y.top_movie.movie_genre.join(', ')}</p>}
                         </div>
                       </div>
                     )}
@@ -109,7 +109,7 @@ function YearCards({ years }: { years: YearSummary[] }) {
                         <div className="bg-indigo-500 rounded-l-full" style={{ width: `${(y.local_admissions / (y.total_admissions || 1)) * 100}%` }} />
                         <div className="bg-amber-500 rounded-r-full" style={{ width: `${(y.international_admissions / (y.total_admissions || 1)) * 100}%` }} />
                       </div>
-                      <div className="flex justify-between text-[9px] text-muted-foreground/50 font-mono">
+                      <div className="flex justify-between text-sm text-muted-foreground/50 font-mono">
                         <span>{((y.local_admissions / (y.total_admissions || 1)) * 100).toFixed(0)}%</span>
                         <span>{((y.international_admissions / (y.total_admissions || 1)) * 100).toFixed(0)}%</span>
                       </div>
@@ -117,16 +117,16 @@ function YearCards({ years }: { years: YearSummary[] }) {
                     <div className="grid grid-cols-2 gap-2 pt-1 border-t">
                       {y.top_local && (
                         <div className="min-w-0">
-                          <p className="text-[9px] font-black uppercase tracking-widest text-indigo-500/60">Local</p>
-                          <p className="text-[11px] font-medium truncate">{y.top_local.title}</p>
-                          <p className="text-[10px] text-muted-foreground font-mono">{formatAdm(y.top_local.total_admissions)}</p>
+                          <p className="text-sm font-black uppercase tracking-widest text-indigo-500/60">Local</p>
+                          <p className="text-sm font-medium truncate">{y.top_local.title}</p>
+                          <p className="text-sm text-muted-foreground font-mono">{formatAdm(y.top_local.total_admissions)}</p>
                         </div>
                       )}
                       {y.top_international && (
                         <div className="min-w-0">
-                          <p className="text-[9px] font-black uppercase tracking-widest text-amber-500/60">Intl</p>
-                          <p className="text-[11px] font-medium truncate">{y.top_international.title}</p>
-                          <p className="text-[10px] text-muted-foreground font-mono">{formatAdm(y.top_international.total_admissions)}</p>
+                          <p className="text-sm font-black uppercase tracking-widest text-amber-500/60">Intl</p>
+                          <p className="text-sm font-medium truncate">{y.top_international.title}</p>
+                          <p className="text-sm text-muted-foreground font-mono">{formatAdm(y.top_international.total_admissions)}</p>
                         </div>
                       )}
                     </div>
@@ -151,7 +151,7 @@ function YearlyTable({ years }: { years: YearSummary[] }) {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+              <tr className="border-b text-sm font-black uppercase tracking-widest text-muted-foreground/60">
                 <th className="p-4 text-left">Year</th>
                 <th className="p-4 text-left">Champion</th>
                 <th className="p-4 text-right">Total Admissions</th>

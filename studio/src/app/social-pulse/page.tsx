@@ -39,7 +39,7 @@ export default function SocialPulsePage() {
         return (
             <div className="h-screen flex flex-col items-center justify-center gap-4">
                 <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Synchronizing Social Signals...</p>
+                <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">Synchronizing Social Signals...</p>
             </div>
         );
     }
@@ -72,8 +72,8 @@ export default function SocialPulsePage() {
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="hidden md:flex flex-col items-end px-4 border-r border-border/40">
-                        <span className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Data Source</span>
-                        <span className="text-[10px] font-bold text-primary uppercase">YT + Google + TMDB</span>
+                        <span className="text-sm font-black uppercase text-muted-foreground/60 tracking-widest">Data Source</span>
+                        <span className="text-sm font-bold text-primary uppercase">YT + Google + TMDB</span>
                     </div>
                     <Button variant="outline" size="sm" onClick={() => mutate()} className="h-10 px-4 gap-2 rounded-xl border-border/60 hover:bg-muted transition-all">
                         <RefreshCcw className="w-4 h-4" />

@@ -90,8 +90,8 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 p-6">
                 <div className="p-4 bg-red-50 border border-red-100 rounded-xl text-center">
-                    <p className="text-red-600 font-bold uppercase text-xs tracking-tight">Error Loading Theatre</p>
-                    <p className="text-red-400 text-[10px] mt-1 italic">{error || 'Theatre not found in registry'}</p>
+                    <p className="text-red-600 font-bold uppercase text-sm tracking-tight">Error Loading Theatre</p>
+                    <p className="text-red-400 text-sm mt-1 italic">{error || 'Theatre not found in registry'}</p>
                 </div>
                 <Link href="/cinemas">
                     <Button variant="outline" size="sm">Return to Registry</Button>
@@ -116,18 +116,18 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
                     <div className="flex items-center h-8 gap-4 bg-muted/20 px-3 rounded-lg border border-border/50 shadow-sm overflow-hidden animate-in fade-in duration-300">
                         <div className="hidden lg:flex items-center h-full gap-2 border-r border-border/50 pr-4 mr-1">
                             <Tag className="w-2.5 h-2.5 text-primary/50" />
-                            <span className="text-[9px] font-black uppercase tracking-tight text-primary/60 truncate max-w-[200px]">
+                            <span className="text-sm font-black uppercase tracking-tight text-primary/60 truncate max-w-[200px]">
                                 {navContext.filterText}
                             </span>
                         </div>
 
-                        <div className="hidden sm:flex items-center gap-1.5 px-1.5 py-0.5 rounded border border-border/50 bg-background/50 text-[8px] font-black text-muted-foreground/40 uppercase tracking-widest">
+                        <div className="hidden sm:flex items-center gap-1.5 px-1.5 py-0.5 rounded border border-border/50 bg-background/50 text-sm font-black text-muted-foreground/40 uppercase tracking-widest">
                             <span className="border rounded px-1 px-0.5">←</span>
                             <span className="border rounded px-1 px-0.5">→</span>
                             <span>to cycle</span>
                         </div>
 
-                        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-tighter text-muted-foreground/70">
+                        <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-tighter text-muted-foreground/70">
                             <ListFilter className="w-3 h-3" />
                             <span>Theatre {navContext.current} of {navContext.total}</span>
                         </div>
@@ -164,7 +164,7 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
                                 <div className="flex items-center gap-3 h-5 overflow-hidden">
                                     <MerchantBadge merchant={theatre.merchant} className="h-5" variant="outline" />
                                     <div className="flex items-center gap-1.5 group cursor-pointer h-5 overflow-hidden" onClick={handleCopyId}>
-                                        <span className="text-[10px] font-mono text-muted-foreground/60 uppercase tracking-tighter transition-colors group-hover:text-primary leading-none flex items-center h-full">
+                                        <span className="text-sm font-mono text-muted-foreground/60 uppercase tracking-tighter transition-colors group-hover:text-primary leading-none flex items-center h-full">
                                             ID: {theatre.theatre_id}
                                         </span>
                                         <div className="flex items-center justify-center w-4 h-4 rounded hover:bg-muted transition-colors">
@@ -191,7 +191,7 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
                                 </div>
 
                                 {/* Row 3: Address - FORCE 16px HEIGHT */}
-                                <div className="flex items-center gap-2 text-muted-foreground text-xs pt-1 h-4 overflow-hidden">
+                                <div className="flex items-center gap-2 text-muted-foreground text-sm pt-1 h-4 overflow-hidden">
                                     <MapPin className="w-3 h-3 text-primary shrink-0" />
                                     <div className="flex items-center h-full gap-2">
                                         <span className="font-bold uppercase whitespace-nowrap leading-none">{theatre.city}</span>
@@ -203,7 +203,7 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
                             
                             <div className="flex flex-col items-end gap-3 shrink-0 h-full">
                                 <div className="flex items-center h-6 gap-2">
-                                    <div className="flex items-center h-full gap-3 text-[10px] font-mono text-muted-foreground/40 bg-muted/20 px-3 rounded-full border border-border/50 shadow-sm w-[180px] justify-center relative overflow-hidden">
+                                    <div className="flex items-center h-full gap-3 text-sm font-mono text-muted-foreground/40 bg-muted/20 px-3 rounded-full border border-border/50 shadow-sm w-[180px] justify-center relative overflow-hidden">
                                         {metrics ? (
                                             <div className="flex items-center h-full w-full">
                                                 <div className="flex items-center gap-1.5 font-bold uppercase tracking-tighter flex-1 justify-center leading-none">
@@ -219,12 +219,12 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
                                         ) : (
                                             <div className="flex items-center gap-2 opacity-30 animate-pulse justify-center w-full">
                                                 <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                                                <span className="text-[8px] font-bold uppercase tracking-widest leading-none">Profiling Link...</span>
+                                                <span className="text-sm font-bold uppercase tracking-widest leading-none">Profiling Link...</span>
                                             </div>
                                         )}
                                     </div>
 
-                                    <div className="flex items-center justify-center w-10 h-full rounded bg-primary/5 border border-primary/20 text-[9px] font-black text-primary uppercase leading-none">
+                                    <div className="flex items-center justify-center w-10 h-full rounded bg-primary/5 border border-primary/20 text-sm font-black text-primary uppercase leading-none">
                                         V{theatre.version || '2.0'}
                                     </div>
                                 </div>
@@ -234,7 +234,7 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
                                         href={`https://www.google.com/maps/search/?api=1&query=${theatre.lat},${theatre.lng}`}
                                         target="_blank" rel="noopener noreferrer"
                                     >
-                                        <Button variant="outline" size="sm" className="h-8 gap-2 text-[10px] font-bold uppercase border-primary/20 hover:bg-primary/5">
+                                        <Button variant="outline" size="sm" className="h-8 gap-2 text-sm font-bold uppercase border-primary/20 hover:bg-primary/5">
                                             <Map className="w-3 h-3" /> Maps <ArrowUpRight className="w-2.5 h-2.5 opacity-50" />
                                         </Button>
                                     </a>
@@ -242,7 +242,7 @@ export function CinemaDetailView({ theatreId }: CinemaDetailViewProps) {
                                         href={`https://console.cloud.google.com/firestore/databases/-default-/data/panel/theatres/${theatre.theatre_id}?project=cineradar-481014`}
                                         target="_blank" rel="noopener noreferrer"
                                     >
-                                        <Button variant="outline" size="sm" className="h-8 gap-2 text-[10px] font-bold uppercase border-primary/20 hover:bg-primary/5">
+                                        <Button variant="outline" size="sm" className="h-8 gap-2 text-sm font-bold uppercase border-primary/20 hover:bg-primary/5">
                                             <ExternalLink className="w-3 h-3" /> Source
                                         </Button>
                                     </a>

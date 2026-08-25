@@ -48,7 +48,7 @@ export default function ActorsPage() {
           </div>
           <div>
             <h1 className="text-base font-black uppercase tracking-tighter">Actor Database</h1>
-            <p className="text-[10px] text-muted-foreground/60 uppercase tracking-widest font-bold">
+            <p className="text-sm text-muted-foreground/60 uppercase tracking-widest font-bold">
               {totalActors.toLocaleString()} actors (min 3 movies) · {bankable} bankable (avg ≥{formatAdm(HIT_THRESHOLD)})
             </p>
           </div>
@@ -66,7 +66,7 @@ export default function ActorsPage() {
       <div className="flex items-center gap-3">
         <SearchInput value={search} onChange={setSearch} placeholder="Search actors…" />
         <TypeFilterBar value={typeFilter} onChange={setTypeFilter} />
-        <span className="text-[10px] text-muted-foreground/40 font-mono ml-auto">{filtered.length} results</span>
+        <span className="text-sm text-muted-foreground/40 font-mono ml-auto">{filtered.length} results</span>
       </div>
 
       {/* Table */}

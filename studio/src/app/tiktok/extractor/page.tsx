@@ -141,7 +141,7 @@ export default function HashtagExtractorPage() {
                     </div>
                 </div>
 
-                <Badge variant="outline" className="px-3 py-1 text-xs font-semibold gap-1.5 self-start md:self-auto bg-primary/5 text-primary border-primary/20">
+                <Badge variant="outline" className="px-3 py-1 text-sm font-semibold gap-1.5 self-start md:self-auto bg-primary/5 text-primary border-primary/20">
                     <Sparkles className="w-3.5 h-3.5" />
                     Auto-Heuristic + Cinema Post Extractor
                 </Badge>
@@ -150,10 +150,10 @@ export default function HashtagExtractorPage() {
             {/* Quick Movie Presets */}
             <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                         Select Current In-Theatre Film
                     </span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-sm text-muted-foreground">
                         5 Active Box Office Titles
                     </span>
                 </div>
@@ -168,7 +168,7 @@ export default function HashtagExtractorPage() {
                                     setCustomDistributor('');
                                     setSelectedPreset(preset);
                                 }}
-                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${
+                                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 border ${
                                     isSelected
                                         ? 'bg-primary text-primary-foreground border-primary shadow-sm'
                                         : 'bg-muted/30 hover:bg-muted text-muted-foreground hover:text-foreground border-border/50'
@@ -189,14 +189,14 @@ export default function HashtagExtractorPage() {
                         <Tag className="w-4 h-4 text-primary" />
                         Custom Film & Distributor Query
                     </CardTitle>
-                    <CardDescription className="text-xs">
+                    <CardDescription className="text-sm">
                         Enter any upcoming film to instantly compute its normalized marketing hashtag bundle
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="p-5 pt-0">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="text-xs font-semibold text-muted-foreground mb-1 block">Movie Title</label>
+                            <label className="text-sm font-semibold text-muted-foreground mb-1 block">Movie Title</label>
                             <Input
                                 placeholder="e.g. Pengabdi Setan 3, Lembayung, Sekawan Limo..."
                                 value={customTitle}
@@ -205,7 +205,7 @@ export default function HashtagExtractorPage() {
                             />
                         </div>
                         <div>
-                            <label className="text-xs font-semibold text-muted-foreground mb-1 block">Distributor / Production House (Optional)</label>
+                            <label className="text-sm font-semibold text-muted-foreground mb-1 block">Distributor / Production House (Optional)</label>
                             <Input
                                 placeholder="e.g. Rapi Films, MD Pictures, Falcon..."
                                 value={customDistributor}
@@ -225,17 +225,17 @@ export default function HashtagExtractorPage() {
                         <CardHeader className="p-6 pb-4 border-b border-border/30 bg-muted/20">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                                    <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                                         Campaign Target
                                     </span>
                                     <CardTitle className="text-2xl font-black text-foreground mt-0.5">
                                         {generatedCampaign.title}
                                     </CardTitle>
-                                    <p className="text-xs text-muted-foreground">
+                                    <p className="text-sm text-muted-foreground">
                                         Distributor: <span className="font-semibold text-foreground">{generatedCampaign.distributor}</span>
                                     </p>
                                 </div>
-                                <Badge className="px-3 py-1 text-xs font-bold gap-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">
+                                <Badge className="px-3 py-1 text-sm font-bold gap-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">
                                     <ShieldCheck className="w-3.5 h-3.5" />
                                     Confidence: 98%
                                 </Badge>
@@ -245,7 +245,7 @@ export default function HashtagExtractorPage() {
                         <CardContent className="p-6 space-y-6">
                             {/* Primary Hashtag */}
                             <div>
-                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 block">
+                                <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-2 block">
                                     Primary Campaign Hashtag (Official)
                                 </label>
                                 <div className="flex items-center justify-between p-3.5 rounded-2xl bg-primary/5 border border-primary/20">
@@ -253,7 +253,7 @@ export default function HashtagExtractorPage() {
                                         <span className="text-lg font-black text-primary font-mono">
                                             {generatedCampaign.primaryTag}
                                         </span>
-                                        <Badge variant="outline" className="text-[10px] uppercase font-bold text-primary border-primary/30">
+                                        <Badge variant="outline" className="text-sm uppercase font-bold text-primary border-primary/30">
                                             Primary
                                         </Badge>
                                     </div>
@@ -261,7 +261,7 @@ export default function HashtagExtractorPage() {
                                         variant="outline"
                                         size="sm"
                                         onClick={() => handleCopy(generatedCampaign.primaryTag, 'primary')}
-                                        className="rounded-xl gap-1.5 text-xs font-medium"
+                                        className="rounded-xl gap-1.5 text-sm font-medium"
                                     >
                                         {copiedTag === 'primary' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
                                         {copiedTag === 'primary' ? 'Copied' : 'Copy'}
@@ -271,7 +271,7 @@ export default function HashtagExtractorPage() {
 
                             {/* Secondary & Variant Tags */}
                             <div>
-                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 block">
+                                <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-2 block">
                                     Secondary & Creator Variant Tags ({generatedCampaign.secondaryTags.length})
                                 </label>
                                 <div className="flex flex-wrap gap-2">
@@ -279,7 +279,7 @@ export default function HashtagExtractorPage() {
                                         <div
                                             key={idx}
                                             onClick={() => handleCopy(tag, `tag-${idx}`)}
-                                            className="px-3 py-1.5 rounded-xl bg-muted/40 hover:bg-muted border border-border/50 text-xs font-mono font-medium text-foreground cursor-pointer transition-colors flex items-center gap-2 group"
+                                            className="px-3 py-1.5 rounded-xl bg-muted/40 hover:bg-muted border border-border/50 text-sm font-mono font-medium text-foreground cursor-pointer transition-colors flex items-center gap-2 group"
                                             title="Click to copy"
                                         >
                                             <span>{tag}</span>
@@ -295,12 +295,12 @@ export default function HashtagExtractorPage() {
 
                             {/* Cinema Post Promo Scanner Excerpt */}
                             <div className="p-4 rounded-2xl bg-muted/30 border border-border/40 space-y-2">
-                                <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
+                                <div className="flex items-center gap-2 text-sm font-bold text-muted-foreground">
                                     <Info className="w-3.5 h-3.5 text-primary" />
                                     Detected in Cinema XXI / Distributor Promo Posts:
                                 </div>
-                                <p className="text-xs italic text-foreground/80 leading-relaxed font-sans bg-background/50 p-3 rounded-xl border border-border/30">
-                                    "{generatedCampaign.promoExcerpt}"
+                                <p className="text-sm italic text-foreground/80 leading-relaxed font-sans bg-background/50 p-3 rounded-xl border border-border/30">
+                                    &ldquo;{generatedCampaign.promoExcerpt}&rdquo;
                                 </p>
                             </div>
                         </CardContent>
@@ -316,7 +316,7 @@ export default function HashtagExtractorPage() {
                                 <AtSign className="w-4 h-4 text-primary" />
                                 Detected Official Accounts
                             </CardTitle>
-                            <CardDescription className="text-xs">
+                            <CardDescription className="text-sm">
                                 Verified promotional channels for this title
                             </CardDescription>
                         </CardHeader>
@@ -325,8 +325,8 @@ export default function HashtagExtractorPage() {
                                 <div className="flex items-center gap-2.5">
                                     <TikTokIcon className="w-4 h-4" />
                                     <div>
-                                        <p className="text-xs font-bold leading-none">TikTok</p>
-                                        <p className="text-[11px] text-muted-foreground">{generatedCampaign.officialTiktok}</p>
+                                        <p className="text-sm font-bold leading-none">TikTok</p>
+                                        <p className="text-sm text-muted-foreground">{generatedCampaign.officialTiktok}</p>
                                     </div>
                                 </div>
                                 <a
@@ -343,8 +343,8 @@ export default function HashtagExtractorPage() {
                                 <div className="flex items-center gap-2.5">
                                     <InstagramIcon className="w-4 h-4 text-pink-500" />
                                     <div>
-                                        <p className="text-xs font-bold leading-none">Instagram</p>
-                                        <p className="text-[11px] text-muted-foreground">{generatedCampaign.officialIg}</p>
+                                        <p className="text-sm font-bold leading-none">Instagram</p>
+                                        <p className="text-sm text-muted-foreground">{generatedCampaign.officialIg}</p>
                                     </div>
                                 </div>
                                 <a
@@ -361,8 +361,8 @@ export default function HashtagExtractorPage() {
                                 <div className="flex items-center gap-2.5">
                                     <XIcon className="w-4 h-4" />
                                     <div>
-                                        <p className="text-xs font-bold leading-none">X / Twitter</p>
-                                        <p className="text-[11px] text-muted-foreground">{generatedCampaign.officialX}</p>
+                                        <p className="text-sm font-bold leading-none">X / Twitter</p>
+                                        <p className="text-sm text-muted-foreground">{generatedCampaign.officialX}</p>
                                     </div>
                                 </div>
                                 <a
@@ -388,7 +388,7 @@ export default function HashtagExtractorPage() {
                         <CardContent className="p-5 pt-0 space-y-2.5">
                             <Link
                                 href={`/tiktok/explorer?hashtag=${generatedCampaign.primaryTag.replace('#', '')}`}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-xs hover:bg-primary/90 transition-all shadow-sm"
+                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 transition-all shadow-sm"
                             >
                                 <Play className="w-4 h-4" />
                                 Open in TikTok Explorer
@@ -398,7 +398,7 @@ export default function HashtagExtractorPage() {
                             <Button
                                 variant="outline"
                                 onClick={handleSave}
-                                className="w-full rounded-xl text-xs font-semibold gap-2 border-border/60"
+                                className="w-full rounded-xl text-sm font-semibold gap-2 border-border/60"
                             >
                                 {savedSuccess ? (
                                     <>
@@ -413,7 +413,7 @@ export default function HashtagExtractorPage() {
                             <Button
                                 variant="ghost"
                                 onClick={() => handleCopy([generatedCampaign.primaryTag, ...generatedCampaign.secondaryTags].join(' '), 'all')}
-                                className="w-full rounded-xl text-xs text-muted-foreground hover:text-foreground"
+                                className="w-full rounded-xl text-sm text-muted-foreground hover:text-foreground"
                             >
                                 {copiedTag === 'all' ? 'All Tags Copied!' : 'Copy All Hashtags as String'}
                             </Button>

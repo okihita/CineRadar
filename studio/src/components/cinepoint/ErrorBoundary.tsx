@@ -36,10 +36,10 @@ export class CinePointErrorBoundary extends Component<Props, State> {
           <CardContent className="py-8 flex flex-col items-center gap-3">
             <AlertTriangle className="w-8 h-8 text-amber-500" />
             <p className="text-sm font-bold text-muted-foreground">Something went wrong rendering this section</p>
-            <p className="text-xs text-muted-foreground/50 max-w-md text-center">{this.state.error?.message}</p>
+            <p className="text-sm text-muted-foreground/50 max-w-md text-center">{this.state.error?.message}</p>
             <button
               onClick={() => this.setState({ hasError: false, error: null })}
-              className="text-[10px] font-bold text-primary hover:underline"
+              className="text-sm font-bold text-primary hover:underline"
             >
               Try again
             </button>

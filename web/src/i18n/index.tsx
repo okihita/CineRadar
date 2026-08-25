@@ -36,7 +36,6 @@ export function I18nProvider({
     try {
       const saved = localStorage.getItem(STORAGE_KEY) as Locale | null;
       if (saved && LOCALES.includes(saved)) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLocaleState(saved);
       }
     } catch {

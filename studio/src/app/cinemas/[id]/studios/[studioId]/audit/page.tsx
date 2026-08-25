@@ -49,10 +49,10 @@ function AuditSidebar({
                 <div className="space-y-1">
                     <h2 className="font-bold text-lg tracking-tight uppercase text-foreground">Studio {studio.id}</h2>
                     <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-[10px] uppercase font-bold text-muted-foreground">
+                        <Badge variant="outline" className="text-sm uppercase font-bold text-muted-foreground">
                             {studio.room_category || 'REGULAR'}
                         </Badge>
-                        <Badge variant="outline" className="text-[10px] uppercase font-bold text-blue-600 border-blue-200 bg-blue-50/50">
+                        <Badge variant="outline" className="text-sm uppercase font-bold text-blue-600 border-blue-200 bg-blue-50/50">
                             V{studio.version}
                         </Badge>
                     </div>
@@ -61,7 +61,7 @@ function AuditSidebar({
 
             <div className="flex-1 overflow-y-auto p-4 space-y-6 text-foreground">
                 <div className="space-y-3">
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60 px-1">Master Source</p>
+                    <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground/60 px-1">Master Source</p>
                     <Button 
                         variant={activeDay === -1 ? "secondary" : "ghost"} 
                         className={cn(
@@ -72,14 +72,14 @@ function AuditSidebar({
                     >
                         <ShieldCheck className="w-5 h-5 text-primary" />
                         <div className="flex flex-col items-start text-left">
-                            <span className="text-xs font-bold uppercase tracking-tight">Digital Twin</span>
-                            <span className="text-[9px] text-muted-foreground opacity-70 italic">Final Consolidated Truth</span>
+                            <span className="text-sm font-bold uppercase tracking-tight">Digital Twin</span>
+                            <span className="text-sm text-muted-foreground opacity-70 italic">Final Consolidated Truth</span>
                         </div>
                     </Button>
                 </div>
 
                 <div className="space-y-3">
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60 px-1">Historical Evidence</p>
+                    <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground/60 px-1">Historical Evidence</p>
                     <div className="space-y-1.5">
                         {evidence.map((ev, idx) => (
                             <Button
@@ -92,16 +92,16 @@ function AuditSidebar({
                                 onClick={() => onSelect(idx)}
                                 disabled={isLoading}
                             >
-                                <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold shrink-0">
+                                <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-sm font-bold shrink-0">
                                     {idx + 1}
                                 </div>
                                 <div className="flex flex-col min-w-0">
-                                    <span className="text-xs font-bold truncate leading-tight uppercase tracking-tighter text-foreground/90">{ev.movie_title || ev.movie}</span>
-                                    <span className="text-[11px] text-muted-foreground mt-1 font-semibold">
+                                    <span className="text-sm font-bold truncate leading-tight uppercase tracking-tighter text-foreground/90">{ev.movie_title || ev.movie}</span>
+                                    <span className="text-sm text-muted-foreground mt-1 font-semibold">
                                         {new Date(ev.date).toLocaleDateString('en-US', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}, {ev.time}
                                     </span>
                                     {ev.price && (
-                                        <span className="text-[10px] text-primary font-mono mt-0.5 font-bold">
+                                        <span className="text-sm text-primary font-mono mt-0.5 font-bold">
                                             Rp {ev.price.toLocaleString('id-ID')}
                                         </span>
                                     )}
@@ -112,7 +112,7 @@ function AuditSidebar({
                 </div>
             </div>
             
-            <div className="p-4 border-t bg-muted/10 text-[9px] text-muted-foreground/60 italic leading-relaxed text-center uppercase tracking-tighter">
+            <div className="p-4 border-t bg-muted/10 text-sm text-muted-foreground/60 italic leading-relaxed text-center uppercase tracking-tighter">
                 Refined via 7-day Multi-Showtime Consensus
             </div>
         </div>
@@ -197,7 +197,7 @@ export default function StudioAuditPage({ params }: PageProps) {
     if (isLoading) return (
         <div className="flex flex-col items-center justify-center h-screen gap-4 bg-background">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <p className="text-muted-foreground animate-pulse font-bold text-xs tracking-widest uppercase">Initializing forensic environment...</p>
+            <p className="text-muted-foreground animate-pulse font-bold text-sm tracking-widest uppercase">Initializing forensic environment...</p>
         </div>
     );
 
@@ -231,9 +231,9 @@ export default function StudioAuditPage({ params }: PageProps) {
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2.5">
                             {activeDay === -1 ? <Zap className="w-4 h-4 text-primary" /> : <History className="w-4 h-4 text-amber-600" />}
-                            <h1 className="font-bold tracking-tight text-xs uppercase">{currentTitle}</h1>
+                            <h1 className="font-bold tracking-tight text-sm uppercase">{currentTitle}</h1>
                         </div>
-                        <Badge variant="outline" className="text-[10px] font-mono h-5 py-0 bg-primary/5 text-primary border-primary/20">
+                        <Badge variant="outline" className="text-sm font-mono h-5 py-0 bg-primary/5 text-primary border-primary/20">
                             <Table className="w-3 h-3 mr-1.5 opacity-50" />
                             {totalCapacity} Physical Capacity
                         </Badge>
@@ -247,7 +247,7 @@ export default function StudioAuditPage({ params }: PageProps) {
                                     : `https://console.cloud.google.com/firestore/databases/-default-/data/panel/movie_performance_v2/${evidence[activeDay].movie_id}/days/${evidence[activeDay].date}/showtimes/${evidence[activeDay].showtime_id}?project=cineradar-481014`
                                 }
                                 target="_blank" rel="noopener noreferrer"
-                                className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-primary/5 hover:bg-primary/10 text-primary border border-primary/20 text-[10px] font-bold uppercase transition-all shadow-sm"
+                                className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-primary/5 hover:bg-primary/10 text-primary border border-primary/20 text-sm font-bold uppercase transition-all shadow-sm"
                             >
                                 <ExternalLink className="w-3 h-3" /> 
                                 {activeDay === -1 ? 'Template Source' : 'Evidence Source'}
@@ -272,11 +272,11 @@ export default function StudioAuditPage({ params }: PageProps) {
                     {/* The Single Adaptive Inspector */}
                     <Card className="shadow-lg border-primary/10 flex flex-col min-h-[500px]">
                         <CardHeader className="py-2.5 px-4 border-b bg-muted/20 shrink-0 flex flex-row items-center justify-between">
-                            <CardTitle className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 opacity-70">
+                            <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 opacity-70">
                                 {inspectorIcon}
                                 {inspectorTitle}
                             </CardTitle>
-                            <div className="text-[9px] font-mono opacity-40 uppercase">
+                            <div className="text-sm font-mono opacity-40 uppercase">
                                 Specimen ID: {activeDay === -1 ? studio.id : evidence[activeDay]?.showtime_id}
                             </div>
                         </CardHeader>
@@ -285,7 +285,7 @@ export default function StudioAuditPage({ params }: PageProps) {
                                 {isLoadingProof ? (
                                     <div className="h-full flex flex-col items-center justify-center gap-3">
                                         <Loader2 className="w-6 h-6 animate-spin text-primary/20" />
-                                        <span className="text-[10px] font-bold uppercase tracking-widest opacity-30">Parsing Specimen...</span>
+                                        <span className="text-sm font-bold uppercase tracking-widest opacity-30">Parsing Specimen...</span>
                                     </div>
                                 ) : (
                                     <JsonViewer data={inspectorData ? sortObjectKeys(inspectorData as Record<string, unknown>) : {}} />

@@ -25,33 +25,33 @@ export function MovieDetailPanel({ movie }: { movie: CinePointMovie }) {
             {movie.language && (
               <div className="flex items-center gap-2">
                 <Languages className="w-4 h-4 text-muted-foreground/60" />
-                <span className="text-xs text-muted-foreground">Language</span>
+                <span className="text-sm text-muted-foreground">Language</span>
                 <span className="text-sm font-medium ml-auto">{movie.language}</span>
               </div>
             )}
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-muted-foreground/60" />
-              <span className="text-xs text-muted-foreground">Duration</span>
+              <span className="text-sm text-muted-foreground">Duration</span>
               <span className="text-sm font-medium ml-auto">{movie.duration || '?'} min</span>
             </div>
             {movie.rating_category && movie.rating_category.length > 0 && (
               <div className="flex items-center gap-2">
                 <Eye className="w-4 h-4 text-muted-foreground/60" />
-                <span className="text-xs text-muted-foreground">Rating</span>
-                <Badge variant="outline" className="ml-auto text-xs border-red-500/30 text-red-600">{movie.rating_category[0]}</Badge>
+                <span className="text-sm text-muted-foreground">Rating</span>
+                <Badge variant="outline" className="ml-auto text-sm border-red-500/30 text-red-600">{movie.rating_category[0]}</Badge>
               </div>
             )}
             {movie.movie_rating && (movie.movie_rating.imdb || movie.movie_rating.rotten_tomatoes) && (
               <div className="flex items-center gap-2 pt-2 border-t">
-                <span className="text-xs font-bold text-amber-600">IMDb</span>
+                <span className="text-sm font-bold text-amber-600">IMDb</span>
                 <span className="text-sm font-mono ml-1">{movie.movie_rating.imdb ?? '—'}</span>
-                <span className="text-xs font-bold text-red-600 ml-auto">RT</span>
+                <span className="text-sm font-bold text-red-600 ml-auto">RT</span>
                 <span className="text-sm font-mono ml-1">{movie.movie_rating.rotten_tomatoes != null ? `${movie.movie_rating.rotten_tomatoes}%` : '—'}</span>
               </div>
             )}
             {movie.movie_genre && movie.movie_genre.length > 0 && (
               <div className="flex flex-wrap gap-1.5 pt-2 border-t">
-                {movie.movie_genre.map((g) => (<Badge key={g} variant="secondary" className="text-[10px]">{g}</Badge>))}
+                {movie.movie_genre.map((g) => (<Badge key={g} variant="secondary" className="text-sm">{g}</Badge>))}
               </div>
             )}
           </CardContent>
@@ -67,7 +67,7 @@ export function MovieDetailPanel({ movie }: { movie: CinePointMovie }) {
               {movie.similar_movies.map((sm) => (
                 <div key={sm.id} className="space-y-1">
                   <p className="text-sm font-medium">{sm.title}</p>
-                  <p className="text-[11px] text-muted-foreground/60 line-clamp-2">{sm.description}</p>
+                  <p className="text-sm text-muted-foreground/60 line-clamp-2">{sm.description}</p>
                 </div>
               ))}
             </CardContent>
@@ -80,7 +80,7 @@ export function MovieDetailPanel({ movie }: { movie: CinePointMovie }) {
 
 export function MetaChip({ icon, value, className }: { icon: React.ReactNode; value: string; className?: string }) {
   return (
-    <div className={`flex items-center gap-1 text-[10px] text-muted-foreground ${className ?? ''}`}>
+    <div className={`flex items-center gap-1 text-sm text-muted-foreground ${className ?? ''}`}>
       {icon}
       <span className="font-medium">{value}</span>
     </div>

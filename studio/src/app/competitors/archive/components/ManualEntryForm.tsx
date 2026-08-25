@@ -118,13 +118,13 @@ export function ManualEntryForm({ tweetId, postingDate, onSaved, onCancel }: Man
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <PencilLine className="w-3.5 h-3.5 text-primary/60" />
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60">
+          <span className="text-sm font-black uppercase tracking-[0.2em] text-primary/60">
             Manual Data Entry
           </span>
         </div>
         <button
           onClick={onCancel}
-          className="text-[9px] text-muted-foreground/40 hover:text-muted-foreground/80 uppercase font-bold tracking-widest transition-colors"
+          className="text-sm text-muted-foreground/40 hover:text-muted-foreground/80 uppercase font-bold tracking-widest transition-colors"
         >
           Cancel
         </button>
@@ -137,7 +137,7 @@ export function ManualEntryForm({ tweetId, postingDate, onSaved, onCancel }: Man
             key={t}
             onClick={() => handleDataTypeChange(t)}
             className={cn(
-              'px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border transition-all',
+              'px-3 py-1.5 rounded-lg text-sm font-black uppercase tracking-widest border transition-all',
               dataType === t
                 ? 'bg-primary/10 text-primary border-primary/30 shadow-sm'
                 : 'bg-muted/30 text-muted-foreground/40 border-border/20 hover:border-border/40'
@@ -150,14 +150,14 @@ export function ManualEntryForm({ tweetId, postingDate, onSaved, onCancel }: Man
 
       {/* Date input */}
       <div className="mb-4">
-        <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50 mb-1.5 block">
+        <label className="text-sm font-black uppercase tracking-widest text-muted-foreground/50 mb-1.5 block">
           Target Date
         </label>
         <input
           type="date"
           value={date}
           onChange={e => setDate(e.target.value)}
-          className="w-full max-w-[200px] px-3 py-1.5 rounded-lg border border-border/40 bg-background text-[12px] font-medium focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20"
+          className="w-full max-w-[200px] px-3 py-1.5 rounded-lg border border-border/40 bg-background text-sm font-medium focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20"
         />
       </div>
 
@@ -165,7 +165,7 @@ export function ManualEntryForm({ tweetId, postingDate, onSaved, onCancel }: Man
       <div className="space-y-2 mb-4">
         {/* Header row */}
         <div className={cn(
-          'grid gap-2 px-3 py-1.5 text-[8px] font-black uppercase tracking-widest text-muted-foreground/40',
+          'grid gap-2 px-3 py-1.5 text-sm font-black uppercase tracking-widest text-muted-foreground/40',
           isShowtimes ? 'grid-cols-[1fr_80px_80px_32px]' : 'grid-cols-[1fr_80px_80px_80px_32px]'
         )}>
           <span>Title</span>
@@ -189,27 +189,27 @@ export function ManualEntryForm({ tweetId, postingDate, onSaved, onCancel }: Man
               placeholder="Movie title"
               value={(row as { title_cp: string }).title_cp}
               onChange={e => updateRow(idx, 'title_cp', e.target.value)}
-              className="px-3 py-1.5 rounded-lg border border-border/30 bg-background text-[12px] font-medium focus:outline-none focus:border-primary/40"
+              className="px-3 py-1.5 rounded-lg border border-border/30 bg-background text-sm font-medium focus:outline-none focus:border-primary/40"
             />
             <input
               type="number"
               value={isShowtimes ? (row as ShowtimeRow).showtimes : (row as AdmissionRow).daily_admissions}
               onChange={e => updateRow(idx, isShowtimes ? 'showtimes' : 'daily_admissions', Number(e.target.value))}
-              className="px-3 py-1.5 rounded-lg border border-border/30 bg-background text-[12px] font-mono focus:outline-none focus:border-primary/40"
+              className="px-3 py-1.5 rounded-lg border border-border/30 bg-background text-sm font-mono focus:outline-none focus:border-primary/40"
             />
             <input
               type="number"
               step="0.1"
               value={(row as { daily_change_pct: number }).daily_change_pct}
               onChange={e => updateRow(idx, 'daily_change_pct', Number(e.target.value))}
-              className="px-3 py-1.5 rounded-lg border border-border/30 bg-background text-[12px] font-mono focus:outline-none focus:border-primary/40"
+              className="px-3 py-1.5 rounded-lg border border-border/30 bg-background text-sm font-mono focus:outline-none focus:border-primary/40"
             />
             {!isShowtimes && (
               <input
                 type="number"
                 value={(row as AdmissionRow).cumulative_admissions}
                 onChange={e => updateRow(idx, 'cumulative_admissions', Number(e.target.value))}
-                className="px-3 py-1.5 rounded-lg border border-border/30 bg-background text-[12px] font-mono focus:outline-none focus:border-primary/40"
+                className="px-3 py-1.5 rounded-lg border border-border/30 bg-background text-sm font-mono focus:outline-none focus:border-primary/40"
               />
             )}
             <button
@@ -229,7 +229,7 @@ export function ManualEntryForm({ tweetId, postingDate, onSaved, onCancel }: Man
 
         <button
           onClick={addRow}
-          className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground/40 hover:text-primary/60 transition-colors mt-1"
+          className="flex items-center gap-1.5 text-sm font-black uppercase tracking-widest text-muted-foreground/40 hover:text-primary/60 transition-colors mt-1"
         >
           <Plus className="w-3 h-3" /> Add Row
         </button>
@@ -237,7 +237,7 @@ export function ManualEntryForm({ tweetId, postingDate, onSaved, onCancel }: Man
 
       {/* Error */}
       {error && (
-        <div className="mb-3 px-3 py-2 rounded-lg bg-red-500/5 border border-red-500/20 text-[10px] text-red-600 font-bold">
+        <div className="mb-3 px-3 py-2 rounded-lg bg-red-500/5 border border-red-500/20 text-sm text-red-600 font-bold">
           {error}
         </div>
       )}
@@ -247,7 +247,7 @@ export function ManualEntryForm({ tweetId, postingDate, onSaved, onCancel }: Man
         onClick={handleSave}
         disabled={saving}
         size="sm"
-        className="h-8 gap-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl"
+        className="h-8 gap-2 px-4 text-sm font-black uppercase tracking-wider rounded-xl"
       >
         {saving ? (
           <Loader2 className="w-3.5 h-3.5 animate-spin" />

@@ -30,17 +30,17 @@ export function CityShowtimesTable({ cityData }: CityShowtimesTableProps) {
 
     return (
         <div>
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+            <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 By City
             </h4>
             <table className="w-full text-sm">
                 <thead>
                     <tr className="border-b border-border">
-                        <th className="text-left py-1.5 px-2 text-xs font-medium text-muted-foreground">City</th>
-                        <th className="text-left py-1.5 px-2 text-xs font-medium text-muted-foreground">Chains</th>
-                        <th className="text-center py-1.5 px-2 text-xs font-medium text-muted-foreground">Availability</th>
-                        <th className="text-right py-1.5 px-2 text-xs font-medium text-muted-foreground">Theatres</th>
-                        <th className="text-right py-1.5 px-2 text-xs font-medium text-muted-foreground">Showtimes</th>
+                        <th className="text-left py-1.5 px-2 text-sm font-medium text-muted-foreground">City</th>
+                        <th className="text-left py-1.5 px-2 text-sm font-medium text-muted-foreground">Chains</th>
+                        <th className="text-center py-1.5 px-2 text-sm font-medium text-muted-foreground">Availability</th>
+                        <th className="text-right py-1.5 px-2 text-sm font-medium text-muted-foreground">Theatres</th>
+                        <th className="text-right py-1.5 px-2 text-sm font-medium text-muted-foreground">Showtimes</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -49,14 +49,14 @@ export function CityShowtimesTable({ cityData }: CityShowtimesTableProps) {
 
                         return (
                             <tr key={row.city} className="border-b border-border/50 even:bg-muted/5 hover:bg-muted/20 transition-colors">
-                                <td className="py-2 px-2 text-xs font-medium">{row.city}</td>
+                                <td className="py-2 px-2 text-sm font-medium">{row.city}</td>
                                 <td className="py-2 px-2">
                                     <div className="flex gap-1">
                                         {row.chains.map((c) => {
                                             const tw = CHAIN_TAILWIND[c.chain];
                                             return (
                                                 <span key={c.chain} className={cn(
-                                                    "text-[8px] font-bold uppercase px-1 py-0.5 rounded text-white",
+                                                    "text-sm font-bold uppercase px-1 py-0.5 rounded text-white",
                                                     tw?.bg || "bg-gray-500"
                                                 )}>
                                                     {c.chain}
@@ -76,13 +76,13 @@ export function CityShowtimesTable({ cityData }: CityShowtimesTableProps) {
                                                 style={{ width: `${Math.min(bookablePct, 100)}%` }}
                                             />
                                         </div>
-                                        <span className="text-[10px] font-mono tabular-nums text-muted-foreground w-8 text-right">
+                                        <span className="text-sm font-mono tabular-nums text-muted-foreground w-8 text-right">
                                             {bookablePct.toFixed(0)}%
                                         </span>
                                     </div>
                                 </td>
-                                <td className="py-2 px-2 text-xs text-right tabular-nums text-muted-foreground">{row.theatres}</td>
-                                <td className="py-2 px-2 text-xs text-right tabular-nums">
+                                <td className="py-2 px-2 text-sm text-right tabular-nums text-muted-foreground">{row.theatres}</td>
+                                <td className="py-2 px-2 text-sm text-right tabular-nums">
                                     <span className="font-mono font-medium text-foreground">{row.available}</span>
                                     <span className="text-muted-foreground/60"> / {row.showtimes}</span>
                                 </td>

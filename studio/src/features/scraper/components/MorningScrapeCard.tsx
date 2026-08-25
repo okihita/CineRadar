@@ -101,7 +101,7 @@ export const MorningScrapeCard: React.FC<MorningScrapeCardProps> = ({ morningRun
                 </h3>
                 <div className={`flex items-center gap-2 px-2 py-1 rounded-lg ${status.bgColor} border ${status.borderColor}`}>
                     <StatusIcon className={`w-3.5 h-3.5 ${status.color} ${status.animate ? 'animate-spin' : ''}`} />
-                    <span className={`text-xs font-medium ${status.color}`}>{status.label}</span>
+                    <span className={`text-sm font-medium ${status.color}`}>{status.label}</span>
                 </div>
             </div>
 
@@ -110,7 +110,7 @@ export const MorningScrapeCard: React.FC<MorningScrapeCardProps> = ({ morningRun
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                     {/* Movies */}
                     <div>
-                        <span className="text-muted-foreground text-xs block mb-1">Movies</span>
+                        <span className="text-muted-foreground text-sm block mb-1">Movies</span>
                         <span className="text-foreground text-lg font-semibold">
                             {morningRun.movies_found || 0}
                         </span>
@@ -118,7 +118,7 @@ export const MorningScrapeCard: React.FC<MorningScrapeCardProps> = ({ morningRun
 
                     {/* Theatres */}
                     <div>
-                        <span className="text-muted-foreground text-xs block mb-1">Theatres</span>
+                        <span className="text-muted-foreground text-sm block mb-1">Theatres</span>
                         <span className="text-foreground text-lg font-semibold">
                             {morningRun.theatres_total || 0}
                         </span>
@@ -126,7 +126,7 @@ export const MorningScrapeCard: React.FC<MorningScrapeCardProps> = ({ morningRun
 
                     {/* Cities */}
                     <div>
-                        <span className="text-muted-foreground text-xs block mb-1">Cities</span>
+                        <span className="text-muted-foreground text-sm block mb-1">Cities</span>
                         <span className="text-foreground text-lg font-semibold">
                             {morningRun.cities_covered || 0}
                         </span>
@@ -134,7 +134,7 @@ export const MorningScrapeCard: React.FC<MorningScrapeCardProps> = ({ morningRun
 
                     {/* Duration */}
                     <div>
-                        <span className="text-muted-foreground text-xs block mb-1">Duration</span>
+                        <span className="text-muted-foreground text-sm block mb-1">Duration</span>
                         <span className="text-foreground text-lg font-semibold">
                             {formatDuration(morningRun.duration_seconds)}
                         </span>
@@ -142,7 +142,7 @@ export const MorningScrapeCard: React.FC<MorningScrapeCardProps> = ({ morningRun
 
                     {/* Start time */}
                     <div>
-                        <span className="text-muted-foreground text-xs block mb-1">Started</span>
+                        <span className="text-muted-foreground text-sm block mb-1">Started</span>
                         <span className="text-foreground text-lg font-semibold">
                             {formatTime(morningRun.start_time)}
                         </span>
@@ -152,7 +152,7 @@ export const MorningScrapeCard: React.FC<MorningScrapeCardProps> = ({ morningRun
                 {/* Error message */}
                 {morningRun.error && (
                     <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                        <span className="text-xs text-red-500 dark:text-red-400 font-mono">{morningRun.error}</span>
+                        <span className="text-sm text-red-500 dark:text-red-400 font-mono">{morningRun.error}</span>
                     </div>
                 )}
             </div>

@@ -51,7 +51,7 @@ export function BaseSeatMap({ title, subtitle, rows, type, href, studioId }: Bas
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <h3 className={cn(
-                            "text-[10px] font-black uppercase tracking-widest",
+                            "text-sm font-black uppercase tracking-widest",
                             type === 'baseline' && "text-orange-600",
                             type === 'showtime' && "text-green-600",
                             type === 'master' && "text-purple-600"
@@ -66,7 +66,7 @@ export function BaseSeatMap({ title, subtitle, rows, type, href, studioId }: Bas
                         type === 'master' && "bg-purple-500"
                     )} />
                 </div>
-                <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-tight mt-0.5">
+                <p className="text-sm text-muted-foreground font-bold uppercase tracking-tight mt-0.5">
                     {subtitle}
                 </p>
             </div>
@@ -80,7 +80,7 @@ export function BaseSeatMap({ title, subtitle, rows, type, href, studioId }: Bas
                     <div className="flex flex-col gap-1">
                         {rows.map((row, i) => (
                             <div key={`${type}-row-${row.rowName}-${i}`} className="flex items-center gap-2 justify-center">
-                                <div className="w-5 text-[8px] font-mono font-black text-muted-foreground/30 text-right uppercase">
+                                <div className="w-5 text-sm font-mono font-black text-muted-foreground/30 text-right uppercase">
                                     {row.rowName}
                                 </div>
                                 <div className="flex gap-0.5">
@@ -88,7 +88,7 @@ export function BaseSeatMap({ title, subtitle, rows, type, href, studioId }: Bas
                                         <div 
                                             key={`${type}-s-${seat.id}-${i}-${j}`} 
                                             className={cn(
-                                                'w-3.5 h-3.5 md:w-4 md:h-4 rounded-t-sm rounded-b-[1px] flex items-center justify-center text-[7px] font-medium transition-all duration-300',
+                                                'w-3.5 h-3.5 md:w-4 md:h-4 rounded-t-sm rounded-b-[1px] flex items-center justify-center text-sm font-medium transition-all duration-300',
                                                 getSeatStyles(seat.status)
                                             )}
                                             title={`Seat ${seat.id} (${seat.status})`}
@@ -97,7 +97,7 @@ export function BaseSeatMap({ title, subtitle, rows, type, href, studioId }: Bas
                                         </div>
                                     ))}
                                 </div>
-                                <div className="w-5 text-[8px] font-mono font-black text-muted-foreground/30 text-left uppercase">
+                                <div className="w-5 text-sm font-mono font-black text-muted-foreground/30 text-left uppercase">
                                     {row.rowName}
                                 </div>
                             </div>
@@ -110,33 +110,33 @@ export function BaseSeatMap({ title, subtitle, rows, type, href, studioId }: Bas
             <div className="p-2 border-t bg-muted/5 flex justify-center gap-4">
                 <div className="flex items-center gap-1.5">
                     <div className="w-2 h-2 rounded-sm bg-muted border" />
-                    <span className="text-[8px] font-bold text-muted-foreground uppercase">Available</span>
+                    <span className="text-sm font-bold text-muted-foreground uppercase">Available</span>
                 </div>
                 {type === 'baseline' ? (
                     <div className="flex items-center gap-1.5">
                         <div className="w-2 h-2 rounded-sm bg-red-500/20 border border-red-500/30" />
-                        <span className="text-[8px] font-bold text-muted-foreground uppercase">Blocked @ 2AM</span>
+                        <span className="text-sm font-bold text-muted-foreground uppercase">Blocked @ 2AM</span>
                     </div>
                 ) : type === 'showtime' ? (
                     <>
                         <div className="flex items-center gap-1.5">
                             <div className="w-2 h-2 rounded-sm bg-green-500 shadow-sm" />
-                            <span className="text-[8px] font-bold text-muted-foreground uppercase">Delta Sold</span>
+                            <span className="text-sm font-bold text-muted-foreground uppercase">Delta Sold</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                             <div className="w-2 h-2 rounded-sm bg-red-500/20 border border-red-500/30" />
-                            <span className="text-[8px] font-bold text-muted-foreground uppercase">Static Block</span>
+                            <span className="text-sm font-bold text-muted-foreground uppercase">Static Block</span>
                         </div>
                     </>
                 ) : (
                     <>
                         <div className="flex items-center gap-1.5">
                             <div className="w-2 h-2 rounded-sm bg-purple-500/10 border border-purple-500/30" />
-                            <span className="text-[8px] font-bold text-muted-foreground uppercase">Physical Slot</span>
+                            <span className="text-sm font-bold text-muted-foreground uppercase">Physical Slot</span>
                         </div>
                         <div className="flex items-center gap-2 ml-2 pl-2 border-l border-border/50">
                             {studioId && (
-                                <span className="text-[8px] font-black uppercase tracking-tighter text-purple-500/70 bg-purple-500/5 border border-purple-500/10 px-1.5 py-0.5 rounded">
+                                <span className="text-sm font-black uppercase tracking-tighter text-purple-500/70 bg-purple-500/5 border border-purple-500/10 px-1.5 py-0.5 rounded">
                                     Studio {studioId}
                                 </span>
                             )}
@@ -144,7 +144,7 @@ export function BaseSeatMap({ title, subtitle, rows, type, href, studioId }: Bas
                                 <Link 
                                     href={href} 
                                     target="_blank"
-                                    className="inline-flex items-center gap-1 text-[8px] font-black uppercase tracking-widest text-purple-600 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 px-2 py-0.5 rounded transition-all"
+                                    className="inline-flex items-center gap-1 text-sm font-black uppercase tracking-widest text-purple-600 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 px-2 py-0.5 rounded transition-all"
                                 >
                                     <ExternalLink className="w-2.5 h-2.5" />
                                     Asset Registry

@@ -37,7 +37,7 @@ export function DayByDayTable({
                                                 {abbreviateTitle(movie.title)}
                                             </span>
                                         </div>
-                                        <span className="text-xs text-muted-foreground">Adm / Shows</span>
+                                        <span className="text-sm text-muted-foreground">Adm / Shows</span>
                                     </div>
                                 </TableHead>
                             ))}
@@ -54,7 +54,7 @@ export function DayByDayTable({
                                         <TableCell key={id} className="text-right">
                                             <div className="flex flex-col items-end">
                                                 <span className="font-medium">{admissions.toLocaleString()}</span>
-                                                <span className="text-xs text-muted-foreground">{showtimes.toLocaleString()}</span>
+                                                <span className="text-sm text-muted-foreground">{showtimes.toLocaleString()}</span>
                                             </div>
                                         </TableCell>
                                     );

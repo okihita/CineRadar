@@ -40,7 +40,7 @@ function AuthErrorBanner() {
       <div className="flex-shrink-0 mt-0.5">{c.icon}</div>
       <div>
         <p className="text-sm font-semibold">{c.title}</p>
-        <p className="text-xs text-muted-foreground mt-1">{c.message}</p>
+        <p className="text-sm text-muted-foreground mt-1">{c.message}</p>
       </div>
     </div>
   );
@@ -102,8 +102,8 @@ export default function SignInPage() {
             {STATS.map((stat) => (
               <div key={stat.label} className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
                 <p className="text-2xl font-black text-primary-foreground font-mono">{stat.value}</p>
-                <p className="text-xs font-semibold text-primary-foreground/80 mt-0.5">{stat.label}</p>
-                <p className="text-[10px] text-primary-foreground/40">{stat.sub}</p>
+                <p className="text-sm font-semibold text-primary-foreground/80 mt-0.5">{stat.label}</p>
+                <p className="text-sm text-primary-foreground/40">{stat.sub}</p>
               </div>
             ))}
           </div>
@@ -124,7 +124,7 @@ export default function SignInPage() {
             </div>
             <div>
               <h1 className="text-lg font-bold">CineRadar</h1>
-              <p className="text-[10px] text-muted-foreground tracking-wide">INTELLIGENCE DASHBOARD</p>
+              <p className="text-sm text-muted-foreground tracking-wide">INTELLIGENCE DASHBOARD</p>
             </div>
           </div>
 
@@ -153,7 +153,7 @@ export default function SignInPage() {
 
           {/* Footer */}
           <div className="mt-12 pt-6 border-t border-border">
-            <p className="text-[10px] text-muted-foreground text-center leading-relaxed">
+            <p className="text-sm text-muted-foreground text-center leading-relaxed">
               New here? Sign in with Google to request access.<br />
               An administrator will review and approve your account.
             </p>

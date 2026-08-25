@@ -132,7 +132,7 @@ export function PerformanceHeatmap({ provinceStats }: PerformanceHeatmapProps) {
             <h4 className="font-semibold text-sm border-b pb-1 mb-2 leading-tight">
               {hoveredProvince.province}
             </h4>
-            <div className="space-y-1 text-xs">
+            <div className="space-y-1 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Occupancy:</span>
                 <span
@@ -154,7 +154,7 @@ export function PerformanceHeatmap({ provinceStats }: PerformanceHeatmapProps) {
                 <span className="font-mono">{hoveredProvince.totalShows}</span>
               </div>
               {hoveredProvince.topCity && (
-                <div className="mt-2 pt-2 border-t border-dashed text-[10px]">
+                <div className="mt-2 pt-2 border-t border-dashed text-sm">
                   <span className="text-muted-foreground block mb-0.5">
                     Top City:
                   </span>

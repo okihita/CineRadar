@@ -49,11 +49,11 @@ export function MovieCastSection({ movie }: MovieCastSectionProps) {
                                             </div>
                                         )}
                                     </div>
-                                    <p className="font-semibold text-[13px] leading-tight line-clamp-2 mb-1 text-foreground/90 group-hover:text-primary transition-colors" title={actorName}>
+                                    <p className="font-semibold text-sm leading-tight line-clamp-2 mb-1 text-foreground/90 group-hover:text-primary transition-colors" title={actorName}>
                                         {actorName}
                                     </p>
                                     {(characterName || castType) && (
-                                        <p className="text-[11px] text-muted-foreground line-clamp-2 leading-snug" title={characterName || castType}>
+                                        <p className="text-sm text-muted-foreground line-clamp-2 leading-snug" title={characterName || castType}>
                                             {characterName || castType}
                                         </p>
                                     )}

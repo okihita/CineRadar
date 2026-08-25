@@ -24,7 +24,7 @@ export function MarketSignals({ factors, languageStats, ratingStats, durationBuc
                 <CardTitle className="text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2">
                   <span className={cn('w-2.5 h-2.5 rounded-full', lang === 'Indonesia' ? 'bg-indigo-500' : 'bg-amber-500')} />
                   {lang}
-                  <span className="text-muted-foreground font-normal normal-case tracking-normal text-xs ml-auto">
+                  <span className="text-muted-foreground font-normal normal-case tracking-normal text-sm ml-auto">
                     {stats.count} movies · Avg {formatAdm(stats.avg_admission)} · Hit {stats.hit_rate_pct}%
                   </span>
                 </CardTitle>

@@ -39,10 +39,10 @@ export function IndustryMegaphone({ narrative, signals }: IndustryMegaphoneProps
                                 {signal.source === 'YouTube' ? <Play className="w-4 h-4 text-red-500" /> : <TrendingUp className="w-4 h-4 text-blue-500" />}
                             </div>
                             <div className="flex-1 min-w-0">
-                                <h4 className="text-xs font-bold truncate uppercase tracking-tight">{signal.title}</h4>
+                                <h4 className="text-sm font-bold truncate uppercase tracking-tight">{signal.title}</h4>
                                 <div className="flex items-center gap-2 mt-1">
-                                    <span className="text-[10px] font-black uppercase text-muted-foreground/60">{signal.author}</span>
-                                    <span className="text-[10px] font-mono text-primary font-bold">{signal.views}</span>
+                                    <span className="text-sm font-black uppercase text-muted-foreground/60">{signal.author}</span>
+                                    <span className="text-sm font-mono text-primary font-bold">{signal.views}</span>
                                 </div>
                             </div>
                             <ExternalLink className="w-3 h-3 text-muted-foreground opacity-0 group-hover/item:opacity-100 transition-opacity" />

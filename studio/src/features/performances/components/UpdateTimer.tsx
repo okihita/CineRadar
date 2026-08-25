@@ -30,7 +30,7 @@ export function UpdateTimer({ lastSweptAt, variant = 'pill', showNextUpdate = tr
 
     if (variant === 'minimal') {
         return (
-            <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 border-l border-border/40 pl-3 ml-1">
+            <div className="flex items-center gap-3 text-sm font-bold uppercase tracking-wider text-muted-foreground/60 border-l border-border/40 pl-3 ml-1">
                 <div className="flex items-center gap-1.5">
                     <Clock className="w-2.5 h-2.5 text-primary opacity-50" />
                     <span>Updated</span>
@@ -45,34 +45,34 @@ export function UpdateTimer({ lastSweptAt, variant = 'pill', showNextUpdate = tr
                         </div>
                     </>
                 )}
-                <span className="text-[7px] opacity-30">WIB</span>
+                <span className="text-sm opacity-30">WIB</span>
             </div>
         );
     }
 
     return (
         <div className="flex items-center gap-4 bg-muted/30 px-3 py-1.5 rounded-full border border-border/40 shadow-sm animate-in fade-in slide-in-from-top-2 duration-700">
-            <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground/70">
+            <div className="flex items-center gap-1.5 text-sm font-black uppercase tracking-widest text-muted-foreground/70">
                 <Clock className="w-3 h-3 text-primary animate-pulse" />
                 <span>Last Updated</span>
                 <div className="flex items-baseline gap-1">
-                    <span className="font-mono text-[11px] text-foreground font-bold tracking-tighter">
+                    <span className="font-mono text-sm text-foreground font-bold tracking-tighter">
                         {formatToWIB(lastUpdate)}
                     </span>
-                    <span className="text-[8px] opacity-40 font-bold">WIB</span>
+                    <span className="text-sm opacity-40 font-bold">WIB</span>
                 </div>
             </div>
             
             {showNextUpdate && (
                 <>
                     <div className="w-px h-2.5 bg-border/60" />
-                    <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground/70">
+                    <div className="flex items-center gap-1.5 text-sm font-black uppercase tracking-widest text-muted-foreground/70">
                         <span>Next Update</span>
                         <div className="flex items-baseline gap-1">
-                            <span className="font-mono text-[11px] text-primary font-bold tracking-tighter">
+                            <span className="font-mono text-sm text-primary font-bold tracking-tighter">
                                 {formatToWIB(nextUpdate)}
                             </span>
-                            <span className="text-[8px] opacity-40 font-bold">WIB</span>
+                            <span className="text-sm opacity-40 font-bold">WIB</span>
                         </div>
                     </div>
                 </>
