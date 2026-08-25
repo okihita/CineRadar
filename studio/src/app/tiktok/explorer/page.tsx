@@ -54,6 +54,7 @@ export default function TikTokExplorerPage() {
     const [selectedMovieFilter, setSelectedMovieFilter] = useState<string>('all');
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [commentSearch, setCommentSearch] = useState<string>('');
+    const [visibleCommentCount, setVisibleCommentCount] = useState<number>(30);
     const [copied, setCopied] = useState<boolean>(false);
 
     // Fetch real local dataset for #harusnyahorror if present
@@ -201,20 +202,68 @@ export default function TikTokExplorerPage() {
         });
     }, [allPosts, selectedMovieFilter, searchQuery]);
 
-    // Filtered comments
+    // Filtered comments (combining live dataset comments + dayData comments)
     const filteredComments = useMemo(() => {
-        if (!dayData) return [];
-        return dayData.comments.filter((c) => {
+        const tagToMovie: Record<string, string> = {
+            harusnyahorror: 'HARUSNYA HORROR',
+            kangmak: 'KANG MAK',
+            agaklaen: 'AGAK LAEN',
+            kakaboss: 'KAKA BOSS',
+            lembayung: 'LEMBAYUNG',
+            filmlaura: 'LAURA',
+            homesweetloan: 'HOME SWEET LOAN',
+            filmsumala: 'SUMALA',
+            filmthaghut: 'THAGHUT',
+            sekawanlimo: 'SEKAWAN LIMO',
+        };
+
+        const liveRawComments = (liveDataset?.data?.comments || []) as Array<Record<string, unknown>>;
+        const liveMappedComments = liveRawComments.map((c, idx) => {
+            const videoId = String(c.videoId || '');
+            const text = String(c.text || '');
+            const diggCount = Number(c.diggCount || 0);
+            const authorName = String(c.authorName || 'user');
+
+            // Find matching post to resolve movie title
+            const matchingPost = (liveDataset?.data?.posts || []).find((p: { id: string; platform_data?: { campaign_hashtag?: string } }) => p.id.includes(videoId));
+            const rawTag = (matchingPost?.platform_data?.campaign_hashtag || 'harusnyahorror').toLowerCase().replace('#', '');
+            const movieTitle = tagToMovie[rawTag] || 'HARUSNYA HORROR';
+
+            return {
+                id: String(c.id || `live_c_${idx}`),
+                movieTitle,
+                text,
+                diggCount,
+                authorName,
+                sentiment: (diggCount > 50 || text.toLowerCase().includes('keren') || text.toLowerCase().includes('bagus') ? 'positive' : 'mixed') as 'positive' | 'mixed' | 'negative',
+                topic: text.toLowerCase().includes('tiket') ? 'Ticketing & Availability'
+                    : text.toLowerCase().includes('ending') || text.toLowerCase().includes('plot') ? 'Story & Ending'
+                    : text.toLowerCase().includes('akting') || text.toLowerCase().includes('aktor') ? 'Performance & Cast'
+                    : 'Audience Reaction',
+            };
+        });
+
+        const dayComments = dayData?.comments || [];
+        const existingIds = new Set(liveMappedComments.map((c) => c.id));
+        const combined = [...liveMappedComments];
+        for (const c of dayComments) {
+            if (!existingIds.has(c.id)) {
+                combined.push(c);
+            }
+        }
+
+        return combined.filter((c) => {
             const matchesMovie =
                 selectedMovieFilter === 'all' ||
                 c.movieTitle.toLowerCase() === selectedMovieFilter.toLowerCase();
             const matchesSearch =
                 !commentSearch.trim() ||
                 c.text.toLowerCase().includes(commentSearch.toLowerCase()) ||
-                c.topic.toLowerCase().includes(commentSearch.toLowerCase());
+                c.topic.toLowerCase().includes(commentSearch.toLowerCase()) ||
+                c.authorName.toLowerCase().includes(commentSearch.toLowerCase());
             return matchesMovie && matchesSearch;
         });
-    }, [dayData, selectedMovieFilter, commentSearch]);
+    }, [dayData, liveDataset, selectedMovieFilter, commentSearch]);
 
     const handleCopyJson = () => {
         if (!dayData) return;
@@ -804,7 +853,7 @@ export default function TikTokExplorerPage() {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                                {filteredComments.map((comment) => (
+                                {filteredComments.slice(0, visibleCommentCount).map((comment) => (
                                     <Card key={comment.id} className="bg-card border-border/40 p-3.5 space-y-2.5 flex flex-col justify-between">
                                         <div className="space-y-1.5">
                                             <div className="flex items-center justify-between gap-2">
@@ -838,6 +887,19 @@ export default function TikTokExplorerPage() {
                                     </Card>
                                 ))}
                             </div>
+
+                            {filteredComments.length > visibleCommentCount && (
+                                <div className="flex justify-center pt-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setVisibleCommentCount((prev) => prev + 30)}
+                                        className="text-sm font-semibold rounded-lg"
+                                    >
+                                        Load More Comments ({filteredComments.length - visibleCommentCount} remaining)
+                                    </Button>
+                                </div>
+                            )}
                         </TabsContent>
 
                         {/* TAB 3: RAW JSON INSPECTOR */}
