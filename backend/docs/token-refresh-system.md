@@ -102,11 +102,11 @@ START → Load token → Need refresh?
 
 ### Implementation
 
-In [`backend/functions/scraper/main.py`](functions/scraper/main.py), the `refresh_access_token()` function should:
+In [`backend/functions/scraper/main.py`](../functions/scraper/main.py), the `refresh_access_token()` function should:
 
 1. Acquire distributed lock
 2. Call TIX refresh API
-3. **NEW:** Test the token with a layout API call
+3. Test the token with a layout API call
 4. If 401, wait 2 seconds and retry (max 5 times)
 5. Only save to Firestore after successful test
 6. Release lock
@@ -121,17 +121,17 @@ In [`backend/functions/scraper/main.py`](functions/scraper/main.py), the `refres
 
 ## Configuration
 
-- **max_instances**: 5 (from [`deploy.sh`](functions/deploy.sh))
+- **max_instances**: 10 (from [`deploy.sh`](../functions/deploy.sh))
 - **Distributed lock timeout**: 60 seconds
-- **Lock Wait max\_retries**: 20 attempts (with 2.0s sleep = up to 40s wait, matching token propagation time)
+- **Lock Wait max_retries**: 20 attempts (with 2.0s sleep = up to 40s wait, matching token propagation time)
 - **Token refresh threshold**: 25 minutes (emergency)
 - **JWT validity**: 30 minutes
 
 ## Related Files
 
-- [`functions/scraper/main.py`](functions/scraper/main.py) - Token refresh logic
-- [`functions/deploy.sh`](functions/deploy.sh) - Cloud Function deployment
-- [`infrastructure/token_refresher.py`](infrastructure/token_refresher.py) - CLI token refresh
+- [`functions/scraper/main.py`](../functions/scraper/main.py) - Token refresh logic
+- [`functions/deploy.sh`](../functions/deploy.sh) - Cloud Function deployment
+- [`infrastructure/token_refresher.py`](../infrastructure/token_refresher.py) - CLI token refresh
 
 ## Monitoring
 

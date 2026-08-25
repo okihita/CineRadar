@@ -48,15 +48,14 @@ import os
 import sys
 import time
 import uuid
-from dataclasses import dataclass, asdict
-from datetime import date, datetime, timedelta, timezone
+from dataclasses import asdict, dataclass
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
 import requests
 from google.cloud import firestore_v1 as firestore
 from google.oauth2 import service_account
-
 
 # ─── Constants ──────────────────────────────────────────────
 
@@ -272,7 +271,7 @@ def fetch_day(date_str: str) -> ScrapeResult:
             last_status = resp.status_code
 
             if resp.status_code == 429:
-                print(f"HTTP 429 ⏳")
+                print("HTTP 429 ⏳")
                 print(f"    ⏳ Rate limited! Backing off {RATE_LIMIT_BACKOFF_SECONDS}s...")
                 time.sleep(RATE_LIMIT_BACKOFF_SECONDS)
                 retries += 1
@@ -305,7 +304,7 @@ def fetch_day(date_str: str) -> ScrapeResult:
                 return ScrapeResult(
                     date=date_str,
                     movies=[],
-                    scraped_at=datetime.now(timezone.utc).isoformat(),
+                    scraped_at=datetime.now(UTC).isoformat(),
                     elapsed_ms=elapsed_ms,
                     http_status=last_status,
                     error=str(e),
@@ -315,7 +314,7 @@ def fetch_day(date_str: str) -> ScrapeResult:
     return ScrapeResult(
         date=date_str,
         movies=all_movies,
-        scraped_at=datetime.now(timezone.utc).isoformat(),
+        scraped_at=datetime.now(UTC).isoformat(),
         elapsed_ms=elapsed_ms,
         http_status=last_status,
     )
@@ -482,7 +481,7 @@ def print_summary(
     print(f"📊 {label}")
     print("=" * 64)
     print(f"  Batch ID:        {meta.batch_id}")
-    print(f"  Direction:       backward (newest → oldest)")
+    print("  Direction:       backward (newest → oldest)")
     print(f"  Date range:      {meta.date_start} → {meta.date_end}")
     print(f"  Dates scraped:   {meta.dates_scraped}")
     print(f"  Dates skipped:   {meta.dates_skipped}")
@@ -491,15 +490,15 @@ def print_summary(
     print(f"  Docs rejected:   {meta.docs_rejected}")
     print(f"  Elapsed:         {format_elapsed(elapsed)}")
     if sample_doc_ids:
-        print(f"\n  Sample doc IDs (verify in Firestore console):")
+        print("\n  Sample doc IDs (verify in Firestore console):")
         for sid in sample_doc_ids[:10]:
             print(f"    • {sid}")
     if not dry_run:
-        print(f"\n  Firestore verification:")
+        print("\n  Firestore verification:")
         print(f"    Collection: {COLLECTION_BOX_OFFICE}")
         print(f"    Filter: date == '{meta.date_end}' (newest date)")
-        print(f"    Expected: ~10-50 docs")
-        print(f"\n  Resume: uv run scripts/cinepoint_backfill.py --resume")
+        print("    Expected: ~10-50 docs")
+        print("\n  Resume: uv run scripts/cinepoint_backfill.py --resume")
     print("=" * 64 + "\n")
 
 
@@ -551,9 +550,9 @@ Examples:
 
     # ── Connect to Firestore ──
     print("\n🔥 CinePoint Box Office Backfill")
-    print(f"   Connecting to Firestore...", flush=True)
+    print("   Connecting to Firestore...", flush=True)
     db = firestore_client()
-    print(f"   ✓ Connected\n   Loading checkpoint...", flush=True)
+    print("   ✓ Connected\n   Loading checkpoint...", flush=True)
 
     # ── Load checkpoint ──
     meta = load_sync_meta(db)
@@ -596,11 +595,11 @@ Examples:
     dates = generate_dates_backward(from_date, to_date)
     total_days = len(dates)
 
-    print(f"   Direction:      backward (newest → oldest)")
+    print("   Direction:      backward (newest → oldest)")
     print(f"   Date range:     {to_date} → {from_date} ({total_days} days)")
     print(f"   Delay:          {args.delay}s between requests")
     if args.dry_run:
-        print(f"   🔎 DRY RUN — no data will be written")
+        print("   🔎 DRY RUN — no data will be written")
     print(flush=True)
 
     # ── Initialize meta ──
@@ -612,7 +611,7 @@ Examples:
             date_start=str(from_date),
             date_end=str(to_date),
             batch_id=batch_id,
-            started_at=datetime.now(timezone.utc).isoformat(),
+            started_at=datetime.now(UTC).isoformat(),
         )
     else:
         meta.status = "running"
@@ -738,7 +737,7 @@ Examples:
             save_sync_meta(db, meta)
         print(f"\n\n⏸️ PAUSED at {meta.last_scraped_date}")
         print(f"   Progress: {meta.dates_scraped}/{total_days} dates, {meta.docs_written} docs, {format_elapsed(elapsed)}")
-        print(f"   Resume:   uv run scripts/cinepoint_backfill.py --resume\n")
+        print("   Resume:   uv run scripts/cinepoint_backfill.py --resume\n")
         sys.exit(0)
 
     except Exception as e:
@@ -749,13 +748,13 @@ Examples:
             save_sync_meta(db, meta)
         print(f"\n❌ Fatal error: {e}")
         print(f"   Last scraped: {meta.last_scraped_date}")
-        print(f"   Resume: uv run scripts/cinepoint_backfill.py --resume\n")
+        print("   Resume: uv run scripts/cinepoint_backfill.py --resume\n")
         sys.exit(1)
 
     # ── Final ──
     elapsed = time.time() - start_time
     meta.status = "complete"
-    meta.completed_at = datetime.now(timezone.utc).isoformat()
+    meta.completed_at = datetime.now(UTC).isoformat()
     if not args.dry_run:
         save_sync_meta(db, meta)
 

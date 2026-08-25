@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft, Loader2, Film, ChevronRight, Eye,
@@ -19,34 +19,35 @@ export default function CinePointMovieDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const { id: movieId } = use(params);
   const [movie, setMovie] = useState<CinePointMovie | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [movieId, setMovieId] = useState<string>('');
 
   useEffect(() => {
-    params.then((p) => setMovieId(p.id));
-  }, [params]);
-
-  const loadMovie = useCallback(async () => {
-    if (!movieId) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/competitors/cinepoint/movies/${movieId}/detail`);
-      const json = await res.json();
-      if (json.success && json.data) {
-        setMovie(json.data);
-      } else {
-        setError(json.error || 'Movie not found');
+    let isCancelled = false;
+    async function fetchDetail() {
+      if (!movieId) return;
+      try {
+        const res = await fetch(`/api/competitors/cinepoint/movies/${movieId}/detail`);
+        const json = await res.json();
+        if (isCancelled) return;
+        if (json.success && json.data) {
+          setMovie(json.data);
+        } else {
+          setError(json.error || 'Movie not found');
+        }
+      } catch {
+        if (!isCancelled) setError('Failed to load movie');
+      } finally {
+        if (!isCancelled) setLoading(false);
       }
-    } catch {
-      setError('Failed to load movie');
     }
-    setLoading(false);
+    fetchDetail();
+    return () => {
+      isCancelled = true;
+    };
   }, [movieId]);
-
-  useEffect(() => { loadMovie(); }, [loadMovie]);
 
   if (loading) {
     return (

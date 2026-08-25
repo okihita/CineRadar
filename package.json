@@ -4,9 +4,9 @@
   "private": true,
   "engines": {
     "node": ">=24.0.0",
-    "pnpm": "^10.0.0"
+    "pnpm": "^11.0.0"
   },
-  "packageManager": "pnpm@10.33.0",
+  "packageManager": "pnpm@11.23.0",
   "scripts": {
     "dev": "kill -9 $(lsof -ti:3000) 2>/dev/null || true && kill -9 $(lsof -ti:3001) 2>/dev/null || true && pnpm run dev:web & pnpm run dev:admin",
     "dev:web": "kill -9 $(lsof -ti:3000) 2>/dev/null || true && pnpm --filter=web dev --port 3000",
@@ -15,24 +15,5 @@
     "lint": "pnpm -r lint",
     "setup": "pnpm install && uv sync",
     "type-check": "pnpm -r type-check"
-  },
-  "pnpm": {
-    "overrides": {
-      "fast-xml-parser": ">=5.3.6",
-      "brace-expansion": ">=2.0.2",
-      "postcss": ">=8.5.10"
-    },
-    "ignoredBuiltDependencies": [
-      "sharp"
-    ]
-  },
-  "dependencies": {
-    "@types/d3-geo": "^3.1.0",
-    "@types/d3-scale": "^4.0.9",
-    "@types/topojson-client": "^3.1.5",
-    "crypto-js": "^4.2.0",
-    "d3-geo": "^3.1.1",
-    "d3-scale": "^4.0.2",
-    "topojson-client": "^3.1.0"
   }
 }

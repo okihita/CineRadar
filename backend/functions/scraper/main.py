@@ -495,8 +495,8 @@ def load_token_data(db: firestore.Client) -> dict[str, Any] | None:
     """
     try:
         doc = db.collection("auth_tokens").document("tix_jwt").get()
-        if doc.exists:  # type: ignore[union-attr]
-            data = doc.to_dict()  # type: ignore[union-attr]
+        if doc.exists:
+            data = doc.to_dict()
             if not data:
                 return None
 
@@ -529,10 +529,10 @@ class TokenRefreshLock:
         except Exception:
             # Already exists, check if stale
             doc = self.lock_ref.get()
-            if not doc.exists:  # type: ignore[union-attr]
+            if not doc.exists:
                 return self.acquire(instance_id)  # Race condition handled
 
-            data = doc.to_dict()  # type: ignore[union-attr]
+            data = doc.to_dict()
             if not data:
                 return self.acquire(instance_id)
 
@@ -1186,7 +1186,6 @@ def save_snapshot(
         "sold_seats": sold_seats,
         "occupancy_pct": occupancy_pct,
         "layout_compressed": layout_compressed,
-        "raw_api_response": raw_api_response,
         "scraped_at": datetime.now(JAKARTA_TZ).isoformat(),
         "scrape_phase": showtime_data.get("scrape_phase", "T-30"),
         # True Audience Metrics
