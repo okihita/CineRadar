@@ -8,7 +8,7 @@ import {
     Search, Calendar, ChevronLeft, ChevronRight,
     Sparkles, Film, ThumbsUp, Activity, Copy, Check, FileCode,
     TrendingUp, ShieldCheck, CalendarX2, AlertCircle, ArrowRight,
-    Trophy, Zap, AlertTriangle, Flame, PieChart
+    Trophy, Zap, AlertTriangle, Flame, PieChart, Sun, Moon, Clock
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +23,7 @@ import { getDailyTikTokData, MULTI_DAY_TIKTOK_DATA, type DailyTikTokData } from 
 export default function TikTokExplorerPage() {
     const today = getTodayJakarta();
     const [selectedDate, setSelectedDate] = useState<string>(today);
+    const [briefingWindow, setBriefingWindow] = useState<'morning' | 'night'>('night');
     const [selectedMovieFilter, setSelectedMovieFilter] = useState<string>('all');
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [commentSearch, setCommentSearch] = useState<string>('');
@@ -176,7 +177,8 @@ export default function TikTokExplorerPage() {
             date: selectedDate,
             dayLabel: dayData.dayLabel,
             actionableInsights,
-            executiveSummary: dayData.executiveSummary,
+            activeBriefing: dayData.briefings[briefingWindow],
+            allBriefings: dayData.briefings,
             slateSentiment: dayData.slate,
             topPosts: filteredPosts,
             sampleComments: filteredComments,
@@ -395,24 +397,53 @@ export default function TikTokExplorerPage() {
                         </Card>
                     </div>
 
-                    {/* Daily AI Executive Summary Briefing */}
+                    {/* Dual-Window Gemini Market Intelligence Briefing */}
                     <Card className="border-primary/30 bg-gradient-to-r from-primary/5 via-primary/10 to-transparent">
-                        <CardHeader className="p-5 pb-2">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <Sparkles className="w-4 h-4 text-primary" />
-                                    <CardTitle className="text-sm font-bold uppercase tracking-wider text-primary">
-                                        Gemini Market Intelligence Briefing — {dayData.dayLabel}
-                                    </CardTitle>
+                        <CardHeader className="p-5 pb-3">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <Sparkles className="w-4 h-4 text-primary" />
+                                        <CardTitle className="text-sm font-bold uppercase tracking-wider text-primary">
+                                            Gemini Market Intelligence Briefing
+                                        </CardTitle>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-1 font-mono">
+                                        <Clock className="w-3.5 h-3.5 text-primary/70" />
+                                        Summarized from scraper run at {dayData.briefings[briefingWindow].runTimestamp} ({selectedDate})
+                                    </p>
                                 </div>
-                                <Badge variant="outline" className="text-[10px] uppercase font-mono text-primary border-primary/20">
-                                    AI Synthesis
-                                </Badge>
+
+                                {/* Dual-Window Switcher Buttons */}
+                                <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border/50 self-start md:self-auto">
+                                    <button
+                                        onClick={() => setBriefingWindow('morning')}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                                            briefingWindow === 'morning'
+                                                ? 'bg-primary text-primary-foreground shadow-sm'
+                                                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                                        }`}
+                                    >
+                                        <Sun className="w-3.5 h-3.5" />
+                                        Morning (11:00)
+                                    </button>
+                                    <button
+                                        onClick={() => setBriefingWindow('night')}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                                            briefingWindow === 'night'
+                                                ? 'bg-primary text-primary-foreground shadow-sm'
+                                                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                                        }`}
+                                    >
+                                        <Moon className="w-3.5 h-3.5" />
+                                        Night Recap (23:00)
+                                    </button>
+                                </div>
                             </div>
                         </CardHeader>
                         <CardContent className="p-5 pt-0">
-                            <p className="text-sm text-foreground/90 leading-relaxed font-sans">
-                                {dayData.executiveSummary}
+                            <p className="text-sm text-foreground/90 leading-relaxed font-sans bg-background/40 p-4 rounded-xl border border-border/30">
+                                {dayData.briefings[briefingWindow].summary}
                             </p>
                         </CardContent>
                     </Card>
@@ -752,7 +783,8 @@ export default function TikTokExplorerPage() {
                                     date: selectedDate,
                                     dayLabel: dayData.dayLabel,
                                     actionableInsights,
-                                    executiveSummary: dayData.executiveSummary,
+                                    activeBriefing: dayData.briefings[briefingWindow],
+                                    allBriefings: dayData.briefings,
                                     slateSentiment: dayData.slate,
                                     topPosts: filteredPosts,
                                     sampleComments: filteredComments,

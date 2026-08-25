@@ -22,10 +22,19 @@ export interface MovieDailySlate {
     viralityScore: string;
 }
 
+export interface BriefingWindow {
+    timeLabel: string;
+    runTimestamp: string;
+    summary: string;
+}
+
 export interface DailyTikTokData {
     date: string;
     dayLabel: string;
-    executiveSummary: string;
+    briefings: {
+        morning: BriefingWindow;
+        night: BriefingWindow;
+    };
     slate: MovieDailySlate[];
     posts: Array<{
         id: string;
@@ -64,8 +73,20 @@ export const MULTI_DAY_TIKTOK_DATA: Record<string, DailyTikTokData> = {
     '2026-08-23': {
         date: '2026-08-23',
         dayLabel: 'Friday — Premiere & Opening Surge',
-        executiveSummary:
-            'On Friday, August 23, opening-day screenings generated massive social momentum across major cinema chains. Harusnya Horror led total social volume with 4.8M impressions from midnight screenings in XXI. Cek Khodam went viral among comedy creator circles with 3.1M views. Dan Bandung captured young adult romance interest with high share velocity on dialogue soundbites.',
+        briefings: {
+            morning: {
+                timeLabel: 'Morning Trajectory (11:00 WIB)',
+                runTimestamp: '11:00 WIB',
+                summary:
+                    'Early morning crawl shows massive pre-booking excitement across cinema chains. Harusnya Horror leads TikTok search volume driven by gala clips from the cast. Cek Khodam trends strongly on parody sound clips, while Dan Bandung is heavily forwarded among Bandung college student accounts.',
+            },
+            night: {
+                timeLabel: 'Night Box Office Recap (23:00 WIB)',
+                runTimestamp: '23:00 WIB',
+                summary:
+                    'Post-showtime exit sentiment confirms strong opening numbers. Harusnya Horror reached 4.8M impressions with positive reviews on cast chemistry, though babak 2 pacing drew mixed feedback. Cek Khodam achieved the highest viral forward rate of the night (14.2k shares), and Kado Untuk Ibu logged an extraordinary 91% positive Word-of-Mouth rating.',
+            },
+        },
         slate: [
             {
                 id: 'harusnyahorror',
@@ -281,8 +302,20 @@ export const MULTI_DAY_TIKTOK_DATA: Record<string, DailyTikTokData> = {
     '2026-08-24': {
         date: '2026-08-24',
         dayLabel: 'Saturday — Peak Weekend Velocity',
-        executiveSummary:
-            'On Saturday, August 24, weekend cinema crowds surged across the snapshot registry. Harusnya Horror peaked at 6.8M impressions powered by Gala Premiere reaction clips and cinema visit memes. Cek Khodam surged to 4.2M views, while Kado Untuk Ibu experienced a massive Word-of-Mouth breakout among family audiences with 92% positive sentiment.',
+        briefings: {
+            morning: {
+                timeLabel: 'Morning Trajectory (11:00 WIB)',
+                runTimestamp: '11:00 WIB',
+                summary:
+                    'Saturday morning shows strong weekend acceleration across all 8 active titles. Harusnya Horror gala premiere reaction videos surged +1.8M views overnight. Cek Khodam and Kado Untuk Ibu show the highest afternoon cinema group booking intent.',
+            },
+            night: {
+                timeLabel: 'Night Box Office Recap (23:00 WIB)',
+                runTimestamp: '23:00 WIB',
+                summary:
+                    'Saturday night peak volume logged 19.8M total cinema views. Harusnya Horror peaked at 6.85M impressions with heavy cinema visit activity. Kado Untuk Ibu delivered the weekend’s biggest Word-of-Mouth breakout with 92% positive sentiment, while Dan Bandung captured 16.4k shares across romance dialogue soundbites.',
+            },
+        },
         slate: [
             {
                 id: 'harusnyahorror',
@@ -473,8 +506,20 @@ export const MULTI_DAY_TIKTOK_DATA: Record<string, DailyTikTokData> = {
     '2026-08-25': {
         date: '2026-08-25',
         dayLabel: 'Sunday — Word-of-Mouth Consolidation',
-        executiveSummary:
-            'On Sunday, August 25, word-of-mouth consolidated across the active box office registry with 17.5M total market views. Indosiar TV appearance gave Harusnya Horror a secondary surge (995k views on promotional segment). Cek Khodam locked in the weekend’s top comedy buzz, while Perumahan Laddaland captured late-night horror moviegoers across XXI and CGV.',
+        briefings: {
+            morning: {
+                timeLabel: 'Morning Trajectory (11:00 WIB)',
+                runTimestamp: '11:00 WIB',
+                summary:
+                    'Sunday morning shows heavy family cinema interest. Indosiar TV feature gave Harusnya Horror a large morning boost (995k views on promotional segment). Cek Khodam maintains peak engagement among teenage friend groups planning Sunday matinee tickets.',
+            },
+            night: {
+                timeLabel: 'Night Box Office Recap (23:00 WIB)',
+                runTimestamp: '23:00 WIB',
+                summary:
+                    'Sunday night recap shows total slate views stabilizing at 17.5M impressions. Harusnya Horror maintained 35.5% share of voice with high engagement on cast TV appearances. Perumahan Laddaland captured late-night horror moviegoers across XXI, while Kado Untuk Ibu sustained the market’s cleanest sentiment profile (91% positive).',
+            },
+        },
         slate: [
             {
                 id: 'harusnyahorror',
@@ -649,8 +694,20 @@ export const MULTI_DAY_TIKTOK_DATA: Record<string, DailyTikTokData> = {
     '2026-08-26': {
         date: '2026-08-26',
         dayLabel: 'Monday — Post-Weekend Holdover Analysis',
-        executiveSummary:
-            'On Monday, August 26, post-weekend holdover metrics show strong weekday retention for the active slate. Kado Untuk Ibu leads weekday bookings with rising school & family nobar group sales. Dan Bandung commands high romance conversation among college students, while Harusnya Horror continues cinema-visit promotions in Jabodetabek.',
+        briefings: {
+            morning: {
+                timeLabel: 'Morning Trajectory (11:00 WIB)',
+                runTimestamp: '11:00 WIB',
+                summary:
+                    'Monday morning shows weekday holdover patterns taking effect. Kado Untuk Ibu leads weekday ticket reservations with rising school & family nobar inquiries. Dan Bandung dialogue quotes continue to trend among students, while Harusnya Horror begins promoting regional cinema visits.',
+            },
+            night: {
+                timeLabel: 'Night Box Office Recap (23:00 WIB)',
+                runTimestamp: '23:00 WIB',
+                summary:
+                    'Post-weekend holdover metrics show strong weekday retention for top titles. Kado Untuk Ibu holds an impressive 93% positive Word-of-Mouth profile. Dan Bandung captures weekday romance conversation, while Harusnya Horror transitions into its second-phase campaign with Tangerang cinema visit highlights.',
+            },
+        },
         slate: [
             {
                 id: 'harusnyahorror',
