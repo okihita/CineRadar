@@ -283,6 +283,19 @@ export default function TikTokExplorerPage() {
                 </Card>
             ) : (
                 <>
+                    {/* Section Header with Date Context */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-border/30 pb-2">
+                        <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-primary" />
+                            <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
+                                Daily Market Signals — {new Date(`${selectedDate}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}
+                            </h2>
+                        </div>
+                        <span className="text-xs text-muted-foreground font-mono">
+                            24h Crawl Window ({selectedDate})
+                        </span>
+                    </div>
+
                     {/* 4 Actionable Cinema Intelligence Cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         {/* Card 1: Share of Voice (SOV) Leader */}
