@@ -44,6 +44,7 @@ interface ExplorerPost {
     tiktok_sound?: string;
     platform_data?: {
         tiktok_sound?: string;
+        campaign_hashtag?: string;
     };
 }
 
@@ -134,30 +135,47 @@ export default function TikTokExplorerPage() {
         };
     }, [dayData]);
 
-    // Merge live scraped posts (if Harusnya Horror) with day-specific posts
+    // Merge live scraped multi-slate posts with day-specific posts
     const allPosts: ExplorerPost[] = useMemo(() => {
         if (!dayData) return [];
         const rawPosts = (liveDataset?.data?.posts || []) as ExplorerPost[];
-        const realHarusnyaPosts: ExplorerPost[] = rawPosts.map((p) => ({
-            id: p.id,
-            movieTitle: 'HARUSNYA HORROR',
-            hashtag: '#harusnyahorror',
-            title: p.title,
-            text: p.text,
-            url: p.url,
-            published_at: p.published_at,
-            source_name: p.source_name,
-            source_handle: p.source_handle,
-            source_avatar: p.source_avatar,
-            thumbnail: p.thumbnail,
-            metrics: p.metrics,
-            sentiment: ((p.metrics?.likes || 0) > 20000 ? 'positive' : 'mixed') as 'positive' | 'mixed',
-            tiktok_sound: p.platform_data?.tiktok_sound,
-        }));
+        const tagToMovie: Record<string, string> = {
+            harusnyahorror: 'HARUSNYA HORROR',
+            kangmak: 'KANG MAK',
+            agaklaen: 'AGAK LAEN',
+            kakaboss: 'KAKA BOSS',
+            lembayung: 'LEMBAYUNG',
+            filmlaura: 'LAURA',
+            homesweetloan: 'HOME SWEET LOAN',
+            filmsumala: 'SUMALA',
+            filmthaghut: 'THAGHUT',
+            sekawanlimo: 'SEKAWAN LIMO',
+        };
+
+        const liveMappedPosts: ExplorerPost[] = rawPosts.map((p) => {
+            const rawTag = (p.platform_data?.campaign_hashtag || 'harusnyahorror').toLowerCase().replace('#', '');
+            const resolvedTitle = tagToMovie[rawTag] || rawTag.toUpperCase();
+            return {
+                id: p.id,
+                movieTitle: resolvedTitle,
+                hashtag: `#${rawTag}`,
+                title: p.title,
+                text: p.text,
+                url: p.url,
+                published_at: p.published_at,
+                source_name: p.source_name,
+                source_handle: p.source_handle,
+                source_avatar: p.source_avatar,
+                thumbnail: p.thumbnail,
+                metrics: p.metrics,
+                sentiment: ((p.metrics?.likes || 0) > 20000 ? 'positive' : 'mixed') as 'positive' | 'mixed',
+                tiktok_sound: p.platform_data?.tiktok_sound,
+            };
+        });
 
         // Merge without duplicating IDs
-        const existingIds = new Set(realHarusnyaPosts.map((p) => p.id));
-        const combined: ExplorerPost[] = [...realHarusnyaPosts];
+        const existingIds = new Set(liveMappedPosts.map((p) => p.id));
+        const combined: ExplorerPost[] = [...liveMappedPosts];
 
         for (const post of dayData.posts) {
             if (!existingIds.has(post.id)) {

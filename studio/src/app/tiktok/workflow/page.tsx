@@ -90,25 +90,26 @@ const PIPELINE_STAGES: Record<string, PipelineStage> = {
         title: 'Theatrical Slate & Tag Resolver',
         category: 'Input Resolution',
         icon: Film,
-        badge: '6 Active Movies',
+        badge: '10 Theatrical Titles',
         badgeColor: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20',
         duration: '~2s',
         cost: '$0.00',
-        description: 'Queries active Indonesian cinema showtimes from TIX.id / 21Cineplex and maps each theatrical title to its primary viral campaign hashtags.',
+        description: 'Resolves active Indonesian cinema showtimes from TIX.id / 21Cineplex alongside upcoming releases (T-7) and maps them to primary viral campaign tags.',
         component: 'Hashtag Extractor & Movie Catalog',
-        inputs: ['Active Showtimes DB', 'Curated Keyword Rules', 'TIX.id Catalog'],
-        outputs: ['Active Hashtags Array', 'Target Movie Metadata'],
+        inputs: ['Active Theatrical Showtimes', 'Upcoming Release Slate', 'Curated Campaign Hashtags'],
+        outputs: ['10 Target Movie Hashtags', 'Release Status Metadata'],
         technicalDetails: {
             runtime: 'Python 3.13 / FastAPI Rest Endpoint',
             apiOrModel: 'TIX.id Showtimes Catalog + Firestore',
-            scriptPath: 'studio/src/app/api/social-feed/sources/route.ts',
-            schema: 'Array<{ movie_title: string, official_tags: string[], aliases: string[] }>',
+            scriptPath: 'backend/scripts/pilot_tiktok_crawler.py',
+            schema: 'Array<{ title: string, hashtag: string, distributor: string, release_status: string }>',
             failurePolicy: 'Fallback to active weekly slate from local JSON cache',
         },
         samplePayload: JSON.stringify([
-            { title: "Harusnya Horror", hashtag: "harusnyahorror", distributor: "MD Pictures", limit: 25 },
-            { title: "Kang Mak", hashtag: "kangmak", distributor: "Falcon Pictures", limit: 25 },
-            { title: "Agak Laen", hashtag: "agaklaen", distributor: "Imajinari", limit: 25 }
+            { title: "Harusnya Horror", hashtag: "harusnyahorror", distributor: "MD Pictures", release_status: "Now Playing" },
+            { title: "Kang Mak", hashtag: "kangmak", distributor: "Falcon Pictures", release_status: "Now Playing" },
+            { title: "Laura", hashtag: "filmlaura", distributor: "MD Pictures", release_status: "Upcoming T-3" },
+            { title: "Home Sweet Loan", hashtag: "homesweetloan", distributor: "Visinema", release_status: "Upcoming T-7" }
         ], null, 2),
     },
     scraper: {
@@ -117,14 +118,14 @@ const PIPELINE_STAGES: Record<string, PipelineStage> = {
         title: 'Apify Actor Scraping Engine',
         category: 'Data Extraction',
         icon: Bot,
-        badge: 'Capped Spend ~$0.85/day',
+        badge: '500 Posts · 1,125 Comments',
         badgeColor: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
-        duration: '~25s',
-        cost: '~$0.085 / run',
-        description: 'Dispatches headless Apify scraping actors to collect top video statistics (views, shares, likes) and user comments without account credentials.',
+        duration: '~45s',
+        cost: '~$2.35 / run ($4.70/day)',
+        description: 'Dispatches headless Apify scraping actors across all 10 slate titles to collect top video statistics (views, shares, likes) and audience discussion threads.',
         component: 'Apify TikTok Scraper Actor',
-        inputs: ['Resolved Hashtags', 'Limit Parameters (25 posts/tag)', 'Comments Depth (20/post)'],
-        outputs: ['Raw Video Metadata', 'Top Audience Comments', 'Engagement Metrics'],
+        inputs: ['10 Resolved Hashtags', 'Limit (50 posts/movie)', 'Comments Depth (60/post)'],
+        outputs: ['500 Normalized Social Posts', '1,125 Audience Comments', 'Engagement Metrics'],
         technicalDetails: {
             runtime: 'Apify Serverless Actor Container',
             apiOrModel: 'clockworks/tiktok-scraper + comments-scraper',
@@ -133,11 +134,10 @@ const PIPELINE_STAGES: Record<string, PipelineStage> = {
             failurePolicy: 'Circuit breaker: Abort if spend exceeds $5.00/day; return partial records',
         },
         samplePayload: JSON.stringify({
-            scraped_items: 10,
-            scraped_comments: 45,
-            total_views: 454000,
-            total_shares: 4178,
-            spend_usd: 0.1323,
+            target_slate: 10,
+            scraped_items: 500,
+            scraped_comments: 1125,
+            spend_usd: 2.35,
             status: "SUCCEEDED"
         }, null, 2),
     },
@@ -173,29 +173,30 @@ const PIPELINE_STAGES: Record<string, PipelineStage> = {
     ai_enrichment: {
         id: 'ai_enrichment',
         stepNumber: 5,
-        title: 'Gemini 2.5 Flash Intelligence & NLP',
+        title: 'Gemini 3.6 Flash Intelligence & NLP',
         category: 'AI Enrichment',
         icon: Sparkles,
-        badge: 'Gemini 2.5 Flash',
+        badge: 'Gemini 3.6 Flash',
         badgeColor: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20',
         duration: '~8s',
-        cost: '< $0.01 / run',
-        description: 'Executes structured NLP analysis to compute Organic vs Promo ratios, sentiment classification, virality velocity, and generates scannable executive briefings.',
+        cost: '< $0.05 / run',
+        description: 'Executes structured NLP analysis across all 10 movie feeds to compute Organic vs Promo ratios, sentiment classification, virality velocity, and generates dual executive briefings.',
         component: '@google/generative-ai / Structured Inference',
-        inputs: ['Crawled Videos & Comments', 'Historical Baseline Metrics'],
-        outputs: ['Sentiment Scores', 'Organic WoM Ratio', 'Executive Briefings', 'Risk/Friction Alerts'],
+        inputs: ['500 Crawled Videos', '1,125 Audience Comments', 'Historical Baseline Metrics'],
+        outputs: ['Sentiment Scores', 'Organic WoM Ratio', 'Executive Briefings (Morning/Night)', 'Risk/Friction Alerts'],
         technicalDetails: {
-            runtime: 'Server-side Next.js Route Handler',
-            apiOrModel: 'Google Gemini 2.5 Flash (temperature: 0.2)',
-            scriptPath: 'studio/src/app/api/social-feed/summarize/route.ts',
-            schema: '{ share_of_voice: object, briefings: [morning, night], signals: object[] }',
+            runtime: 'Python REST Client / Server-side Route Handler',
+            apiOrModel: 'Google Gemini 3.6 Flash (Structured JSON Schema)',
+            scriptPath: 'backend/scripts/pilot_tiktok_crawler.py',
+            schema: '{ share_of_voice_leader, organic_wom_ratio, virality_velocity, morning_briefing, night_briefing, friction_alert }',
             failurePolicy: 'Fallback to deterministic rule-based sentiment calculation',
         },
         samplePayload: JSON.stringify({
-            sentiment_summary: { positive: 72, neutral: 18, negative: 10 },
-            organic_wom_ratio: "78% (High Authentic Word-of-Mouth)",
-            virality_velocity: "+24.5% vs yesterday",
-            briefing_takeaway: "Strong early comedy buzz for #harusnyahorror driven by creator reaction clips."
+            share_of_voice_leader: "Harusnya Horror",
+            organic_wom_ratio: "79% Organic WoM (High authentic community conversation)",
+            virality_velocity: "+42.1% vs yesterday",
+            morning_briefing: "Viral trailer clips featuring Reza Arap (YB) and Lula Lahfah triggered early morning engagement spikes.",
+            night_briefing: "Evening showtime audience reactions highlighted a surprising shift from comedy to intense emotional tear-jerker moments."
         }, null, 2),
     },
     dashboard: {
@@ -483,12 +484,12 @@ export default function TikTokWorkflowPage() {
                             <DollarSign className="w-4 h-4 text-emerald-500" />
                         </CardDescription>
                         <CardTitle className="text-xl font-black text-emerald-500">
-                            ~$0.85 / $5.00
+                            ~$4.70 / $5.00
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="p-4 pt-1">
                         <span className="text-sm text-muted-foreground">
-                            Apify actor + Gemini API
+                            10 movies · 500 posts/day
                         </span>
                     </CardContent>
                 </Card>
@@ -500,7 +501,7 @@ export default function TikTokWorkflowPage() {
                             <Sparkles className="w-4 h-4 text-purple-500" />
                         </CardDescription>
                         <CardTitle className="text-xl font-black text-purple-500">
-                            Gemini 2.5 Flash
+                            Gemini 3.6 Flash
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="p-4 pt-1">

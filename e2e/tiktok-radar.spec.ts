@@ -32,11 +32,14 @@ test.describe('TikTok Radar Performance & Heaviness Audits', () => {
 
     // Verify header and pipeline stages
     await expect(page.getByRole('heading', { name: /TikTok Intelligence Pipeline/i })).toBeVisible();
+    await page.waitForLoadState('networkidle');
+    await page.waitForSelector('.react-flow__renderer', { state: 'visible', timeout: 8000 });
+
     const sequenceBtn = page.getByRole('button', { name: /Sequence & Step Breakdown/i });
     await expect(sequenceBtn).toBeVisible();
     await sequenceBtn.click();
 
-    await expect(page.getByText('Daily Execution Sequence')).toBeVisible();
+    await expect(page.getByText(/Chronological step-by-step pipeline sequence/i)).toBeVisible();
 
     console.log(`[TikTok Workflow Audit] DOM Nodes: ${result.domNodeCount}, TTFB: ${result.ttfbMs}ms, Load: ${result.loadTimeMs}ms`);
   });
