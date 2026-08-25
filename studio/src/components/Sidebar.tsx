@@ -497,7 +497,7 @@ function MenuSection({
             <button
                 onClick={onToggle}
                 className={cn(
-                    'w-full flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors',
+                    'w-full flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-left',
                     'hover:bg-muted/50 text-muted-foreground/50 hover:text-muted-foreground/70',
                     groupActive && 'text-muted-foreground/70',
                 )}
@@ -513,7 +513,7 @@ function MenuSection({
                                 !expanded && '-rotate-90'
                             )}
                         />
-                        <span className="text-sm font-semibold uppercase tracking-wider">
+                        <span className="text-sm font-semibold uppercase tracking-wider text-left truncate">
                             {group.label}
                         </span>
                     </>
