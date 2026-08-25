@@ -2,13 +2,13 @@
 
 import { useMemo } from 'react';
 import {
-  AreaChart, Area, BarChart, Bar, LineChart, Line,
+  AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, PieChart, Pie, Cell,
 } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import {
-  Film, TrendingUp, Trophy, Users, BarChart3,
+  Film, Trophy, Users, BarChart3,
   Crown, Calendar, Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -21,7 +21,6 @@ import { PageLoader, PageError } from '@/components/cinepoint/PageShell';
 import { CinePointErrorBoundary } from '@/components/cinepoint/ErrorBoundary';
 import { useBoxOfficeData, RANGE_PRESETS } from './_components/useBoxOfficeData';
 import type { RangePreset } from './_components/useBoxOfficeData';
-import { MovieDetailPanel } from './_components/MovieDetailPanel';
 import { HallOfFameTab } from './_components/HallOfFameTab';
 import { MovieDrillDown } from './_components/MovieDrillDown';
 import { FullRankings } from './_components/FullRankings';
@@ -32,11 +31,11 @@ export default function CinePointInsightsPage() {
   const {
     data, yearsData, loading, yearsLoading, error, yearsError, range, setRange,
     selectedMovie, setSelectedMovie, enrichedMovie, enrichedLoading,
-    loadData, loadYears,
+    loadYears,
   } = useBoxOfficeData();
 
-  const localTotal = useMemo(() => data?.movie_rankings.filter((m) => m.type === 'local').reduce((s, m) => s + m.total_period_admissions, 0) ?? 0, [data]);
-  const intlTotal = useMemo(() => data?.movie_rankings.filter((m) => m.type === 'international').reduce((s, m) => s + m.total_period_admissions, 0) ?? 0, [data]);
+  const localTotal = useMemo(() => data?.movie_rankings?.filter((m) => m.type === 'local').reduce((s, m) => s + m.total_period_admissions, 0) ?? 0, [data]);
+  const intlTotal = useMemo(() => data?.movie_rankings?.filter((m) => m.type === 'international').reduce((s, m) => s + m.total_period_admissions, 0) ?? 0, [data]);
 
   return (
     <div className="px-6 py-8 space-y-6">
