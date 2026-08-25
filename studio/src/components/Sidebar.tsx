@@ -66,9 +66,9 @@ const menuGroups: MenuGroup[] = [
                 adminOnly: false,
             },
             {
-                title: 'Crawler Jobs',
-                description: 'Batch scraping & schedules',
-                href: '/tiktok/jobs',
+                title: 'Pipeline Workflow',
+                description: 'Daily processing & AI graph',
+                href: '/tiktok/workflow',
                 icon: Sparkles,
                 adminOnly: false,
             },

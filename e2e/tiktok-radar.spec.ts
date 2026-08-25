@@ -23,4 +23,21 @@ test.describe('TikTok Radar Performance & Heaviness Audits', () => {
 
     console.log(`[TikTok Radar Audit] DOM Nodes: ${result.domNodeCount}, TTFB: ${result.ttfbMs}ms, Load: ${result.loadTimeMs}ms`);
   });
+
+  test('evaluates interactive Xyflow graph and sequence diagram on /tiktok/workflow', async ({ page }) => {
+    const result = await auditPagePerformance(page, 'http://127.0.0.1:3101/tiktok/workflow', {
+      maxDomNodeCount: 2000,
+      maxLoadTimeMs: 15000,
+    });
+
+    // Verify header and pipeline stages
+    await expect(page.getByRole('heading', { name: /TikTok Intelligence Pipeline/i })).toBeVisible();
+    const sequenceBtn = page.getByRole('button', { name: /Sequence & Step Breakdown/i });
+    await expect(sequenceBtn).toBeVisible();
+    await sequenceBtn.click();
+
+    await expect(page.getByText('Daily Execution Sequence')).toBeVisible();
+
+    console.log(`[TikTok Workflow Audit] DOM Nodes: ${result.domNodeCount}, TTFB: ${result.ttfbMs}ms, Load: ${result.loadTimeMs}ms`);
+  });
 });
