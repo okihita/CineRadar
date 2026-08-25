@@ -8,7 +8,7 @@ import {
     Search, Calendar, ChevronLeft, ChevronRight,
     Film, ThumbsUp, Activity, Copy, Check, FileCode,
     CalendarX2, ArrowRight,
-    Trophy, Zap, AlertTriangle, Sun, Moon
+    Trophy, Zap, AlertTriangle, Sun, Moon, Clock, User
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -216,7 +216,7 @@ export default function TikTokExplorerPage() {
 
     const formattedHeaderDate = useMemo(() => {
         return new Date(`${selectedDate}T00:00:00`).toLocaleDateString('en-US', {
-            weekday: 'short',
+            weekday: 'long',
             month: 'short',
             day: 'numeric',
             year: 'numeric'
@@ -224,34 +224,34 @@ export default function TikTokExplorerPage() {
     }, [selectedDate]);
 
     return (
-        <div className="space-y-6">
+        <div className="p-6 space-y-6">
             {/* Page Header & Date Navigation Toolbar */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/40 pb-5">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-zinc-950 dark:bg-zinc-800 text-white flex items-center justify-center border border-border/40">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-border/40 pb-6">
+                <div className="flex items-center gap-3.5">
+                    <div className="w-11 h-11 rounded-xl bg-zinc-950 dark:bg-zinc-800 text-white flex items-center justify-center border border-border/40 shrink-0">
                         <TikTokIcon className="w-5 h-5" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold tracking-tight text-foreground">TikTok Radar</h1>
-                        <p className="text-sm text-muted-foreground">
+                        <h1 className="text-2xl font-bold tracking-tight text-foreground">TikTok Radar</h1>
+                        <p className="text-sm text-muted-foreground mt-0.5">
                             Daily audience sentiment, viral momentum, and box office buzz across active cinema releases
                         </p>
                     </div>
                 </div>
 
                 {/* Date Navigator Toolbar */}
-                <div className="flex items-center gap-1.5 self-start md:self-auto">
+                <div className="flex items-center gap-1.5 p-1 bg-muted/30 border border-border/50 rounded-xl self-start lg:self-auto">
                     <Button
-                        variant="outline"
+                        variant="ghost"
                         size="icon"
                         onClick={handlePrevDay}
-                        className="h-8 w-8 rounded-lg"
+                        className="h-8 w-8 rounded-lg hover:bg-muted"
                         title="Previous Day"
                     >
                         <ChevronLeft className="w-4 h-4" />
                     </Button>
 
-                    <div className="flex items-center gap-2 px-3 h-8 rounded-lg border border-border/60 bg-muted/20 text-sm font-medium">
+                    <div className="flex items-center gap-2 px-3 h-8 rounded-lg border border-border/40 bg-background text-sm font-medium">
                         <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
                         <input
                             type="date"
@@ -262,20 +262,20 @@ export default function TikTokExplorerPage() {
                     </div>
 
                     <Button
-                        variant="outline"
+                        variant="ghost"
                         size="icon"
                         onClick={handleNextDay}
-                        className="h-8 w-8 rounded-lg"
+                        className="h-8 w-8 rounded-lg hover:bg-muted"
                         title="Next Day"
                     >
                         <ChevronRight className="w-4 h-4" />
                     </Button>
 
                     <Button
-                        variant={selectedDate === today ? 'default' : 'outline'}
+                        variant={selectedDate === today ? 'secondary' : 'outline'}
                         size="sm"
                         onClick={() => setSelectedDate(today)}
-                        className="h-8 text-sm px-3 font-medium rounded-lg"
+                        className="h-8 text-sm px-3.5 font-medium rounded-lg border-border/50"
                     >
                         Today
                     </Button>
@@ -321,7 +321,7 @@ export default function TikTokExplorerPage() {
             ) : (
                 <>
                     {/* Section Date Anchor */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between pb-1">
                         <div className="flex items-center gap-2">
                             <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                                 Daily Market Signals
@@ -332,7 +332,7 @@ export default function TikTokExplorerPage() {
                             </span>
                         </div>
                         <span className="text-sm text-muted-foreground">
-                            24h Window (<span className="font-mono">{selectedDate}</span>)
+                            24h Crawl Window (<span className="font-mono">{selectedDate}</span>)
                         </span>
                     </div>
 
@@ -341,9 +341,9 @@ export default function TikTokExplorerPage() {
                         {/* Card 1: Share of Voice Leader */}
                         <Card
                             onClick={() => setSelectedMovieFilter(actionableInsights.sovLeader.title)}
-                            className="border-border/60 hover:border-border cursor-pointer transition-colors"
+                            className="border-border/60 hover:border-border/90 cursor-pointer transition-colors"
                         >
-                            <CardHeader className="p-4 pb-2">
+                            <CardHeader className="p-5 pb-2">
                                 <CardDescription className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
                                     Share of Voice Leader
                                     <Trophy className="w-4 h-4 text-amber-500" />
@@ -352,7 +352,7 @@ export default function TikTokExplorerPage() {
                                     {actionableInsights.sovLeader.title}
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="p-4 pt-0 space-y-1.5">
+                            <CardContent className="p-5 pt-0 space-y-1.5">
                                 <div className="text-sm font-medium text-amber-600 dark:text-amber-400">
                                     <span className="font-mono font-bold">{actionableInsights.sovLeader.sharePct}%</span> Market Attention
                                 </div>
@@ -365,9 +365,9 @@ export default function TikTokExplorerPage() {
                         {/* Card 2: Organic Word-of-Mouth Winner */}
                         <Card
                             onClick={() => setSelectedMovieFilter(actionableInsights.womWinner.title)}
-                            className="border-border/60 hover:border-border cursor-pointer transition-colors"
+                            className="border-border/60 hover:border-border/90 cursor-pointer transition-colors"
                         >
-                            <CardHeader className="p-4 pb-2">
+                            <CardHeader className="p-5 pb-2">
                                 <CardDescription className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
                                     Top Organic WoM
                                     <ThumbsUp className="w-4 h-4 text-emerald-500" />
@@ -376,7 +376,7 @@ export default function TikTokExplorerPage() {
                                     {actionableInsights.womWinner.title}
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="p-4 pt-0 space-y-1.5">
+                            <CardContent className="p-5 pt-0 space-y-1.5">
                                 <div className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
                                     <span className="font-mono font-bold">{actionableInsights.womWinner.positivePct}%</span> Positive Praise
                                 </div>
@@ -389,9 +389,9 @@ export default function TikTokExplorerPage() {
                         {/* Card 3: Breakout Virality Velocity */}
                         <Card
                             onClick={() => setSelectedMovieFilter(actionableInsights.viralityLeader.title)}
-                            className="border-border/60 hover:border-border cursor-pointer transition-colors"
+                            className="border-border/60 hover:border-border/90 cursor-pointer transition-colors"
                         >
-                            <CardHeader className="p-4 pb-2">
+                            <CardHeader className="p-5 pb-2">
                                 <CardDescription className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
                                     Top Virality Velocity
                                     <Zap className="w-4 h-4 text-cyan-500" />
@@ -400,7 +400,7 @@ export default function TikTokExplorerPage() {
                                     {actionableInsights.viralityLeader.title}
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="p-4 pt-0 space-y-1.5">
+                            <CardContent className="p-5 pt-0 space-y-1.5">
                                 <div className="text-sm font-medium text-cyan-600 dark:text-cyan-400">
                                     <span className="font-mono font-bold">{actionableInsights.viralityLeader.shareRate}%</span> Forward Rate
                                 </div>
@@ -413,9 +413,9 @@ export default function TikTokExplorerPage() {
                         {/* Card 4: Audience Friction Alert */}
                         <Card
                             onClick={() => setSelectedMovieFilter(actionableInsights.frictionTarget.title)}
-                            className="border-border/60 hover:border-border cursor-pointer transition-colors"
+                            className="border-border/60 hover:border-border/90 cursor-pointer transition-colors"
                         >
-                            <CardHeader className="p-4 pb-2">
+                            <CardHeader className="p-5 pb-2">
                                 <CardDescription className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
                                     Critical Friction Alert
                                     <AlertTriangle className="w-4 h-4 text-rose-500" />
@@ -424,7 +424,7 @@ export default function TikTokExplorerPage() {
                                     {actionableInsights.frictionTarget.title}
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="p-4 pt-0 space-y-1.5">
+                            <CardContent className="p-5 pt-0 space-y-1.5">
                                 <div className="text-sm font-medium text-rose-600 dark:text-rose-400">
                                     <span className="font-mono font-bold">{actionableInsights.frictionTarget.frictionPct}%</span> Mixed/Friction
                                 </div>
@@ -436,59 +436,77 @@ export default function TikTokExplorerPage() {
                     </div>
 
                     {/* Dual-Column Gemini Intelligence Briefings */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                         {/* Morning Briefing */}
                         <Card className="border-border/60 bg-card">
-                            <CardHeader className="p-5 pb-3 border-b border-border/30">
+                            <CardHeader className="p-6 pb-4 border-b border-border/30">
                                 <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <Sun className="w-4 h-4 text-amber-500" />
-                                        <CardTitle className="text-base font-bold text-foreground">
-                                            Morning Trajectory (11:00 WIB)
-                                        </CardTitle>
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-500">
+                                            <Sun className="w-4 h-4" />
+                                        </div>
+                                        <div>
+                                            <CardTitle className="text-base font-bold text-foreground">
+                                                Morning Trajectory (11:00 WIB)
+                                            </CardTitle>
+                                            <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
+                                                <Clock className="w-3.5 h-3.5" />
+                                                Scraped at <span className="font-mono">{dayData.briefings.morning.runTimestamp}</span>
+                                            </p>
+                                        </div>
                                     </div>
                                     <Badge variant="outline" className="text-sm font-medium">
                                         Pre-Showtime
                                     </Badge>
                                 </div>
-                                <p className="text-sm font-semibold text-foreground/90 pt-2">
+                                <p className="text-sm font-semibold text-foreground/90 pt-2.5">
                                     {dayData.briefings.morning.headline}
                                 </p>
                             </CardHeader>
-                            <CardContent className="p-5 space-y-3">
+                            <CardContent className="p-6 space-y-4">
                                 <p className="text-sm text-muted-foreground leading-relaxed">
                                     {dayData.briefings.morning.summary}
                                 </p>
-                                <div className="p-3 rounded-lg bg-muted/40 border border-border/40 text-sm text-foreground/90">
-                                    <span className="font-semibold">Actionable Takeaway:</span> {dayData.briefings.morning.keyTakeaway}
+                                <div className="p-4 rounded-xl bg-muted/40 border border-border/40 text-sm space-y-1">
+                                    <span className="font-semibold text-foreground block">Actionable Takeaway</span>
+                                    <p className="text-muted-foreground leading-relaxed">{dayData.briefings.morning.keyTakeaway}</p>
                                 </div>
                             </CardContent>
                         </Card>
 
                         {/* Night Recap */}
                         <Card className="border-border/60 bg-card">
-                            <CardHeader className="p-5 pb-3 border-b border-border/30">
+                            <CardHeader className="p-6 pb-4 border-b border-border/30">
                                 <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <Moon className="w-4 h-4 text-indigo-400" />
-                                        <CardTitle className="text-base font-bold text-foreground">
-                                            Night Box Office Recap (23:00 WIB)
-                                        </CardTitle>
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400">
+                                            <Moon className="w-4 h-4" />
+                                        </div>
+                                        <div>
+                                            <CardTitle className="text-base font-bold text-foreground">
+                                                Night Box Office Recap (23:00 WIB)
+                                            </CardTitle>
+                                            <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
+                                                <Clock className="w-3.5 h-3.5" />
+                                                Scraped at <span className="font-mono">{dayData.briefings.night.runTimestamp}</span>
+                                            </p>
+                                        </div>
                                     </div>
                                     <Badge variant="outline" className="text-sm font-medium">
                                         Post-Showtimes
                                     </Badge>
                                 </div>
-                                <p className="text-sm font-semibold text-foreground/90 pt-2">
+                                <p className="text-sm font-semibold text-foreground/90 pt-2.5">
                                     {dayData.briefings.night.headline}
                                 </p>
                             </CardHeader>
-                            <CardContent className="p-5 space-y-3">
+                            <CardContent className="p-6 space-y-4">
                                 <p className="text-sm text-muted-foreground leading-relaxed">
                                     {dayData.briefings.night.summary}
                                 </p>
-                                <div className="p-3 rounded-lg bg-muted/40 border border-border/40 text-sm text-foreground/90">
-                                    <span className="font-semibold">Actionable Takeaway:</span> {dayData.briefings.night.keyTakeaway}
+                                <div className="p-4 rounded-xl bg-muted/40 border border-border/40 text-sm space-y-1">
+                                    <span className="font-semibold text-foreground block">Actionable Takeaway</span>
+                                    <p className="text-muted-foreground leading-relaxed">{dayData.briefings.night.keyTakeaway}</p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -496,7 +514,7 @@ export default function TikTokExplorerPage() {
 
                     {/* Movie Slate Sentiment & Virality Leaderboard */}
                     <Card className="border-border/60 bg-card overflow-hidden">
-                        <CardHeader className="p-5 pb-3 border-b border-border/30 flex flex-col md:flex-row md:items-center justify-between gap-2">
+                        <CardHeader className="p-6 pb-4 border-b border-border/30 flex flex-col md:flex-row md:items-center justify-between gap-3">
                             <div>
                                 <CardTitle className="text-base font-bold flex items-center gap-2">
                                     <Activity className="w-4 h-4 text-primary" />
@@ -523,13 +541,13 @@ export default function TikTokExplorerPage() {
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left text-sm border-collapse">
                                     <thead>
-                                        <tr className="border-b border-border/40 bg-muted/20 text-muted-foreground uppercase text-sm font-semibold">
-                                            <th className="p-3.5 pl-5">Movie & Tag</th>
-                                            <th className="p-3.5">24h Views</th>
-                                            <th className="p-3.5">Virality Score</th>
-                                            <th className="p-3.5 w-56">Sentiment Split</th>
-                                            <th className="p-3.5">Top Audience Praise</th>
-                                            <th className="p-3.5 pr-5">Top Complaint</th>
+                                        <tr className="border-b border-border/40 bg-muted/20 text-muted-foreground uppercase text-sm font-semibold tracking-wider">
+                                            <th className="px-6 py-3.5">Movie & Tag</th>
+                                            <th className="px-6 py-3.5">24h Views</th>
+                                            <th className="px-6 py-3.5">Virality Score</th>
+                                            <th className="px-6 py-3.5 w-60">Sentiment Split</th>
+                                            <th className="px-6 py-3.5">Top Audience Praise</th>
+                                            <th className="px-6 py-3.5">Top Complaint</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-border/30">
@@ -545,33 +563,35 @@ export default function TikTokExplorerPage() {
                                                         isSelected ? 'bg-primary/5 font-medium' : 'hover:bg-muted/20'
                                                     }`}
                                                 >
-                                                    <td className="p-3.5 pl-5">
-                                                        <div className="flex items-center gap-2.5">
-                                                            <Film className="w-4 h-4 text-primary flex-shrink-0" />
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                                                                <Film className="w-4 h-4 flex-shrink-0" />
+                                                            </div>
                                                             <div>
-                                                                <span className="font-bold text-sm text-foreground block">{movie.title}</span>
+                                                                <span className="font-bold text-sm text-foreground block leading-tight">{movie.title}</span>
                                                                 <span className="text-sm text-muted-foreground">{movie.hashtag} • {movie.distributor}</span>
                                                             </div>
                                                         </div>
                                                     </td>
 
-                                                    <td className="p-3.5 font-mono font-medium text-foreground">
+                                                    <td className="px-6 py-4 font-mono font-medium text-foreground">
                                                         {movie.dailyViews.toLocaleString()}
                                                     </td>
 
-                                                    <td className="p-3.5">
+                                                    <td className="px-6 py-4">
                                                         <Badge variant="outline" className="text-sm font-medium">
                                                             {movie.viralityScore}
                                                         </Badge>
                                                     </td>
 
                                                     {/* Sentiment Progress Bar */}
-                                                    <td className="p-3.5">
-                                                        <div className="space-y-1">
+                                                    <td className="px-6 py-4">
+                                                        <div className="space-y-1.5">
                                                             <div className="flex justify-between text-sm text-muted-foreground">
-                                                                <span className="text-emerald-500"><span className="font-mono">{movie.positivePct}%</span> Pos</span>
-                                                                <span className="text-amber-500"><span className="font-mono">{movie.mixedPct}%</span> Mix</span>
-                                                                <span className="text-rose-500"><span className="font-mono">{movie.negativePct}%</span> Neg</span>
+                                                                <span className="text-emerald-500 font-medium"><span className="font-mono">{movie.positivePct}%</span> Pos</span>
+                                                                <span className="text-amber-500 font-medium"><span className="font-mono">{movie.mixedPct}%</span> Mix</span>
+                                                                <span className="text-rose-500 font-medium"><span className="font-mono">{movie.negativePct}%</span> Neg</span>
                                                             </div>
                                                             <div className="w-full h-2 rounded-full overflow-hidden flex bg-muted">
                                                                 <div style={{ width: `${movie.positivePct}%` }} className="bg-emerald-500 h-full" />
@@ -581,13 +601,13 @@ export default function TikTokExplorerPage() {
                                                         </div>
                                                     </td>
 
-                                                    <td className="p-3.5 text-foreground/90">
+                                                    <td className="px-6 py-4 text-foreground/90">
                                                         <Badge variant="secondary" className="text-sm font-normal">
                                                             {movie.topPraise}
                                                         </Badge>
                                                     </td>
 
-                                                    <td className="p-3.5 pr-5 text-muted-foreground">
+                                                    <td className="px-6 py-4 text-muted-foreground">
                                                         <Badge variant="secondary" className="text-sm font-normal">
                                                             {movie.topComplaint}
                                                         </Badge>
@@ -603,17 +623,17 @@ export default function TikTokExplorerPage() {
 
                     {/* Main Tabs Feed Section */}
                     <Tabs defaultValue="videos" className="space-y-4">
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                            <TabsList className="bg-muted/40 p-1 rounded-lg border border-border/40">
-                                <TabsTrigger value="videos" className="gap-2 text-sm font-medium">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <TabsList className="bg-muted/40 p-1 rounded-xl border border-border/40 h-auto">
+                                <TabsTrigger value="videos" className="gap-2 text-sm font-semibold px-4 py-2 rounded-lg">
                                     <Play className="w-3.5 h-3.5" />
                                     Viral Videos ({filteredPosts.length})
                                 </TabsTrigger>
-                                <TabsTrigger value="comments" className="gap-2 text-sm font-medium">
+                                <TabsTrigger value="comments" className="gap-2 text-sm font-semibold px-4 py-2 rounded-lg">
                                     <MessageSquare className="w-3.5 h-3.5" />
                                     Audience Comments ({filteredComments.length})
                                 </TabsTrigger>
-                                <TabsTrigger value="raw" className="gap-2 text-sm font-medium">
+                                <TabsTrigger value="raw" className="gap-2 text-sm font-semibold px-4 py-2 rounded-lg">
                                     <FileCode className="w-3.5 h-3.5" />
                                     Daily Raw JSON
                                 </TabsTrigger>
@@ -623,7 +643,7 @@ export default function TikTokExplorerPage() {
                             <div className="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1">
                                 <button
                                     onClick={() => setSelectedMovieFilter('all')}
-                                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                                    className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                                         selectedMovieFilter === 'all'
                                             ? 'bg-primary text-primary-foreground'
                                             : 'bg-muted/40 hover:bg-muted text-muted-foreground'
@@ -635,7 +655,7 @@ export default function TikTokExplorerPage() {
                                     <button
                                         key={m.id}
                                         onClick={() => setSelectedMovieFilter(m.title)}
-                                        className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                                        className={`px-3.5 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
                                             selectedMovieFilter === m.title
                                                 ? 'bg-primary text-primary-foreground'
                                                 : 'bg-muted/40 hover:bg-muted text-muted-foreground'
@@ -664,12 +684,12 @@ export default function TikTokExplorerPage() {
                                 </span>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {filteredPosts.map((post: ExplorerPost) => (
                                     <Card key={post.id} className="overflow-hidden bg-card border-border/50 flex flex-col justify-between">
                                         <div>
                                             {/* Creator Header */}
-                                            <div className="p-3.5 pb-2.5 flex items-center justify-between gap-3 border-b border-border/30">
+                                            <div className="p-4 pb-3 flex items-center justify-between gap-3 border-b border-border/30">
                                                 <div className="flex items-center gap-2.5 min-w-0">
                                                     {post.source_avatar ? (
                                                         <Image
@@ -697,7 +717,7 @@ export default function TikTokExplorerPage() {
 
                                             {/* Thumbnail */}
                                             {post.thumbnail && (
-                                                <div className="relative w-full h-44 bg-muted overflow-hidden">
+                                                <div className="relative w-full h-48 bg-muted overflow-hidden">
                                                     <Image
                                                         src={post.thumbnail}
                                                         alt={post.title}
@@ -705,7 +725,7 @@ export default function TikTokExplorerPage() {
                                                         className="object-cover"
                                                         unoptimized
                                                     />
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-3">
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-3.5">
                                                         <div className="flex items-center gap-4 text-white text-sm font-medium">
                                                             <span className="flex items-center gap-1">
                                                                 <Eye className="w-3.5 h-3.5 text-cyan-400" />
@@ -725,7 +745,7 @@ export default function TikTokExplorerPage() {
                                             )}
 
                                             {/* Caption */}
-                                            <div className="p-3.5 space-y-2">
+                                            <div className="p-4 space-y-2">
                                                 <p className="text-sm line-clamp-3 leading-relaxed text-foreground/90 whitespace-pre-line">
                                                     {post.text}
                                                 </p>
@@ -733,7 +753,7 @@ export default function TikTokExplorerPage() {
                                         </div>
 
                                         {/* Footer */}
-                                        <div className="p-3.5 pt-2 border-t border-border/30 flex items-center justify-between text-sm text-muted-foreground">
+                                        <div className="p-4 pt-3 border-t border-border/30 flex items-center justify-between text-sm text-muted-foreground">
                                             <span>{new Date(post.published_at).toLocaleDateString()}</span>
                                             <a
                                                 href={post.url}
@@ -767,15 +787,20 @@ export default function TikTokExplorerPage() {
                                 </span>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {filteredComments.map((comment) => (
-                                    <Card key={comment.id} className="bg-card border-border/40 p-4 space-y-2.5 flex flex-col justify-between">
-                                        <div className="space-y-2">
+                                    <Card key={comment.id} className="bg-card border-border/40 p-5 space-y-3.5 flex flex-col justify-between">
+                                        <div className="space-y-2.5">
                                             <div className="flex items-center justify-between gap-2">
-                                                <span className="text-sm font-semibold text-foreground">
-                                                    @{comment.authorName}
-                                                </span>
-                                                <Badge variant="outline" className="text-sm font-normal">
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0">
+                                                        <User className="w-3.5 h-3.5" />
+                                                    </div>
+                                                    <span className="text-sm font-semibold text-foreground truncate">
+                                                        @{comment.authorName}
+                                                    </span>
+                                                </div>
+                                                <Badge variant="outline" className="text-sm font-normal shrink-0">
                                                     {comment.movieTitle}
                                                 </Badge>
                                             </div>
@@ -785,7 +810,7 @@ export default function TikTokExplorerPage() {
                                             </p>
                                         </div>
 
-                                        <div className="flex items-center justify-between pt-2 text-sm text-muted-foreground border-t border-border/20">
+                                        <div className="flex items-center justify-between pt-3 text-sm text-muted-foreground border-t border-border/20">
                                             <span className="flex items-center gap-1 text-rose-500 font-medium">
                                                 <Heart className="w-3.5 h-3.5 fill-rose-500" />
                                                 <span className="font-mono">{comment.diggCount}</span> likes
@@ -816,7 +841,7 @@ export default function TikTokExplorerPage() {
                                 </Button>
                             </div>
 
-                            <div className="bg-zinc-950 text-zinc-200 p-4 rounded-xl border border-border/40 overflow-x-auto max-h-[600px] font-mono text-sm leading-relaxed">
+                            <div className="bg-zinc-950 text-zinc-200 p-5 rounded-xl border border-border/40 overflow-x-auto max-h-[600px] font-mono text-sm leading-relaxed">
                                 <pre>{JSON.stringify({
                                     date: selectedDate,
                                     dayLabel: dayData.dayLabel,
