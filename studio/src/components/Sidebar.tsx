@@ -52,8 +52,8 @@ const menuGroups: MenuGroup[] = [
         icon: Video,
         items: [
             {
-                title: 'TikTok Explorer',
-                description: 'Hashtag & buzz tracker',
+                title: 'TikTok Radar',
+                description: 'Daily buzz & sentiment',
                 href: '/tiktok/explorer',
                 icon: Play,
                 adminOnly: false,

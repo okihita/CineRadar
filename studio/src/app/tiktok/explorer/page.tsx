@@ -198,14 +198,9 @@ export default function TikTokExplorerPage() {
                             <TikTokIcon className="w-6 h-6" />
                         </div>
                         <div>
-                            <div className="flex items-center gap-2">
-                                <h1 className="text-3xl font-black tracking-tight">TikTok Intelligence Explorer</h1>
-                                <Badge variant="outline" className="text-xs uppercase font-mono tracking-wider bg-primary/5 text-primary border-primary/20">
-                                    Actionable Signals
-                                </Badge>
-                            </div>
+                            <h1 className="text-3xl font-black tracking-tight">TikTok Radar</h1>
                             <p className="text-muted-foreground text-sm font-medium">
-                                Share of voice, Word-of-Mouth momentum, virality velocity, and audience friction alerts
+                                Daily audience sentiment, viral momentum, and box office buzz across active cinema releases
                             </p>
                         </div>
                     </div>
