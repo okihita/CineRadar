@@ -186,8 +186,6 @@ export default function TikTokExplorerPage() {
         setTimeout(() => setCopied(false), 2000);
     };
 
-    const pastDateOptions = ['2026-08-23', '2026-08-24', '2026-08-25', '2026-08-26'];
-
     return (
         <div className="min-h-screen bg-background text-foreground p-6 max-w-[1600px] mx-auto space-y-8 animate-in fade-in duration-500">
             {/* Header & Date Navigation Toolbar */}
@@ -206,66 +204,46 @@ export default function TikTokExplorerPage() {
                     </div>
                 </div>
 
-                {/* Date Navigator Bar with Quick History Pills */}
-                <div className="flex flex-wrap items-center gap-2">
-                    <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-2xl border border-border/50">
-                        {pastDateOptions.map((dateStr) => {
-                            const isCurrent = selectedDate === dateStr;
-                            const label =
-                                dateStr === '2026-08-26'
-                                    ? 'Aug 26 (Today)'
-                                    : dateStr === '2026-08-25'
-                                    ? 'Aug 25 (Sun)'
-                                    : dateStr === '2026-08-24'
-                                    ? 'Aug 24 (Sat)'
-                                    : 'Aug 23 (Fri)';
-                            return (
-                                <button
-                                    key={dateStr}
-                                    onClick={() => setSelectedDate(dateStr)}
-                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                                        isCurrent
-                                            ? 'bg-primary text-primary-foreground shadow-sm'
-                                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
-                                    }`}
-                                >
-                                    {label}
-                                </button>
-                            );
-                        })}
+                {/* Date Navigator Toolbar */}
+                <div className="flex items-center gap-1.5 bg-muted/40 p-1.5 rounded-2xl border border-border/50 self-start lg:self-auto">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handlePrevDay}
+                        className="h-8 w-8 rounded-xl"
+                        title="Previous Day"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                    </Button>
+
+                    <div className="flex items-center gap-1.5 px-2 font-mono text-xs font-bold text-foreground">
+                        <Calendar className="w-3.5 h-3.5 text-primary" />
+                        <input
+                            type="date"
+                            value={selectedDate}
+                            onChange={(e) => setSelectedDate(e.target.value)}
+                            className="bg-transparent border-0 font-bold focus:outline-none cursor-pointer text-foreground text-xs"
+                        />
                     </div>
 
-                    <div className="flex items-center gap-1.5 bg-muted/40 p-1.5 rounded-2xl border border-border/50">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={handlePrevDay}
-                            className="h-7 w-7 rounded-xl"
-                            title="Previous Day"
-                        >
-                            <ChevronLeft className="w-4 h-4" />
-                        </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleNextDay}
+                        className="h-8 w-8 rounded-xl"
+                        title="Next Day"
+                    >
+                        <ChevronRight className="w-4 h-4" />
+                    </Button>
 
-                        <div className="flex items-center gap-1.5 px-2 font-mono text-xs font-bold text-foreground">
-                            <Calendar className="w-3.5 h-3.5 text-primary" />
-                            <input
-                                type="date"
-                                value={selectedDate}
-                                onChange={(e) => setSelectedDate(e.target.value)}
-                                className="bg-transparent border-0 font-bold focus:outline-none cursor-pointer text-foreground text-xs"
-                            />
-                        </div>
-
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={handleNextDay}
-                            className="h-7 w-7 rounded-xl"
-                            title="Next Day"
-                        >
-                            <ChevronRight className="w-4 h-4" />
-                        </Button>
-                    </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedDate(today)}
+                        className="h-8 rounded-xl text-xs px-3 font-semibold border-border/60 ml-1"
+                    >
+                        Today
+                    </Button>
                 </div>
             </div>
 
