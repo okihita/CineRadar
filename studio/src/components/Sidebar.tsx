@@ -7,6 +7,7 @@ import {
     Database, Calendar, Clapperboard, Sun, Moon, Monitor,
     LogOut, Users as UsersIcon, Share2, ArrowRightLeft,
     TrendingUp, Rss, Settings, Shield, BookOpen, Radio, Swords, Library, BarChart3, Target, Star,
+    Play, Wand2, Sparkles, Video,
     type LucideIcon,
 } from 'lucide-react';
 import { useState, useCallback } from 'react';
@@ -45,6 +46,34 @@ const standaloneItems: MenuItem[] = [
 ];
 
 const menuGroups: MenuGroup[] = [
+    {
+        id: 'tiktok',
+        label: 'TikTok Crawling',
+        icon: Video,
+        items: [
+            {
+                title: 'TikTok Explorer',
+                description: 'Hashtag & buzz tracker',
+                href: '/tiktok/explorer',
+                icon: Play,
+                adminOnly: false,
+            },
+            {
+                title: 'Hashtag Extractor',
+                description: 'Auto-detect campaign tags',
+                href: '/tiktok/extractor',
+                icon: Wand2,
+                adminOnly: false,
+            },
+            {
+                title: 'Crawler Jobs',
+                description: 'Batch scraping & schedules',
+                href: '/tiktok/jobs',
+                icon: Sparkles,
+                adminOnly: false,
+            },
+        ],
+    },
     {
         id: 'social',
         label: 'Social Intelligence',
