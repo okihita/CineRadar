@@ -23,7 +23,6 @@ import { getDailyTikTokData, MULTI_DAY_TIKTOK_DATA, type DailyTikTokData } from 
 export default function TikTokExplorerPage() {
     const today = getTodayJakarta();
     const [selectedDate, setSelectedDate] = useState<string>(today);
-    const [briefingWindow, setBriefingWindow] = useState<'morning' | 'night'>('night');
     const [selectedMovieFilter, setSelectedMovieFilter] = useState<string>('all');
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [commentSearch, setCommentSearch] = useState<string>('');
@@ -177,8 +176,7 @@ export default function TikTokExplorerPage() {
             date: selectedDate,
             dayLabel: dayData.dayLabel,
             actionableInsights,
-            activeBriefing: dayData.briefings[briefingWindow],
-            allBriefings: dayData.briefings,
+            briefings: dayData.briefings,
             slateSentiment: dayData.slate,
             topPosts: filteredPosts,
             sampleComments: filteredComments,
@@ -397,56 +395,92 @@ export default function TikTokExplorerPage() {
                         </Card>
                     </div>
 
-                    {/* Dual-Window Gemini Market Intelligence Briefing */}
-                    <Card className="border-primary/30 bg-gradient-to-r from-primary/5 via-primary/10 to-transparent">
-                        <CardHeader className="p-5 pb-3">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <Sparkles className="w-4 h-4 text-primary" />
-                                        <CardTitle className="text-sm font-bold uppercase tracking-wider text-primary">
-                                            Gemini Market Intelligence Briefing
-                                        </CardTitle>
-                                    </div>
-                                    <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-1 font-mono">
-                                        <Clock className="w-3.5 h-3.5 text-primary/70" />
-                                        Summarized from scraper run at {dayData.briefings[briefingWindow].runTimestamp} ({selectedDate})
-                                    </p>
-                                </div>
-
-                                {/* Dual-Window Switcher Buttons */}
-                                <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border/50 self-start md:self-auto">
-                                    <button
-                                        onClick={() => setBriefingWindow('morning')}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                                            briefingWindow === 'morning'
-                                                ? 'bg-primary text-primary-foreground shadow-sm'
-                                                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                                        }`}
-                                    >
-                                        <Sun className="w-3.5 h-3.5" />
-                                        Morning (11:00)
-                                    </button>
-                                    <button
-                                        onClick={() => setBriefingWindow('night')}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                                            briefingWindow === 'night'
-                                                ? 'bg-primary text-primary-foreground shadow-sm'
-                                                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                                        }`}
-                                    >
-                                        <Moon className="w-3.5 h-3.5" />
-                                        Night Recap (23:00)
-                                    </button>
-                                </div>
+                    {/* Dual-Column Scannable Gemini Market Intelligence Briefings */}
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Sparkles className="w-4 h-4 text-primary" />
+                                <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">
+                                    Gemini AI Slate Intelligence Briefings
+                                </h3>
                             </div>
-                        </CardHeader>
-                        <CardContent className="p-5 pt-0">
-                            <p className="text-sm text-foreground/90 leading-relaxed font-sans bg-background/40 p-4 rounded-xl border border-border/30">
-                                {dayData.briefings[briefingWindow].summary}
-                            </p>
-                        </CardContent>
-                    </Card>
+                            <span className="text-xs text-muted-foreground font-mono">
+                                2 Daily Scraper Checkpoints
+                            </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            {/* Column 1: Morning Briefing */}
+                            <Card className="border-border/60 bg-card/60 flex flex-col justify-between shadow-sm">
+                                <CardHeader className="p-5 pb-3 border-b border-border/30 bg-muted/20">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-500">
+                                                <Sun className="w-4 h-4" />
+                                            </div>
+                                            <div>
+                                                <CardTitle className="text-sm font-bold text-foreground">
+                                                    Morning Trajectory (11:00 WIB)
+                                                </CardTitle>
+                                                <p className="text-[11px] text-muted-foreground font-mono">
+                                                    Summarized from scraper run at {dayData.briefings.morning.runTimestamp}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <Badge variant="outline" className="text-[10px] font-mono border-amber-500/30 text-amber-500 bg-amber-500/10">
+                                            Pre-Showtime
+                                        </Badge>
+                                    </div>
+                                    <h4 className="text-xs font-bold text-foreground/90 pt-2">
+                                        {dayData.briefings.morning.headline}
+                                    </h4>
+                                </CardHeader>
+                                <CardContent className="p-5 space-y-3">
+                                    <p className="text-xs text-foreground/80 leading-relaxed font-sans">
+                                        {dayData.briefings.morning.summary}
+                                    </p>
+                                    <div className="p-2.5 rounded-xl bg-amber-500/5 border border-amber-500/20 text-[11px] text-amber-600 dark:text-amber-400 font-medium">
+                                        <strong>Actionable Takeaway:</strong> {dayData.briefings.morning.keyTakeaway}
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Column 2: Night Recap */}
+                            <Card className="border-border/60 bg-card/60 flex flex-col justify-between shadow-sm">
+                                <CardHeader className="p-5 pb-3 border-b border-border/30 bg-muted/20">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400">
+                                                <Moon className="w-4 h-4" />
+                                            </div>
+                                            <div>
+                                                <CardTitle className="text-sm font-bold text-foreground">
+                                                    Night Box Office Recap (23:00 WIB)
+                                                </CardTitle>
+                                                <p className="text-[11px] text-muted-foreground font-mono">
+                                                    Summarized from scraper run at {dayData.briefings.night.runTimestamp}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <Badge variant="outline" className="text-[10px] font-mono border-indigo-500/30 text-indigo-400 bg-indigo-500/10">
+                                            Post-Showtimes
+                                        </Badge>
+                                    </div>
+                                    <h4 className="text-xs font-bold text-foreground/90 pt-2">
+                                        {dayData.briefings.night.headline}
+                                    </h4>
+                                </CardHeader>
+                                <CardContent className="p-5 space-y-3">
+                                    <p className="text-xs text-foreground/80 leading-relaxed font-sans">
+                                        {dayData.briefings.night.summary}
+                                    </p>
+                                    <div className="p-2.5 rounded-xl bg-indigo-500/5 border border-indigo-500/20 text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">
+                                        <strong>Actionable Takeaway:</strong> {dayData.briefings.night.keyTakeaway}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
 
                     {/* Movie Slate Sentiment & Virality Leaderboard */}
                     <Card className="border-border/60 bg-card overflow-hidden">
@@ -783,8 +817,7 @@ export default function TikTokExplorerPage() {
                                     date: selectedDate,
                                     dayLabel: dayData.dayLabel,
                                     actionableInsights,
-                                    activeBriefing: dayData.briefings[briefingWindow],
-                                    allBriefings: dayData.briefings,
+                                    briefings: dayData.briefings,
                                     slateSentiment: dayData.slate,
                                     topPosts: filteredPosts,
                                     sampleComments: filteredComments,
