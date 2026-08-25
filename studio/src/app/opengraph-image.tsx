@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 
-export const alt = 'CineRadar Admin - Forensic Movie Intelligence';
+export const alt = 'CineRadar Studio - Forensic Movie Intelligence';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -37,7 +37,7 @@ export default function Image() {
             color: '#38bdf8',
           }}
         >
-          CineRadar Admin
+          CineRadar Studio
         </div>
         <div
           style={{

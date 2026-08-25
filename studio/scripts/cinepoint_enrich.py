@@ -143,13 +143,13 @@ def main():
     # ── Load env ──
     env_path = Path(__file__).resolve().parent.parent / ".env.local"
     if not env_path.exists():
-        env_path = Path(__file__).resolve().parent.parent / "admin" / ".env.local"
+        env_path = Path(__file__).resolve().parent.parent / "studio" / ".env.local"
     load_dotenv(env_path)
 
     refresh_token = os.environ.get("CINEPOINT_REFRESH_TOKEN")
     if not refresh_token:
         print("❌ CINEPOINT_REFRESH_TOKEN not set in environment")
-        print("   Add it to admin/.env.local:")
+        print("   Add it to studio/.env.local:")
         print('   CINEPOINT_REFRESH_TOKEN="eyJhbGci..."')
         sys.exit(1)
 

@@ -3,14 +3,15 @@
   "version": "1.0.0",
   "private": true,
   "engines": {
-    "node": ">=24.0.0",
+    "node": ">=24.0.0 <=26.x",
     "pnpm": "^11.0.0"
   },
   "packageManager": "pnpm@11.23.0",
   "scripts": {
-    "dev": "kill -9 $(lsof -ti:3000) 2>/dev/null || true && kill -9 $(lsof -ti:3001) 2>/dev/null || true && pnpm run dev:web & pnpm run dev:admin",
+    "dev": "kill -9 $(lsof -ti:3000) 2>/dev/null || true && kill -9 $(lsof -ti:3001) 2>/dev/null || true && pnpm run dev:web & pnpm run dev:studio",
     "dev:web": "kill -9 $(lsof -ti:3000) 2>/dev/null || true && pnpm --filter=web dev --port 3000",
-    "dev:admin": "kill -9 $(lsof -ti:3001) 2>/dev/null || true && pnpm --filter=admin dev --port 3001",
+    "dev:studio": "kill -9 $(lsof -ti:3001) 2>/dev/null || true && pnpm --filter=studio dev --port 3001",
+    "dev:admin": "pnpm run dev:studio",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "setup": "pnpm install && uv sync",

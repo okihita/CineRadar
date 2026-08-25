@@ -30,15 +30,28 @@ updates:
     commit-message:
       prefix: "deps"
 
-  # npm (admin frontend)
-  - package-ecosystem: "npm"
-    directory: "/admin"
+  # pnpm (studio frontend)
+  - package-ecosystem: "pnpm"
+    directory: "/studio"
     schedule:
       interval: "weekly"
       day: "monday"
     groups:
-      npm-deps:
+      studio-deps:
         patterns:
           - "*"
     commit-message:
-      prefix: "deps(admin)"
+      prefix: "deps(studio)"
+
+  # pnpm (web frontend)
+  - package-ecosystem: "pnpm"
+    directory: "/web"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      web-deps:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "deps(web)"

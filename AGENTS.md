@@ -8,7 +8,7 @@ Welcome to the CineRadar repository. This document defines the engineering stand
 
 CineRadar is a monorepo consisting of three primary applications and cloud services:
 
-* **`admin/`** (`admin`): Next.js 16 (Turbopack, Tailwind CSS v4, React 19, SWR, NextAuth) Studio Dashboard.
+* **`studio/`** (`studio`): Next.js 16 (Turbopack, Tailwind CSS v4, React 19, SWR, NextAuth) Studio Dashboard.
 * **`web/`** (`web`): Next.js 16 (Turbopack, Tailwind CSS v4, React 19) Consumer Web Application.
 * **`backend/`** (`backend` / `functions`): Python 3.13 (`uv`, `httpx`, `pydantic`, Google Cloud Firestore 2.28) scraping engine and Gen 2 Cloud Functions (`dispatcher`, `sweeper`, `scrape-seat-jit`).
 * **`docs/`** (`docs`): Official technical manuals (01 through 13).
@@ -34,7 +34,7 @@ All branches created in this repository must follow the **Monorepo Scoped Prefix
 * `test`: Adding or updating test suites
 
 ### Allowed Scopes (`<scope>`)
-* `admin`: Studio / Admin Dashboard (`/admin`)
+* `studio`: Studio Dashboard (`/studio`)
 * `web`: Consumer Web App (`/web`)
 * `backend`: Python Scraping Engine & CLI (`/backend`)
 * `functions`: Cloud Functions (`/backend/functions`)
@@ -42,7 +42,7 @@ All branches created in this repository must follow the **Monorepo Scoped Prefix
 * `all`: Monorepo-wide, cross-cutting, or multi-app changes
 
 ### Real-World Branch Examples
-* `feat/admin/cinepoint-catalog`
+* `feat/studio/cinepoint-catalog`
 * `hotfix/functions/sweeper-memory-optimization`
 * `fix/web/live-seats-mobile-layout`
 * `chore/all/upgrade-pnpm-dependencies`
@@ -53,7 +53,7 @@ All branches created in this repository must follow the **Monorepo Scoped Prefix
 ## 3. Conventional Commits Standard
 
 Commit messages must reflect the same `<type>(<scope>): <description>` format:
-* `feat(admin): add CinePoint tweet paste-and-parse tool`
+* `feat(studio): add CinePoint tweet paste-and-parse tool`
 * `fix(functions): prevent OOM crash in sweeper via select projection`
 * `chore(all): update lockfiles and dependency versions`
 * `deps(backend): upgrade Python packages via uv`
