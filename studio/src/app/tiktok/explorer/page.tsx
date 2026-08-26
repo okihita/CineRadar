@@ -345,7 +345,7 @@ export default function TikTokExplorerPage() {
                     <div>
                         <h1 className="text-xl font-bold tracking-tight text-foreground">TikTok Radar</h1>
                         <p className="text-muted-foreground text-sm font-medium">
-                            Social buzz, audience sentiment, and Gemini 3.6 Flash briefings for movies with active showtimes today
+                            Social buzz, audience sentiment, and national executive summary
                         </p>
                     </div>
                 </div>
