@@ -17,6 +17,16 @@ interface TruthSource {
 interface SourcesData {
     sources: TruthSource[];
     overrides: Record<string, string[]>;
+    excluded_hashtags?: string[];
+}
+
+function sortedUniqueTags(tags: string[]): string[] {
+    const set = new Set<string>();
+    for (const t of tags) {
+        const clean = t.replace(/^#/, '').trim().toLowerCase();
+        if (clean) set.add(clean);
+    }
+    return Array.from(set).sort();
 }
 
 const FIRESTORE_COLLECTION = 'tiktok_sources';
@@ -29,13 +39,13 @@ function getSourcesFilePath(): string {
 function readLocalSources(): SourcesData {
     const filePath = getSourcesFilePath();
     if (!fs.existsSync(filePath)) {
-        return { sources: [], overrides: {} };
+        return { sources: [], overrides: {}, excluded_hashtags: [] };
     }
     try {
         const raw = fs.readFileSync(filePath, 'utf-8');
         return JSON.parse(raw);
     } catch {
-        return { sources: [], overrides: {} };
+        return { sources: [], overrides: {}, excluded_hashtags: [] };
     }
 }
 
@@ -57,6 +67,7 @@ async function getSourcesData(): Promise<SourcesData> {
             return {
                 sources: doc.sources,
                 overrides: doc.overrides || {},
+                excluded_hashtags: doc.excluded_hashtags || [],
             };
         }
     } catch (err) {
@@ -70,6 +81,7 @@ async function getSourcesData(): Promise<SourcesData> {
         firestoreRestClient.createDocument(FIRESTORE_COLLECTION, FIRESTORE_DOC_ID, {
             sources: local.sources,
             overrides: local.overrides || {},
+            excluded_hashtags: local.excluded_hashtags || [],
             updated_at: new Date().toISOString(),
         }).catch((err) => console.warn('[TikTok Sources] Initial Firestore seed error:', err));
     }
@@ -105,6 +117,7 @@ export async function GET() {
             success: true,
             sources: data.sources,
             overrides: data.overrides || {},
+            excluded_hashtags: data.excluded_hashtags || [],
         });
     } catch (err: unknown) {
         return NextResponse.json({
@@ -117,8 +130,14 @@ export async function GET() {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { action, source, override } = body;
+        const { action, source, override, excluded_hashtags } = body;
         const currentData = await getSourcesData();
+
+        if (action === 'set_excluded' && Array.isArray(excluded_hashtags)) {
+            currentData.excluded_hashtags = sortedUniqueTags(excluded_hashtags);
+            await persistSourcesData(currentData);
+            return NextResponse.json({ success: true, message: 'Excluded hashtags updated', excluded_hashtags: currentData.excluded_hashtags });
+        }
 
         if (action === 'add_source' && source) {
             const cleanHandle = source.handle.replace(/^@/, '').trim().toLowerCase();

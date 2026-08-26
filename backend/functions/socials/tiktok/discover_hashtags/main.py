@@ -163,14 +163,15 @@ def scrape_seed_account_posts(apify_token: str, handles: list[str]) -> list[dict
         raise RuntimeError(f"Network error connecting to Apify API: {exc}") from exc
 
 
-def extract_tags_from_post(post: dict[str, Any]) -> set[str]:
-    """Extracts clean non-generic hashtags from a single TikTok post."""
+def extract_tags_from_post(post: dict[str, Any], excluded_tags: set[str] | None = None) -> set[str]:
+    """Extracts clean non-generic, non-exhibitor noise hashtags from a single TikTok post."""
+    banned = GENERIC_TAGS if excluded_tags is None else GENERIC_TAGS.union(excluded_tags)
     tags: set[str] = set()
     for t in post.get("hashtags") or []:
         t_raw = t.get("name") if isinstance(t, dict) else t
         if t_raw is not None:
             clean_t = str(t_raw).replace("#", "").strip().lower()
-            if clean_t and clean_t not in GENERIC_TAGS:
+            if clean_t and clean_t not in banned:
                 tags.add(clean_t)
     return tags
 
@@ -256,6 +257,11 @@ def resolve_hashtags_for_slate(
 ) -> dict[str, dict[str, Any]]:
     """Resolves hashtags strictly from manual overrides and live posts. Zero mock fallback."""
     overrides: dict[str, list[str]] = sources_config.get("overrides", {}) or {}
+    excluded_tags: set[str] = {
+        str(t).replace("#", "").strip().lower()
+        for t in sources_config.get("excluded_hashtags", [])
+        if t
+    }
     discovered_slate: dict[str, dict[str, Any]] = {}
 
     for movie in active_movies:
@@ -269,9 +275,8 @@ def resolve_hashtags_for_slate(
         if title in overrides:
             for tag in overrides[title]:
                 tag_str = str(tag or "").strip()
-                if tag_str.startswith("#"):
-                    tag_str = tag_str[1:]
-                if clean_tag := tag_str.lower():
+                clean_tag = tag_str.lower()
+                if clean_tag and clean_tag not in excluded_tags:
                     found_tags.add(clean_tag)
             sources.add("manual_override")
 
@@ -284,7 +289,7 @@ def resolve_hashtags_for_slate(
             post_url = str(post.get("webVideoUrl") or post.get("url") or "")
 
             if title.lower() in caption or norm_title in caption:
-                post_tags = extract_tags_from_post(post)
+                post_tags = extract_tags_from_post(post, excluded_tags)
                 found_tags.update(post_tags)
                 if author:
                     sources.add(f"@{author.lstrip('@')}")

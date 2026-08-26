@@ -18,7 +18,8 @@ import {
     Hash,
     Save,
     ExternalLink,
-    KeyRound
+    KeyRound,
+    Filter
 } from 'lucide-react';
 import { fetcher } from '@/lib/api';
 import { toast } from 'sonner';
@@ -38,6 +39,7 @@ interface SourcesApiResponse {
     success: boolean;
     sources: TruthSource[];
     overrides: Record<string, string[]>;
+    excluded_hashtags?: string[];
 }
 
 export default function TikTokDiscoverySettingsPage() {
@@ -98,8 +100,68 @@ export default function TikTokDiscoverySettingsPage() {
         }
     };
 
+    // Excluded Hashtags State
+    const [newExcludedTag, setNewExcludedTag] = useState('');
+    const [isSavingExcluded, setIsSavingExcluded] = useState(false);
+
     const sources = data?.sources || [];
     const overrides = data?.overrides || {};
+    const excludedHashtags = data?.excluded_hashtags || [];
+
+    const handleAddExcludedTag = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const cleanTag = newExcludedTag.replace(/^#/, '').trim().toLowerCase();
+        if (!cleanTag) {
+            toast.error('Please enter a hashtag to exclude');
+            return;
+        }
+        if (excludedHashtags.includes(cleanTag)) {
+            toast.error('Tag is already in exclusion list');
+            return;
+        }
+
+        setIsSavingExcluded(true);
+        try {
+            const updated = [...excludedHashtags, cleanTag];
+            const res = await fetch('/api/socials/tiktok/sources', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'set_excluded', excluded_hashtags: updated }),
+            });
+            const result = await res.json();
+            if (result.success) {
+                toast.success(`Excluded #${cleanTag}`);
+                setNewExcludedTag('');
+                mutate();
+            } else {
+                toast.error(result.error || 'Failed to update excluded hashtags');
+            }
+        } catch {
+            toast.error('Network error updating excluded hashtags');
+        } finally {
+            setIsSavingExcluded(false);
+        }
+    };
+
+    const handleDeleteExcludedTag = async (tagToRemove: string) => {
+        try {
+            const updated = excludedHashtags.filter((t) => t !== tagToRemove);
+            const res = await fetch('/api/socials/tiktok/sources', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'set_excluded', excluded_hashtags: updated }),
+            });
+            const result = await res.json();
+            if (result.success) {
+                toast.success(`Removed #${tagToRemove} from exclusion list`);
+                mutate();
+            } else {
+                toast.error(result.error || 'Failed to delete excluded hashtag');
+            }
+        } catch {
+            toast.error('Network error deleting excluded hashtag');
+        }
+    };
 
     const filteredSources = filterCategory === 'all'
         ? sources
@@ -308,11 +370,15 @@ export default function TikTokDiscoverySettingsPage() {
                     </TabsTrigger>
                     <TabsTrigger value="overrides" className="gap-2 text-sm font-semibold px-3.5 py-1.5 rounded-md">
                         <Hash className="w-4 h-4" />
-                        Custom Hashtag Overrides ({Object.keys(overrides).length})
+                        Custom Overrides ({Object.keys(overrides).length})
+                    </TabsTrigger>
+                    <TabsTrigger value="excluded" className="gap-2 text-sm font-semibold px-3.5 py-1.5 rounded-md">
+                        <Filter className="w-4 h-4" />
+                        Excluded Noise Tags ({excludedHashtags.length})
                     </TabsTrigger>
                     <TabsTrigger value="tokens" className="gap-2 text-sm font-semibold px-3.5 py-1.5 rounded-md">
                         <KeyRound className="w-4 h-4" />
-                        API Credentials & Tokens
+                        API Credentials
                     </TabsTrigger>
                 </TabsList>
 
@@ -608,7 +674,65 @@ export default function TikTokDiscoverySettingsPage() {
                     </Card>
                 </TabsContent>
 
-                {/* TAB 3: API CREDENTIALS & TOKENS */}
+                {/* TAB 3: EXCLUDED NOISE HASHTAGS */}
+                <TabsContent value="excluded" className="space-y-4">
+                    <Card className="border-border/60 bg-card p-4 sm:p-5">
+                        <CardHeader className="p-0 pb-3">
+                            <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
+                                <Filter className="w-4 h-4 text-rose-500" />
+                                Noise & Brand Campaign Exclusion Filter
+                            </CardTitle>
+                            <CardDescription className="text-sm text-muted-foreground">
+                                These exhibitor circuit tags, general hashtags, and promo handles will be automatically stripped from discovered movie campaigns to keep sentiment crawling pristine.
+                            </CardDescription>
+                        </CardHeader>
+
+                        {/* Add New Excluded Tag */}
+                        <form onSubmit={handleAddExcludedTag} className="flex gap-2 pt-2">
+                            <Input
+                                placeholder="e.g. nontondixxi, temancgv, cgvindo"
+                                value={newExcludedTag}
+                                onChange={(e) => setNewExcludedTag(e.target.value)}
+                                className="bg-muted/20 text-sm h-9 font-mono max-w-sm"
+                            />
+                            <Button
+                                type="submit"
+                                disabled={isSavingExcluded || !newExcludedTag.trim()}
+                                className="h-9 px-4 text-sm font-semibold gap-1.5"
+                            >
+                                <Plus className="w-3.5 h-3.5" />
+                                {isSavingExcluded ? 'Adding...' : 'Add Excluded Tag'}
+                            </Button>
+                        </form>
+
+                        {/* Active Excluded Tags Badges */}
+                        <div className="pt-4 space-y-2">
+                            <span className="text-sm font-bold text-muted-foreground uppercase tracking-wider block">
+                                Currently Banned Noise Tags ({excludedHashtags.length})
+                            </span>
+                            <div className="flex flex-wrap gap-2 pt-1">
+                                {excludedHashtags.map((tag) => (
+                                    <div
+                                        key={tag}
+                                        className="inline-flex items-center gap-1.5 bg-rose-500/10 text-rose-600 border border-rose-500/20 rounded-lg px-2.5 py-1 text-sm font-mono font-medium"
+                                    >
+                                        #{tag}
+                                        <button
+                                            type="button"
+                                            onClick={() => handleDeleteExcludedTag(tag)}
+                                            className="hover:text-rose-800 transition-colors ml-0.5"
+                                            title={`Remove #${tag} from exclusions`}
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </Card>
+                </TabsContent>
+
+                {/* TAB 4: API CREDENTIALS & TOKENS */}
                 <TabsContent value="tokens" className="space-y-4">
                     <Card className="border-border/60 bg-card p-4 sm:p-5">
                         <CardHeader className="p-0 pb-3">
