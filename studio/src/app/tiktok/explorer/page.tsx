@@ -208,8 +208,12 @@ export default function TikTokExplorerPage() {
     }, [isDataAvailableForDate, allPosts, liveData]);
 
     // ─── 4. Compute Per-Movie Sentiment Breakdown for Today's Active Lineup ───
+    const hasSocialCrawl = useMemo(() => {
+        return isDataAvailableForDate && allPosts.length > 0 && actionableInsights !== null;
+    }, [isDataAvailableForDate, allPosts.length, actionableInsights]);
+
     const todayMovieSentimentList = useMemo(() => {
-        if (!isDataAvailableForDate || activeShowtimeMovies.length === 0) return [];
+        if (activeShowtimeMovies.length === 0) return [];
         const aiBreakdowns = (liveData?.ai_insights?.movie_breakdowns || {}) as Record<string, {
             top_praise?: string;
             top_complaint?: string;
@@ -236,31 +240,47 @@ export default function TikTokExplorerPage() {
             const positivePct = breakdown.positive_pct ?? (
                 mComments.length > 0
                     ? Math.round((mComments.filter((c) => c.sentiment === 'positive').length / mComments.length) * 100)
-                    : 80
+                    : (hasSocialCrawl ? 80 : 0)
             );
             const negativePct = breakdown.negative_pct ?? (
                 mComments.length > 0
                     ? Math.round((mComments.filter((c) => c.sentiment === 'negative').length / mComments.length) * 100)
-                    : 5
+                    : (hasSocialCrawl ? 5 : 0)
             );
-            const mixedPct = breakdown.mixed_pct ?? (100 - positivePct - negativePct);
+            const mixedPct = hasSocialCrawl ? (100 - positivePct - negativePct) : 0;
 
             const topPraise = breakdown.top_praise || (
-                mComments[0]?.text ? `"${mComments[0].text.slice(0, 90)}..."` : 'Diskusi audiens dan antusiasme penonton aktif'
+                mComments[0]?.text
+                    ? `"${mComments[0].text.slice(0, 90)}..."`
+                    : (hasSocialCrawl ? 'Diskusi audiens dan antusiasme penonton aktif' : 'Scheduled for 11:00 WIB crawl')
             );
             const topComplaint = breakdown.top_complaint || (
-                mComments.find((c) => c.sentiment === 'mixed')?.text ? `"${mComments.find((c) => c.sentiment === 'mixed')?.text.slice(0, 90)}..."` : 'Ketersediaan jam tayang di bioskop'
+                mComments.find((c) => c.sentiment === 'mixed')?.text
+                    ? `"${mComments.find((c) => c.sentiment === 'mixed')?.text.slice(0, 90)}..."`
+                    : (hasSocialCrawl ? 'Ketersediaan jam tayang di bioskop' : 'Scheduled for 11:00 WIB crawl')
             );
+
+            const hasDiscoveredHashtag = hasSocialCrawl && mPosts.length > 0;
+            const hashtagDisplay = hasDiscoveredHashtag ? `#${cleanTag}` : null;
+
+            const totalShowtimes = Object.values(m.cities || {}).reduce((cSum, theatres) => {
+                return cSum + (theatres || []).reduce((tSum, t) => {
+                    return tSum + (t.rooms || []).reduce((rSum, r) => rSum + (r.all_showtimes?.length || r.showtimes?.length || 0), 0);
+                }, 0);
+            }, 0);
 
             return {
                 id: m.movie_id,
                 title: m.title,
-                hashtag: `#${cleanTag}`,
+                hashtag: hashtagDisplay,
+                showtimes_count: totalShowtimes,
+                merchants: m.merchants || [],
                 genres: m.genres || [],
                 age_category: m.age_category || 'SU',
                 views,
                 likes,
                 shares,
+                hasSocialCrawl,
                 positivePct,
                 mixedPct,
                 negativePct,
@@ -269,8 +289,11 @@ export default function TikTokExplorerPage() {
             };
         });
 
-        return list.sort((a, b) => b.views - a.views);
-    }, [isDataAvailableForDate, activeShowtimeMovies, allPosts, allComments, liveData]);
+        if (hasSocialCrawl) {
+            return list.sort((a, b) => b.views - a.views);
+        }
+        return list.sort((a, b) => (b.showtimes_count || 0) - (a.showtimes_count || 0));
+    }, [hasSocialCrawl, activeShowtimeMovies, allPosts, allComments, liveData]);
 
     // ─── 4. Filtered Feeds ──────────────────────────────────────────
     const filteredPosts = useMemo(() => {
@@ -391,117 +414,153 @@ export default function TikTokExplorerPage() {
                     <h3 className="text-base font-bold text-foreground">Loading Theatrical Intelligence...</h3>
                     <p className="text-sm text-muted-foreground">Aggregating live Apify crawler records and Gemini analysis.</p>
                 </Card>
-            ) : !isDataAvailableForDate || !actionableInsights ? (
-                selectedDate > today ? (
-                    /* Future Date Scheduled Pipeline Empty State */
-                    <Card className="border-border/60 bg-card p-6 sm:p-10 text-center space-y-6 max-w-2xl mx-auto shadow-sm">
-                        <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto text-primary shadow-sm">
-                            <Clock className="w-7 h-7" />
-                        </div>
-                        <div className="space-y-2 max-w-lg mx-auto">
-                            <Badge variant="outline" className="text-sm font-semibold border-primary/30 text-primary">
-                                Upcoming Ingestion Schedule
-                            </Badge>
-                            <h3 className="text-xl font-bold text-foreground">
-                                Scheduled Data Pipeline for {selectedDate}
-                            </h3>
-                            <p className="text-sm text-muted-foreground leading-relaxed">
-                                Intelligence for this future date is scheduled to populate automatically across the following daily automated runs:
-                            </p>
-                        </div>
+            ) : selectedDate > today ? (
+                /* Future Date Scheduled Pipeline Empty State */
+                <Card className="border-border/60 bg-card p-6 sm:p-10 text-center space-y-6 max-w-2xl mx-auto shadow-sm">
+                    <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto text-primary shadow-sm">
+                        <Clock className="w-7 h-7" />
+                    </div>
+                    <div className="space-y-2 max-w-lg mx-auto">
+                        <Badge variant="outline" className="text-sm font-semibold border-primary/30 text-primary">
+                            Upcoming Ingestion Schedule
+                        </Badge>
+                        <h3 className="text-xl font-bold text-foreground">
+                            Scheduled Data Pipeline for {selectedDate}
+                        </h3>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                            Intelligence for this future date is scheduled to populate automatically across the following daily automated runs:
+                        </p>
+                    </div>
 
-                        {/* Scheduled Pipeline Timeline Steps */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
-                            <div className="p-3.5 rounded-xl bg-muted/40 border border-border/40 space-y-1.5 flex flex-col justify-between">
-                                <div>
-                                    <div className="flex items-center justify-between mb-1">
-                                        <span className="font-mono text-sm font-bold text-primary">06:00 WIB</span>
-                                        <Film className="w-4 h-4 text-muted-foreground" />
-                                    </div>
-                                    <h4 className="text-sm font-bold text-foreground">Showtimes Sync</h4>
-                                    <p className="text-sm text-muted-foreground leading-relaxed mt-1">
-                                        Populates active movies and showtimes from XXI, CGV, and Cinepolis.
-                                    </p>
+                    {/* Scheduled Pipeline Timeline Steps */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
+                        <div className="p-3.5 rounded-xl bg-muted/40 border border-border/40 space-y-1.5 flex flex-col justify-between">
+                            <div>
+                                <div className="flex items-center justify-between mb-1">
+                                    <span className="font-mono text-sm font-bold text-primary">06:00 WIB</span>
+                                    <Film className="w-4 h-4 text-muted-foreground" />
                                 </div>
-                            </div>
-
-                            <div className="p-3.5 rounded-xl bg-muted/40 border border-border/40 space-y-1.5 flex flex-col justify-between">
-                                <div>
-                                    <div className="flex items-center justify-between mb-1">
-                                        <span className="font-mono text-sm font-bold text-indigo-500">08:00 WIB</span>
-                                        <Search className="w-4 h-4 text-muted-foreground" />
-                                    </div>
-                                    <h4 className="text-sm font-bold text-foreground">Hashtags Target</h4>
-                                    <p className="text-sm text-muted-foreground leading-relaxed mt-1">
-                                        Populates and links viral TikTok campaign tags to newly screening movies.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="p-3.5 rounded-xl bg-muted/40 border border-border/40 space-y-1.5 flex flex-col justify-between">
-                                <div>
-                                    <div className="flex items-center justify-between mb-1">
-                                        <span className="font-mono text-sm font-bold text-emerald-500">11:00 WIB</span>
-                                        <Sparkles className="w-4 h-4 text-muted-foreground" />
-                                    </div>
-                                    <h4 className="text-sm font-bold text-foreground">Morning Analysis</h4>
-                                    <p className="text-sm text-muted-foreground leading-relaxed mt-1">
-                                        Executes morning crawl and Gemini 3.6 Flash sentiment analysis.
-                                    </p>
-                                </div>
+                                <h4 className="text-sm font-bold text-foreground">Showtimes Sync</h4>
+                                <p className="text-sm text-muted-foreground leading-relaxed mt-1">
+                                    Populates active movies and showtimes from XXI, CGV, and Cinepolis.
+                                </p>
                             </div>
                         </div>
 
-                        <div className="pt-1">
-                            <Button
-                                variant="default"
-                                size="sm"
-                                onClick={() => setSelectedDate(today)}
-                                className="gap-1.5 text-sm font-semibold rounded-lg"
-                            >
-                                Jump to Today&apos;s Live Intelligence ({today})
-                                <ArrowRight className="w-3.5 h-3.5" />
-                            </Button>
+                        <div className="p-3.5 rounded-xl bg-muted/40 border border-border/40 space-y-1.5 flex flex-col justify-between">
+                            <div>
+                                <div className="flex items-center justify-between mb-1">
+                                    <span className="font-mono text-sm font-bold text-indigo-500">08:00 WIB</span>
+                                    <Search className="w-4 h-4 text-muted-foreground" />
+                                </div>
+                                <h4 className="text-sm font-bold text-foreground">Hashtags Target</h4>
+                                <p className="text-sm text-muted-foreground leading-relaxed mt-1">
+                                    Populates and links viral TikTok campaign tags to newly screening movies.
+                                </p>
+                            </div>
                         </div>
-                    </Card>
-                ) : (
-                    /* Honest Empty State for Past Unrecorded Dates */
-                    <Card className="border-border/60 bg-card p-12 text-center space-y-4 max-w-lg mx-auto">
-                        <div className="w-12 h-12 rounded-full bg-muted/60 flex items-center justify-center mx-auto text-muted-foreground">
-                            <CalendarX2 className="w-6 h-6" />
+
+                        <div className="p-3.5 rounded-xl bg-muted/40 border border-border/40 space-y-1.5 flex flex-col justify-between">
+                            <div>
+                                <div className="flex items-center justify-between mb-1">
+                                    <span className="font-mono text-sm font-bold text-emerald-500">11:00 WIB</span>
+                                    <Sparkles className="w-4 h-4 text-muted-foreground" />
+                                </div>
+                                <h4 className="text-sm font-bold text-foreground">Morning Analysis</h4>
+                                <p className="text-sm text-muted-foreground leading-relaxed mt-1">
+                                    Executes morning crawl and Gemini 3.6 Flash sentiment analysis.
+                                </p>
+                            </div>
                         </div>
-                        <div className="space-y-1 max-w-md mx-auto">
-                            <h3 className="text-base font-bold text-foreground">No Crawl Snapshot for {selectedDate}</h3>
-                            <p className="text-sm text-muted-foreground">
-                                Automated crawling captures data twice daily (11:00 & 23:00 WIB). Real theatrical intelligence is recorded for today.
-                            </p>
-                        </div>
+                    </div>
+
+                    <div className="pt-1">
                         <Button
                             variant="default"
                             size="sm"
-                            onClick={() => setSelectedDate(crawlDate || today)}
+                            onClick={() => setSelectedDate(today)}
                             className="gap-1.5 text-sm font-semibold rounded-lg"
                         >
-                            Jump to Latest Live Crawl ({crawlDate || today})
+                            Jump to Today&apos;s Live Intelligence ({today})
                             <ArrowRight className="w-3.5 h-3.5" />
                         </Button>
-                    </Card>
-                )
+                    </div>
+                </Card>
+            ) : selectedDate < today && !hasSocialCrawl ? (
+                /* Honest Empty State for Past Unrecorded Dates */
+                <Card className="border-border/60 bg-card p-12 text-center space-y-4 max-w-lg mx-auto">
+                    <div className="w-12 h-12 rounded-full bg-muted/60 flex items-center justify-center mx-auto text-muted-foreground">
+                        <CalendarX2 className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-1 max-w-md mx-auto">
+                        <h3 className="text-base font-bold text-foreground">No Crawl Snapshot for {selectedDate}</h3>
+                        <p className="text-sm text-muted-foreground">
+                            Automated crawling captures data twice daily (11:00 & 23:00 WIB). Real theatrical intelligence is recorded for today.
+                        </p>
+                    </div>
+                    <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => setSelectedDate(crawlDate || today)}
+                        className="gap-1.5 text-sm font-semibold rounded-lg"
+                    >
+                        Jump to Latest Live Crawl ({crawlDate || today})
+                        <ArrowRight className="w-3.5 h-3.5" />
+                    </Button>
+                </Card>
             ) : (
                 <>
-                    {/* 4 Actionable Market Signals */}
-                    <div className="space-y-1.5">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                                <Activity className="w-3.5 h-3.5 text-primary" />
-                                Today&apos;s Theatrical Signals · {selectedDate}
-                            </span>
-                            <span className="text-sm text-muted-foreground font-mono">
-                                Live Ingestion: <strong className="text-foreground">{allPosts.length}</strong> posts | <strong className="text-foreground">{allComments.length}</strong> comments
-                            </span>
-                        </div>
+                    {/* Morning Theatrical Lineup Banner when Social Crawl is Pending */}
+                    {!hasSocialCrawl || !actionableInsights ? (
+                        <Card className="border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-4 sm:p-5">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="outline" className="text-sm font-semibold border-primary/30 text-primary">
+                                            Live Theatrical Day · {selectedDate}
+                                        </Badge>
+                                        <span className="text-sm text-muted-foreground font-mono">
+                                            {activeShowtimeMovies.length} movies screening across cinemas
+                                        </span>
+                                    </div>
+                                    <h3 className="text-base font-bold text-foreground">
+                                        Active Theatrical Lineup Synced · Social Crawl Scheduled for 11:00 WIB
+                                    </h3>
+                                    <p className="text-sm text-muted-foreground">
+                                        Active movies playing in XXI, CGV, and Cinepolis are listed below. Marketing campaign hashtags resolve at 08:00 WIB, followed by TikTok buzz and sentiment briefings at 11:00 WIB.
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <div className="px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-center">
+                                        <span className="block text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400">06:00 WIB</span>
+                                        <span className="text-sm text-muted-foreground">Showtimes ✓</span>
+                                    </div>
+                                    <div className="px-3 py-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-center">
+                                        <span className="block text-sm font-mono font-bold text-indigo-600 dark:text-indigo-400">08:00 WIB</span>
+                                        <span className="text-sm text-muted-foreground">Hashtags ⏱</span>
+                                    </div>
+                                    <div className="px-3 py-2 rounded-lg bg-muted/50 border border-border/40 text-center">
+                                        <span className="block text-sm font-mono font-bold text-muted-foreground">11:00 WIB</span>
+                                        <span className="text-sm text-muted-foreground">Crawl ⏱</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </Card>
+                    ) : (
+                        <>
+                            {/* 4 Actionable Market Signals */}
+                            <div className="space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                                        <Activity className="w-3.5 h-3.5 text-primary" />
+                                        Today&apos;s Theatrical Signals · {selectedDate}
+                                    </span>
+                                    <span className="text-sm text-muted-foreground font-mono">
+                                        Live Ingestion: <strong className="text-foreground">{allPosts.length}</strong> posts | <strong className="text-foreground">{allComments.length}</strong> comments
+                                    </span>
+                                </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                             {/* Card 1: Share of Voice Leader */}
                             <Card className="bg-gradient-to-br from-indigo-500/5 via-card to-card border-indigo-500/20">
                                 <CardHeader className="p-3.5 pb-1">
@@ -678,6 +737,8 @@ export default function TikTokExplorerPage() {
                             </CardContent>
                         </Card>
                     </div>
+                    </>
+                    )}
 
                     {/* Theatrical Lineup & Sentiment Analysis */}
                     <Card className="border-border/60 bg-card overflow-hidden">
@@ -809,9 +870,17 @@ export default function TikTokExplorerPage() {
                                                                     <span className="hover:underline font-bold text-foreground">
                                                                         {movie.title}
                                                                     </span>
-                                                                    <span className="block text-sm text-muted-foreground font-mono font-normal">
-                                                                        {movie.hashtag}
-                                                                    </span>
+                                                                    {movie.hashtag ? (
+                                                                        <span className="block text-sm text-muted-foreground font-mono font-normal">
+                                                                            {movie.hashtag}
+                                                                        </span>
+                                                                    ) : (
+                                                                        <div className="mt-0.5">
+                                                                            <Badge variant="outline" className="text-sm font-normal border-dashed text-muted-foreground py-0 px-1.5 h-5">
+                                                                                ⏱ Pending 08:00 WIB discovery
+                                                                            </Badge>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         </td>
@@ -821,27 +890,39 @@ export default function TikTokExplorerPage() {
                                                             </Badge>
                                                         </td>
                                                         <td className="p-3 text-right font-mono font-semibold text-foreground">
-                                                            {movie.views > 0 ? movie.views.toLocaleString() : '-'}
+                                                            {movie.hasSocialCrawl && movie.views > 0 ? movie.views.toLocaleString() : '—'}
                                                         </td>
                                                         <td className="p-3 text-right font-mono text-muted-foreground">
-                                                            {movie.shares > 0 ? movie.shares.toLocaleString() : '-'}
+                                                            {movie.hasSocialCrawl && movie.shares > 0 ? movie.shares.toLocaleString() : '—'}
                                                         </td>
                                                         <td className="p-3 min-w-[200px]">
-                                                            <div className="space-y-1">
-                                                                <div className="flex items-center justify-between text-sm font-mono">
-                                                                    <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{movie.positivePct}% Pos</span>
-                                                                    <span className="text-muted-foreground">{movie.mixedPct}% Mix</span>
-                                                                    <span className="text-rose-500">{movie.negativePct}% Crit</span>
+                                                            {movie.hasSocialCrawl && (movie.positivePct > 0 || movie.mixedPct > 0 || movie.negativePct > 0) ? (
+                                                                <div className="space-y-1">
+                                                                    <div className="flex items-center justify-between text-sm font-mono">
+                                                                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{movie.positivePct}% Pos</span>
+                                                                        <span className="text-muted-foreground">{movie.mixedPct}% Mix</span>
+                                                                        <span className="text-rose-500">{movie.negativePct}% Crit</span>
+                                                                    </div>
+                                                                    <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden flex">
+                                                                        <div style={{ width: `${movie.positivePct}%` }} className="bg-emerald-500 h-full" />
+                                                                        <div style={{ width: `${movie.mixedPct}%` }} className="bg-amber-500 h-full" />
+                                                                        <div style={{ width: `${movie.negativePct}%` }} className="bg-rose-500 h-full" />
+                                                                    </div>
                                                                 </div>
-                                                                <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden flex">
-                                                                    <div style={{ width: `${movie.positivePct}%` }} className="bg-emerald-500 h-full" />
-                                                                    <div style={{ width: `${movie.mixedPct}%` }} className="bg-amber-500 h-full" />
-                                                                    <div style={{ width: `${movie.negativePct}%` }} className="bg-rose-500 h-full" />
-                                                                </div>
-                                                            </div>
+                                                            ) : (
+                                                                <span className="text-sm text-muted-foreground italic font-normal">
+                                                                    Awaiting 11:00 WIB crawl
+                                                                </span>
+                                                            )}
                                                         </td>
                                                         <td className="p-3 pr-4 text-muted-foreground truncate max-w-[260px]">
-                                                            {movie.topPraise}
+                                                            {movie.hasSocialCrawl ? (
+                                                                movie.topPraise
+                                                            ) : (
+                                                                <span className="italic text-muted-foreground">
+                                                                    Scheduled for 11:00 WIB crawl
+                                                                </span>
+                                                            )}
                                                         </td>
                                                     </tr>
                                                 );
@@ -853,8 +934,9 @@ export default function TikTokExplorerPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Main Tabs Feed Section */}
-                    <Tabs defaultValue="videos" className="space-y-3.5">
+                    {/* Main Tabs Feed Section (Only when social crawl has populated posts) */}
+                    {hasSocialCrawl && (
+                        <Tabs defaultValue="videos" className="space-y-3.5">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                             <TabsList className="bg-muted/40 p-0.5 rounded-lg border border-border/40 h-auto">
                                 <TabsTrigger value="videos" className="gap-2 text-sm font-semibold px-3 py-1.5 rounded-md">
@@ -1251,6 +1333,7 @@ export default function TikTokExplorerPage() {
                             </div>
                         </TabsContent>
                     </Tabs>
+                    )}
                 </>
             )}
         </div>

@@ -10,7 +10,7 @@ test.describe('TikTok Radar Performance & Heaviness Audits', () => {
 
     // Verify critical elements render properly
     await expect(page.getByRole('heading', { name: 'TikTok Radar' })).toBeVisible();
-    await expect(page.getByText(/Theatrical Signals|Market Signals|No Crawl Snapshot|Scheduled Data Pipeline/i)).toBeVisible();
+    await expect(page.getByText(/Theatrical Signals|Market Signals|Theatrical Lineup|Social Crawl Scheduled|No Crawl Snapshot|Scheduled Data Pipeline/i).first()).toBeVisible();
 
     // Verify tab interactions work smoothly if data is present
     const commentsTab = page.getByRole('tab', { name: /Audience Comments/i });
