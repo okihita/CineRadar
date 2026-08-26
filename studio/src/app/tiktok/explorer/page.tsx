@@ -343,12 +343,7 @@ export default function TikTokExplorerPage() {
                         <TikTokIcon className="w-5 h-5" />
                     </div>
                     <div>
-                        <div className="flex items-center gap-2">
-                            <h1 className="text-xl font-bold tracking-tight text-foreground">TikTok Radar</h1>
-                            <Badge variant="outline" className="text-sm font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20">
-                                Today&apos;s Theatrical Lineup · {activeShowtimeMovies.length || 27} Movies in Cinemas
-                            </Badge>
-                        </div>
+                        <h1 className="text-xl font-bold tracking-tight text-foreground">TikTok Radar</h1>
                         <p className="text-muted-foreground text-sm font-medium">
                             Social buzz, audience sentiment, and Gemini 3.6 Flash briefings for movies with active showtimes today
                         </p>
