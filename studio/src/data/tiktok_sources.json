@@ -32,8 +32,8 @@
     },
     {
       "id": "src-md-pictures",
-      "handle": "mdpictures_official",
-      "name": "MD Pictures",
+      "handle": "mdentertainmentofficial",
+      "name": "MD Pictures (MD Entertainment)",
       "category": "studio",
       "active": true,
       "verified": true,
@@ -42,7 +42,7 @@
     },
     {
       "id": "src-falcon-pictures",
-      "handle": "falconpictures_",
+      "handle": "falconpictures",
       "name": "Falcon Pictures",
       "category": "studio",
       "active": true,
@@ -99,16 +99,6 @@
       "verified": true,
       "priority": "medium",
       "notes": "Indonesian film production house (Suzanna, Tenggelamnya Kapal Van Der Wijck)."
-    },
-    {
-      "id": "src-bicara-boxoffice",
-      "handle": "bicaraboxoffice",
-      "name": "Bicara Box Office",
-      "category": "tracker",
-      "active": true,
-      "verified": true,
-      "priority": "high",
-      "notes": "Authoritative Indonesian box office tracker & analyst."
     },
     {
       "id": "src-habis-nonton-film",

@@ -87,7 +87,7 @@ def simulate_seed_account_posts(active_movies: List[Dict[str, Any]], sources: Li
 
         # 2. Post by Studio / Production House
         simulated_posts.append({
-            "source_handle": "mdpictures_official" if "HORROR" in title.upper() else "falconpictures_",
+            "source_handle": "mdentertainmentofficial" if "HORROR" in title.upper() else "falconpictures",
             "source_name": "Official Studio",
             "category": "studio",
             "caption": f"Siap-siap berteriak dan merasakan sensasi nonton {title}! Beli tiketnya sekarang sebelum kehabisan! #{agency_tag} #{primary_tag} #OfficialTrailer",
