@@ -512,40 +512,28 @@ export default function TikTokExplorerPage() {
                 <>
                     {/* Morning Theatrical Lineup Banner when Social Crawl is Pending */}
                     {!hasSocialCrawl || !actionableInsights ? (
-                        <Card className="border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-4 sm:p-5">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                <div className="space-y-1">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 rounded-xl bg-card border border-border/60 shadow-sm">
+                            <div className="flex items-center gap-3">
+                                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                                <div className="space-y-0.5">
                                     <div className="flex items-center gap-2">
-                                        <Badge variant="outline" className="text-sm font-semibold border-primary/30 text-primary">
-                                            Live Theatrical Day · {selectedDate}
-                                        </Badge>
-                                        <span className="text-sm text-muted-foreground font-mono">
-                                            {activeShowtimeMovies.length} movies screening across cinemas
+                                        <span className="text-sm font-bold text-foreground">
+                                            Theatrical Slate Active ({activeShowtimeMovies.length} Titles)
                                         </span>
+                                        <Badge variant="outline" className="text-sm font-medium border-emerald-500/30 text-emerald-600 dark:text-emerald-400 py-0 px-1.5 h-5">
+                                            Showtimes Synced
+                                        </Badge>
                                     </div>
-                                    <h3 className="text-base font-bold text-foreground">
-                                        Active Theatrical Lineup Synced · Social Crawl Scheduled for 11:00 WIB
-                                    </h3>
                                     <p className="text-sm text-muted-foreground">
-                                        Marketing campaign hashtags resolve at 08:00 WIB, followed by TikTok buzz and sentiment briefings at 11:00 WIB.
+                                        Hashtag discovery and TikTok sentiment crawl scheduled for 08:00 &amp; 11:00 WIB.
                                     </p>
                                 </div>
-                                <div className="flex items-center gap-2 shrink-0">
-                                    <div className="px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-center">
-                                        <span className="block text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400">06:00 WIB</span>
-                                        <span className="text-sm text-muted-foreground">Showtimes ✓</span>
-                                    </div>
-                                    <div className="px-3 py-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-center">
-                                        <span className="block text-sm font-mono font-bold text-indigo-600 dark:text-indigo-400">08:00 WIB</span>
-                                        <span className="text-sm text-muted-foreground">Hashtags ⏱</span>
-                                    </div>
-                                    <div className="px-3 py-2 rounded-lg bg-muted/50 border border-border/40 text-center">
-                                        <span className="block text-sm font-mono font-bold text-muted-foreground">11:00 WIB</span>
-                                        <span className="text-sm text-muted-foreground">Crawl ⏱</span>
-                                    </div>
-                                </div>
                             </div>
-                        </Card>
+                            <div className="flex items-center gap-2 shrink-0 text-sm font-mono text-muted-foreground">
+                                <Clock className="w-3.5 h-3.5 text-primary" />
+                                <span>Next Crawl: 11:00 WIB</span>
+                            </div>
+                        </div>
                     ) : (
                         <>
                             {/* 4 Actionable Market Signals */}
@@ -742,22 +730,13 @@ export default function TikTokExplorerPage() {
 
                     {/* Theatrical Lineup & Sentiment Analysis */}
                     <Card className="border-border/60 bg-card overflow-hidden">
-                        <CardHeader className="p-4 pb-2.5 border-b border-border/30">
+                        <CardHeader className="p-3.5 pb-2.5 border-b border-border/30">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <div className="flex items-center gap-2">
                                     <Film className="w-4 h-4 text-primary" />
-                                    <div>
-                                        <CardTitle className="text-sm font-bold text-foreground">
-                                            Theatrical Lineup &amp; Sentiment Analysis
-                                        </CardTitle>
-                                        <p className="text-sm text-muted-foreground">
-                                            {isScheduleLoading ? (
-                                                'Loading active theatrical movies from cinema circuits...'
-                                            ) : (
-                                                `Showing ${showAllMovies ? todayMovieSentimentList.length : Math.min(10, todayMovieSentimentList.length)} of ${todayMovieSentimentList.length} movies playing in cinemas today · Click any row to filter feed`
-                                            )}
-                                        </p>
-                                    </div>
+                                    <CardTitle className="text-sm font-bold text-foreground">
+                                        Theatrical Lineup &amp; Sentiment ({todayMovieSentimentList.length})
+                                    </CardTitle>
                                 </div>
 
                                 <div className="flex items-center gap-2">
@@ -769,9 +748,9 @@ export default function TikTokExplorerPage() {
                                                 : 'bg-muted/40 hover:bg-muted text-muted-foreground border border-border/40'
                                         }`}
                                     >
-                                        All Active Movies
+                                        All Active
                                         <Badge variant="secondary" className="text-sm font-normal px-1.5 py-0 h-5">
-                                            {filteredPosts.length}
+                                            {activeShowtimeMovies.length}
                                         </Badge>
                                     </button>
 
@@ -784,12 +763,12 @@ export default function TikTokExplorerPage() {
                                         >
                                             {showAllMovies ? (
                                                 <>
-                                                    Show Top 10
+                                                    Top 10
                                                     <ChevronUp className="w-3.5 h-3.5" />
                                                 </>
                                             ) : (
                                                 <>
-                                                    Show More (+{todayMovieSentimentList.length - 10})
+                                                    All ({todayMovieSentimentList.length})
                                                     <ChevronDown className="w-3.5 h-3.5" />
                                                 </>
                                             )}
@@ -877,7 +856,7 @@ export default function TikTokExplorerPage() {
                                                                     ) : (
                                                                         <div className="mt-0.5">
                                                                             <Badge variant="outline" className="text-sm font-normal border-dashed text-muted-foreground py-0 px-1.5 h-5">
-                                                                                ⏱ Pending 08:00 WIB discovery
+                                                                                Pending
                                                                             </Badge>
                                                                         </div>
                                                                     )}
@@ -910,8 +889,8 @@ export default function TikTokExplorerPage() {
                                                                     </div>
                                                                 </div>
                                                             ) : (
-                                                                <span className="text-sm text-muted-foreground italic font-normal">
-                                                                    Awaiting 11:00 WIB crawl
+                                                                <span className="text-sm text-muted-foreground font-mono">
+                                                                    —
                                                                 </span>
                                                             )}
                                                         </td>
@@ -919,8 +898,8 @@ export default function TikTokExplorerPage() {
                                                             {movie.hasSocialCrawl ? (
                                                                 movie.topPraise
                                                             ) : (
-                                                                <span className="italic text-muted-foreground">
-                                                                    Scheduled for 11:00 WIB crawl
+                                                                <span className="font-mono text-muted-foreground">
+                                                                    —
                                                                 </span>
                                                             )}
                                                         </td>
