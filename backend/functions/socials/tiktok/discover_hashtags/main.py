@@ -186,21 +186,28 @@ def resolve_hashtags_for_slate(
         # 1. Custom Overrides (Highest priority)
         if title in overrides:
             for tag in overrides[title]:
-                if clean_tag := str(tag or "").replace("#", "").strip().lower():
+                tag_str = str(tag or "").strip()
+                if tag_str.startswith("#"):
+                    tag_str = tag_str[1:]
+                clean_tag = tag_str.lower()
+                if clean_tag:
                     found_tags.add(clean_tag)
             sources.add("manual_override")
 
         # 2. Match live scraped posts
         for post in scraped_posts:
-            caption = (str(post.get("text") or post.get("caption") or "")).lower()
-            author = str(
-                post.get("authorMeta", {}).get("name") or post.get("source_handle") or ""
-            ).strip()
+            caption_val = post.get("text") or post.get("caption")
+            caption = str(caption_val or "").lower()
+
+            author_meta = post.get("authorMeta")
+            author_name = author_meta.get("name") if isinstance(author_meta, dict) else None
+            author_val = author_name or post.get("source_handle")
+            author = str(author_val or "").strip()
 
             if title.lower() in caption or norm_title in caption:
                 found_tags.update(extract_tags_from_post(post))
                 if author:
-                    sources.add(f"@{author.replace('@', '')}")
+                    sources.add(f"@{author.lstrip('@')}")
 
         discovered_slate[title] = {
             "movie_id": movie.get("movie_id", norm_title),
