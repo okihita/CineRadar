@@ -5,7 +5,7 @@ import useSWR from 'swr';
 import Image from 'next/image';
 import {
     Play, Eye, Heart, MessageSquare, ExternalLink,
-    Search, Calendar, ChevronLeft, ChevronRight,
+    Search, Calendar, ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
     Film, ThumbsUp, Activity, Copy, Check, FileCode,
     CalendarX2, ArrowRight,
     Trophy, Zap, AlertTriangle, Sun, Moon, Clock, User
@@ -55,6 +55,7 @@ export default function TikTokExplorerPage() {
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [commentSearch, setCommentSearch] = useState<string>('');
     const [visibleCommentCount, setVisibleCommentCount] = useState<number>(30);
+    const [showAllMovies, setShowAllMovies] = useState<boolean>(false);
     const [copied, setCopied] = useState<boolean>(false);
 
     // Fetch real live scraped dataset
@@ -542,19 +543,42 @@ export default function TikTokExplorerPage() {
                         </Card>
                     </div>
 
-                    {/* Active Movies Playing Today Filter Pills */}
-                    <div className="space-y-2 bg-muted/20 p-3.5 rounded-xl border border-border/40">
+                    {/* Theatrical Lineup Filter Bar */}
+                    <div className="space-y-2.5 bg-muted/20 p-3.5 rounded-xl border border-border/40">
                         <div className="flex items-center justify-between">
-                            <span className="text-sm font-bold text-foreground flex items-center gap-2">
+                            <div className="flex items-center gap-2">
                                 <Film className="w-4 h-4 text-primary" />
-                                Active Theatrical Movies with Showtimes Today ({activeShowtimeMovies.length || 27} Titles)
-                            </span>
-                            <span className="text-sm text-muted-foreground">
-                                Filter viral feeds by today&apos;s movie
-                            </span>
+                                <span className="text-sm font-bold text-foreground">
+                                    Theatrical Lineup
+                                </span>
+                                <Badge variant="outline" className="text-sm font-medium">
+                                    {activeShowtimeMovies.length || 27} in Cinemas Today
+                                </Badge>
+                            </div>
+
+                            {activeShowtimeMovies.length > 10 && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setShowAllMovies((prev) => !prev)}
+                                    className="text-sm font-semibold text-primary hover:text-primary gap-1 h-7 px-2"
+                                >
+                                    {showAllMovies ? (
+                                        <>
+                                            Show Top 10
+                                            <ChevronUp className="w-3.5 h-3.5" />
+                                        </>
+                                    ) : (
+                                        <>
+                                            Show More (+{activeShowtimeMovies.length - 10})
+                                            <ChevronDown className="w-3.5 h-3.5" />
+                                        </>
+                                    )}
+                                </Button>
+                            )}
                         </div>
 
-                        <div className="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1">
+                        <div className="flex flex-wrap items-center gap-1.5 max-w-full">
                             <button
                                 onClick={() => setSelectedMovieFilter('all')}
                                 className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors flex items-center gap-1.5 shrink-0 ${
@@ -569,16 +593,7 @@ export default function TikTokExplorerPage() {
                                 </Badge>
                             </button>
 
-                            {(activeShowtimeMovies.length > 0 ? activeShowtimeMovies : [
-                                { movie_id: '1', title: 'HARUSNYA HORROR' },
-                                { movie_id: '2', title: 'CEK KHODAM' },
-                                { movie_id: '3', title: 'PERUMAHAN LADDALAND' },
-                                { movie_id: '4', title: 'DAN BANDUNG' },
-                                { movie_id: '5', title: 'SENI MERAYU TUHAN' },
-                                { movie_id: '6', title: 'SAJEN SATU SURO' },
-                                { movie_id: '7', title: 'PAKET SANTET' },
-                                { movie_id: '8', title: 'OPERASI PESTA COPET' },
-                            ]).map((m) => {
+                            {(showAllMovies ? activeShowtimeMovies : activeShowtimeMovies.slice(0, 10)).map((m) => {
                                 const isSelected = selectedMovieFilter.toLowerCase() === m.title.toLowerCase();
                                 return (
                                     <button
