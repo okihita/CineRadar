@@ -983,14 +983,14 @@ export default function TikTokExplorerPage() {
                                             {sourcesData?.excluded_hashtags?.length || 26} Noise Tags Filtered
                                         </Button>
                                     </Link>
-                                    <Link href="/tiktok/chains">
+                                    <Link href="/tiktok/exhibitors">
                                         <Button
                                             variant="outline"
                                             size="sm"
                                             className="gap-1.5 text-sm font-semibold h-7 px-2.5 rounded-lg border-border/60"
                                         >
                                             <Building2 className="w-3.5 h-3.5 text-amber-500" />
-                                            Chain Monitoring
+                                            Exhibitor Archive
                                         </Button>
                                     </Link>
                                     <Link href="/tiktok/explorer/settings">

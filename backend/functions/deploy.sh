@@ -211,6 +211,52 @@ deploy_discover_hashtags() {
     fi
 }
 
+deploy_sync_exhibitors() {
+    echo "🎪 Deploying 3-hourly TikTok exhibitor sync function..."
+    cd socials/tiktok/sync_exhibitors
+    gcloud functions deploy sync-tiktok-exhibitors \
+        --gen2 \
+        --runtime=python314 \
+        --region="$REGION" \
+        --source=. \
+        --entry-point=sync_exhibitors_http \
+        --trigger-http \
+        --allow-unauthenticated \
+        --memory=512MB \
+        --timeout=300s \
+        --set-env-vars="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,LOG_EXECUTION_ID=true" \
+        --project="$PROJECT_ID"
+    cd ../../../
+    
+    # Create 3-Hourly Scheduler
+    echo "⏰ Creating 3-Hourly Exhibitor Sync Scheduler..."
+    SYNC_URL=$(gcloud functions describe sync-tiktok-exhibitors \
+        --gen2 \
+        --region="$REGION" \
+        --project="$PROJECT_ID" \
+        --format='value(serviceConfig.uri)' 2>/dev/null)
+        
+    if [ -z "$SYNC_URL" ]; then
+        echo "   ❌ Error: sync-tiktok-exhibitors URL not found."
+    else
+        gcloud scheduler jobs delete 3hourly-exhibitor-sync \
+            --location="$REGION" \
+            --project="$PROJECT_ID" \
+            --quiet 2>/dev/null || true
+            
+        gcloud scheduler jobs create http 3hourly-exhibitor-sync \
+            --location="$REGION" \
+            --schedule="0 */3 * * *" \
+            --time-zone="Asia/Jakarta" \
+            --uri="$SYNC_URL" \
+            --http-method=POST \
+            --headers="User-Agent=Google-Cloud-Scheduler" \
+            --project="$PROJECT_ID"
+            
+        echo "   ✓ Scheduler: 3-Hourly Exhibitor Sync (0 */3 * * * WIB)"
+    fi
+}
+
 # Main
 case "${1:-all}" in
     pubsub)
@@ -231,6 +277,9 @@ case "${1:-all}" in
     discover_hashtags|hashtags)
         deploy_discover_hashtags
         ;;
+    sync_exhibitors|exhibitors)
+        deploy_sync_exhibitors
+        ;;
     theatrical)
         deploy_pubsub
         deploy_dispatcher
@@ -247,11 +296,12 @@ case "${1:-all}" in
         deploy_scheduler
         deploy_sweeper
         deploy_discover_hashtags
+        deploy_sync_exhibitors
         echo ""
         echo "✅ All components deployed!"
         ;;
     *)
-        echo "Usage: $0 [pubsub|dispatcher|scraper|scheduler|sweeper|discover_hashtags|theatrical|all]"
+        echo "Usage: $0 [pubsub|dispatcher|scraper|scheduler|sweeper|discover_hashtags|sync_exhibitors|theatrical|all]"
         exit 1
         ;;
 esac
