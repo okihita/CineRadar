@@ -168,8 +168,8 @@ deploy_sweeper() {
 }
 
 deploy_discover_hashtags() {
-    echo "🔍 Deploying morning hashtag discovery function..."
-    cd socials/discover_hashtags
+    echo "🔍 Deploying morning TikTok hashtag discovery function..."
+    cd socials/tiktok/discover_hashtags
     gcloud functions deploy discover-tiktok-hashtags \
         --gen2 \
         --runtime=python314 \
@@ -182,7 +182,7 @@ deploy_discover_hashtags() {
         --timeout=300s \
         --set-env-vars="GOOGLE_CLOUD_PROJECT=$PROJECT_ID" \
         --project="$PROJECT_ID"
-    cd ../..
+    cd ../../..
 
     echo "⏰ Creating Daily 08:00 WIB Discovery Scheduler..."
     DISCOVERY_URL=$(gcloud functions describe discover-tiktok-hashtags \
