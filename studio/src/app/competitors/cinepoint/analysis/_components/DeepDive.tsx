@@ -35,7 +35,7 @@ export function DeepDive({ movies, overallAvg, query, setQuery, selectedMovie, s
         <CardTitle className="text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2">
           <Search className="w-4 h-4 text-cyan-500" /> Movie Deep Dive
         </CardTitle>
-        <CardDescription className="text-[9px]">Pick any movie to see its success profile compared against averages</CardDescription>
+        <CardDescription className="text-sm">Pick any movie to see its success profile compared against averages</CardDescription>
       </CardHeader>
       <CardContent className="py-4 space-y-4">
         {/* Search */}
@@ -48,16 +48,16 @@ export function DeepDive({ movies, overallAvg, query, setQuery, selectedMovie, s
         {/* Search results */}
         {query.trim() && !selectedMovie && (
           <div className="border rounded-lg divide-y max-h-60 overflow-auto">
-            {results.length === 0 && <p className="p-3 text-xs text-muted-foreground text-center">No movies found</p>}
+            {results.length === 0 && <p className="p-3 text-sm text-muted-foreground text-center">No movies found</p>}
             {results.map((m) => (
               <button key={m.id} onClick={() => { setSelectedMovie(m); setQuery(m.title); }}
                 className="w-full flex items-center justify-between p-2.5 hover:bg-muted/30 text-left transition-colors">
                 <div>
-                  <p className="text-xs font-bold">{m.title}</p>
-                  <p className="text-[10px] text-muted-foreground">{m.release_year || '—'} · {m.language} · {m.genres.slice(0, 3).join(', ')}</p>
+                  <p className="text-sm font-bold">{m.title}</p>
+                  <p className="text-sm text-muted-foreground">{m.release_year || '—'} · {m.language} · {m.genres.slice(0, 3).join(', ')}</p>
                 </div>
                 {m.total_admission > 0 && (
-                  <span className="text-xs font-mono font-bold" style={{ color: admissionColor(m.total_admission) }}>
+                  <span className="text-sm font-mono font-bold" style={{ color: admissionColor(m.total_admission) }}>
                     {formatAdm(m.total_admission)}
                   </span>
                 )}
@@ -73,18 +73,18 @@ export function DeepDive({ movies, overallAvg, query, setQuery, selectedMovie, s
               <div>
                 <Link href={`/competitors/cinepoint/movies/${profile.movie.id}`} className="text-sm font-black hover:text-primary transition-colors">{profile.movie.title}</Link>
                 <div className="flex flex-wrap items-center gap-2 mt-1">
-                  <span className="text-[10px] text-muted-foreground">{profile.movie.release_year || '—'}</span>
-                  <span className="text-[10px] text-muted-foreground">·</span>
-                  <span className="text-[10px] text-muted-foreground">{profile.movie.language}</span>
-                  <span className="text-[10px] text-muted-foreground">·</span>
-                  <span className="text-[10px] text-muted-foreground">{profile.movie.duration} min</span>
-                  {profile.movie.genres.map((g) => <Badge key={g} variant="outline" className="text-[9px] px-1.5 py-0">{g}</Badge>)}
+                  <span className="text-sm text-muted-foreground">{profile.movie.release_year || '—'}</span>
+                  <span className="text-sm text-muted-foreground">·</span>
+                  <span className="text-sm text-muted-foreground">{profile.movie.language}</span>
+                  <span className="text-sm text-muted-foreground">·</span>
+                  <span className="text-sm text-muted-foreground">{profile.movie.duration} min</span>
+                  {profile.movie.genres.map((g) => <Badge key={g} variant="outline" className="text-sm px-1.5 py-0">{g}</Badge>)}
                 </div>
-                {profile.movie.directors.length > 0 && <p className="text-[10px] text-muted-foreground/60 mt-1">Dir: {profile.movie.directors.slice(0, 3).join(', ')}</p>}
+                {profile.movie.directors.length > 0 && <p className="text-sm text-muted-foreground/60 mt-1">Dir: {profile.movie.directors.slice(0, 3).join(', ')}</p>}
               </div>
               <div className="text-right">
                 <p className="text-lg font-black" style={{ color: TIER_COLORS[profile.tier] }}>{profile.movie.total_admission > 0 ? formatAdm(profile.movie.total_admission) : 'N/A'}</p>
-                <span className={cn('text-[9px] font-bold px-2 py-0.5 rounded-full text-white',
+                <span className={cn('text-sm font-bold px-2 py-0.5 rounded-full text-white',
                   profile.tier === 'mega_hit' || profile.tier === 'hit' ? 'bg-emerald-500' : profile.tier === 'moderate' ? 'bg-amber-500' : 'bg-gray-400')}>
                   {TIER_LABELS[profile.tier]}
                 </span>
@@ -99,9 +99,9 @@ export function DeepDive({ movies, overallAvg, query, setQuery, selectedMovie, s
                 {profile.vsDuration && <ComparisonCard label={`vs ${profile.vsDuration.label} Avg`} movieValue={profile.vsDuration.value} avgValue={profile.vsDuration.avg} />}
                 {profile.movie.score > 0 && (
                   <div className="px-3 py-2 rounded-lg border border-border/30 bg-card">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">Audience Score</p>
+                    <p className="text-sm font-black uppercase tracking-widest text-muted-foreground/50">Audience Score</p>
                     <p className={cn('text-base font-black', profile.movie.score >= 7 ? 'text-emerald-600' : profile.movie.score >= 5 ? 'text-amber-600' : 'text-red-500')}>
-                      {profile.movie.score.toFixed(1)}<span className="text-[10px] text-muted-foreground font-normal">/10</span>
+                      {profile.movie.score.toFixed(1)}<span className="text-sm text-muted-foreground font-normal">/10</span>
                     </p>
                   </div>
                 )}
@@ -111,16 +111,16 @@ export function DeepDive({ movies, overallAvg, query, setQuery, selectedMovie, s
             {/* Genre comparison */}
             {Object.keys(profile.genreAvgs).length > 0 && profile.movie.total_admission > 0 && (
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-2">vs Genre Averages</p>
+                <p className="text-sm font-black uppercase tracking-widest text-muted-foreground/60 mb-2">vs Genre Averages</p>
                 <div className="flex flex-wrap gap-2">
                   {profile.movie.genres.map((g) => {
                     const avg = profile.genreAvgs[g] || 0;
                     const above = profile.movie.total_admission >= avg;
                     return (
-                      <div key={g} className={cn('px-3 py-1.5 rounded-lg border text-xs font-medium',
+                      <div key={g} className={cn('px-3 py-1.5 rounded-lg border text-sm font-medium',
                         above ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-700' : 'border-red-500/30 bg-red-500/5 text-red-600')}>
                         {g}: {above ? '↑' : '↓'} {formatAdm(Math.abs(profile.movie.total_admission - avg))}
-                        <span className="text-[9px] text-muted-foreground ml-1">vs {formatAdm(avg)} avg</span>
+                        <span className="text-sm text-muted-foreground ml-1">vs {formatAdm(avg)} avg</span>
                       </div>
                     );
                   })}
@@ -128,7 +128,7 @@ export function DeepDive({ movies, overallAvg, query, setQuery, selectedMovie, s
               </div>
             )}
 
-            <button onClick={() => { setSelectedMovie(null); setQuery(''); }} className="text-[10px] text-muted-foreground hover:text-primary transition-colors">
+            <button onClick={() => { setSelectedMovie(null); setQuery(''); }} className="text-sm text-muted-foreground hover:text-primary transition-colors">
               ← Clear selection
             </button>
           </div>
@@ -144,12 +144,12 @@ function ComparisonCard({ label, movieValue, avgValue }: { label: string; movieV
   const above = delta >= 0;
   return (
     <div className="px-3 py-2 rounded-lg border border-border/30 bg-card">
-      <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">{label}</p>
+      <p className="text-sm font-black uppercase tracking-widest text-muted-foreground/50">{label}</p>
       <p className={cn('text-base font-black', above ? 'text-emerald-600' : 'text-red-500')}>
         {above ? '+' : ''}{formatAdm(delta)}
-        <span className="text-[10px] text-muted-foreground font-normal ml-1">({above ? '+' : ''}{pctDelta}%)</span>
+        <span className="text-sm text-muted-foreground font-normal ml-1">({above ? '+' : ''}{pctDelta}%)</span>
       </p>
-      <p className="text-[9px] text-muted-foreground/50 font-mono mt-0.5">{formatAdm(movieValue)} vs {formatAdm(avgValue)} avg</p>
+      <p className="text-sm text-muted-foreground/50 font-mono mt-0.5">{formatAdm(movieValue)} vs {formatAdm(avgValue)} avg</p>
     </div>
   );
 }

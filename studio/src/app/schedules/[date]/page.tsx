@@ -94,7 +94,7 @@ export default function SchedulesDatePage({ params }: PageProps) {
                         </div>
                         <div className="flex items-center gap-3">
                             {freshnessLabel && (
-                                <span className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground bg-muted/50 px-2 py-1 rounded-md border border-border/50">
+                                <span className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground bg-muted/50 px-2 py-1 rounded-md border border-border/50">
                                     <Clock className="h-3 w-3" />
                                     Updated {freshnessLabel}
                                 </span>

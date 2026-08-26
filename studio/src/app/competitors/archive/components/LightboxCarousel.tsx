@@ -49,7 +49,7 @@ export function LightboxCarousel({ urls, initialIndex, onClose }: LightboxCarous
 
       {/* ESC hint */}
       <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20">
-        <span className="text-white/30 text-[10px] font-bold uppercase tracking-widest">
+        <span className="text-white/30 text-sm font-bold uppercase tracking-widest">
           Press ESC to close · ← → to navigate
         </span>
       </div>
@@ -57,7 +57,7 @@ export function LightboxCarousel({ urls, initialIndex, onClose }: LightboxCarous
       {/* Image counter */}
       {urls.length > 1 && (
         <div className="absolute top-14 left-1/2 -translate-x-1/2 z-20">
-          <span className="text-white/50 text-[11px] font-mono font-bold">
+          <span className="text-white/50 text-sm font-mono font-bold">
             {index + 1} / {urls.length}
           </span>
         </div>

@@ -18,17 +18,17 @@ interface MovieScheduleListProps {
 function DeltaIndicator({ delta }: { delta: number | null }) {
     if (delta === null) return null;
     if (delta === 0) return (
-        <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground/50 font-mono">
+        <span className="flex items-center gap-0.5 text-sm text-muted-foreground/50 font-mono">
             <Minus className="h-2.5 w-2.5" />0
         </span>
     );
     if (delta > 0) return (
-        <span className="flex items-center gap-0.5 text-[10px] text-emerald-600 font-mono font-bold">
+        <span className="flex items-center gap-0.5 text-sm text-emerald-600 font-mono font-bold">
             <ArrowUp className="h-2.5 w-2.5" />+{delta}
         </span>
     );
     return (
-        <span className="flex items-center gap-0.5 text-[10px] text-red-500 font-mono font-bold">
+        <span className="flex items-center gap-0.5 text-sm text-red-500 font-mono font-bold">
             <ArrowDown className="h-2.5 w-2.5" />{delta}
         </span>
     );
@@ -64,7 +64,7 @@ export function MovieScheduleList({ movies }: MovieScheduleListProps) {
                         >
                             {/* Rank */}
                             <div className="flex items-center justify-center w-6 flex-shrink-0">
-                                <span className="text-xs font-mono font-bold text-muted-foreground/60 tabular-nums">{rank}</span>
+                                <span className="text-sm font-mono font-bold text-muted-foreground/60 tabular-nums">{rank}</span>
                             </div>
 
                             {/* Poster */}
@@ -79,7 +79,7 @@ export function MovieScheduleList({ movies }: MovieScheduleListProps) {
                                         priority={idx < 4}
                                     />
                                 ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">No Img</div>
+                                    <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">No Img</div>
                                 )}
                             </div>
 
@@ -89,11 +89,11 @@ export function MovieScheduleList({ movies }: MovieScheduleListProps) {
                                     <div className="min-w-0">
                                         <h3 className="font-bold text-lg leading-tight truncate pr-2">{movie.title}</h3>
                                         <div className="flex flex-wrap gap-2 mt-1">
-                                            {movie.age_category && <Badge variant="outline" className="text-[10px] h-5">{movie.age_category}</Badge>}
-                                            {movie.is_presale && <Badge className="text-[10px] h-5 bg-amber-500 hover:bg-amber-600">Presale</Badge>}
+                                            {movie.age_category && <Badge variant="outline" className="text-sm h-5">{movie.age_category}</Badge>}
+                                            {movie.is_presale && <Badge className="text-sm h-5 bg-amber-500 hover:bg-amber-600">Presale</Badge>}
                                             {/* Room type badges */}
                                             {roomCategories.map((cat) => (
-                                                <Badge key={cat} variant="secondary" className="text-[9px] h-5 font-mono">
+                                                <Badge key={cat} variant="secondary" className="text-sm h-5 font-mono">
                                                     {cat}
                                                 </Badge>
                                             ))}
@@ -118,7 +118,7 @@ export function MovieScheduleList({ movies }: MovieScheduleListProps) {
                                         </span>
                                     </div>
                                     <div className="flex items-center">
-                                        <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-medium",
+                                        <span className={cn("text-sm px-1.5 py-0.5 rounded font-medium",
                                             movie.showtimeCount > 0 && (movie.availableCount / movie.showtimeCount) > 0.5 ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
                                         )}>
                                             {movie.showtimeCount > 0 ? ((movie.availableCount / movie.showtimeCount) * 100).toFixed(0) : 0}% bookable

@@ -102,7 +102,7 @@ function CinemasPageContent() {
                 <div className="flex flex-col md:flex-row md:items-center gap-6">
                     <div className="hidden xl:flex flex-col shrink-0">
                         <h2 className="text-sm font-black uppercase tracking-tighter leading-none">Cinema Intelligence</h2>
-                        <span className="text-[8px] font-bold uppercase tracking-widest text-muted-foreground mt-1">Registry Control</span>
+                        <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground mt-1">Registry Control</span>
                     </div>
                     <GlobalTheatreSearch 
                         value={store.searchTerm}

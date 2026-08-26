@@ -67,7 +67,7 @@ export function PropertyViewer({ value, depth = 0 }: PropertyViewerProps) {
       <div className="space-y-2 pl-4 border-l-2 border-border">
         {value.map((v, i) => (
           <div key={i} className="text-sm">
-            <span className="text-muted-foreground text-xs mr-2">[{i}]</span>
+            <span className="text-muted-foreground text-sm mr-2">[{i}]</span>
             <PropertyViewer value={v} depth={depth + 1} />
           </div>
         ))}
@@ -86,7 +86,7 @@ export function PropertyViewer({ value, depth = 0 }: PropertyViewerProps) {
           <Badge className="bg-amber-500 font-bold hover:bg-amber-600 shadow-none border-transparent">
             ★ {Number(obj.vote_average).toFixed(1)}
           </Badge>
-          <span className="text-xs text-muted-foreground font-medium">({(obj.vote_count as number) || 0} votes)</span>
+          <span className="text-sm text-muted-foreground font-medium">({(obj.vote_count as number) || 0} votes)</span>
         </div>
       );
     }
@@ -101,13 +101,13 @@ export function PropertyViewer({ value, depth = 0 }: PropertyViewerProps) {
     }
 
     if (depth > 2) {
-      return <pre className="text-xs bg-muted p-2 rounded overflow-auto border border-border">{JSON.stringify(value, null, 2)}</pre>;
+      return <pre className="text-sm bg-muted p-2 rounded overflow-auto border border-border">{JSON.stringify(value, null, 2)}</pre>;
     }
     return (
       <div className="space-y-2 pl-3 border-l-[3px] border-muted">
         {entries.map(([key, val]) => (
           <div key={key}>
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{key}</span>
+            <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{key}</span>
             <div className="mt-0.5"><PropertyViewer value={val} depth={depth + 1} /></div>
           </div>
         ))}

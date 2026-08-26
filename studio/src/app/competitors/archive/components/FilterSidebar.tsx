@@ -129,7 +129,7 @@ export function FilterSidebar({
         <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-primary/5 border border-primary/15">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse flex-shrink-0" />
-            <span className="text-[10px] font-bold text-primary/70 truncate">
+            <span className="text-sm font-bold text-primary/70 truncate">
               Filtered
               {activeSource && <span className="font-normal text-muted-foreground"> · @{activeSource}</span>}
               {activeType && (
@@ -139,7 +139,7 @@ export function FilterSidebar({
           </div>
           <button
             onClick={clearAll}
-            className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground/50 hover:text-foreground flex items-center gap-1 transition-colors flex-shrink-0"
+            className="text-sm font-bold uppercase tracking-wider text-muted-foreground/50 hover:text-foreground flex items-center gap-1 transition-colors flex-shrink-0"
           >
             <X className="w-3 h-3" />
             Clear
@@ -149,7 +149,7 @@ export function FilterSidebar({
 
       {/* Calendar Navigation */}
       <div className="bg-card border border-border/40 rounded-[2rem] p-4 shadow-sm">
-        <h3 className="px-1 mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40 flex items-center justify-between">
+        <h3 className="px-1 mb-3 text-sm font-black uppercase tracking-[0.2em] text-muted-foreground/40 flex items-center justify-between">
           Temporal Navigation
           <span className="text-primary/60 font-mono">{coverageMap.size} Days</span>
         </h3>
@@ -189,7 +189,7 @@ export function FilterSidebar({
 
         {/* Legend */}
         <div className="mt-3 space-y-2 px-1">
-          <div className="flex items-center gap-3 text-[10px] font-bold flex-wrap">
+          <div className="flex items-center gap-3 text-sm font-bold flex-wrap">
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-blue-500" />
               <span className="text-muted-foreground">Showtimes</span>
@@ -213,14 +213,14 @@ export function FilterSidebar({
             <div className="px-3 py-2 rounded-xl bg-orange-500/[0.03] border border-orange-500/15 space-y-2">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-3 h-3 text-orange-500/70 flex-shrink-0" />
-                <p className="text-[10px] font-bold text-orange-600/70 uppercase tracking-wider">
+                <p className="text-sm font-bold text-orange-600/70 uppercase tracking-wider">
                   {otherOnlyDates.length} Non-Data Signal{otherOnlyDates.length > 1 ? 's' : ''}
                 </p>
               </div>
               <div className="space-y-1 pt-1 border-t border-orange-500/10">
                 {otherOnlyDates.slice(0, 3).map((date) => (
                   <div key={date} className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-mono text-muted-foreground/50">
+                    <span className="text-sm font-mono text-muted-foreground/50">
                       {format(parseISO(date), 'EEE, MMM d')}
                       <span className="font-medium text-orange-600/50"> — other only</span>
                     </span>
@@ -228,7 +228,7 @@ export function FilterSidebar({
                       href={buildCinepointVerifyUrl(date)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[9px] tracking-wider text-muted-foreground/25 hover:text-muted-foreground/60 transition-colors flex items-center gap-0.5 flex-shrink-0"
+                      className="text-sm tracking-wider text-muted-foreground/25 hover:text-muted-foreground/60 transition-colors flex items-center gap-0.5 flex-shrink-0"
                     >
                       <ExternalLink className="w-2.5 h-2.5" />
                       check
@@ -242,13 +242,13 @@ export function FilterSidebar({
           {/* Coverage Gaps */}
           {needsAttention > 0 && attentionDates.length > 0 && (
             <div className="px-3 py-2 rounded-xl bg-muted/5 border border-border/30 space-y-2">
-              <p className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-wider">
+              <p className="text-sm font-bold text-muted-foreground/70 uppercase tracking-wider">
                 {needsAttention} Gap{needsAttention > 1 ? 's' : ''} in Coverage
               </p>
               <div className="space-y-1 pt-1 border-t border-border/20">
                 {attentionDates.map((item) => (
                   <div key={item.date} className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-mono text-muted-foreground/50">
+                    <span className="text-sm font-mono text-muted-foreground/50">
                       {format(parseISO(item.date), 'MMM d')}
                       <span className="font-medium"> — no {item.missing}</span>
                     </span>
@@ -256,7 +256,7 @@ export function FilterSidebar({
                       href={buildCinepointVerifyUrl(item.date)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[9px] tracking-wider text-muted-foreground/25 hover:text-muted-foreground/60 transition-colors flex items-center gap-0.5 flex-shrink-0"
+                      className="text-sm tracking-wider text-muted-foreground/25 hover:text-muted-foreground/60 transition-colors flex items-center gap-0.5 flex-shrink-0"
                     >
                       <ExternalLink className="w-2.5 h-2.5" />
                       check
@@ -271,14 +271,14 @@ export function FilterSidebar({
 
       {/* Source Selection */}
       <div className="space-y-3">
-        <h3 className="px-1 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40">
+        <h3 className="px-1 text-sm font-black uppercase tracking-[0.2em] text-muted-foreground/40">
           Data Sources
         </h3>
         <div className="flex flex-wrap lg:flex-col gap-1.5">
           <button
             onClick={() => onSourceChange(null)}
             className={cn(
-              'flex items-center justify-between px-3 py-2 rounded-lg border text-[11px] font-bold transition-all',
+              'flex items-center justify-between px-3 py-2 rounded-lg border text-sm font-bold transition-all',
               !activeSource
                 ? 'bg-primary text-primary-foreground border-primary shadow-sm'
                 : 'bg-muted/5 border-border/30 hover:bg-muted/20 text-muted-foreground',
@@ -294,7 +294,7 @@ export function FilterSidebar({
               key={s.handle}
               onClick={() => onSourceChange(activeSource === s.handle ? null : s.handle)}
               className={cn(
-                'flex items-center justify-between px-3 py-2 rounded-lg border text-[11px] font-bold transition-all group',
+                'flex items-center justify-between px-3 py-2 rounded-lg border text-sm font-bold transition-all group',
                 activeSource === s.handle
                   ? 'bg-primary text-primary-foreground border-primary shadow-sm'
                   : 'bg-muted/5 border-border/30 hover:bg-muted/20 text-muted-foreground',
@@ -302,7 +302,7 @@ export function FilterSidebar({
             >
               <span className="truncate pr-2">@{s.handle}</span>
               <span className={cn(
-                'font-mono text-[10px] px-1.5 py-0.5 rounded-md',
+                'font-mono text-sm px-1.5 py-0.5 rounded-md',
                 activeSource === s.handle ? 'bg-white/20' : 'bg-muted text-muted-foreground/50',
               )}>
                 {s.tweet_count}
@@ -314,14 +314,14 @@ export function FilterSidebar({
 
       {/* Type Filtering */}
       <div className="space-y-3">
-        <h3 className="px-1 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40">
+        <h3 className="px-1 text-sm font-black uppercase tracking-[0.2em] text-muted-foreground/40">
           Tweet Content
         </h3>
         <div className="flex flex-wrap lg:flex-col gap-1.5">
           <button
             onClick={() => onTypeChange(null)}
             className={cn(
-              'flex items-center gap-2 px-3 py-2 rounded-lg border text-[11px] font-bold transition-all',
+              'flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-bold transition-all',
               !activeType
                 ? 'bg-primary text-primary-foreground border-primary shadow-sm'
                 : 'bg-muted/5 border-border/30 hover:bg-muted/20 text-muted-foreground',
@@ -339,7 +339,7 @@ export function FilterSidebar({
                 key={type}
                 onClick={() => onTypeChange(activeType === type ? null : type)}
                 className={cn(
-                  'flex items-center justify-between px-3 py-2 rounded-lg border text-[11px] font-bold transition-all',
+                  'flex items-center justify-between px-3 py-2 rounded-lg border text-sm font-bold transition-all',
                   activeType === type
                     ? 'bg-primary text-primary-foreground border-primary shadow-sm'
                     : `${cfg.color} hover:opacity-80`,
@@ -350,7 +350,7 @@ export function FilterSidebar({
                   {cfg.label}
                 </span>
                 <span className={cn(
-                  'font-mono text-[10px] px-1.5 py-0.5 rounded-md',
+                  'font-mono text-sm px-1.5 py-0.5 rounded-md',
                   activeType === type ? 'bg-white/20' : 'bg-black/5',
                 )}>
                   {count}

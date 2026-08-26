@@ -18,7 +18,7 @@ export function ForensicShowtimeTable({ showtimes, movieId, date }: ForensicShow
         <div className="overflow-x-auto rounded-xl border border-primary/5 shadow-sm bg-card">
             <table className="w-full text-sm">
                 <thead>
-                    <tr className="bg-muted/30 border-b text-left text-muted-foreground/60 uppercase text-[9px] font-black tracking-widest">
+                    <tr className="bg-muted/30 border-b text-left text-muted-foreground/60 uppercase text-sm font-black tracking-widest">
                         <th className="py-4 px-4 w-24">Time</th>
                         <th className="py-4 px-4">Room</th>
                         <th className="py-4 px-4">Price</th>

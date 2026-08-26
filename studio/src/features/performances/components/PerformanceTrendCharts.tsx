@@ -36,7 +36,7 @@ const DeltaBadge = ({ value }: { value: number | null }) => {
     
     return (
         <span className={cn(
-            "inline-flex items-center gap-0.5 text-[10px] font-bold ml-1.5 px-1 rounded-md",
+            "inline-flex items-center gap-0.5 text-sm font-bold ml-1.5 px-1 rounded-md",
             isPositive ? "text-green-500 bg-green-500/5" : isNeutral ? "text-muted-foreground bg-muted" : "text-red-500 bg-red-500/5"
         )}>
             <Icon className="w-2.5 h-2.5" />
@@ -50,7 +50,7 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean, payload?:
     if (active && payload && payload.length) {
         return (
             <div className="bg-background/95 backdrop-blur-md border border-border/40 rounded-xl shadow-2xl p-4 min-w-[220px] animate-in fade-in zoom-in-95 duration-200">
-                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 border-b border-border/20 pb-2">{label}</p>
+                <p className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-3 border-b border-border/20 pb-2">{label}</p>
                 <div className="space-y-3">
                     {payload.map((entry, index) => {
                         // Extract pre-calculated delta from the original data object
@@ -66,10 +66,10 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean, payload?:
                                             className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                                             style={{ backgroundColor: entry.color }}
                                         />
-                                        <span className="text-[10px] font-bold uppercase tracking-tight text-muted-foreground/80 truncate">{entry.name}</span>
+                                        <span className="text-sm font-bold uppercase tracking-tight text-muted-foreground/80 truncate">{entry.name}</span>
                                     </div>
                                     <div className="flex items-center flex-shrink-0">
-                                        <span className="font-mono text-xs font-black text-foreground">
+                                        <span className="font-mono text-sm font-black text-foreground">
                                             {entry.name.includes('Occupancy')
                                                 ? `${Number(entry.value).toFixed(1)}%`
                                                 : Number(entry.value).toLocaleString()}

@@ -59,13 +59,13 @@ export function DateDetailHeader({ date, confidence, onNavigateDate }: DateDetai
           <div className="flex items-center gap-2">
             <h1 className="text-base font-black uppercase tracking-tighter">CinePoint Benchmark</h1>
             {confidence && (
-              <Badge variant="outline" className={cn('text-[9px] h-5 px-2 gap-1 border font-bold uppercase tracking-wider', confidenceColor(confidence.level))}>
+              <Badge variant="outline" className={cn('text-sm h-5 px-2 gap-1 border font-bold uppercase tracking-wider', confidenceColor(confidence.level))}>
                 <ConfidenceIcon level={confidence.level} />
                 {confidence.score}/100
               </Badge>
             )}
           </div>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold opacity-60">
+          <p className="text-sm text-muted-foreground uppercase tracking-widest font-bold opacity-60">
             {displayDate}
           </p>
         </div>
@@ -93,7 +93,7 @@ export function DateDetailHeader({ date, confidence, onNavigateDate }: DateDetai
           variant="outline"
           size="sm"
           onClick={() => router.push(`/competitors/${today}`)}
-          className="h-8 gap-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl border-border/60 hover:bg-muted transition-all"
+          className="h-8 gap-2 px-4 text-sm font-black uppercase tracking-wider rounded-xl border-border/60 hover:bg-muted transition-all"
         >
           Today
         </Button>
@@ -101,7 +101,7 @@ export function DateDetailHeader({ date, confidence, onNavigateDate }: DateDetai
           <Button
             variant="outline"
             size="sm"
-            className="h-8 gap-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl border-border/60 hover:bg-muted transition-all"
+            className="h-8 gap-2 px-4 text-sm font-black uppercase tracking-wider rounded-xl border-border/60 hover:bg-muted transition-all"
           >
             <Archive className="w-3.5 h-3.5" />
             Archive

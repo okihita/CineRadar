@@ -116,7 +116,7 @@ export function HistoryGrid({ movieId, history }: HistoryGridProps) {
                                         </span>
                                     </div>
                                     <CardContent className="p-2 flex-1 flex items-center justify-center">
-                                        <span className="text-xs text-muted-foreground font-medium">No data</span>
+                                        <span className="text-sm text-muted-foreground font-medium">No data</span>
                                     </CardContent>
                                 </Card>
                             );
@@ -134,20 +134,20 @@ export function HistoryGrid({ movieId, history }: HistoryGridProps) {
                                     </div>
 
                                     <CardContent className="px-2 py-1.5 flex flex-col justify-between flex-1 gap-1">
-                                        <p className="text-[10px] text-muted-foreground font-medium leading-tight">
+                                        <p className="text-sm text-muted-foreground font-medium leading-tight">
                                             {dayData.cities?.length || 0} Cities • {dayData.total_showtimes} Shows
                                         </p>
 
                                         <div className="grid grid-cols-2 gap-1 mt-auto">
                                             <div className="bg-muted/50 p-1.5 rounded flex flex-col items-center justify-center">
-                                                <p className="text-[9px] font-semibold text-muted-foreground uppercase leading-none mb-0.5">Occ</p>
-                                                <p className={cn("font-mono text-xs font-bold leading-none", getOccupancyColor(dayData.avg_occupancy_pct))}>
+                                                <p className="text-sm font-semibold text-muted-foreground uppercase leading-none mb-0.5">Occ</p>
+                                                <p className={cn("font-mono text-sm font-bold leading-none", getOccupancyColor(dayData.avg_occupancy_pct))}>
                                                     {formatOccupancy(dayData.avg_occupancy_pct)}%
                                                 </p>
                                             </div>
                                             <div className="bg-muted/50 p-1.5 rounded flex flex-col items-center justify-center">
-                                                <p className="text-[9px] font-semibold text-muted-foreground uppercase leading-none mb-0.5">Sold</p>
-                                                <p className="font-mono text-xs font-bold leading-none">
+                                                <p className="text-sm font-semibold text-muted-foreground uppercase leading-none mb-0.5">Sold</p>
+                                                <p className="font-mono text-sm font-bold leading-none">
                                                     {formatCompactNumber(dayData.total_sold)}
                                                 </p>
                                             </div>

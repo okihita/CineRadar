@@ -102,11 +102,11 @@ export function TheatreTable({
               <TableHead className="w-[30%]">
                 <button
                   onClick={onToggleNameSort}
-                  className="flex items-center gap-1 hover:text-primary transition-colors font-bold uppercase tracking-wider text-[10px]"
+                  className="flex items-center gap-1 hover:text-primary transition-colors font-bold uppercase tracking-wider text-sm"
                 >
                   <Building2 className="w-3 h-3" />
                   Theatre Name
-                  <span className="text-[8px] opacity-50 ml-1">
+                  <span className="text-sm opacity-50 ml-1">
                     {sortByName === 'asc' ? '↑' : '↓'}
                   </span>
                 </button>
@@ -114,29 +114,29 @@ export function TheatreTable({
               <TableHead className="w-[20%]">
                 <button
                   onClick={onToggleCitySort}
-                  className="flex items-center gap-1 hover:text-primary transition-colors font-bold uppercase tracking-wider text-[10px]"
+                  className="flex items-center gap-1 hover:text-primary transition-colors font-bold uppercase tracking-wider text-sm"
                 >
                   <MapPin className="w-3 h-3" />
                   Location
-                  <span className="text-[8px] opacity-50 ml-1">
+                  <span className="text-sm opacity-50 ml-1">
                     {sortByCity === 'asc' ? '↑' : '↓'}
                   </span>
                 </button>
               </TableHead>
-              <TableHead className="w-[15%] font-bold uppercase tracking-wider text-[10px]">Merchant</TableHead>
+              <TableHead className="w-[15%] font-bold uppercase tracking-wider text-sm">Merchant</TableHead>
               <TableHead className="w-[15%]">
                 <button
                   onClick={onToggleCapacitySort}
-                  className="flex items-center gap-1 hover:text-primary transition-colors font-bold uppercase tracking-wider text-[10px]"
+                  className="flex items-center gap-1 hover:text-primary transition-colors font-bold uppercase tracking-wider text-sm"
                 >
                   <Users className="w-3 h-3" />
                   Capacity
-                  <span className="text-[8px] opacity-50 ml-1">
+                  <span className="text-sm opacity-50 ml-1">
                     {sortByCapacity === 'asc' ? '↑' : '↓'}
                   </span>
                 </button>
               </TableHead>
-              <TableHead className="text-right font-bold uppercase tracking-wider text-[10px]">Actions</TableHead>
+              <TableHead className="text-right font-bold uppercase tracking-wider text-sm">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -159,11 +159,11 @@ export function TheatreTable({
                         {highlightText(theatre.name, searchTerm)}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[10px] text-muted-foreground font-mono">
+                        <span className="text-sm text-muted-foreground font-mono">
                           {theatre.theatre_id}
                         </span>
                         {theatre.version && (
-                          <Badge variant="outline" className="text-[8px] h-4 px-1 bg-primary/5 text-primary border-primary/20">
+                          <Badge variant="outline" className="text-sm h-4 px-1 bg-primary/5 text-primary border-primary/20">
                             V{theatre.version}
                           </Badge>
                         )}
@@ -172,7 +172,7 @@ export function TheatreTable({
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <span className="text-xs font-medium">{highlightText(theatre.city, searchTerm)}</span>
+                      <span className="text-sm font-medium">{highlightText(theatre.city, searchTerm)}</span>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -184,12 +184,12 @@ export function TheatreTable({
                         <span className="text-sm font-bold font-mono">
                           {theatre.total_capacity?.toLocaleString()}
                         </span>
-                        <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-tighter">
+                        <span className="text-sm text-muted-foreground uppercase font-bold tracking-tighter">
                           Across {theatre.studio_count || 0} Studios
                         </span>
                       </div>
                     ) : (
-                      <Badge variant="secondary" className="text-[9px] font-bold uppercase opacity-40 animate-pulse">
+                      <Badge variant="secondary" className="text-sm font-bold uppercase opacity-40 animate-pulse">
                         Indexing...
                       </Badge>
                     )}
@@ -200,7 +200,7 @@ export function TheatreTable({
                         href={`/cinemas/${theatre.theatre_id}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-2 h-8 px-3 text-[10px] font-bold uppercase tracking-tight border border-primary/20 bg-background hover:bg-primary/5 text-muted-foreground hover:text-primary transition-all shadow-sm rounded-md no-underline"
+                        className="inline-flex items-center justify-center gap-2 h-8 px-3 text-sm font-bold uppercase tracking-tight border border-primary/20 bg-background hover:bg-primary/5 text-muted-foreground hover:text-primary transition-all shadow-sm rounded-md no-underline"
                       >
                         Intelligence
                         <ExternalLink className="w-3 h-3 opacity-50" />
@@ -216,7 +216,7 @@ export function TheatreTable({
 
       {/* Pagination */}
       <div className="flex items-center justify-between px-2 py-4">
-        <div className="text-xs text-muted-foreground">
+        <div className="text-sm text-muted-foreground">
           Showing <span className="font-bold text-foreground">{startIndex + 1}</span> to{' '}
           <span className="font-bold text-foreground">
             {Math.min(startIndex + ITEMS_PER_PAGE, totalCount)}
@@ -247,7 +247,7 @@ export function TheatreTable({
                   variant={currentPage === pageNum ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => onPageChange(pageNum)}
-                  className="h-8 w-8 p-0 text-xs"
+                  className="h-8 w-8 p-0 text-sm"
                 >
                   {pageNum}
                 </Button>

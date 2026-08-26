@@ -7,6 +7,7 @@ import {
     Database, Calendar, Clapperboard, Sun, Moon, Monitor,
     LogOut, Users as UsersIcon, Share2, ArrowRightLeft,
     TrendingUp, Rss, Settings, Shield, BookOpen, Radio, Swords, Library, BarChart3, Target, Star,
+    Play, Wand2, Sparkles, Video,
     type LucideIcon,
 } from 'lucide-react';
 import { useState, useCallback } from 'react';
@@ -45,6 +46,34 @@ const standaloneItems: MenuItem[] = [
 ];
 
 const menuGroups: MenuGroup[] = [
+    {
+        id: 'tiktok',
+        label: 'TikTok Crawling',
+        icon: Video,
+        items: [
+            {
+                title: 'TikTok Radar',
+                description: 'Daily buzz & sentiment',
+                href: '/tiktok/explorer',
+                icon: Play,
+                adminOnly: false,
+            },
+            {
+                title: 'Hashtag Extractor',
+                description: 'Auto-detect campaign tags',
+                href: '/tiktok/extractor',
+                icon: Wand2,
+                adminOnly: false,
+            },
+            {
+                title: 'Pipeline Workflow',
+                description: 'Daily processing & AI graph',
+                href: '/tiktok/workflow',
+                icon: Sparkles,
+                adminOnly: false,
+            },
+        ],
+    },
     {
         id: 'social',
         label: 'Social Intelligence',
@@ -191,6 +220,22 @@ const adminGroup: MenuGroup = {
 // ─── Helpers ─────────────────────────────────────────────
 
 const COLLAPSED_KEY = 'cineradar-nav-collapsed-groups';
+const SIDEBAR_COLLAPSED_KEY = 'cineradar-sidebar-collapsed';
+
+function loadSidebarCollapsed(): boolean {
+    if (typeof window === 'undefined') return false;
+    try {
+        const raw = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+        if (raw !== null) return JSON.parse(raw);
+    } catch { /* ignore */ }
+    return false;
+}
+
+function saveSidebarCollapsed(collapsed: boolean) {
+    try {
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, JSON.stringify(collapsed));
+    } catch { /* ignore */ }
+}
 
 function loadCollapsedGroups(): Set<string> {
     if (typeof window === 'undefined') return new Set();
@@ -240,10 +285,25 @@ function isGroupActive(group: MenuGroup, pathname: string): boolean {
 
 export function Sidebar() {
     const pathname = usePathname();
-    const [collapsed, setCollapsed] = useState(false);
     const { darkMode, toggleDarkMode, followsSystem, resetToSystem } = useDarkModeContext();
     const { data: session } = useSession();
     const isAdmin = (session as unknown as { user?: { role?: string } })?.user?.role === 'admin';
+
+    const [collapsed, setCollapsed] = useState<boolean>(() => {
+        if (typeof window === 'undefined') return false;
+        return document.documentElement.classList.contains('sidebar-collapsed') || loadSidebarCollapsed();
+    });
+
+    const toggleCollapsed = useCallback(() => {
+        setCollapsed(prev => {
+            const next = !prev;
+            saveSidebarCollapsed(next);
+            if (typeof document !== 'undefined') {
+                document.documentElement.classList.toggle('sidebar-collapsed', next);
+            }
+            return next;
+        });
+    }, []);
 
     const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => {
         if (typeof window === 'undefined') return new Set();
@@ -275,6 +335,7 @@ export function Sidebar() {
 
     return (
         <aside
+            data-sidebar="cineradar-sidebar"
             className={cn(
                 'h-screen bg-muted/30 border-r flex flex-col transition-all duration-300',
                 collapsed ? 'w-16' : 'w-64'
@@ -292,7 +353,7 @@ export function Sidebar() {
                 {!collapsed && (
                     <div className="overflow-hidden">
                         <h1 className="text-lg font-bold tracking-tight">CineRadar</h1>
-                        <p className="text-xs text-muted-foreground">Intelligence Dashboard</p>
+                        <p className="text-sm text-muted-foreground">Intelligence Dashboard</p>
                     </div>
                 )}
             </div>
@@ -320,7 +381,7 @@ export function Sidebar() {
                                 <div className="overflow-hidden">
                                     <p className="text-sm font-medium">{item.title}</p>
                                     <p className={cn(
-                                        'text-xs',
+                                        'text-sm',
                                         isActive ? 'text-primary-foreground/70' : 'text-muted-foreground'
                                     )}>
                                         {item.description}
@@ -368,15 +429,15 @@ export function Sidebar() {
                             <Image src={session.user.image} alt="" width={24} height={24} className="rounded-full flex-shrink-0" />
                         ) : (
                             <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                                <span className="text-[10px] font-bold text-primary-foreground">
+                                <span className="text-sm font-bold text-primary-foreground">
                                     {session.user.name?.[0]?.toUpperCase() || 'U'}
                                 </span>
                             </div>
                         )}
                         {!collapsed && (
                             <div className="flex-1 min-w-0">
-                                <p className="text-xs font-medium truncate">{session.user.name}</p>
-                                <p className="text-[10px] text-muted-foreground truncate">{session.user.email}</p>
+                                <p className="text-sm font-medium truncate">{session.user.name}</p>
+                                <p className="text-sm text-muted-foreground truncate">{session.user.email}</p>
                             </div>
                         )}
                         {!collapsed && (
@@ -403,7 +464,7 @@ export function Sidebar() {
                         <Moon className="w-5 h-5" />
                     )}
                     {!collapsed && (
-                        <span className="text-xs">
+                        <span className="text-sm">
                             {darkMode ? 'Light Mode' : 'Dark Mode'}
                         </span>
                     )}
@@ -418,14 +479,14 @@ export function Sidebar() {
                     >
                         <Monitor className="w-5 h-5" />
                         {!collapsed && (
-                            <span className="text-xs">Auto</span>
+                            <span className="text-sm">Auto</span>
                         )}
                     </button>
                 )}
 
                 {/* Collapse Button */}
                 <button
-                    onClick={() => setCollapsed(!collapsed)}
+                    onClick={toggleCollapsed}
                     className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                 >
                     {collapsed ? (
@@ -433,7 +494,7 @@ export function Sidebar() {
                     ) : (
                         <>
                             <ChevronLeft className="w-4 h-4" />
-                            <span className="text-xs">Collapse</span>
+                            <span className="text-sm">Collapse</span>
                         </>
                     )}
                 </button>
@@ -468,7 +529,7 @@ function MenuSection({
             <button
                 onClick={onToggle}
                 className={cn(
-                    'w-full flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors',
+                    'w-full flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-left',
                     'hover:bg-muted/50 text-muted-foreground/50 hover:text-muted-foreground/70',
                     groupActive && 'text-muted-foreground/70',
                 )}
@@ -484,7 +545,7 @@ function MenuSection({
                                 !expanded && '-rotate-90'
                             )}
                         />
-                        <span className="text-[11px] font-semibold uppercase tracking-wider">
+                        <span className="text-sm font-semibold uppercase tracking-wider text-left truncate">
                             {group.label}
                         </span>
                     </>

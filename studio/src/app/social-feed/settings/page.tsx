@@ -133,7 +133,7 @@ function SourceCard({
                     <Image src={source.avatar_url} alt="" width={36} height={36} className="rounded-lg flex-shrink-0" unoptimized />
                 ) : (
                     <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                        <span className="text-[10px] font-bold text-muted-foreground">{source.display_name[0]}</span>
+                        <span className="text-sm font-bold text-muted-foreground">{source.display_name[0]}</span>
                     </div>
                 )}
 
@@ -143,7 +143,7 @@ function SourceCard({
                         <span className="font-medium text-sm truncate">{source.display_name}</span>
                         <YouTubeIcon className="w-3 h-3 text-red-500 flex-shrink-0" />
                     </div>
-                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                         <span className="font-mono truncate">{source.handle}</span>
                         {source.subscriber_count > 0 && (
                             <>
@@ -169,7 +169,7 @@ function SourceCard({
                         )}
                         title={source.active ? 'Deactivate' : 'Activate'}
                     >
-                        {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <span className="text-[10px] font-bold">{source.active ? 'ON' : 'OFF'}</span>}
+                        {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <span className="text-sm font-bold">{source.active ? 'ON' : 'OFF'}</span>}
                     </button>
                     <button
                         onClick={() => onDelete(source)}
@@ -188,7 +188,7 @@ function SourceCard({
                         value={editNotes}
                         onChange={e => setEditNotes(e.target.value)}
                         placeholder="Notes..."
-                        className="h-6 text-[11px]"
+                        className="h-6 text-sm"
                         autoFocus
                         onKeyDown={e => { if (e.key === 'Enter') onSaveNotes(source.id); if (e.key === 'Escape') setEditId(null); }}
                     />
@@ -197,7 +197,7 @@ function SourceCard({
                 </div>
             ) : source.notes ? (
                 <p
-                    className="text-[10px] text-muted-foreground/40 mt-1 ml-5 truncate cursor-pointer hover:text-muted-foreground/70"
+                    className="text-sm text-muted-foreground/40 mt-1 ml-5 truncate cursor-pointer hover:text-muted-foreground/70"
                     onClick={() => onEditNotes(source)}
                 >
                     {source.notes}
@@ -249,8 +249,8 @@ function KanbanColumn({
         >
             {/* Column header */}
             <div className="px-3 pt-3 pb-2">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-foreground/80">{column.label}</h3>
-                <p className="text-[10px] text-muted-foreground/50 mt-0.5">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-foreground/80">{column.label}</h3>
+                <p className="text-sm text-muted-foreground/50 mt-0.5">
                     {sources.length} source{sources.length !== 1 ? 's' : ''}
                     {inactiveInCol > 0 && <span className="text-muted-foreground/30"> · {inactiveInCol} inactive</span>}
                 </p>
@@ -260,7 +260,7 @@ function KanbanColumn({
             <div className="flex-1 px-2 pb-2 overflow-y-auto min-h-[120px]">
                 {sources.length === 0 && (
                     <div className="flex items-center justify-center h-[120px] border border-dashed border-border/30 rounded-lg">
-                        <p className="text-[10px] text-muted-foreground/30">Drop sources here</p>
+                        <p className="text-sm text-muted-foreground/30">Drop sources here</p>
                     </div>
                 )}
                 {sources.map((source, i) => {
@@ -589,7 +589,7 @@ export default function SourceSettingsPage() {
                 <div className="flex flex-col items-center justify-center py-20 gap-4 border border-dashed rounded-xl bg-muted/5">
                     <ShieldAlert className="w-12 h-12 text-muted-foreground/20" />
                     <p className="text-muted-foreground font-medium">Admin access required</p>
-                    <p className="text-xs text-muted-foreground/60">Only administrators can manage sources.</p>
+                    <p className="text-sm text-muted-foreground/60">Only administrators can manage sources.</p>
                 </div>
             </div>
         );
@@ -655,7 +655,7 @@ export default function SourceSettingsPage() {
 
                         {/* Step 1: Lookup */}
                         <div className="space-y-3">
-                            <label className="text-xs font-medium text-muted-foreground">YouTube Channel</label>
+                            <label className="text-sm font-medium text-muted-foreground">YouTube Channel</label>
                             <div className="flex gap-2">
                                 <Input
                                     value={lookupId}
@@ -669,7 +669,7 @@ export default function SourceSettingsPage() {
                                     Look Up
                                 </Button>
                             </div>
-                            {lookupError && <p className="text-xs text-red-500">{lookupError}</p>}
+                            {lookupError && <p className="text-sm text-red-500">{lookupError}</p>}
                         </div>
 
                         {/* Step 2: Preview + confirm */}
@@ -683,8 +683,8 @@ export default function SourceSettingsPage() {
                                     )}
                                     <div className="flex-1 min-w-0">
                                         <p className="font-medium text-sm truncate">{lookupResult.display_name}</p>
-                                        <p className="text-xs text-muted-foreground font-mono">{lookupResult.handle}</p>
-                                        <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-0.5">
+                                        <p className="text-sm text-muted-foreground font-mono">{lookupResult.handle}</p>
+                                        <div className="flex items-center gap-3 text-sm text-muted-foreground mt-0.5">
                                             <span>{formatCompactNumber(lookupResult.subscriber_count)} subs</span>
                                             <span>{lookupResult.video_count} videos</span>
                                         </div>
@@ -693,7 +693,7 @@ export default function SourceSettingsPage() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-xs font-medium text-muted-foreground">Category</label>
+                                    <label className="text-sm font-medium text-muted-foreground">Category</label>
                                     <select
                                         value={newCategory}
                                         onChange={e => setNewCategory(e.target.value as SourceCategory)}

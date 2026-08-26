@@ -72,7 +72,7 @@ export function ForensicHealthSheet({ diagnostic }: ForensicHealthSheetProps) {
                     className="h-7 px-2 gap-1.5 text-primary hover:bg-primary/10 transition-all border border-transparent hover:border-primary/20"
                 >
                     <ShieldCheck className="w-3.5 h-3.5" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Audit Health</span>
+                    <span className="text-sm font-black uppercase tracking-widest">Audit Health</span>
                     {mismatches > 0 && (
                         <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
                     )}
@@ -89,7 +89,7 @@ export function ForensicHealthSheet({ diagnostic }: ForensicHealthSheetProps) {
                             </div>
                             <div>
                                 <DialogTitle className="text-3xl font-black uppercase tracking-tighter leading-none">Forensic Sync Audit</DialogTitle>
-                                <DialogDescription className="text-xs font-bold uppercase tracking-widest opacity-60 mt-1">
+                                <DialogDescription className="text-sm font-bold uppercase tracking-widest opacity-60 mt-1">
                                     Full Market Registry • Firestore V2 Verification
                                 </DialogDescription>
                             </div>
@@ -104,7 +104,7 @@ export function ForensicHealthSheet({ diagnostic }: ForensicHealthSheetProps) {
 
                             <div className="flex items-center gap-4">
                                 <label className="flex items-center gap-2 cursor-pointer group bg-muted/20 px-3 py-2 rounded-xl border border-border/40 hover:border-primary/30 transition-all">
-                                    <span className="text-[10px] font-black uppercase text-muted-foreground group-hover:text-primary transition-colors">Scheduled Only</span>
+                                    <span className="text-sm font-black uppercase text-muted-foreground group-hover:text-primary transition-colors">Scheduled Only</span>
                                     <input 
                                         type="checkbox" 
                                         checked={showScheduledOnly} 
@@ -117,7 +117,7 @@ export function ForensicHealthSheet({ diagnostic }: ForensicHealthSheetProps) {
                                     <input 
                                         type="text"
                                         placeholder="Search Registry..."
-                                        className="w-full h-11 pl-11 pr-4 bg-muted/20 border border-border/50 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold"
+                                        className="w-full h-11 pl-11 pr-4 bg-muted/20 border border-border/50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold"
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
                                     />
@@ -127,7 +127,7 @@ export function ForensicHealthSheet({ diagnostic }: ForensicHealthSheetProps) {
                     </DialogHeader>
 
                     {/* TABLE HEADERS */}
-                    <div className="grid grid-cols-[40px_1.5fr_210px_160px_220px_100px] gap-4 px-6 mb-4 uppercase text-[9px] font-black tracking-[0.2em] text-muted-foreground/40 border-b border-border/20 pb-2">
+                    <div className="grid grid-cols-[40px_1.5fr_210px_160px_220px_100px] gap-4 px-6 mb-4 uppercase text-sm font-black tracking-[0.2em] text-muted-foreground/40 border-b border-border/20 pb-2">
                         <div>#</div>
                         <div>Movie Identity</div>
                         <div className="text-center">Pipeline Status</div>
@@ -152,21 +152,21 @@ export function ForensicHealthSheet({ diagnostic }: ForensicHealthSheetProps) {
                                     )}
                                 >
                                     {/* 1. Index */}
-                                    <span className="text-[10px] font-black font-mono text-muted-foreground/20">{idx + 1}.</span>
+                                    <span className="text-sm font-black font-mono text-muted-foreground/20">{idx + 1}.</span>
 
                                     {/* 2. Identity Block */}
                                     <div className="min-w-0">
                                         <div className="flex items-center gap-2 mb-0.5">
-                                            <h4 className="text-xs font-black uppercase truncate tracking-tight group-hover:text-primary transition-colors leading-tight" title={item.title}>
+                                            <h4 className="text-sm font-black uppercase truncate tracking-tight group-hover:text-primary transition-colors leading-tight" title={item.title}>
                                                 {item.title}
                                             </h4>
                                             {item.has_schedule && (
-                                                <div className="flex-shrink-0 px-1.5 py-0.5 bg-blue-500/10 text-blue-600 rounded text-[7px] font-black uppercase tracking-widest border border-blue-500/10">
+                                                <div className="flex-shrink-0 px-1.5 py-0.5 bg-blue-500/10 text-blue-600 rounded text-sm font-black uppercase tracking-widest border border-blue-500/10">
                                                     Live
                                                 </div>
                                             )}
                                         </div>
-                                        <p className="text-[9px] font-mono font-bold text-muted-foreground/30 tracking-tighter">{item.id}</p>
+                                        <p className="text-sm font-mono font-bold text-muted-foreground/30 tracking-tighter">{item.id}</p>
                                     </div>
 
                                     {/* 3. Pipeline Status */}
@@ -181,7 +181,7 @@ export function ForensicHealthSheet({ diagnostic }: ForensicHealthSheetProps) {
                                         {isScheduledButMissing && (
                                             <div className="flex items-center gap-1.5 text-amber-600 opacity-80">
                                                 <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
-                                                <span className="text-[8px] font-black uppercase leading-none tracking-tighter text-center">
+                                                <span className="text-sm font-black uppercase leading-none tracking-tighter text-center">
                                                     {!item.has_metadata ? "Wait: Scraper" : "Wait: Aggregator"}
                                                 </span>
                                             </div>
@@ -190,7 +190,7 @@ export function ForensicHealthSheet({ diagnostic }: ForensicHealthSheetProps) {
 
                                     {/* 5. Internal Links */}
                                     <div className="flex items-center gap-1 justify-center">
-                                        <Button variant="ghost" size="sm" className="h-7 gap-1 text-[9px] font-black uppercase px-2 hover:bg-muted hover:text-blue-600 border border-transparent hover:border-border/50" asChild title="Daily Schedules">
+                                        <Button variant="ghost" size="sm" className="h-7 gap-1 text-sm font-black uppercase px-2 hover:bg-muted hover:text-blue-600 border border-transparent hover:border-border/50" asChild title="Daily Schedules">
                                             <Link href={`/schedules/${today}`}>
                                                 <Calendar className="w-3 h-3" />
                                                 Sched
@@ -200,7 +200,7 @@ export function ForensicHealthSheet({ diagnostic }: ForensicHealthSheetProps) {
                                             variant="ghost" 
                                             size="sm" 
                                             className={cn(
-                                                "h-7 gap-1 text-[9px] font-black uppercase px-2 hover:bg-muted border border-transparent hover:border-border/50",
+                                                "h-7 gap-1 text-sm font-black uppercase px-2 hover:bg-muted border border-transparent hover:border-border/50",
                                                 isSynced ? "hover:text-primary" : "opacity-20 pointer-events-none"
                                             )} 
                                             asChild
@@ -247,7 +247,7 @@ export function ForensicHealthSheet({ diagnostic }: ForensicHealthSheetProps) {
 function StatItem({ label, value, color }: { label: string, value: number, color: string }) {
     return (
         <div className="flex flex-col items-center">
-            <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-0.5 whitespace-nowrap">{label}</span>
+            <span className="text-sm font-black text-muted-foreground uppercase tracking-widest mb-0.5 whitespace-nowrap">{label}</span>
             <span className={cn("text-xl font-black font-mono leading-none", color)}>{value}</span>
         </div>
     );
@@ -256,7 +256,7 @@ function StatItem({ label, value, color }: { label: string, value: number, color
 function StatusPillDetailed({ active, label, icon }: { active: boolean, label: string, icon: React.ReactNode }) {
     return (
         <div className={cn(
-            "flex flex-col items-center justify-center w-14 h-8 rounded-lg border text-[7px] font-black uppercase tracking-tighter transition-all",
+            "flex flex-col items-center justify-center w-14 h-8 rounded-lg border text-sm font-black uppercase tracking-tighter transition-all",
             active ? "bg-green-500/10 border-green-500/20 text-green-600" : "bg-muted/10 border-border/30 text-muted-foreground/30 grayscale"
         )}>
             <div className="flex items-center gap-1 opacity-70">

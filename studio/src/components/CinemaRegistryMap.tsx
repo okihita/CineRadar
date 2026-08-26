@@ -234,11 +234,11 @@ function MapOverlay({ lastUpdated }: { lastUpdated?: string | null }) {
 
     return (
         <div className="absolute top-2 left-2 flex flex-col gap-1">
-            <div className="bg-background/90 backdrop-blur-sm px-2 py-1 rounded text-xs font-mono text-muted-foreground border border-border/50">
+            <div className="bg-background/90 backdrop-blur-sm px-2 py-1 rounded text-sm font-mono text-muted-foreground border border-border/50">
                 Zoom: {zoom.toFixed(1)}×
             </div>
             {lastUpdated && (
-                <div className="bg-background/90 backdrop-blur-sm px-2 py-1 rounded text-[10px] text-muted-foreground border border-border/50">
+                <div className="bg-background/90 backdrop-blur-sm px-2 py-1 rounded text-sm text-muted-foreground border border-border/50">
                     Updated: {lastUpdated}
                 </div>
             )}
@@ -277,7 +277,7 @@ export function CinemaRegistryMap({
                 <div className="text-center p-6 bg-background/80 backdrop-blur rounded-lg shadow-sm">
                     <div className="text-red-500 font-bold mb-2">Configuration Error</div>
                     <p className="text-sm text-gray-600 mb-2">Google Maps API Key is missing.</p>
-                    <p className="text-xs text-gray-400 font-mono bg-gray-100 p-1.5 rounded">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</p>
+                    <p className="text-sm text-gray-400 font-mono bg-gray-100 p-1.5 rounded">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</p>
                 </div>
             </div>
         );
@@ -321,7 +321,7 @@ export function CinemaRegistryMap({
                                 </div>
 
                                 {/* Location: City + Address inline */}
-                                <p className="text-[11px] text-gray-600 mb-1.5 line-clamp-2">
+                                <p className="text-sm text-gray-600 mb-1.5 line-clamp-2">
                                     {selectedTheatre.city}{selectedTheatre.address ? ` · ${selectedTheatre.address}` : ''}
                                 </p>
 
@@ -329,12 +329,12 @@ export function CinemaRegistryMap({
                                 {selectedTheatre.room_types && selectedTheatre.room_types.length > 0 && (
                                     <div className="flex flex-wrap gap-0.5 mb-1.5">
                                         {selectedTheatre.room_types.slice(0, 5).map(type => (
-                                            <span key={type} className="px-1 py-0.5 text-[9px] bg-gray-100 text-gray-600 rounded">
+                                            <span key={type} className="px-1 py-0.5 text-sm bg-gray-100 text-gray-600 rounded">
                                                 {type}
                                             </span>
                                         ))}
                                         {selectedTheatre.room_types.length > 5 && (
-                                            <span className="px-1 py-0.5 text-[9px] text-gray-400">
+                                            <span className="px-1 py-0.5 text-sm text-gray-400">
                                                 +{selectedTheatre.room_types.length - 5}
                                             </span>
                                         )}
@@ -347,7 +347,7 @@ export function CinemaRegistryMap({
                                         href={`/cinemas/${selectedTheatre.theatre_id}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="flex-[1.5] flex items-center justify-center gap-1 px-2 py-1 text-[11px] font-bold bg-primary text-white rounded hover:bg-primary/90 transition-colors uppercase tracking-tight no-underline"
+                                        className="flex-[1.5] flex items-center justify-center gap-1 px-2 py-1 text-sm font-bold bg-primary text-white rounded hover:bg-primary/90 transition-colors uppercase tracking-tight no-underline"
                                     >
                                         <ExternalLink className="w-3 h-3" />
                                         Intelligence
@@ -358,7 +358,7 @@ export function CinemaRegistryMap({
                                             : `https://www.google.com/maps/dir/?api=1&destination=${selectedTheatre.lat},${selectedTheatre.lng}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="flex-1 flex items-center justify-center gap-1 px-2 py-1 text-[11px] font-medium bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors no-underline"
+                                        className="flex-1 flex items-center justify-center gap-1 px-2 py-1 text-sm font-medium bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors no-underline"
                                     >
                                         <Navigation className="w-3 h-3" />
                                         Directions
@@ -369,7 +369,7 @@ export function CinemaRegistryMap({
                                                 : `https://www.google.com/maps?q=${selectedTheatre.lat},${selectedTheatre.lng}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="flex items-center justify-center px-2 py-1 text-[11px] font-medium bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors no-underline"
+                                        className="flex items-center justify-center px-2 py-1 text-sm font-medium bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors no-underline"
                                         title="Open in Google Maps"
                                     >
                                         <ExternalLink className="w-3 h-3" />

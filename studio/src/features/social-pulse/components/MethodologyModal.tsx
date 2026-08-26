@@ -16,7 +16,7 @@ export function MethodologyModal() {
       <DialogTrigger asChild>
         <button className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl transition-all border border-primary/20 group">
           <Calculator className="w-3.5 h-3.5 group-hover:rotate-12 transition-transform" />
-          <span className="text-[10px] font-black uppercase tracking-wider">How it&apos;s calculated</span>
+          <span className="text-sm font-black uppercase tracking-wider">How it&apos;s calculated</span>
         </button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl bg-background/95 backdrop-blur-xl border-border/40 rounded-[2rem] shadow-2xl">
@@ -38,16 +38,16 @@ export function MethodologyModal() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-4 bg-muted/30 rounded-2xl border border-border/40">
-                <p className="text-[10px] font-black uppercase text-muted-foreground mb-2">Weighting</p>
-                <ul className="space-y-2 text-xs font-medium">
+                <p className="text-sm font-black uppercase text-muted-foreground mb-2">Weighting</p>
+                <ul className="space-y-2 text-sm font-medium">
                   <li className="flex justify-between"><span>Google Trends (RSV)</span> <span className="text-primary font-bold">60%</span></li>
                   <li className="flex justify-between"><span>YouTube View Velocity</span> <span className="text-primary font-bold">30%</span></li>
                   <li className="flex justify-between"><span>TMDB Popularity</span> <span className="text-primary font-bold">10%</span></li>
                 </ul>
               </div>
               <div className="p-4 bg-muted/30 rounded-2xl border border-border/40">
-                <p className="text-[10px] font-black uppercase text-muted-foreground mb-2">Definition</p>
-                <p className="text-[11px] leading-relaxed text-muted-foreground">
+                <p className="text-sm font-black uppercase text-muted-foreground mb-2">Definition</p>
+                <p className="text-sm leading-relaxed text-muted-foreground">
                   A normalized index representing the &quot;Top of Mind&quot; awareness for a title. 
                   High velocity indicates a successful viral campaign or organic breakout.
                 </p>
@@ -62,11 +62,11 @@ export function MethodologyModal() {
               <h4>Perf Score (Sales Gravity)</h4>
             </div>
             <div className="p-4 bg-muted/30 rounded-2xl border border-border/40">
-              <p className="text-[10px] font-black uppercase text-muted-foreground mb-2">The Formula</p>
-              <div className="bg-background/50 p-3 rounded-xl border border-border/20 font-mono text-xs text-center">
+              <p className="text-sm font-black uppercase text-muted-foreground mb-2">The Formula</p>
+              <div className="bg-background/50 p-3 rounded-xl border border-border/20 font-mono text-sm text-center">
                 Score = (Current Movie Sales / Max Daily Sales) * 100
               </div>
-              <p className="text-[11px] leading-relaxed text-muted-foreground mt-3 italic">
+              <p className="text-sm leading-relaxed text-muted-foreground mt-3 italic">
                 Normalization allows us to compare &quot;Buzz&quot; against &quot;Sales&quot; on the same scale, regardless of whether it is a weekday or a block-buster weekend.
               </p>
             </div>
@@ -78,10 +78,10 @@ export function MethodologyModal() {
               <Info className="w-4 h-4" />
               <h4>The Divergence Delta</h4>
             </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
+            <p className="text-sm text-muted-foreground leading-relaxed">
               Divergence identifies the gap between **what people are talking about** and **what people are buying.**
             </p>
-            <div className="grid grid-cols-2 gap-3 text-[10px]">
+            <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="px-3 py-2 bg-blue-500/10 text-blue-600 rounded-lg border border-blue-500/20 font-bold uppercase">
                 Buzz &gt; Sales = Pent-up Demand
               </div>

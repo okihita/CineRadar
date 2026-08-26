@@ -29,16 +29,16 @@ export function ChartsTabs({
     <Tabs defaultValue="coverage" className="w-full">
       <div className="flex items-center justify-between mb-4">
         <TabsList className="bg-muted/10 border border-border/40">
-          <TabsTrigger value="coverage" className="text-[10px] uppercase font-bold tracking-widest">
+          <TabsTrigger value="coverage" className="text-sm uppercase font-bold tracking-widest">
             Coverage Trend
           </TabsTrigger>
-          <TabsTrigger value="confidence" className="text-[10px] uppercase font-bold tracking-widest">
+          <TabsTrigger value="confidence" className="text-sm uppercase font-bold tracking-widest">
             Confidence
           </TabsTrigger>
-          <TabsTrigger value="heatmap" className="text-[10px] uppercase font-bold tracking-widest">
+          <TabsTrigger value="heatmap" className="text-sm uppercase font-bold tracking-widest">
             Accuracy Heatmap
           </TabsTrigger>
-          <TabsTrigger value="boxoffice" className="text-[10px] uppercase font-bold tracking-widest">
+          <TabsTrigger value="boxoffice" className="text-sm uppercase font-bold tracking-widest">
             Box Office
           </TabsTrigger>
         </TabsList>

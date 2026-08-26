@@ -53,7 +53,7 @@ export function AggregatedShowtimeChart({ movies }: AggregatedShowtimeChartProps
                             Aggregated volume across all {movies.length} movies ({totalShowtimes} showtimes)
                         </CardDescription>
                     </div>
-                    <div className="text-xs flex gap-3 text-muted-foreground mt-1">
+                    <div className="text-sm flex gap-3 text-muted-foreground mt-1">
                         <div className="flex items-center gap-1.5">
                             <div className="w-2.5 h-2.5 rounded-sm bg-primary"></div>
                             <span>Available ({totalAvailable.toLocaleString()})</span>

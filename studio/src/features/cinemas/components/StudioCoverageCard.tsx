@@ -41,7 +41,7 @@ export function StudioCoverageCard() {
 
   return (
     <div className="space-y-4 pt-4 border-t border-border/50">
-      <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">Market Performance</h2>
+      <h2 className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground/60">Market Performance</h2>
       
       <div className="space-y-3">
         {/* 1. National Twin Coverage */}
@@ -51,7 +51,7 @@ export function StudioCoverageCard() {
           </div>
           <div className="flex flex-col">
             <span className="text-sm font-black tracking-tight">{stats.promotedPercentage}%</span>
-            <span className="text-[9px] font-bold uppercase tracking-tighter text-muted-foreground">Digital Twin Coverage</span>
+            <span className="text-sm font-bold uppercase tracking-tighter text-muted-foreground">Digital Twin Coverage</span>
           </div>
         </div>
 
@@ -62,7 +62,7 @@ export function StudioCoverageCard() {
           </div>
           <div className="flex flex-col">
             <span className="text-sm font-black tracking-tight">{stats.totalStudios.toLocaleString()}</span>
-            <span className="text-[9px] font-bold uppercase tracking-tighter text-muted-foreground">Verified Studios</span>
+            <span className="text-sm font-bold uppercase tracking-tighter text-muted-foreground">Verified Studios</span>
           </div>
         </div>
 
@@ -73,7 +73,7 @@ export function StudioCoverageCard() {
           </div>
           <div className="flex flex-col">
             <span className="text-sm font-black tracking-tight">{(stats.totalPhysicalSeats / 1000).toFixed(1)}k</span>
-            <span className="text-[9px] font-bold uppercase tracking-tighter text-muted-foreground">Seating Capacity</span>
+            <span className="text-sm font-bold uppercase tracking-tighter text-muted-foreground">Seating Capacity</span>
           </div>
         </div>
       </div>

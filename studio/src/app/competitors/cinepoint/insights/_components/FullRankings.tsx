@@ -22,7 +22,7 @@ export function FullRankings({ data, selectedMovie, setSelectedMovie }: {
         <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-background z-10">
-              <tr className="border-b text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+              <tr className="border-b text-sm font-black uppercase tracking-widest text-muted-foreground/60">
                 <th className="p-4 text-left w-12">#</th>
                 <th className="p-4 text-left">Movie</th>
                 <th className="p-4 text-left w-20">Type</th>
@@ -39,7 +39,7 @@ export function FullRankings({ data, selectedMovie, setSelectedMovie }: {
                   className={cn('border-b last:border-0 hover:bg-muted/30 transition-colors cursor-pointer', selectedMovie === m.id && 'bg-indigo-500/5')}
                   onClick={() => setSelectedMovie(selectedMovie === m.id ? null : m.id)}>
                   <td className="p-4 font-mono font-bold">{m.latest_rank ?? '-'}</td>
-                  <td className="p-4"><p className="font-medium">{m.title}</p><p className="text-[10px] text-muted-foreground/60">{m.movie_genre.join(', ')}</p></td>
+                  <td className="p-4"><p className="font-medium">{m.title}</p><p className="text-sm text-muted-foreground/60">{m.movie_genre.join(', ')}</p></td>
                   <td className="p-4"><TypeBadge type={m.type} /></td>
                   <td className="p-4 text-right font-mono">{m.total_period_admissions.toLocaleString()}</td>
                   <td className="p-4 text-right font-mono text-muted-foreground">{m.latest_total_admission.toLocaleString()}</td>

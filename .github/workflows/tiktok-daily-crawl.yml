@@ -1,0 +1,55 @@
+# Daily TikTok Crawl & AI Sentiment Intelligence Pipeline
+# Runs twice daily at 11:00 WIB and 23:00 WIB
+name: TikTok Daily Theatrical Slate Crawl
+
+on:
+  schedule:
+    - cron: '0 4 * * *'   # 11:00 WIB (04:00 UTC) — Morning Viral Spike Window
+    - cron: '0 16 * * *'  # 23:00 WIB (16:00 UTC) — Night Prime-Time Recap Window
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Videos per title'
+        required: false
+        default: '50'
+      comments:
+        description: 'Comments per post'
+        required: false
+        default: '60'
+
+jobs:
+  crawl-tiktok-slate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v8.3.2
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Execute TikTok Multi-Movie Slate Crawler
+        run: |
+          LIMIT="${{ github.event.inputs.limit || '50' }}"
+          COMMENTS="${{ github.event.inputs.comments || '60' }}"
+          uv run python backend/scripts/pilot_tiktok_crawler.py --slate --limit "$LIMIT" --comments-per-post "$COMMENTS"
+        env:
+          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Commit Updated Hot Cache Snapshot
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add studio/src/data/tiktok_latest.json
+          git diff --staged --quiet || git commit -m "chore(data): auto-update TikTok theatrical intelligence snapshot [skip ci]"
+          git push origin HEAD || echo "Push skipped or no changes"

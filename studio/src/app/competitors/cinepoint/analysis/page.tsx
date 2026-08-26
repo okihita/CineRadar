@@ -137,7 +137,7 @@ export default function CinePointAnalysisPage() {
             </div>
             <div>
               <h1 className="text-base font-black uppercase tracking-tighter">Success Predictor</h1>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold opacity-60">Loading analysis data…</p>
+              <p className="text-sm text-muted-foreground uppercase tracking-widest font-bold opacity-60">Loading analysis data…</p>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -151,7 +151,7 @@ export default function CinePointAnalysisPage() {
             ))}
           </div>
           <div className="h-80 rounded-xl border border-border/20 animate-pulse bg-muted/10" />
-          <p className="text-center text-xs text-muted-foreground/40 font-medium">Analyzing {movies.length > 0 ? movies.length : '3,963'} movies…</p>
+          <p className="text-center text-sm text-muted-foreground/40 font-medium">Analyzing {movies.length > 0 ? movies.length : '3,963'} movies…</p>
         </div>
       </div>
     );
@@ -168,7 +168,7 @@ export default function CinePointAnalysisPage() {
           </div>
           <div>
             <h1 className="text-base font-black uppercase tracking-tighter">Success Predictor</h1>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold opacity-60">
+            <p className="text-sm text-muted-foreground uppercase tracking-widest font-bold opacity-60">
               {overview.total_movies.toLocaleString()} movies · {overview.with_admissions.toLocaleString()} with admissions
             </p>
           </div>
@@ -176,7 +176,7 @@ export default function CinePointAnalysisPage() {
         <button
           onClick={() => setShowFilters(!showFilters)}
           className={cn(
-            'flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all',
+            'flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-bold uppercase tracking-wider transition-all',
             showFilters ? 'bg-primary/10 border-primary/20 text-primary' : 'border-border/40 text-muted-foreground hover:bg-muted',
           )}
         >
@@ -209,10 +209,10 @@ export default function CinePointAnalysisPage() {
           <CardContent className="py-12 text-center">
             <Filter className="w-8 h-8 text-muted-foreground/20 mx-auto mb-3" />
             <p className="text-sm font-bold text-muted-foreground">No movies match your filters</p>
-            <p className="text-xs text-muted-foreground/50 mt-1">Try adjusting the type, genre, or year range filters</p>
+            <p className="text-sm text-muted-foreground/50 mt-1">Try adjusting the type, genre, or year range filters</p>
             <button
               onClick={() => { setTypeFilter('all'); setSelectedGenres([]); setYearRangeFilter([0, 0]); }}
-              className="mt-3 text-[10px] font-bold text-primary hover:underline"
+              className="mt-3 text-sm font-bold text-primary hover:underline"
             >
               Reset all filters
             </button>
@@ -244,8 +244,8 @@ function SkeletonCard({ title, subtitle }: { title: string; subtitle: string }) 
           <div className="w-5 h-5 rounded bg-muted/40 animate-pulse" />
           <div className="h-4 w-24 bg-muted/30 rounded animate-pulse" />
         </div>
-        <p className="text-xs font-bold text-muted-foreground/60">{title}</p>
-        <p className="text-[10px] text-muted-foreground/30">{subtitle}</p>
+        <p className="text-sm font-bold text-muted-foreground/60">{title}</p>
+        <p className="text-sm text-muted-foreground/30">{subtitle}</p>
       </CardContent>
     </Card>
   );

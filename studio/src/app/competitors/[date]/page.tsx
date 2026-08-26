@@ -106,7 +106,7 @@ export default function CompetitorDatePage() {
       {/* Coverage Context */}
       <div className="flex items-start gap-3 px-4 py-3 rounded-lg border border-border/50 bg-muted/5 text-muted-foreground">
         <Info className="w-4 h-4 mt-0.5 flex-shrink-0 text-muted-foreground/50" />
-        <p className="text-[11px] leading-relaxed">
+        <p className="text-sm leading-relaxed">
           CineRadar currently tracks{' '}
           <span className="font-bold text-foreground font-mono">
             {data?.cinema_count ?? '—'}
@@ -141,7 +141,7 @@ export default function CompetitorDatePage() {
           {/* Right: Comparison Table */}
           <Card className="overflow-hidden border-border/50">
             <CardContent className="p-4">
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3">
+              <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-3">
                 Comparison — CineRadar vs CinePoint
               </h3>
               {data?.comparison ? (
@@ -154,7 +154,7 @@ export default function CompetitorDatePage() {
                   onMatchUpdate={handleMatchUpdate}
                 />
               ) : (
-                <div className="text-center py-12 text-muted-foreground text-xs">
+                <div className="text-center py-12 text-muted-foreground text-sm">
                   No comparison data yet.
                   <br />
                   <span className="text-muted-foreground/50">

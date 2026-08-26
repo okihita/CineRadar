@@ -16,27 +16,27 @@ export function DateCumulativeTable({ date, dateCumulative }: DateCumulativeTabl
   return (
     <Card className="overflow-hidden border-border/50">
       <CardContent className="p-4">
-        <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
+        <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
           <TrendingUp className="w-3.5 h-3.5" />
           CinePoint Box Office — {date}
         </h3>
         <div className="overflow-x-auto rounded-xl border border-border/40">
-          <table className="w-full text-[11px]">
+          <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/40 bg-muted/5">
-                <th className="text-left py-2.5 px-3 font-black uppercase tracking-[0.15em] text-muted-foreground text-[9px]">
+                <th className="text-left py-2.5 px-3 font-black uppercase tracking-[0.15em] text-muted-foreground text-sm">
                   Movie
                 </th>
-                <th className="text-right py-2.5 px-3 font-black uppercase tracking-[0.15em] text-muted-foreground text-[9px]">
+                <th className="text-right py-2.5 px-3 font-black uppercase tracking-[0.15em] text-muted-foreground text-sm">
                   Daily Admissions
                 </th>
-                <th className="text-right py-2.5 px-3 font-black uppercase tracking-[0.15em] text-muted-foreground text-[9px]">
+                <th className="text-right py-2.5 px-3 font-black uppercase tracking-[0.15em] text-muted-foreground text-sm">
                   Change
                 </th>
-                <th className="text-right py-2.5 px-3 font-black uppercase tracking-[0.15em] text-muted-foreground text-[9px]">
+                <th className="text-right py-2.5 px-3 font-black uppercase tracking-[0.15em] text-muted-foreground text-sm">
                   Cumulative
                 </th>
-                <th className="text-right py-2.5 px-3 font-black uppercase tracking-[0.15em] text-muted-foreground text-[9px]">
+                <th className="text-right py-2.5 px-3 font-black uppercase tracking-[0.15em] text-muted-foreground text-sm">
                   W2/W1
                 </th>
               </tr>
@@ -47,7 +47,7 @@ export function DateCumulativeTable({ date, dateCumulative }: DateCumulativeTabl
                 if (!pt) return null;
                 return (
                   <tr key={movie.title_cp} className="hover:bg-muted/5 transition-colors">
-                    <td className="py-2.5 px-3 font-bold text-[12px]">
+                    <td className="py-2.5 px-3 font-bold text-sm">
                       {movie.title_cr || movie.title_cp}
                     </td>
                     <td className="text-right py-2.5 px-3 font-mono">
@@ -55,7 +55,7 @@ export function DateCumulativeTable({ date, dateCumulative }: DateCumulativeTabl
                     </td>
                     <td className="text-right py-2.5 px-3">
                       <span className={cn(
-                        'font-mono font-bold text-[11px]',
+                        'font-mono font-bold text-sm',
                         pt.daily_change_pct > 0 ? 'text-emerald-600' : pt.daily_change_pct < 0 ? 'text-red-500' : 'text-muted-foreground',
                       )}>
                         {pt.daily_change_pct > 0 ? '+' : ''}{pt.daily_change_pct}%

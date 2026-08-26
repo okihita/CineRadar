@@ -30,7 +30,7 @@ export function DailyStatsBanner({ stats, onMarketingUpdate }: DailyStatsBannerP
                 <div className="flex flex-col justify-center gap-1.5 px-6 py-3 bg-zinc-900/5 dark:bg-white/5 border-r border-border/30 min-w-[160px]">
                     <div className="flex items-center gap-2">
                         <TrendingUp className="w-3.5 h-3.5 text-muted-foreground opacity-70" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 whitespace-nowrap">
+                        <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground/70 whitespace-nowrap">
                             Marketing DNA
                         </span>
                     </div>
@@ -38,7 +38,7 @@ export function DailyStatsBanner({ stats, onMarketingUpdate }: DailyStatsBannerP
                         variant="ghost"
                         size="sm"
                         onClick={() => setIsEditModalOpen(true)}
-                        className="h-6 gap-1 px-1 text-[8px] font-black uppercase text-primary hover:text-primary hover:bg-primary/5 transition-all ml-4"
+                        className="h-6 gap-1 px-1 text-sm font-black uppercase text-primary hover:text-primary hover:bg-primary/5 transition-all ml-4"
                     >
                         <Pencil className="w-2.5 h-2.5" />
                         Edit Info
@@ -61,8 +61,8 @@ export function DailyStatsBanner({ stats, onMarketingUpdate }: DailyStatsBannerP
                                     <Camera className="w-3.5 h-3.5" />
                                 </div>
                                 <div className="flex flex-col min-w-0">
-                                    <span className="text-[8px] font-bold text-muted-foreground uppercase leading-none mb-0.5 tracking-tighter">Instagram</span>
-                                    <span className="text-[11px] font-black truncate group-hover:text-pink-600 transition-colors">@{stats.marketing.official_accounts.instagram.replace(/^@/, '')}</span>
+                                    <span className="text-sm font-bold text-muted-foreground uppercase leading-none mb-0.5 tracking-tighter">Instagram</span>
+                                    <span className="text-sm font-black truncate group-hover:text-pink-600 transition-colors">@{stats.marketing.official_accounts.instagram.replace(/^@/, '')}</span>
                                 </div>
                             </a>
                         ) : (
@@ -71,8 +71,8 @@ export function DailyStatsBanner({ stats, onMarketingUpdate }: DailyStatsBannerP
                                     <Camera className="w-3.5 h-3.5" />
                                 </div>
                                 <div className="flex flex-col min-w-0">
-                                    <span className="text-[8px] font-bold text-muted-foreground uppercase leading-none mb-0.5 tracking-tighter">Instagram</span>
-                                    <span className="text-[11px] font-black truncate">—</span>
+                                    <span className="text-sm font-bold text-muted-foreground uppercase leading-none mb-0.5 tracking-tighter">Instagram</span>
+                                    <span className="text-sm font-black truncate">—</span>
                                 </div>
                             </div>
                         )}
@@ -90,8 +90,8 @@ export function DailyStatsBanner({ stats, onMarketingUpdate }: DailyStatsBannerP
                                     <MessageCircle className="w-3.5 h-3.5" />
                                 </div>
                                 <div className="flex flex-col min-w-0">
-                                    <span className="text-[8px] font-bold text-muted-foreground uppercase leading-none mb-0.5 tracking-tighter">X / Twitter</span>
-                                    <span className="text-[11px] font-black truncate group-hover:text-primary transition-colors">@{stats.marketing.official_accounts.x.replace(/^@/, '')}</span>
+                                    <span className="text-sm font-bold text-muted-foreground uppercase leading-none mb-0.5 tracking-tighter">X / Twitter</span>
+                                    <span className="text-sm font-black truncate group-hover:text-primary transition-colors">@{stats.marketing.official_accounts.x.replace(/^@/, '')}</span>
                                 </div>
                             </a>
                         ) : (
@@ -100,8 +100,8 @@ export function DailyStatsBanner({ stats, onMarketingUpdate }: DailyStatsBannerP
                                     <MessageCircle className="w-3.5 h-3.5" />
                                 </div>
                                 <div className="flex flex-col min-w-0">
-                                    <span className="text-[8px] font-bold text-muted-foreground uppercase leading-none mb-0.5 tracking-tighter">X / Twitter</span>
-                                    <span className="text-[11px] font-black truncate">—</span>
+                                    <span className="text-sm font-bold text-muted-foreground uppercase leading-none mb-0.5 tracking-tighter">X / Twitter</span>
+                                    <span className="text-sm font-black truncate">—</span>
                                 </div>
                             </div>
                         )}
@@ -119,8 +119,8 @@ export function DailyStatsBanner({ stats, onMarketingUpdate }: DailyStatsBannerP
                                     <Music className="w-3.5 h-3.5" />
                                 </div>
                                 <div className="flex flex-col min-w-0">
-                                    <span className="text-[8px] font-bold text-muted-foreground uppercase leading-none mb-0.5 tracking-tighter">TikTok</span>
-                                    <span className="text-[11px] font-black truncate group-hover:text-cyan-600 transition-colors">@{stats.marketing.official_accounts.tiktok.replace(/^@/, '')}</span>
+                                    <span className="text-sm font-bold text-muted-foreground uppercase leading-none mb-0.5 tracking-tighter">TikTok</span>
+                                    <span className="text-sm font-black truncate group-hover:text-cyan-600 transition-colors">@{stats.marketing.official_accounts.tiktok.replace(/^@/, '')}</span>
                                 </div>
                             </a>
                         ) : (
@@ -129,8 +129,8 @@ export function DailyStatsBanner({ stats, onMarketingUpdate }: DailyStatsBannerP
                                     <Music className="w-3.5 h-3.5" />
                                 </div>
                                 <div className="flex flex-col min-w-0">
-                                    <span className="text-[8px] font-bold text-muted-foreground uppercase leading-none mb-0.5 tracking-tighter">TikTok</span>
-                                    <span className="text-[11px] font-black truncate">—</span>
+                                    <span className="text-sm font-bold text-muted-foreground uppercase leading-none mb-0.5 tracking-tighter">TikTok</span>
+                                    <span className="text-sm font-black truncate">—</span>
                                 </div>
                             </div>
                         )}
@@ -148,18 +148,18 @@ export function DailyStatsBanner({ stats, onMarketingUpdate }: DailyStatsBannerP
                                     <Hash className="w-3.5 h-3.5" />
                                 </div>
                                 <div className="flex flex-col min-w-0 justify-center h-full">
-                                    <span className="text-[8px] font-bold text-muted-foreground uppercase leading-none mb-0.5 tracking-tighter">Hashtag</span>
+                                    <span className="text-sm font-bold text-muted-foreground uppercase leading-none mb-0.5 tracking-tighter">Hashtag</span>
                                     <div className="flex flex-col min-h-[14px] justify-center">
-                                        <span className="text-[11px] font-black truncate leading-tight group-hover:text-blue-600 transition-colors">{stats.marketing.primary_hashtag}</span>
+                                        <span className="text-sm font-black truncate leading-tight group-hover:text-blue-600 transition-colors">{stats.marketing.primary_hashtag}</span>
                                         {stats.marketing.secondary_hashtags && stats.marketing.secondary_hashtags.length > 0 && (
                                             <div className="flex flex-wrap gap-x-1.5 gap-y-0.5 mt-0.5">
                                                 {stats.marketing.secondary_hashtags.slice(0, 2).map(tag => (
-                                                    <span key={tag} className="text-[7px] font-bold text-muted-foreground/50 whitespace-nowrap">
+                                                    <span key={tag} className="text-sm font-bold text-muted-foreground/50 whitespace-nowrap">
                                                         {tag}
                                                     </span>
                                                 ))}
                                                 {stats.marketing.secondary_hashtags.length > 2 && (
-                                                    <span className="text-[7px] font-bold text-muted-foreground/30">+{stats.marketing.secondary_hashtags.length - 2}</span>
+                                                    <span className="text-sm font-bold text-muted-foreground/30">+{stats.marketing.secondary_hashtags.length - 2}</span>
                                                 )}
                                             </div>
                                         )}
@@ -172,8 +172,8 @@ export function DailyStatsBanner({ stats, onMarketingUpdate }: DailyStatsBannerP
                                     <Hash className="w-3.5 h-3.5" />
                                 </div>
                                 <div className="flex flex-col min-w-0 justify-center">
-                                    <span className="text-[8px] font-bold text-muted-foreground uppercase leading-none mb-0.5 tracking-tighter">Hashtag</span>
-                                    <span className="text-[11px] font-black truncate">—</span>
+                                    <span className="text-sm font-bold text-muted-foreground uppercase leading-none mb-0.5 tracking-tighter">Hashtag</span>
+                                    <span className="text-sm font-black truncate">—</span>
                                 </div>
                             </div>
                         )}
@@ -184,10 +184,10 @@ export function DailyStatsBanner({ stats, onMarketingUpdate }: DailyStatsBannerP
                                 <TrendingUp className="w-3.5 h-3.5" />
                             </div>
                             <div className="flex flex-col min-w-0">
-                                <span className="text-[8px] font-bold text-muted-foreground uppercase leading-none mb-0.5 tracking-tighter">Google Trend</span>
-                                <span className="text-[11px] font-black flex items-baseline gap-1">
+                                <span className="text-sm font-bold text-muted-foreground uppercase leading-none mb-0.5 tracking-tighter">Google Trend</span>
+                                <span className="text-sm font-black flex items-baseline gap-1">
                                     {stats.marketing?.trends_score || "—"} 
-                                    {stats.marketing?.trends_score && <span className="text-[7px] font-bold text-green-500">+12%</span>}
+                                    {stats.marketing?.trends_score && <span className="text-sm font-bold text-green-500">+12%</span>}
                                 </span>
                             </div>
                         </div>

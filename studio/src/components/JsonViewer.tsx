@@ -85,7 +85,7 @@ function JsonItem({ data, level = 0, label, isLast = true, expandAll, shrinkAll 
         {label && <span className="text-foreground/60 font-medium">{label}:</span>}
         <span className="text-muted-foreground font-bold">{openBrace}</span>
         {!isExpanded && (
-          <span className="text-muted-foreground/60 px-1 bg-muted/50 rounded mx-1 text-[10px] font-normal">
+          <span className="text-muted-foreground/60 px-1 bg-muted/50 rounded mx-1 text-sm font-normal">
             {isArray ? `${(data as unknown[]).length} items` : `${Object.keys(data as Record<string, unknown>).length} keys`}
           </span>
         )}
@@ -161,7 +161,7 @@ export function JsonViewer({ data }: { data: unknown }) {
           >
             <Minus className="w-3.5 h-3.5" />
           </Button>
-          <span className="text-[10px] font-mono text-muted-foreground w-6 text-center">{fontSize}</span>
+          <span className="text-sm font-mono text-muted-foreground w-6 text-center">{fontSize}</span>
           <Button 
             variant="ghost" size="icon" className="h-6 w-6" 
             onClick={() => setFontSize(Math.min(24, fontSize + 1))}
@@ -173,13 +173,13 @@ export function JsonViewer({ data }: { data: unknown }) {
 
         <div className="flex items-center gap-1">
           <Button 
-            variant="outline" size="sm" className="h-6 px-2 text-[9px] font-bold gap-1"
+            variant="outline" size="sm" className="h-6 px-2 text-sm font-bold gap-1"
             onClick={handleShrink}
           >
             <Minimize2 className="w-3 h-3" /> SHRINK ALL
           </Button>
           <Button 
-            variant="outline" size="sm" className="h-6 px-2 text-[9px] font-bold gap-1"
+            variant="outline" size="sm" className="h-6 px-2 text-sm font-bold gap-1"
             onClick={handleExpand}
           >
             <Maximize2 className="w-3 h-3" /> EXPAND ALL

@@ -64,7 +64,7 @@ export function SeatProgressBar({
 
       {/* Labels */}
       {showLabels && (
-        <div className="flex justify-between mt-1 text-xs text-gray-600">
+        <div className="flex justify-between mt-1 text-sm text-gray-600">
           <span className="flex items-center gap-1">
             <span className="w-2 h-2 rounded bg-red-400"></span>
             <span>{blockedSeats} blocked</span>

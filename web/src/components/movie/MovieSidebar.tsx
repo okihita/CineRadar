@@ -50,7 +50,7 @@ export default function MovieSidebar({
           <div className="flex items-center gap-2">
             <Film className="w-5 h-5 text-purple-400" />
             <h2 className="text-base font-bold text-white tracking-tight">{t('sidebar.title')}</h2>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-gray-400 font-mono">
+            <span className="text-sm px-2 py-0.5 rounded-full bg-white/10 text-gray-400 font-mono">
               {movies.length}
             </span>
           </div>
@@ -94,7 +94,7 @@ export default function MovieSidebar({
           <div className="p-8 text-center text-gray-500">
             <Film className="w-8 h-8 mx-auto mb-2 opacity-40" />
             <p className="text-sm font-medium">{t('sidebar.emptyTitle')}</p>
-            <p className="text-xs text-gray-600 mt-1">{t('sidebar.emptySubtitle')}</p>
+            <p className="text-sm text-gray-600 mt-1">{t('sidebar.emptySubtitle')}</p>
           </div>
         ) : (
           filteredMovies.map((movie, index) => {
@@ -114,7 +114,7 @@ export default function MovieSidebar({
                 }`}
               >
                 {/* Index */}
-                <span className="text-gray-500 text-xs font-mono w-5 flex-shrink-0 text-center">
+                <span className="text-gray-500 text-sm font-mono w-5 flex-shrink-0 text-center">
                   {index + 1}
                 </span>
 
@@ -134,7 +134,7 @@ export default function MovieSidebar({
                     </div>
                   )}
                   {movie.is_presale && (
-                    <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[7px] font-extrabold text-center py-0.5 tracking-tighter">
+                    <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-extrabold text-center py-0.5 tracking-tighter">
                       {t('showtimes.hero.presale')}
                     </div>
                   )}
@@ -144,11 +144,11 @@ export default function MovieSidebar({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 mb-0.5">
                     {movie.is_presale ? (
-                      <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-amber-400 uppercase tracking-wider">
+                      <span className="inline-flex items-center gap-0.5 text-sm font-bold text-amber-400 uppercase tracking-wider">
                         <Sparkles className="w-2.5 h-2.5" /> {t('sidebar.presale')}
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-400 uppercase tracking-wider">
+                      <span className="inline-flex items-center gap-1 text-sm font-bold text-emerald-400 uppercase tracking-wider">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> {t('sidebar.showing')}
                       </span>
                     )}
@@ -163,13 +163,13 @@ export default function MovieSidebar({
                   </h3>
 
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs text-gray-400 flex items-center gap-1 truncate">
+                    <span className="text-sm text-gray-400 flex items-center gap-1 truncate">
                       <MapPin className="w-3 h-3 text-blue-400 flex-shrink-0" />
                       {movie.cities.length === 1 ? t('sidebar.singleCity') : t('sidebar.citiesCount', { count: movie.cities.length })}
                     </span>
                     {movie.age_category && (
                       <span
-                        className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
+                        className={`text-sm font-bold px-1.5 py-0.2 rounded ${
                           movie.age_category === 'SU'
                             ? 'bg-green-500/20 text-green-400 border border-green-500/30'
                             : movie.age_category === 'R' || movie.age_category === '13+'
@@ -191,7 +191,7 @@ export default function MovieSidebar({
       </div>
 
       {/* Sidebar Footer */}
-      <div className="p-3 border-t border-white/10 bg-black/40 text-center text-xs text-gray-400 flex items-center justify-between px-4">
+      <div className="p-3 border-t border-white/10 bg-black/40 text-center text-sm text-gray-400 flex items-center justify-between px-4">
         <span>{t('sidebar.totalListings')}</span>
         <span className="font-mono font-bold text-white">{filteredMovies.length}</span>
       </div>

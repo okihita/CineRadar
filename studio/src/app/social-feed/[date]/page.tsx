@@ -168,13 +168,13 @@ function PostCard({ post }: { post: FirestoreSocialPost }) {
                                 <YouTubeIcon className="w-5 h-5 text-white" />
                             </div>
                         </div>
-                        <div className={cn("absolute bottom-2 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-background/80 backdrop-blur-sm text-[8px] font-bold uppercase tracking-wider", typeConfig.color)}>
+                        <div className={cn("absolute bottom-2 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-background/80 backdrop-blur-sm text-sm font-bold uppercase tracking-wider", typeConfig.color)}>
                             <TypeIcon className="w-2.5 h-2.5" />
                             <span>{post.content_type}</span>
                         </div>
-                        <span className="absolute bottom-2 right-2 text-[9px] text-white/80 font-mono tabular-nums bg-black/50 backdrop-blur-sm px-1.5 py-0.5 rounded-md">{timeAgo(post.published_at)}</span>
+                        <span className="absolute bottom-2 right-2 text-sm text-white/80 font-mono tabular-nums bg-black/50 backdrop-blur-sm px-1.5 py-0.5 rounded-md">{timeAgo(post.published_at)}</span>
                         {views > 0 && (
-                            <span className="absolute top-2 right-2 text-[8px] text-white/70 font-mono bg-black/40 backdrop-blur-sm px-1.5 py-0.5 rounded-md">{formatNumber(views)} views</span>
+                            <span className="absolute top-2 right-2 text-sm text-white/70 font-mono bg-black/40 backdrop-blur-sm px-1.5 py-0.5 rounded-md">{formatNumber(views)} views</span>
                         )}
                     </div>
                 )}
@@ -191,10 +191,10 @@ function PostCard({ post }: { post: FirestoreSocialPost }) {
                             )}
                         </div>
                         <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                            <span className="text-[11px] font-bold truncate">{name}</span>
+                            <span className="text-sm font-bold truncate">{name}</span>
                         </div>
                     </div>
-                    <p className="text-[12px] font-semibold leading-snug text-foreground line-clamp-2">
+                    <p className="text-sm font-semibold leading-snug text-foreground line-clamp-2">
                         {post.title}
                     </p>
                 </div>
@@ -208,13 +208,13 @@ function PostCard({ post }: { post: FirestoreSocialPost }) {
                         className="w-full text-left"
                     >
                         <p className={cn(
-                            "text-[11px] text-muted-foreground/70 leading-relaxed whitespace-pre-line",
+                            "text-sm text-muted-foreground/70 leading-relaxed whitespace-pre-line",
                             !expanded && "line-clamp-2",
                         )}>
                             {description}
                         </p>
                         {description.length > 100 && (
-                            <span className="text-[9px] text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors">
+                            <span className="text-sm text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors">
                                 {expanded ? '← Show less' : 'Show more ▾'}
                             </span>
                         )}
@@ -244,7 +244,7 @@ function AccountCard({ name, avatar, postCount }: { name: string; avatar: string
                     <span className="text-sm font-bold truncate">{name}</span>
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs font-mono text-muted-foreground">{postCount} posts</span>
+                    <span className="text-sm font-mono text-muted-foreground">{postCount} posts</span>
                 </div>
             </div>
         </div>
@@ -670,9 +670,9 @@ export default function SocialFeedPage() {
                     <div>
                         <div className="flex items-center gap-2">
                             <h1 className="text-2xl font-black uppercase tracking-tighter">Industry Feed</h1>
-                            <span className="px-2 py-0.5 bg-muted rounded text-[10px] font-black text-muted-foreground uppercase tracking-tight">Social + AI</span>
+                            <span className="px-2 py-0.5 bg-muted rounded text-sm font-black text-muted-foreground uppercase tracking-tight">Social + AI</span>
                         </div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-sm text-muted-foreground">
                             {hasData
                                 ? <><span className="text-foreground font-bold">{posts.length}</span> posts • <span className="text-foreground font-bold">{analyses.length}</span> hourly analyses</>
                                 : 'No data for this date'
@@ -693,7 +693,7 @@ export default function SocialFeedPage() {
                             {formatDate(selectedDate)}
                         </span>
                         {isToday(selectedDate) && (
-                            <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded text-[8px] font-black uppercase">Today</span>
+                            <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded text-sm font-black uppercase">Today</span>
                         )}
                         <input
                             type="date"
@@ -701,7 +701,7 @@ export default function SocialFeedPage() {
                             max={today}
                             min="2026-01-01"
                             onChange={e => setSelectedDate(e.target.value)}
-                            className="ml-1 text-xs bg-transparent border border-border/40 rounded px-2 py-1 text-muted-foreground cursor-pointer"
+                            className="ml-1 text-sm bg-transparent border border-border/40 rounded px-2 py-1 text-muted-foreground cursor-pointer"
                         />
                     </div>
 
@@ -721,7 +721,7 @@ export default function SocialFeedPage() {
                             {deleting ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
-                                <><Trash2 className="w-3.5 h-3.5 mr-1.5" /><span className="text-[10px] font-bold uppercase">Delete</span></>
+                                <><Trash2 className="w-3.5 h-3.5 mr-1.5" /><span className="text-sm font-bold uppercase">Delete</span></>
                             )}
                         </Button>
                     )}
@@ -739,12 +739,12 @@ export default function SocialFeedPage() {
                             </div>
                             <div>
                                 <p className="text-sm font-bold">No data for {formatDate(selectedDate)}</p>
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-sm text-muted-foreground">
                                     Backfill will fetch YouTube uploads from <span className="text-foreground font-semibold">{activeSources.length}</span> monitored accounts and generate per-hour AI analysis.
                                 </p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-4 text-[10px] text-muted-foreground">
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1"><YouTubeIcon className="w-3 h-3 text-red-500" /> activities.list + videos.list</span>
                             <span>•</span>
                             <span className="flex items-center gap-1"><Sparkles className="w-3 h-3 text-primary" /> Gemini hourly summaries</span>
@@ -765,7 +765,7 @@ export default function SocialFeedPage() {
                                 .filter(c => grouped.has(c.value))
                                 .map(({ value, label }) => (
                                     <div key={value}>
-                                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">{label}</p>
+                                        <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2">{label}</p>
                                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
                                             {(grouped.get(value) || []).map(source => (
                                                 <div key={source.id} className="flex items-center gap-2.5 px-3 py-2 bg-background/40 rounded-lg border border-border/10">
@@ -821,12 +821,12 @@ export default function SocialFeedPage() {
                         <div className="flex-1">
                             <p className="text-sm font-bold">{progress.message}</p>
                             {progress.phase === 'fetching' && progress.channel && (
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-sm text-muted-foreground">
                                     Source {progress.channelIndex}/{progress.totalChannels}: {progress.channel}
                                 </p>
                             )}
                             {progress.phase === 'analyzing' && (
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-sm text-muted-foreground">
                                     Hour {progress.completedHours}/{progress.totalHours}
                                     {progress.totalVideos !== undefined && ` • ${progress.totalVideos} posts found`}
                                 </p>
@@ -851,7 +851,7 @@ export default function SocialFeedPage() {
                     {progress.phase === 'retrying' && progress.retryInfo && (
                         <div className="p-3 bg-amber-500/5 border border-amber-500/20 rounded-xl space-y-1.5">
                             <div className="flex items-center justify-between">
-                                <p className="text-xs font-bold text-amber-600">
+                                <p className="text-sm font-bold text-amber-600">
                                     ⚡ Gemini rate limit — retrying {progress.retryInfo.hour}
                                 </p>
                                 <span className="text-lg font-mono font-black text-amber-500 tabular-nums">
@@ -868,7 +868,7 @@ export default function SocialFeedPage() {
                                     }}
                                 />
                             </div>
-                            <p className="text-[10px] text-muted-foreground">
+                            <p className="text-sm text-muted-foreground">
                                 Attempt {progress.retryInfo.attempt} of {progress.retryInfo.maxRetries}
                             </p>
                         </div>
@@ -877,18 +877,18 @@ export default function SocialFeedPage() {
                     {/* Completed summaries — readable while waiting */}
                     {(progress.completedSummaries ?? []).length > 0 && progress.phase === 'analyzing' && (
                         <div className="space-y-2 max-h-[40vh] overflow-y-auto">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50 sticky top-0 bg-background py-1">Summaries generated ({(progress.completedSummaries ?? []).length})</p>
+                            <p className="text-sm font-black uppercase tracking-widest text-muted-foreground/50 sticky top-0 bg-background py-1">Summaries generated ({(progress.completedSummaries ?? []).length})</p>
                             {(progress.completedSummaries ?? []).map((s, i) => (
                                 <div key={i} className="p-3 bg-muted/20 rounded-xl border border-border/20">
                                     <div className="flex items-center gap-2 mb-1.5">
-                                        <span className="text-xs font-mono font-bold tabular-nums text-primary">{s.hour}</span>
-                                        <span className="text-[10px] text-muted-foreground">{s.postCount} posts</span>
+                                        <span className="text-sm font-mono font-bold tabular-nums text-primary">{s.hour}</span>
+                                        <span className="text-sm text-muted-foreground">{s.postCount} posts</span>
                                     </div>
-                                    <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{s.summary}</p>
+                                    <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{s.summary}</p>
                                     {s.hashtags.length > 0 && (
                                         <div className="flex flex-wrap gap-1 mt-1.5">
                                             {s.hashtags.map((tag: string) => (
-                                                <span key={tag} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-primary/10 text-primary/70 rounded-full text-[8px] font-bold">
+                                                <span key={tag} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-primary/10 text-primary/70 rounded-full text-sm font-bold">
                                                     <Hash className="w-2 h-2" />
                                                     {tag.replace('#', '')}
                                                 </span>
@@ -902,7 +902,7 @@ export default function SocialFeedPage() {
 
                     {/* Done summary */}
                     {progress.done && (
-                        <div className="flex items-center gap-4 text-xs">
+                        <div className="flex items-center gap-4 text-sm">
                             <span className="text-green-600 font-bold">✓ {progress.videos_written} posts fetched</span>
                             <span className="text-green-600 font-bold">✓ {progress.analyses_written} hourly analyses</span>
                         </div>
@@ -910,7 +910,7 @@ export default function SocialFeedPage() {
 
                     {/* Error */}
                     {progress.error && (
-                        <p className="text-xs text-destructive">{progress.error}</p>
+                        <p className="text-sm text-destructive">{progress.error}</p>
                     )}
                 </div>
             )}
@@ -932,7 +932,7 @@ export default function SocialFeedPage() {
                         <div className="sticky top-4 h-[calc(100vh-2rem)] flex flex-col">
                             <div className="flex items-center gap-2 mb-3 flex-shrink-0">
                                 <Sparkles className="w-3.5 h-3.5 text-primary" />
-                                <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">AI Pulse</h2>
+                                <h2 className="text-sm font-black uppercase tracking-[0.2em] text-primary">AI Pulse</h2>
                             </div>
 
                             <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 scrollbar-thin">
@@ -981,25 +981,25 @@ export default function SocialFeedPage() {
                                         >
                                             <div className="flex items-center justify-between mb-1">
                                                 <span className={cn(
-                                                    "text-[10px] font-mono font-bold tabular-nums",
+                                                    "text-sm font-mono font-bold tabular-nums",
                                                     isStale && "text-blue-500/60",
                                                 )}>
                                                     {formatHour(h)}
                                                 </span>
                                                 {hasPosts && (
-                                                    <span className="text-[9px] font-mono font-bold text-muted-foreground">{hourPosts.length}</span>
+                                                    <span className="text-sm font-mono font-bold text-muted-foreground">{hourPosts.length}</span>
                                                 )}
                                                 {isStale && (
-                                                    <span className="text-[8px] font-bold text-blue-500/50 uppercase tracking-wider">Pending</span>
+                                                    <span className="text-sm font-bold text-blue-500/50 uppercase tracking-wider">Pending</span>
                                                 )}
                                             </div>
                                             {analysis && (
-                                                <p className="text-[10px] text-muted-foreground leading-snug line-clamp-3">
+                                                <p className="text-sm text-muted-foreground leading-snug line-clamp-3">
                                                     {renderMD(analysis.summary)}
                                                 </p>
                                             )}
                                             {!hasPosts && !analysis && !isStale && (
-                                                <p className="text-[9px] text-muted-foreground/50 italic">No activity</p>
+                                                <p className="text-sm text-muted-foreground/50 italic">No activity</p>
                                             )}
                                         </button>
                                     );
@@ -1018,7 +1018,7 @@ export default function SocialFeedPage() {
                                 return (
                                     <div key={type} className="flex items-center gap-1.5 px-2.5 py-1 bg-muted/20 rounded-lg">
                                         <Icon className={cn("w-3 h-3", cfg.color)} />
-                                        <span className="text-[10px] font-bold text-muted-foreground">{count} {cfg.label}</span>
+                                        <span className="text-sm font-bold text-muted-foreground">{count} {cfg.label}</span>
                                     </div>
                                 );
                             })}
@@ -1027,13 +1027,13 @@ export default function SocialFeedPage() {
                         {/* Batch retry for failed summaries */}
                         {failedHours.length > 0 && !backfilling && (
                             <div className="flex items-center gap-3 px-3 py-2 bg-orange-500/5 rounded-xl border border-orange-500/10">
-                                <span className="text-[10px] text-orange-600 font-medium">
+                                <span className="text-sm text-orange-600 font-medium">
                                     {failedHours.length} hour{failedHours.length > 1 ? 's' : ''} missing summary
                                 </span>
                                 <button
                                     onClick={handleRetryAll}
                                     disabled={batchRetrying}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-orange-600 hover:bg-orange-500/10 rounded-md transition-colors disabled:opacity-50"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-bold text-orange-600 hover:bg-orange-500/10 rounded-md transition-colors disabled:opacity-50"
                                 >
                                     {batchRetrying ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
                                     {batchRetrying ? 'Generating...' : 'Generate All'}
@@ -1047,17 +1047,17 @@ export default function SocialFeedPage() {
                                 <div className="flex items-center gap-2.5">
                                     <Clock className="w-4 h-4 text-blue-500/70 flex-shrink-0" />
                                     <div>
-                                        <p className="text-[11px] text-foreground font-medium">
+                                        <p className="text-sm text-foreground font-medium">
                                             {staleHours.length} hour{staleHours.length > 1 ? 's' : ''} not yet scraped
                                         </p>
-                                        <p className="text-[10px] text-muted-foreground">
+                                        <p className="text-sm text-muted-foreground">
                                             {formatHour(staleHours[0])} – {String(staleHours[staleHours.length - 1]).padStart(2, '0')}:59 · data may be missing
                                         </p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={handleBackfill}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-blue-600 hover:bg-blue-500/10 rounded-md transition-colors flex-shrink-0"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-bold text-blue-600 hover:bg-blue-500/10 rounded-md transition-colors flex-shrink-0"
                                 >
                                     <Download className="w-3 h-3" />
                                     Refresh Now
@@ -1098,7 +1098,7 @@ export default function SocialFeedPage() {
                                             {formatHour(hourIdx)}
                                         </span>
                                         <div className="flex-1 h-px bg-border/30" />
-                                        <span className="text-[10px] text-muted-foreground/50 font-mono">{postCount} posts</span>
+                                        <span className="text-sm text-muted-foreground/50 font-mono">{postCount} posts</span>
                                     </div>
 
                                     {/* Full analysis for this hour */}
@@ -1112,14 +1112,14 @@ export default function SocialFeedPage() {
                                                     <div className="flex items-center justify-between">
                                                         <div className="flex items-center gap-1.5">
                                                             <Sparkles className="w-3 h-3 text-orange-500/50" />
-                                                            <span className="text-[9px] font-bold uppercase tracking-widest text-orange-500/50">
+                                                            <span className="text-sm font-bold uppercase tracking-widest text-orange-500/50">
                                                                 {analysis ? 'Summary Unavailable' : 'No Summary'}
                                                             </span>
                                                         </div>
                                                         <button
                                                             onClick={() => handleRetryHour(hourIdx)}
                                                             disabled={isRetrying}
-                                                            className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-orange-600 hover:bg-orange-500/10 rounded-md transition-colors disabled:opacity-50"
+                                                            className="flex items-center gap-1 px-2 py-1 text-sm font-bold text-orange-600 hover:bg-orange-500/10 rounded-md transition-colors disabled:opacity-50"
                                                         >
                                                             {isRetrying ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
                                                             {isRetrying ? 'Generating...' : 'Generate'}
@@ -1133,14 +1133,14 @@ export default function SocialFeedPage() {
                                             <div className="mb-3 mx-3 p-3 bg-primary/5 rounded-xl border border-primary/10">
                                                 <div className="flex items-center gap-1.5 mb-1.5">
                                                     <Sparkles className="w-3 h-3 text-primary" />
-                                                    <span className="text-[9px] font-black uppercase tracking-widest text-primary/60">AI Summary</span>
+                                                    <span className="text-sm font-black uppercase tracking-widest text-primary/60">AI Summary</span>
                                                 </div>
-                                                <p className="text-xs text-foreground/80 leading-relaxed whitespace-pre-line">{renderMD(analysis.summary)}</p>
+                                                <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-line">{renderMD(analysis.summary)}</p>
                                                 {/* Hashtag pills */}
                                                 {analysis.hashtags && analysis.hashtags.length > 0 && (
                                                     <div className="flex flex-wrap gap-1.5 mt-2">
                                                         {analysis.hashtags.map((tag: string) => (
-                                                            <span key={tag} className="inline-flex items-center gap-0.5 px-2 py-0.5 bg-primary/10 text-primary/70 rounded-full text-[9px] font-bold">
+                                                            <span key={tag} className="inline-flex items-center gap-0.5 px-2 py-0.5 bg-primary/10 text-primary/70 rounded-full text-sm font-bold">
                                                                 <Hash className="w-2.5 h-2.5" />
                                                                 {tag.replace('#', '')}
                                                             </span>
@@ -1166,7 +1166,7 @@ export default function SocialFeedPage() {
                     <aside className="lg:col-span-3 space-y-6">
                         <div className="sticky top-6 space-y-6">
                             <div>
-                                <h3 className="text-xs font-black uppercase tracking-widest mb-3 text-muted-foreground">
+                                <h3 className="text-sm font-black uppercase tracking-widest mb-3 text-muted-foreground">
                                     Active Sources ({derivedAccounts.length})
                                 </h3>
                                 <div className="space-y-2">

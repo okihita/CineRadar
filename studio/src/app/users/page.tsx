@@ -107,7 +107,7 @@ export default function UsersPage() {
                             </div>
                             <div>
                                 <p className="text-2xl font-black">{pendingUsers.length}</p>
-                                <p className="text-xs text-muted-foreground font-medium">Pending Approval</p>
+                                <p className="text-sm text-muted-foreground font-medium">Pending Approval</p>
                             </div>
                         </div>
                     </CardContent>
@@ -120,7 +120,7 @@ export default function UsersPage() {
                             </div>
                             <div>
                                 <p className="text-2xl font-black">{activeUsers.length}</p>
-                                <p className="text-xs text-muted-foreground font-medium">Active Users</p>
+                                <p className="text-sm text-muted-foreground font-medium">Active Users</p>
                             </div>
                         </div>
                     </CardContent>
@@ -133,7 +133,7 @@ export default function UsersPage() {
                             </div>
                             <div>
                                 <p className="text-2xl font-black">{users.length}</p>
-                                <p className="text-xs text-muted-foreground font-medium">Total Registered</p>
+                                <p className="text-sm text-muted-foreground font-medium">Total Registered</p>
                             </div>
                         </div>
                     </CardContent>
@@ -159,7 +159,7 @@ export default function UsersPage() {
                             <CardContent className="p-0">
                                 <table className="w-full text-sm">
                                     <thead>
-                                        <tr className="border-b text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                                        <tr className="border-b text-sm font-black uppercase tracking-widest text-muted-foreground/60">
                                             <th className="p-4 text-left">User</th>
                                             <th className="p-4 text-left">Registered</th>
                                             <th className="p-4 text-right">Actions</th>
@@ -170,15 +170,15 @@ export default function UsersPage() {
                                             <tr key={user.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                                                 <td className="p-4">
                                                     <p className="font-medium">{user.name || 'Unknown'}</p>
-                                                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                                                    <p className="text-sm text-muted-foreground">{user.email}</p>
                                                 </td>
-                                                <td className="p-4 text-muted-foreground text-xs">{formatDate(user.registered_at)}</td>
+                                                <td className="p-4 text-muted-foreground text-sm">{formatDate(user.registered_at)}</td>
                                                 <td className="p-4">
                                                     <div className="flex items-center justify-end gap-2">
                                                         <Button
                                                             size="sm"
                                                             variant="outline"
-                                                            className="h-8 text-xs gap-1.5 border-green-500/20 text-green-600 hover:bg-green-500/10"
+                                                            className="h-8 text-sm gap-1.5 border-green-500/20 text-green-600 hover:bg-green-500/10"
                                                             disabled={actionLoading === user.id + 'approve'}
                                                             onClick={() => handleAction(user.email!, 'approve')}
                                                         >
@@ -188,7 +188,7 @@ export default function UsersPage() {
                                                         <Button
                                                             size="sm"
                                                             variant="outline"
-                                                            className="h-8 text-xs gap-1.5 border-red-500/20 text-red-600 hover:bg-red-500/10"
+                                                            className="h-8 text-sm gap-1.5 border-red-500/20 text-red-600 hover:bg-red-500/10"
                                                             disabled={actionLoading === user.id + 'reject'}
                                                             onClick={() => handleAction(user.email!, 'reject')}
                                                         >
@@ -216,7 +216,7 @@ export default function UsersPage() {
                         <CardContent className="p-0">
                             <table className="w-full text-sm">
                                 <thead>
-                                    <tr className="border-b text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                                    <tr className="border-b text-sm font-black uppercase tracking-widest text-muted-foreground/60">
                                         <th className="p-4 text-left">User</th>
                                         <th className="p-4 text-left">Role</th>
                                         <th className="p-4 text-left">Registered</th>
@@ -232,9 +232,9 @@ export default function UsersPage() {
                                                 <td className="p-4">
                                                     <p className="font-medium">
                                                         {user.name || 'Unknown'}
-                                                        {isCurrentUser && <span className="ml-2 text-[10px] text-primary font-normal">(you)</span>}
+                                                        {isCurrentUser && <span className="ml-2 text-sm text-primary font-normal">(you)</span>}
                                                     </p>
-                                                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                                                    <p className="text-sm text-muted-foreground">{user.email}</p>
                                                 </td>
                                                 <td className="p-4">
                                                     <Badge variant="outline" className={user.role === 'admin' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-muted/50'}>
@@ -242,7 +242,7 @@ export default function UsersPage() {
                                                         {user.role || 'viewer'}
                                                     </Badge>
                                                 </td>
-                                                <td className="p-4 text-muted-foreground text-xs">{formatDate(user.registered_at)}</td>
+                                                <td className="p-4 text-muted-foreground text-sm">{formatDate(user.registered_at)}</td>
                                                 <td className="p-4">
                                                     <div className="flex items-center justify-end gap-2">
                                                         {!isCurrentUser && (
@@ -250,7 +250,7 @@ export default function UsersPage() {
                                                                 <Button
                                                                     size="sm"
                                                                     variant="ghost"
-                                                                    className="h-8 text-xs"
+                                                                    className="h-8 text-sm"
                                                                     disabled={actionLoading === user.id + 'update_role'}
                                                                     onClick={() => handleAction(user.email!, 'update_role', user.role === 'admin' ? 'viewer' : 'admin')}
                                                                 >
@@ -259,7 +259,7 @@ export default function UsersPage() {
                                                                 <Button
                                                                     size="sm"
                                                                     variant="ghost"
-                                                                    className="h-8 text-xs text-orange-600 hover:text-orange-700 hover:bg-orange-500/10"
+                                                                    className="h-8 text-sm text-orange-600 hover:text-orange-700 hover:bg-orange-500/10"
                                                                     disabled={actionLoading === user.id + 'suspend'}
                                                                     onClick={() => handleAction(user.email!, 'suspend')}
                                                                 >
@@ -294,7 +294,7 @@ export default function UsersPage() {
                             <CardContent className="p-0">
                                 <table className="w-full text-sm">
                                     <thead>
-                                        <tr className="border-b text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                                        <tr className="border-b text-sm font-black uppercase tracking-widest text-muted-foreground/60">
                                             <th className="p-4 text-left">User</th>
                                             <th className="p-4 text-left">Status</th>
                                             <th className="p-4 text-right">Actions</th>
@@ -308,7 +308,7 @@ export default function UsersPage() {
                                                 <tr key={user.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                                                     <td className="p-4">
                                                         <p className="font-medium">{user.name || 'Unknown'}</p>
-                                                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                                                        <p className="text-sm text-muted-foreground">{user.email}</p>
                                                     </td>
                                                     <td className="p-4">
                                                         <Badge variant="outline" className={sc.badgeClass}>
@@ -321,7 +321,7 @@ export default function UsersPage() {
                                                             <Button
                                                                 size="sm"
                                                                 variant="ghost"
-                                                                className="h-8 text-xs text-green-600 hover:text-green-700 hover:bg-green-500/10"
+                                                                className="h-8 text-sm text-green-600 hover:text-green-700 hover:bg-green-500/10"
                                                                 disabled={actionLoading === user.id + 'approve'}
                                                                 onClick={() => handleAction(user.email!, 'approve')}
                                                             >

@@ -56,7 +56,7 @@ export default function ShowtimeSparkline({ showtimes = [] }: ShowtimeSparklineP
                             }}
                         />
                         {/* Custom Micro-Tooltip */}
-                        <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-gray-950/95 border border-white/20 rounded text-[9px] font-mono text-white whitespace-nowrap opacity-0 group-hover/bar:opacity-100 pointer-events-none transition-opacity z-30 shadow-lg">
+                        <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-gray-950/95 border border-white/20 rounded text-sm font-mono text-white whitespace-nowrap opacity-0 group-hover/bar:opacity-100 pointer-events-none transition-opacity z-30 shadow-lg">
                             {formattedHour}: <span className="font-bold text-pink-400">{count}</span>
                         </div>
                     </div>

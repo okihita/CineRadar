@@ -2,13 +2,13 @@
 
 import { useMemo } from 'react';
 import {
-  AreaChart, Area, BarChart, Bar, LineChart, Line,
+  AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, PieChart, Pie, Cell,
 } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import {
-  Film, TrendingUp, Trophy, Users, BarChart3,
+  Film, Trophy, Users, BarChart3,
   Crown, Calendar, Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -21,7 +21,6 @@ import { PageLoader, PageError } from '@/components/cinepoint/PageShell';
 import { CinePointErrorBoundary } from '@/components/cinepoint/ErrorBoundary';
 import { useBoxOfficeData, RANGE_PRESETS } from './_components/useBoxOfficeData';
 import type { RangePreset } from './_components/useBoxOfficeData';
-import { MovieDetailPanel } from './_components/MovieDetailPanel';
 import { HallOfFameTab } from './_components/HallOfFameTab';
 import { MovieDrillDown } from './_components/MovieDrillDown';
 import { FullRankings } from './_components/FullRankings';
@@ -32,11 +31,11 @@ export default function CinePointInsightsPage() {
   const {
     data, yearsData, loading, yearsLoading, error, yearsError, range, setRange,
     selectedMovie, setSelectedMovie, enrichedMovie, enrichedLoading,
-    loadData, loadYears,
+    loadYears,
   } = useBoxOfficeData();
 
-  const localTotal = useMemo(() => data?.movie_rankings.filter((m) => m.type === 'local').reduce((s, m) => s + m.total_period_admissions, 0) ?? 0, [data]);
-  const intlTotal = useMemo(() => data?.movie_rankings.filter((m) => m.type === 'international').reduce((s, m) => s + m.total_period_admissions, 0) ?? 0, [data]);
+  const localTotal = useMemo(() => data?.movie_rankings?.filter((m) => m.type === 'local').reduce((s, m) => s + m.total_period_admissions, 0) ?? 0, [data]);
+  const intlTotal = useMemo(() => data?.movie_rankings?.filter((m) => m.type === 'international').reduce((s, m) => s + m.total_period_admissions, 0) ?? 0, [data]);
 
   return (
     <div className="px-6 py-8 space-y-6">
@@ -48,7 +47,7 @@ export default function CinePointInsightsPage() {
           </div>
           <div>
             <h1 className="text-base font-black uppercase tracking-tighter">Box Office Intelligence</h1>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold opacity-60">Historical box office analytics from CinePoint data</p>
+            <p className="text-sm text-muted-foreground uppercase tracking-widest font-bold opacity-60">Historical box office analytics from CinePoint data</p>
           </div>
         </div>
       </div>
@@ -106,12 +105,12 @@ function DashboardContent({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Calendar className="w-4 h-4 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground font-medium">Period</span>
+          <span className="text-sm text-muted-foreground font-medium">Period</span>
         </div>
         <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
           {RANGE_PRESETS.map((p) => (
             <button key={p.value} onClick={() => { setRange(p.value); setSelectedMovie(null); }}
-              className={cn('px-3 py-1.5 text-xs font-medium rounded-md transition-all',
+              className={cn('px-3 py-1.5 text-sm font-medium rounded-md transition-all',
                 range === p.value ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground',
               )}>{p.label}</button>
           ))}
@@ -127,7 +126,7 @@ function DashboardContent({
           <Film className="w-12 h-12 text-muted-foreground/20" />
           <p className="text-muted-foreground font-medium">No box office data yet</p>
           {data?.sync_meta && (
-            <p className="text-xs text-muted-foreground">Backfill: {data.sync_meta.status} · {data.sync_meta.dates_scraped} dates · {data.sync_meta.docs_written?.toLocaleString()} docs</p>
+            <p className="text-sm text-muted-foreground">Backfill: {data.sync_meta.status} · {data.sync_meta.dates_scraped} dates · {data.sync_meta.docs_written?.toLocaleString()} docs</p>
           )}
         </div>
       )}
@@ -156,19 +155,19 @@ function KpiCards({ meta }: { meta: NonNullable<ReturnType<typeof useBoxOfficeDa
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       <Card><CardContent className="pt-6"><div className="flex items-center gap-3">
         <div className="p-2 bg-indigo-500/10 rounded-lg"><Users className="w-5 h-5 text-indigo-500" /></div>
-        <div><p className="text-2xl font-black">{meta.grand_total_admissions.toLocaleString()}</p><p className="text-xs text-muted-foreground font-medium">Total Admissions</p><p className="text-[10px] text-muted-foreground/60">{meta.avg_daily_admissions.toLocaleString()}/day avg</p></div>
+        <div><p className="text-2xl font-black">{meta.grand_total_admissions.toLocaleString()}</p><p className="text-sm text-muted-foreground font-medium">Total Admissions</p><p className="text-sm text-muted-foreground/60">{meta.avg_daily_admissions.toLocaleString()}/day avg</p></div>
       </div></CardContent></Card>
       <Card><CardContent className="pt-6"><div className="flex items-center gap-3">
         <div className="p-2 bg-purple-500/10 rounded-lg"><Film className="w-5 h-5 text-purple-500" /></div>
-        <div><p className="text-2xl font-black">{meta.unique_movies}</p><p className="text-xs text-muted-foreground font-medium">Unique Movies</p><p className="text-[10px] text-muted-foreground/60">{meta.days_with_data} days tracked</p></div>
+        <div><p className="text-2xl font-black">{meta.unique_movies}</p><p className="text-sm text-muted-foreground font-medium">Unique Movies</p><p className="text-sm text-muted-foreground/60">{meta.days_with_data} days tracked</p></div>
       </div></CardContent></Card>
       <Card><CardContent className="pt-6"><div className="flex items-center gap-3">
         <div className="p-2 bg-amber-500/10 rounded-lg"><Trophy className="w-5 h-5 text-amber-500" /></div>
-        <div><p className="text-2xl font-black">{meta.peak_day?.admissions?.toLocaleString() ?? '-'}</p><p className="text-xs text-muted-foreground font-medium">Peak Day</p><p className="text-[10px] text-muted-foreground/60">{meta.peak_day?.date ? format(parseISO(meta.peak_day.date), 'EEE, MMM d') : '-'}</p></div>
+        <div><p className="text-2xl font-black">{meta.peak_day?.admissions?.toLocaleString() ?? '-'}</p><p className="text-sm text-muted-foreground font-medium">Peak Day</p><p className="text-sm text-muted-foreground/60">{meta.peak_day?.date ? format(parseISO(meta.peak_day.date), 'EEE, MMM d') : '-'}</p></div>
       </div></CardContent></Card>
       <Card><CardContent className="pt-6"><div className="flex items-center gap-3">
         <div className="p-2 bg-emerald-500/10 rounded-lg"><Crown className="w-5 h-5 text-emerald-500" /></div>
-        <div><p className="text-2xl font-black">{meta.top_movie?.total_period_admissions?.toLocaleString() ?? '-'}</p><p className="text-xs text-muted-foreground font-medium">Top Movie</p><p className="text-[10px] text-muted-foreground/60 truncate max-w-[140px]">{meta.top_movie?.title ?? '-'}</p></div>
+        <div><p className="text-2xl font-black">{meta.top_movie?.total_period_admissions?.toLocaleString() ?? '-'}</p><p className="text-sm text-muted-foreground font-medium">Top Movie</p><p className="text-sm text-muted-foreground/60 truncate max-w-[140px]">{meta.top_movie?.title ?? '-'}</p></div>
       </div></CardContent></Card>
     </div>
   );
@@ -210,7 +209,7 @@ function ChartsRow({ data, localTotal, intlTotal }: { data: NonNullable<ReturnTy
                 <Tooltip formatter={(v) => Number(v).toLocaleString()} />
               </PieChart>
             </ResponsiveContainer>
-            <div className="flex gap-4 text-xs text-muted-foreground mt-2">
+            <div className="flex gap-4 text-sm text-muted-foreground mt-2">
               <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: LOCAL_COLOR }} /> Local</span>
               <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: INTL_COLOR }} /> Intl</span>
             </div>

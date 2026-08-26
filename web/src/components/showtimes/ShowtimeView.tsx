@@ -70,14 +70,14 @@ export default function ShowtimeView({ movieTitle, city, schedules, onClose }: S
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
                                         <h3 className="font-bold text-lg text-white">{theatre.theatre_name}</h3>
-                                        <span className={`px-2 py-0.5 text-xs font-bold rounded ${theatre.merchant === 'XXI' ? 'bg-amber-600/80' :
+                                        <span className={`px-2 py-0.5 text-sm font-bold rounded ${theatre.merchant === 'XXI' ? 'bg-amber-600/80' :
                                             theatre.merchant === 'CGV' ? 'bg-red-600/80' :
                                                 'bg-blue-600/80'
                                             }`}>
                                             {theatre.merchant}
                                         </span>
                                     </div>
-                                    <p className="text-xs text-gray-500 line-clamp-1">{theatre.address}</p>
+                                    <p className="text-sm text-gray-500 line-clamp-1">{theatre.address}</p>
                                 </div>
                             </div>
 
@@ -86,7 +86,7 @@ export default function ShowtimeView({ movieTitle, city, schedules, onClose }: S
                                     <div key={idx} className="bg-black/20 rounded-lg p-3">
                                         <div className="flex justify-between items-center mb-2">
                                             <span className="text-sm font-medium text-gray-300">{room.category}</span>
-                                            <span className="text-xs text-gray-500">{room.price}</span>
+                                            <span className="text-sm text-gray-500">{room.price}</span>
                                         </div>
                                         <div className="flex flex-wrap gap-2">
                                             {/* Past showtimes (grayed out) */}

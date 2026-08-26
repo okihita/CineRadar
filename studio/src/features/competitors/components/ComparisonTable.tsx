@@ -36,7 +36,7 @@ function CoverageBar({ cr, cp }: { cr?: number; cp?: number }) {
           style={{ width: `${ratio}%` }} 
         />
       </div>
-      <span className="text-[8px] font-bold text-muted-foreground w-8 text-right">{ratio.toFixed(0)}%</span>
+      <span className="text-sm font-bold text-muted-foreground w-8 text-right">{ratio.toFixed(0)}%</span>
     </div>
   );
 }
@@ -63,7 +63,7 @@ export function ComparisonTable({
 
   if (rows.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground text-xs flex flex-col items-center gap-3 border-2 border-dashed rounded-2xl border-border/40 bg-muted/5">
+      <div className="text-center py-12 text-muted-foreground text-sm flex flex-col items-center gap-3 border-2 border-dashed rounded-2xl border-border/40 bg-muted/5">
         <AlertCircle className="w-6 h-6 opacity-40" />
         <p>No data yet. Paste a CinePoint tweet above to start comparing.</p>
       </div>
@@ -78,9 +78,9 @@ export function ComparisonTable({
   return (
     <div className="space-y-4">
       {/* Summary Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 text-[10px] font-bold uppercase tracking-tight bg-muted/5 p-3 rounded-xl border border-border/40">
+      <div className="flex flex-wrap items-center justify-between gap-3 text-sm font-bold uppercase tracking-tight bg-muted/5 p-3 rounded-xl border border-border/40">
         <div className="flex items-center gap-4">
-          <Badge variant="outline" className={cn("text-[9px] font-mono h-6 px-3 border-primary/20", summary.matched_movies === summary.total_cp_movies ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600")}>
+          <Badge variant="outline" className={cn("text-sm font-mono h-6 px-3 border-primary/20", summary.matched_movies === summary.total_cp_movies ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600")}>
             {summary.matched_movies}/{summary.total_cp_movies} matched
           </Badge>
           <span className="text-muted-foreground/60 hidden sm:inline">Coverage Health:</span>
@@ -90,14 +90,14 @@ export function ComparisonTable({
           {showShowtimes && summary.total_cp_showtimes > 0 && (
             <div className="flex items-center gap-3">
               <span className="text-muted-foreground">Showtimes:</span>
-              <span className="font-mono text-[11px]">{summary.total_cr_showtimes.toLocaleString()} <span className="text-muted-foreground/40">/ {summary.total_cp_showtimes.toLocaleString()}</span></span>
+              <span className="font-mono text-sm">{summary.total_cr_showtimes.toLocaleString()} <span className="text-muted-foreground/40">/ {summary.total_cp_showtimes.toLocaleString()}</span></span>
             </div>
           )}
 
           {showAdmissions && summary.total_cp_admissions > 0 && (
             <div className="flex items-center gap-3">
               <span className="text-muted-foreground">Admissions:</span>
-              <span className="font-mono text-[11px]">{summary.total_cr_admissions.toLocaleString()} <span className="text-muted-foreground/40">/ {summary.total_cp_admissions.toLocaleString()}</span></span>
+              <span className="font-mono text-sm">{summary.total_cr_admissions.toLocaleString()} <span className="text-muted-foreground/40">/ {summary.total_cp_admissions.toLocaleString()}</span></span>
             </div>
           )}
         </div>
@@ -106,10 +106,10 @@ export function ComparisonTable({
       <Tabs defaultValue={defaultTab} className="w-full">
         <div className="flex items-center justify-between mb-4">
           <TabsList className="bg-muted/10 border border-border/40">
-            {showShowtimes && <TabsTrigger value="showtimes" className="text-[10px] uppercase font-bold tracking-widest">Showtimes</TabsTrigger>}
-            {showAdmissions && <TabsTrigger value="admissions" className="text-[10px] uppercase font-bold tracking-widest">Admissions</TabsTrigger>}
+            {showShowtimes && <TabsTrigger value="showtimes" className="text-sm uppercase font-bold tracking-widest">Showtimes</TabsTrigger>}
+            {showAdmissions && <TabsTrigger value="admissions" className="text-sm uppercase font-bold tracking-widest">Admissions</TabsTrigger>}
           </TabsList>
-          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-primary/60">Forensic View</span>
+          <span className="text-sm font-black uppercase tracking-[0.2em] text-primary/60">Forensic View</span>
         </div>
 
         {['showtimes', 'admissions'].map((tabType) => {
@@ -120,19 +120,19 @@ export function ComparisonTable({
           return (
             <TabsContent key={tabType} value={tabType} className="mt-0 outline-none">
               <div className="overflow-x-auto rounded-2xl border border-border/40 shadow-sm bg-card">
-                <table className="w-full text-[11px]">
+                <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border/40 bg-muted/5">
-                      <th className="text-left py-3 px-4 font-black uppercase tracking-[0.15em] text-muted-foreground text-[9px] w-[35%]">
+                      <th className="text-left py-3 px-4 font-black uppercase tracking-[0.15em] text-muted-foreground text-sm w-[35%]">
                         Target Movie
                       </th>
-                      <th className="text-right py-3 px-4 font-black uppercase tracking-[0.15em] text-muted-foreground text-[9px] w-[25%]">
+                      <th className="text-right py-3 px-4 font-black uppercase tracking-[0.15em] text-muted-foreground text-sm w-[25%]">
                         CineRadar (Local)
                       </th>
-                      <th className="text-right py-3 px-4 font-black uppercase tracking-[0.15em] text-muted-foreground text-[9px] w-[20%]">
+                      <th className="text-right py-3 px-4 font-black uppercase tracking-[0.15em] text-muted-foreground text-sm w-[20%]">
                         CinePoint (Truth)
                       </th>
-                      <th className="text-right py-3 px-4 font-black uppercase tracking-[0.15em] text-muted-foreground text-[9px] w-[20%]">
+                      <th className="text-right py-3 px-4 font-black uppercase tracking-[0.15em] text-muted-foreground text-sm w-[20%]">
                         Delta Drift
                       </th>
                     </tr>
@@ -153,25 +153,25 @@ export function ComparisonTable({
                           <td className="py-3 px-4">
                             {row.matched_movie_id ? (
                               <div className="flex flex-col">
-                                <span className="font-bold text-[12px] text-foreground tracking-tight">
+                                <span className="font-bold text-sm text-foreground tracking-tight">
                                   {row.title_cr || row.title_cp}
                                 </span>
                                 {row.title_cp !== row.title_cr && row.title_cr && (
-                                  <span className="text-muted-foreground/50 text-[9px] uppercase tracking-wider font-medium flex items-center gap-1 mt-0.5">
+                                  <span className="text-muted-foreground/50 text-sm uppercase tracking-wider font-medium flex items-center gap-1 mt-0.5">
                                     <Link2 className="w-2.5 h-2.5" /> Mapped to: {row.title_cp}
                                   </span>
                                 )}
                               </div>
                             ) : (
                               <div className="flex flex-col gap-1.5">
-                                <span className="text-amber-600 font-bold text-[12px] tracking-tight flex items-center gap-1.5">
+                                <span className="text-amber-600 font-bold text-sm tracking-tight flex items-center gap-1.5">
                                   <AlertCircle className="w-3.5 h-3.5" /> {row.title_cp}
                                 </span>
                                 <Select
                                   onValueChange={(val) => handleMatch(row.title_cp, val)}
                                   disabled={updatingTitle === row.title_cp}
                                 >
-                                  <SelectTrigger className="h-6 w-[180px] text-[9px] bg-amber-500/5 border-amber-500/20 text-amber-700 dark:text-amber-400 font-bold uppercase tracking-wider">
+                                  <SelectTrigger className="h-6 w-[180px] text-sm bg-amber-500/5 border-amber-500/20 text-amber-700 dark:text-amber-400 font-bold uppercase tracking-wider">
                                     <SelectValue placeholder="Link Database Movie..." />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -179,7 +179,7 @@ export function ComparisonTable({
                                       .filter((m) => m.title)
                                       .sort((a, b) => a.title.localeCompare(b.title))
                                       .map((m) => (
-                                        <SelectItem key={m.movie_id || m.id} value={m.movie_id || m.id} className="text-[10px] font-medium">
+                                        <SelectItem key={m.movie_id || m.id} value={m.movie_id || m.id} className="text-sm font-medium">
                                           {m.title}
                                         </SelectItem>
                                       ))}
@@ -191,28 +191,28 @@ export function ComparisonTable({
 
                           {/* CineRadar Column (with Progress Bar) */}
                           <td className="text-right py-3 px-4">
-                            <div className="font-mono text-[12px] font-medium">
+                            <div className="font-mono text-sm font-medium">
                               {crValue !== undefined ? crValue.toLocaleString() : '—'}
                             </div>
                             {row.matched_movie_id && <CoverageBar cr={crValue} cp={cpValue} />}
                           </td>
 
                           {/* CinePoint Column */}
-                          <td className="text-right py-3 px-4 font-mono text-[12px] text-muted-foreground font-medium">
+                          <td className="text-right py-3 px-4 font-mono text-sm text-muted-foreground font-medium">
                             {cpValue !== undefined ? cpValue.toLocaleString() : '—'}
                           </td>
 
                           {/* Delta Column */}
                           <td className="text-right py-3 px-4">
                             <div className={cn(
-                              'font-mono text-[12px] font-black',
+                              'font-mono text-sm font-black',
                               deltaValue !== undefined && deltaValue > 0 ? 'text-emerald-600' : 
                               deltaValue !== undefined && deltaValue < 0 ? 'text-red-500' : 'text-muted-foreground'
                             )}>
                               {deltaValue !== undefined ? `${deltaValue > 0 ? '+' : ''}${deltaValue.toLocaleString()}` : '—'}
                             </div>
                             <div className={cn(
-                              'text-[9px] font-bold mt-0.5',
+                              'text-sm font-bold mt-0.5',
                               deltaPct !== undefined && deltaPct > 0 ? 'text-emerald-600/70' : 
                               deltaPct !== undefined && deltaPct < 0 ? 'text-red-500/70' : 'text-muted-foreground/50'
                             )}>

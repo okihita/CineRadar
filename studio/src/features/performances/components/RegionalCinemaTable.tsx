@@ -64,7 +64,7 @@ export function RegionalCinemaTable({ showtimes, onDrillDown }: RegionalCinemaTa
         <div className="overflow-x-auto">
             <table className="w-full text-sm">
                 <thead>
-                    <tr className="border-b bg-muted/30 uppercase text-[10px] font-black tracking-widest text-muted-foreground/70">
+                    <tr className="border-b bg-muted/30 uppercase text-sm font-black tracking-widest text-muted-foreground/70">
                         <th className="p-4 text-left cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('theatre_name')}>Cinema / Mall</th>
                         <th className="p-4 text-left cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('merchant')}>Chain</th>
                         <th className="p-4 text-right cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('showtime_count')}>Shows</th>
@@ -83,7 +83,7 @@ export function RegionalCinemaTable({ showtimes, onDrillDown }: RegionalCinemaTa
                                 onClick={() => onDrillDown(cinema.theatre_id)}
                             >
                                 <td className="p-4">
-                                    <div className="flex items-center gap-2 font-black uppercase text-xs tracking-tight group-hover:text-primary transition-colors">
+                                    <div className="flex items-center gap-2 font-black uppercase text-sm tracking-tight group-hover:text-primary transition-colors">
                                         <Building2 className="w-3.5 h-3.5 text-muted-foreground/40" />
                                         {cinema.theatre_name}
                                     </div>
@@ -91,20 +91,20 @@ export function RegionalCinemaTable({ showtimes, onDrillDown }: RegionalCinemaTa
                                 <td className="p-4">
                                     <MerchantBadge merchant={cinema.merchant} />
                                 </td>
-                                <td className="p-4 text-right font-mono font-bold text-xs opacity-60">{cinema.showtime_count}</td>
+                                <td className="p-4 text-right font-mono font-bold text-sm opacity-60">{cinema.showtime_count}</td>
                                 <td className="p-4 hidden md:table-cell">
                                     <ForensicAuditProgress 
                                         auditedCount={cinema.audited_count} 
                                         totalCount={cinema.showtime_count} 
                                     />
                                 </td>
-                                <td className="p-4 text-right font-black font-mono text-xs tabular-nums">
+                                <td className="p-4 text-right font-black font-mono text-sm tabular-nums">
                                     {cinema.total_sold.toLocaleString()}
                                     <span className="text-muted-foreground/30 font-normal ml-1">/{cinema.total_seats.toLocaleString()}</span>
                                 </td>
                                 <td className="py-4 px-4 text-right">
                                     <span className={cn(
-                                        "text-xs font-black font-mono tabular-nums",
+                                        "text-sm font-black font-mono tabular-nums",
                                         getOccupancyColor(cinema.true_occupancy_pct)
                                     )}>
                                         {formatOccupancy(cinema.true_occupancy_pct)}%

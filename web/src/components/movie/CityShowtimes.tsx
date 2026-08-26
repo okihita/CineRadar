@@ -140,11 +140,11 @@ export default function CityShowtimes({ movie }: CityShowtimesProps) {
                         ) : (
                             <div className="w-full h-full flex flex-col items-center justify-center bg-gray-800 text-gray-500">
                                 <Film className="w-12 h-12 mb-2 opacity-50" />
-                                <span className="text-xs">🎬</span>
+                                <span className="text-sm">🎬</span>
                             </div>
                         )}
                         {movie.is_presale && (
-                            <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] sm:text-xs font-extrabold text-center py-1 tracking-wider shadow-md">
+                            <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm sm:text-sm font-extrabold text-center py-1 tracking-wider shadow-md">
                                 {t('showtimes.hero.presale')}
                             </div>
                         )}
@@ -153,10 +153,10 @@ export default function CityShowtimes({ movie }: CityShowtimesProps) {
                             <div className="absolute bottom-3 right-3 bg-gray-950/80 backdrop-blur-md border border-emerald-500/30 rounded-xl px-2.5 py-1.5 flex items-center gap-2 shadow-2xl">
                                 <Flame className="w-4 h-4 text-emerald-400 animate-pulse" />
                                 <div className="flex flex-col items-start leading-none">
-                                    <span className="text-[8px] uppercase tracking-widest text-emerald-400 font-bold mb-0.5">
+                                    <span className="text-sm uppercase tracking-widest text-emerald-400 font-bold mb-0.5">
                                         {t('common.showing')}
                                     </span>
-                                    <span className="text-xs sm:text-sm font-extrabold text-white">
+                                    <span className="text-sm sm:text-sm font-extrabold text-white">
                                         {movie.admissionStats.total_admissions.toLocaleString()}
                                     </span>
                                 </div>
@@ -170,24 +170,24 @@ export default function CityShowtimes({ movie }: CityShowtimesProps) {
                             {/* Badges & Tags Row */}
                             <div className="flex flex-wrap items-center gap-2 mb-3">
                                 {movie.is_presale ? (
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold tracking-wider text-amber-300 bg-amber-500/15 border border-amber-500/30 rounded-full shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-bold tracking-wider text-amber-300 bg-amber-500/15 border border-amber-500/30 rounded-full shadow-[0_0_15px_rgba(245,158,11,0.2)]">
                                         <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                                         {t('showtimes.hero.presale')}
                                     </span>
                                 ) : hasSchedules ? (
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold tracking-wider text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 rounded-full shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-bold tracking-wider text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 rounded-full shadow-[0_0_15px_rgba(16,185,129,0.15)]">
                                         <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
                                         {t('showtimes.hero.nowShowing')}
                                     </span>
                                 ) : (
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold tracking-wider text-sky-300 bg-sky-500/15 border border-sky-500/30 rounded-full">
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 text-sm font-bold tracking-wider text-sky-300 bg-sky-500/15 border border-sky-500/30 rounded-full">
                                         <Clock className="w-3.5 h-3.5 text-sky-300" />
                                         {t('showtimes.hero.presale')}
                                     </span>
                                 )}
 
                                 {movie.age_category && (
-                                    <span className="px-2.5 py-1 text-xs font-bold text-white bg-white/10 border border-white/15 rounded-full backdrop-blur-sm shadow-sm">
+                                    <span className="px-2.5 py-1 text-sm font-bold text-white bg-white/10 border border-white/15 rounded-full backdrop-blur-sm shadow-sm">
                                         {movie.age_category}
                                     </span>
                                 )}
@@ -199,7 +199,7 @@ export default function CityShowtimes({ movie }: CityShowtimesProps) {
                                     return (
                                         <span
                                             key={genre}
-                                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-gray-300 bg-white/[0.04] border border-white/10 rounded-full hover:bg-white/[0.08] transition-colors"
+                                            className="inline-flex items-center gap-1 px-2.5 py-1 text-sm font-medium text-gray-300 bg-white/[0.04] border border-white/10 rounded-full hover:bg-white/[0.08] transition-colors"
                                         >
                                             <span>{emoji}</span>
                                             <span>{localized}</span>
@@ -215,7 +215,7 @@ export default function CityShowtimes({ movie }: CityShowtimesProps) {
 
                             {/* Cinema Chains Available */}
                             <div className="flex flex-wrap items-center gap-2 mb-6">
-                                <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider mr-1">
+                                <span className="text-sm text-gray-400 font-semibold uppercase tracking-wider mr-1">
                                     {t('showtimes.hero.availableAt')}
                                 </span>
                                 {merchants.map((merchant) => {
@@ -223,7 +223,7 @@ export default function CityShowtimes({ movie }: CityShowtimesProps) {
                                     return (
                                         <span
                                             key={merchant}
-                                            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-lg border backdrop-blur-sm shadow-sm transition-all duration-200"
+                                            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-sm font-bold rounded-lg border backdrop-blur-sm shadow-sm transition-all duration-200"
                                             style={{
                                                 borderColor: `${color}40`,
                                                 backgroundColor: `${color}15`,
@@ -253,7 +253,7 @@ export default function CityShowtimes({ movie }: CityShowtimesProps) {
                                         <div className="text-lg sm:text-xl font-bold text-white tracking-tight truncate">
                                             {cities.length}
                                         </div>
-                                        <div className="text-[10px] sm:text-[11px] uppercase tracking-wider text-gray-400 font-semibold truncate">
+                                        <div className="text-sm sm:text-sm uppercase tracking-wider text-gray-400 font-semibold truncate">
                                             {t('showtimes.hero.stats.cities')}
                                         </div>
                                     </div>
@@ -268,7 +268,7 @@ export default function CityShowtimes({ movie }: CityShowtimesProps) {
                                         <div className="text-lg sm:text-xl font-bold text-white tracking-tight truncate">
                                             {stats.totalTheatres.toLocaleString()}
                                         </div>
-                                        <div className="text-[10px] sm:text-[11px] uppercase tracking-wider text-gray-400 font-semibold truncate">
+                                        <div className="text-sm sm:text-sm uppercase tracking-wider text-gray-400 font-semibold truncate">
                                             {t('showtimes.hero.stats.theatres')}
                                         </div>
                                     </div>
@@ -283,7 +283,7 @@ export default function CityShowtimes({ movie }: CityShowtimesProps) {
                                         <div className="text-lg sm:text-xl font-bold text-white tracking-tight truncate">
                                             {stats.allShowtimes.length.toLocaleString()}
                                         </div>
-                                        <div className="text-[10px] sm:text-[11px] uppercase tracking-wider text-gray-400 font-semibold truncate">
+                                        <div className="text-sm sm:text-sm uppercase tracking-wider text-gray-400 font-semibold truncate">
                                             {t('showtimes.hero.stats.dailyShowtimes')}
                                         </div>
                                     </div>
@@ -300,7 +300,7 @@ export default function CityShowtimes({ movie }: CityShowtimesProps) {
                                                 ? `${formatPrice(stats.priceRange.min)} – ${formatPrice(stats.priceRange.max)}`
                                                 : '-'}
                                         </div>
-                                        <div className="text-[10px] sm:text-[11px] uppercase tracking-wider text-gray-400 font-semibold truncate">
+                                        <div className="text-sm sm:text-sm uppercase tracking-wider text-gray-400 font-semibold truncate">
                                             {t('showtimes.hero.stats.priceRange')}
                                         </div>
                                     </div>
@@ -308,7 +308,7 @@ export default function CityShowtimes({ movie }: CityShowtimesProps) {
 
                                 {/* Density Sparkline */}
                                 <div className="col-span-2 sm:col-span-4 lg:col-span-1 flex flex-col justify-center p-2.5 rounded-xl bg-white/[0.02] border-t sm:border-t-0 sm:border-l border-white/5 lg:pl-3">
-                                    <div className="flex items-center justify-between text-[10px] sm:text-[11px] uppercase tracking-wider text-gray-400 font-semibold mb-1">
+                                    <div className="flex items-center justify-between text-sm sm:text-sm uppercase tracking-wider text-gray-400 font-semibold mb-1">
                                         <span className="flex items-center gap-1 text-purple-300">
                                             <Activity className="w-3.5 h-3.5 text-purple-400" />
                                             <span>{t('showtimes.hero.stats.hourlyDensity')}</span>
@@ -341,7 +341,7 @@ export default function CityShowtimes({ movie }: CityShowtimesProps) {
                                 <Ticket className="w-5 h-5 text-purple-400" />
                                 <span>{t('nav.showtimes')}</span>
                             </h2>
-                            <span className="text-xs text-gray-400">
+                            <span className="text-sm text-gray-400">
                                 {t('catalog.citiesCount', { count: cities.length })}
                             </span>
                         </div>
@@ -394,14 +394,14 @@ export default function CityShowtimes({ movie }: CityShowtimesProps) {
                                             </div>
                                             <div className="min-w-0">
                                                 <h3 className="text-base sm:text-lg font-bold text-white truncate">{city}</h3>
-                                                <p className="text-xs text-gray-400 font-medium">
+                                                <p className="text-sm text-gray-400 font-medium">
                                                     {t('showtimes.card.theatresCount', { count: theaters.length })}
                                                 </p>
                                             </div>
                                         </div>
 
                                         <div className="flex items-center gap-3">
-                                            <span className="text-xs px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-gray-300 font-medium hidden sm:inline-block">
+                                            <span className="text-sm px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-gray-300 font-medium hidden sm:inline-block">
                                                 {t('showtimes.card.showtimesCount', { count: totalShows })}
                                             </span>
                                             <div className={`p-1.5 rounded-lg bg-white/5 text-gray-400 transition-transform duration-300 ${isExpanded ? 'rotate-180 text-white bg-white/10' : ''}`}>

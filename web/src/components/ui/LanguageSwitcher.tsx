@@ -17,7 +17,7 @@ export default function LanguageSwitcher() {
           <button
             key={loc}
             onClick={() => setLocale(loc)}
-            className={`px-2 py-0.5 sm:py-1 rounded-lg text-[11px] sm:text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1 active:scale-95 ${
+            className={`px-2 py-0.5 sm:py-1 rounded-lg text-sm sm:text-sm font-bold transition-all duration-200 cursor-pointer flex items-center gap-1 active:scale-95 ${
               isActive
                 ? 'bg-purple-600 text-white shadow-md shadow-purple-500/25 border border-purple-400/40'
                 : 'text-gray-400 hover:text-white hover:bg-white/5'
