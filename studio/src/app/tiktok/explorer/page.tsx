@@ -91,14 +91,15 @@ export default function TikTokExplorerPage() {
     const { data: liveResponse, isLoading } = useSWR('/api/socials/tiktok?hashtag=latest', fetcher, { revalidateOnFocus: false });
     const liveData = liveResponse?.data;
 
-    // Crawl date timestamp
+    // Crawl date timestamp normalized to Asia/Jakarta (WIB)
     const crawlDate = useMemo(() => {
         if (!liveData?.executed_at) return today;
-        return new Date(liveData.executed_at).toISOString().split('T')[0];
+        const d = new Date(liveData.executed_at);
+        return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(d);
     }, [liveData, today]);
 
     // Check if the currently selected date has real crawl data
-    const isDataAvailableForDate = selectedDate === crawlDate || selectedDate === today;
+    const isDataAvailableForDate = selectedDate === crawlDate;
 
     // Date navigation helpers
     const handlePrevDay = () => {
