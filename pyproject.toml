@@ -80,6 +80,7 @@ strict = true
 
 [dependency-groups]
 dev = [
+    "functions-framework>=3.10.2",
     "mypy>=1.20.1",
     "ruff>=0.15.10",
 ]
