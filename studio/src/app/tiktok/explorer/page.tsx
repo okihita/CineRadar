@@ -77,6 +77,18 @@ export default function TikTokExplorerPage() {
     // Check if the currently selected date has real crawl data
     const isDataAvailableForDate = selectedDate === crawlDate;
 
+    // Check if the night crawl window (23:00 WIB) has executed for the active dataset
+    const hasNightRunHappened = useMemo(() => {
+        if (!liveData?.executed_at) return false;
+        const d = new Date(liveData.executed_at);
+        const jakartaHour = Number(new Intl.DateTimeFormat('en-US', {
+            hour: 'numeric',
+            hour12: false,
+            timeZone: 'Asia/Jakarta',
+        }).format(d));
+        return jakartaHour >= 22;
+    }, [liveData]);
+
     // Date navigation helpers
     const handlePrevDay = () => {
         const d = new Date(selectedDate);
@@ -502,19 +514,30 @@ export default function TikTokExplorerPage() {
                                             </CardTitle>
                                             <p className="text-sm text-muted-foreground flex items-center gap-1">
                                                 <Clock className="w-3 h-3" />
-                                                Gemini 3.6 Flash Ingested Window
+                                                {hasNightRunHappened ? 'Gemini 3.6 Flash Ingested Window' : 'Scheduled Daily Run'}
                                             </p>
                                         </div>
                                     </div>
                                     <Badge variant="outline" className="text-sm font-medium">
-                                        Post-Showtimes
+                                        {hasNightRunHappened ? 'Post-Showtimes' : 'Awaiting 23:00 WIB'}
                                     </Badge>
                                 </div>
                             </CardHeader>
                             <CardContent className="p-4 space-y-2.5">
-                                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
-                                    {actionableInsights.nightBriefing}
-                                </p>
+                                {hasNightRunHappened ? (
+                                    <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                                        {actionableInsights.nightBriefing}
+                                    </p>
+                                ) : (
+                                    <div className="py-3 text-center space-y-1 bg-muted/20 rounded-lg border border-border/30 p-3">
+                                        <p className="text-sm font-semibold text-foreground">
+                                            Awaiting Evening Showtime Reactions
+                                        </p>
+                                        <p className="text-sm text-muted-foreground leading-relaxed">
+                                            The Night Box Office Recap will automatically populate at <strong className="text-foreground font-mono">23:00 WIB</strong> after evening showtime discussions and prime-time word-of-mouth are ingested by Gemini 3.6 Flash.
+                                        </p>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     </div>
