@@ -65,7 +65,7 @@ export default function TikTokExplorerPage() {
     const liveData = liveResponse?.data;
 
     // Fetch today's movies with actual showtimes from schedules_v2
-    const { data: scheduleResponse } = useSWR<ScheduleResponse>(`/api/schedules?date=${selectedDate}`, fetcher, { revalidateOnFocus: false });
+    const { data: scheduleResponse, isLoading: isScheduleLoading } = useSWR<ScheduleResponse>(`/api/schedules?date=${selectedDate}`, fetcher, { revalidateOnFocus: false });
     const activeShowtimeMovies: MovieSchedule[] = useMemo(() => {
         return scheduleResponse?.movies || [];
     }, [scheduleResponse]);
@@ -690,7 +690,11 @@ export default function TikTokExplorerPage() {
                                             Theatrical Lineup &amp; Sentiment Analysis
                                         </CardTitle>
                                         <p className="text-sm text-muted-foreground">
-                                            Showing {showAllMovies ? todayMovieSentimentList.length : Math.min(10, todayMovieSentimentList.length)} of {todayMovieSentimentList.length} movies playing in cinemas today · Click any row to filter feed
+                                            {isScheduleLoading ? (
+                                                'Loading active theatrical movies from cinema circuits...'
+                                            ) : (
+                                                `Showing ${showAllMovies ? todayMovieSentimentList.length : Math.min(10, todayMovieSentimentList.length)} of ${todayMovieSentimentList.length} movies playing in cinemas today · Click any row to filter feed`
+                                            )}
                                         </p>
                                     </div>
                                 </div>
@@ -747,62 +751,102 @@ export default function TikTokExplorerPage() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-border/30">
-                                        {(showAllMovies ? todayMovieSentimentList : todayMovieSentimentList.slice(0, 10)).map((movie, idx) => {
-                                            const isSelected = selectedMovieFilter.toLowerCase() === movie.title.toLowerCase();
-                                            return (
-                                                <tr
-                                                    key={movie.id}
-                                                    onClick={() => setSelectedMovieFilter((prev) => prev.toLowerCase() === movie.title.toLowerCase() ? 'all' : movie.title)}
-                                                    className={`hover:bg-muted/30 transition-colors cursor-pointer ${
-                                                        isSelected ? 'bg-primary/10 font-semibold' : ''
-                                                    }`}
-                                                >
-                                                    <td className="p-3 pl-4 text-foreground">
+                                        {isScheduleLoading ? (
+                                            Array.from({ length: 6 }).map((_, idx) => (
+                                                <tr key={idx} className="animate-pulse">
+                                                    <td className="p-3 pl-4">
                                                         <div className="flex items-center gap-2">
-                                                            <span className="text-muted-foreground font-mono text-sm w-4">
-                                                                {idx + 1}.
-                                                            </span>
-                                                            <div>
-                                                                <span className="hover:underline font-bold text-foreground">
-                                                                    {movie.title}
-                                                                </span>
-                                                                <span className="block text-sm text-muted-foreground font-mono font-normal">
-                                                                    {movie.hashtag}
-                                                                </span>
+                                                            <div className="w-4 h-4 bg-muted rounded shrink-0" />
+                                                            <div className="space-y-1.5 flex-1">
+                                                                <div className="w-40 h-4 bg-muted/80 rounded" />
+                                                                <div className="w-24 h-3 bg-muted/50 rounded" />
                                                             </div>
                                                         </div>
                                                     </td>
                                                     <td className="p-3">
-                                                        <Badge variant="outline" className="text-sm font-medium">
-                                                            {movie.age_category}
-                                                        </Badge>
+                                                        <div className="w-10 h-5 bg-muted/70 rounded" />
                                                     </td>
-                                                    <td className="p-3 text-right font-mono font-semibold text-foreground">
-                                                        {movie.views > 0 ? movie.views.toLocaleString() : '-'}
+                                                    <td className="p-3 text-right">
+                                                        <div className="w-16 h-4 bg-muted/70 rounded ml-auto" />
                                                     </td>
-                                                    <td className="p-3 text-right font-mono text-muted-foreground">
-                                                        {movie.shares > 0 ? movie.shares.toLocaleString() : '-'}
+                                                    <td className="p-3 text-right">
+                                                        <div className="w-12 h-4 bg-muted/60 rounded ml-auto" />
                                                     </td>
                                                     <td className="p-3 min-w-[200px]">
-                                                        <div className="space-y-1">
-                                                            <div className="flex items-center justify-between text-sm font-mono">
-                                                                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{movie.positivePct}% Pos</span>
-                                                                <span className="text-muted-foreground">{movie.mixedPct}% Mix</span>
-                                                                <span className="text-rose-500">{movie.negativePct}% Crit</span>
-                                                            </div>
-                                                            <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden flex">
-                                                                <div style={{ width: `${movie.positivePct}%` }} className="bg-emerald-500 h-full" />
-                                                                <div style={{ width: `${movie.mixedPct}%` }} className="bg-amber-500 h-full" />
-                                                                <div style={{ width: `${movie.negativePct}%` }} className="bg-rose-500 h-full" />
-                                                            </div>
+                                                        <div className="space-y-1.5">
+                                                            <div className="w-36 h-3 bg-muted/70 rounded" />
+                                                            <div className="w-full h-1.5 bg-muted/50 rounded-full" />
                                                         </div>
                                                     </td>
-                                                    <td className="p-3 pr-4 text-muted-foreground truncate max-w-[260px]">
-                                                        {movie.topPraise}
+                                                    <td className="p-3 pr-4">
+                                                        <div className="w-48 h-4 bg-muted/60 rounded" />
                                                     </td>
                                                 </tr>
-                                            );
-                                        })}
+                                            ))
+                                        ) : todayMovieSentimentList.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={6} className="p-8 text-center text-sm text-muted-foreground">
+                                                    No active theatrical movies found for {selectedDate}.
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            (showAllMovies ? todayMovieSentimentList : todayMovieSentimentList.slice(0, 10)).map((movie, idx) => {
+                                                const isSelected = selectedMovieFilter.toLowerCase() === movie.title.toLowerCase();
+                                                return (
+                                                    <tr
+                                                        key={movie.id}
+                                                        onClick={() => setSelectedMovieFilter((prev) => prev.toLowerCase() === movie.title.toLowerCase() ? 'all' : movie.title)}
+                                                        className={`hover:bg-muted/30 transition-colors cursor-pointer ${
+                                                            isSelected ? 'bg-primary/10 font-semibold' : ''
+                                                        }`}
+                                                    >
+                                                        <td className="p-3 pl-4 text-foreground">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-muted-foreground font-mono text-sm w-4">
+                                                                    {idx + 1}.
+                                                                </span>
+                                                                <div>
+                                                                    <span className="hover:underline font-bold text-foreground">
+                                                                        {movie.title}
+                                                                    </span>
+                                                                    <span className="block text-sm text-muted-foreground font-mono font-normal">
+                                                                        {movie.hashtag}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="p-3">
+                                                            <Badge variant="outline" className="text-sm font-medium">
+                                                                {movie.age_category}
+                                                            </Badge>
+                                                        </td>
+                                                        <td className="p-3 text-right font-mono font-semibold text-foreground">
+                                                            {movie.views > 0 ? movie.views.toLocaleString() : '-'}
+                                                        </td>
+                                                        <td className="p-3 text-right font-mono text-muted-foreground">
+                                                            {movie.shares > 0 ? movie.shares.toLocaleString() : '-'}
+                                                        </td>
+                                                        <td className="p-3 min-w-[200px]">
+                                                            <div className="space-y-1">
+                                                                <div className="flex items-center justify-between text-sm font-mono">
+                                                                    <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{movie.positivePct}% Pos</span>
+                                                                    <span className="text-muted-foreground">{movie.mixedPct}% Mix</span>
+                                                                    <span className="text-rose-500">{movie.negativePct}% Crit</span>
+                                                                </div>
+                                                                <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden flex">
+                                                                    <div style={{ width: `${movie.positivePct}%` }} className="bg-emerald-500 h-full" />
+                                                                    <div style={{ width: `${movie.mixedPct}%` }} className="bg-amber-500 h-full" />
+                                                                    <div style={{ width: `${movie.negativePct}%` }} className="bg-rose-500 h-full" />
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="p-3 pr-4 text-muted-foreground truncate max-w-[260px]">
+                                                            {movie.topPraise}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
