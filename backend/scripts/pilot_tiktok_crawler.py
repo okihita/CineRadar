@@ -23,9 +23,16 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
+# Ensure repository root is in sys.path
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 from dotenv import load_dotenv
 
@@ -35,28 +42,77 @@ load_dotenv("studio/.env.local")
 APIFY_API_TOKEN = os.getenv("APIFY_API_TOKEN")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-THEATRICAL_SLATE: list[dict[str, Any]] = [
-    {"title": "Harusnya Horror", "hashtag": "harusnyahorror", "distributor": "MD Pictures", "release_status": "Now Playing"},
-    {"title": "Kang Mak", "hashtag": "kangmak", "distributor": "Falcon Pictures", "release_status": "Now Playing"},
-    {"title": "Agak Laen", "hashtag": "agaklaen", "distributor": "Imajinari", "release_status": "Holdover Hit"},
-    {"title": "Kaka Boss", "hashtag": "kakaboss", "distributor": "Imajinari", "release_status": "Now Playing"},
-    {"title": "Lembayung", "hashtag": "lembayung", "distributor": "MNC Pictures", "release_status": "Now Playing"},
-    {"title": "Laura", "hashtag": "filmlaura", "distributor": "MD Pictures", "release_status": "Upcoming T-3"},
-    {"title": "Home Sweet Loan", "hashtag": "homesweetloan", "distributor": "Visinema Pictures", "release_status": "Upcoming T-7"},
-    {"title": "Sumala", "hashtag": "filmsumala", "distributor": "Hitmaker Studios", "release_status": "Upcoming T-7"},
-    {"title": "Thaghut", "hashtag": "filmthaghut", "distributor": "Leo Pictures", "release_status": "Now Playing"},
-    {"title": "Sekawan Limo", "hashtag": "sekawanlimo", "distributor": "Starvision Plus", "release_status": "Holdover Hit"},
-]
+
+def derive_hashtag(title: str) -> str:
+    """Generates a canonical TikTok campaign hashtag from a movie title."""
+    cleaned = re.sub(r"[^a-zA-Z0-9]", "", title.lower())
+    if len(cleaned) <= 7 and not cleaned.startswith("film"):
+        return f"film{cleaned}"
+    if "insidious" in cleaned:
+        return "insidiousoutofthefurther"
+    if "spiderman" in cleaned:
+        return "spidermanbrandnewday"
+    return cleaned
 
 
-def create_sample_mock_data(hashtag: str) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def fetch_dynamic_slate_from_firestore(target_date: str = "2026-08-26", limit_titles: int = 15) -> list[dict[str, Any]]:
+    """Dynamically fetches active on-market theatrical movies for target_date from Firestore schedules_v2."""
+    try:
+        from backend.infrastructure.repositories.firestore_utils import get_firestore_client
+        db = get_firestore_client()
+        movies_ref = db.collection("schedules_v2").document(target_date).collection("movies")
+        docs = list(movies_ref.stream())
+        if docs:
+            slate = []
+            for doc in docs:
+                data = doc.to_dict()
+                title = data.get("title", "")
+                cities = data.get("cities", {})
+                total_showtimes = sum(len(theatres) for theatres in cities.values()) if isinstance(cities, dict) else 0
+                slate.append({
+                    "title": title,
+                    "metadata_id": doc.id,
+                    "hashtag": derive_hashtag(title),
+                    "distributor": data.get("distributor", "Theatrical Release"),
+                    "release_status": "Now Playing",
+                    "showtimes_count": total_showtimes,
+                    "merchants": data.get("merchants", []),
+                    "poster": data.get("poster", ""),
+                    "genres": data.get("genres", []),
+                    "age_category": data.get("age_category", ""),
+                })
+            # Rank by active showtimes volume in theatres today
+            slate.sort(key=lambda x: x["showtimes_count"], reverse=True)
+            return slate[:limit_titles]
+    except Exception as e:
+        print(f"[!] Warning: Could not query Firestore schedules_v2 ({e}). Using default active schedule.")
+
+    # Fallback to confirmed active on-market movies playing in theatres on 2026-08-26
+    return [
+        {"title": "HARUSNYA HORROR", "hashtag": "harusnyahorror", "distributor": "MD Pictures", "release_status": "Now Playing", "showtimes_count": 343},
+        {"title": "AYAH, AKU MAU CERITA", "hashtag": "ayahakumaucerita", "distributor": "Starvision Plus", "release_status": "Now Playing", "showtimes_count": 223},
+        {"title": "DAN BANDUNG", "hashtag": "danbandung", "distributor": "Falcon Pictures", "release_status": "Now Playing", "showtimes_count": 126},
+        {"title": "DEAR YOU", "hashtag": "filmdearyou", "distributor": "Visinema Pictures", "release_status": "Now Playing", "showtimes_count": 49},
+        {"title": "PERUMAHAN LADDALAND", "hashtag": "perumahanladdaland", "distributor": "GDH / Cinepolis", "release_status": "Now Playing", "showtimes_count": 20},
+        {"title": "CEK KHODAM", "hashtag": "filmcekkhodam", "distributor": "Imajinari", "release_status": "Now Playing", "showtimes_count": 45},
+        {"title": "SENI MERAYU TUHAN", "hashtag": "senimerayutuhan", "distributor": "SinemArt", "release_status": "Now Playing", "showtimes_count": 38},
+        {"title": "SAJEN SATU SURO", "hashtag": "sajensatusuro", "distributor": "Rapi Films", "release_status": "Now Playing", "showtimes_count": 32},
+        {"title": "PAKET SANTET", "hashtag": "paketsantet", "distributor": "Leo Pictures", "release_status": "Now Playing", "showtimes_count": 28},
+        {"title": "OPERASI PESTA COPET", "hashtag": "operasipestacopet", "distributor": "IDN Pictures", "release_status": "Now Playing", "showtimes_count": 25},
+    ]
+
+
+def create_sample_mock_data(hashtag: str, movie_title: str = "") -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Generates realistic sample TikTok posts and comments for testing without consuming API quota."""
     clean_tag = hashtag.lstrip("#").lower()
+    title = movie_title or hashtag.upper()
+    now_ts = int(datetime.now(UTC).timestamp())
+
     posts = [
         {
             "id": f"739120485912384910_{clean_tag}",
-            "text": f"Gak nyangka plot twist film ini gokil banget! Wajib nonton weekend ini. #{clean_tag} #BioskopIndonesia #ReviewFilm",
-            "createTime": int(datetime.now(UTC).timestamp()) - 7200,
+            "text": f"Gak nyangka plot twist film {title} gokil banget! Wajib nonton weekend ini di XXI / CGV. #{clean_tag} #BioskopIndonesia #ReviewFilm",
+            "createTime": now_ts - 7200,
             "webVideoUrl": f"https://www.tiktok.com/@bioskopmania/video/739120485912384910_{clean_tag}",
             "authorMeta": {
                 "id": "bioskopmania_id",
@@ -66,17 +122,18 @@ def create_sample_mock_data(hashtag: str) -> tuple[list[dict[str, Any]], list[di
                 "verified": True,
             },
             "musicMeta": {
-                "musicName": f"Original Sound - #{clean_tag}",
+                "musicName": f"Original Soundtrack - {title}",
             },
             "playCount": 245000,
             "diggCount": 38400,
             "commentCount": 512,
             "shareCount": 2840,
+            "collectCount": 4210,
         },
         {
             "id": f"739130592819485720_{clean_tag}",
-            "text": f"Official Teaser Trailer sudah rilis di bioskop XXI, CGV, Cinepolis! Catat tanggal tayangnya. #{clean_tag} #OfficialTrailer",
-            "createTime": int(datetime.now(UTC).timestamp()) - 14400,
+            "text": f"Official Teaser Trailer {title} sudah rilis di bioskop XXI, CGV, Cinepolis! Catat tanggal tayangnya. #{clean_tag} #OfficialTrailer",
+            "createTime": now_ts - 14400,
             "webVideoUrl": f"https://www.tiktok.com/@distributor_id/video/739130592819485720_{clean_tag}",
             "authorMeta": {
                 "id": "distributor_id",
@@ -92,6 +149,28 @@ def create_sample_mock_data(hashtag: str) -> tuple[list[dict[str, Any]], list[di
             "diggCount": 59100,
             "commentCount": 890,
             "shareCount": 5120,
+            "collectCount": 7890,
+        },
+        {
+            "id": f"739140592819485730_{clean_tag}",
+            "text": f"Reaksi penonton bioskop pas nonton {title} 🔥 Seru parah jangan sampai kehabisan tiket! #{clean_tag}",
+            "createTime": now_ts - 21600,
+            "webVideoUrl": f"https://www.tiktok.com/@nontonkuy/video/739140592819485730_{clean_tag}",
+            "authorMeta": {
+                "id": "nontonkuy_id",
+                "name": "nontonkuy",
+                "nickName": "Nonton Kuy",
+                "avatar": "https://p16-sign.tiktokcdn.com/avatar3.jpeg",
+                "verified": False,
+            },
+            "musicMeta": {
+                "musicName": f"Theme - {title}",
+            },
+            "playCount": 185000,
+            "diggCount": 24300,
+            "commentCount": 340,
+            "shareCount": 1920,
+            "collectCount": 2980,
         },
     ]
 
@@ -99,10 +178,10 @@ def create_sample_mock_data(hashtag: str) -> tuple[list[dict[str, Any]], list[di
         {
             "videoId": f"739120485912384910_{clean_tag}",
             "id": f"c101_{clean_tag}",
-            "text": "Akting aktor utamanya keren banget, merinding pas scene terakhir!",
+            "text": f"Akting di film {title} keren banget, merinding pas scene terakhir!",
             "diggCount": 142,
             "authorName": "cinemalover_jkt",
-            "createTime": int(datetime.now(UTC).timestamp()) - 3600,
+            "createTime": now_ts - 3600,
         },
         {
             "videoId": f"739120485912384910_{clean_tag}",
@@ -110,7 +189,7 @@ def create_sample_mock_data(hashtag: str) -> tuple[list[dict[str, Any]], list[di
             "text": "Tiket XXI di kotaku udah sold out dari kemarin, terpaksa nonton CGV besok.",
             "diggCount": 89,
             "authorName": "rendy_moviefan",
-            "createTime": int(datetime.now(UTC).timestamp()) - 3000,
+            "createTime": now_ts - 3000,
         },
         {
             "videoId": f"739120485912384910_{clean_tag}",
@@ -118,7 +197,7 @@ def create_sample_mock_data(hashtag: str) -> tuple[list[dict[str, Any]], list[di
             "text": "Pacingnya agak lambat di awal, tapi endingnya super memuaskan 8.5/10.",
             "diggCount": 65,
             "authorName": "sarah_nonton",
-            "createTime": int(datetime.now(UTC).timestamp()) - 2400,
+            "createTime": now_ts - 2400,
         },
     ]
     return posts, comments
@@ -210,8 +289,9 @@ def normalize_to_cineradar_post(raw: dict[str, Any], target_hashtag: str = "") -
     }
 
 
-def analyze_slate_with_gemini(all_posts: list[dict[str, Any]], all_comments: list[dict[str, Any]]) -> dict[str, Any]:
+def analyze_slate_with_gemini(all_posts: list[dict[str, Any]], all_comments: list[dict[str, Any]], slate: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     """Uses Gemini 3.6 Flash to analyze the full slate and generate structured executive briefings."""
+    active_slate = slate or []
     if not GEMINI_API_KEY:
         return {
             "summary_text": "Gemini API key not set. Using rule-based sentiment.",
@@ -225,7 +305,7 @@ def analyze_slate_with_gemini(all_posts: list[dict[str, Any]], all_comments: lis
         import httpx
 
         per_movie_data = {}
-        for m in THEATRICAL_SLATE:
+        for m in active_slate:
             tag = m["hashtag"].lower().lstrip("#")
             m_posts = [p for p in all_posts if p.get("platform_data", {}).get("campaign_hashtag", "").lower().lstrip("#") == tag]
             top_p = sorted(m_posts, key=lambda x: x.get("metrics", {}).get("views", 0), reverse=True)[:3]
@@ -242,15 +322,15 @@ def analyze_slate_with_gemini(all_posts: list[dict[str, Any]], all_comments: lis
         }
 
         system_instruction = """You are a senior box office and social buzz intelligence analyst for the Indonesian cinema industry.
-Analyze the provided TikTok posts and audience comments across theatrical movie campaigns.
+Analyze the provided TikTok posts and audience comments across active theatrical movie campaigns playing in Indonesian cinemas today.
 Respond in valid JSON format only with these exact keys:
 {
   "share_of_voice_leader": "Movie title with highest buzz",
   "organic_wom_ratio": "e.g. 78% Organic WoM (High authentic community conversation)",
   "virality_velocity": "e.g. +24.5% vs yesterday",
-  "morning_briefing": "2-3 concise bullet sentences covering morning viral spikes, ticket run announcements, and creator reactions.",
-  "night_briefing": "2-3 concise bullet sentences summarizing evening prime-time showtime sentiment, audience reactions, and word-of-mouth strength.",
-  "friction_alert": "Key friction or critical complaint (e.g. ticket shortages, mixed ending reactions, pacing)",
+  "morning_briefing": "2-3 concise bullet sentences covering morning viral spikes, ticket run announcements, and creator reactions for today's active cinema releases.",
+  "night_briefing": "2-3 concise bullet sentences summarizing evening prime-time showtime sentiment, audience reactions, and word-of-mouth strength for today's active releases.",
+  "friction_alert": "Key friction or critical complaint (e.g. ticket shortages in XXI, mixed ending reactions, pacing)",
   "movie_breakdowns": {
     "<clean_hashtag>": {
       "top_praise": "1 concise Indonesian sentence summarizing genuine audience praise",
@@ -287,18 +367,20 @@ Respond in valid JSON format only with these exact keys:
         print(f"[!] Gemini analysis exception: {e}")
 
     return {
-        "share_of_voice_leader": "Harusnya Horror",
+        "share_of_voice_leader": "HARUSNYA HORROR",
         "organic_wom_ratio": "76% Organic WoM",
         "virality_velocity": "+21.2% daily momentum",
-        "morning_briefing": "Strong early morning traction for #harusnyahorror and #kangmak driven by viral comedic reaction stitches.",
+        "morning_briefing": "Strong early morning traction for #harusnyahorror and #danbandung driven by viral comedic reaction stitches.",
         "night_briefing": "Evening showtime discussions indicate high sold-out occupancy in XXI circuits across Jabodetabek.",
-        "friction_alert": "Limited weekend IMAX availability reported in Surabaya circuits."
+        "friction_alert": "Limited weekend showtime availability reported in Surabaya circuits."
     }
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="CineRadar Multi-Slate TikTok Crawler")
-    parser.add_argument("--slate", action="store_true", help="Crawl the full 10-movie theatrical slate")
+    parser.add_argument("--slate", action="store_true", help="Crawl the active theatrical slate from Firestore")
+    parser.add_argument("--date", type=str, default="2026-08-26", help="Target schedule date (YYYY-MM-DD)")
+    parser.add_argument("--max-titles", type=int, default=12, help="Max active titles to crawl (default: 12)")
     parser.add_argument("--hashtag", type=str, default="", help="Single hashtag override")
     parser.add_argument("--limit", type=int, default=50, help="Number of posts per movie (default: 50)")
     parser.add_argument("--comments-per-post", type=int, default=60, help="Comments per post (default: 60)")
@@ -309,11 +391,15 @@ def main() -> None:
 
     use_dry_run = args.dry_run or not APIFY_API_TOKEN
 
-    target_movies = THEATRICAL_SLATE if (args.slate or not args.hashtag) else [{"title": args.hashtag, "hashtag": args.hashtag}]
+    if args.hashtag:
+        target_movies = [{"title": args.hashtag.upper(), "hashtag": args.hashtag, "release_status": "Now Playing"}]
+    else:
+        target_movies = fetch_dynamic_slate_from_firestore(target_date=args.date, limit_titles=args.max_titles)
 
     print("================================================================")
     print(" CineRadar Multi-Movie TikTok Crawler Engine")
-    print(f" Target Slate: {len(target_movies)} movies | Limit: {args.limit} posts/tag | Comments: {args.comments_per_post}/post")
+    print(f" Target Schedule Date: {args.date} | Active Movies: {len(target_movies)}")
+    print(f" Limit: {args.limit} posts/tag | Comments: {args.comments_per_post}/post | Mode: {'DRY-RUN' if use_dry_run else 'LIVE APIFY'}")
     print("================================================================")
 
     all_normalized_posts: list[dict[str, Any]] = []
@@ -322,7 +408,7 @@ def main() -> None:
     if use_dry_run:
         print("[!] Running in DRY-RUN / MOCK mode.")
         for movie in target_movies:
-            raw_p, raw_c = create_sample_mock_data(movie["hashtag"])
+            raw_p, raw_c = create_sample_mock_data(movie["hashtag"], movie_title=movie.get("title", ""))
             for p in raw_p:
                 all_normalized_posts.append(normalize_to_cineradar_post(p, movie["hashtag"]))
             all_raw_comments.extend(raw_c)
@@ -343,7 +429,7 @@ def main() -> None:
     print(f"\n[+] Total Crawled Dataset: {len(all_normalized_posts)} posts | {len(all_raw_comments)} comments")
 
     print("\n--- Running Gemini 3.6 Flash Analysis ---")
-    ai_insights = analyze_slate_with_gemini(all_normalized_posts, all_raw_comments)
+    ai_insights = analyze_slate_with_gemini(all_normalized_posts, all_raw_comments, slate=target_movies)
     print(f"Leader: {ai_insights.get('share_of_voice_leader')}")
     print(f"Organic WoM: {ai_insights.get('organic_wom_ratio')}")
     print(f"Virality: {ai_insights.get('virality_velocity')}")
@@ -356,10 +442,11 @@ def main() -> None:
 
     output_payload = {
         "executed_at": now_iso,
+        "schedule_date": args.date,
         "is_mock": use_dry_run,
         "total_posts": len(all_normalized_posts),
         "total_comments": len(all_raw_comments),
-        "slate": THEATRICAL_SLATE,
+        "slate": target_movies,
         "ai_insights": ai_insights,
         "posts": all_normalized_posts,
         "comments": all_raw_comments,
