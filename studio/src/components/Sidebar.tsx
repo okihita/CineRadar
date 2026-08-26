@@ -220,6 +220,22 @@ const adminGroup: MenuGroup = {
 // ─── Helpers ─────────────────────────────────────────────
 
 const COLLAPSED_KEY = 'cineradar-nav-collapsed-groups';
+const SIDEBAR_COLLAPSED_KEY = 'cineradar-sidebar-collapsed';
+
+function loadSidebarCollapsed(): boolean {
+    if (typeof window === 'undefined') return false;
+    try {
+        const raw = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+        if (raw !== null) return JSON.parse(raw);
+    } catch { /* ignore */ }
+    return false;
+}
+
+function saveSidebarCollapsed(collapsed: boolean) {
+    try {
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, JSON.stringify(collapsed));
+    } catch { /* ignore */ }
+}
 
 function loadCollapsedGroups(): Set<string> {
     if (typeof window === 'undefined') return new Set();
@@ -269,10 +285,22 @@ function isGroupActive(group: MenuGroup, pathname: string): boolean {
 
 export function Sidebar() {
     const pathname = usePathname();
-    const [collapsed, setCollapsed] = useState(false);
     const { darkMode, toggleDarkMode, followsSystem, resetToSystem } = useDarkModeContext();
     const { data: session } = useSession();
     const isAdmin = (session as unknown as { user?: { role?: string } })?.user?.role === 'admin';
+
+    const [collapsed, setCollapsed] = useState<boolean>(() => {
+        if (typeof window === 'undefined') return false;
+        return loadSidebarCollapsed();
+    });
+
+    const toggleCollapsed = useCallback(() => {
+        setCollapsed(prev => {
+            const next = !prev;
+            saveSidebarCollapsed(next);
+            return next;
+        });
+    }, []);
 
     const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => {
         if (typeof window === 'undefined') return new Set();
@@ -454,7 +482,7 @@ export function Sidebar() {
 
                 {/* Collapse Button */}
                 <button
-                    onClick={() => setCollapsed(!collapsed)}
+                    onClick={toggleCollapsed}
                     className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                 >
                     {collapsed ? (
