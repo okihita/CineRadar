@@ -602,9 +602,21 @@ export default function TikTokExplorerPage() {
                                     </p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 shrink-0 text-sm font-mono text-muted-foreground">
-                                <Clock className="w-3.5 h-3.5 text-primary" />
-                                <span>Next Crawl: 11:00 WIB</span>
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 shrink-0">
+                                <div className="flex items-center gap-2 text-sm font-mono text-muted-foreground">
+                                    <Clock className="w-3.5 h-3.5 text-primary" />
+                                    <span>Next Crawl: 18:00 WIB</span>
+                                </div>
+                                <Link href="/tiktok/workflow">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-7 px-2.5 text-xs font-semibold rounded-lg gap-1.5 border-border/60 hover:border-primary/50"
+                                    >
+                                        <Sparkles className="w-3 h-3 text-primary" />
+                                        See Workflow
+                                    </Button>
+                                </Link>
                             </div>
                         </div>
                     ) : (

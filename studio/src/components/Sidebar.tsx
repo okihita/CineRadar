@@ -65,13 +65,6 @@ const menuGroups: MenuGroup[] = [
                 icon: Building2,
                 adminOnly: false,
             },
-            {
-                title: 'Pipeline Workflow',
-                description: 'Daily processing & AI graph',
-                href: '/tiktok/workflow',
-                icon: Sparkles,
-                adminOnly: false,
-            },
         ],
     },
     {
