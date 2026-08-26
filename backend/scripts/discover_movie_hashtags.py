@@ -29,6 +29,18 @@ def get_today_wib() -> str:
 
 
 def load_sources_config() -> Dict[str, Any]:
+    """Loads sources and overrides from Firestore tiktok_sources/config, falling back to local JSON."""
+    try:
+        db = firestore.Client()
+        doc = db.collection("tiktok_sources").document("config").get()
+        if doc.exists:
+            data = doc.to_dict() or {}
+            if "sources" in data:
+                save_sources_config(data)
+                return data
+    except Exception as e:
+        print(f"⚠️ Firestore load error (falling back to local): {e}")
+
     if SOURCES_FILE.exists():
         with open(SOURCES_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
@@ -36,6 +48,7 @@ def load_sources_config() -> Dict[str, Any]:
 
 
 def save_sources_config(config: Dict[str, Any]) -> None:
+    """Saves sources and overrides to local JSON disk backup."""
     SOURCES_FILE.parent.mkdir(parents=True, exist_ok=True)
     with open(SOURCES_FILE, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=2)

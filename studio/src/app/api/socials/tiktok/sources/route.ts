@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { firestoreRestClient } from '@/lib/firestore-rest';
 
 interface TruthSource {
     id: string;
@@ -18,27 +19,88 @@ interface SourcesData {
     overrides: Record<string, string[]>;
 }
 
+const FIRESTORE_COLLECTION = 'tiktok_sources';
+const FIRESTORE_DOC_ID = 'config';
+
 function getSourcesFilePath(): string {
     return path.join(process.cwd(), 'src/data/tiktok_sources.json');
 }
 
-function readSources(): SourcesData {
+function readLocalSources(): SourcesData {
     const filePath = getSourcesFilePath();
     if (!fs.existsSync(filePath)) {
         return { sources: [], overrides: {} };
     }
-    const raw = fs.readFileSync(filePath, 'utf-8');
-    return JSON.parse(raw);
+    try {
+        const raw = fs.readFileSync(filePath, 'utf-8');
+        return JSON.parse(raw);
+    } catch {
+        return { sources: [], overrides: {} };
+    }
 }
 
-function writeSources(data: SourcesData): void {
-    const filePath = getSourcesFilePath();
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+function writeLocalSources(data: SourcesData): void {
+    try {
+        const filePath = getSourcesFilePath();
+        fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+    } catch (e) {
+        console.warn('[TikTok Sources] Failed to write local cache backup:', e);
+    }
+}
+
+async function getSourcesData(): Promise<SourcesData> {
+    try {
+        const doc = await firestoreRestClient.getDocument<SourcesData>(FIRESTORE_COLLECTION, FIRESTORE_DOC_ID);
+        if (doc && Array.isArray(doc.sources)) {
+            // Update local fallback file asynchronously
+            writeLocalSources(doc);
+            return {
+                sources: doc.sources,
+                overrides: doc.overrides || {},
+            };
+        }
+    } catch (err) {
+        console.warn('[TikTok Sources] Firestore read fallback to local JSON:', err);
+    }
+
+    // Fallback to local JSON file
+    const local = readLocalSources();
+    // Seed Firestore asynchronously if not yet present
+    if (local.sources.length > 0) {
+        firestoreRestClient.createDocument(FIRESTORE_COLLECTION, FIRESTORE_DOC_ID, {
+            sources: local.sources,
+            overrides: local.overrides || {},
+            updated_at: new Date().toISOString(),
+        }).catch((err) => console.warn('[TikTok Sources] Initial Firestore seed error:', err));
+    }
+    return local;
+}
+
+async function persistSourcesData(data: SourcesData): Promise<boolean> {
+    // 1. Write local disk cache
+    writeLocalSources(data);
+
+    // 2. Persist to Firestore
+    try {
+        const payload = {
+            sources: data.sources,
+            overrides: data.overrides || {},
+            updated_at: new Date().toISOString(),
+        };
+        const updated = await firestoreRestClient.updateDocument(FIRESTORE_COLLECTION, FIRESTORE_DOC_ID, payload);
+        if (!updated) {
+            await firestoreRestClient.createDocument(FIRESTORE_COLLECTION, FIRESTORE_DOC_ID, payload);
+        }
+        return true;
+    } catch (err) {
+        console.error('[TikTok Sources] Firestore write error:', err);
+        return false;
+    }
 }
 
 export async function GET() {
     try {
-        const data = readSources();
+        const data = await getSourcesData();
         return NextResponse.json({
             success: true,
             sources: data.sources,
@@ -56,7 +118,7 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
         const { action, source, override } = body;
-        const currentData = readSources();
+        const currentData = await getSourcesData();
 
         if (action === 'add_source' && source) {
             const cleanHandle = source.handle.replace(/^@/, '').trim().toLowerCase();
@@ -78,7 +140,7 @@ export async function POST(request: Request) {
             } else {
                 currentData.sources.push(newSource);
             }
-            writeSources(currentData);
+            await persistSourcesData(currentData);
             return NextResponse.json({ success: true, message: 'Source added/updated', sources: currentData.sources });
         }
 
@@ -86,7 +148,7 @@ export async function POST(request: Request) {
             const item = currentData.sources.find(s => s.id === source.id);
             if (item) {
                 item.active = !item.active;
-                writeSources(currentData);
+                await persistSourcesData(currentData);
                 return NextResponse.json({ success: true, message: 'Source toggled', sources: currentData.sources });
             }
             return NextResponse.json({ success: false, error: 'Source not found' }, { status: 404 });
@@ -94,7 +156,7 @@ export async function POST(request: Request) {
 
         if (action === 'delete_source' && source?.id) {
             currentData.sources = currentData.sources.filter(s => s.id !== source.id);
-            writeSources(currentData);
+            await persistSourcesData(currentData);
             return NextResponse.json({ success: true, message: 'Source deleted', sources: currentData.sources });
         }
 
@@ -109,7 +171,7 @@ export async function POST(request: Request) {
             } else {
                 currentData.overrides[movieKey] = tags;
             }
-            writeSources(currentData);
+            await persistSourcesData(currentData);
             return NextResponse.json({ success: true, message: 'Override saved', overrides: currentData.overrides });
         }
 
