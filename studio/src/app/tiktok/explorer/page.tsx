@@ -10,7 +10,7 @@ import {
     Film, ThumbsUp, Activity, Copy, Check, FileCode,
     CalendarX2, ArrowRight, LayoutGrid, List,
     Trophy, Zap, AlertTriangle, Sun, Moon, Clock, User, Sparkles,
-    Settings, ShieldCheck
+    Settings, ShieldCheck, Building2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -972,16 +972,28 @@ export default function TikTokExplorerPage() {
                                     </CardTitle>
                                 </div>
 
-                                <Link href="/tiktok/explorer/settings">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="gap-1.5 text-sm font-semibold h-7 px-2.5 rounded-lg border-border/60"
-                                    >
-                                        <Settings className="w-3.5 h-3.5 text-muted-foreground" />
-                                        Manage Seed Accounts ({sourcesData?.sources?.length || 13})
-                                    </Button>
-                                </Link>
+                                <div className="flex items-center gap-2">
+                                    <Link href="/tiktok/chains">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="gap-1.5 text-sm font-semibold h-7 px-2.5 rounded-lg border-border/60"
+                                        >
+                                            <Building2 className="w-3.5 h-3.5 text-amber-500" />
+                                            Chain Monitoring
+                                        </Button>
+                                    </Link>
+                                    <Link href="/tiktok/explorer/settings">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="gap-1.5 text-sm font-semibold h-7 px-2.5 rounded-lg border-border/60"
+                                        >
+                                            <Settings className="w-3.5 h-3.5 text-muted-foreground" />
+                                            Manage Seeds ({sourcesData?.sources?.length || 13})
+                                        </Button>
+                                    </Link>
+                                </div>
                             </div>
                         </CardHeader>
                         <CardContent className="p-3 sm:p-4">

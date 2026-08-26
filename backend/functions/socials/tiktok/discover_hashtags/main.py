@@ -1,16 +1,20 @@
-"""CineRadar — Hashtag Discovery Engine (Gen 2 Cloud Function).
+"""CineRadar — Hashtag Discovery & Cinema Chain Monitoring Engine (Gen 2 Cloud Function).
 
 HTTP-triggered Cloud Function that runs daily at 08:00 WIB:
 1. Loads Apify API token from Firestore `auth_tokens/socials`. FAILS LOUDLY (500) if missing.
-2. Loads active 'ON' truth seed accounts from Firestore `tiktok_sources/config`. FAILS LOUDLY (400) if none active.
+2. Loads active truth seed accounts from Firestore `tiktok_sources/config`. FAILS LOUDLY (400) if none active.
 3. Queries today's active theatrical slate from Firestore `schedules_v2/{target_date}/movies`. FAILS LOUDLY (404) if empty.
-4. Executes live Apify TikTok Profile Scraper across all active seed accounts. FAILS LOUDLY (502) if Apify API fails.
-5. Matches and resolves authentic campaign hashtags from live seed posts and manual overrides only.
+4. Executes live Apify TikTok Profile Scraper across top 3 exhibitor chains + studios (up to 30 posts/exhibitor).
+5. Stores full raw exhibitor timeline rollup in Firestore `tiktok_circuit_timeline/{target_date}`.
+6. Matches and resolves authentic campaign hashtags from live seed posts and manual overrides only.
    - NO auto-seed generation.
    - NO silent mock fallback.
-   - If a movie has no live posts or overrides, discovered_hashtags remains EMPTY [].
-6. Persists the discovery snapshot to Firestore `tiktok_hashtag_discovery/{target_date}`.
-7. Sends instant Telegram alerts for both successful completion and failure.
+7. Persists the discovery snapshot to Firestore `tiktok_hashtag_discovery/{target_date}`.
+8. Sends a rich, structured Telegram Morning Briefing containing:
+   - Total active theatrical movies for today
+   - Exhibitor pulse metrics
+   - Successfully mapped Movie -> Hashtag(s) (with contributing sources)
+   - Unmarketed/Pending titles
 
 Triggered by Cloud Scheduler daily at 08:00 WIB (`0 8 * * *` WIB).
 """
@@ -35,7 +39,9 @@ logger = logging.getLogger(__name__)
 
 PROJECT_ID: str = str(os.environ.get("GOOGLE_CLOUD_PROJECT", "cineradar-481014"))
 WIB = ZoneInfo("Asia/Jakarta")
-GENERIC_TAGS: frozenset[str] = frozenset({"fyp", "foryou", "viral", "bioskop", "cinema"})
+GENERIC_TAGS: frozenset[str] = frozenset(
+    {"fyp", "foryou", "viral", "bioskop", "cinema", "nontondibioskop"}
+)
 
 
 # ─── 1. Firestore & Infrastructure Clients (Single Responsibility) ───
@@ -114,7 +120,7 @@ def load_sources_config(db: firestore.Client) -> dict[str, Any]:
     return {"sources": [], "overrides": {}}
 
 
-# ─── 3. External Scraping & Resolution (SOLID / Pure Logic) ───
+# ─── 3. External Scraping & Chain Timeline (SOLID / Pure Logic) ───
 
 
 def scrape_seed_account_posts(apify_token: str, handles: list[str]) -> list[dict[str, Any]]:
@@ -131,9 +137,10 @@ def scrape_seed_account_posts(apify_token: str, handles: list[str]) -> list[dict
 
     actor_id = "clockworks~tiktok-profile-scraper"
     url = f"https://api.apify.com/v2/acts/{actor_id}/run-sync-get-dataset-items?token={apify_token}"
+    # Fetch 25 posts per profile to cover recent theatrical marketing window
     payload = {
         "profiles": profiles,
-        "resultsPerPage": 5,
+        "resultsPerPage": 25,
         "shouldDownloadVideos": False,
         "shouldDownloadCovers": False,
     }
@@ -168,6 +175,80 @@ def extract_tags_from_post(post: dict[str, Any]) -> set[str]:
     return tags
 
 
+def build_circuit_timeline_rollup(
+    scraped_posts: list[dict[str, Any]], target_date: str
+) -> dict[str, Any]:
+    """Rolls up raw exhibitor posts into a compact single-document structure."""
+    chain_map: dict[str, list[dict[str, Any]]] = {
+        "cinema_21": [],
+        "cgv_id": [],
+        "cinepolis_id": [],
+        "studios": [],
+    }
+
+    for post in scraped_posts:
+        author_meta = post.get("authorMeta")
+        author_name = str(
+            author_meta.get("name")
+            if isinstance(author_meta, dict)
+            else post.get("source_handle") or ""
+        ).lower()
+        post_id = str(post.get("id") or "")
+        post_url = str(
+            post.get("webVideoUrl")
+            or post.get("url")
+            or f"https://www.tiktok.com/@{author_name}/video/{post_id}"
+        )
+        caption = str(post.get("text") or post.get("caption") or "").strip()
+        hashtags = sorted(extract_tags_from_post(post))
+
+        post_summary = {
+            "id": post_id,
+            "url": post_url,
+            "author": f"@{author_name.lstrip('@')}",
+            "caption": caption[:300],
+            "hashtags": hashtags,
+            "views": int(post.get("playCount") or post.get("views") or 0),
+            "likes": int(post.get("diggCount") or post.get("likes") or 0),
+            "comments": int(post.get("commentCount") or 0),
+            "shares": int(post.get("shareCount") or 0),
+            "published_at": str(post.get("createTimeISO") or post.get("published_at") or ""),
+        }
+
+        if "cinema.21" in author_name or "21cineplex" in author_name:
+            chain_map["cinema_21"].append(post_summary)
+        elif "cgv" in author_name:
+            chain_map["cgv_id"].append(post_summary)
+        elif "cinepolis" in author_name:
+            chain_map["cinepolis_id"].append(post_summary)
+        else:
+            chain_map["studios"].append(post_summary)
+
+    return {
+        "date": target_date,
+        "crawled_at": datetime.datetime.now(WIB).isoformat(),
+        "total_posts": len(scraped_posts),
+        "chains": {
+            "cinema_21": {
+                "name": "Cinema XXI",
+                "handle": "@cinema.21",
+                "posts": chain_map["cinema_21"],
+            },
+            "cgv_id": {"name": "CGV Cinemas", "handle": "@cgv.id", "posts": chain_map["cgv_id"]},
+            "cinepolis_id": {
+                "name": "Cinépolis Indonesia",
+                "handle": "@cinepolisid",
+                "posts": chain_map["cinepolis_id"],
+            },
+            "studios": {
+                "name": "Production Houses",
+                "handle": "Various",
+                "posts": chain_map["studios"],
+            },
+        },
+    }
+
+
 def resolve_hashtags_for_slate(
     active_movies: list[dict[str, Any]],
     sources_config: dict[str, Any],
@@ -182,6 +263,7 @@ def resolve_hashtags_for_slate(
         norm_title = normalize_title(title)
         found_tags: set[str] = set()
         sources: set[str] = set()
+        matched_urls: list[str] = []
 
         # 1. Custom Overrides (Highest priority)
         if title in overrides:
@@ -189,25 +271,25 @@ def resolve_hashtags_for_slate(
                 tag_str = str(tag or "").strip()
                 if tag_str.startswith("#"):
                     tag_str = tag_str[1:]
-                clean_tag = tag_str.lower()
-                if clean_tag:
+                if clean_tag := tag_str.lower():
                     found_tags.add(clean_tag)
             sources.add("manual_override")
 
         # 2. Match live scraped posts
         for post in scraped_posts:
-            caption_val = post.get("text") or post.get("caption")
-            caption = str(caption_val or "").lower()
-
+            caption = str(post.get("text") or post.get("caption") or "").lower()
             author_meta = post.get("authorMeta")
             author_name = author_meta.get("name") if isinstance(author_meta, dict) else None
-            author_val = author_name or post.get("source_handle")
-            author = str(author_val or "").strip()
+            author = str(author_name or post.get("source_handle") or "").strip()
+            post_url = str(post.get("webVideoUrl") or post.get("url") or "")
 
             if title.lower() in caption or norm_title in caption:
-                found_tags.update(extract_tags_from_post(post))
+                post_tags = extract_tags_from_post(post)
+                found_tags.update(post_tags)
                 if author:
                     sources.add(f"@{author.lstrip('@')}")
+                if post_url and len(matched_urls) < 3:
+                    matched_urls.append(post_url)
 
         discovered_slate[title] = {
             "movie_id": movie.get("movie_id", norm_title),
@@ -215,10 +297,67 @@ def resolve_hashtags_for_slate(
             "age_category": movie.get("age_category", "SU"),
             "discovered_hashtags": sorted(found_tags),
             "contributing_sources": sorted(sources),
+            "source_post_urls": matched_urls,
             "verified": len(found_tags) > 0,
         }
 
     return discovered_slate
+
+
+def format_telegram_report(
+    target_date: str,
+    active_movies: list[dict[str, Any]],
+    discovered_slate: dict[str, dict[str, Any]],
+    circuit_rollup: dict[str, Any],
+    now_wib: datetime.datetime,
+) -> str:
+    """Formats a rich, compact, mobile-friendly Telegram report."""
+    mapped_movies: list[tuple[str, list[str], list[str]]] = []
+    unmapped_movies: list[str] = []
+
+    for title, info in discovered_slate.items():
+        if info["discovered_hashtags"]:
+            mapped_movies.append((title, info["discovered_hashtags"], info["contributing_sources"]))
+        else:
+            unmapped_movies.append(title)
+
+    lines: list[str] = [
+        "🍿 *CineRadar Theatrical & Social Pulse*",
+        f"📅 Date: `{target_date}` | 🎬 Theatrical Slate: `{len(active_movies)} Movies`",
+        "",
+        f"✅ *Verified Campaigns ({len(mapped_movies)}/{len(active_movies)})*:",
+    ]
+
+    for title, tags, srcs in mapped_movies[:15]:
+        tags_str = " ".join([f"#{t}" for t in tags[:3]])
+        src_str = f"({', '.join(srcs[:2])})" if srcs else ""
+        lines.append(f"• *{title}* → `{tags_str}` {src_str}")
+
+    if len(mapped_movies) > 15:
+        lines.append(f"_...and {len(mapped_movies) - 15} more verified titles_")
+
+    if unmapped_movies:
+        lines.append("")
+        lines.append(f"⏳ *Pending / No Promo Tags ({len(unmapped_movies)})*:")
+        sample_unmapped = ", ".join(unmapped_movies[:6])
+        if len(unmapped_movies) > 6:
+            sample_unmapped += f", +{len(unmapped_movies) - 6} more"
+        lines.append(f"_{sample_unmapped}_")
+
+    # Circuit summary
+    chains = circuit_rollup.get("chains", {})
+    xxi_count = len(chains.get("cinema_21", {}).get("posts", []))
+    cgv_count = len(chains.get("cgv_id", {}).get("posts", []))
+    cine_count = len(chains.get("cinepolis_id", {}).get("posts", []))
+
+    lines.append("")
+    lines.append("📡 *Exhibitor Feed Pulse*:")
+    lines.append(
+        f"• Cinema XXI: `{xxi_count} promos` | CGV: `{cgv_count} promos` | Cinépolis: `{cine_count} promos`"
+    )
+    lines.append(f"⏱ *Scan Completed*: `{now_wib.strftime('%H:%M:%S')} WIB`")
+
+    return "\n".join(lines)
 
 
 # ─── 4. Cloud Function Entrypoint (Controller) ───
@@ -260,12 +399,18 @@ def discover_hashtags_http(request: Any) -> tuple[str, int, dict[str, str]]:
             )
             return json_response({"success": False, "error": error_msg}, 404)
 
-        # Step 4 & 5: Live Apify Scraping & Authentic Resolution
+        # Step 4: Live Apify Scraping across all active handles
         scraped_posts = scrape_seed_account_posts(apify_token, active_handles)
+
+        # Step 5: Save Circuit Timeline Rollup to Firestore
+        circuit_rollup = build_circuit_timeline_rollup(scraped_posts, target_date)
+        db.collection("tiktok_circuit_timeline").document(target_date).set(circuit_rollup)
+
+        # Step 6: Authentic Slate Hashtag Resolution
         discovered_slate = resolve_hashtags_for_slate(active_movies, sources_config, scraped_posts)
         resolved_count = sum(1 for m in discovered_slate.values() if m["discovered_hashtags"])
 
-        # Step 6: Persist Daily Snapshot
+        # Step 7: Persist Daily Discovery Snapshot
         db.collection("tiktok_hashtag_discovery").document(target_date).set(
             {
                 "date": target_date,
@@ -278,16 +423,11 @@ def discover_hashtags_http(request: Any) -> tuple[str, int, dict[str, str]]:
             }
         )
 
-        # Step 7: Rich Telegram Success Alert
-        send_telegram_alert(
-            db,
-            f"🍿 *CineRadar TikTok Discovery Complete*\n\n"
-            f"📅 *Date*: `{target_date}`\n"
-            f"🎬 *Theatrical Slate*: `{len(active_movies)} movies`\n"
-            f"🏷️ *Verified Campaigns*: `{resolved_count}/{len(active_movies)} titles`\n"
-            f"📡 *Live Posts Scanned*: `{len(scraped_posts)}` from `{len(active_handles)} seeds`\n"
-            f"⏱ *Executed at*: `{now_wib.strftime('%H:%M:%S')} WIB`",
+        # Step 8: Send Rich Telegram Morning Intelligence Report
+        telegram_report = format_telegram_report(
+            target_date, active_movies, discovered_slate, circuit_rollup, now_wib
         )
+        send_telegram_alert(db, telegram_report)
 
         return json_response(
             {
