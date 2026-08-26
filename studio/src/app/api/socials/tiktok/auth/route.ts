@@ -3,6 +3,7 @@ import { firestoreRestClient } from '@/lib/firestore-rest';
 
 interface SocialAuthDoc {
     apify_api_token?: string;
+    gemini_tiktok_api_key?: string;
     status?: string;
     updated_at?: string;
     updated_by?: string;
@@ -15,10 +16,16 @@ export async function GET() {
         const isConfigured = Boolean(token && token.length > 5);
         const masked = isConfigured ? `${token.slice(0, 8)}...${token.slice(-4)}` : '';
 
+        const geminiKey = doc?.gemini_tiktok_api_key || '';
+        const isGeminiConfigured = Boolean(geminiKey && geminiKey.length > 5);
+        const maskedGemini = isGeminiConfigured ? `${geminiKey.slice(0, 6)}...${geminiKey.slice(-4)}` : '';
+
         return NextResponse.json({
             success: true,
             isConfigured,
             maskedToken: masked,
+            isGeminiConfigured,
+            maskedGeminiToken: maskedGemini,
             status: doc?.status || 'inactive',
             updated_at: doc?.updated_at || null,
         });

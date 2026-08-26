@@ -40,7 +40,7 @@ load_dotenv(".env")
 load_dotenv("studio/.env.local")
 
 APIFY_API_TOKEN = os.getenv("APIFY_API_TOKEN")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_TIKTOK_API_KEY") or os.getenv("GEMINI_API_KEY")
 
 
 def derive_hashtag(title: str) -> str:
