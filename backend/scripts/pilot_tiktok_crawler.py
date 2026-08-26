@@ -222,27 +222,21 @@ def analyze_slate_with_gemini(all_posts: list[dict[str, Any]], all_comments: lis
     try:
         import httpx
 
-        prompt_summary = [
-            {
-                "author": p["source_name"],
-                "views": p["metrics"]["views"],
-                "likes": p["metrics"]["likes"],
-                "shares": p["metrics"]["shares"],
-                "text": p["text"][:120],
-                "tag": p.get("platform_data", {}).get("campaign_hashtag", ""),
+        per_movie_data = {}
+        for m in THEATRICAL_SLATE:
+            tag = m["hashtag"].lower().lstrip("#")
+            m_posts = [p for p in all_posts if p.get("platform_data", {}).get("campaign_hashtag", "").lower().lstrip("#") == tag]
+            top_p = sorted(m_posts, key=lambda x: x.get("metrics", {}).get("views", 0), reverse=True)[:3]
+            top_p_summary = [{"text": p.get("text", "")[:120], "views": p.get("metrics", {}).get("views", 0), "shares": p.get("metrics", {}).get("shares", 0)} for p in top_p]
+            per_movie_data[m["title"]] = {
+                "hashtag": tag,
+                "distributor": m.get("distributor", ""),
+                "top_posts": top_p_summary
             }
-            for p in all_posts[:40]
-        ]
-
-        sample_comments = [
-            {"comment": c.get("text", "")[:100]}
-            for c in all_comments[:50]
-        ]
 
         prompt_payload = {
-            "tracked_slate": [m["title"] for m in THEATRICAL_SLATE],
-            "posts_sample": prompt_summary,
-            "audience_comments_sample": sample_comments,
+            "movies": per_movie_data,
+            "sample_audience_comments": [c.get("text", "")[:100] for c in all_comments[:40]]
         }
 
         system_instruction = """You are a senior box office and social buzz intelligence analyst for the Indonesian cinema industry.
@@ -254,7 +248,16 @@ Respond in valid JSON format only with these exact keys:
   "virality_velocity": "e.g. +24.5% vs yesterday",
   "morning_briefing": "2-3 concise bullet sentences covering morning viral spikes, ticket run announcements, and creator reactions.",
   "night_briefing": "2-3 concise bullet sentences summarizing evening prime-time showtime sentiment, audience reactions, and word-of-mouth strength.",
-  "friction_alert": "Key friction or critical complaint (e.g. ticket shortages, mixed ending reactions, pacing)"
+  "friction_alert": "Key friction or critical complaint (e.g. ticket shortages, mixed ending reactions, pacing)",
+  "movie_breakdowns": {
+    "<clean_hashtag>": {
+      "top_praise": "1 concise Indonesian sentence summarizing genuine audience praise",
+      "top_complaint": "1 concise Indonesian sentence summarizing genuine friction or critique",
+      "positive_pct": 82,
+      "mixed_pct": 13,
+      "negative_pct": 5
+    }
+  }
 }"""
 
         url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={GEMINI_API_KEY}"
@@ -271,7 +274,7 @@ Respond in valid JSON format only with these exact keys:
             }
         }
 
-        with httpx.Client(timeout=30.0) as client:
+        with httpx.Client(timeout=40.0) as client:
             resp = client.post(url, json=payload)
             if resp.status_code == 200:
                 result = resp.json()

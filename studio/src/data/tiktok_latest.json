@@ -66,12 +66,84 @@
     }
   ],
   "ai_insights": {
-    "share_of_voice_leader": "Harusnya Horror",
-    "organic_wom_ratio": "79% Organic WoM (High authentic community conversation driven by unexpected emotional tone and influencer fanbase)",
-    "virality_velocity": "+42.1% vs yesterday",
-    "morning_briefing": "Viral trailer clips featuring Reza Arap (YB) and Lula Lahfah triggered early morning engagement spikes across TikTok creator feeds. Official announcements confirmed strong theatrical momentum with over 400,000+ viewers reported on opening runs. Key digital influencers and gaming communities actively drove ticket rush excitement around the unique wibu ghost storyline.",
-    "night_briefing": "Evening showtime audience reactions highlighted a surprising shift from laugh-out-loud comedy to intense emotional tear-jerker moments during the third act. Positive word-of-mouth gained traction as viewers praised the emotional chemistry and comedic balance. Late-night posts reflected strong community empathy and high re-watch intent among fans.",
-    "friction_alert": "Audience confusion regarding age appropriateness/profanity restrictions and minor complaints about stiff acting from non-traditional cast members."
+    "share_of_voice_leader": "Sekawan Limo",
+    "organic_wom_ratio": "83% Organic WoM (Diskusi komunitas film dan reaksi penonton otentik)",
+    "virality_velocity": "+45.2% vs kemarin",
+    "morning_briefing": "• Penayangan klip dan trailer film Sekawan Limo serta Lembayung memicu lonjakan tayangan masif hingga puluhan juta views di TikTok sejak pagi hari.\n• Kreator dan audiens aktif membagikan jadwal tayang, menanyakan batas usia penonton, serta memesan tiket bioskop lebih awal.\n• Reaksi awal antusias menyoroti perpaduan unik genre komedi-horor dan apresiasi terhadap penampilan para kreator konten.",
+    "night_briefing": "• Sentimen pertunjukan malam didominasi oleh ulasan positif penonton yang merasa terhibur sekaligus tersentuh oleh alur emosional cerita.\n• Word-of-mouth berkembang pesat dengan banyaknya rekomendasi nonton bareng teman kerja maupun pasangan.\n• Terjadi peningkatan permintaan jam tayang tambahan di berbagai jaringan bioskop kota-kota daerah.",
+    "friction_alert": "Ketidakpastian batas minimal usia penonton serta kekhawatiran sebagian audiens terhadap potensi humor yang terasa garing atau kaku.",
+    "movie_breakdowns": {
+      "harusnyahorror": {
+        "top_praise": "Konsep komedi horor wibu yang unik dan akting para YouTuber sangat menghibur penonton.",
+        "top_complaint": "Beberapa penonton merasa akting masih kaku dan khawatir humornya terasa garing.",
+        "positive_pct": 75,
+        "mixed_pct": 18,
+        "negative_pct": 7
+      },
+      "kangmak": {
+        "top_praise": "Humor jajaran komedian sukses membuat penonton tertawa terbahak-bahak di bioskop.",
+        "top_complaint": "Penonton mempertanyakan ketersediaan jam tayang dan kesesuaian sensor usia anak.",
+        "positive_pct": 88,
+        "mixed_pct": 9,
+        "negative_pct": 3
+      },
+      "agaklaen": {
+        "top_praise": "Interaksi jajaran pemain utama sangat solid dan menjadi tolok ukur komedi horor berkualitas.",
+        "top_complaint": "Ada kecemasan tayangan di platform streaming akan memotong beberapa adegan favorit.",
+        "positive_pct": 90,
+        "mixed_pct": 7,
+        "negative_pct": 3
+      },
+      "kakaboss": {
+        "top_praise": "Acara nonton bareng dan tarian khas film menghadirkan suasana penuh kegembiraan.",
+        "top_complaint": "Promosi dan pembagian jumlah layar di daerah masih dirasa kurang merata.",
+        "positive_pct": 80,
+        "mixed_pct": 15,
+        "negative_pct": 5
+      },
+      "lembayung": {
+        "top_praise": "Adegan horor rumah sakit berhasil memberikan kejutan mencekam yang ampuh memicu jeritan penonton.",
+        "top_complaint": "Beberapa adegan dinilai terlalu menakutkan untuk penonton usia muda.",
+        "positive_pct": 85,
+        "mixed_pct": 11,
+        "negative_pct": 4
+      },
+      "filmlaura": {
+        "top_praise": "Kisah emosional dan akting pemeran utama berhasil menguras air mata penonton.",
+        "top_complaint": "Penonton merasa sedih dan sentimental mengingat kenangan sosok asli almarhumah.",
+        "positive_pct": 86,
+        "mixed_pct": 10,
+        "negative_pct": 4
+      },
+      "homesweetloan": {
+        "top_praise": "Cerita sangat berkesan dan relate dengan perjuangan hidup pekerja muda perkotaan.",
+        "top_complaint": "Banyak potongan cuplikan cerita beredar di media sosial sebelum audiens sempat menonton.",
+        "positive_pct": 83,
+        "mixed_pct": 12,
+        "negative_pct": 5
+      },
+      "filmsumala": {
+        "top_praise": "Atmosfer horor lokal yang mencekam disajikan dengan kualitas akting yang memukau.",
+        "top_complaint": "Alur cerita horor dirasa cukup berat dan menakutkan bagi sebagian penonton.",
+        "positive_pct": 79,
+        "mixed_pct": 15,
+        "negative_pct": 6
+      },
+      "filmthaghut": {
+        "top_praise": "Eksekusi horor yang menegangkan dan alur cerita yang layak mendapatkan rating tinggi.",
+        "top_complaint": "Sempat terjadi kebingungan di kalangan penonton terkait informasi tayang dan promosi.",
+        "positive_pct": 81,
+        "mixed_pct": 13,
+        "negative_pct": 6
+      },
+      "sekawanlimo": {
+        "top_praise": "Perpaduan komedi pendakian gunung yang kocak dan unsur horor menyajikan hiburan yang lengkap.",
+        "top_complaint": "Antrean tiket di beberapa bioskop daerah cepat habis karena lonjakan peminat.",
+        "positive_pct": 89,
+        "mixed_pct": 8,
+        "negative_pct": 3
+      }
+    }
   },
   "posts": [
     {

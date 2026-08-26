@@ -174,9 +174,16 @@ export default function TikTokExplorerPage() {
         });
     }, [isDataAvailableForDate, liveData]);
 
-    // ─── 3. Dynamically Compute Slate Statistics from Real Data ─────
+    // ─── 3. Dynamically Compute Slate Statistics from Real Data & Gemini ─────
     const slateStats: MovieSlateStats[] = useMemo(() => {
         if (!isDataAvailableForDate || allPosts.length === 0) return [];
+        const aiBreakdowns = (liveData?.ai_insights?.movie_breakdowns || {}) as Record<string, {
+            top_praise?: string;
+            top_complaint?: string;
+            positive_pct?: number;
+            mixed_pct?: number;
+            negative_pct?: number;
+        }>;
 
         const slateMovies = Object.entries(TAG_TO_MOVIE).map(([tag, info]) => {
             const moviePosts = allPosts.filter((p) => p.hashtag.toLowerCase().includes(tag));
@@ -184,17 +191,31 @@ export default function TikTokExplorerPage() {
 
             const dailyViews = moviePosts.reduce((s, p) => s + (p.metrics?.views || 0), 0);
             const dailyLikes = moviePosts.reduce((s, p) => s + (p.metrics?.likes || 0), 0);
-            const dailyComments = moviePosts.reduce((s, p) => s + (p.metrics?.comments || 0), 0);
+            const dailyComments = movieComments.length || moviePosts.reduce((s, p) => s + (p.metrics?.comments || 0), 0);
             const dailyShares = moviePosts.reduce((s, p) => s + (p.metrics?.shares || 0), 0);
 
-            const totalCommentLikes = movieComments.reduce((s, c) => s + c.diggCount, 0);
-            const positiveComments = movieComments.filter((c) => c.sentiment === 'positive').length;
-            const totalC = movieComments.length || 1;
-            const positivePct = Math.min(95, Math.max(65, Math.round((positiveComments / totalC) * 100) || 78));
-            const negativePct = Math.max(4, Math.round((100 - positivePct) * 0.3));
-            const mixedPct = 100 - positivePct - negativePct;
+            // Sourced directly from real Gemini 3.6 Flash NLP per-movie analysis
+            const breakdown = aiBreakdowns[tag] || {};
+            const positivePct = breakdown.positive_pct ?? (
+                movieComments.length > 0
+                    ? Math.round((movieComments.filter((c) => c.sentiment === 'positive').length / movieComments.length) * 100)
+                    : 80
+            );
+            const negativePct = breakdown.negative_pct ?? (
+                movieComments.length > 0
+                    ? Math.round((movieComments.filter((c) => c.sentiment === 'negative').length / movieComments.length) * 100)
+                    : 5
+            );
+            const mixedPct = breakdown.mixed_pct ?? (100 - positivePct - negativePct);
 
-            const viralityRatio = dailyViews > 0 ? ((dailyShares / dailyViews) * 100).toFixed(2) : '0.85';
+            const topPraise = breakdown.top_praise || (
+                movieComments[0]?.text ? `"${movieComments[0].text.slice(0, 90)}..."` : 'Diskusi audiens aktif di media sosial'
+            );
+            const topComplaint = breakdown.top_complaint || (
+                movieComments.find((c) => c.sentiment === 'mixed')?.text ? `"${movieComments.find((c) => c.sentiment === 'mixed')?.text.slice(0, 90)}..."` : 'Ketersediaan jam tayang di bioskop'
+            );
+
+            const viralityRatio = dailyViews > 0 ? ((dailyShares / dailyViews) * 100).toFixed(2) : '0.00';
 
             return {
                 id: `movie_${tag}`,
@@ -202,21 +223,21 @@ export default function TikTokExplorerPage() {
                 hashtag: `#${tag}`,
                 distributor: info.distributor,
                 release_status: info.status,
-                dailyViews: Math.max(dailyViews, 24000),
-                dailyLikes: Math.max(dailyLikes, 1800),
-                dailyComments: Math.max(dailyComments, movieComments.length),
-                dailyShares: Math.max(dailyShares, 120),
+                dailyViews,
+                dailyLikes,
+                dailyComments,
+                dailyShares,
                 positivePct,
                 mixedPct,
                 negativePct,
-                topPraise: totalCommentLikes > 100 ? 'Akting dan komedi viral diapresiasi penonton' : 'Antusiasme jadwal tayang tinggi',
-                topComplaint: negativePct > 8 ? 'Jadwal tayang malam cepat sold out' : 'Keterbatasan studio premier',
-                viralityScore: `${viralityRatio}% (${Number(viralityRatio) > 1.2 ? 'High Viral' : 'Normal'})`,
+                topPraise,
+                topComplaint,
+                viralityScore: `${viralityRatio}% (${Number(viralityRatio) > 0.8 ? 'High Viral' : 'Normal'})`,
             };
         });
 
         return slateMovies.sort((a, b) => b.dailyViews - a.dailyViews);
-    }, [isDataAvailableForDate, allPosts, allComments]);
+    }, [isDataAvailableForDate, allPosts, allComments, liveData]);
 
     // ─── 4. Real Gemini 3.6 Flash Actionable Intelligence ────────────
     const actionableInsights = useMemo(() => {
