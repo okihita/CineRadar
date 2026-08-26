@@ -3,114 +3,114 @@
   "_name": "projects/cineradar-481014/databases/(default)/documents/tiktok_sources/config",
   "sources": [
     {
-      "priority": "high",
-      "name": "Cinema XXI",
-      "category": "exhibitor",
       "active": true,
-      "handle": "cinema.21",
+      "name": "Cinema XXI",
       "verified": true,
       "id": "src-cinema-21",
+      "category": "exhibitor",
+      "priority": "high",
+      "handle": "cinema.21",
       "notes": "Primary national cinema circuit. Posts daily schedules and official trailers."
     },
     {
-      "priority": "high",
-      "handle": "cgv.id",
-      "active": true,
-      "category": "exhibitor",
       "id": "src-cgv-id",
-      "name": "CGV Cinemas Indonesia",
-      "notes": "Major exhibitor circuit. Heavy trailer promotion and campaign tags.",
-      "verified": true
-    },
-    {
-      "priority": "medium",
+      "verified": true,
+      "active": true,
       "category": "exhibitor",
-      "active": true,
-      "handle": "cinepolisid",
-      "id": "src-cinepolis-id",
-      "notes": "National cinema circuit with active movie lineup promotions.",
-      "name": "Cinépolis Cinemas Indonesia",
-      "verified": true
+      "priority": "high",
+      "notes": "Major exhibitor circuit. Heavy trailer promotion and campaign tags.",
+      "name": "CGV Cinemas Indonesia",
+      "handle": "cgv.id"
     },
     {
-      "name": "MD Pictures (MD Entertainment)",
-      "priority": "high",
+      "verified": true,
+      "category": "exhibitor",
+      "name": "Cinépolis Cinemas Indonesia",
+      "priority": "medium",
+      "notes": "National cinema circuit with active movie lineup promotions.",
       "active": true,
+      "id": "src-cinepolis-id",
+      "handle": "cinepolisid"
+    },
+    {
       "handle": "mdentertainmentofficial",
       "id": "src-md-pictures",
+      "name": "MD Pictures (MD Entertainment)",
+      "notes": "Top Indonesian production house (Harusnya Horror, KKN, etc.).",
       "category": "studio",
-      "verified": true,
-      "notes": "Top Indonesian production house (Harusnya Horror, KKN, etc.)."
-    },
-    {
       "priority": "high",
-      "handle": "falconpictures",
       "active": true,
-      "name": "Falcon Pictures",
-      "id": "src-falcon-pictures",
-      "category": "studio",
-      "notes": "Top Indonesian production house (Dan Bandung, Dilan, Miracle in Cell No. 7).",
       "verified": true
     },
     {
       "verified": true,
-      "notes": "Major Indonesian studio & distributor.",
-      "handle": "starvisionplus",
-      "active": true,
-      "name": "Starvision Plus",
       "category": "studio",
-      "id": "src-starvision-plus",
-      "priority": "high"
-    },
-    {
-      "active": true,
-      "handle": "visinemaid",
-      "category": "studio",
-      "verified": true,
+      "id": "src-falcon-pictures",
+      "notes": "Top Indonesian production house (Dan Bandung, Dilan, Miracle in Cell No. 7).",
       "priority": "high",
-      "notes": "Indonesian studio (13 Bom di Jakarta, Mencuri Raden Saleh).",
-      "id": "src-visinema",
-      "name": "Visinema Pictures"
+      "active": true,
+      "handle": "falconpictures",
+      "name": "Falcon Pictures"
     },
     {
-      "verified": true,
-      "name": "Imajinari",
+      "handle": "starvisionplus",
+      "name": "Starvision Plus",
+      "notes": "Major Indonesian studio & distributor.",
+      "id": "src-starvision-plus",
+      "priority": "high",
       "category": "studio",
-      "notes": "Studio behind Agak Laen, Jatuh Cinta Seperti di Dongeng-Dongeng.",
-      "id": "src-imajinari",
       "active": true,
-      "handle": "imajinari.id",
-      "priority": "high"
+      "verified": true
+    },
+    {
+      "active": true,
+      "id": "src-visinema",
+      "verified": true,
+      "name": "Visinema Pictures",
+      "priority": "high",
+      "category": "studio",
+      "handle": "visinemaid",
+      "notes": "Indonesian studio (13 Bom di Jakarta, Mencuri Raden Saleh)."
     },
     {
       "verified": true,
       "active": true,
+      "priority": "high",
+      "category": "studio",
+      "id": "src-imajinari",
+      "notes": "Studio behind Agak Laen, Jatuh Cinta Seperti di Dongeng-Dongeng.",
+      "name": "Imajinari",
+      "handle": "imajinari.id"
+    },
+    {
       "handle": "legacy.pictures",
+      "priority": "medium",
       "category": "studio",
       "notes": "Production house co-producing major commercial releases.",
-      "name": "Legacy Pictures",
+      "verified": true,
+      "active": true,
       "id": "src-legacy-pictures",
-      "priority": "medium"
+      "name": "Legacy Pictures"
     },
     {
-      "id": "src-soraya-intercine",
-      "verified": true,
-      "name": "Soraya Intercine Films",
-      "category": "studio",
-      "handle": "sorayaintercinefilms",
       "active": true,
+      "name": "Soraya Intercine Films",
+      "id": "src-soraya-intercine",
       "notes": "Indonesian film production house (Suzanna, Tenggelamnya Kapal Van Der Wijck).",
-      "priority": "medium"
+      "verified": true,
+      "handle": "sorayaintercinefilms",
+      "priority": "medium",
+      "category": "studio"
     },
     {
       "handle": "habisnontonfilm",
-      "active": true,
-      "priority": "high",
       "notes": "Prominent cinema review platform covering new Indonesian theatrical releases.",
-      "category": "tracker",
-      "id": "src-habis-nonton-film",
       "name": "Habis Nonton Film",
-      "verified": true
+      "category": "tracker",
+      "priority": "high",
+      "id": "src-habis-nonton-film",
+      "verified": true,
+      "active": true
     }
   ],
   "overrides": {
@@ -119,6 +119,7 @@
       "oakstreetmovie"
     ]
   },
+  "updated_at": "2026-08-26T08:28:49.946Z",
   "excluded_hashtags": [
     "bioskop",
     "cgvcinemas",
@@ -150,6 +151,5 @@
     "viral",
     "xxiasik",
     "xxicineplex"
-  ],
-  "updated_at": "2026-08-26T08:28:49.946Z"
+  ]
 }
