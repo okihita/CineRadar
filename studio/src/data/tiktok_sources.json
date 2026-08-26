@@ -109,16 +109,6 @@
       "verified": true,
       "priority": "high",
       "notes": "Prominent cinema review platform covering new Indonesian theatrical releases."
-    },
-    {
-      "id": "src-watchmen-id",
-      "handle": "watchmenid",
-      "name": "WatchmenID",
-      "category": "tracker",
-      "active": true,
-      "verified": true,
-      "priority": "medium",
-      "notes": "Film community & box office discussion hub."
     }
   ],
   "overrides": {}

@@ -15,8 +15,6 @@ import {
     Building2,
     Plus,
     Trash2,
-    CheckCircle2,
-    XCircle,
     Hash,
     Save,
     ExternalLink
@@ -85,27 +83,6 @@ export default function TikTokDiscoverySettingsPage() {
             }
         } catch {
             toast.error('Network error updating source');
-        }
-    };
-
-    // Delete source
-    const handleDelete = async (source: TruthSource) => {
-        if (!confirm(`Delete @${source.handle} from truth seed accounts?`)) return;
-        try {
-            const res = await fetch('/api/socials/tiktok/sources', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'delete_source', source: { id: source.id } }),
-            });
-            const result = await res.json();
-            if (result.success) {
-                toast.success(`Deleted @${source.handle}`);
-                mutate();
-            } else {
-                toast.error(result.error || 'Failed to delete source');
-            }
-        } catch {
-            toast.error('Network error deleting source');
         }
     };
 
@@ -388,21 +365,20 @@ export default function TikTokDiscoverySettingsPage() {
                                         <th className="p-3 pl-4">Seed Account</th>
                                         <th className="p-3">Category</th>
                                         <th className="p-3">Priority</th>
-                                        <th className="p-3">Status</th>
                                         <th className="p-3">Purpose / Notes</th>
-                                        <th className="p-3 pr-4 text-right">Actions</th>
+                                        <th className="p-3 pr-4 text-right">Scrape Status</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border/30">
                                     {isLoading ? (
                                         <tr>
-                                            <td colSpan={6} className="p-8 text-center text-sm text-muted-foreground">
+                                            <td colSpan={5} className="p-8 text-center text-sm text-muted-foreground">
                                                 Loading truth seed accounts...
                                             </td>
                                         </tr>
                                     ) : filteredSources.length === 0 ? (
                                         <tr>
-                                            <td colSpan={6} className="p-8 text-center text-sm text-muted-foreground">
+                                            <td colSpan={5} className="p-8 text-center text-sm text-muted-foreground">
                                                 No accounts found in this category.
                                             </td>
                                         </tr>
@@ -448,36 +424,21 @@ export default function TikTokDiscoverySettingsPage() {
                                                         {source.priority}
                                                     </Badge>
                                                 </td>
-                                                <td className="p-3">
-                                                    <button
-                                                        onClick={() => handleToggle(source)}
-                                                        className="inline-flex items-center gap-1.5 text-sm font-semibold cursor-pointer hover:opacity-80 transition-opacity"
-                                                    >
-                                                        {source.active ? (
-                                                            <>
-                                                                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                                                                <span className="text-emerald-600 dark:text-emerald-400">Active</span>
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <XCircle className="w-4 h-4 text-muted-foreground" />
-                                                                <span className="text-muted-foreground">Disabled</span>
-                                                            </>
-                                                        )}
-                                                    </button>
-                                                </td>
-                                                <td className="p-3 text-muted-foreground text-sm max-w-xs truncate">
+                                                <td className="p-3 text-muted-foreground text-sm max-w-sm truncate">
                                                     {source.notes || '—'}
                                                 </td>
                                                 <td className="p-3 pr-4 text-right">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleDelete(source)}
-                                                        className="text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 h-8 px-2"
+                                                    <button
+                                                        onClick={() => handleToggle(source)}
+                                                        className={`inline-flex items-center justify-center px-3 py-1 rounded-lg text-sm font-bold transition-all border ${
+                                                            source.active
+                                                                ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25'
+                                                                : 'bg-muted/40 text-muted-foreground border-border/50 hover:bg-muted/70 hover:text-foreground'
+                                                        }`}
+                                                        title={source.active ? 'Click to deactivate' : 'Click to activate'}
                                                     >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </Button>
+                                                        {source.active ? 'ON' : 'OFF'}
+                                                    </button>
                                                 </td>
                                             </tr>
                                         ))
