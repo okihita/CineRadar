@@ -66,13 +66,6 @@ const menuGroups: MenuGroup[] = [
                 adminOnly: false,
             },
             {
-                title: 'Hashtag Extractor',
-                description: 'Auto-detect campaign tags',
-                href: '/tiktok/extractor',
-                icon: Wand2,
-                adminOnly: false,
-            },
-            {
                 title: 'Pipeline Workflow',
                 description: 'Daily processing & AI graph',
                 href: '/tiktok/workflow',
