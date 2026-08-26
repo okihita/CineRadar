@@ -864,10 +864,25 @@ export default function TikTokExplorerPage() {
                                                                     <span className="hover:underline font-bold text-foreground">
                                                                         {movie.title}
                                                                     </span>
-                                                                    {movie.hashtag ? (
-                                                                        <span className="block text-sm text-muted-foreground font-mono font-normal">
-                                                                            {movie.hashtag}
-                                                                        </span>
+                                                                    {movie.discoveredTags && movie.discoveredTags.length > 0 ? (
+                                                                        <div className="flex items-center gap-1.5 flex-wrap mt-0.5" onClick={(e) => e.stopPropagation()}>
+                                                                            {movie.discoveredTags.map((tag) => {
+                                                                                const cleanTag = tag.replace(/^#/, '');
+                                                                                return (
+                                                                                    <a
+                                                                                        key={tag}
+                                                                                        href={`https://www.tiktok.com/tag/${cleanTag}`}
+                                                                                        target="_blank"
+                                                                                        rel="noopener noreferrer"
+                                                                                        title={`Open #${cleanTag} on TikTok`}
+                                                                                        className="text-sm text-muted-foreground font-mono font-normal hover:text-primary hover:underline inline-flex items-center gap-0.5 transition-colors"
+                                                                                    >
+                                                                                        {tag}
+                                                                                        <ExternalLink className="w-2.5 h-2.5 opacity-60" />
+                                                                                    </a>
+                                                                                );
+                                                                            })}
+                                                                        </div>
                                                                     ) : (
                                                                         <div className="mt-0.5">
                                                                             <Badge variant="outline" className="text-sm font-normal border-dashed text-muted-foreground py-0 px-1.5 h-5">
@@ -971,15 +986,22 @@ export default function TikTokExplorerPage() {
 
                                             <div className="flex items-center gap-1.5 flex-wrap">
                                                 {hasTags ? (
-                                                    movie.discoveredTags.map((tag) => (
-                                                        <Badge
-                                                            key={tag}
-                                                            variant="secondary"
-                                                            className="font-mono text-sm font-semibold bg-primary/10 text-primary border-primary/20"
-                                                        >
-                                                            {tag}
-                                                        </Badge>
-                                                    ))
+                                                    movie.discoveredTags.map((tag) => {
+                                                        const cleanTag = tag.replace(/^#/, '');
+                                                        return (
+                                                            <a
+                                                                key={tag}
+                                                                href={`https://www.tiktok.com/tag/${cleanTag}`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                title={`Verify #${cleanTag} on TikTok`}
+                                                                className="inline-flex items-center gap-1 font-mono text-sm font-semibold bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-md px-2 py-0.5 transition-colors"
+                                                            >
+                                                                {tag}
+                                                                <ExternalLink className="w-3 h-3 opacity-60" />
+                                                            </a>
+                                                        );
+                                                    })
                                                 ) : (
                                                     <span className="text-sm text-muted-foreground italic">
                                                         ⏱ Pending 08:00 WIB discovery
@@ -1102,9 +1124,16 @@ export default function TikTokExplorerPage() {
                                                             <h4 className="text-sm font-bold text-foreground truncate">
                                                                 {post.source_name}
                                                             </h4>
-                                                            <p className="text-sm text-muted-foreground truncate">
+                                                            <a
+                                                                href={`https://www.tiktok.com/@${post.source_handle.replace(/^@/, '')}`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                title={`Open @${post.source_handle} on TikTok`}
+                                                                className="text-sm text-muted-foreground hover:text-primary hover:underline truncate inline-flex items-center gap-0.5 transition-colors"
+                                                            >
                                                                 {post.source_handle}
-                                                            </p>
+                                                                <ExternalLink className="w-2.5 h-2.5 opacity-60" />
+                                                            </a>
                                                         </div>
                                                     </div>
                                                     <Badge variant="outline" className="text-sm font-normal shrink-0">
@@ -1315,9 +1344,16 @@ export default function TikTokExplorerPage() {
                                                     <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0">
                                                         <User className="w-3 h-3" />
                                                     </div>
-                                                    <span className="text-sm font-semibold text-foreground truncate">
+                                                    <a
+                                                        href={`https://www.tiktok.com/@${comment.authorName.replace(/^@/, '')}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        title={`Open @${comment.authorName} on TikTok`}
+                                                        className="text-sm font-semibold text-foreground hover:text-primary hover:underline truncate inline-flex items-center gap-1 transition-colors"
+                                                    >
                                                         @{comment.authorName}
-                                                    </span>
+                                                        <ExternalLink className="w-2.5 h-2.5 opacity-60" />
+                                                    </a>
                                                 </div>
                                                 <Badge variant="outline" className="text-sm font-normal shrink-0">
                                                     {comment.movieTitle}

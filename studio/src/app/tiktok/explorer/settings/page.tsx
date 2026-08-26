@@ -18,7 +18,8 @@ import {
     CheckCircle2,
     XCircle,
     Hash,
-    Save
+    Save,
+    ExternalLink
 } from 'lucide-react';
 import { fetcher } from '@/lib/api';
 import { toast } from 'sonner';
@@ -417,9 +418,16 @@ export default function TikTokDiscoverySettingsPage() {
                                                             <div className="font-bold text-foreground">
                                                                 {source.name}
                                                             </div>
-                                                            <div className="text-sm font-mono text-muted-foreground">
+                                                            <a
+                                                                href={`https://www.tiktok.com/@${source.handle.replace(/^@/, '')}`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                title={`Open @${source.handle} on TikTok`}
+                                                                className="text-sm font-mono text-muted-foreground hover:text-primary hover:underline inline-flex items-center gap-1 transition-colors"
+                                                            >
                                                                 @{source.handle}
-                                                            </div>
+                                                                <ExternalLink className="w-3 h-3 opacity-60" />
+                                                            </a>
                                                         </div>
                                                     </div>
                                                 </td>
@@ -557,15 +565,22 @@ export default function TikTokDiscoverySettingsPage() {
                                                 </td>
                                                 <td className="p-3">
                                                     <div className="flex items-center gap-1.5 flex-wrap">
-                                                        {tags.map((tag) => (
-                                                            <Badge
-                                                                key={tag}
-                                                                variant="outline"
-                                                                className="font-mono text-sm font-medium bg-primary/5 text-primary border-primary/20"
-                                                            >
-                                                                #{tag}
-                                                            </Badge>
-                                                        ))}
+                                                        {tags.map((tag) => {
+                                                            const cleanTag = tag.replace(/^#/, '');
+                                                            return (
+                                                                <a
+                                                                    key={tag}
+                                                                    href={`https://www.tiktok.com/tag/${cleanTag}`}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    title={`Open #${cleanTag} on TikTok`}
+                                                                    className="inline-flex items-center gap-1 font-mono text-sm font-medium bg-primary/5 hover:bg-primary/15 text-primary border border-primary/20 rounded-md px-2 py-0.5 transition-colors"
+                                                                >
+                                                                    #{cleanTag}
+                                                                    <ExternalLink className="w-3 h-3 opacity-60" />
+                                                                </a>
+                                                            );
+                                                        })}
                                                     </div>
                                                 </td>
                                                 <td className="p-3 pr-4 text-right">
