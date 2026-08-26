@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { fetcher } from '@/lib/api';
 import { getTodayJakarta } from '@/lib/timeUtils';
 import { TikTokIcon } from '@/components/BrandIcons';
+import { MovieViralExplorerModal } from '@/components/tiktok/MovieViralExplorerModal';
 import type { ScheduleResponse, MovieSchedule } from '@/features/schedules/types';
 
 interface PostMetrics {
@@ -61,6 +62,35 @@ export default function TikTokExplorerPage() {
     const [showAllMovies, setShowAllMovies] = useState<boolean>(false);
     const [videoLayoutMode, setVideoLayoutMode] = useState<'grid' | 'list'>('grid');
     const [copied, setCopied] = useState<boolean>(false);
+    const [modalMovie, setModalMovie] = useState<{ id: string; title: string } | null>(null);
+
+    // Fetch daily 18:00 WIB social pulse leaderboard
+    const { data: pulseResponse } = useSWR<{
+        success: boolean;
+        data?: {
+            total_movies_tracked: number;
+            leaderboard: Array<{
+                rank: number;
+                movie_id: string;
+                title: string;
+                tier: string;
+                total_views: number;
+                total_likes: number;
+                total_comments: number;
+                total_shares: number;
+                posts_count: number;
+                sentiment?: {
+                    positive: number;
+                    mixed: number;
+                    negative: number;
+                    hype_score?: number;
+                };
+            }>;
+        };
+    }>(`/api/socials/tiktok/pulse?date=${selectedDate}`, fetcher, { revalidateOnFocus: false });
+    const pulseLeaderboard = useMemo(() => {
+        return pulseResponse?.data?.leaderboard || [];
+    }, [pulseResponse]);
 
     // Fetch real live scraped dataset
     const { data: liveResponse, isLoading: isLiveLoading } = useSWR('/api/socials/tiktok?hashtag=latest', fetcher, { revalidateOnFocus: false });
@@ -257,32 +287,40 @@ export default function TikTokExplorerPage() {
                 c.movieTitle.toLowerCase() === m.title.toLowerCase()
             );
 
-            const views = mPosts.reduce((s, p) => s + (p.metrics?.views || 0), 0);
-            const likes = mPosts.reduce((s, p) => s + (p.metrics?.likes || 0), 0);
-            const shares = mPosts.reduce((s, p) => s + (p.metrics?.shares || 0), 0);
+            // Match from daily 18:00 WIB pulse leaderboard if available
+            const pulseMatch = pulseLeaderboard.find((p) =>
+                p.movie_id === m.movie_id ||
+                p.title.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanTag ||
+                cleanTag.includes(p.movie_id)
+            );
+
+            const views = pulseMatch?.total_views ?? mPosts.reduce((s, p) => s + (p.metrics?.views || 0), 0);
+            const likes = pulseMatch?.total_likes ?? mPosts.reduce((s, p) => s + (p.metrics?.likes || 0), 0);
+            const shares = pulseMatch?.total_shares ?? mPosts.reduce((s, p) => s + (p.metrics?.shares || 0), 0);
+            const hasCrawlData = Boolean(pulseMatch || (hasSocialCrawl && views > 0));
 
             const breakdown = aiBreakdowns[cleanTag] || {};
-            const positivePct = breakdown.positive_pct ?? (
+            const positivePct = pulseMatch?.sentiment?.positive ?? breakdown.positive_pct ?? (
                 mComments.length > 0
                     ? Math.round((mComments.filter((c) => c.sentiment === 'positive').length / mComments.length) * 100)
-                    : (hasSocialCrawl ? 80 : 0)
+                    : (hasCrawlData ? 80 : 0)
             );
-            const negativePct = breakdown.negative_pct ?? (
+            const negativePct = pulseMatch?.sentiment?.negative ?? breakdown.negative_pct ?? (
                 mComments.length > 0
                     ? Math.round((mComments.filter((c) => c.sentiment === 'negative').length / mComments.length) * 100)
-                    : (hasSocialCrawl ? 5 : 0)
+                    : (hasCrawlData ? 5 : 0)
             );
-            const mixedPct = hasSocialCrawl ? (100 - positivePct - negativePct) : 0;
+            const mixedPct = hasCrawlData ? (100 - positivePct - negativePct) : 0;
 
             const topPraise = breakdown.top_praise || (
                 mComments[0]?.text
                     ? `"${mComments[0].text.slice(0, 90)}..."`
-                    : (hasSocialCrawl ? 'Diskusi audiens dan antusiasme penonton aktif' : 'Scheduled for 11:00 WIB crawl')
+                    : (hasCrawlData ? 'Diskusi audiens dan antusiasme penonton aktif' : 'Scheduled for 18:00 WIB crawl')
             );
             const topComplaint = breakdown.top_complaint || (
                 mComments.find((c) => c.sentiment === 'mixed')?.text
                     ? `"${mComments.find((c) => c.sentiment === 'mixed')?.text.slice(0, 90)}..."`
-                    : (hasSocialCrawl ? 'Ketersediaan jam tayang di bioskop' : 'Scheduled for 11:00 WIB crawl')
+                    : (hasCrawlData ? 'Ketersediaan jam tayang di bioskop' : 'Scheduled for 18:00 WIB crawl')
             );
 
             const movieOverrides = sourcesData?.overrides?.[m.title.toUpperCase()] || [];
@@ -292,7 +330,7 @@ export default function TikTokExplorerPage() {
                 ? movieOverrides.map((t) => `#${t.replace(/^#/, '')}`)
                 : (snapshotTags.length > 0
                     ? snapshotTags.map((t) => `#${t.replace(/^#/, '')}`)
-                    : (hasSocialCrawl && mPosts.length > 0 ? [`#${cleanTag}`] : []));
+                    : (hasCrawlData && mPosts.length > 0 ? [`#${cleanTag}`] : []));
 
             const hashtagDisplay = discoveredTags.length > 0 ? discoveredTags.join(' ') : null;
 
@@ -314,7 +352,8 @@ export default function TikTokExplorerPage() {
                 views,
                 likes,
                 shares,
-                hasSocialCrawl,
+                hasSocialCrawl: hasCrawlData,
+                postsCount: pulseMatch?.posts_count || mPosts.length,
                 positivePct,
                 mixedPct,
                 negativePct,
@@ -323,11 +362,11 @@ export default function TikTokExplorerPage() {
             };
         });
 
-        if (hasSocialCrawl) {
+        if (pulseLeaderboard.length > 0 || hasSocialCrawl) {
             return list.sort((a, b) => b.views - a.views);
         }
         return list.sort((a, b) => (b.showtimes_count || 0) - (a.showtimes_count || 0));
-    }, [hasSocialCrawl, activeShowtimeMovies, allPosts, allComments, liveData, sourcesData?.overrides, discoveryMovies]);
+    }, [hasSocialCrawl, activeShowtimeMovies, allPosts, allComments, liveData, sourcesData?.overrides, discoveryMovies, pulseLeaderboard]);
 
     // ─── 4. Filtered Feeds ──────────────────────────────────────────
     const filteredPosts = useMemo(() => {
@@ -943,9 +982,23 @@ export default function TikTokExplorerPage() {
                                                                 </span>
                                                             )}
                                                         </td>
-                                                        <td className="p-3 pr-4 text-muted-foreground truncate max-w-[260px]">
+                                                        <td className="p-3 pr-4 text-muted-foreground max-w-[260px]">
                                                             {movie.hasSocialCrawl ? (
-                                                                movie.topPraise
+                                                                <div className="flex items-center justify-between gap-2">
+                                                                    <span className="truncate">{movie.topPraise}</span>
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setModalMovie({ id: movie.id, title: movie.title });
+                                                                        }}
+                                                                        className="h-6 px-2 text-xs font-bold text-primary hover:bg-primary/10 gap-1 rounded shrink-0"
+                                                                    >
+                                                                        <Play className="w-2.5 h-2.5 fill-primary" />
+                                                                        Viral
+                                                                    </Button>
+                                                                </div>
                                                             ) : (
                                                                 <span className="font-mono text-muted-foreground">
                                                                     —
@@ -1014,39 +1067,53 @@ export default function TikTokExplorerPage() {
                                     return (
                                         <div
                                             key={`tag-card-${movie.id}`}
-                                            className="p-3 rounded-xl border border-border/40 bg-muted/10 space-y-1.5"
+                                            className="p-3 rounded-xl border border-border/40 bg-muted/10 space-y-2 flex flex-col justify-between"
                                         >
                                             <div className="flex items-center justify-between gap-2">
                                                 <span className="text-sm font-bold text-foreground truncate">
                                                     {movie.title}
                                                 </span>
-                                                <Badge variant="outline" className="text-sm font-medium shrink-0">
+                                                <Badge variant="outline" className="text-xs font-medium shrink-0">
                                                     {movie.age_category}
                                                 </Badge>
                                             </div>
 
-                                            <div className="flex items-center gap-1.5 flex-wrap">
-                                                {hasTags ? (
-                                                    movie.discoveredTags.map((tag) => {
-                                                        const cleanTag = tag.replace(/^#/, '');
-                                                        return (
-                                                            <a
-                                                                key={tag}
-                                                                href={`https://www.tiktok.com/tag/${cleanTag}`}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                title={`Verify #${cleanTag} on TikTok`}
-                                                                className="inline-flex items-center gap-1 font-mono text-sm font-semibold bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-md px-2 py-0.5 transition-colors"
-                                                            >
-                                                                {tag}
-                                                                <ExternalLink className="w-3 h-3 opacity-60" />
-                                                            </a>
-                                                        );
-                                                    })
-                                                ) : (
-                                                    <span className="text-sm text-muted-foreground italic">
-                                                        ⏱ Pending 08:00 WIB discovery
-                                                    </span>
+                                            <div className="flex items-center justify-between gap-1.5 pt-1.5 border-t border-border/20">
+                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                    {hasTags ? (
+                                                        movie.discoveredTags.map((tag) => {
+                                                            const cleanTag = tag.replace(/^#/, '');
+                                                            return (
+                                                                <a
+                                                                    key={tag}
+                                                                    href={`https://www.tiktok.com/tag/${cleanTag}`}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    title={`Verify #${cleanTag} on TikTok`}
+                                                                    className="inline-flex items-center gap-1 font-mono text-xs font-semibold bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-md px-2 py-0.5 transition-colors"
+                                                                >
+                                                                    {tag}
+                                                                    <ExternalLink className="w-2.5 h-2.5 opacity-60" />
+                                                                </a>
+                                                            );
+                                                        })
+                                                    ) : (
+                                                        <span className="text-xs text-muted-foreground italic">
+                                                            ⏱ Pending 08:00 WIB discovery
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                {movie.hasSocialCrawl && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => setModalMovie({ id: movie.id, title: movie.title })}
+                                                        className="h-6 px-2 text-xs font-bold text-primary hover:bg-primary/10 gap-1 rounded shrink-0"
+                                                    >
+                                                        <Play className="w-2.5 h-2.5 fill-primary" />
+                                                        Viral ({movie.postsCount || 40})
+                                                    </Button>
                                                 )}
                                             </div>
                                         </div>
@@ -1472,6 +1539,15 @@ export default function TikTokExplorerPage() {
                     )}
                 </>
             )}
+
+            {/* Movie Viral Posts & Sentiment Explorer Modal */}
+            <MovieViralExplorerModal
+                isOpen={modalMovie !== null}
+                onClose={() => setModalMovie(null)}
+                movieId={modalMovie?.id || null}
+                movieTitle={modalMovie?.title || ''}
+                date={selectedDate}
+            />
         </div>
     );
 }
