@@ -1,11 +1,14 @@
 """CineRadar — Hashtag Discovery Engine (Gen 2 Cloud Function).
 
 HTTP-triggered Cloud Function that runs daily at 08:00 WIB:
-1. Reads Apify token from Firestore `auth_tokens/socials` (falling back to env APIFY_API_TOKEN).
-2. Loads active 'ON' truth seed accounts from Firestore `tiktok_sources/config`.
-3. Queries today's active theatrical slate from Firestore `schedules_v2/{target_date}/movies`.
-4. Scrapes recent video captions from active seed accounts via Apify / Clockworks actor.
-5. Matches and resolves multi-agency campaign hashtags against active theatrical titles.
+1. Loads Apify API token from Firestore `auth_tokens/socials`. FAILS LOUDLY (500) if missing.
+2. Loads active 'ON' truth seed accounts from Firestore `tiktok_sources/config`. FAILS LOUDLY (400) if none active.
+3. Queries today's active theatrical slate from Firestore `schedules_v2/{target_date}/movies`. FAILS LOUDLY (404) if empty.
+4. Executes live Apify TikTok Profile Scraper across all active seed accounts. FAILS LOUDLY (502) if Apify API fails.
+5. Matches and resolves authentic campaign hashtags from live seed posts and manual overrides only.
+   - NO auto-seed generation.
+   - NO silent mock fallback.
+   - If a movie has no live posts or overrides, discovered_hashtags remains EMPTY [].
 6. Persists the discovery snapshot to Firestore `tiktok_hashtag_discovery/{target_date}`.
 
 Triggered by Cloud Scheduler daily at 08:00 WIB (`0 8 * * *` WIB).
@@ -38,18 +41,27 @@ def get_firestore_client() -> firestore.Client:
 
 
 def get_apify_token(db: firestore.Client) -> str:
-    """Fetches Apify API token from Firestore auth_tokens/socials, with env fallback."""
+    """Fetches Apify API token from Firestore auth_tokens/socials or env.
+
+    Raises ValueError if token is missing.
+    """
+    token = ""
     try:
         doc = db.collection("auth_tokens").document("socials").get()
         if doc.exists:
-            token = (doc.to_dict() or {}).get("apify_api_token", "")
-            if token and isinstance(token, str) and len(token) > 10:
-                logger.info("Loaded Apify API token from Firestore auth_tokens/socials")
-                return token.strip()
+            token = str((doc.to_dict() or {}).get("apify_api_token", "")).strip()
     except Exception as e:
-        logger.warning("Failed to read auth_tokens/socials from Firestore: %s", e)
+        logger.error("Failed to read auth_tokens/socials from Firestore: %s", e)
 
-    return os.environ.get("APIFY_API_TOKEN", "").strip()
+    if not token:
+        token = os.environ.get("APIFY_API_TOKEN", "").strip()
+
+    if not token:
+        raise ValueError(
+            "CRITICAL: Apify API token is not configured in Firestore 'auth_tokens/socials' or APIFY_API_TOKEN environment variable."
+        )
+
+    return token
 
 
 def normalize_title(title: str) -> str:
@@ -79,39 +91,55 @@ def load_sources_config(db: firestore.Client) -> dict[str, Any]:
 
 
 def scrape_seed_account_posts(apify_token: str, handles: list[str]) -> list[dict[str, Any]]:
-    """Scrapes latest posts from active seed accounts via Apify Clockworks TikTok actor."""
-    if not apify_token or not handles:
-        logger.info("Skipping live Apify scrape: no token or active handles")
-        return []
+    """Scrapes latest posts from active seed accounts via Apify Clockworks TikTok actor.
 
-    profiles = [f"https://www.tiktok.com/@{h.replace('@', '').strip()}" for h in handles if h.strip()]
-    logger.info("Triggering Apify TikTok profile scrape for %d accounts: %s", len(profiles), profiles)
+    Raises RuntimeError on API failure or non-200 responses.
+    """
+    if not handles:
+        raise ValueError(
+            "No active 'ON' seed accounts configured in Firestore 'tiktok_sources/config'."
+        )
+
+    profiles = [
+        f"https://www.tiktok.com/@{h.replace('@', '').strip()}" for h in handles if h.strip()
+    ]
+    logger.info(
+        "Triggering live Apify TikTok profile scrape for %d accounts: %s", len(profiles), profiles
+    )
+
+    actor_id = "clockworks~tiktok-profile-scraper"
+    url = f"https://api.apify.com/v2/acts/{actor_id}/run-sync-get-dataset-items?token={apify_token}"
+
+    payload = {
+        "profiles": profiles,
+        "resultsPerPage": 5,
+        "shouldDownloadVideos": False,
+        "shouldDownloadCovers": False,
+    }
 
     try:
-        # Run Apify clockworks/tiktok-profile-scraper actor (sync dataset wait, up to 5 posts per seed)
-        actor_id = "clockworks~tiktok-profile-scraper"
-        url = f"https://api.apify.com/v2/acts/{actor_id}/run-sync-get-dataset-items?token={apify_token}"
-
-        payload = {
-            "profiles": profiles,
-            "resultsPerPage": 5,
-            "shouldDownloadVideos": False,
-            "shouldDownloadCovers": False,
-        }
-
-        with httpx.Client(timeout=45.0) as client:
+        with httpx.Client(timeout=60.0) as client:
             response = client.post(url, json=payload)
-            if response.status_code == 200 or response.status_code == 201:
-                items = response.json()
-                if isinstance(items, list):
-                    logger.info("Successfully fetched %d recent posts from Apify seed profiles", len(items))
-                    return items
-            else:
-                logger.warning("Apify Actor returned HTTP %d: %s", response.status_code, response.text[:200])
-    except Exception as e:
-        logger.warning("Apify seed profile crawl encountered error: %s", e)
+            if response.status_code not in (200, 201):
+                error_msg = (
+                    f"Apify Actor failed with HTTP {response.status_code}: {response.text[:300]}"
+                )
+                logger.error(error_msg)
+                raise RuntimeError(error_msg)
 
-    return []
+            items = response.json()
+            if not isinstance(items, list):
+                raise RuntimeError(f"Unexpected Apify response structure: {type(items).__name__}")
+
+            logger.info(
+                "Successfully fetched %d recent posts from live Apify seed profiles", len(items)
+            )
+            return items
+
+    except httpx.RequestError as e:
+        error_msg = f"Network error connecting to Apify API: {e}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
 
 
 def resolve_hashtags_for_slate(
@@ -119,6 +147,10 @@ def resolve_hashtags_for_slate(
     sources_config: dict[str, Any],
     scraped_posts: list[dict[str, Any]],
 ) -> dict[str, dict[str, Any]]:
+    """Resolves hashtags strictly from manual overrides and live scraped posts.
+
+    NO automated patterns. NO fake defaults.
+    """
     existing_overrides: dict[str, list[str]] = sources_config.get("overrides", {}) or {}
     logger.info(
         "Resolving hashtags across %d movies using %d live posts and %d overrides",
@@ -136,7 +168,7 @@ def resolve_hashtags_for_slate(
         found_tags: set[str] = set()
         contributing_sources: set[str] = set()
 
-        # 1. Highest Priority: Check custom overrides
+        # 1. Custom overrides take precedence
         if title in existing_overrides:
             for tag in existing_overrides[title]:
                 clean_tag = tag.replace("#", "").strip().lower()
@@ -150,24 +182,25 @@ def resolve_hashtags_for_slate(
                 text = (post.get("text") or post.get("caption") or "").lower()
                 author = post.get("authorMeta", {}).get("name") or post.get("source_handle") or ""
 
-                # Check if movie title or normalized title is mentioned in post
                 if title.lower() in text or norm_title in text:
-                    # Extract hashtags from post hashtags array or regex
                     post_tags = post.get("hashtags") or []
                     for t in post_tags:
                         t_raw = t.get("name") if isinstance(t, dict) else t
                         if t_raw is not None:
                             clean_t = str(t_raw).replace("#", "").strip().lower()
-                            if clean_t and clean_t not in {"fyp", "foryou", "viral", "bioskop", "cinema"}:
+                            if clean_t and clean_t not in {
+                                "fyp",
+                                "foryou",
+                                "viral",
+                                "bioskop",
+                                "cinema",
+                            }:
                                 found_tags.add(clean_t)
                     if author and isinstance(author, str):
                         contributing_sources.add(f"@{author.replace('@', '')}")
 
-        # 3. Deterministic Fallback if live scrape is empty or unreleased
-        if not found_tags:
-            found_tags.add(norm_title)
-            found_tags.add(f"film{norm_title}")
-            contributing_sources.add("automated_seed_pattern")
+        # If no verified tags found from live seed posts or overrides, it stays empty []
+        is_verified = len(found_tags) > 0
 
         discovered_slate[title] = {
             "movie_id": movie.get("movie_id", norm_title),
@@ -175,7 +208,7 @@ def resolve_hashtags_for_slate(
             "age_category": movie.get("age_category", "SU"),
             "discovered_hashtags": sorted(found_tags),
             "contributing_sources": sorted(contributing_sources),
-            "verified": True,
+            "verified": is_verified,
         }
 
     return discovered_slate
@@ -183,7 +216,7 @@ def resolve_hashtags_for_slate(
 
 @functions_framework.http
 def discover_hashtags_http(request: Any) -> tuple[str, int, dict[str, str]]:
-    """HTTP Cloud Function entrypoint."""
+    """HTTP Cloud Function entrypoint. Fails loudly with explicit error payloads."""
     now_wib = datetime.datetime.now(WIB)
     target_date = now_wib.strftime("%Y-%m-%d")
 
@@ -197,55 +230,99 @@ def discover_hashtags_http(request: Any) -> tuple[str, int, dict[str, str]]:
 
     try:
         db = get_firestore_client()
-        apify_token = get_apify_token(db)
-        sources_config = load_sources_config(db)
-        active_movies = get_active_theatrical_movies(db, target_date)
 
-        if not active_movies:
-            logger.warning("No active theatrical movies found for %s", target_date)
+        # 1. Check Apify Token (Fails 500 if missing)
+        apify_token = get_apify_token(db)
+
+        # 2. Check Active Seed Accounts (Fails 400 if none active)
+        sources_config = load_sources_config(db)
+        active_handles = [
+            s.get("handle")
+            for s in sources_config.get("sources", [])
+            if s.get("active", True) and s.get("handle")
+        ]
+        if not active_handles:
+            error_msg = "No active 'ON' seed accounts found in Firestore 'tiktok_sources/config'."
+            logger.error(error_msg)
             return (
-                json.dumps({"success": False, "message": f"No active movies found for {target_date}"}),
+                json.dumps({"success": False, "error": error_msg}),
+                400,
+                {"Content-Type": "application/json"},
+            )
+
+        # 3. Check Active Movies (Fails 404 if no schedule found)
+        active_movies = get_active_theatrical_movies(db, target_date)
+        if not active_movies:
+            error_msg = f"No active theatrical movies found in schedules_v2/{target_date}/movies."
+            logger.error(error_msg)
+            return (
+                json.dumps({"success": False, "error": error_msg}),
                 404,
                 {"Content-Type": "application/json"},
             )
 
-        # Scrape active seed profiles via Apify
-        active_handles = [s.get("handle") for s in sources_config.get("sources", []) if s.get("active", True) and s.get("handle")]
+        # 4. Scrape active seed profiles via Apify (Fails 502 on network/API error)
         scraped_posts = scrape_seed_account_posts(apify_token, active_handles)
 
-        # Resolve multi-agency hashtags
+        # 5. Resolve authentic hashtags only (NO fallback, NO fake patterns)
         discovered_slate = resolve_hashtags_for_slate(active_movies, sources_config, scraped_posts)
+        resolved_count = sum(1 for m in discovered_slate.values() if m["discovered_hashtags"])
 
-        # Persist daily discovery snapshot to Firestore
-        db.collection("tiktok_hashtag_discovery").document(target_date).set({
-            "date": target_date,
-            "discovered_at": now_wib.isoformat(),
-            "total_theatrical_titles": len(active_movies),
-            "resolved_count": len(discovered_slate),
-            "live_posts_scanned": len(scraped_posts),
-            "active_seeds_count": len(active_handles),
-            "movies": discovered_slate,
-        })
+        # 6. Persist daily discovery snapshot to Firestore
+        db.collection("tiktok_hashtag_discovery").document(target_date).set(
+            {
+                "date": target_date,
+                "discovered_at": now_wib.isoformat(),
+                "total_theatrical_titles": len(active_movies),
+                "resolved_count": resolved_count,
+                "live_posts_scanned": len(scraped_posts),
+                "active_seeds_count": len(active_handles),
+                "movies": discovered_slate,
+            }
+        )
 
-        logger.info("Successfully resolved %d titles for %s (live posts: %d)", len(discovered_slate), target_date, len(scraped_posts))
+        logger.info(
+            "Hashtag discovery completed for %s: %d/%d titles verified (live posts: %d)",
+            target_date,
+            resolved_count,
+            len(active_movies),
+            len(scraped_posts),
+        )
 
         return (
-            json.dumps({
-                "success": True,
-                "date": target_date,
-                "total_titles": len(active_movies),
-                "resolved_count": len(discovered_slate),
-                "live_posts_scanned": len(scraped_posts),
-                "discovered_at": now_wib.isoformat(),
-            }),
+            json.dumps(
+                {
+                    "success": True,
+                    "date": target_date,
+                    "total_titles": len(active_movies),
+                    "resolved_count": resolved_count,
+                    "live_posts_scanned": len(scraped_posts),
+                    "active_seeds_count": len(active_handles),
+                    "discovered_at": now_wib.isoformat(),
+                }
+            ),
             200,
             {"Content-Type": "application/json"},
         )
 
-    except Exception as e:
-        logger.exception("Hashtag discovery failed: %s", e)
+    except ValueError as ve:
+        logger.error("Configuration error: %s", ve)
         return (
-            json.dumps({"success": False, "error": str(e)}),
+            json.dumps({"success": False, "error": str(ve)}),
+            500,
+            {"Content-Type": "application/json"},
+        )
+    except RuntimeError as re:
+        logger.error("Apify execution error: %s", re)
+        return (
+            json.dumps({"success": False, "error": str(re)}),
+            502,
+            {"Content-Type": "application/json"},
+        )
+    except Exception as e:
+        logger.exception("Unexpected hashtag discovery failure: %s", e)
+        return (
+            json.dumps({"success": False, "error": f"Internal server error: {e}"}),
             500,
             {"Content-Type": "application/json"},
         )
