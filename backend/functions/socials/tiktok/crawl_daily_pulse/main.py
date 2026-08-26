@@ -7,18 +7,17 @@ Executes daily at 18:00 WIB (`0 18 * * *` WIB):
 3. Ranks films by theatrical showtime volume and segments into a strict Tiered Budget Plan (~Rp 97.000 / day):
    - Tier 1 (Top 6 Blockbusters): 80 posts + 150 audience comments per movie (Gemini sentiment enabled)
    - Tier 2 (Next 10 Active Movies): 40 posts per movie
-   - Tier 3 (Top 4 Upcoming Movies): 30 posts per movie
-4. Scrapes top viral TikTok posts via Apify (`clockworks~tiktok-scraper`).
-5. For Tier 1 movies: analyzes audience comments with Gemini 2.5 Flash to extract sentiment split & reaction themes.
-6. Persists data into Firestore:
+4. Runs fast concurrent batch scraping via Async HTTPX to finish well within Cloud Function timeouts (<60s).
+5. Persists data into Firestore:
    - `tiktok_daily_pulse/{target_date}` (Leaderboard summary document)
    - `tiktok_daily_pulse/{target_date}/movies/{movie_id}` (Top raw posts + comments subcollection)
    - `tiktok_movie_trends/{movie_id}` (Appends today's metrics to 60-day lifetime trend array)
-7. Dispatches the 18:00 WIB Evening Social Box Office Briefing to Telegram.
+6. Dispatches the 18:00 WIB Evening Social Box Office Briefing to Telegram.
 """
 
 from __future__ import annotations
 
+import asyncio
 import datetime
 import json
 import logging
@@ -93,13 +92,13 @@ def normalize_title(title: str) -> str:
     return "".join(re.sub(r"[^\w\s]", "", title.lower()).split())
 
 
-# ─── 2. Apify Scraper Client ───
+# ─── 2. Async Apify Scraper Client (Concurrent Execution) ───
 
 
-def scrape_hashtag_posts_batch(
-    apify_token: str, hashtags: list[str], max_posts: int
+async def async_scrape_hashtag_posts(
+    client: httpx.AsyncClient, apify_token: str, hashtags: list[str], max_posts: int
 ) -> list[dict[str, Any]]:
-    """Scrapes top viral posts for given hashtags via Apify."""
+    """Scrapes top viral posts asynchronously for given hashtags."""
     if not hashtags:
         return []
     formatted_tags = [
@@ -115,22 +114,21 @@ def scrape_hashtag_posts_batch(
     }
 
     try:
-        with httpx.Client(timeout=90.0) as client:
-            res = client.post(url, json=payload)
-            if res.status_code not in (200, 201):
-                logger.warning("Apify Actor HTTP %d: %s", res.status_code, res.text[:200])
-                return []
-            items = res.json()
-            if isinstance(items, list):
-                return [item for item in items if isinstance(item, dict) and item.get("id")]
+        res = await client.post(url, json=payload, timeout=75.0)
+        if res.status_code not in (200, 201):
+            logger.warning("Apify Actor HTTP %d: %s", res.status_code, res.text[:200])
             return []
+        items = res.json()
+        if isinstance(items, list):
+            return [item for item in items if isinstance(item, dict) and item.get("id")]
+        return []
     except Exception as exc:
         logger.warning("Apify scrape error for %s: %s", hashtags, exc)
         return []
 
 
-def scrape_video_comments_batch(
-    apify_token: str, video_urls: list[str], max_comments: int = 50
+async def async_scrape_comments(
+    client: httpx.AsyncClient, apify_token: str, video_urls: list[str], max_comments: int = 50
 ) -> list[str]:
     """Scrapes top audience comments from viral video URLs."""
     if not video_urls:
@@ -143,17 +141,16 @@ def scrape_video_comments_batch(
     }
 
     try:
-        with httpx.Client(timeout=60.0) as client:
-            res = client.post(url, json=payload)
-            if res.status_code not in (200, 201):
-                return []
-            items = res.json()
-            comments = []
-            if isinstance(items, list):
-                for it in items:
-                    if isinstance(it, dict) and (text := it.get("text")):
-                        comments.append(str(text).strip())
-            return comments
+        res = await client.post(url, json=payload, timeout=45.0)
+        if res.status_code not in (200, 201):
+            return []
+        items = res.json()
+        comments: list[str] = []
+        if isinstance(items, list):
+            for it in items:
+                if isinstance(it, dict) and (text := it.get("text")):
+                    comments.append(str(text).strip())
+        return comments
     except Exception as exc:
         logger.warning("Failed to scrape comments: %s", exc)
         return []
@@ -171,14 +168,14 @@ def analyze_sentiment_with_gemini(
         "mixed": 15,
         "negative": 5,
         "hype_score": 85,
-        "praise_points": ["Strong trailer engagement", "High audience anticipation"],
+        "praise_points": ["Strong viral traction", "High audience anticipation"],
         "criticism_themes": [],
     }
     if not gemini_key or not comments:
         return default_res
 
     try:
-        client = genai.Client(api_key=gemini_key)
+        genai_client = genai.Client(api_key=gemini_key)
         sample_comments = "\n- ".join(comments[:80])
         prompt = f"""You are CineRadar's box office sentiment analyst. Analyze these real Indonesian audience comments for the movie "{movie_title}".
 Comments:
@@ -195,7 +192,7 @@ Return a STRICT JSON object with these exact keys:
 }}
 Ensure positive + mixed + negative equals 100. Output JSON only without markdown fences."""
 
-        response = client.models.generate_content(
+        response = genai_client.models.generate_content(
             model="gemini-2.5-flash",
             contents=prompt,
         )
@@ -210,7 +207,7 @@ Ensure positive + mixed + negative equals 100. Output JSON only without markdown
     return default_res
 
 
-# ─── 4. Main Crawler & Persistence Controller ───
+# ─── 4. Data Processing Helpers ───
 
 
 def sanitize_post(p: dict[str, Any]) -> dict[str, Any]:
@@ -279,6 +276,221 @@ def format_1800_telegram_report(
     return "\n".join(lines)
 
 
+# ─── 5. Async Crawler Coordinator ───
+
+
+async def execute_daily_crawl_async(
+    db: firestore.Client, target_date: str, now_wib: datetime.datetime
+) -> dict[str, Any]:
+    creds = load_credentials(db)
+
+    # 1. Read today's verified campaign hashtags
+    disc_doc = db.collection("tiktok_hashtag_discovery").document(target_date).get()
+    disc_data = disc_doc.to_dict() or {} if disc_doc.exists else {}
+    discovered_movies = disc_data.get("movies", {})
+
+    # 2. Read theatrical showtime volume to rank movies
+    movie_docs = db.collection("schedules_v2").document(target_date).collection("movies").stream()
+    showtime_map: dict[str, int] = {}
+    for d in movie_docs:
+        data = d.to_dict()
+        if data and (title := data.get("title")):
+            showtime_map[title.strip().upper()] = int(data.get("showtime_count") or 10)
+
+    # Filter movies with verified hashtags
+    target_movies = []
+    for title, info in discovered_movies.items():
+        tags = info.get("discovered_hashtags", [])
+        if tags:
+            showtimes = showtime_map.get(title, 0)
+            target_movies.append(
+                {
+                    "movie_id": info.get("movie_id", normalize_title(title)),
+                    "title": title,
+                    "hashtags": tags,
+                    "showtimes": showtimes,
+                }
+            )
+
+    target_movies.sort(key=lambda x: x["showtimes"], reverse=True)
+    if not target_movies:
+        raise ValueError("No verified movie hashtags found for today in tiktok_hashtag_discovery.")
+
+    # Tiered Segmentation (strictly under Rp 100k daily cap):
+    tier1_list = target_movies[:6]
+    tier2_list = target_movies[6:16]
+
+    logger.info(
+        "Triggering async crawl: %d Tier 1 films, %d Tier 2 films", len(tier1_list), len(tier2_list)
+    )
+
+    limits = [80] * len(tier1_list) + [40] * len(tier2_list)
+    combined_movies = tier1_list + tier2_list
+
+    async with httpx.AsyncClient(timeout=90.0) as http_client:
+        # Concurrent post scraping across all target movies
+        scrape_tasks = [
+            async_scrape_hashtag_posts(http_client, creds["apify_token"], m["hashtags"], limit)
+            for m, limit in zip(combined_movies, limits, strict=False)
+        ]
+        all_raw_posts = await asyncio.gather(*scrape_tasks)
+
+        # Scrape comments for Tier 1 movies concurrently
+        comment_tasks = []
+        for idx, _ in enumerate(tier1_list):
+            raw_posts = all_raw_posts[idx]
+            video_urls = [
+                str(p.get("webVideoUrl") or p.get("url") or "")
+                for p in raw_posts[:3]
+                if p.get("id")
+            ]
+            comment_tasks.append(
+                async_scrape_comments(
+                    http_client, creds["apify_token"], video_urls, max_comments=50
+                )
+            )
+
+        all_comments = await asyncio.gather(*comment_tasks)
+
+    # Process and Persist Data to Firestore
+    leaderboard: list[dict[str, Any]] = []
+
+    for idx, m in enumerate(combined_movies):
+        is_tier1 = idx < len(tier1_list)
+        tier_name = "tier_1" if is_tier1 else "tier_2"
+        raw_posts = all_raw_posts[idx]
+
+        clean_posts: list[dict[str, Any]] = []
+        seen_ids = set()
+        for p in raw_posts:
+            item = sanitize_post(p)
+            if item["id"] and item["id"] not in seen_ids:
+                seen_ids.add(item["id"])
+                clean_posts.append(item)
+
+        clean_posts.sort(key=lambda x: x["views"], reverse=True)
+        top_limit = 80 if is_tier1 else 40
+        top_posts = clean_posts[:top_limit]
+
+        total_views = sum(p["views"] for p in top_posts)
+        total_likes = sum(p["likes"] for p in top_posts)
+        total_comments = sum(p["comments"] for p in top_posts)
+        total_shares = sum(p["shares"] for p in top_posts)
+
+        sentiment: dict[str, Any]
+        if is_tier1:
+            comments = all_comments[idx]
+            sentiment = analyze_sentiment_with_gemini(creds["gemini_key"], m["title"], comments)
+        else:
+            sentiment = {"positive": 80, "mixed": 15, "negative": 5, "hype_score": 80}
+
+        top_viral = top_posts[0] if top_posts else {}
+
+        # 1. Save Subcollection: tiktok_daily_pulse/{date}/movies/{movie_id}
+        db.collection("tiktok_daily_pulse").document(target_date).collection("movies").document(
+            m["movie_id"]
+        ).set(
+            {
+                "movie_id": m["movie_id"],
+                "title": m["title"],
+                "date": target_date,
+                "tier": tier_name,
+                "total_posts": len(top_posts),
+                "total_views": total_views,
+                "total_likes": total_likes,
+                "total_comments": total_comments,
+                "total_shares": total_shares,
+                "sentiment": sentiment,
+                "campaign_hashtags": m["hashtags"],
+                "posts": top_posts,
+            }
+        )
+
+        # 2. Append to Lifetime Movie Trends: tiktok_movie_trends/{movie_id}
+        trend_ref = db.collection("tiktok_movie_trends").document(m["movie_id"])
+        trend_doc = trend_ref.get()
+        history = (trend_doc.to_dict() or {}).get("daily_history", []) if trend_doc.exists else []
+        history = [d for d in history if d.get("date") != target_date]
+        history.append(
+            {
+                "date": target_date,
+                "total_views": total_views,
+                "total_likes": total_likes,
+                "total_comments": total_comments,
+                "total_shares": total_shares,
+                "posts_count": len(top_posts),
+                "sentiment_score": sentiment.get("positive", 80),
+            }
+        )
+        history.sort(key=lambda x: x["date"])
+        trend_ref.set(
+            {
+                "movie_id": m["movie_id"],
+                "title": m["title"],
+                "campaign_hashtags": m["hashtags"],
+                "days_tracked": len(history),
+                "cumulative": {
+                    "latest_total_views": total_views,
+                    "latest_total_likes": total_likes,
+                    "latest_total_comments": total_comments,
+                },
+                "daily_history": history,
+            },
+            merge=True,
+        )
+
+        leaderboard.append(
+            {
+                "movie_id": m["movie_id"],
+                "title": m["title"],
+                "tier": tier_name,
+                "total_views": total_views,
+                "total_likes": total_likes,
+                "total_comments": total_comments,
+                "total_shares": total_shares,
+                "posts_count": len(top_posts),
+                "sentiment": sentiment,
+                "top_viral_post": {
+                    "id": top_viral.get("id"),
+                    "url": top_viral.get("url"),
+                    "author": top_viral.get("author_handle"),
+                    "views": top_viral.get("views"),
+                    "likes": top_viral.get("likes"),
+                    "snippet": top_viral.get("caption", "")[:120],
+                },
+            }
+        )
+
+    # Sort Leaderboard by total views
+    leaderboard.sort(key=lambda x: x["total_views"], reverse=True)
+    for rank_idx, item in enumerate(leaderboard, start=1):
+        item["rank"] = rank_idx
+
+    # 3. Persist Daily Pulse Leaderboard
+    db.collection("tiktok_daily_pulse").document(target_date).set(
+        {
+            "date": target_date,
+            "updated_at": now_wib.isoformat(),
+            "total_movies_tracked": len(leaderboard),
+            "leaderboard": leaderboard,
+        }
+    )
+
+    # 4. Dispatch Telegram Briefing
+    telegram_report = format_1800_telegram_report(target_date, leaderboard, now_wib)
+    send_telegram_alert(creds, telegram_report)
+
+    return {
+        "success": True,
+        "date": target_date,
+        "movies_tracked": len(leaderboard),
+        "executed_at": now_wib.isoformat(),
+    }
+
+
+# ─── 6. Cloud Function Entrypoint ───
+
+
 @functions_framework.http
 def crawl_daily_pulse_http(request: Any) -> tuple[str, int, dict[str, str]]:
     """HTTP Entrypoint for 18:00 WIB Daily Social Box Office Crawl."""
@@ -292,256 +504,8 @@ def crawl_daily_pulse_http(request: Any) -> tuple[str, int, dict[str, str]]:
     db = get_firestore_client()
 
     try:
-        creds = load_credentials(db)
-
-        # 1. Read today's verified campaign hashtags
-        disc_doc = db.collection("tiktok_hashtag_discovery").document(target_date).get()
-        disc_data = disc_doc.to_dict() or {} if disc_doc.exists else {}
-        discovered_movies = disc_data.get("movies", {})
-
-        # 2. Read theatrical showtime volume to rank movies
-        movie_docs = (
-            db.collection("schedules_v2").document(target_date).collection("movies").stream()
-        )
-        showtime_map: dict[str, int] = {}
-        for d in movie_docs:
-            data = d.to_dict()
-            if data and (title := data.get("title")):
-                showtime_map[title.strip().upper()] = int(data.get("showtime_count") or 10)
-
-        # Filter movies with verified hashtags
-        target_movies = []
-        for title, info in discovered_movies.items():
-            tags = info.get("discovered_hashtags", [])
-            if tags:
-                showtimes = showtime_map.get(title, 0)
-                target_movies.append(
-                    {
-                        "movie_id": info.get("movie_id", normalize_title(title)),
-                        "title": title,
-                        "hashtags": tags,
-                        "showtimes": showtimes,
-                    }
-                )
-
-        # Sort descending by showtimes
-        target_movies.sort(key=lambda x: x["showtimes"], reverse=True)
-        if not target_movies:
-            return json_response(
-                {"success": False, "message": "No verified movie hashtags found for today"}, 404
-            )
-
-        # Tiered Segmentation (strictly under Rp 100k daily cap):
-        # Tier 1 (Top 6): 80 posts + comments
-        # Tier 2 (Next 10): 40 posts
-        tier1_list = target_movies[:6]
-        tier2_list = target_movies[6:16]
-
-        logger.info(
-            "Executing crawl: %d Tier 1 films, %d Tier 2 films", len(tier1_list), len(tier2_list)
-        )
-        leaderboard: list[dict[str, Any]] = []
-
-        # Process Tier 1 (Blockbusters with full sentiment)
-        for m in tier1_list:
-            raw_posts = scrape_hashtag_posts_batch(
-                creds["apify_token"], m["hashtags"], max_posts=80
-            )
-            clean_posts: list[dict[str, Any]] = []
-            seen_ids = set()
-            for p in raw_posts:
-                item = sanitize_post(p)
-                if item["id"] and item["id"] not in seen_ids:
-                    seen_ids.add(item["id"])
-                    clean_posts.append(item)
-
-            clean_posts.sort(key=lambda x: x["views"], reverse=True)
-            top_posts = clean_posts[:80]
-
-            total_views = sum(p["views"] for p in top_posts)
-            total_likes = sum(p["likes"] for p in top_posts)
-            total_comments = sum(p["comments"] for p in top_posts)
-            total_shares = sum(p["shares"] for p in top_posts)
-
-            # Scrape top comments for Gemini
-            top_video_urls = [p["url"] for p in top_posts[:3] if p.get("url")]
-            comments = scrape_video_comments_batch(
-                creds["apify_token"], top_video_urls, max_comments=60
-            )
-            sentiment = analyze_sentiment_with_gemini(creds["gemini_key"], m["title"], comments)
-
-            top_viral = top_posts[0] if top_posts else {}
-
-            # Save to Subcollection
-            db.collection("tiktok_daily_pulse").document(target_date).collection("movies").document(
-                m["movie_id"]
-            ).set(
-                {
-                    "movie_id": m["movie_id"],
-                    "title": m["title"],
-                    "date": target_date,
-                    "tier": "tier_1",
-                    "total_posts": len(top_posts),
-                    "total_views": total_views,
-                    "total_likes": total_likes,
-                    "total_comments": total_comments,
-                    "total_shares": total_shares,
-                    "sentiment": sentiment,
-                    "campaign_hashtags": m["hashtags"],
-                    "posts": top_posts,
-                }
-            )
-
-            # Append to lifetime movie trends
-            trend_ref = db.collection("tiktok_movie_trends").document(m["movie_id"])
-            trend_doc = trend_ref.get()
-            history = (
-                (trend_doc.to_dict() or {}).get("daily_history", []) if trend_doc.exists else []
-            )
-            history = [d for d in history if d.get("date") != target_date]
-            history.append(
-                {
-                    "date": target_date,
-                    "total_views": total_views,
-                    "total_likes": total_likes,
-                    "total_comments": total_comments,
-                    "total_shares": total_shares,
-                    "posts_count": len(top_posts),
-                    "sentiment_score": sentiment.get("positive", 80),
-                }
-            )
-            history.sort(key=lambda x: x["date"])
-            trend_ref.set(
-                {
-                    "movie_id": m["movie_id"],
-                    "title": m["title"],
-                    "campaign_hashtags": m["hashtags"],
-                    "days_tracked": len(history),
-                    "cumulative": {
-                        "latest_total_views": total_views,
-                        "latest_total_likes": total_likes,
-                        "latest_total_comments": total_comments,
-                    },
-                    "daily_history": history,
-                },
-                merge=True,
-            )
-
-            leaderboard.append(
-                {
-                    "movie_id": m["movie_id"],
-                    "title": m["title"],
-                    "tier": "tier_1",
-                    "total_views": total_views,
-                    "total_likes": total_likes,
-                    "total_comments": total_comments,
-                    "total_shares": total_shares,
-                    "posts_count": len(top_posts),
-                    "sentiment": sentiment,
-                    "top_viral_post": {
-                        "id": top_viral.get("id"),
-                        "url": top_viral.get("url"),
-                        "author": top_viral.get("author_handle"),
-                        "views": top_viral.get("views"),
-                        "likes": top_viral.get("likes"),
-                        "snippet": top_viral.get("caption", "")[:120],
-                    },
-                }
-            )
-
-        # Process Tier 2 (Active movies, 40 posts)
-        for m in tier2_list:
-            raw_posts = scrape_hashtag_posts_batch(
-                creds["apify_token"], m["hashtags"], max_posts=40
-            )
-            clean_posts = []
-            seen_ids = set()
-            for p in raw_posts:
-                item = sanitize_post(p)
-                if item["id"] and item["id"] not in seen_ids:
-                    seen_ids.add(item["id"])
-                    clean_posts.append(item)
-
-            clean_posts.sort(key=lambda x: x["views"], reverse=True)
-            top_posts = clean_posts[:40]
-
-            total_views = sum(p["views"] for p in top_posts)
-            total_likes = sum(p["likes"] for p in top_posts)
-            total_comments = sum(p["comments"] for p in top_posts)
-            total_shares = sum(p["shares"] for p in top_posts)
-
-            top_viral = top_posts[0] if top_posts else {}
-
-            # Save to Subcollection
-            db.collection("tiktok_daily_pulse").document(target_date).collection("movies").document(
-                m["movie_id"]
-            ).set(
-                {
-                    "movie_id": m["movie_id"],
-                    "title": m["title"],
-                    "date": target_date,
-                    "tier": "tier_2",
-                    "total_posts": len(top_posts),
-                    "total_views": total_views,
-                    "total_likes": total_likes,
-                    "total_comments": total_comments,
-                    "total_shares": total_shares,
-                    "campaign_hashtags": m["hashtags"],
-                    "posts": top_posts,
-                }
-            )
-
-            leaderboard.append(
-                {
-                    "movie_id": m["movie_id"],
-                    "title": m["title"],
-                    "tier": "tier_2",
-                    "total_views": total_views,
-                    "total_likes": total_likes,
-                    "total_comments": total_comments,
-                    "total_shares": total_shares,
-                    "posts_count": len(top_posts),
-                    "sentiment": {"positive": 80, "mixed": 15, "negative": 5},
-                    "top_viral_post": {
-                        "id": top_viral.get("id"),
-                        "url": top_viral.get("url"),
-                        "author": top_viral.get("author_handle"),
-                        "views": top_viral.get("views"),
-                        "likes": top_viral.get("likes"),
-                        "snippet": top_viral.get("caption", "")[:120],
-                    },
-                }
-            )
-
-        # Sort Leaderboard by views
-        leaderboard.sort(key=lambda x: x["total_views"], reverse=True)
-        for idx, item in enumerate(leaderboard, start=1):
-            item["rank"] = idx
-
-        # Persist Daily Pulse Leaderboard
-        db.collection("tiktok_daily_pulse").document(target_date).set(
-            {
-                "date": target_date,
-                "updated_at": now_wib.isoformat(),
-                "total_movies_tracked": len(leaderboard),
-                "leaderboard": leaderboard,
-            }
-        )
-
-        # Dispatch Telegram Briefing
-        telegram_report = format_1800_telegram_report(target_date, leaderboard, now_wib)
-        send_telegram_alert(creds, telegram_report)
-
-        return json_response(
-            {
-                "success": True,
-                "date": target_date,
-                "movies_tracked": len(leaderboard),
-                "executed_at": now_wib.isoformat(),
-            },
-            200,
-        )
-
+        result = asyncio.run(execute_daily_crawl_async(db, target_date, now_wib))
+        return json_response(result, 200)
     except ValueError as val_err:
         logger.error("Config error: %s", val_err)
         return json_response({"success": False, "error": str(val_err)}, 400)

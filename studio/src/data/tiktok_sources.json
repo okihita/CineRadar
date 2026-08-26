@@ -1,6 +1,125 @@
 {
   "id": "config",
   "_name": "projects/cineradar-481014/databases/(default)/documents/tiktok_sources/config",
+  "overrides": {
+    "THE END OF OAK STREET": [
+      "theendofoakstreet",
+      "oakstreetmovie"
+    ]
+  },
+  "sources": [
+    {
+      "verified": true,
+      "notes": "Primary national cinema circuit. Posts daily schedules and official trailers.",
+      "id": "src-cinema-21",
+      "priority": "high",
+      "category": "exhibitor",
+      "active": true,
+      "name": "Cinema XXI",
+      "handle": "cinema.21"
+    },
+    {
+      "id": "src-cgv-id",
+      "name": "CGV Cinemas Indonesia",
+      "handle": "cgv.id",
+      "verified": true,
+      "notes": "Major exhibitor circuit. Heavy trailer promotion and campaign tags.",
+      "priority": "high",
+      "category": "exhibitor",
+      "active": true
+    },
+    {
+      "notes": "National cinema circuit with active movie lineup promotions.",
+      "id": "src-cinepolis-id",
+      "active": true,
+      "verified": true,
+      "handle": "cinepolisid",
+      "priority": "medium",
+      "name": "Cinépolis Cinemas Indonesia",
+      "category": "exhibitor"
+    },
+    {
+      "priority": "high",
+      "category": "studio",
+      "verified": true,
+      "handle": "mdentertainmentofficial",
+      "notes": "Top Indonesian production house (Harusnya Horror, KKN, etc.).",
+      "id": "src-md-pictures",
+      "active": true,
+      "name": "MD Pictures (MD Entertainment)"
+    },
+    {
+      "id": "src-falcon-pictures",
+      "name": "Falcon Pictures",
+      "active": true,
+      "category": "studio",
+      "priority": "high",
+      "verified": true,
+      "handle": "falconpictures",
+      "notes": "Top Indonesian production house (Dan Bandung, Dilan, Miracle in Cell No. 7)."
+    },
+    {
+      "priority": "high",
+      "category": "studio",
+      "notes": "Major Indonesian studio & distributor.",
+      "verified": true,
+      "id": "src-starvision-plus",
+      "active": true,
+      "name": "Starvision Plus",
+      "handle": "starvisionplus"
+    },
+    {
+      "name": "Visinema Pictures",
+      "id": "src-visinema",
+      "handle": "visinemaid",
+      "active": true,
+      "category": "studio",
+      "priority": "high",
+      "verified": true,
+      "notes": "Indonesian studio (13 Bom di Jakarta, Mencuri Raden Saleh)."
+    },
+    {
+      "verified": true,
+      "category": "studio",
+      "priority": "high",
+      "name": "Imajinari",
+      "id": "src-imajinari",
+      "handle": "imajinari.id",
+      "notes": "Studio behind Agak Laen, Jatuh Cinta Seperti di Dongeng-Dongeng.",
+      "active": true
+    },
+    {
+      "id": "src-legacy-pictures",
+      "name": "Legacy Pictures",
+      "handle": "legacy.pictures",
+      "category": "studio",
+      "priority": "medium",
+      "notes": "Production house co-producing major commercial releases.",
+      "active": true,
+      "verified": true
+    },
+    {
+      "verified": true,
+      "priority": "medium",
+      "category": "studio",
+      "name": "Soraya Intercine Films",
+      "handle": "sorayaintercinefilms",
+      "id": "src-soraya-intercine",
+      "notes": "Indonesian film production house (Suzanna, Tenggelamnya Kapal Van Der Wijck).",
+      "active": true
+    },
+    {
+      "notes": "Prominent cinema review platform covering new Indonesian theatrical releases.",
+      "handle": "habisnontonfilm",
+      "category": "tracker",
+      "id": "src-habis-nonton-film",
+      "priority": "high",
+      "active": true,
+      "verified": true,
+      "name": "Habis Nonton Film"
+    }
+  ],
+  "updated_at": "2026-08-26T08:28:49.946Z",
   "excluded_hashtags": [
     "bioskop",
     "cgvcinemas",
@@ -32,124 +151,5 @@
     "viral",
     "xxiasik",
     "xxicineplex"
-  ],
-  "sources": [
-    {
-      "verified": true,
-      "notes": "Primary national cinema circuit. Posts daily schedules and official trailers.",
-      "handle": "cinema.21",
-      "priority": "high",
-      "active": true,
-      "category": "exhibitor",
-      "id": "src-cinema-21",
-      "name": "Cinema XXI"
-    },
-    {
-      "handle": "cgv.id",
-      "category": "exhibitor",
-      "priority": "high",
-      "name": "CGV Cinemas Indonesia",
-      "id": "src-cgv-id",
-      "active": true,
-      "verified": true,
-      "notes": "Major exhibitor circuit. Heavy trailer promotion and campaign tags."
-    },
-    {
-      "active": true,
-      "category": "exhibitor",
-      "notes": "National cinema circuit with active movie lineup promotions.",
-      "priority": "medium",
-      "name": "Cinépolis Cinemas Indonesia",
-      "id": "src-cinepolis-id",
-      "handle": "cinepolisid",
-      "verified": true
-    },
-    {
-      "category": "studio",
-      "active": true,
-      "handle": "mdentertainmentofficial",
-      "priority": "high",
-      "verified": true,
-      "notes": "Top Indonesian production house (Harusnya Horror, KKN, etc.).",
-      "name": "MD Pictures (MD Entertainment)",
-      "id": "src-md-pictures"
-    },
-    {
-      "category": "studio",
-      "handle": "falconpictures",
-      "notes": "Top Indonesian production house (Dan Bandung, Dilan, Miracle in Cell No. 7).",
-      "id": "src-falcon-pictures",
-      "active": true,
-      "name": "Falcon Pictures",
-      "priority": "high",
-      "verified": true
-    },
-    {
-      "category": "studio",
-      "handle": "starvisionplus",
-      "notes": "Major Indonesian studio & distributor.",
-      "priority": "high",
-      "active": true,
-      "name": "Starvision Plus",
-      "verified": true,
-      "id": "src-starvision-plus"
-    },
-    {
-      "verified": true,
-      "name": "Visinema Pictures",
-      "id": "src-visinema",
-      "active": true,
-      "priority": "high",
-      "handle": "visinemaid",
-      "notes": "Indonesian studio (13 Bom di Jakarta, Mencuri Raden Saleh).",
-      "category": "studio"
-    },
-    {
-      "verified": true,
-      "active": true,
-      "notes": "Studio behind Agak Laen, Jatuh Cinta Seperti di Dongeng-Dongeng.",
-      "name": "Imajinari",
-      "priority": "high",
-      "category": "studio",
-      "handle": "imajinari.id",
-      "id": "src-imajinari"
-    },
-    {
-      "name": "Legacy Pictures",
-      "notes": "Production house co-producing major commercial releases.",
-      "category": "studio",
-      "active": true,
-      "id": "src-legacy-pictures",
-      "priority": "medium",
-      "verified": true,
-      "handle": "legacy.pictures"
-    },
-    {
-      "category": "studio",
-      "active": true,
-      "name": "Soraya Intercine Films",
-      "notes": "Indonesian film production house (Suzanna, Tenggelamnya Kapal Van Der Wijck).",
-      "id": "src-soraya-intercine",
-      "priority": "medium",
-      "verified": true,
-      "handle": "sorayaintercinefilms"
-    },
-    {
-      "id": "src-habis-nonton-film",
-      "category": "tracker",
-      "handle": "habisnontonfilm",
-      "name": "Habis Nonton Film",
-      "notes": "Prominent cinema review platform covering new Indonesian theatrical releases.",
-      "priority": "high",
-      "verified": true,
-      "active": true
-    }
-  ],
-  "overrides": {
-    "THE END OF OAK STREET": [
-      "theendofoakstreet",
-      "oakstreetmovie"
-    ]
-  },
-  "updated_at": "2026-08-26T08:28:49.946Z"
+  ]
 }
