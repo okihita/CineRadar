@@ -34,13 +34,28 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # noqa: E402
 
 load_dotenv(".env")
 load_dotenv("studio/.env.local")
 
-APIFY_API_TOKEN = os.getenv("APIFY_API_TOKEN")
-GEMINI_API_KEY = os.getenv("GEMINI_TIKTOK_API_KEY") or os.getenv("GEMINI_API_KEY")
+# Load credentials from Firestore auth_tokens/socials (with env fallback)
+def _get_social_credentials() -> tuple[str, str]:
+    apify = os.getenv("APIFY_API_TOKEN", "")
+    gemini = os.getenv("GEMINI_TIKTOK_API_KEY") or os.getenv("GEMINI_API_KEY", "")
+    try:
+        from google.cloud import firestore
+        db = firestore.Client(project=os.environ.get("GOOGLE_CLOUD_PROJECT", "cineradar-481014"))
+        doc = db.collection("auth_tokens").document("socials").get()
+        if doc.exists:
+            data = doc.to_dict() or {}
+            apify = data.get("apify_api_token") or apify
+            gemini = data.get("gemini_tiktok_api_key") or gemini
+    except Exception:
+        pass
+    return str(apify or "").strip(), str(gemini or "").strip()
+
+APIFY_API_TOKEN, GEMINI_API_KEY = _get_social_credentials()
 
 
 def derive_hashtag(title: str) -> str:
