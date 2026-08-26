@@ -20,7 +20,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 import functions_framework
-import google.cloud.firestore as firestore
+from google.cloud import firestore
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -103,7 +103,7 @@ def resolve_hashtags_for_slate(
     return discovered_slate
 
 
-@functions_framework.http  # type: ignore[untyped-decorator]
+@functions_framework.http
 def discover_hashtags_http(request: Any) -> tuple[str, int, dict[str, str]]:
     """HTTP Cloud Function entrypoint."""
     now_wib = datetime.datetime.now(WIB)
