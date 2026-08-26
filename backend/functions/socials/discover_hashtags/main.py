@@ -26,7 +26,7 @@ from google.cloud import firestore
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-PROJECT_ID = os.environ.get("GOOGLE_CLOUD_PROJECT", "cineradar-481014")
+PROJECT_ID: str = os.environ.get("GOOGLE_CLOUD_PROJECT", "cineradar-481014")
 WIB = ZoneInfo("Asia/Jakarta")
 
 
