@@ -205,6 +205,71 @@ export default function TikTokExplorerPage() {
         };
     }, [isDataAvailableForDate, allPosts, liveData]);
 
+    // ─── 4. Compute Per-Movie Sentiment Breakdown for Today's Active Lineup ───
+    const todayMovieSentimentList = useMemo(() => {
+        if (!isDataAvailableForDate || activeShowtimeMovies.length === 0) return [];
+        const aiBreakdowns = (liveData?.ai_insights?.movie_breakdowns || {}) as Record<string, {
+            top_praise?: string;
+            top_complaint?: string;
+            positive_pct?: number;
+            mixed_pct?: number;
+            negative_pct?: number;
+        }>;
+
+        const list = activeShowtimeMovies.map((m) => {
+            const cleanTag = m.title.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const mPosts = allPosts.filter((p) =>
+                p.movieTitle.toLowerCase() === m.title.toLowerCase() ||
+                p.hashtag.toLowerCase().includes(cleanTag)
+            );
+            const mComments = allComments.filter((c) =>
+                c.movieTitle.toLowerCase() === m.title.toLowerCase()
+            );
+
+            const views = mPosts.reduce((s, p) => s + (p.metrics?.views || 0), 0);
+            const likes = mPosts.reduce((s, p) => s + (p.metrics?.likes || 0), 0);
+            const shares = mPosts.reduce((s, p) => s + (p.metrics?.shares || 0), 0);
+
+            const breakdown = aiBreakdowns[cleanTag] || {};
+            const positivePct = breakdown.positive_pct ?? (
+                mComments.length > 0
+                    ? Math.round((mComments.filter((c) => c.sentiment === 'positive').length / mComments.length) * 100)
+                    : 80
+            );
+            const negativePct = breakdown.negative_pct ?? (
+                mComments.length > 0
+                    ? Math.round((mComments.filter((c) => c.sentiment === 'negative').length / mComments.length) * 100)
+                    : 5
+            );
+            const mixedPct = breakdown.mixed_pct ?? (100 - positivePct - negativePct);
+
+            const topPraise = breakdown.top_praise || (
+                mComments[0]?.text ? `"${mComments[0].text.slice(0, 90)}..."` : 'Diskusi audiens dan antusiasme penonton aktif'
+            );
+            const topComplaint = breakdown.top_complaint || (
+                mComments.find((c) => c.sentiment === 'mixed')?.text ? `"${mComments.find((c) => c.sentiment === 'mixed')?.text.slice(0, 90)}..."` : 'Ketersediaan jam tayang di bioskop'
+            );
+
+            return {
+                id: m.movie_id,
+                title: m.title,
+                hashtag: `#${cleanTag}`,
+                genres: m.genres || [],
+                age_category: m.age_category || 'SU',
+                views,
+                likes,
+                shares,
+                positivePct,
+                mixedPct,
+                negativePct,
+                topPraise,
+                topComplaint,
+            };
+        });
+
+        return list.sort((a, b) => b.views - a.views);
+    }, [isDataAvailableForDate, activeShowtimeMovies, allPosts, allComments, liveData]);
+
     // ─── 4. Filtered Feeds ──────────────────────────────────────────
     const filteredPosts = useMemo(() => {
         return allPosts.filter((p) => {
@@ -543,74 +608,135 @@ export default function TikTokExplorerPage() {
                         </Card>
                     </div>
 
-                    {/* Theatrical Lineup Filter Bar */}
-                    <div className="space-y-2.5 bg-muted/20 p-3.5 rounded-xl border border-border/40">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <Film className="w-4 h-4 text-primary" />
-                                <span className="text-sm font-bold text-foreground">
-                                    Theatrical Lineup
-                                </span>
-                                <Badge variant="outline" className="text-sm font-medium">
-                                    {activeShowtimeMovies.length || 27} in Cinemas Today
-                                </Badge>
-                            </div>
+                    {/* Theatrical Lineup & Sentiment Analysis */}
+                    <Card className="border-border/60 bg-card overflow-hidden">
+                        <CardHeader className="p-4 pb-2.5 border-b border-border/30">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                    <Film className="w-4 h-4 text-primary" />
+                                    <div>
+                                        <CardTitle className="text-sm font-bold text-foreground">
+                                            Theatrical Lineup &amp; Sentiment Analysis
+                                        </CardTitle>
+                                        <p className="text-sm text-muted-foreground">
+                                            Showing {showAllMovies ? todayMovieSentimentList.length : Math.min(10, todayMovieSentimentList.length)} of {todayMovieSentimentList.length} movies playing in cinemas today · Click any row to filter feed
+                                        </p>
+                                    </div>
+                                </div>
 
-                            {activeShowtimeMovies.length > 10 && (
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setShowAllMovies((prev) => !prev)}
-                                    className="text-sm font-semibold text-primary hover:text-primary gap-1 h-7 px-2"
-                                >
-                                    {showAllMovies ? (
-                                        <>
-                                            Show Top 10
-                                            <ChevronUp className="w-3.5 h-3.5" />
-                                        </>
-                                    ) : (
-                                        <>
-                                            Show More (+{activeShowtimeMovies.length - 10})
-                                            <ChevronDown className="w-3.5 h-3.5" />
-                                        </>
-                                    )}
-                                </Button>
-                            )}
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-1.5 max-w-full">
-                            <button
-                                onClick={() => setSelectedMovieFilter('all')}
-                                className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors flex items-center gap-1.5 shrink-0 ${
-                                    selectedMovieFilter === 'all'
-                                        ? 'bg-primary text-primary-foreground shadow-sm'
-                                        : 'bg-muted/40 hover:bg-muted text-muted-foreground'
-                                }`}
-                            >
-                                All Active Movies
-                                <Badge variant="secondary" className="text-sm font-normal px-1.5 py-0 h-5">
-                                    {filteredPosts.length}
-                                </Badge>
-                            </button>
-
-                            {(showAllMovies ? activeShowtimeMovies : activeShowtimeMovies.slice(0, 10)).map((m) => {
-                                const isSelected = selectedMovieFilter.toLowerCase() === m.title.toLowerCase();
-                                return (
+                                <div className="flex items-center gap-2">
                                     <button
-                                        key={m.movie_id}
-                                        onClick={() => setSelectedMovieFilter(m.title)}
-                                        className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1.5 shrink-0 ${
-                                            isSelected
-                                                ? 'bg-primary text-primary-foreground shadow-sm font-semibold'
-                                                : 'bg-muted/40 hover:bg-muted text-muted-foreground'
+                                        onClick={() => setSelectedMovieFilter('all')}
+                                        className={`px-2.5 py-1 rounded-lg text-sm font-semibold transition-colors flex items-center gap-1.5 shrink-0 ${
+                                            selectedMovieFilter === 'all'
+                                                ? 'bg-primary text-primary-foreground shadow-sm'
+                                                : 'bg-muted/40 hover:bg-muted text-muted-foreground border border-border/40'
                                         }`}
                                     >
-                                        {m.title}
+                                        All Active Movies
+                                        <Badge variant="secondary" className="text-sm font-normal px-1.5 py-0 h-5">
+                                            {filteredPosts.length}
+                                        </Badge>
                                     </button>
-                                );
-                            })}
-                        </div>
-                    </div>
+
+                                    {todayMovieSentimentList.length > 10 && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setShowAllMovies((prev) => !prev)}
+                                            className="text-sm font-semibold text-foreground gap-1 h-7 px-2.5"
+                                        >
+                                            {showAllMovies ? (
+                                                <>
+                                                    Show Top 10
+                                                    <ChevronUp className="w-3.5 h-3.5" />
+                                                </>
+                                            ) : (
+                                                <>
+                                                    Show More (+{todayMovieSentimentList.length - 10})
+                                                    <ChevronDown className="w-3.5 h-3.5" />
+                                                </>
+                                            )}
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm text-left">
+                                    <thead className="bg-muted/40 text-muted-foreground text-sm font-bold uppercase tracking-wider border-b border-border/40">
+                                        <tr>
+                                            <th className="p-3 pl-4"># Movie Title</th>
+                                            <th className="p-3">Rating</th>
+                                            <th className="p-3 text-right">24h Views</th>
+                                            <th className="p-3 text-right">Shares</th>
+                                            <th className="p-3">Sentiment Breakdown</th>
+                                            <th className="p-3 pr-4">Top Audience Takeaway</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-border/30">
+                                        {(showAllMovies ? todayMovieSentimentList : todayMovieSentimentList.slice(0, 10)).map((movie, idx) => {
+                                            const isSelected = selectedMovieFilter.toLowerCase() === movie.title.toLowerCase();
+                                            return (
+                                                <tr
+                                                    key={movie.id}
+                                                    onClick={() => setSelectedMovieFilter((prev) => prev.toLowerCase() === movie.title.toLowerCase() ? 'all' : movie.title)}
+                                                    className={`hover:bg-muted/30 transition-colors cursor-pointer ${
+                                                        isSelected ? 'bg-primary/10 font-semibold' : ''
+                                                    }`}
+                                                >
+                                                    <td className="p-3 pl-4 text-foreground">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-muted-foreground font-mono text-sm w-4">
+                                                                {idx + 1}.
+                                                            </span>
+                                                            <div>
+                                                                <span className="hover:underline font-bold text-foreground">
+                                                                    {movie.title}
+                                                                </span>
+                                                                <span className="block text-sm text-muted-foreground font-mono font-normal">
+                                                                    {movie.hashtag}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-3">
+                                                        <Badge variant="outline" className="text-sm font-medium">
+                                                            {movie.age_category}
+                                                        </Badge>
+                                                    </td>
+                                                    <td className="p-3 text-right font-mono font-semibold text-foreground">
+                                                        {movie.views > 0 ? movie.views.toLocaleString() : '-'}
+                                                    </td>
+                                                    <td className="p-3 text-right font-mono text-muted-foreground">
+                                                        {movie.shares > 0 ? movie.shares.toLocaleString() : '-'}
+                                                    </td>
+                                                    <td className="p-3 min-w-[200px]">
+                                                        <div className="space-y-1">
+                                                            <div className="flex items-center justify-between text-sm font-mono">
+                                                                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{movie.positivePct}% Pos</span>
+                                                                <span className="text-muted-foreground">{movie.mixedPct}% Mix</span>
+                                                                <span className="text-rose-500">{movie.negativePct}% Crit</span>
+                                                            </div>
+                                                            <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden flex">
+                                                                <div style={{ width: `${movie.positivePct}%` }} className="bg-emerald-500 h-full" />
+                                                                <div style={{ width: `${movie.mixedPct}%` }} className="bg-amber-500 h-full" />
+                                                                <div style={{ width: `${movie.negativePct}%` }} className="bg-rose-500 h-full" />
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-3 pr-4 text-muted-foreground truncate max-w-[260px]">
+                                                        {movie.topPraise}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </CardContent>
+                    </Card>
 
                     {/* Main Tabs Feed Section */}
                     <Tabs defaultValue="videos" className="space-y-3.5">
