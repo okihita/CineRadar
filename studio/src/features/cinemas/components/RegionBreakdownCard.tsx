@@ -13,13 +13,13 @@ export function RegionBreakdownCard({ regionBreakdown }: RegionBreakdownProps) {
     <div className="flex flex-col h-full space-y-3 p-4">
       <div className="flex items-center gap-2 text-muted-foreground/80">
         <MapPin className="w-3 h-3" />
-        <span className="text-[9px] font-black uppercase tracking-widest">Regional Density</span>
+        <span className="text-sm font-black uppercase tracking-widest">Regional Density</span>
       </div>
       
       <div className="space-y-2 overflow-y-auto no-scrollbar max-h-[240px] pr-1">
         {regionBreakdown.map((region) => (
           <div key={region.name} className="space-y-1 group">
-            <div className="flex justify-between items-end text-[10px]">
+            <div className="flex justify-between items-end text-sm">
               <span className="font-bold text-foreground/80 group-hover:text-primary transition-colors">
                 {region.name}
               </span>

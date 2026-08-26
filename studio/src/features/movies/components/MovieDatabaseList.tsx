@@ -143,7 +143,7 @@ export function MovieDatabaseList() {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded border border-border whitespace-nowrap">
+                    <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded border border-border whitespace-nowrap">
                         {sortedMovies.length} movies
                     </span>
                 </div>
@@ -155,7 +155,7 @@ export function MovieDatabaseList() {
                     <button
                         onClick={() => setSelectedGenre(null)}
                         className={cn(
-                            "px-3 py-1 rounded-full text-xs font-medium transition-all border",
+                            "px-3 py-1 rounded-full text-sm font-medium transition-all border",
                             selectedGenre === null 
                                 ? "bg-primary text-primary-foreground border-primary shadow-sm" 
                                 : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
@@ -168,7 +168,7 @@ export function MovieDatabaseList() {
                             key={genre}
                             onClick={() => setSelectedGenre(genre === selectedGenre ? null : genre)}
                             className={cn(
-                                "px-3 py-1 rounded-full text-xs font-medium transition-all border",
+                                "px-3 py-1 rounded-full text-sm font-medium transition-all border",
                                 selectedGenre === genre 
                                     ? "bg-primary text-primary-foreground border-primary shadow-sm" 
                                     : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
@@ -263,12 +263,12 @@ export function MovieDatabaseList() {
                                         <td className="py-3 px-4 text-center">
                                             {movie.is_showing_today ? (
                                                 <div className="flex flex-col items-center gap-0.5">
-                                                    <span className="text-[10px] font-black bg-emerald-500 text-white px-1.5 py-0.5 rounded shadow-sm">
+                                                    <span className="text-sm font-black bg-emerald-500 text-white px-1.5 py-0.5 rounded shadow-sm">
                                                         LIVE
                                                     </span>
                                                 </div>
                                             ) : (
-                                                <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-tighter">
+                                                <span className="text-sm font-bold text-muted-foreground/60 uppercase tracking-tighter">
                                                     Past
                                                 </span>
                                             )}
@@ -296,32 +296,32 @@ export function MovieDatabaseList() {
                                             </Link>
                                             <div className="flex flex-wrap gap-1.5 mt-1.5">
                                                 {movie.age_category && (
-                                                    <span className="text-[9px] font-black bg-muted text-muted-foreground px-1.5 py-0.5 rounded uppercase tracking-wider border border-border/50">{movie.age_category}</span>
+                                                    <span className="text-sm font-black bg-muted text-muted-foreground px-1.5 py-0.5 rounded uppercase tracking-wider border border-border/50">{movie.age_category}</span>
                                                 )}
                                                 {movie.genres.slice(0, 2).map((genre, idx) => (
-                                                    <span key={idx} className="text-[9px] font-medium bg-primary/5 text-primary/70 px-1.5 py-0.5 rounded border border-primary/10">
+                                                    <span key={idx} className="text-sm font-medium bg-primary/5 text-primary/70 px-1.5 py-0.5 rounded border border-primary/10">
                                                         {genre}
                                                     </span>
                                                 ))}
                                                 {movie.genres.length > 2 && (
-                                                    <span className="text-[9px] text-muted-foreground/50 self-center">+{movie.genres.length - 2}</span>
+                                                    <span className="text-sm text-muted-foreground/50 self-center">+{movie.genres.length - 2}</span>
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="py-3 px-3 font-mono text-xs text-primary/80">
+                                        <td className="py-3 px-3 font-mono text-sm text-primary/80">
                                             {movie.id}
                                         </td>
-                                        <td className="py-3 px-3 font-mono text-xs text-muted-foreground">
+                                        <td className="py-3 px-3 font-mono text-sm text-muted-foreground">
                                             {movie.movie_id}
                                         </td>
-                                        <td className="py-3 px-3 text-xs text-muted-foreground">
+                                        <td className="py-3 px-3 text-sm text-muted-foreground">
                                             {movie.last_updated ? new Date(movie.last_updated).toLocaleDateString('en-GB', {
                                                 day: '2-digit',
                                                 month: 'short',
                                                 year: 'numeric'
                                             }) : 'N/A'}
                                         </td>
-                                        <td className="py-3 px-3 text-xs text-muted-foreground">
+                                        <td className="py-3 px-3 text-sm text-muted-foreground">
                                             {movie.release_date && movie.release_date > 0 ? new Date(movie.release_date * 1000).toLocaleDateString('en-GB', {
                                                 day: '2-digit',
                                                 month: 'short',
@@ -335,12 +335,12 @@ export function MovieDatabaseList() {
                                                         <Star className="w-3 h-3 fill-current" />
                                                         {movie.rating.average.toFixed(1)}
                                                     </div>
-                                                    <span className="text-[10px] text-muted-foreground/60 leading-none">
+                                                    <span className="text-sm text-muted-foreground/60 leading-none">
                                                         {movie.rating.count.toLocaleString()} votes
                                                     </span>
                                                 </div>
                                             ) : (
-                                                <span className="text-xs text-muted-foreground/40 italic">No rating</span>
+                                                <span className="text-sm text-muted-foreground/40 italic">No rating</span>
                                             )}
                                         </td>
                                     </tr>

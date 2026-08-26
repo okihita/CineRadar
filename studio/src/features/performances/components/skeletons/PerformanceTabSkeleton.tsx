@@ -19,15 +19,15 @@ export function PerformanceTabSkeleton() {
                     <p className="text-sm font-black uppercase tracking-widest text-foreground">
                         Aggregating Market Data
                     </p>
-                    <p className="text-xs opacity-60 max-w-[360px]">
+                    <p className="text-sm opacity-60 max-w-[360px]">
                         CineRadar is collecting today&apos;s performance snapshots from all cinema chains nationwide.
                     </p>
                 </div>
-                <span className="text-[10px] font-mono font-bold text-muted-foreground/40 tabular-nums">
+                <span className="text-sm font-mono font-bold text-muted-foreground/40 tabular-nums">
                     {elapsed}s
                 </span>
                 {elapsed > 15 && (
-                    <p className="text-[10px] font-bold text-amber-600 uppercase tracking-tight">
+                    <p className="text-sm font-bold text-amber-600 uppercase tracking-tight">
                         Large dataset — hang tight
                     </p>
                 )}

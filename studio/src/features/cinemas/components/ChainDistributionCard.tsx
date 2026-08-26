@@ -33,7 +33,7 @@ export function ChainDistributionCard({ theatres }: ChainDistributionCardProps) 
     <div className="flex flex-col space-y-3 p-4">
       <div className="flex items-center gap-2 text-muted-foreground/80">
         <Building2 className="w-3 h-3" />
-        <span className="text-[9px] font-black uppercase tracking-widest">Chain Distribution</span>
+        <span className="text-sm font-black uppercase tracking-widest">Chain Distribution</span>
       </div>
       
       <div className="h-[160px] w-full flex items-center justify-center">
@@ -48,11 +48,11 @@ export function ChainDistributionCard({ theatres }: ChainDistributionCardProps) 
                 className="w-1.5 h-1.5 rounded-full" 
                 style={{ backgroundColor: item.color }} 
               />
-              <span className="text-[9px] font-bold text-foreground/70 uppercase truncate w-16">
+              <span className="text-sm font-bold text-foreground/70 uppercase truncate w-16">
                 {item.name}
               </span>
             </div>
-            <span className="text-[9px] font-mono text-muted-foreground/50">{item.count}</span>
+            <span className="text-sm font-mono text-muted-foreground/50">{item.count}</span>
           </div>
         ))}
       </div>

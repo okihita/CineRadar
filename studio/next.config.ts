@@ -7,8 +7,9 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.join(__dirname, '..'),
   },
-  // Allow movie poster images from TIX.id CDN
+  // Allow movie poster images from TIX.id CDN and external feeds (unoptimized to bypass Vercel transformation quota)
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',

@@ -59,13 +59,13 @@ export function PasteArea({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+        <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground">
           {label}
         </h3>
         {result && (
           <span
             className={cn(
-              'text-[10px] font-bold flex items-center gap-1',
+              'text-sm font-bold flex items-center gap-1',
               result.ok ? 'text-emerald-600' : 'text-red-500',
             )}
           >
@@ -94,7 +94,7 @@ export function PasteArea({
         placeholder={placeholder}
         rows={existingRaw ? undefined : 8}
         className={cn(
-          'w-full rounded-md border bg-muted/5 px-3 py-2 text-xs font-mono',
+          'w-full rounded-md border bg-muted/5 px-3 py-2 text-sm font-mono',
           'placeholder:text-muted-foreground/40 resize-none',
           'focus:outline-none focus:ring-1 focus:ring-primary/30',
           'border-border/50',
@@ -108,7 +108,7 @@ export function PasteArea({
           variant="outline"
           onClick={handleSave}
           disabled={!hasContent || saving || !isDirty}
-          className="h-7 gap-1.5 px-3 text-[10px] font-bold uppercase"
+          className="h-7 gap-1.5 px-3 text-sm font-bold uppercase"
         >
           {saving ? (
             <Loader2 className="w-3 h-3 animate-spin" />

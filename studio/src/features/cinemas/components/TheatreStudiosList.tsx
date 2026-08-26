@@ -100,12 +100,12 @@ export function TheatreStudiosList({
                                     
                                     <div className="flex items-center gap-1.5 flex-wrap">
                                         {categories.map((cat, idx) => (
-                                            <div key={idx} className="px-1.5 py-0.5 rounded bg-muted/30 border border-border/50 text-[8px] font-black uppercase text-muted-foreground/60 tracking-wider">
+                                            <div key={idx} className="px-1.5 py-0.5 rounded bg-muted/30 border border-border/50 text-sm font-black uppercase text-muted-foreground/60 tracking-wider">
                                                 {cat}
                                             </div>
                                         ))}
-                                        {categories.length > 0 && <span className="text-[10px] text-muted-foreground opacity-20">|</span>}
-                                        <span className="text-[10px] text-muted-foreground font-mono opacity-40 uppercase">ID: {studio.id}</span>
+                                        {categories.length > 0 && <span className="text-sm text-muted-foreground opacity-20">|</span>}
+                                        <span className="text-sm text-muted-foreground font-mono opacity-40 uppercase">ID: {studio.id}</span>
                                     </div>
                                 </div>
                                 
@@ -114,16 +114,16 @@ export function TheatreStudiosList({
                                         <div className="flex items-center gap-1.5 py-0.5">
                                             {isIdeal ? (
                                                 <div className="flex items-center gap-1 text-amber-600/60" title="Gold Standard Verification">
-                                                    <span className="text-[9px] font-black uppercase tracking-tighter">7d+</span>
+                                                    <span className="text-sm font-black uppercase tracking-tighter">7d+</span>
                                                     <Star className="w-3.5 h-3.5 fill-amber-500/40 border-none" />
                                                 </div>
                                             ) : isVerified ? (
                                                 <div className="flex items-center gap-1 text-green-600/40" title="Baseline Verified">
-                                                    <span className="text-[9px] font-black uppercase tracking-tighter">{sampleCount}d</span>
+                                                    <span className="text-sm font-black uppercase tracking-tighter">{sampleCount}d</span>
                                                     <CheckCircle2 className="w-3 h-3" />
                                                 </div>
                                             ) : (
-                                                <span className="text-[9px] font-bold uppercase tracking-tighter text-muted-foreground/30 italic">Unverified</span>
+                                                <span className="text-sm font-bold uppercase tracking-tighter text-muted-foreground/30 italic">Unverified</span>
                                             )}
                                         </div>
 
@@ -139,7 +139,7 @@ export function TheatreStudiosList({
                                         </Link>
                                     </div>
 
-                                    <div className="flex items-center gap-1 text-[8px] font-bold text-muted-foreground/40 uppercase tracking-tight">
+                                    <div className="flex items-center gap-1 text-sm font-bold text-muted-foreground/40 uppercase tracking-tight">
                                         <Calendar className="w-2.5 h-2.5 opacity-40" />
                                         {evidenceSpan}
                                     </div>

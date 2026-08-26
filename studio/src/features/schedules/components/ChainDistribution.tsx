@@ -18,8 +18,8 @@ export function ChainDistribution({ chainDistribution }: ChainDistributionProps)
     return (
         <Card className="border-border/60 shadow-sm p-4">
             <div className="flex items-center gap-2 mb-3">
-                <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Chain Distribution</h3>
-                <span className="text-[9px] font-mono text-muted-foreground/40">{totalShowtimes.toLocaleString()} total showtimes</span>
+                <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Chain Distribution</h3>
+                <span className="text-sm font-mono text-muted-foreground/40">{totalShowtimes.toLocaleString()} total showtimes</span>
             </div>
 
             <div className="space-y-2">
@@ -30,7 +30,7 @@ export function ChainDistribution({ chainDistribution }: ChainDistributionProps)
                     return (
                         <div key={chain.chain} className="flex items-center gap-3">
                             <span className={cn(
-                                "text-[10px] font-black uppercase tracking-wider min-w-[4.5rem] flex-shrink-0 px-1.5 py-0.5 rounded text-white text-center",
+                                "text-sm font-black uppercase tracking-wider min-w-[4.5rem] flex-shrink-0 px-1.5 py-0.5 rounded text-white text-center",
                                 tw?.bg || "bg-gray-500"
                             )}>
                                 {chain.chain}
@@ -45,7 +45,7 @@ export function ChainDistribution({ chainDistribution }: ChainDistributionProps)
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-3 text-[10px] text-muted-foreground flex-shrink-0">
+                            <div className="flex items-center gap-3 text-sm text-muted-foreground flex-shrink-0">
                                 <span className="flex items-center gap-1" title={`${chain.movieCount} movies`}>
                                     <Film className="h-2.5 w-2.5" />
                                     {chain.movieCount}

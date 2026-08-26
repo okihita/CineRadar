@@ -93,10 +93,10 @@ export default function CinePointMovieDetailPage({
               <div className="flex items-center gap-2">
                 <TypeBadge type={movie.type} short />
                 {movie.movie_genre.map((g) => (
-                  <span key={g} className="text-[8px] text-muted-foreground/40 font-medium uppercase tracking-wider">{g}</span>
+                  <span key={g} className="text-sm text-muted-foreground/40 font-medium uppercase tracking-wider">{g}</span>
                 ))}
                 {isEnriched && (
-                  <span className="text-[8px] text-emerald-500/60 font-bold uppercase tracking-widest">Enriched</span>
+                  <span className="text-sm text-emerald-500/60 font-bold uppercase tracking-widest">Enriched</span>
                 )}
               </div>
             </div>
@@ -107,17 +107,17 @@ export default function CinePointMovieDetailPage({
             {movie.score != null && (
               <div className="text-right">
                 <p className="text-lg font-black">{movie.score.toFixed(1)}</p>
-                <p className="text-[8px] text-muted-foreground/40 uppercase tracking-widest font-bold">Score</p>
+                <p className="text-sm text-muted-foreground/40 uppercase tracking-widest font-bold">Score</p>
               </div>
             )}
             {movie.language && (
               <div className="text-right">
-                <p className="text-xs font-bold">{movie.language}</p>
-                <p className="text-[8px] text-muted-foreground/40 uppercase tracking-widest font-bold">Language</p>
+                <p className="text-sm font-bold">{movie.language}</p>
+                <p className="text-sm text-muted-foreground/40 uppercase tracking-widest font-bold">Language</p>
               </div>
             )}
             <Link href="/competitors/cinepoint/insights">
-              <Button variant="outline" size="sm" className="h-8 gap-2 text-[10px] font-black uppercase tracking-wider rounded-xl">
+              <Button variant="outline" size="sm" className="h-8 gap-2 text-sm font-black uppercase tracking-wider rounded-xl">
                 Insights
                 <ChevronRight className="w-3 h-3" />
               </Button>
@@ -133,8 +133,8 @@ export default function CinePointMovieDetailPage({
             <Eye className="w-5 h-5 shrink-0" />
             <div>
               <p className="font-bold">Movie details not yet enriched</p>
-              <p className="text-xs text-amber-600/60 mt-0.5">
-                Run <code className="bg-amber-500/10 px-1 py-0.5 rounded text-[10px]">cinepoint_enrich.py --movie-id {movie.id}</code> to fetch casts, synopsis, trailer, and more.
+              <p className="text-sm text-amber-600/60 mt-0.5">
+                Run <code className="bg-amber-500/10 px-1 py-0.5 rounded text-sm">cinepoint_enrich.py --movie-id {movie.id}</code> to fetch casts, synopsis, trailer, and more.
               </p>
             </div>
           </div>
@@ -169,7 +169,7 @@ export default function CinePointMovieDetailPage({
 function Meta({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div>
-      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">{label}</p>
+      <p className="text-sm font-black uppercase tracking-widest text-muted-foreground/40">{label}</p>
       <p className={cn('text-sm font-medium', mono && 'font-mono')}>{value}</p>
     </div>
   );

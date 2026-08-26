@@ -30,7 +30,7 @@ export function KpiRow({ overview }: KpiRowProps) {
         <div key={label} className="px-4 py-3 rounded-xl border border-border/30 bg-card">
           <div className="flex items-center gap-2 mb-1">
             <Icon className={`w-3.5 h-3.5 ${KPI_COLORS[color]}`} />
-            <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">{label}</span>
+            <span className="text-sm font-black uppercase tracking-widest text-muted-foreground/50">{label}</span>
           </div>
           <p className="text-xl font-black tracking-tight">{value}</p>
         </div>

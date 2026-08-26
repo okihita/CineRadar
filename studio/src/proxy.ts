@@ -4,6 +4,11 @@ import { NextResponse } from "next/server";
 export default auth((req) => {
   const { pathname } = req.nextUrl;
 
+  // Allow test bypass when running in E2E test mode
+  if (process.env.PLAYWRIGHT_TEST === '1') {
+    return NextResponse.next();
+  }
+
   // Public routes that don't require authentication
   const isPublicRoute =
     pathname.startsWith("/sign-in") ||

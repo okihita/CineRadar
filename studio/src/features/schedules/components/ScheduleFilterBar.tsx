@@ -49,25 +49,25 @@ export function ScheduleFilterBar({
                         placeholder="Search movies..."
                         value={search}
                         onChange={(e) => onSearchChange(e.target.value)}
-                        className="h-8 text-xs pl-8"
+                        className="h-8 text-sm pl-8"
                     />
                 </div>
                 <Button
                     variant={presaleOnly ? "default" : "outline"}
                     size="sm"
-                    className={cn("h-8 text-[10px] font-bold uppercase tracking-wider gap-1", !presaleOnly && "text-amber-600 border-amber-500/30 hover:bg-amber-500/10")}
+                    className={cn("h-8 text-sm font-bold uppercase tracking-wider gap-1", !presaleOnly && "text-amber-600 border-amber-500/30 hover:bg-amber-500/10")}
                     onClick={onTogglePresale}
                 >
                     <Sparkles className="h-3 w-3" />
                     Presale
                 </Button>
                 {hasActiveFilters && (
-                    <Button variant="ghost" size="sm" className="h-8 text-[10px] text-muted-foreground gap-1" onClick={onClear}>
+                    <Button variant="ghost" size="sm" className="h-8 text-sm text-muted-foreground gap-1" onClick={onClear}>
                         <X className="h-3 w-3" />
                         Clear
                     </Button>
                 )}
-                <span className="text-[10px] font-mono text-muted-foreground/60 tabular-nums whitespace-nowrap">
+                <span className="text-sm font-mono text-muted-foreground/60 tabular-nums whitespace-nowrap">
                     {resultCount === totalCount ? `${totalCount} movies` : `${resultCount} / ${totalCount}`}
                 </span>
             </div>
@@ -85,7 +85,7 @@ export function ScheduleFilterBar({
                                 onClick={() => onToggleChain(chain)}
                                 aria-pressed={isSelected}
                                 className={cn(
-                                    "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all border",
+                                    "px-2 py-0.5 rounded text-sm font-bold uppercase tracking-wider transition-all border",
                                     isSelected
                                         ? `${tw?.bg || 'bg-gray-500'} text-white border-transparent`
                                         : "bg-muted/50 text-muted-foreground border-border/50 hover:bg-muted"
@@ -107,7 +107,7 @@ export function ScheduleFilterBar({
                             onClick={() => onToggleGenre(genre)}
                             aria-pressed={selectedGenres.has(genre)}
                             className={cn(
-                                "px-2 py-0.5 rounded text-[10px] font-medium transition-all border",
+                                "px-2 py-0.5 rounded text-sm font-medium transition-all border",
                                 selectedGenres.has(genre)
                                     ? "bg-primary text-primary-foreground border-transparent"
                                     : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted/60"

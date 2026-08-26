@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   }
 };
 
-// Blocking script to prevent flash of wrong theme and suppress internal performance measurement bugs
+// Blocking script to prevent flash of wrong theme and sidebar layout shifts
 const initScript = `
 (function() {
     // 1. Dark Mode initialization
@@ -50,7 +50,16 @@ const initScript = `
     }
     document.documentElement.classList.toggle('dark', dark);
 
-    // 2. Suppress Next.js 16/Turbopack "negative time stamp" measurement error
+    // 2. Sidebar Collapsed pre-paint initialization (prevents split-second flash)
+    const SIDEBAR_KEY = 'cineradar-sidebar-collapsed';
+    const sidebarStored = localStorage.getItem(SIDEBAR_KEY);
+    if (sidebarStored === 'true') {
+        document.documentElement.classList.add('sidebar-collapsed');
+    } else {
+        document.documentElement.classList.remove('sidebar-collapsed');
+    }
+
+    // 3. Suppress Next.js 16/Turbopack "negative time stamp" measurement error
     if (typeof window !== 'undefined' && window.performance && window.performance.measure) {
         const originalMeasure = window.performance.measure;
         window.performance.measure = function(name, start, end) {

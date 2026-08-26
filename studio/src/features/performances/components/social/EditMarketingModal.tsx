@@ -224,7 +224,7 @@ export function EditMarketingModal({
                 />
               </div>
               {validationErrors.primary_hashtag && (
-                <p className="text-xs text-destructive">{validationErrors.primary_hashtag}</p>
+                <p className="text-sm text-destructive">{validationErrors.primary_hashtag}</p>
               )}
             </div>
             
@@ -275,7 +275,7 @@ export function EditMarketingModal({
                 </Button>
               </div>
               {validationErrors.secondary_hashtags && (
-                <p className="text-xs text-destructive">{validationErrors.secondary_hashtags}</p>
+                <p className="text-sm text-destructive">{validationErrors.secondary_hashtags}</p>
               )}
             </div>
             

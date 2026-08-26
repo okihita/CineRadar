@@ -60,7 +60,7 @@ export default function PersonDetailPage() {
       <div className="px-6 py-8">
         <div className="flex flex-col items-center justify-center py-32 gap-4">
           <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 animate-pulse" />
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/40">Loading…</p>
+          <p className="text-sm font-black uppercase tracking-[0.3em] text-muted-foreground/40">Loading…</p>
         </div>
       </div>
     );
@@ -79,16 +79,16 @@ export default function PersonDetailPage() {
           </Link>
           <div>
             <h1 className="text-base font-black tracking-tight">{name}</h1>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold opacity-60">{label}</p>
+            <p className="text-sm text-muted-foreground uppercase tracking-widest font-bold opacity-60">{label}</p>
           </div>
         </div>
         <Card className="border-dashed">
           <CardContent className="py-12 text-center">
             <p className="text-sm font-bold text-muted-foreground">No movies found for this {label.toLowerCase()}</p>
-            <p className="text-xs text-muted-foreground/50 mt-1">
+            <p className="text-sm text-muted-foreground/50 mt-1">
               The name &quot;{name}&quot; doesn&apos;t match any {role === 'director' ? 'director' : 'actor'} in the database.
             </p>
-            <p className="text-[10px] text-muted-foreground/30 mt-2 font-mono">
+            <p className="text-sm text-muted-foreground/30 mt-2 font-mono">
               Try searching from the <Link href={backHref} className="text-primary hover:underline">{role === 'director' ? 'Director' : 'Actor'} Database</Link> instead.
             </p>
           </CardContent>
@@ -109,7 +109,7 @@ export default function PersonDetailPage() {
         </div>
         <div>
           <h1 className="text-base font-black tracking-tight">{name}</h1>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold opacity-60">
+          <p className="text-sm text-muted-foreground uppercase tracking-widest font-bold opacity-60">
             {label} · {stats.total_movies} movies · {formatAdm(stats.total_admissions)} total admissions
           </p>
         </div>
@@ -133,7 +133,7 @@ export default function PersonDetailPage() {
           <CardContent>
             <div className="flex flex-wrap gap-2">
               {stats.genres.map((g) => (
-                <span key={g} className="text-xs font-medium px-3 py-1 rounded-lg bg-muted/50 border border-border/20">{g}</span>
+                <span key={g} className="text-sm font-medium px-3 py-1 rounded-lg bg-muted/50 border border-border/20">{g}</span>
               ))}
             </div>
           </CardContent>
@@ -152,7 +152,7 @@ export default function PersonDetailPage() {
                   <p className="text-sm text-muted-foreground font-mono">{formatAdm(stats.best_movie.total_admission)} admissions</p>
                   <div className="flex gap-2 mt-1">
                     {stats.best_movie.genres.map((g) => (
-                      <span key={g} className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-muted/40 text-muted-foreground">{g}</span>
+                      <span key={g} className="text-sm font-medium px-1.5 py-0.5 rounded bg-muted/40 text-muted-foreground">{g}</span>
                     ))}
                   </div>
                 </div>
@@ -193,9 +193,9 @@ export default function PersonDetailPage() {
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-auto max-h-[50vh]">
-            <table className="w-full text-xs">
+            <table className="w-full text-sm">
               <thead className="sticky top-0 bg-background z-10 border-b">
-                <tr className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">
+                <tr className="text-sm font-black uppercase tracking-widest text-muted-foreground/50">
                   <th className="p-3 text-left">Movie</th>
                   <th className="p-3 text-right">Year</th>
                   <th className="p-3 text-right">Admissions</th>
@@ -222,7 +222,7 @@ export default function PersonDetailPage() {
                     <td className="p-3">
                       <div className="flex flex-wrap gap-1">
                         {m.genres.slice(0, 3).map((g) => (
-                          <span key={g} className="text-[9px] px-1.5 py-0.5 rounded bg-muted/40 text-muted-foreground">{g}</span>
+                          <span key={g} className="text-sm px-1.5 py-0.5 rounded bg-muted/40 text-muted-foreground">{g}</span>
                         ))}
                       </div>
                     </td>

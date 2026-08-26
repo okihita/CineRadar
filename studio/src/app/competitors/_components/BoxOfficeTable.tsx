@@ -10,37 +10,37 @@ export function BoxOfficeTable({ cumulative }: { cumulative: CumulativeMovieTrac
   return (
     <Card className="overflow-hidden border-border/50">
       <CardContent className="p-6">
-        <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-4">
+        <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-4">
           CinePoint Cumulative Box Office Tracker — Top Movies
         </h3>
         {cumulative.length === 0 ? (
-          <div className="py-12 text-center text-xs text-muted-foreground">
+          <div className="py-12 text-center text-sm text-muted-foreground">
             No cumulative admissions data yet. Import admission tweets to track box office.
           </div>
         ) : (
           <div className="overflow-x-auto rounded-2xl border border-border/40">
-            <table className="w-full text-[11px]">
+            <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/40 bg-muted/5">
-                  <th className="text-left py-3 px-4 font-black uppercase tracking-[0.15em] text-muted-foreground text-[9px] w-[25%]">
+                  <th className="text-left py-3 px-4 font-black uppercase tracking-[0.15em] text-muted-foreground text-sm w-[25%]">
                     Movie
                   </th>
-                  <th className="text-right py-3 px-3 font-black uppercase tracking-[0.15em] text-muted-foreground text-[9px]">
+                  <th className="text-right py-3 px-3 font-black uppercase tracking-[0.15em] text-muted-foreground text-sm">
                     Cumulative
                   </th>
-                  <th className="text-right py-3 px-3 font-black uppercase tracking-[0.15em] text-muted-foreground text-[9px]">
+                  <th className="text-right py-3 px-3 font-black uppercase tracking-[0.15em] text-muted-foreground text-sm">
                     Peak Daily
                   </th>
-                  <th className="text-right py-3 px-3 font-black uppercase tracking-[0.15em] text-muted-foreground text-[9px]">
+                  <th className="text-right py-3 px-3 font-black uppercase tracking-[0.15em] text-muted-foreground text-sm">
                     Opening
                   </th>
-                  <th className="text-right py-3 px-3 font-black uppercase tracking-[0.15em] text-muted-foreground text-[9px]">
+                  <th className="text-right py-3 px-3 font-black uppercase tracking-[0.15em] text-muted-foreground text-sm">
                     Days
                   </th>
-                  <th className="text-right py-3 px-3 font-black uppercase tracking-[0.15em] text-muted-foreground text-[9px]">
+                  <th className="text-right py-3 px-3 font-black uppercase tracking-[0.15em] text-muted-foreground text-sm">
                     W2/W1 Drop
                   </th>
-                  <th className="text-right py-3 px-3 font-black uppercase tracking-[0.15em] text-muted-foreground text-[9px]">
+                  <th className="text-right py-3 px-3 font-black uppercase tracking-[0.15em] text-muted-foreground text-sm">
                     Trend
                   </th>
                 </tr>
@@ -54,9 +54,9 @@ export function BoxOfficeTable({ cumulative }: { cumulative: CumulativeMovieTrac
                   return (
                     <tr key={movie.title_cp} className="hover:bg-muted/5 transition-colors">
                       <td className="py-3 px-4">
-                        <div className="font-bold text-[12px] tracking-tight">{movie.title_cr || movie.title_cp}</div>
+                        <div className="font-bold text-sm tracking-tight">{movie.title_cr || movie.title_cp}</div>
                         {movie.title_cr && movie.title_cr !== movie.title_cp && (
-                          <div className="text-muted-foreground/50 text-[9px] uppercase tracking-wider mt-0.5">
+                          <div className="text-muted-foreground/50 text-sm uppercase tracking-wider mt-0.5">
                             CP: {movie.title_cp}
                           </div>
                         )}
@@ -101,7 +101,7 @@ export function BoxOfficeTable({ cumulative }: { cumulative: CumulativeMovieTrac
         )}
 
         {cumulative.length > 0 && (
-          <div className="mt-4 px-4 py-3 rounded-lg border border-border/40 bg-muted/5 text-[11px] text-muted-foreground leading-relaxed">
+          <div className="mt-4 px-4 py-3 rounded-lg border border-border/40 bg-muted/5 text-sm text-muted-foreground leading-relaxed">
             <span className="font-semibold text-foreground">W2/W1 Drop Rate:</span> Ratio of 2nd-week average daily admissions to 1st-week average. 
             A value of 50% means the movie lost half its audience by week 2. 
             Industry standard: &gt;70% is strong legs, &lt;40% is front-loaded.

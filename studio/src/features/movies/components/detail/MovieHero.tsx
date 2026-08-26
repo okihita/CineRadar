@@ -102,7 +102,7 @@ export function MovieHero({ movie, movieId }: MovieHeroProps) {
                     {formattedReleaseDate && <span>{formattedReleaseDate}</span>}
                     {duration != null && <span>• {duration} min</span>}
                     <span className="flex items-center gap-1.5 ml-1">
-                        <span className="text-xs bg-muted/50 px-2 py-0.5 rounded border border-border/50 font-mono select-all text-foreground/70">
+                        <span className="text-sm bg-muted/50 px-2 py-0.5 rounded border border-border/50 font-mono select-all text-foreground/70">
                             {movieId}
                         </span>
                     </span>
@@ -116,7 +116,7 @@ export function MovieHero({ movie, movieId }: MovieHeroProps) {
 
                     {/* Last Scraped */}
                     {scrapedAt && (
-                        <span className="text-[11px] ml-1 flex items-center gap-1.5 text-muted-foreground/80 font-mono" title={scrapedAt}>
+                        <span className="text-sm ml-1 flex items-center gap-1.5 text-muted-foreground/80 font-mono" title={scrapedAt}>
                             <span className="w-1.5 h-1.5 rounded-full bg-green-500/80 inline-block shadow-[0_0_4px_rgba(34,197,94,0.4)]"></span>
                             Updated {formatRelativeWIB(scrapedAt)}
                         </span>

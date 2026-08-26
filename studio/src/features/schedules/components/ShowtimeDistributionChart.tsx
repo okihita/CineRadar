@@ -36,10 +36,10 @@ export function ShowtimeDistributionChart({ cityData }: ShowtimeDistributionChar
     return (
         <div>
             <div className="flex justify-between items-center mb-2">
-                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
                     Showtime Distribution (9am – 11pm)
                 </h4>
-                <div className="text-[10px] flex gap-2 text-muted-foreground">
+                <div className="text-sm flex gap-2 text-muted-foreground">
                     <div className="flex items-center gap-1">
                         <div className="w-2 h-2 rounded-sm bg-primary"></div>
                         <span>Available</span>

@@ -54,7 +54,7 @@ export function GlobalTheatreSearch({
                 )}
                 
                 {resultsCount !== undefined && (
-                    <div className="px-2 py-1 rounded bg-muted/50 border border-border/50 text-[10px] font-black text-muted-foreground uppercase tracking-tighter tabular-nums">
+                    <div className="px-2 py-1 rounded bg-muted/50 border border-border/50 text-sm font-black text-muted-foreground uppercase tracking-tighter tabular-nums">
                         {resultsCount} Matches
                     </div>
                 )}

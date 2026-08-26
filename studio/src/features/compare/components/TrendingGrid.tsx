@@ -72,7 +72,7 @@ export function TrendingGrid({ trendingMovies, isLoading, error, onAddMovie, onC
                     <h3 className="text-lg font-bold flex items-center gap-2">
                         <Flame className="w-4 h-4 text-primary" /> Today&apos;s Market Leaders
                     </h3>
-                    <span className="text-xs text-muted-foreground uppercase tracking-widest font-mono">
+                    <span className="text-sm text-muted-foreground uppercase tracking-widest font-mono">
                         Sorted by Tickets Sold
                     </span>
                 </div>
@@ -110,26 +110,26 @@ export function TrendingGrid({ trendingMovies, isLoading, error, onAddMovie, onC
                                             sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 12vw"
                                         />
                                     ) : (
-                                        <div className="w-full h-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                                        <div className="w-full h-full bg-muted flex items-center justify-center text-sm text-muted-foreground">
                                             No Poster
                                         </div>
                                     )}
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
-                                        <span className="text-[10px] text-white font-bold uppercase">Add to Compare</span>
+                                        <span className="text-sm text-white font-bold uppercase">Add to Compare</span>
                                     </div>
                                 </div>
                                 <CardContent className="p-2 space-y-2">
-                                    <div className="font-bold text-[13px] leading-tight truncate" title={movie.title}>
+                                    <div className="font-bold text-sm leading-tight truncate" title={movie.title}>
                                         {abbreviateTitle(movie.title)}
                                     </div>
                                     <div className="flex flex-col gap-1">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-[10px] text-muted-foreground">Tickets</span>
-                                            <span className="text-[11px] font-bold text-primary">{(movie.today?.total_sold || 0).toLocaleString()}</span>
+                                            <span className="text-sm text-muted-foreground">Tickets</span>
+                                            <span className="text-sm font-bold text-primary">{(movie.today?.total_sold || 0).toLocaleString()}</span>
                                         </div>
                                         <div className="flex items-center justify-between">
-                                            <span className="text-[10px] text-muted-foreground">Shows</span>
-                                            <span className="text-[11px] font-bold">{(movie.today?.total_showtimes || 0).toLocaleString()}</span>
+                                            <span className="text-sm text-muted-foreground">Shows</span>
+                                            <span className="text-sm font-bold">{(movie.today?.total_showtimes || 0).toLocaleString()}</span>
                                         </div>
                                     </div>
                                 </CardContent>

@@ -177,7 +177,7 @@ export default function TweetArchivePage() {
             </div>
             <div>
               <h1 className="text-base font-black uppercase tracking-tighter">Tweet Archive</h1>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold opacity-60">
+              <p className="text-sm text-muted-foreground uppercase tracking-widest font-bold opacity-60">
                 Competitor Intelligence Feed
               </p>
             </div>
@@ -195,7 +195,7 @@ export default function TweetArchivePage() {
               size="sm"
               onClick={handleReparse}
               disabled={reparsing}
-              className="h-8 gap-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl border-border/60 hover:bg-muted transition-all"
+              className="h-8 gap-2 px-4 text-sm font-black uppercase tracking-wider rounded-xl border-border/60 hover:bg-muted transition-all"
             >
               <RefreshCw className={cn('w-3.5 h-3.5', reparsing && 'animate-spin')} />
               Re-parse All
@@ -205,7 +205,7 @@ export default function TweetArchivePage() {
               size="sm"
               onClick={() => setIsImportModalOpen(true)}
               disabled={importing}
-              className="h-8 gap-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl border-border/60 hover:bg-muted transition-all"
+              className="h-8 gap-2 px-4 text-sm font-black uppercase tracking-wider rounded-xl border-border/60 hover:bg-muted transition-all"
             >
               <ClipboardPaste className="w-3.5 h-3.5" />
               Import JSON
@@ -251,7 +251,7 @@ export default function TweetArchivePage() {
             {importResult && (
               <div
                 className={cn(
-                  'p-4 rounded-2xl border text-[11px] font-bold leading-relaxed animate-in fade-in slide-in-from-top-2 duration-500',
+                  'p-4 rounded-2xl border text-sm font-bold leading-relaxed animate-in fade-in slide-in-from-top-2 duration-500',
                   importResult.ok
                     ? 'bg-emerald-500/[0.03] border-emerald-500/20 text-emerald-700 dark:text-emerald-400'
                     : 'bg-red-500/[0.03] border-red-500/20 text-red-700 dark:text-red-400',
@@ -277,7 +277,7 @@ export default function TweetArchivePage() {
             {reparseResult && (
               <div
                 className={cn(
-                  'p-4 rounded-2xl border text-[11px] font-bold leading-relaxed animate-in fade-in slide-in-from-top-2 duration-500',
+                  'p-4 rounded-2xl border text-sm font-bold leading-relaxed animate-in fade-in slide-in-from-top-2 duration-500',
                   reparseResult.ok
                     ? 'bg-blue-500/[0.03] border-blue-500/20 text-blue-700 dark:text-blue-400'
                     : 'bg-red-500/[0.03] border-red-500/20 text-red-700 dark:text-red-400',
@@ -296,7 +296,7 @@ export default function TweetArchivePage() {
             {loading ? (
               <div className="py-32 flex flex-col items-center justify-center gap-4">
                 <Loader2 className="w-8 h-8 animate-spin text-primary opacity-40" />
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/40">
+                <p className="text-sm font-black uppercase tracking-[0.3em] text-muted-foreground/40">
                   Streaming Archive...
                 </p>
               </div>
@@ -304,19 +304,19 @@ export default function TweetArchivePage() {
               <div className="py-16 text-center space-y-4">
                 <AlertCircle className="w-10 h-10 text-red-500/40 mx-auto" />
                 <p className="text-sm text-red-600 font-bold">{error}</p>
-                <button onClick={fetchTweets} className="text-[10px] font-bold text-primary hover:underline">
+                <button onClick={fetchTweets} className="text-sm font-bold text-primary hover:underline">
                   Retry
                 </button>
               </div>
             ) : data && data.tweets.length > 0 ? (
               <div className="space-y-12 animate-in fade-in duration-700 pb-40">
                 <div className="px-6 py-2 flex items-center justify-between border-b border-border/10 pb-4">
-                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
+                  <span className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground/60">
                     Intelligence Stream ({data.total} Signals)
                   </span>
                   <div className="flex items-center gap-1">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-[8px] font-black uppercase text-emerald-600/80">Live Archive</span>
+                    <span className="text-sm font-black uppercase text-emerald-600/80">Live Archive</span>
                   </div>
                 </div>
 
@@ -329,7 +329,7 @@ export default function TweetArchivePage() {
                   >
                     <div className="sticky top-20 z-20 flex items-center gap-4 py-2 pointer-events-none">
                       <div className="bg-background/80 backdrop-blur-md border border-border/40 px-4 py-1.5 rounded-full shadow-lg pointer-events-auto flex items-center gap-2">
-                        <span className="text-[11px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                        <span className="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2">
                           <Calendar className="w-3.5 h-3.5" />
                           {date !== 'unknown' ? format(parseISO(date), 'EEEE, MMM d, yyyy') : 'Uncategorized'}
                         </span>
@@ -367,8 +367,8 @@ function EmptyArchiveState() {
       <div className="w-12 h-12 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
         <Archive className="w-6 h-6 text-muted-foreground/40" />
       </div>
-      <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest">No signals found in the archive.</p>
-      <p className="text-muted-foreground/50 text-[10px] mt-2 uppercase tracking-tight font-medium">
+      <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">No signals found in the archive.</p>
+      <p className="text-muted-foreground/50 text-sm mt-2 uppercase tracking-tight font-medium">
         Use the sidebar to import tweets and get started →
       </p>
     </div>
@@ -391,7 +391,7 @@ function DateCoverageBadge({ date, coverageData }: { date: string; coverageData:
   if (!label) return null;
 
   return (
-    <span className={`text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded border ${className}`}>
+    <span className={`text-sm font-black uppercase tracking-wider px-1.5 py-0.5 rounded border ${className}`}>
       {label}
     </span>
   );

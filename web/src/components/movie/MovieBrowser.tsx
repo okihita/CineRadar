@@ -245,7 +245,7 @@ export default function MovieBrowser({ movies, initialMovieId }: MovieBrowserPro
                 <div className="flex items-center gap-1 p-1 bg-white/[0.05] rounded-xl border border-white/10 shadow-inner overflow-x-auto no-scrollbar">
                     <button
                         onClick={() => setViewMode('catalog')}
-                        className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 flex-shrink-0 ${
+                        className={`px-3 py-1.5 rounded-lg text-sm sm:text-sm font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 flex-shrink-0 ${
                             viewMode === 'catalog'
                                 ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md shadow-purple-500/25'
                                 : 'text-gray-400 hover:text-white'
@@ -256,7 +256,7 @@ export default function MovieBrowser({ movies, initialMovieId }: MovieBrowserPro
                     </button>
                     <button
                         onClick={() => setViewMode('showtimes')}
-                        className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 flex-shrink-0 ${
+                        className={`px-3 py-1.5 rounded-lg text-sm sm:text-sm font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 flex-shrink-0 ${
                             viewMode === 'showtimes'
                                 ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md shadow-purple-500/25'
                                 : 'text-gray-400 hover:text-white'
@@ -271,7 +271,7 @@ export default function MovieBrowser({ movies, initialMovieId }: MovieBrowserPro
                 {viewMode === 'showtimes' && selectedMovie && (
                     <button
                         onClick={() => setIsMobileDrawerOpen(true)}
-                        className="lg:hidden flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-white text-xs font-semibold shadow-md active:scale-95 transition-all max-w-[170px] truncate cursor-pointer"
+                        className="lg:hidden flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-white text-sm font-semibold shadow-md active:scale-95 transition-all max-w-[170px] truncate cursor-pointer"
                         aria-label={t('common.changeMovie')}
                     >
                         <span className="truncate font-bold">{selectedMovie.title}</span>
@@ -303,13 +303,13 @@ export default function MovieBrowser({ movies, initialMovieId }: MovieBrowserPro
                         <div className="lg:hidden flex items-center justify-between px-3.5 py-2.5 bg-black/50 border-b border-white/10">
                             <button
                                 onClick={() => setViewMode('catalog')}
-                                className="inline-flex items-center gap-1.5 text-xs font-bold text-purple-300 hover:text-white bg-purple-500/15 border border-purple-500/30 px-3 py-1.5 rounded-xl shadow-sm active:scale-95 transition-all cursor-pointer"
+                                className="inline-flex items-center gap-1.5 text-sm font-bold text-purple-300 hover:text-white bg-purple-500/15 border border-purple-500/30 px-3 py-1.5 rounded-xl shadow-sm active:scale-95 transition-all cursor-pointer"
                             >
                                 <ArrowLeft className="w-3.5 h-3.5" />
                                 <span>{t('common.backToMovies')}</span>
                             </button>
 
-                            <span className="text-[11px] text-gray-400 font-medium truncate max-w-[160px]">
+                            <span className="text-sm text-gray-400 font-medium truncate max-w-[160px]">
                                 {selectedMovie?.title}
                             </span>
                         </div>
@@ -321,7 +321,7 @@ export default function MovieBrowser({ movies, initialMovieId }: MovieBrowserPro
                                         🎬
                                     </div>
                                     <p className="text-sm font-bold text-white">{t('common.loadingShowtimes')}</p>
-                                    <p className="text-xs text-gray-500 mt-1">{t('common.loadingTelemetry')}</p>
+                                    <p className="text-sm text-gray-500 mt-1">{t('common.loadingTelemetry')}</p>
                                 </div>
                             </div>
                         ) : (

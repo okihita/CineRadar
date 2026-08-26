@@ -4,7 +4,7 @@ packages:
 
 catalog:
   # Framework & Core
-  next: 16.3.1
+  next: 16.3.3
   react: 19.2.8
   react-dom: 19.2.8
 
@@ -14,11 +14,13 @@ catalog:
   tailwind-merge: ^3.6.0
   tailwindcss: ^4.3.3
   '@tailwindcss/postcss': ^4.3.3
+  '@xyflow/react': ^12.11.5
 
   # Tooling & Types
   typescript: ^6.0.3
   eslint: ^10.8.1
-  eslint-config-next: 16.3.1
+  eslint-config-next: 16.3.3
+  '@playwright/test': ^1.62.1
   '@types/node': ^26.2.0
   '@types/react': ^19.2.18
   '@types/react-dom': ^19.2.4
@@ -32,3 +34,19 @@ overrides:
 allowBuilds:
   unrs-resolver: true
   sharp: false
+
+minimumReleaseAgeExclude:
+  - '@next/env@16.3.3'
+  - '@next/eslint-plugin-next@16.3.3'
+  - '@next/swc-darwin-arm64@16.3.3'
+  - '@next/swc-darwin-x64@16.3.3'
+  - '@next/swc-linux-arm64-gnu@16.3.3'
+  - '@next/swc-linux-arm64-musl@16.3.3'
+  - '@next/swc-linux-x64-gnu@16.3.3'
+  - '@next/swc-linux-x64-musl@16.3.3'
+  - '@next/swc-win32-arm64-msvc@16.3.3'
+  - '@next/swc-win32-x64-msvc@16.3.3'
+  - eslint-config-next@16.3.3
+  - next@16.3.3
+  - '@xyflow/react@12.11.5'
+  - '@xyflow/system@0.0.81'

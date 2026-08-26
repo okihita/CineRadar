@@ -49,7 +49,7 @@ export function SchedulesPageSkeleton() {
                     <p className="text-sm font-bold uppercase tracking-widest text-foreground">
                         Loading Showtime Intelligence
                     </p>
-                    <p className="text-xs opacity-60">
+                    <p className="text-sm opacity-60">
                         Aggregating daily schedule data across all cinema chains.
                     </p>
                 </div>

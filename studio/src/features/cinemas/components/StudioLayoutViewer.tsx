@@ -45,7 +45,7 @@ function StudioSeat({
         <div 
             className={cn(
                 'w-3.5 h-3.5 md:w-4 md:h-4 rounded-t-sm rounded-b-[2px] flex items-center justify-center transition-all border',
-                seat.type === 'aisle' ? 'invisible' : 'bg-background border-border text-[7px] font-bold'
+                seat.type === 'aisle' ? 'invisible' : 'bg-background border-border text-sm font-bold'
             )}
             style={seat.type === 'seat' ? customStyle : {}}
             title={tooltip}
@@ -78,7 +78,7 @@ export function StudioLayoutViewer({ studio, showLegend = false, proofData, isLo
                 <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/40 backdrop-blur-[1px] rounded-xl transition-all animate-in fade-in duration-200">
                     <div className="bg-background/80 px-3 py-1.5 rounded-full border shadow-sm flex items-center gap-2">
                         <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Fetching Specimen...</span>
+                        <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Fetching Specimen...</span>
                     </div>
                 </div>
             )}
@@ -95,7 +95,7 @@ export function StudioLayoutViewer({ studio, showLegend = false, proofData, isLo
                                 {visualLayout.map((row: LayoutRow, i: number) => {
                                     return (
                                         <div key={i} className="flex items-center gap-1.5 justify-center">
-                                            <div className="w-5 text-[9px] font-mono font-bold text-muted-foreground/40 text-right pr-1">{row.row_name}</div>
+                                            <div className="w-5 text-sm font-mono font-bold text-muted-foreground/40 text-right pr-1">{row.row_name}</div>
                                             <div className="flex gap-1">
                                                 {row.seats.map((seat: AuditSeat, j: number) => (
                                                     <StudioSeat 
@@ -106,7 +106,7 @@ export function StudioLayoutViewer({ studio, showLegend = false, proofData, isLo
                                                     />
                                                 ))}
                                             </div>
-                                            <div className="w-5 text-[9px] font-mono font-bold text-muted-foreground/40 pl-1">{row.row_name}</div>
+                                            <div className="w-5 text-sm font-mono font-bold text-muted-foreground/40 pl-1">{row.row_name}</div>
                                         </div>
                                     );
                                 })}
@@ -114,7 +114,7 @@ export function StudioLayoutViewer({ studio, showLegend = false, proofData, isLo
 
                             <div className="w-full flex flex-col items-center gap-2 mt-auto">
                                 <div className="w-[70%] max-w-[280px] h-1.5 bg-gradient-to-t from-primary/30 to-transparent border-b border-primary/40 rounded-b-[50%] opacity-80" />
-                                <span className="text-[8px] font-bold uppercase tracking-[0.3em] text-muted-foreground/40">Cinema Screen</span>
+                                <span className="text-sm font-bold uppercase tracking-[0.3em] text-muted-foreground/40">Cinema Screen</span>
                             </div>
                         </div>
                     </div>
@@ -129,15 +129,15 @@ export function StudioLayoutViewer({ studio, showLegend = false, proofData, isLo
                         <div className="flex items-center gap-4 border-b border-border/20 pb-2.5 flex-wrap">
                             <div className="flex items-center gap-1.5">
                                 <div className="w-2.5 h-2.5 rounded-sm bg-green-500 border border-green-600/20" />
-                                <span className="text-[9px] font-bold uppercase text-green-700/70 tracking-tighter">Available</span>
+                                <span className="text-sm font-bold uppercase text-green-700/70 tracking-tighter">Available</span>
                             </div>
                             <div className="flex items-center gap-1.5">
                                 <div className="w-2.5 h-2.5 rounded-sm bg-[#f59e0b] border border-amber-600/20" />
-                                <span className="text-[9px] font-bold uppercase text-amber-700/70 tracking-tighter">Booked</span>
+                                <span className="text-sm font-bold uppercase text-amber-700/70 tracking-tighter">Booked</span>
                             </div>
                             <div className="flex items-center gap-1.5">
                                 <div className="w-2.5 h-2.5 rounded-sm bg-red-500 border border-red-600/20" />
-                                <span className="text-[9px] font-bold uppercase text-red-700/70 tracking-tighter">Sold/Blocked</span>
+                                <span className="text-sm font-bold uppercase text-red-700/70 tracking-tighter">Sold/Blocked</span>
                             </div>
                         </div>
                     )}
@@ -156,20 +156,20 @@ export function StudioLayoutViewer({ studio, showLegend = false, proofData, isLo
                                             style={{ backgroundColor: `${group.color}30`, borderColor: group.color }}
                                         />
                                         <div className="flex items-baseline gap-3">
-                                            <span className="text-[10px] font-black uppercase text-foreground/90 w-24">{group.name}</span>
-                                            <div className="flex items-center gap-3 text-[10px] text-muted-foreground tabular-nums">
+                                            <span className="text-sm font-black uppercase text-foreground/90 w-24">{group.name}</span>
+                                            <div className="flex items-center gap-3 text-sm text-muted-foreground tabular-nums">
                                                 <span className="flex items-center gap-1.5">
-                                                    <span className="font-medium text-[8px] uppercase tracking-tight opacity-60">Mon-Thu</span>
+                                                    <span className="font-medium text-sm uppercase tracking-tight opacity-60">Mon-Thu</span>
                                                     <span className="text-foreground font-bold">Rp {format(p.mon_thu)}</span>
                                                 </span>
                                                 <span className="opacity-20">•</span>
                                                 <span className="flex items-center gap-1.5">
-                                                    <span className="font-medium text-[8px] uppercase tracking-tight opacity-60">Fri</span>
+                                                    <span className="font-medium text-sm uppercase tracking-tight opacity-60">Fri</span>
                                                     <span className="text-foreground font-bold">Rp {format(p.fri)}</span>
                                                 </span>
                                                 <span className="opacity-20">•</span>
                                                 <span className="flex items-center gap-1.5">
-                                                    <span className="font-medium text-[8px] uppercase tracking-tight opacity-60">Sat-Sun</span>
+                                                    <span className="font-medium text-sm uppercase tracking-tight opacity-60">Sat-Sun</span>
                                                     <span className="text-foreground font-bold">Rp {format(p.sat_sun)}</span>
                                                 </span>
                                             </div>

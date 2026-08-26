@@ -69,7 +69,7 @@ export function PerformanceBentoGrid({ movies }: PerformanceBentoGridProps) {
                             <div className="flex-1 flex flex-col justify-between py-2">
                                 <div>
                                     <div className="flex items-center gap-3 mb-4">
-                                        <div className="px-3 py-1 bg-amber-500 text-zinc-950 text-[10px] font-black uppercase tracking-tighter rounded-full">
+                                        <div className="px-3 py-1 bg-amber-500 text-zinc-950 text-sm font-black uppercase tracking-tighter rounded-full">
                                             #1 National
                                         </div>
                                     </div>
@@ -81,7 +81,7 @@ export function PerformanceBentoGrid({ movies }: PerformanceBentoGridProps) {
                                 <div className="space-y-4 border-t border-white/10 pt-6">
                                     <div className="flex justify-between items-end">
                                         <div className="space-y-1">
-                                            <p className="text-[9px] font-black text-white/30 uppercase tracking-widest flex items-center gap-1.5">
+                                            <p className="text-sm font-black text-white/30 uppercase tracking-widest flex items-center gap-1.5">
                                                 <Target className="w-3 h-3" /> True OCR
                                             </p>
                                             <p className={cn("text-3xl font-black font-mono leading-none", getOccupancyColor(podium[0].today?.avg_occupancy_pct ?? 0))}>
@@ -90,7 +90,7 @@ export function PerformanceBentoGrid({ movies }: PerformanceBentoGridProps) {
                                         </div>
                                         <div className="flex gap-8 text-right">
                                             <div className="space-y-1">
-                                                <p className="text-[9px] font-black text-white/30 uppercase tracking-widest flex items-center gap-1.5 justify-end">
+                                                <p className="text-sm font-black text-white/30 uppercase tracking-widest flex items-center gap-1.5 justify-end">
                                                     <Zap className="w-3 h-3" /> Shows
                                                 </p>
                                                 <p className="text-2xl font-black font-mono text-white leading-none">
@@ -98,7 +98,7 @@ export function PerformanceBentoGrid({ movies }: PerformanceBentoGridProps) {
                                                 </p>
                                             </div>
                                             <div className="space-y-1">
-                                                <p className="text-[9px] font-black text-white/30 uppercase tracking-widest flex items-center gap-1.5 justify-end">
+                                                <p className="text-sm font-black text-white/30 uppercase tracking-widest flex items-center gap-1.5 justify-end">
                                                     <Users className="w-3 h-3" /> Audience
                                                 </p>
                                                 <p className="text-2xl font-black font-mono text-white leading-none tabular-nums">
@@ -129,7 +129,7 @@ export function PerformanceBentoGrid({ movies }: PerformanceBentoGridProps) {
                                     <Image src={movie.poster} alt={movie.title} fill sizes="(max-width: 768px) 50vw, 33vw" className="object-contain rounded-lg drop-shadow-md border border-border/10" />
                                 </div>
                                 <div className="flex-1 flex flex-col justify-center min-w-0">
-                                    <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                                    <div className="text-sm font-black text-muted-foreground uppercase tracking-widest mb-1 flex items-center gap-1.5">
                                         <TrendingUp className="w-3 h-3" /> Rank #{idx + 2}
                                     </div>
                                     <h4 className="text-xl font-black tracking-tight line-clamp-1 mb-4 group-hover:text-primary transition-colors">
@@ -137,21 +137,21 @@ export function PerformanceBentoGrid({ movies }: PerformanceBentoGridProps) {
                                     </h4>
                                     <div className="flex items-center gap-6">
                                         <div>
-                                            <p className="text-[8px] font-black text-muted-foreground/50 uppercase tracking-widest mb-0.5">OCR</p>
+                                            <p className="text-sm font-black text-muted-foreground/50 uppercase tracking-widest mb-0.5">OCR</p>
                                             <p className={cn("text-xl font-black font-mono leading-none", getOccupancyColor(movie.today?.avg_occupancy_pct ?? 0))}>
                                                 {formatOccupancy(movie.today?.avg_occupancy_pct ?? 0)}%
                                             </p>
                                         </div>
                                         <div className="h-6 w-px bg-border/40" />
                                         <div>
-                                            <p className="text-[8px] font-black text-muted-foreground/50 uppercase tracking-widest mb-0.5">Shows</p>
+                                            <p className="text-sm font-black text-muted-foreground/50 uppercase tracking-widest mb-0.5">Shows</p>
                                             <p className="text-xl font-black font-mono text-foreground leading-none">
                                                 {(movie.today?.total_showtimes ?? 0).toLocaleString()}
                                             </p>
                                         </div>
                                         <div className="h-6 w-px bg-border/40" />
                                         <div>
-                                            <p className="text-[8px] font-black text-muted-foreground/50 uppercase tracking-widest mb-0.5">Audience</p>
+                                            <p className="text-sm font-black text-muted-foreground/50 uppercase tracking-widest mb-0.5">Audience</p>
                                             <p className="text-xl font-black font-mono text-foreground leading-none tabular-nums">
                                                 {movie.today?.total_sold.toLocaleString() || '0'}
                                             </p>

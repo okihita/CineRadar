@@ -52,9 +52,9 @@ export function GenreSection({ factors, genreStats, genreCombos }: GenreSectionP
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-auto max-h-[450px]">
-                <table className="w-full text-xs">
+                <table className="w-full text-sm">
                   <thead className="sticky top-0 bg-background z-10">
-                    <tr className="border-b text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">
+                    <tr className="border-b text-sm font-black uppercase tracking-widest text-muted-foreground/50">
                       <th className="p-2 text-left">Genre</th><th className="p-2 text-right">Avg</th><th className="p-2 text-right">Hit%</th><th className="p-2 text-right">Score</th>
                     </tr>
                   </thead>

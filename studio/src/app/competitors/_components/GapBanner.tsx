@@ -23,7 +23,7 @@ export function GapBanner({ trendDays }: { trendDays: TrendDay[] }) {
       <div className="flex items-center gap-3">
         <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
         <div>
-          <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400">
+          <span className="text-sm font-bold text-amber-700 dark:text-amber-400">
             {needsData.length} date{needsData.length > 1 ? 's' : ''} in the last 14 days need data
           </span>
         </div>
@@ -33,13 +33,13 @@ export function GapBanner({ trendDays }: { trendDays: TrendDay[] }) {
           href="https://x.com/cinepoint_"
           target="_blank"
           rel="noopener noreferrer"
-          className="h-7 px-3 text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 rounded-lg border border-border/40 text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
+          className="h-7 px-3 text-sm font-bold uppercase tracking-wider flex items-center gap-1.5 rounded-lg border border-border/40 text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
         >
           <ExternalLink className="w-3 h-3" />
           @cinepoint_
         </a>
         <Link href="/competitors/archive">
-          <Button variant="outline" size="sm" className="h-7 gap-1.5 px-3 text-[9px] font-bold uppercase tracking-wider">
+          <Button variant="outline" size="sm" className="h-7 gap-1.5 px-3 text-sm font-bold uppercase tracking-wider">
             <Archive className="w-3 h-3" />
             Backfill in Archive
           </Button>

@@ -160,7 +160,7 @@ export function ForensicPerformanceHub({ showtimes, movieId, date }: ForensicPer
                                         onClick={() => !isLast && jumpToLevel(bc.level)}
                                     >
                                         <Icon className={cn("w-3.5 h-3.5", !isLast && "opacity-70")} />
-                                        <span className="text-[10px] uppercase tracking-wider">{bc.label}</span>
+                                        <span className="text-sm uppercase tracking-wider">{bc.label}</span>
                                     </Button>
                                 </React.Fragment>
                             );
@@ -174,7 +174,7 @@ export function ForensicPerformanceHub({ showtimes, movieId, date }: ForensicPer
                         variant="ghost"
                         size="sm"
                         className={cn(
-                            "h-7 px-4 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all",
+                            "h-7 px-4 text-sm font-bold uppercase tracking-wider rounded-lg transition-all",
                             viewMode === 'HIERARCHY' ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
                         )}
                         onClick={() => {
@@ -189,7 +189,7 @@ export function ForensicPerformanceHub({ showtimes, movieId, date }: ForensicPer
                         variant="ghost"
                         size="sm"
                         className={cn(
-                            "h-7 px-4 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all",
+                            "h-7 px-4 text-sm font-bold uppercase tracking-wider rounded-lg transition-all",
                             viewMode === 'FEED' ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground"
                         )}
                         onClick={() => {

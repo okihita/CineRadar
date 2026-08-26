@@ -30,6 +30,7 @@ data/seats_*.json
 data/jit_granular/
 data/live_seat_snapshot.json
 !data/.gitkeep
+backend/scripts/output/
 
 # Secrets and credentials
 *.pem
@@ -61,3 +62,7 @@ _archive/
 .env.local
 .vercel/
 migration_checkpoint/
+
+# Playwright Test Artifacts
+test-results/
+playwright-report/

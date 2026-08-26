@@ -13,7 +13,7 @@ export function DashboardHeader({ today }: { today: string }) {
         </div>
         <div>
           <h1 className="text-base font-black uppercase tracking-tighter">Competitor Intelligence</h1>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold opacity-60">
+          <p className="text-sm text-muted-foreground uppercase tracking-widest font-bold opacity-60">
             CinePoint Benchmark Dashboard
           </p>
         </div>
@@ -24,7 +24,7 @@ export function DashboardHeader({ today }: { today: string }) {
           <Button
             variant="outline"
             size="sm"
-            className="h-8 gap-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl border-border/60 hover:bg-muted transition-all"
+            className="h-8 gap-2 px-4 text-sm font-black uppercase tracking-wider rounded-xl border-border/60 hover:bg-muted transition-all"
           >
             <CalendarDays className="w-3.5 h-3.5" />
             Today&apos;s Detail
@@ -34,7 +34,7 @@ export function DashboardHeader({ today }: { today: string }) {
           <Button
             variant="outline"
             size="sm"
-            className="h-8 gap-2 px-4 text-[10px] font-black uppercase tracking-wider rounded-xl border-border/60 hover:bg-muted transition-all"
+            className="h-8 gap-2 px-4 text-sm font-black uppercase tracking-wider rounded-xl border-border/60 hover:bg-muted transition-all"
           >
             <Archive className="w-3.5 h-3.5" />
             Tweet Archive

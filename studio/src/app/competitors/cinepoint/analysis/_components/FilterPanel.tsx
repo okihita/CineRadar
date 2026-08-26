@@ -38,11 +38,11 @@ export function FilterPanel({
       <CardContent className="py-4 space-y-4">
         {/* Factor toggles */}
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-2">Analysis Factors</p>
+          <p className="text-sm font-black uppercase tracking-widest text-muted-foreground/60 mb-2">Analysis Factors</p>
           <div className="flex flex-wrap gap-2">
             {factorConfig.map(({ key, label, icon: Icon }) => (
               <button key={key} onClick={() => toggleFactor(key)}
-                className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all',
+                className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-all',
                   factors[key] ? 'bg-primary/10 border-primary/20 text-primary' : 'bg-muted/30 border-border/20 text-muted-foreground/40')}>
                 <Icon className="w-3 h-3" />{label}
               </button>
@@ -52,13 +52,13 @@ export function FilterPanel({
 
         {/* Type filter */}
         <div className="flex items-center gap-4">
-          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Type</p>
+          <p className="text-sm font-black uppercase tracking-widest text-muted-foreground/60">Type</p>
           <TypeFilterBar value={typeFilter} onChange={setTypeFilter} />
         </div>
 
         {/* Genre filter */}
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-2">
+          <p className="text-sm font-black uppercase tracking-widest text-muted-foreground/60 mb-2">
             Genre Filter
             {selectedGenres.length > 0 && (
               <button onClick={() => setSelectedGenres([])} className="ml-2 text-primary hover:underline normal-case tracking-normal font-medium">
@@ -69,7 +69,7 @@ export function FilterPanel({
           <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
             {allGenres.map((g) => (
               <button key={g} onClick={() => setSelectedGenres(selectedGenres.includes(g) ? selectedGenres.filter((x) => x !== g) : [...selectedGenres, g])}
-                className={cn('px-2 py-0.5 rounded text-[10px] font-medium border transition-all',
+                className={cn('px-2 py-0.5 rounded text-sm font-medium border transition-all',
                   selectedGenres.includes(g) ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-600' : 'bg-muted/20 border-border/20 text-muted-foreground/50 hover:bg-muted/40')}>
                 {g}
               </button>
@@ -79,7 +79,7 @@ export function FilterPanel({
 
         {/* Year range filter */}
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-2">
+          <p className="text-sm font-black uppercase tracking-widest text-muted-foreground/60 mb-2">
             Year Range
             {(yearRangeFilter[0] > 0 || yearRangeFilter[1] > 0) && (
               <button onClick={() => setYearRangeFilter([0, 0])} className="ml-2 text-primary hover:underline normal-case tracking-normal font-medium">Reset</button>
@@ -88,24 +88,24 @@ export function FilterPanel({
           <div className="flex items-center gap-2">
             <input type="number" value={yearRangeFilter[0] || ''} onChange={(e) => setYearRangeFilter([Number(e.target.value) || 0, yearRangeFilter[1]])}
               placeholder={String(yearMin)} min={yearMin} max={yearMax}
-              className="w-20 px-2 py-1 text-xs rounded-md border border-border/40 bg-background text-center font-mono" />
-            <span className="text-[10px] text-muted-foreground/50">to</span>
+              className="w-20 px-2 py-1 text-sm rounded-md border border-border/40 bg-background text-center font-mono" />
+            <span className="text-sm text-muted-foreground/50">to</span>
             <input type="number" value={yearRangeFilter[1] || ''} onChange={(e) => setYearRangeFilter([yearRangeFilter[0], Number(e.target.value) || 0])}
               placeholder={String(yearMax)} min={yearMin} max={yearMax}
-              className="w-20 px-2 py-1 text-xs rounded-md border border-border/40 bg-background text-center font-mono" />
-            <span className="text-[10px] text-muted-foreground/40 font-mono">{yearMin}–{yearMax}</span>
+              className="w-20 px-2 py-1 text-sm rounded-md border border-border/40 bg-background text-center font-mono" />
+            <span className="text-sm text-muted-foreground/40 font-mono">{yearMin}–{yearMax}</span>
           </div>
         </div>
 
         {/* Active filters summary */}
         {hasActiveFilters && (
-          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Filter className="w-3 h-3" />
             <span>Showing {filteredCount.toLocaleString()} of {moviesCount.toLocaleString()} movies</span>
-            {typeFilter !== 'all' && <Badge variant="outline" className="text-[9px] px-1.5 py-0">{typeFilter}</Badge>}
-            {selectedGenres.map((g) => <Badge key={g} variant="outline" className="text-[9px] px-1.5 py-0 border-indigo-500/30 text-indigo-600">{g}</Badge>)}
+            {typeFilter !== 'all' && <Badge variant="outline" className="text-sm px-1.5 py-0">{typeFilter}</Badge>}
+            {selectedGenres.map((g) => <Badge key={g} variant="outline" className="text-sm px-1.5 py-0 border-indigo-500/30 text-indigo-600">{g}</Badge>)}
             {(yearRangeFilter[0] > 0 || yearRangeFilter[1] > 0) && (
-              <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-amber-500/30 text-amber-600">
+              <Badge variant="outline" className="text-sm px-1.5 py-0 border-amber-500/30 text-amber-600">
                 {yearRangeFilter[0] || yearMin}–{yearRangeFilter[1] || yearMax}
               </Badge>
             )}

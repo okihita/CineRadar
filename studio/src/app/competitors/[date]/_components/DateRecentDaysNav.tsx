@@ -39,7 +39,7 @@ export function DateRecentDaysNav({ currentDate }: DateRecentDaysNavProps) {
     <Card className="overflow-hidden border-border/50">
       <CardContent className="p-3">
         <div className="space-y-1.5">
-          <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">
+          <span className="text-sm font-black uppercase tracking-widest text-muted-foreground/50">
             Recent 7 Days
           </span>
           <div className="flex gap-1">
@@ -57,7 +57,7 @@ export function DateRecentDaysNav({ currentDate }: DateRecentDaysNavProps) {
                   key={d}
                   href={`/competitors/${d}`}
                   className={cn(
-                    'flex-1 flex flex-col items-center gap-0.5 py-1.5 px-1 rounded-md border text-[9px] font-bold transition-colors',
+                    'flex-1 flex flex-col items-center gap-0.5 py-1.5 px-1 rounded-md border text-sm font-bold transition-colors',
                     isActive
                       ? 'bg-primary text-primary-foreground border-primary'
                       : `border-border/30 hover:bg-muted/50 ${statusColor}`,

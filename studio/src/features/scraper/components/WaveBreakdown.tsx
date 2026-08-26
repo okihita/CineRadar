@@ -16,7 +16,7 @@ const WaveProgress = ({ label, stats, description }: { label: string; stats: Wav
             <div className="flex justify-between items-end">
                 <div>
                     <h4 className="font-bold text-sm">{label}</h4>
-                    <p className="text-xs text-muted-foreground">{description}</p>
+                    <p className="text-sm text-muted-foreground">{description}</p>
                 </div>
                 <div className="text-right">
                     <span className="text-lg font-bold">{stats.rate}%</span>
@@ -26,17 +26,17 @@ const WaveProgress = ({ label, stats, description }: { label: string; stats: Wav
             <Progress value={stats.rate} className="h-2" />
             
             <div className="grid grid-cols-2 gap-2 pt-1">
-                <div className="flex items-center gap-1.5 text-xs">
+                <div className="flex items-center gap-1.5 text-sm">
                     <CheckCircle2 className="w-3 h-3 text-green-500" />
                     <span className="text-muted-foreground">Success:</span>
                     <span className="font-medium">{stats.success.toLocaleString()}</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-xs">
+                <div className="flex items-center gap-1.5 text-sm">
                     <XCircle className="w-3 h-3 text-red-500" />
                     <span className="text-muted-foreground">Errors:</span>
                     <span className="font-medium">{stats.error.toLocaleString()}</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-xs col-span-2">
+                <div className="flex items-center gap-1.5 text-sm col-span-2">
                     <Info className="w-3 h-3 text-blue-500" />
                     <span className="text-muted-foreground">Found in Window:</span>
                     <span className="font-medium">{stats.found.toLocaleString()}</span>

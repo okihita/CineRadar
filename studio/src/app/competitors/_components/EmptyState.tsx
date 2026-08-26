@@ -15,7 +15,7 @@ export function EmptyState() {
           </div>
           <div>
             <h2 className="text-sm font-black uppercase tracking-tighter">Getting Started with Competitor Tracking</h2>
-            <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed">
+            <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
               CineRadar compares your cinema data against <span className="font-bold text-foreground">@cinepoint_</span> on X/Twitter.
               Import their tweets to start benchmarking.
             </p>
@@ -27,9 +27,9 @@ export function EmptyState() {
                 <div className="w-6 h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center">
                   <ExternalLink className="w-3 h-3 text-emerald-600" />
                 </div>
-                <span className="text-[10px] font-black uppercase tracking-wider">Easy Import</span>
+                <span className="text-sm font-black uppercase tracking-wider">Easy Import</span>
               </div>
-              <p className="text-[10px] text-muted-foreground leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 Paste individual tweet URLs. No developer tools needed.
               </p>
             </div>
@@ -38,9 +38,9 @@ export function EmptyState() {
                 <div className="w-6 h-6 rounded-lg bg-blue-500/10 flex items-center justify-center">
                   <Archive className="w-3 h-3 text-blue-600" />
                 </div>
-                <span className="text-[10px] font-black uppercase tracking-wider">Advanced Import</span>
+                <span className="text-sm font-black uppercase tracking-wider">Advanced Import</span>
               </div>
-              <p className="text-[10px] text-muted-foreground leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 Paste raw Twitter API JSON from browser DevTools. Best for bulk initial import.
               </p>
             </div>
@@ -48,7 +48,7 @@ export function EmptyState() {
 
           <div className="flex items-center justify-center gap-3 pt-2">
             <Link href="/competitors/archive">
-              <Button size="sm" className="h-8 gap-2 px-5 text-[10px] font-bold uppercase tracking-wider">
+              <Button size="sm" className="h-8 gap-2 px-5 text-sm font-bold uppercase tracking-wider">
                 Open Tweet Archive
                 <ArrowRight className="w-3 h-3" />
               </Button>
@@ -58,7 +58,7 @@ export function EmptyState() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <Button variant="outline" size="sm" className="h-8 gap-2 px-4 text-[10px] font-bold uppercase tracking-wider">
+              <Button variant="outline" size="sm" className="h-8 gap-2 px-4 text-sm font-bold uppercase tracking-wider">
                 <ExternalLink className="w-3 h-3" />
                 Open @cinepoint_
               </Button>

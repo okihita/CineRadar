@@ -102,7 +102,7 @@ export const DateNavigator: React.FC<DateNavigatorProps> = ({
                         </span>
                     </div>
                     {isToday && (
-                        <span className="text-xs text-primary font-medium mt-1">
+                        <span className="text-sm text-primary font-medium mt-1">
                             Today
                         </span>
                     )}

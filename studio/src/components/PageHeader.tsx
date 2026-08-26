@@ -34,7 +34,7 @@ export function PageHeader({
                     <div className="flex items-center gap-2 flex-wrap">
                         <h1 className="text-2xl font-bold">{title}</h1>
                         {metrics && (
-                            <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground/40 ml-2 bg-muted/30 px-2 py-0.5 rounded-full border border-border/50">
+                            <div className="flex items-center gap-3 text-sm font-mono text-muted-foreground/40 ml-2 bg-muted/30 px-2 py-0.5 rounded-full border border-border/50">
                                 <div className="flex items-center gap-1">
                                     <Gauge className="w-2.5 h-2.5" />
                                     <span>{metrics.latencyMs}ms</span>
@@ -51,7 +51,7 @@ export function PageHeader({
                         <p className="text-muted-foreground text-sm mt-0.5">{description}</p>
                     )}
                     {lastUpdated && (
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-sm text-muted-foreground mt-1">
                             Last updated: {lastUpdated}
                         </p>
                     )}

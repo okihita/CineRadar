@@ -60,11 +60,11 @@ export function MovieDeepDive({ movie, open, onOpenChange }: MovieDeepDiveProps)
                             )}
                             <div className="space-y-3 flex-1">
                                 <div className="flex items-center gap-2">
-                                    <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-[10px] font-black uppercase tracking-widest border border-primary/10">
+                                    <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-sm font-black uppercase tracking-widest border border-primary/10">
                                         Forensic Analysis
                                     </span>
                                     <div className={cn(
-                                        "px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border",
+                                        "px-2 py-0.5 rounded text-sm font-black uppercase tracking-widest border",
                                         ...(() => {
                                             const cfg = getInsightConfig(movie.insight);
                                             return [cfg.bg, cfg.color, cfg.border];
@@ -78,17 +78,17 @@ export function MovieDeepDive({ movie, open, onOpenChange }: MovieDeepDiveProps)
                                 </DialogTitle>
                                 <div className="flex items-center gap-6">
                                     <div className="flex flex-col">
-                                        <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Buzz Score</span>
+                                        <span className="text-sm font-black text-muted-foreground uppercase tracking-widest">Buzz Score</span>
                                         <span className="text-xl font-black font-mono text-primary leading-none">{movie.buzz_score}</span>
                                     </div>
                                     <div className="w-px h-6 bg-border/40" />
                                     <div className="flex flex-col">
-                                        <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Perf Score</span>
+                                        <span className="text-sm font-black text-muted-foreground uppercase tracking-widest">Perf Score</span>
                                         <span className="text-xl font-black font-mono text-foreground leading-none">{movie.sales_score}</span>
                                     </div>
                                     <Link 
                                         href={`/performances/${movie.metadata_id}`}
-                                        className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-xl text-[10px] font-black uppercase tracking-wider hover:scale-105 transition-transform"
+                                        className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-xl text-sm font-black uppercase tracking-wider hover:scale-105 transition-transform"
                                     >
                                         View Full Perf <ChevronRight className="w-3 h-3" />
                                     </Link>
@@ -146,7 +146,7 @@ export function MovieDeepDive({ movie, open, onOpenChange }: MovieDeepDiveProps)
                                 </LineChart>
                             </ResponsiveContainer>
                         </div>
-                        <p className="text-[10px] text-muted-foreground italic text-center">
+                        <p className="text-sm text-muted-foreground italic text-center">
                             Divergence is most visible at D-7 breakout points.
                         </p>
                     </section>
@@ -154,14 +154,14 @@ export function MovieDeepDive({ movie, open, onOpenChange }: MovieDeepDiveProps)
                     {/* 3. Platform Telemetry Grid */}
                     <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="space-y-4">
-                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-blue-500">
+                            <div className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-blue-500">
                                 <Globe className="w-3.5 h-3.5" />
                                 Google Trends
                             </div>
                             <div className="space-y-3 p-4 bg-blue-500/5 rounded-2xl border border-blue-500/10">
                                 {movie.telemetry.google.top_provinces.map(p => (
                                     <div key={p.name} className="space-y-1">
-                                        <div className="flex justify-between text-[10px] font-bold uppercase tracking-tight">
+                                        <div className="flex justify-between text-sm font-bold uppercase tracking-tight">
                                             <span>{p.name}</span>
                                             <span className="text-blue-500 font-mono">{p.pct}%</span>
                                         </div>
@@ -174,34 +174,34 @@ export function MovieDeepDive({ movie, open, onOpenChange }: MovieDeepDiveProps)
                         </div>
 
                         <div className="space-y-4">
-                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-red-500">
+                            <div className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-red-500">
                                 <Play className="w-3.5 h-3.5" />
                                 YouTube Pulse
                             </div>
                             <div className="space-y-4 p-4 bg-red-500/5 rounded-2xl border border-red-500/10">
                                 <div className="flex flex-col">
-                                    <span className="text-[8px] font-black text-muted-foreground/60 uppercase">View Velocity</span>
+                                    <span className="text-sm font-black text-muted-foreground/60 uppercase">View Velocity</span>
                                     <span className="text-lg font-black font-mono text-red-600">{movie.telemetry.youtube.view_velocity}</span>
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-[8px] font-black text-muted-foreground/60 uppercase">Engage Ratio</span>
+                                    <span className="text-sm font-black text-muted-foreground/60 uppercase">Engage Ratio</span>
                                     <span className="text-lg font-black font-mono text-foreground">{(movie.telemetry.youtube.like_ratio * 100).toFixed(1)}%</span>
                                 </div>
                             </div>
                         </div>
 
                         <div className="space-y-4">
-                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-amber-500">
+                            <div className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-amber-500">
                                 <ArrowUpRight className="w-3.5 h-3.5" />
                                 TMDB Signal
                             </div>
                             <div className="space-y-4 p-4 bg-amber-500/5 rounded-2xl border border-amber-500/10">
                                 <div className="flex flex-col">
-                                    <span className="text-[8px] font-black text-muted-foreground/60 uppercase">Global Rank</span>
+                                    <span className="text-sm font-black text-muted-foreground/60 uppercase">Global Rank</span>
                                     <span className="text-lg font-black font-mono text-amber-600">#{movie.telemetry.tmdb.global_rank}</span>
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-[8px] font-black text-muted-foreground/60 uppercase">Local Interest</span>
+                                    <span className="text-sm font-black text-muted-foreground/60 uppercase">Local Interest</span>
                                     <span className="text-lg font-black font-mono text-foreground">{movie.telemetry.tmdb.local_popularity_delta}</span>
                                 </div>
                             </div>
@@ -210,7 +210,7 @@ export function MovieDeepDive({ movie, open, onOpenChange }: MovieDeepDiveProps)
 
                     {/* 4. Audience Narrative (AI) */}
                     <section className="space-y-4 pt-6 border-t border-border/40">
-                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary">
+                        <div className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-primary">
                             <MessageSquare className="w-4 h-4" />
                             Audience Narrative (Forensic AI)
                         </div>
@@ -226,15 +226,15 @@ export function MovieDeepDive({ movie, open, onOpenChange }: MovieDeepDiveProps)
                 <div className="mt-auto p-6 bg-muted/20 border-t border-border/40 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <div className="flex flex-col">
-                            <span className="text-[8px] font-black text-muted-foreground/60 uppercase">Total Sales</span>
-                            <span className="text-xs font-mono font-black">{movie.metrics.raw_sold.toLocaleString()}</span>
+                            <span className="text-sm font-black text-muted-foreground/60 uppercase">Total Sales</span>
+                            <span className="text-sm font-mono font-black">{movie.metrics.raw_sold.toLocaleString()}</span>
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-[8px] font-black text-muted-foreground/60 uppercase">Occupancy</span>
-                            <span className="text-xs font-mono font-black">{movie.metrics.ocr_pct}%</span>
+                            <span className="text-sm font-black text-muted-foreground/60 uppercase">Occupancy</span>
+                            <span className="text-sm font-mono font-black">{movie.metrics.ocr_pct}%</span>
                         </div>
                     </div>
-                    <div className="text-[10px] font-bold text-muted-foreground/40 uppercase">
+                    <div className="text-sm font-bold text-muted-foreground/40 uppercase">
                         Ref:MP-{movie.metadata_id.slice(0, 8)}
                     </div>
                 </div>
