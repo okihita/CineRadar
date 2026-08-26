@@ -8,7 +8,7 @@ import {
     Search, Calendar, ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
     Film, ThumbsUp, Activity, Copy, Check, FileCode,
     CalendarX2, ArrowRight, LayoutGrid, List,
-    Trophy, Zap, AlertTriangle, Sun, Moon, Clock, User
+    Trophy, Zap, AlertTriangle, Sun, Moon, Clock, User, Sparkles
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -397,27 +397,101 @@ export default function TikTokExplorerPage() {
                     <p className="text-sm text-muted-foreground">Aggregating live Apify crawler records and Gemini analysis.</p>
                 </Card>
             ) : !isDataAvailableForDate || !actionableInsights ? (
-                /* Honest Empty State for Unrecorded Dates */
-                <Card className="border-border/60 bg-card p-12 text-center space-y-4">
-                    <div className="w-12 h-12 rounded-full bg-muted/60 flex items-center justify-center mx-auto text-muted-foreground">
-                        <CalendarX2 className="w-6 h-6" />
-                    </div>
-                    <div className="space-y-1 max-w-md mx-auto">
-                        <h3 className="text-base font-bold text-foreground">No Crawl Snapshot for {selectedDate}</h3>
-                        <p className="text-sm text-muted-foreground">
-                            Automated crawling captures data twice daily (11:00 & 23:00 WIB). Real theatrical intelligence is recorded for today.
-                        </p>
-                    </div>
-                    <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => setSelectedDate(crawlDate)}
-                        className="gap-1.5 text-sm font-semibold rounded-lg"
-                    >
-                        Jump to Latest Live Crawl ({crawlDate})
-                        <ArrowRight className="w-3.5 h-3.5" />
-                    </Button>
-                </Card>
+                selectedDate > today ? (
+                    /* Future Date Scheduled Pipeline Empty State */
+                    <Card className="border-border/60 bg-card p-6 sm:p-10 text-center space-y-6 max-w-2xl mx-auto shadow-sm">
+                        <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto text-primary shadow-sm">
+                            <Clock className="w-7 h-7" />
+                        </div>
+                        <div className="space-y-2 max-w-lg mx-auto">
+                            <Badge variant="outline" className="text-sm font-semibold border-primary/30 text-primary">
+                                Upcoming Ingestion Schedule
+                            </Badge>
+                            <h3 className="text-xl font-bold text-foreground">
+                                Scheduled Data Pipeline for {selectedDate}
+                            </h3>
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                                Intelligence for this future date is scheduled to populate automatically across the following daily automated runs:
+                            </p>
+                        </div>
+
+                        {/* Scheduled Pipeline Timeline Steps */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
+                            <div className="p-3.5 rounded-xl bg-muted/40 border border-border/40 space-y-1.5 flex flex-col justify-between">
+                                <div>
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="font-mono text-sm font-bold text-primary">06:00 WIB</span>
+                                        <Film className="w-4 h-4 text-muted-foreground" />
+                                    </div>
+                                    <h4 className="text-sm font-bold text-foreground">Showtimes Sync</h4>
+                                    <p className="text-sm text-muted-foreground leading-relaxed mt-1">
+                                        Populates active movies and showtimes from XXI, CGV, and Cinepolis.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="p-3.5 rounded-xl bg-muted/40 border border-border/40 space-y-1.5 flex flex-col justify-between">
+                                <div>
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="font-mono text-sm font-bold text-indigo-500">08:00 WIB</span>
+                                        <Search className="w-4 h-4 text-muted-foreground" />
+                                    </div>
+                                    <h4 className="text-sm font-bold text-foreground">Hashtags Target</h4>
+                                    <p className="text-sm text-muted-foreground leading-relaxed mt-1">
+                                        Populates and links viral TikTok campaign tags to newly screening movies.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="p-3.5 rounded-xl bg-muted/40 border border-border/40 space-y-1.5 flex flex-col justify-between">
+                                <div>
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="font-mono text-sm font-bold text-emerald-500">11:00 WIB</span>
+                                        <Sparkles className="w-4 h-4 text-muted-foreground" />
+                                    </div>
+                                    <h4 className="text-sm font-bold text-foreground">Morning Analysis</h4>
+                                    <p className="text-sm text-muted-foreground leading-relaxed mt-1">
+                                        Executes morning crawl and Gemini 3.6 Flash sentiment analysis.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="pt-1">
+                            <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() => setSelectedDate(today)}
+                                className="gap-1.5 text-sm font-semibold rounded-lg"
+                            >
+                                Jump to Today&apos;s Live Intelligence ({today})
+                                <ArrowRight className="w-3.5 h-3.5" />
+                            </Button>
+                        </div>
+                    </Card>
+                ) : (
+                    /* Honest Empty State for Past Unrecorded Dates */
+                    <Card className="border-border/60 bg-card p-12 text-center space-y-4 max-w-lg mx-auto">
+                        <div className="w-12 h-12 rounded-full bg-muted/60 flex items-center justify-center mx-auto text-muted-foreground">
+                            <CalendarX2 className="w-6 h-6" />
+                        </div>
+                        <div className="space-y-1 max-w-md mx-auto">
+                            <h3 className="text-base font-bold text-foreground">No Crawl Snapshot for {selectedDate}</h3>
+                            <p className="text-sm text-muted-foreground">
+                                Automated crawling captures data twice daily (11:00 & 23:00 WIB). Real theatrical intelligence is recorded for today.
+                            </p>
+                        </div>
+                        <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => setSelectedDate(crawlDate || today)}
+                            className="gap-1.5 text-sm font-semibold rounded-lg"
+                        >
+                            Jump to Latest Live Crawl ({crawlDate || today})
+                            <ArrowRight className="w-3.5 h-3.5" />
+                        </Button>
+                    </Card>
+                )
             ) : (
                 <>
                     {/* 4 Actionable Market Signals */}
