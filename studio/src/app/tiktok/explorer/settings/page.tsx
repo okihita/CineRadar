@@ -217,12 +217,12 @@ export default function TikTokDiscoverySettingsPage() {
     };
 
     return (
-        <div className="space-y-6 max-w-7xl mx-auto pb-12">
+        <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto pb-16">
             {/* Header with Back Navigation */}
-            <div className="flex items-center justify-between gap-4">
+            <div>
                 <Link
                     href="/tiktok/explorer"
-                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-lg border border-border/50 bg-card hover:bg-muted shadow-xs"
                 >
                     <ArrowLeft className="w-4 h-4" />
                     Back to TikTok Radar
