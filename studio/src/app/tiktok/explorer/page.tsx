@@ -80,6 +80,20 @@ export default function TikTokExplorerPage() {
     }>('/api/socials/tiktok/sources', fetcher, { revalidateOnFocus: false });
     const sourcesData = sourcesResponse;
 
+    // Fetch daily 08:00 WIB discovery snapshot
+    const { data: discoveryResponse } = useSWR<{
+        success: boolean;
+        data?: {
+            movies: Record<string, {
+                title: string;
+                discovered_hashtags: string[];
+            }>;
+        };
+    }>(`/api/socials/tiktok/discovery?date=${selectedDate}`, fetcher, { revalidateOnFocus: false });
+    const discoveryMovies = useMemo(() => {
+        return discoveryResponse?.data?.movies || {};
+    }, [discoveryResponse]);
+
     // Crawl date timestamp normalized to Asia/Jakarta (WIB)
     const crawlDate = useMemo(() => {
         if (!liveData?.executed_at) return today;
@@ -271,9 +285,13 @@ export default function TikTokExplorerPage() {
             );
 
             const movieOverrides = sourcesData?.overrides?.[m.title.toUpperCase()] || [];
+            const snapshotTags = discoveryMovies[m.title.toUpperCase()]?.discovered_hashtags || [];
+
             const discoveredTags = movieOverrides.length > 0
                 ? movieOverrides.map((t) => `#${t.replace(/^#/, '')}`)
-                : (hasSocialCrawl && mPosts.length > 0 ? [`#${cleanTag}`] : []);
+                : (snapshotTags.length > 0
+                    ? snapshotTags.map((t) => `#${t.replace(/^#/, '')}`)
+                    : (hasSocialCrawl && mPosts.length > 0 ? [`#${cleanTag}`] : []));
 
             const hashtagDisplay = discoveredTags.length > 0 ? discoveredTags.join(' ') : null;
 
@@ -308,7 +326,7 @@ export default function TikTokExplorerPage() {
             return list.sort((a, b) => b.views - a.views);
         }
         return list.sort((a, b) => (b.showtimes_count || 0) - (a.showtimes_count || 0));
-    }, [hasSocialCrawl, activeShowtimeMovies, allPosts, allComments, liveData, sourcesData?.overrides]);
+    }, [hasSocialCrawl, activeShowtimeMovies, allPosts, allComments, liveData, sourcesData?.overrides, discoveryMovies]);
 
     // ─── 4. Filtered Feeds ──────────────────────────────────────────
     const filteredPosts = useMemo(() => {
