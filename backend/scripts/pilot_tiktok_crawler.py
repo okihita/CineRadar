@@ -175,6 +175,7 @@ def normalize_to_cineradar_post(raw: dict[str, Any], target_hashtag: str = "") -
     like_count = int(raw.get("diggCount") or stats.get("diggCount") or 0)
     comment_count = int(raw.get("commentCount") or stats.get("commentCount") or 0)
     share_count = int(raw.get("shareCount") or stats.get("shareCount") or 0)
+    bookmark_count = int(raw.get("collectCount") or stats.get("collectCount") or 0)
 
     author_name = author.get("nickName") or author.get("name") or "TikTok Creator"
     author_handle = f"@{author.get('name', 'unknown').lstrip('@')}"
@@ -200,6 +201,7 @@ def normalize_to_cineradar_post(raw: dict[str, Any], target_hashtag: str = "") -
             "likes": like_count,
             "comments": comment_count,
             "shares": share_count,
+            "bookmarks": bookmark_count,
         },
         "platform_data": {
             "tiktok_sound": music.get("musicName") or "",

@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import useSWR from 'swr';
 import Image from 'next/image';
 import {
-    Play, Eye, Heart, MessageSquare, ExternalLink,
+    Play, Eye, Heart, MessageSquare, ExternalLink, Bookmark,
     Search, Calendar, ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
     Film, ThumbsUp, Activity, Copy, Check, FileCode,
     CalendarX2, ArrowRight, LayoutGrid, List,
@@ -25,6 +25,7 @@ interface PostMetrics {
     likes?: number;
     comments?: number;
     shares?: number;
+    bookmarks?: number;
 }
 
 interface ExplorerPost {
@@ -132,7 +133,7 @@ export default function TikTokExplorerPage() {
                 source_handle: p.source_handle || '@creator',
                 source_avatar: p.source_avatar || '',
                 thumbnail: p.thumbnail || '',
-                metrics: p.metrics || { views: 0, likes: 0, comments: 0, shares: 0 },
+                metrics: p.metrics || { views: 0, likes: 0, comments: 0, shares: 0, bookmarks: 0 },
                 sentiment: (likes > 20000 || p.text?.toLowerCase().includes('bagus') || p.text?.toLowerCase().includes('keren') ? 'positive' : 'mixed') as 'positive' | 'mixed' | 'negative',
                 tiktok_sound: p.platform_data?.tiktok_sound || '',
             };
@@ -893,6 +894,10 @@ export default function TikTokExplorerPage() {
                                                         <MessageSquare className="w-3.5 h-3.5 text-cyan-500" />
                                                         {(post.metrics?.comments || 0).toLocaleString()}
                                                     </span>
+                                                    <span className="flex items-center gap-1 text-foreground" title="Bookmarks / Saves">
+                                                        <Bookmark className="w-3.5 h-3.5 text-amber-500" />
+                                                        {(post.metrics?.bookmarks || 0).toLocaleString()}
+                                                    </span>
                                                     <span className="flex items-center gap-1 text-foreground" title="Shares">
                                                         <Activity className="w-3.5 h-3.5 text-emerald-500" />
                                                         {(post.metrics?.shares || 0).toLocaleString()}
@@ -935,6 +940,7 @@ export default function TikTokExplorerPage() {
                                                     <th className="p-3 text-right">Views</th>
                                                     <th className="p-3 text-right">Likes</th>
                                                     <th className="p-3 text-right">Comments</th>
+                                                    <th className="p-3 text-right">Bookmarks</th>
                                                     <th className="p-3 text-right">Shares</th>
                                                     <th className="p-3 pr-4 text-center">Watch</th>
                                                 </tr>
@@ -996,6 +1002,11 @@ export default function TikTokExplorerPage() {
                                                         {/* Comments */}
                                                         <td className="p-3 text-right font-mono text-cyan-600 dark:text-cyan-400 font-semibold whitespace-nowrap">
                                                             {(post.metrics?.comments || 0).toLocaleString()}
+                                                        </td>
+
+                                                        {/* Bookmarks */}
+                                                        <td className="p-3 text-right font-mono text-amber-500 font-semibold whitespace-nowrap">
+                                                            {(post.metrics?.bookmarks || 0).toLocaleString()}
                                                         </td>
 
                                                         {/* Shares */}
