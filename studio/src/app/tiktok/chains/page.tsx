@@ -106,7 +106,7 @@ export default function TikTokChainMonitoringPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <PageHeader
                         title="Cinema Chain Promotion Monitoring"
-                        subtitle="Real-time promotional timeline & social intelligence across Cinema XXI, CGV, and Cinépolis TikTok channels."
+                        description="Real-time promotional timeline & social intelligence across Cinema XXI, CGV, and Cinépolis TikTok channels."
                     />
 
                     <div className="flex items-center gap-2">

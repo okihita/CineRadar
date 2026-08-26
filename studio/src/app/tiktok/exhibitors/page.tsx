@@ -134,7 +134,7 @@ export default function TikTokExhibitorArchivePage() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <PageHeader
                         title="Exhibitor Circuit 14-Day Timeline Archive"
-                        subtitle="Continuous 3-hourly crawling of promotional trailers & engagement metrics across Cinema XXI, CGV, and Cinépolis."
+                        description="Continuous 3-hourly crawling of promotional trailers & engagement metrics across Cinema XXI, CGV, and Cinépolis."
                     />
 
                     <div className="flex items-center gap-2">

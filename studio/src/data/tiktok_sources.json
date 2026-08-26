@@ -1,115 +1,155 @@
 {
+  "id": "config",
+  "_name": "projects/cineradar-481014/databases/(default)/documents/tiktok_sources/config",
+  "excluded_hashtags": [
+    "bioskop",
+    "cgvcinemas",
+    "cgvindo",
+    "cgvngobrolseru",
+    "cinema",
+    "cinema21",
+    "cinepolisid",
+    "cinepolisindonesia",
+    "cinepolispopcorn",
+    "cinépolisid",
+    "dixxi",
+    "filmbioskop",
+    "foryou",
+    "foryoupage",
+    "fyp",
+    "jajanasikdixxi",
+    "lebihserudicgv",
+    "nontonasikdixxi",
+    "nontondibioskop",
+    "nontondixxi",
+    "nontonlebihseru",
+    "popcornxxi",
+    "screenx",
+    "screenxcgv",
+    "semuaserudicgv",
+    "temancgv",
+    "trending",
+    "viral",
+    "xxiasik",
+    "xxicineplex"
+  ],
   "sources": [
     {
-      "id": "src-cinema-21",
-      "handle": "cinema.21",
-      "name": "Cinema XXI",
-      "category": "exhibitor",
-      "active": true,
       "verified": true,
+      "notes": "Primary national cinema circuit. Posts daily schedules and official trailers.",
+      "handle": "cinema.21",
       "priority": "high",
-      "notes": "Primary national cinema circuit. Posts daily schedules and official trailers."
+      "active": true,
+      "category": "exhibitor",
+      "id": "src-cinema-21",
+      "name": "Cinema XXI"
     },
     {
-      "id": "src-cgv-id",
       "handle": "cgv.id",
-      "name": "CGV Cinemas Indonesia",
       "category": "exhibitor",
+      "priority": "high",
+      "name": "CGV Cinemas Indonesia",
+      "id": "src-cgv-id",
       "active": true,
       "verified": true,
-      "priority": "high",
       "notes": "Major exhibitor circuit. Heavy trailer promotion and campaign tags."
     },
     {
+      "active": true,
+      "category": "exhibitor",
+      "notes": "National cinema circuit with active movie lineup promotions.",
+      "priority": "medium",
+      "name": "Cinépolis Cinemas Indonesia",
       "id": "src-cinepolis-id",
       "handle": "cinepolisid",
-      "name": "Cin\u00e9polis Cinemas Indonesia",
-      "category": "exhibitor",
-      "active": true,
-      "verified": true,
-      "priority": "medium",
-      "notes": "National cinema circuit with active movie lineup promotions."
+      "verified": true
     },
     {
-      "id": "src-md-pictures",
+      "category": "studio",
+      "active": true,
       "handle": "mdentertainmentofficial",
+      "priority": "high",
+      "verified": true,
+      "notes": "Top Indonesian production house (Harusnya Horror, KKN, etc.).",
       "name": "MD Pictures (MD Entertainment)",
-      "category": "studio",
-      "active": true,
-      "verified": true,
-      "priority": "high",
-      "notes": "Top Indonesian production house (Harusnya Horror, KKN, etc.)."
+      "id": "src-md-pictures"
     },
     {
-      "id": "src-falcon-pictures",
+      "category": "studio",
       "handle": "falconpictures",
+      "notes": "Top Indonesian production house (Dan Bandung, Dilan, Miracle in Cell No. 7).",
+      "id": "src-falcon-pictures",
+      "active": true,
       "name": "Falcon Pictures",
-      "category": "studio",
-      "active": true,
-      "verified": true,
       "priority": "high",
-      "notes": "Top Indonesian production house (Dan Bandung, Dilan, Miracle in Cell No. 7)."
+      "verified": true
     },
     {
-      "id": "src-starvision-plus",
+      "category": "studio",
       "handle": "starvisionplus",
+      "notes": "Major Indonesian studio & distributor.",
+      "priority": "high",
+      "active": true,
       "name": "Starvision Plus",
-      "category": "studio",
-      "active": true,
       "verified": true,
-      "priority": "high",
-      "notes": "Major Indonesian studio & distributor."
+      "id": "src-starvision-plus"
     },
     {
-      "id": "src-visinema",
-      "handle": "visinemaid",
+      "verified": true,
       "name": "Visinema Pictures",
-      "category": "studio",
+      "id": "src-visinema",
       "active": true,
-      "verified": true,
       "priority": "high",
-      "notes": "Indonesian studio (13 Bom di Jakarta, Mencuri Raden Saleh)."
+      "handle": "visinemaid",
+      "notes": "Indonesian studio (13 Bom di Jakarta, Mencuri Raden Saleh).",
+      "category": "studio"
     },
     {
-      "id": "src-imajinari",
-      "handle": "imajinari.id",
+      "verified": true,
+      "active": true,
+      "notes": "Studio behind Agak Laen, Jatuh Cinta Seperti di Dongeng-Dongeng.",
       "name": "Imajinari",
-      "category": "studio",
-      "active": true,
-      "verified": true,
       "priority": "high",
-      "notes": "Studio behind Agak Laen, Jatuh Cinta Seperti di Dongeng-Dongeng."
+      "category": "studio",
+      "handle": "imajinari.id",
+      "id": "src-imajinari"
     },
     {
-      "id": "src-legacy-pictures",
-      "handle": "legacy.pictures",
       "name": "Legacy Pictures",
+      "notes": "Production house co-producing major commercial releases.",
       "category": "studio",
       "active": true,
-      "verified": true,
+      "id": "src-legacy-pictures",
       "priority": "medium",
-      "notes": "Production house co-producing major commercial releases."
+      "verified": true,
+      "handle": "legacy.pictures"
     },
     {
-      "id": "src-soraya-intercine",
-      "handle": "sorayaintercinefilms",
-      "name": "Soraya Intercine Films",
       "category": "studio",
       "active": true,
-      "verified": true,
+      "name": "Soraya Intercine Films",
+      "notes": "Indonesian film production house (Suzanna, Tenggelamnya Kapal Van Der Wijck).",
+      "id": "src-soraya-intercine",
       "priority": "medium",
-      "notes": "Indonesian film production house (Suzanna, Tenggelamnya Kapal Van Der Wijck)."
+      "verified": true,
+      "handle": "sorayaintercinefilms"
     },
     {
       "id": "src-habis-nonton-film",
+      "category": "tracker",
       "handle": "habisnontonfilm",
       "name": "Habis Nonton Film",
-      "category": "tracker",
-      "active": true,
-      "verified": true,
+      "notes": "Prominent cinema review platform covering new Indonesian theatrical releases.",
       "priority": "high",
-      "notes": "Prominent cinema review platform covering new Indonesian theatrical releases."
+      "verified": true,
+      "active": true
     }
   ],
-  "overrides": {}
+  "overrides": {
+    "THE END OF OAK STREET": [
+      "theendofoakstreet",
+      "oakstreetmovie"
+    ]
+  },
+  "updated_at": "2026-08-26T08:28:49.946Z"
 }

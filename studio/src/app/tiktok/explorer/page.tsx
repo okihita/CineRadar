@@ -77,6 +77,7 @@ export default function TikTokExplorerPage() {
         success: boolean;
         sources: Array<{ id: string; handle: string; name: string; category: string; active: boolean }>;
         overrides: Record<string, string[]>;
+        excluded_hashtags?: string[];
     }>('/api/socials/tiktok/sources', fetcher, { revalidateOnFocus: false });
     const sourcesData = sourcesResponse;
 
