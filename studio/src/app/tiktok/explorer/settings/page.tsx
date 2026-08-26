@@ -17,7 +17,8 @@ import {
     Trash2,
     Hash,
     Save,
-    ExternalLink
+    ExternalLink,
+    KeyRound
 } from 'lucide-react';
 import { fetcher } from '@/lib/api';
 import { toast } from 'sonner';
@@ -56,6 +57,46 @@ export default function TikTokDiscoverySettingsPage() {
     const [overrideMovie, setOverrideMovie] = useState('');
     const [overrideTags, setOverrideTags] = useState('');
     const [isSavingOverride, setIsSavingOverride] = useState(false);
+
+    // Auth Tokens State
+    const { data: authData, mutate: mutateAuth } = useSWR<{
+        success: boolean;
+        isConfigured: boolean;
+        maskedToken: string;
+        status: string;
+        updated_at: string | null;
+    }>('/api/socials/tiktok/auth', fetcher);
+
+    const [apifyTokenInput, setApifyTokenInput] = useState('');
+    const [isSavingToken, setIsSavingToken] = useState(false);
+
+    const handleSaveToken = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!apifyTokenInput.trim()) {
+            toast.error('Please enter an Apify API token');
+            return;
+        }
+        setIsSavingToken(true);
+        try {
+            const res = await fetch('/api/socials/tiktok/auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ apify_api_token: apifyTokenInput.trim() }),
+            });
+            const result = await res.json();
+            if (result.success) {
+                toast.success('Apify token saved to Firestore (auth_tokens/socials)');
+                setApifyTokenInput('');
+                mutateAuth();
+            } else {
+                toast.error(result.error || 'Failed to save token');
+            }
+        } catch {
+            toast.error('Network error saving token');
+        } finally {
+            setIsSavingToken(false);
+        }
+    };
 
     const sources = data?.sources || [];
     const overrides = data?.overrides || {};
@@ -268,6 +309,10 @@ export default function TikTokDiscoverySettingsPage() {
                     <TabsTrigger value="overrides" className="gap-2 text-sm font-semibold px-3.5 py-1.5 rounded-md">
                         <Hash className="w-4 h-4" />
                         Custom Hashtag Overrides ({Object.keys(overrides).length})
+                    </TabsTrigger>
+                    <TabsTrigger value="tokens" className="gap-2 text-sm font-semibold px-3.5 py-1.5 rounded-md">
+                        <KeyRound className="w-4 h-4" />
+                        API Credentials & Tokens
                     </TabsTrigger>
                 </TabsList>
 
@@ -559,6 +604,76 @@ export default function TikTokDiscoverySettingsPage() {
                                     )}
                                 </tbody>
                             </table>
+                        </div>
+                    </Card>
+                </TabsContent>
+
+                {/* TAB 3: API CREDENTIALS & TOKENS */}
+                <TabsContent value="tokens" className="space-y-4">
+                    <Card className="border-border/60 bg-card p-4 sm:p-5">
+                        <CardHeader className="p-0 pb-3">
+                            <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
+                                <KeyRound className="w-4 h-4 text-primary" />
+                                Social Scraping API Credentials
+                            </CardTitle>
+                            <CardDescription className="text-sm text-muted-foreground">
+                                Credentials are securely stored in Cloud Firestore (<code>auth_tokens/socials</code>) and used across CineRadar discovery functions and crawlers.
+                            </CardDescription>
+                        </CardHeader>
+
+                        <div className="space-y-4 pt-2">
+                            {/* Current Status Box */}
+                            <div className="p-3.5 rounded-xl border border-border/40 bg-muted/20 flex items-center justify-between">
+                                <div>
+                                    <span className="text-sm font-bold text-foreground block">
+                                        Apify API Token Status
+                                    </span>
+                                    <span className="text-sm text-muted-foreground">
+                                        {authData?.isConfigured
+                                            ? `Configured (${authData.maskedToken})`
+                                            : 'Not configured — functions will use default seed pattern fallback'}
+                                    </span>
+                                </div>
+                                <Badge
+                                    variant="outline"
+                                    className={`text-sm font-semibold ${
+                                        authData?.isConfigured
+                                            ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                                            : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                                    }`}
+                                >
+                                    {authData?.isConfigured ? 'Active' : 'Unset'}
+                                </Badge>
+                            </div>
+
+                            {/* Token Update Form */}
+                            <form onSubmit={handleSaveToken} className="space-y-3">
+                                <div>
+                                    <label className="block text-sm font-semibold text-muted-foreground mb-1">
+                                        Update Apify API Token (<code>apify_api_...</code>)
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <Input
+                                            type="password"
+                                            placeholder="Paste new Apify API Token..."
+                                            value={apifyTokenInput}
+                                            onChange={(e) => setApifyTokenInput(e.target.value)}
+                                            className="bg-muted/20 text-sm h-9 font-mono flex-1"
+                                        />
+                                        <Button
+                                            type="submit"
+                                            disabled={isSavingToken || !apifyTokenInput.trim()}
+                                            className="h-9 px-4 text-sm font-semibold gap-1.5"
+                                        >
+                                            <Save className="w-3.5 h-3.5" />
+                                            {isSavingToken ? 'Saving...' : 'Save to Firestore'}
+                                        </Button>
+                                    </div>
+                                    <span className="text-sm text-muted-foreground mt-1 block">
+                                        Updating this token hot-reloads discovery without requiring a Cloud Function redeployment.
+                                    </span>
+                                </div>
+                            </form>
                         </div>
                     </Card>
                 </TabsContent>
