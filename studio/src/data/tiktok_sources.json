@@ -1,0 +1,244 @@
+{
+  "sources": [
+    {
+      "id": "src-cinema-21",
+      "handle": "cinema.21",
+      "name": "Cinema XXI",
+      "category": "exhibitor",
+      "active": true,
+      "verified": true,
+      "priority": "high",
+      "notes": "Primary national cinema circuit. Posts daily schedules and official trailers."
+    },
+    {
+      "id": "src-cgv-id",
+      "handle": "cgv.id",
+      "name": "CGV Cinemas Indonesia",
+      "category": "exhibitor",
+      "active": true,
+      "verified": true,
+      "priority": "high",
+      "notes": "Major exhibitor circuit. Heavy trailer promotion and campaign tags."
+    },
+    {
+      "id": "src-cinepolis-id",
+      "handle": "cinepolisid",
+      "name": "Cin\u00e9polis Cinemas Indonesia",
+      "category": "exhibitor",
+      "active": true,
+      "verified": true,
+      "priority": "medium",
+      "notes": "National cinema circuit with active movie lineup promotions."
+    },
+    {
+      "id": "src-md-pictures",
+      "handle": "mdpictures_official",
+      "name": "MD Pictures",
+      "category": "studio",
+      "active": true,
+      "verified": true,
+      "priority": "high",
+      "notes": "Top Indonesian production house (Harusnya Horror, KKN, etc.)."
+    },
+    {
+      "id": "src-falcon-pictures",
+      "handle": "falconpictures_",
+      "name": "Falcon Pictures",
+      "category": "studio",
+      "active": true,
+      "verified": true,
+      "priority": "high",
+      "notes": "Top Indonesian production house (Dan Bandung, Dilan, Miracle in Cell No. 7)."
+    },
+    {
+      "id": "src-starvision-plus",
+      "handle": "starvisionplus",
+      "name": "Starvision Plus",
+      "category": "studio",
+      "active": true,
+      "verified": true,
+      "priority": "high",
+      "notes": "Major Indonesian studio & distributor."
+    },
+    {
+      "id": "src-visinema",
+      "handle": "visinemaid",
+      "name": "Visinema Pictures",
+      "category": "studio",
+      "active": true,
+      "verified": true,
+      "priority": "high",
+      "notes": "Indonesian studio (13 Bom di Jakarta, Mencuri Raden Saleh)."
+    },
+    {
+      "id": "src-imajinari",
+      "handle": "imajinari.id",
+      "name": "Imajinari",
+      "category": "studio",
+      "active": true,
+      "verified": true,
+      "priority": "high",
+      "notes": "Studio behind Agak Laen, Jatuh Cinta Seperti di Dongeng-Dongeng."
+    },
+    {
+      "id": "src-legacy-pictures",
+      "handle": "legacy.pictures",
+      "name": "Legacy Pictures",
+      "category": "studio",
+      "active": true,
+      "verified": true,
+      "priority": "medium",
+      "notes": "Production house co-producing major commercial releases."
+    },
+    {
+      "id": "src-soraya-intercine",
+      "handle": "sorayaintercinefilms",
+      "name": "Soraya Intercine Films",
+      "category": "studio",
+      "active": true,
+      "verified": true,
+      "priority": "medium",
+      "notes": "Indonesian film production house (Suzanna, Tenggelamnya Kapal Van Der Wijck)."
+    },
+    {
+      "id": "src-bicara-boxoffice",
+      "handle": "bicaraboxoffice",
+      "name": "Bicara Box Office",
+      "category": "tracker",
+      "active": true,
+      "verified": true,
+      "priority": "high",
+      "notes": "Authoritative Indonesian box office tracker & analyst."
+    },
+    {
+      "id": "src-habis-nonton-film",
+      "handle": "habisnontonfilm",
+      "name": "Habis Nonton Film",
+      "category": "tracker",
+      "active": true,
+      "verified": true,
+      "priority": "high",
+      "notes": "Prominent cinema review platform covering new Indonesian theatrical releases."
+    },
+    {
+      "id": "src-watchmen-id",
+      "handle": "watchmenid",
+      "name": "WatchmenID",
+      "category": "tracker",
+      "active": true,
+      "verified": true,
+      "priority": "medium",
+      "notes": "Film community & box office discussion hub."
+    }
+  ],
+  "overrides": {
+    "HARUSNYA HORROR": [
+      "harusnyahorror",
+      "filmharusnyahorror"
+    ],
+    "DAN BANDUNG": [
+      "danbandung",
+      "filmdanbandung"
+    ],
+    "INSIDIOUS: OUT OF THE FURTHER": [
+      "insidiousoutofthefurther",
+      "filminsidious"
+    ],
+    "SPIDER-MAN: BRAND NEW DAY": [
+      "spidermanbrandnewday",
+      "spiderman"
+    ],
+    "AYAH, AKU MAU CERITA": [
+      "ayahakumaucerita",
+      "filmayahakumaucerita"
+    ],
+    "THE ODYSSEY": [
+      "filmtheodyssey",
+      "theodyssey"
+    ],
+    "CEK KHODAM": [
+      "cekkhodam",
+      "filmcekkhodam"
+    ],
+    "PERUMAHAN LADDALAND": [
+      "filmperumahanladdaland",
+      "perumahanladdaland"
+    ],
+    "KADO UNTUK IBU": [
+      "filmkadountukibu",
+      "kadountukibu"
+    ],
+    "MOTOR CITY": [
+      "filmmotorcity",
+      "motorcity"
+    ],
+    "SENI MERAYU TUHAN": [
+      "filmsenimerayutuhan",
+      "senimerayutuhan"
+    ],
+    "SAJEN SATU SURO": [
+      "filmsajensatusuro",
+      "sajensatusuro"
+    ],
+    "THE END OF OAK STREET": [
+      "filmtheendofoakstreet",
+      "theendofoakstreet"
+    ],
+    "OPERASI PESTA COPET": [
+      "filmoperasipestacopet",
+      "operasipestacopet"
+    ],
+    "DEEP WATER": [
+      "deepwater",
+      "filmdeepwater"
+    ],
+    "AUTOPSY DEAD BODY CAN TALK": [
+      "autopsydeadbodycantalk",
+      "filmautopsydeadbodycantalk"
+    ],
+    "PAKET SANTET": [
+      "filmpaketsantet",
+      "paketsantet"
+    ],
+    "BABY UDON": [
+      "babyudon",
+      "filmbabyudon"
+    ],
+    "NIMRODS -  A GREEN DAY COMEDY": [
+      "filmnimrodsagreendaycomedy",
+      "nimrodsagreendaycomedy"
+    ],
+    "DEAR YOU": [
+      "dearyou",
+      "filmdearyou"
+    ],
+    "KUNG FU SOCCER": [
+      "filmkungfusoccer",
+      "kungfusoccer"
+    ],
+    "PAW PATROL: THE DINO MOVIE": [
+      "filmpawpatrolthedinomovie",
+      "pawpatrolthedinomovie"
+    ],
+    "AGITO PSYCHIC WAR": [
+      "agitopsychicwar",
+      "filmagitopsychicwar"
+    ],
+    "MUTINY": [
+      "filmmutiny",
+      "mutiny"
+    ],
+    "A NEW DAWN": [
+      "anewdawn",
+      "filmanewdawn"
+    ],
+    "CHIIKAWA THE MOVIE: THE SECRET OF THE MERMAID ISLAND": [
+      "chiikawathemoviethesecretofthemermaidisland",
+      "filmchiikawathemoviethesecretofthemermaidisland"
+    ],
+    "AWARAPAN 2": [
+      "awarapan2",
+      "filmawarapan2"
+    ]
+  }
+}

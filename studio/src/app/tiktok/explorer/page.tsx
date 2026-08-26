@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import Link from 'next/link';
 import useSWR from 'swr';
 import Image from 'next/image';
 import {
@@ -8,7 +9,8 @@ import {
     Search, Calendar, ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
     Film, ThumbsUp, Activity, Copy, Check, FileCode,
     CalendarX2, ArrowRight, LayoutGrid, List,
-    Trophy, Zap, AlertTriangle, Sun, Moon, Clock, User, Sparkles
+    Trophy, Zap, AlertTriangle, Sun, Moon, Clock, User, Sparkles,
+    Settings, ShieldCheck
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -69,6 +71,14 @@ export default function TikTokExplorerPage() {
     const activeShowtimeMovies: MovieSchedule[] = useMemo(() => {
         return scheduleResponse?.movies || [];
     }, [scheduleResponse]);
+
+    // Fetch truth seed accounts and manual overrides
+    const { data: sourcesResponse } = useSWR<{
+        success: boolean;
+        sources: Array<{ id: string; handle: string; name: string; category: string; active: boolean }>;
+        overrides: Record<string, string[]>;
+    }>('/api/socials/tiktok/sources', fetcher, { revalidateOnFocus: false });
+    const sourcesData = sourcesResponse;
 
     // Crawl date timestamp normalized to Asia/Jakarta (WIB)
     const crawlDate = useMemo(() => {
@@ -260,8 +270,12 @@ export default function TikTokExplorerPage() {
                     : (hasSocialCrawl ? 'Ketersediaan jam tayang di bioskop' : 'Scheduled for 11:00 WIB crawl')
             );
 
-            const hasDiscoveredHashtag = hasSocialCrawl && mPosts.length > 0;
-            const hashtagDisplay = hasDiscoveredHashtag ? `#${cleanTag}` : null;
+            const movieOverrides = sourcesData?.overrides?.[m.title.toUpperCase()] || [];
+            const discoveredTags = movieOverrides.length > 0
+                ? movieOverrides.map((t) => `#${t.replace(/^#/, '')}`)
+                : (hasSocialCrawl && mPosts.length > 0 ? [`#${cleanTag}`] : []);
+
+            const hashtagDisplay = discoveredTags.length > 0 ? discoveredTags.join(' ') : null;
 
             const totalShowtimes = Object.values(m.cities || {}).reduce((cSum, theatres) => {
                 return cSum + (theatres || []).reduce((tSum, t) => {
@@ -273,6 +287,7 @@ export default function TikTokExplorerPage() {
                 id: m.movie_id,
                 title: m.title,
                 hashtag: hashtagDisplay,
+                discoveredTags,
                 showtimes_count: totalShowtimes,
                 merchants: m.merchants || [],
                 genres: m.genres || [],
@@ -293,7 +308,7 @@ export default function TikTokExplorerPage() {
             return list.sort((a, b) => b.views - a.views);
         }
         return list.sort((a, b) => (b.showtimes_count || 0) - (a.showtimes_count || 0));
-    }, [hasSocialCrawl, activeShowtimeMovies, allPosts, allComments, liveData]);
+    }, [hasSocialCrawl, activeShowtimeMovies, allPosts, allComments, liveData, sourcesData?.overrides]);
 
     // ─── 4. Filtered Feeds ──────────────────────────────────────────
     const filteredPosts = useMemo(() => {
@@ -909,6 +924,71 @@ export default function TikTokExplorerPage() {
                                         )}
                                     </tbody>
                                 </table>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Verified Campaign Hashtags Section */}
+                    <Card className="border-border/60 bg-card overflow-hidden">
+                        <CardHeader className="p-3.5 pb-2.5 border-b border-border/30">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                    <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                                    <CardTitle className="text-sm font-bold text-foreground">
+                                        Verified Campaign Hashtags ({todayMovieSentimentList.filter((m) => m.discoveredTags.length > 0).length}/{todayMovieSentimentList.length})
+                                    </CardTitle>
+                                </div>
+
+                                <Link href="/tiktok/explorer/settings">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="gap-1.5 text-sm font-semibold h-7 px-2.5 rounded-lg border-border/60"
+                                    >
+                                        <Settings className="w-3.5 h-3.5 text-muted-foreground" />
+                                        Manage Seed Accounts ({sourcesData?.sources?.length || 13})
+                                    </Button>
+                                </Link>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-3 sm:p-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                                {todayMovieSentimentList.map((movie) => {
+                                    const hasTags = movie.discoveredTags.length > 0;
+                                    return (
+                                        <div
+                                            key={`tag-card-${movie.id}`}
+                                            className="p-3 rounded-xl border border-border/40 bg-muted/10 space-y-1.5"
+                                        >
+                                            <div className="flex items-center justify-between gap-2">
+                                                <span className="text-sm font-bold text-foreground truncate">
+                                                    {movie.title}
+                                                </span>
+                                                <Badge variant="outline" className="text-sm font-medium shrink-0">
+                                                    {movie.age_category}
+                                                </Badge>
+                                            </div>
+
+                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                {hasTags ? (
+                                                    movie.discoveredTags.map((tag) => (
+                                                        <Badge
+                                                            key={tag}
+                                                            variant="secondary"
+                                                            className="font-mono text-sm font-semibold bg-primary/10 text-primary border-primary/20"
+                                                        >
+                                                            {tag}
+                                                        </Badge>
+                                                    ))
+                                                ) : (
+                                                    <span className="text-sm text-muted-foreground italic">
+                                                        ⏱ Pending 08:00 WIB discovery
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </CardContent>
                     </Card>

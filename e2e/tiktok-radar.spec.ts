@@ -44,4 +44,17 @@ test.describe('TikTok Radar Performance & Heaviness Audits', () => {
 
     console.log(`[TikTok Workflow Audit] DOM Nodes: ${result.domNodeCount}, TTFB: ${result.ttfbMs}ms, Load: ${result.loadTimeMs}ms`);
   });
+
+  test('evaluates truth seed accounts and overrides management on /tiktok/explorer/settings', async ({ page }) => {
+    const result = await auditPagePerformance(page, 'http://127.0.0.1:3101/tiktok/explorer/settings', {
+      maxDomNodeCount: 2000,
+      maxLoadTimeMs: 15000,
+    });
+
+    await expect(page.getByRole('heading', { name: /Hashtag Discovery Settings/i })).toBeVisible();
+    await expect(page.getByText(/Truth Seed Accounts/i).first()).toBeVisible();
+    await expect(page.getByText(/Cinema XXI/i)).toBeVisible();
+
+    console.log(`[TikTok Settings Audit] DOM Nodes: ${result.domNodeCount}, TTFB: ${result.ttfbMs}ms, Load: ${result.loadTimeMs}ms`);
+  });
 });
