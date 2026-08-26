@@ -10,6 +10,7 @@ HTTP-triggered Cloud Function that runs daily at 08:00 WIB:
    - NO silent mock fallback.
    - If a movie has no live posts or overrides, discovered_hashtags remains EMPTY [].
 6. Persists the discovery snapshot to Firestore `tiktok_hashtag_discovery/{target_date}`.
+7. Sends instant Telegram alerts for both successful completion and failure.
 
 Triggered by Cloud Scheduler daily at 08:00 WIB (`0 8 * * *` WIB).
 """
@@ -38,6 +39,32 @@ WIB = ZoneInfo("Asia/Jakarta")
 
 def get_firestore_client() -> firestore.Client:
     return firestore.Client(project=PROJECT_ID)
+
+
+def send_telegram_alert(db: firestore.Client, message: str) -> None:
+    """Sends a markdown formatted notification to Telegram if configured in Firestore."""
+    try:
+        doc = db.collection("auth_tokens").document("socials").get()
+        if not doc.exists:
+            return
+
+        data = doc.to_dict() or {}
+        bot_token = data.get("telegram_bot_token")
+        chat_id = data.get("telegram_chat_id")
+
+        if not bot_token or not chat_id:
+            return
+
+        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        payload = {
+            "chat_id": str(chat_id),
+            "text": message,
+            "parse_mode": "Markdown",
+        }
+        with httpx.Client(timeout=10.0) as client:
+            client.post(url, json=payload)
+    except Exception as e:
+        logger.warning("Failed to send Telegram alert: %s", e)
 
 
 def get_apify_token(db: firestore.Client) -> str:
@@ -216,7 +243,7 @@ def resolve_hashtags_for_slate(
 
 @functions_framework.http
 def discover_hashtags_http(request: Any) -> tuple[str, int, dict[str, str]]:
-    """HTTP Cloud Function entrypoint. Fails loudly with explicit error payloads."""
+    """HTTP Cloud Function entrypoint. Fails loudly and alerts Telegram on completion/failure."""
     now_wib = datetime.datetime.now(WIB)
     target_date = now_wib.strftime("%Y-%m-%d")
 
@@ -227,10 +254,9 @@ def discover_hashtags_http(request: Any) -> tuple[str, int, dict[str, str]]:
             target_date = req_json["date"]
 
     logger.info("Starting Morning Hashtag Discovery for target date: %s", target_date)
+    db = get_firestore_client()
 
     try:
-        db = get_firestore_client()
-
         # 1. Check Apify Token (Fails 500 if missing)
         apify_token = get_apify_token(db)
 
@@ -244,6 +270,10 @@ def discover_hashtags_http(request: Any) -> tuple[str, int, dict[str, str]]:
         if not active_handles:
             error_msg = "No active 'ON' seed accounts found in Firestore 'tiktok_sources/config'."
             logger.error(error_msg)
+            send_telegram_alert(
+                db,
+                f"🚨 *CineRadar TikTok Discovery Failed*\n📅 Date: `{target_date}`\n❌ Error: {error_msg}",
+            )
             return (
                 json.dumps({"success": False, "error": error_msg}),
                 400,
@@ -255,6 +285,10 @@ def discover_hashtags_http(request: Any) -> tuple[str, int, dict[str, str]]:
         if not active_movies:
             error_msg = f"No active theatrical movies found in schedules_v2/{target_date}/movies."
             logger.error(error_msg)
+            send_telegram_alert(
+                db,
+                f"🚨 *CineRadar TikTok Discovery Failed*\n📅 Date: `{target_date}`\n❌ Error: {error_msg}",
+            )
             return (
                 json.dumps({"success": False, "error": error_msg}),
                 404,
@@ -289,6 +323,17 @@ def discover_hashtags_http(request: Any) -> tuple[str, int, dict[str, str]]:
             len(scraped_posts),
         )
 
+        # 7. Send Rich Telegram Success Alert
+        success_msg = (
+            f"🍿 *CineRadar TikTok Discovery Complete*\n\n"
+            f"📅 *Date*: `{target_date}`\n"
+            f"🎬 *Theatrical Slate*: `{len(active_movies)} movies`\n"
+            f"🏷️ *Verified Campaigns*: `{resolved_count}/{len(active_movies)} titles`\n"
+            f"📡 *Live Posts Scanned*: `{len(scraped_posts)}` from `{len(active_handles)} seeds`\n"
+            f"⏱ *Executed at*: `{now_wib.strftime('%H:%M:%S')} WIB`"
+        )
+        send_telegram_alert(db, success_msg)
+
         return (
             json.dumps(
                 {
@@ -306,14 +351,24 @@ def discover_hashtags_http(request: Any) -> tuple[str, int, dict[str, str]]:
         )
 
     except ValueError as ve:
-        logger.error("Configuration error: %s", ve)
+        error_msg = f"Configuration error: {ve}"
+        logger.error(error_msg)
+        send_telegram_alert(
+            db,
+            f"🚨 *CineRadar TikTok Discovery [CONFIG ERROR]*\n📅 Date: `{target_date}`\n❌ Error: `{ve}`",
+        )
         return (
             json.dumps({"success": False, "error": str(ve)}),
             500,
             {"Content-Type": "application/json"},
         )
     except RuntimeError as re:
-        logger.error("Apify execution error: %s", re)
+        error_msg = f"Apify execution error: {re}"
+        logger.error(error_msg)
+        send_telegram_alert(
+            db,
+            f"🚨 *CineRadar TikTok Discovery [APIFY ERROR]*\n📅 Date: `{target_date}`\n❌ Error: `{re}`",
+        )
         return (
             json.dumps({"success": False, "error": str(re)}),
             502,
@@ -321,6 +376,10 @@ def discover_hashtags_http(request: Any) -> tuple[str, int, dict[str, str]]:
         )
     except Exception as e:
         logger.exception("Unexpected hashtag discovery failure: %s", e)
+        send_telegram_alert(
+            db,
+            f"🚨 *CineRadar TikTok Discovery [CRITICAL ERROR]*\n📅 Date: `{target_date}`\n❌ Error: `{e}`",
+        )
         return (
             json.dumps({"success": False, "error": f"Internal server error: {e}"}),
             500,
