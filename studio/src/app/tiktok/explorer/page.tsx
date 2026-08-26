@@ -527,7 +527,7 @@ export default function TikTokExplorerPage() {
                                         Active Theatrical Lineup Synced · Social Crawl Scheduled for 11:00 WIB
                                     </h3>
                                     <p className="text-sm text-muted-foreground">
-                                        Active movies playing in XXI, CGV, and Cinepolis are listed below. Marketing campaign hashtags resolve at 08:00 WIB, followed by TikTok buzz and sentiment briefings at 11:00 WIB.
+                                        Marketing campaign hashtags resolve at 08:00 WIB, followed by TikTok buzz and sentiment briefings at 11:00 WIB.
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
