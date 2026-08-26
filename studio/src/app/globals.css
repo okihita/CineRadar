@@ -123,3 +123,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Zero-layout-shift instant sidebar collapsed styles */
+html.sidebar-collapsed aside[data-sidebar="cineradar-sidebar"],
+html.sidebar-collapsed div[data-sidebar-placeholder] {
+  width: 4rem !important; /* 64px = w-16 */
+}

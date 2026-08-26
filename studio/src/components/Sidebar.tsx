@@ -291,13 +291,16 @@ export function Sidebar() {
 
     const [collapsed, setCollapsed] = useState<boolean>(() => {
         if (typeof window === 'undefined') return false;
-        return loadSidebarCollapsed();
+        return document.documentElement.classList.contains('sidebar-collapsed') || loadSidebarCollapsed();
     });
 
     const toggleCollapsed = useCallback(() => {
         setCollapsed(prev => {
             const next = !prev;
             saveSidebarCollapsed(next);
+            if (typeof document !== 'undefined') {
+                document.documentElement.classList.toggle('sidebar-collapsed', next);
+            }
             return next;
         });
     }, []);
@@ -332,6 +335,7 @@ export function Sidebar() {
 
     return (
         <aside
+            data-sidebar="cineradar-sidebar"
             className={cn(
                 'h-screen bg-muted/30 border-r flex flex-col transition-all duration-300',
                 collapsed ? 'w-16' : 'w-64'

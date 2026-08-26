@@ -16,8 +16,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     if (status === 'loading') {
         return (
             <div className="flex h-screen">
-                {/* Minimal placeholder to reserve space (matches w-64 in Sidebar) */}
-                <div className="hidden md:block w-64 bg-muted/10 border-r animate-pulse" />
+                {/* Minimal placeholder to reserve space (matches w-64/w-16 in Sidebar) */}
+                <div data-sidebar-placeholder className="hidden md:block w-64 bg-muted/10 border-r animate-pulse" />
                 <main className="flex-1 overflow-auto bg-background">
                     <ErrorBoundary>{children}</ErrorBoundary>
                 </main>
