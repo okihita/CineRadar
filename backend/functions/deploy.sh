@@ -257,6 +257,52 @@ deploy_sync_exhibitors() {
     fi
 }
 
+deploy_daily_pulse() {
+    echo "🔥 Deploying 18:00 WIB Daily TikTok Social Box Office Crawler..."
+    cd socials/tiktok/crawl_daily_pulse
+    gcloud functions deploy crawl-tiktok-daily-pulse \
+        --gen2 \
+        --runtime=python314 \
+        --region="$REGION" \
+        --source=. \
+        --entry-point=crawl_daily_pulse_http \
+        --trigger-http \
+        --allow-unauthenticated \
+        --memory=512MB \
+        --timeout=300s \
+        --set-env-vars="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,LOG_EXECUTION_ID=true" \
+        --project="$PROJECT_ID"
+    cd ../../../
+    
+    # Create Daily 18:00 WIB Scheduler
+    echo "⏰ Creating Daily 18:00 WIB Social Box Office Scheduler..."
+    PULSE_URL=$(gcloud functions describe crawl-tiktok-daily-pulse \
+        --gen2 \
+        --region="$REGION" \
+        --project="$PROJECT_ID" \
+        --format='value(serviceConfig.uri)' 2>/dev/null)
+        
+    if [ -z "$PULSE_URL" ]; then
+        echo "   ❌ Error: crawl-tiktok-daily-pulse URL not found."
+    else
+        gcloud scheduler jobs delete daily-social-pulse \
+            --location="$REGION" \
+            --project="$PROJECT_ID" \
+            --quiet 2>/dev/null || true
+            
+        gcloud scheduler jobs create http daily-social-pulse \
+            --location="$REGION" \
+            --schedule="0 18 * * *" \
+            --time-zone="Asia/Jakarta" \
+            --uri="$PULSE_URL" \
+            --http-method=POST \
+            --headers="User-Agent=Google-Cloud-Scheduler" \
+            --project="$PROJECT_ID"
+            
+        echo "   ✓ Scheduler: Daily Social Box Office Pulse at 18:00 WIB"
+    fi
+}
+
 # Main
 case "${1:-all}" in
     pubsub)
@@ -280,6 +326,9 @@ case "${1:-all}" in
     sync_exhibitors|exhibitors)
         deploy_sync_exhibitors
         ;;
+    daily_pulse|pulse)
+        deploy_daily_pulse
+        ;;
     theatrical)
         deploy_pubsub
         deploy_dispatcher
@@ -297,11 +346,12 @@ case "${1:-all}" in
         deploy_sweeper
         deploy_discover_hashtags
         deploy_sync_exhibitors
+        deploy_daily_pulse
         echo ""
         echo "✅ All components deployed!"
         ;;
     *)
-        echo "Usage: $0 [pubsub|dispatcher|scraper|scheduler|sweeper|discover_hashtags|sync_exhibitors|theatrical|all]"
+        echo "Usage: $0 [pubsub|dispatcher|scraper|scheduler|sweeper|discover_hashtags|sync_exhibitors|daily_pulse|theatrical|all]"
         exit 1
         ;;
 esac
