@@ -33,7 +33,7 @@ from google.cloud import firestore
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-PROJECT_ID: str = os.environ.get("GOOGLE_CLOUD_PROJECT", "cineradar-481014")
+PROJECT_ID: str = str(os.environ.get("GOOGLE_CLOUD_PROJECT", "cineradar-481014"))
 WIB = ZoneInfo("Asia/Jakarta")
 GENERIC_TAGS: frozenset[str] = frozenset({"fyp", "foryou", "viral", "bioskop", "cinema"})
 
@@ -57,7 +57,8 @@ def send_telegram_alert(db: firestore.Client, message: str) -> None:
         if not doc.exists:
             return
         data = doc.to_dict() or {}
-        bot_token, chat_id = data.get("telegram_bot_token"), data.get("telegram_chat_id")
+        bot_token = data.get("telegram_bot_token")
+        chat_id = data.get("telegram_chat_id")
         if not bot_token or not chat_id:
             return
 
@@ -66,8 +67,8 @@ def send_telegram_alert(db: firestore.Client, message: str) -> None:
             client.post(
                 url, json={"chat_id": str(chat_id), "text": message, "parse_mode": "Markdown"}
             )
-    except Exception as e:
-        logger.warning("Failed to send Telegram alert: %s", e)
+    except Exception as exc:
+        logger.warning("Failed to send Telegram alert: %s", exc)
 
 
 def get_apify_token(db: firestore.Client) -> str:
@@ -77,10 +78,10 @@ def get_apify_token(db: firestore.Client) -> str:
         doc = db.collection("auth_tokens").document("socials").get()
         if doc.exists:
             token = str((doc.to_dict() or {}).get("apify_api_token", "")).strip()
-    except Exception as e:
-        logger.error("Failed to read auth_tokens/socials from Firestore: %s", e)
+    except Exception as exc:
+        logger.error("Failed to read auth_tokens/socials from Firestore: %s", exc)
 
-    token = token or os.environ.get("APIFY_API_TOKEN", "").strip()
+    token = token or str(os.environ.get("APIFY_API_TOKEN", "")).strip()
     if not token:
         raise ValueError("Apify API token is not configured in Firestore 'auth_tokens/socials'.")
     return token
@@ -95,18 +96,22 @@ def normalize_title(title: str) -> str:
 
 def get_active_theatrical_movies(db: firestore.Client, target_date: str) -> list[dict[str, Any]]:
     docs = db.collection("schedules_v2").document(target_date).collection("movies").stream()
-    movies = [data for doc in docs if (data := doc.to_dict()) and "title" in data]
+    movies: list[dict[str, Any]] = []
+    for doc in docs:
+        data = doc.to_dict()
+        if data and "title" in data:
+            movies.append(data)
     logger.info("Fetched %d active movies from schedules_v2/%s/movies", len(movies), target_date)
     return movies
 
 
 def load_sources_config(db: firestore.Client) -> dict[str, Any]:
     doc = db.collection("tiktok_sources").document("config").get()
-    return (
-        doc.to_dict() or {"sources": [], "overrides": {}}
-        if doc.exists
-        else {"sources": [], "overrides": {}}
-    )
+    if doc.exists:
+        data = doc.to_dict()
+        if data:
+            return data
+    return {"sources": [], "overrides": {}}
 
 
 # ─── 3. External Scraping & Resolution (SOLID / Pure Logic) ───
@@ -143,10 +148,12 @@ def scrape_seed_account_posts(apify_token: str, handles: list[str]) -> list[dict
             items = res.json()
             if not isinstance(items, list):
                 raise RuntimeError(f"Unexpected Apify response structure: {type(items).__name__}")
-            logger.info("Fetched %d recent posts from live Apify seed profiles", len(items))
-            return items
-    except httpx.RequestError as e:
-        raise RuntimeError(f"Network error connecting to Apify API: {e}") from e
+
+            clean_items: list[dict[str, Any]] = [item for item in items if isinstance(item, dict)]
+            logger.info("Fetched %d recent posts from live Apify seed profiles", len(clean_items))
+            return clean_items
+    except httpx.RequestError as exc:
+        raise RuntimeError(f"Network error connecting to Apify API: {exc}") from exc
 
 
 def extract_tags_from_post(post: dict[str, Any]) -> set[str]:
@@ -179,18 +186,20 @@ def resolve_hashtags_for_slate(
         # 1. Custom Overrides (Highest priority)
         if title in overrides:
             for tag in overrides[title]:
-                if clean_tag := tag.replace("#", "").strip().lower():
+                if clean_tag := str(tag or "").replace("#", "").strip().lower():
                     found_tags.add(clean_tag)
             sources.add("manual_override")
 
         # 2. Match live scraped posts
         for post in scraped_posts:
-            caption = (post.get("text") or post.get("caption") or "").lower()
-            author = post.get("authorMeta", {}).get("name") or post.get("source_handle") or ""
+            caption = (str(post.get("text") or post.get("caption") or "")).lower()
+            author = str(
+                post.get("authorMeta", {}).get("name") or post.get("source_handle") or ""
+            ).strip()
 
             if title.lower() in caption or norm_title in caption:
                 found_tags.update(extract_tags_from_post(post))
-                if author and isinstance(author, str):
+                if author:
                     sources.add(f"@{author.replace('@', '')}")
 
         discovered_slate[title] = {
@@ -215,7 +224,7 @@ def discover_hashtags_http(request: Any) -> tuple[str, int, dict[str, str]]:
     target_date = now_wib.strftime("%Y-%m-%d")
 
     if request.is_json and (req_json := request.get_json(silent=True)):
-        target_date = req_json.get("date", target_date)
+        target_date = str(req_json.get("date") or target_date)
 
     logger.info("Starting Morning Hashtag Discovery for target date: %s", target_date)
     db = get_firestore_client()
@@ -225,7 +234,7 @@ def discover_hashtags_http(request: Any) -> tuple[str, int, dict[str, str]]:
         apify_token = get_apify_token(db)
         sources_config = load_sources_config(db)
         active_handles = [
-            s.get("handle")
+            str(s.get("handle"))
             for s in sources_config.get("sources", [])
             if s.get("active", True) and s.get("handle")
         ]
@@ -286,24 +295,24 @@ def discover_hashtags_http(request: Any) -> tuple[str, int, dict[str, str]]:
             200,
         )
 
-    except ValueError as ve:
-        logger.error("Configuration error: %s", ve)
+    except ValueError as val_err:
+        logger.error("Configuration error: %s", val_err)
         send_telegram_alert(
             db,
-            f"🚨 *CineRadar TikTok Discovery [CONFIG ERROR]*\n📅 Date: `{target_date}`\n❌ Error: `{ve}`",
+            f"🚨 *CineRadar TikTok Discovery [CONFIG ERROR]*\n📅 Date: `{target_date}`\n❌ Error: `{val_err}`",
         )
-        return json_response({"success": False, "error": str(ve)}, 400)
-    except RuntimeError as re:
-        logger.error("Apify execution error: %s", re)
+        return json_response({"success": False, "error": str(val_err)}, 400)
+    except RuntimeError as run_err:
+        logger.error("Apify execution error: %s", run_err)
         send_telegram_alert(
             db,
-            f"🚨 *CineRadar TikTok Discovery [APIFY ERROR]*\n📅 Date: `{target_date}`\n❌ Error: `{re}`",
+            f"🚨 *CineRadar TikTok Discovery [APIFY ERROR]*\n📅 Date: `{target_date}`\n❌ Error: `{run_err}`",
         )
-        return json_response({"success": False, "error": str(re)}, 502)
-    except Exception as e:
-        logger.exception("Unexpected discovery failure: %s", e)
+        return json_response({"success": False, "error": str(run_err)}, 502)
+    except Exception as gen_err:
+        logger.exception("Unexpected discovery failure: %s", gen_err)
         send_telegram_alert(
             db,
-            f"🚨 *CineRadar TikTok Discovery [CRITICAL ERROR]*\n📅 Date: `{target_date}`\n❌ Error: `{e}`",
+            f"🚨 *CineRadar TikTok Discovery [CRITICAL ERROR]*\n📅 Date: `{target_date}`\n❌ Error: `{gen_err}`",
         )
-        return json_response({"success": False, "error": f"Internal server error: {e}"}, 500)
+        return json_response({"success": False, "error": f"Internal server error: {gen_err}"}, 500)
