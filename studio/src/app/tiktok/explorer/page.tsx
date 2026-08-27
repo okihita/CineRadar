@@ -10,7 +10,7 @@ import {
     Film, ThumbsUp, Activity, Copy, Check, FileCode,
     CalendarX2, ArrowRight, LayoutGrid, List,
     Trophy, Zap, AlertTriangle, Sun, Moon, Clock, User, Sparkles,
-    Settings, ShieldCheck, Building2, Filter
+    Settings, ShieldCheck, Building2, Filter, Database
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -1035,6 +1035,16 @@ export default function TikTokExplorerPage() {
                                         >
                                             <Filter className="w-3 h-3 text-rose-500" />
                                             {sourcesData?.excluded_hashtags?.length || 26} Noise Tags Filtered
+                                        </Button>
+                                    </Link>
+                                    <Link href="/tiktok/raw">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="gap-1.5 text-sm font-semibold h-7 px-2.5 rounded-lg border-border/60"
+                                        >
+                                            <Database className="w-3.5 h-3.5 text-primary" />
+                                            Raw Data
                                         </Button>
                                     </Link>
                                     <Link href="/tiktok/exhibitors">
