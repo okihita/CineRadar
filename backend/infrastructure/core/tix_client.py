@@ -20,7 +20,7 @@ from typing import Any
 import httpx
 
 from backend.infrastructure.city_data import CITIES
-from backend.infrastructure.core.config import API_BASE
+from backend.infrastructure.core.config import API_BASE, USER_AGENT
 from backend.infrastructure.core.guest_token import GuestToken, fetch_guest_token
 from backend.infrastructure.firestore_collections import MOVIES, SCHEDULES, SCHEDULES_V2
 from backend.schemas.tix_api import (
@@ -88,6 +88,7 @@ class CineRadarScraper:
         return {
             "Authorization": f"Bearer {self.guest_token.token}",
             "Content-Type": "application/json",
+            "User-Agent": USER_AGENT,
             "platform": "web",
         }
 
