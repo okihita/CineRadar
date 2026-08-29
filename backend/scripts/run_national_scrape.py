@@ -59,8 +59,11 @@ async def main() -> None:
     # Notification Service
     try:
         from google.cloud import firestore
-        from backend.infrastructure.core.resend_notification_service import ResendNotificationService
-        
+
+        from backend.infrastructure.core.resend_notification_service import (
+            ResendNotificationService,
+        )
+
         db = firestore.Client()
         notifier = ResendNotificationService(db=db)
     except Exception as e:

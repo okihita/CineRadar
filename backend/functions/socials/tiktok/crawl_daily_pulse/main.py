@@ -323,7 +323,6 @@ async def execute_daily_crawl_async(
     # Ultra-Saver Segmentation (~Rp 25.000 / day):
     # - Top 5 Blockbusters: 40 posts + 30 audience comments each
     tier1_list = target_movies[:5]
-    tier2_list: list[dict[str, Any]] = []
 
     logger.info(
         "Triggering async crawl in Ultra-Saver mode: %d Tier 1 films (40 posts + 30 comments)", len(tier1_list)

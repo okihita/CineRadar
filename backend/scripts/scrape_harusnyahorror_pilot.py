@@ -7,11 +7,11 @@ Schema Target:
 """
 
 import datetime
-import json
 import logging
 import os
 import sys
 from zoneinfo import ZoneInfo
+
 import httpx
 from google.cloud import firestore
 
@@ -42,7 +42,7 @@ def scrape_top_hashtag_posts(apify_token: str, hashtags: list[str], max_posts: i
     """Scrapes top viral TikTok posts for the target hashtags."""
     actor_id = "clockworks~tiktok-scraper"
     url = f"https://api.apify.com/v2/acts/{actor_id}/run-sync-get-dataset-items?token={apify_token}"
-    
+
     # Format hashtags for the actor
     formatted_tags = [f"https://www.tiktok.com/tag/{h.replace('#', '').strip()}" for h in hashtags]
     logger.info("Scraping top %d posts for tags: %s", max_posts, hashtags)
@@ -61,7 +61,7 @@ def scrape_top_hashtag_posts(apify_token: str, hashtags: list[str], max_posts: i
         items = res.json()
         if not isinstance(items, list):
             raise RuntimeError(f"Unexpected Apify response: {type(items)}")
-        
+
         logger.info("Fetched %d raw posts from Apify", len(items))
         return items
 
@@ -87,7 +87,7 @@ def sanitize_post(p: dict) -> dict:
         "author_handle": str(author_handle),
         "author_avatar": str(author_avatar),
         "caption": str(p.get("text") or p.get("caption") or "")[:600],
-        "hashtags": sorted(list(set(tags))),
+        "hashtags": sorted(set(tags)),
         "views": int(p.get("playCount") or p.get("views") or 0),
         "likes": int(p.get("diggCount") or p.get("likes") or 0),
         "comments": int(p.get("commentCount") or 0),
@@ -100,7 +100,7 @@ def sanitize_post(p: dict) -> dict:
 def main():
     db = firestore.Client(project=PROJECT_ID)
     apify_token = get_apify_token(db)
-    
+
     # 1. Scrape Apify
     raw_posts = scrape_top_hashtag_posts(apify_token, HASHTAGS, max_posts=100)
     if not raw_posts:

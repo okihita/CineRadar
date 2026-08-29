@@ -541,7 +541,10 @@ async def async_main() -> None:
         logger.error("🚨 CRITICAL: No showtimes found in schedules_v2 - exiting with failure")
         try:
             from google.cloud import firestore
-            from backend.infrastructure.core.resend_notification_service import ResendNotificationService
+
+            from backend.infrastructure.core.resend_notification_service import (
+                ResendNotificationService,
+            )
             sync_db = firestore.Client()
             notifier = ResendNotificationService(db=sync_db)
             alert_msg = (
