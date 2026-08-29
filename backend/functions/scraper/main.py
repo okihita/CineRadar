@@ -53,6 +53,18 @@ JAKARTA_TZ = ZoneInfo("Asia/Jakarta")
 REFRESH_API_URL = "https://api-b2b.tix.id/v1/users/refresh"
 ENABLE_SCHEMA_VALIDATION = os.environ.get("ENABLE_SCHEMA_VALIDATION", "true").lower() == "true"
 
+USER_AGENT = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+BROWSER_HEADERS = {
+    "User-Agent": USER_AGENT,
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
+    "Origin": "https://m.tix.id",
+    "Referer": "https://m.tix.id/",
+    "Sec-Fetch-Dest": "empty",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Site": "same-site",
+}
+
 # Global In-Memory Cache for Cloud Function
 # Stores physical capacity for studios to prevent heavy Firestore GET operations during JIT bursts.
 # Format: {"theatre_id:studio_id": (total_seats, is_locked)}
@@ -808,12 +820,8 @@ def fetch_seat_layout(showtime_id: str, merchant: str, token: str) -> dict[str, 
     """
     merchant_path = get_merchant_path(merchant)
     url = f"https://api-b2b.tix.id/v1/movies/{merchant_path}/layout"
-
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Accept": "application/json",
-        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15",
-    }
+    headers = {"Authorization": f"Bearer {token}"}
+    headers.update(BROWSER_HEADERS)
 
     params = {
         "show_time_id": showtime_id,
@@ -850,13 +858,11 @@ def test_token_valid(token: str) -> bool:
     This checks if the token's session has propagated to TIX's Redis nodes.
     """
     try:
+        headers = {"Authorization": f"Bearer {token}"}
+        headers.update(BROWSER_HEADERS)
         response = httpx.get(
             "https://api-b2b.tix.id/v1/movies/cgv/layout",
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Accept": "application/json",
-                "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15",
-            },
+            headers=headers,
             params={"show_time_id": "0", "tz": "7"},
             timeout=5,
         )
@@ -882,11 +888,8 @@ def fetch_seat_layout_with_retry(
     last_error_detail = ""
 
     for attempt in range(2):
-        headers = {
-            "Authorization": f"Bearer {current_token}",
-            "Accept": "application/json",
-            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15",
-        }
+        headers = {"Authorization": f"Bearer {current_token}"}
+        headers.update(BROWSER_HEADERS)
         params = {"show_time_id": showtime_id, "tz": "7"}
 
         try:
