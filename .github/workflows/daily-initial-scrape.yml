@@ -62,9 +62,30 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       issues: write
+      contents: read
 
     steps:
-      - name: Alert on failure
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v8.3.2
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+
+      - name: Send Dual Telegram & Email Failure Alert
+        run: |
+          PYTHONPATH=. uv run python backend/scripts/notify_failure.py \
+            --workflow "Scrape National Movies & Showtimes" \
+            --run-id "${{ github.run_id }}" \
+            --repo "${{ github.repository }}"
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          NOTIFICATION_EMAIL: ${{ secrets.NOTIFICATION_EMAIL }}
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+
+      - name: Create GitHub Issue on failure
         uses: actions/github-script@v9
         with:
           script: |

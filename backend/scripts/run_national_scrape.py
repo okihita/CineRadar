@@ -45,6 +45,16 @@ async def main() -> None:
     uploaded_movies = result.get("uploaded", 0)
     total_showtimes = result.get("stats", {}).get("total_showtimes", 0)
     target_date = result.get("date")
+    error_counts = result.get("error_counts", {})
+    recent_errors = result.get("recent_errors", [])
+
+    # Anomaly Thresholds (National circuit sanity floor)
+    # A standard theatrical slate across Indonesia has at least 15 active movies and 1,500+ showtimes.
+    # Yielding fewer than 5 movies or 500 showtimes signals severe scraping degradation or partial WAF blocks.
+    MIN_EXPECTED_SHOWTIMES = 500
+    MIN_EXPECTED_MOVIES = 5
+
+    is_failure = uploaded_movies < MIN_EXPECTED_MOVIES or total_showtimes < MIN_EXPECTED_SHOWTIMES
 
     # Notification Service
     try:
@@ -57,13 +67,20 @@ async def main() -> None:
         logger.warning(f"Could not initialize notification service: {e}")
         notifier = None
 
-    if uploaded_movies == 0 or total_showtimes == 0:
+    if is_failure:
+        err_details = "\n".join([f"  • {e}" for e in recent_errors]) if recent_errors else "  • No explicit HTTP exceptions recorded"
+        http_breakdown = ", ".join([f"HTTP {k}: {v}" for k, v in error_counts.items()]) if error_counts else "None"
+
         error_msg = (
-            f"🚨 *[CineRadar CRITICAL] Morning National Scrape Failed!*\n\n"
+            f"🚨 *[CineRadar CRITICAL] Morning National Scrape Anomaly!*\n\n"
             f"📅 *Date:* {target_date}\n"
-            f"⚠️ *Failure:* 0 showtimes or movies were uploaded.\n"
-            f"Possible causes: TIX.id WAF 403 block, API schema change, or network failure.\n\n"
-            f"Action required immediately."
+            f"⚠️ *Failure:* Scraping volume below operational thresholds!\n"
+            f"• *Movies Uploaded:* {uploaded_movies} (Min expected: {MIN_EXPECTED_MOVIES})\n"
+            f"• *Showtimes Found:* {total_showtimes} (Min expected: {MIN_EXPECTED_SHOWTIMES})\n"
+            f"• *Error Codes:* {http_breakdown}\n\n"
+            f"*Sample Errors:*\n{err_details}\n\n"
+            f"Possible causes: TIX.id WAF block, API schema change, or network failure.\n"
+            f"Immediate investigation required."
         )
         logger.error(error_msg)
         if notifier:
@@ -75,7 +92,8 @@ async def main() -> None:
                     "Uploaded Movies": uploaded_movies,
                     "Total Showtimes": total_showtimes,
                     "API Requests": result.get("api_requests", 0),
-                    "Status": "ZERO_DISCOVERY_ERROR",
+                    "HTTP Errors": http_breakdown,
+                    "Status": "ANOMALY_THRESHOLD_BREACH",
                 },
             )
         # Force non-zero exit code so GitHub Actions alerts and fails loudly

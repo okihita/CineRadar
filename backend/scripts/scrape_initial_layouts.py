@@ -538,8 +538,27 @@ async def async_main() -> None:
     showtimes = await load_showtimes_from_schedule(db, date)
 
     if not showtimes:
-        logger.warning("⚠️ No showtimes found - exiting")
-        return
+        logger.error("🚨 CRITICAL: No showtimes found in schedules_v2 - exiting with failure")
+        try:
+            from google.cloud import firestore
+            from backend.infrastructure.core.resend_notification_service import ResendNotificationService
+            sync_db = firestore.Client()
+            notifier = ResendNotificationService(db=sync_db)
+            alert_msg = (
+                f"🚨 *[CineRadar CRITICAL] Morning Baseline Layouts Failed!*\n\n"
+                f"📅 *Date:* {date}\n"
+                f"⚠️ *Failure:* 0 showtimes found in schedules_v2!\n"
+                f"Baseline seat initialization could not execute.\n"
+                f"Immediate investigation required."
+            )
+            await notifier.send_alert(
+                subject=f"🚨 [CineRadar CRITICAL] Baseline Seat Layouts Failed ({date})",
+                body=alert_msg,
+                metadata={"Date": date, "Status": "ZERO_SHOWTIMES_ERROR"},
+            )
+        except Exception as e:
+            logger.warning(f"Could not send baseline layout failure alert: {e}")
+        sys.exit(1)
 
     # Apply limit if specified
     if args.limit:
