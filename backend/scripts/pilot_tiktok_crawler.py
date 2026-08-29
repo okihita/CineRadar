@@ -27,7 +27,7 @@ import re
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 # Ensure repository root is in sys.path
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -376,7 +376,7 @@ Respond in valid JSON format only with these exact keys:
             if resp.status_code == 200:
                 result = resp.json()
                 raw_json = result["candidates"][0]["content"]["parts"][0]["text"]
-                return json.loads(raw_json)
+                return cast("dict[str, Any]", json.loads(raw_json))
             print(f"[!] Gemini HTTP {resp.status_code}: {resp.text[:200]}")
     except Exception as e:
         print(f"[!] Gemini analysis exception: {e}")
@@ -434,7 +434,9 @@ def main() -> None:
         for movie in target_movies:
             tag = movie["hashtag"]
             raw_posts = run_apify_hashtag_search(client, tag, limit=args.limit)
-            video_urls = [p.get("webVideoUrl") for p in raw_posts if p.get("webVideoUrl")][:3]
+            video_urls: list[str] = [
+                str(p["webVideoUrl"]) for p in raw_posts if p.get("webVideoUrl")
+            ][:3]
             raw_comments = run_apify_comments_scraper(client, video_urls, comments_per_post=args.comments_per_post)
 
             for p in raw_posts:

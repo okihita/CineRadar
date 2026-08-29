@@ -10,6 +10,7 @@ import datetime
 import logging
 import os
 import sys
+from typing import Any
 from zoneinfo import ZoneInfo
 
 import httpx
@@ -38,7 +39,7 @@ def get_apify_token(db: firestore.Client) -> str:
     return token
 
 
-def scrape_top_hashtag_posts(apify_token: str, hashtags: list[str], max_posts: int = 100) -> list[dict]:
+def scrape_top_hashtag_posts(apify_token: str, hashtags: list[str], max_posts: int = 100) -> list[dict[str, Any]]:
     """Scrapes top viral TikTok posts for the target hashtags."""
     actor_id = "clockworks~tiktok-scraper"
     url = f"https://api.apify.com/v2/acts/{actor_id}/run-sync-get-dataset-items?token={apify_token}"
@@ -66,7 +67,7 @@ def scrape_top_hashtag_posts(apify_token: str, hashtags: list[str], max_posts: i
         return items
 
 
-def sanitize_post(p: dict) -> dict:
+def sanitize_post(p: dict[str, Any]) -> dict[str, Any]:
     """Sanitizes raw TikTok post into clean JSON document."""
     post_id = str(p.get("id") or "")
     author_meta = p.get("authorMeta") or {}
