@@ -19,6 +19,10 @@ This function MUST be entirely self-contained. DO NOT:
 - Extract constants/helpers to shared modules (will break deployment)
 - Attempt to "clean up" duplication with infrastructure code
 
+⚠️ DEPLOYMENT PROTOCOL ⚠️
+DO NOT deploy this function with raw `gcloud functions deploy` commands.
+MUST ALWAYS be deployed via: `./backend/functions/deploy.sh dispatcher`
+
 Code duplication with backend/infrastructure/ is INTENTIONAL and required for:
 - Deployment isolation (--source=. only uploads this directory)
 - Cold start performance (minimal dependencies)

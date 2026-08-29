@@ -79,4 +79,5 @@ After any successful `--no-ff` merge into `dev` or `main`:
 ## 6. Cloud Infrastructure & Cost Efficiency Rules
 
 1. **Sweeper Frequency**: The `jit-sweeper` Cloud Scheduler job MUST remain on a **30-minute interval** (`0,30 10-23 * * *`). Do not reduce this frequency without explicit user approval, as 30m saves ~50% (~105,000 reads/day) in Firestore document read operations.
-2. **Cloud Functions Isolation**: Functions in `backend/functions/` (`dispatcher`, `scraper`, `sweeper`) MUST remain 100% self-contained without imports from `backend.*`.
+2. **Cloud Functions Isolation**: Functions in `backend/functions/` (`dispatcher`, `scraper`, `sweeper`, `socials/*`) MUST remain 100% self-contained without imports from `backend.*`.
+3. **Cloud Functions Deployment Protocol**: Functions in `backend/functions/` MUST NEVER be deployed via raw/ad-hoc `gcloud functions deploy` CLI commands. They MUST ALWAYS be deployed using `./backend/functions/deploy.sh <target>` (e.g. `./deploy.sh scraper`, `./deploy.sh dispatcher`, `./deploy.sh sweeper`, `./deploy.sh tiktok-pulse`, `./deploy.sh tiktok-exhibitors`, `./deploy.sh tiktok-hashtags`, or `./deploy.sh all`). This ensures correct entry points, source directory isolation, memory/timeout quotas, and environment variables.

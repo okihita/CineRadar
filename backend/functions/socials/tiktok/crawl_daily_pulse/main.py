@@ -13,6 +13,10 @@ Executes daily at 18:00 WIB (`0 18 * * *` WIB):
    - `tiktok_daily_pulse/{target_date}/movies/{movie_id}` (Top raw posts + comments subcollection)
    - `tiktok_movie_trends/{movie_id}` (Appends today's metrics to 60-day lifetime trend array)
 6. Dispatches the 18:00 WIB Evening Social Box Office Briefing to Telegram.
+
+⚠️ DEPLOYMENT PROTOCOL ⚠️
+DO NOT deploy this function with raw `gcloud functions deploy` commands.
+MUST ALWAYS be deployed via: `./backend/functions/deploy.sh tiktok-pulse`
 """
 
 from __future__ import annotations
@@ -316,16 +320,17 @@ async def execute_daily_crawl_async(
     if not target_movies:
         raise ValueError("No verified movie hashtags found for today in tiktok_hashtag_discovery.")
 
-    # Tiered Segmentation (strictly under Rp 100k daily cap):
-    tier1_list = target_movies[:6]
-    tier2_list = target_movies[6:16]
+    # Ultra-Saver Segmentation (~Rp 25.000 / day):
+    # - Top 5 Blockbusters: 40 posts + 30 audience comments each
+    tier1_list = target_movies[:5]
+    tier2_list: list[dict[str, Any]] = []
 
     logger.info(
-        "Triggering async crawl: %d Tier 1 films, %d Tier 2 films", len(tier1_list), len(tier2_list)
+        "Triggering async crawl in Ultra-Saver mode: %d Tier 1 films (40 posts + 30 comments)", len(tier1_list)
     )
 
-    limits = [80] * len(tier1_list) + [40] * len(tier2_list)
-    combined_movies = tier1_list + tier2_list
+    limits = [40] * len(tier1_list)
+    combined_movies = tier1_list
 
     async with httpx.AsyncClient(timeout=90.0) as http_client:
         # Concurrent post scraping across all target movies
@@ -335,18 +340,18 @@ async def execute_daily_crawl_async(
         ]
         all_raw_posts = await asyncio.gather(*scrape_tasks)
 
-        # Scrape comments for Tier 1 movies concurrently
+        # Scrape comments for Top 5 movies concurrently (max 30 comments per movie)
         comment_tasks = []
         for idx, _ in enumerate(tier1_list):
             raw_posts = all_raw_posts[idx]
             video_urls = [
                 str(p.get("webVideoUrl") or p.get("url") or "")
-                for p in raw_posts[:3]
+                for p in raw_posts[:2]
                 if p.get("id")
             ]
             comment_tasks.append(
                 async_scrape_comments(
-                    http_client, creds["apify_token"], video_urls, max_comments=50
+                    http_client, creds["apify_token"], video_urls, max_comments=30
                 )
             )
 
