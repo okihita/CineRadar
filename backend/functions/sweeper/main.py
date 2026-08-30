@@ -93,6 +93,13 @@ def send_telegram_alert(bot_token: str, chat_id: str, message: str) -> bool:
         return False
 
 
+def escape_markdown(text: str) -> str:
+    """Escapes Telegram Markdown special characters."""
+    for ch in ("*", "_", "`", "[", "]"):
+        text = text.replace(ch, f"\\{ch}")
+    return text
+
+
 def format_night_recap_message(
     target_date: str,
     today_results: list[dict[str, Any]],
@@ -107,6 +114,12 @@ def format_night_recap_message(
     total_seats = sum(m.get("total_seats", 0) for m in active_movies)
     overall_occ = (total_sold / total_seats * 100) if total_seats > 0 else 0.0
 
+    all_cities: set[str] = set()
+    for m in active_movies:
+        for c in m.get("cities", []):
+            all_cities.add(c)
+    total_cities_count = len(all_cities) or 80
+
     day_name = now_wib.strftime("%A")
 
     lines = [
@@ -115,7 +128,7 @@ def format_night_recap_message(
         f"📅 *Date:* {day_name}, {target_date}",
         f"🎟️ *Total Est. Admissions Today:* {total_sold:,} tickets",
         f"🍿 *Overall National Occupancy:* {overall_occ:.1f}%",
-        "🏛️ *National Circuit Coverage:* 83 Cities",
+        f"🏛️ *National Circuit Coverage:* {total_cities_count} Cities",
         f"🎬 *Total Active Titles Swept:* {len(active_movies)} Films",
         "",
         "🏆 *Top 8 Box Office Leaders (Today):*",
@@ -124,7 +137,7 @@ def format_night_recap_message(
 
     top_8 = active_movies[:8]
     for idx, m in enumerate(top_8, 1):
-        title = m.get("title", "Unknown")
+        title = escape_markdown(str(m.get("title") or "Unknown"))
         sold = m.get("total_sold", 0)
         seats = m.get("total_seats", 0)
         occ = m.get("avg_occupancy_pct", 0.0)
@@ -450,17 +463,19 @@ def run_sweeper(request: Any) -> Any:
         if aggregate_all_time_stats(db, schedule_id, metadata_id):
             all_time_updates += 1
 
-    # 4. Dispatch Automated 23:00+ WIB Box Office Night Recap to Telegram
-    # Dispatches on the final daily sweep runs (23:00 or 23:30 WIB), or when forced via ?recap=true
+    # 4. Dispatch Automated 23:30 WIB Box Office Night Recap to Telegram
+    # Dispatches on the final daily sweep run (23:30 WIB), or when forced via ?recap=true
     is_force_recap = False
     with contextlib.suppress(Exception):
         if request and hasattr(request, "args"):
             is_force_recap = str(request.args.get("recap", "")).lower() in ("true", "1")
 
-    is_night_window = now.hour >= 23
+    # Cloud Scheduler triggers at 23:30 WIB (0,30 10-23 * * *)
+    # The final sweep of the day occurs at 23:30 WIB
+    is_final_daily_sweep = (now.hour == 23 and now.minute >= 25)
 
     telegram_sent = False
-    if (is_night_window or is_force_recap) and today_recap_results:
+    if (is_final_daily_sweep or is_force_recap) and today_recap_results:
         logger.info(f"🌙 Preparing National Box Office Night Recap for Telegram ({len(today_recap_results)} films)...")
         bot_token, chat_id = load_telegram_credentials(db)
         if bot_token and chat_id:
