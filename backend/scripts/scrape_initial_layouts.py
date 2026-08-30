@@ -540,12 +540,12 @@ async def async_main() -> None:
     if not showtimes:
         logger.error("🚨 CRITICAL: No showtimes found in schedules_v2 - exiting with failure")
         try:
-            from google.cloud import firestore
-
             from backend.infrastructure.core.resend_notification_service import (
                 ResendNotificationService,
             )
-            sync_db = firestore.Client()
+            from backend.infrastructure.repositories.firestore_utils import get_firestore_client
+
+            sync_db = get_firestore_client()
             notifier = ResendNotificationService(db=sync_db)
             alert_msg = (
                 f"🚨 *[CineRadar CRITICAL] Morning Baseline Layouts Failed!*\n\n"

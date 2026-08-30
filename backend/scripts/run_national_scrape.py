@@ -58,13 +58,12 @@ async def main() -> None:
 
     # Notification Service
     try:
-        from google.cloud import firestore
-
         from backend.infrastructure.core.resend_notification_service import (
             ResendNotificationService,
         )
+        from backend.infrastructure.repositories.firestore_utils import get_firestore_client
 
-        db = firestore.Client()
+        db = get_firestore_client()
         notifier = ResendNotificationService(db=db)
     except Exception as e:
         logger.warning(f"Could not initialize notification service: {e}")
