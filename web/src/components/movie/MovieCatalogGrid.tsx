@@ -231,7 +231,7 @@ export default function MovieCatalogGrid({ movies, onSelectMovie }: MovieCatalog
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
-            {filteredMovies.map((movie) => (
+            {filteredMovies.map((movie, index) => (
               <div
                 key={movie.id}
                 onClick={() => onSelectMovie(movie)}
@@ -244,6 +244,7 @@ export default function MovieCatalogGrid({ movies, onSelectMovie }: MovieCatalog
                       src={movie.poster}
                       alt={movie.title}
                       fill
+                      priority={index < 4}
                       className="object-cover transition-transform duration-700 group-hover:scale-105"
                       sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
                     />
