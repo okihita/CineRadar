@@ -4,7 +4,7 @@ Orchestrates multi-movie theatrical slate crawling:
 1. Resolves active theatrical Indonesian movie slate and viral campaign tags.
 2. Crawls video metadata and audience comments via Apify actors.
 3. Normalizes payloads into CineRadar's standard social post schema.
-4. Executes Gemini 3.6 Flash structured sentiment and executive briefing analysis.
+4. Executes Gemini 2.5 Flash structured sentiment and executive briefing analysis.
 5. Persists data to Hot Cache (studio/src/data/tiktok_latest.json) and Firestore (tiktok_crawls).
 
 Usage:
@@ -28,6 +28,7 @@ import sys
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 # Ensure repository root is in sys.path
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -168,7 +169,7 @@ def create_sample_mock_data(hashtag: str, movie_title: str = "") -> tuple[list[d
         },
         {
             "id": f"739140592819485730_{clean_tag}",
-            "text": f"Reaksi penonton bioskop pas nonton {title} 🔥 Seru parah jangan sampai kehabisan tiket! #{clean_tag}",
+            "text": f"Reaksi penonton bioskop pas nonton {title}. Seru parah jangan sampai kehabisan tiket! #{clean_tag}",
             "createTime": now_ts - 21600,
             "webVideoUrl": f"https://www.tiktok.com/@nontonkuy/video/739140592819485730_{clean_tag}",
             "authorMeta": {
@@ -357,7 +358,7 @@ Respond in valid JSON format only with these exact keys:
   }
 }"""
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={GEMINI_API_KEY}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
         payload = {
             "contents": [
                 {
@@ -394,9 +395,10 @@ Respond in valid JSON format only with these exact keys:
 
 
 def main() -> None:
+    today_jakarta = datetime.now(ZoneInfo("Asia/Jakarta")).strftime("%Y-%m-%d")
     parser = argparse.ArgumentParser(description="CineRadar Multi-Slate TikTok Crawler")
     parser.add_argument("--slate", action="store_true", help="Crawl the active theatrical slate from Firestore")
-    parser.add_argument("--date", type=str, default="2026-08-26", help="Target schedule date (YYYY-MM-DD)")
+    parser.add_argument("--date", type=str, default=today_jakarta, help=f"Target schedule date (YYYY-MM-DD, default: {today_jakarta})")
     parser.add_argument("--max-titles", type=int, default=12, help="Max active titles to crawl (default: 12)")
     parser.add_argument("--hashtag", type=str, default="", help="Single hashtag override")
     parser.add_argument("--limit", type=int, default=50, help="Number of posts per movie (default: 50)")
