@@ -14,6 +14,10 @@ HTTP & Cloud Scheduler-triggered function that runs every 3 hours (`0 */3 * * *`
    - Updates `tiktok_hashtag_discovery/{target_date}` with the freshly derived slate.
 4. Updates the daily circuit snapshot `tiktok_circuit_timeline/{target_date}` for fast 1-read UI access.
 5. Dispatches an aggregated 3-hourly summary alert to Telegram.
+
+⚠️ DEPLOYMENT PROTOCOL ⚠️
+DO NOT deploy this function with raw `gcloud functions deploy` commands.
+MUST ALWAYS be deployed via: `./backend/functions/deploy.sh tiktok-exhibitors`
 """
 
 from __future__ import annotations
@@ -101,7 +105,7 @@ def normalize_title(title: str) -> str:
 def scrape_exhibitor_posts(apify_token: str, is_backfill: bool = False) -> list[dict[str, Any]]:
     """Scrapes latest posts from Cinema XXI, CGV, and Cinépolis."""
     profiles = [f"https://www.tiktok.com/@{h}" for h in EXHIBITOR_HANDLES]
-    limit = 60 if is_backfill else 10
+    limit = 40 if is_backfill else 5
     logger.info("Scraping %d exhibitor profiles (resultsPerPage=%d)...", len(profiles), limit)
 
     actor_id = "clockworks~tiktok-profile-scraper"

@@ -20,6 +20,10 @@ This function MUST be entirely self-contained. DO NOT:
 - Extract constants/helpers to shared modules (will break deployment)
 - Attempt to "clean up" duplication with infrastructure code
 
+⚠️ DEPLOYMENT PROTOCOL ⚠️
+DO NOT deploy this function with raw `gcloud functions deploy` commands.
+MUST ALWAYS be deployed via: `./backend/functions/deploy.sh sweeper`
+
 Code duplication with backend/infrastructure/ is INTENTIONAL and required for:
 - Deployment isolation (--source=. only uploads this directory)
 - Cold start performance (minimal dependencies)
@@ -33,6 +37,7 @@ See: backend/functions/README.md#critical-self-contained-function-constraint
 See: backend/docs/cloud-functions-architecture.md
 """
 
+import contextlib
 import logging
 import os
 from datetime import datetime
@@ -41,6 +46,7 @@ from zoneinfo import ZoneInfo
 
 import functions_framework
 import google.cloud.firestore as firestore
+import httpx
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -56,13 +62,108 @@ def get_firestore_client() -> firestore.Client:
     return firestore.Client(project=PROJECT_ID)
 
 
+def load_telegram_credentials(db: firestore.Client) -> tuple[str, str]:
+    """Loads Telegram bot token and chat ID from auth_tokens/socials."""
+    try:
+        doc = db.collection("auth_tokens").document("socials").get()
+        if doc.exists:
+            data = doc.to_dict() or {}
+            bot_token = str(data.get("telegram_bot_token") or os.environ.get("TELEGRAM_BOT_TOKEN", "")).strip()
+            chat_id = str(data.get("telegram_chat_id") or os.environ.get("TELEGRAM_CHAT_ID", "")).strip()
+            return bot_token, chat_id
+    except Exception as e:
+        logger.warning(f"Could not load Telegram credentials from Firestore: {e}")
+    return os.environ.get("TELEGRAM_BOT_TOKEN", ""), os.environ.get("TELEGRAM_CHAT_ID", "")
+
+
+def send_telegram_alert(bot_token: str, chat_id: str, message: str) -> bool:
+    """Dispatches message to Telegram via HTTP API."""
+    if not bot_token or not chat_id:
+        logger.warning("Telegram credentials not configured. Skipping night recap.")
+        return False
+    try:
+        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        with httpx.Client(timeout=10.0) as client:
+            resp = client.post(
+                url, json={"chat_id": chat_id, "text": message, "parse_mode": "Markdown"}
+            )
+            return resp.status_code == 200
+    except Exception as e:
+        logger.error(f"Failed to send Telegram night recap: {e}")
+        return False
+
+
+def escape_markdown(text: str) -> str:
+    """Escapes Telegram Markdown special characters."""
+    for ch in ("*", "_", "`", "[", "]"):
+        text = text.replace(ch, f"\\{ch}")
+    return text
+
+
+def format_night_recap_message(
+    target_date: str,
+    today_results: list[dict[str, Any]],
+    now_wib: datetime,
+) -> str:
+    """Builds a rich Top 8 National Box Office Night Briefing message."""
+    # Filter only movies with recorded sales or showtimes
+    active_movies = [m for m in today_results if m.get("total_sold", 0) > 0 or m.get("total_seats", 0) > 0]
+    active_movies.sort(key=lambda x: x.get("total_sold", 0), reverse=True)
+
+    total_sold = sum(m.get("total_sold", 0) for m in active_movies)
+    total_seats = sum(m.get("total_seats", 0) for m in active_movies)
+    overall_occ = (total_sold / total_seats * 100) if total_seats > 0 else 0.0
+
+    all_cities: set[str] = set()
+    for m in active_movies:
+        for c in m.get("cities", []):
+            all_cities.add(c)
+    total_cities_count = len(all_cities) or 80
+
+    day_name = now_wib.strftime("%A")
+
+    lines = [
+        "🌙 *[CineRadar] National Box Office Night Recap*",
+        "━━━━━━━━━━━━━━━━━━━━",
+        f"📅 *Date:* {day_name}, {target_date}",
+        f"🎟️ *Total Est. Admissions Today:* {total_sold:,} tickets",
+        f"🍿 *Overall National Occupancy:* {overall_occ:.1f}%",
+        f"🏛️ *National Circuit Coverage:* {total_cities_count} Cities",
+        f"🎬 *Total Active Titles Swept:* {len(active_movies)} Films",
+        "",
+        "🏆 *Top 8 Box Office Leaders (Today):*",
+        "━━━━━━━━━━━━━━━━━━━━",
+    ]
+
+    top_8 = active_movies[:8]
+    for idx, m in enumerate(top_8, 1):
+        title = escape_markdown(str(m.get("title") or "Unknown"))
+        sold = m.get("total_sold", 0)
+        seats = m.get("total_seats", 0)
+        occ = m.get("avg_occupancy_pct", 0.0)
+        shows = m.get("total_showtimes_scraped", 0)
+        cities_count = len(m.get("cities", []))
+
+        lines.append(f"*{idx}. {title}*")
+        lines.append(f"   • 🎟️ *Admissions:* {sold:,} tickets")
+        lines.append(f"   • 📈 *Occupancy:* {occ}% ({seats:,} seats)")
+        lines.append(f"   • 🎪 *Showtimes:* {shows} shows across {cities_count} cities")
+        lines.append("")
+
+    lines.append("━━━━━━━━━━━━━━━━━━━━")
+    lines.append("🟢 All final showtimes reconciled & archived.")
+    lines.append("📊 [Open Studio Dashboard](https://studio.cineradar.id)")
+
+    return "\n".join(lines)
+
+
 def aggregate_daily_stats(
     db: firestore.Client,
     date_str: str,
     movie_id: str,
     movie_title: str,
     metadata_id: str | None = None,
-) -> bool:
+) -> tuple[bool, dict[str, Any] | None]:
     """Aggregate showtimes for a specific date and update DailyPerformance.
 
     Args:
@@ -72,7 +173,7 @@ def aggregate_daily_stats(
         movie_title: Movie title for logging
         metadata_id: Immutable movie entity ID (V2 schema)
 
-    Returns: True if updated (even if 0)
+    Returns: Tuple of (True if updated, daily stats payload dictionary or None)
     """
     try:
         # V2 Migration: Try movie_performance_v2 first if metadata_id available
@@ -146,7 +247,7 @@ def aggregate_daily_stats(
                 cities.add(s_city)
 
         if total_showtimes_scraped == 0 and total_seats == 0:
-            return False
+            return False, None
 
         # Weighted average: total sold / total seats (same as all-time calc)
         avg_occupancy = (total_sold / total_seats * 100) if total_seats > 0 else 0.0
@@ -176,11 +277,18 @@ def aggregate_daily_stats(
             )
 
         logger.debug(f"Daily Update {movie_id} ({date_str}): {total_sold}/{total_seats} seats")
-        return True
+        result_payload = {
+            "title": movie_title,
+            "movie_id": movie_id,
+            "metadata_id": metadata_id,
+            "date": date_str,
+            **update_data,
+        }
+        return True, result_payload
 
     except Exception as e:
         logger.error(f"Failed to aggregate daily for {movie_title} on {date_str}: {e}")
-        return False
+        return False, None
 
 
 def aggregate_all_time_stats(
@@ -331,6 +439,7 @@ def run_sweeper(request: Any) -> Any:
 
     daily_updates = 0
     all_time_updates = 0
+    today_recap_results: list[dict[str, Any]] = []
 
     # 3. Execution Loop
     for _, info in movie_info.items():
@@ -341,8 +450,11 @@ def run_sweeper(request: Any) -> Any:
         # A. Update Daily Stats (for all target dates)
         updated_any_day = False
         for date_str in dates_to_sweep:
-            if aggregate_daily_stats(db, date_str, schedule_id, title, metadata_id):
+            success, daily_payload = aggregate_daily_stats(db, date_str, schedule_id, title, metadata_id)
+            if success:
                 updated_any_day = True
+                if date_str == today_str and daily_payload:
+                    today_recap_results.append(daily_payload)
 
         if updated_any_day:
             daily_updates += 1
@@ -350,6 +462,29 @@ def run_sweeper(request: Any) -> Any:
         # B. Update All-Time Stats
         if aggregate_all_time_stats(db, schedule_id, metadata_id):
             all_time_updates += 1
+
+    # 4. Dispatch Automated 23:30 WIB Box Office Night Recap to Telegram
+    # Dispatches on the final daily sweep run (23:30 WIB), or when forced via ?recap=true
+    is_force_recap = False
+    with contextlib.suppress(Exception):
+        if request and hasattr(request, "args"):
+            is_force_recap = str(request.args.get("recap", "")).lower() in ("true", "1")
+
+    # Cloud Scheduler triggers at 23:30 WIB (0,30 10-23 * * *)
+    # The final sweep of the day occurs at 23:30 WIB
+    is_final_daily_sweep = (now.hour == 23 and now.minute >= 25)
+
+    telegram_sent = False
+    if (is_final_daily_sweep or is_force_recap) and today_recap_results:
+        logger.info(f"🌙 Preparing National Box Office Night Recap for Telegram ({len(today_recap_results)} films)...")
+        bot_token, chat_id = load_telegram_credentials(db)
+        if bot_token and chat_id:
+            recap_message = format_night_recap_message(today_str, today_recap_results, now)
+            telegram_sent = send_telegram_alert(bot_token, chat_id, recap_message)
+            if telegram_sent:
+                logger.info("✅ National Box Office Night Recap dispatched to Telegram successfully.")
+            else:
+                logger.warning("⚠️ Failed to dispatch Telegram Night Recap.")
 
     # Log summary
     summary = {
@@ -359,6 +494,7 @@ def run_sweeper(request: Any) -> Any:
         "all_time_updates": all_time_updates,
         "timestamp": now.isoformat(),
         "schema": "v2" if use_v2_schema else "v1",
+        "telegram_recap_dispatched": telegram_sent,
     }
 
     logger.info(

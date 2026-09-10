@@ -17,6 +17,10 @@ HTTP-triggered Cloud Function that runs daily at 08:00 WIB:
    - Unmarketed/Pending titles
 
 Triggered by Cloud Scheduler daily at 08:00 WIB (`0 8 * * *` WIB).
+
+⚠️ DEPLOYMENT PROTOCOL ⚠️
+DO NOT deploy this function with raw `gcloud functions deploy` commands.
+MUST ALWAYS be deployed via: `./backend/functions/deploy.sh tiktok-hashtags`
 """
 
 from __future__ import annotations

@@ -20,7 +20,7 @@ from typing import Any
 import httpx
 
 from backend.infrastructure.city_data import CITIES
-from backend.infrastructure.core.config import API_BASE
+from backend.infrastructure.core.config import API_BASE, BROWSER_HEADERS
 from backend.infrastructure.core.guest_token import GuestToken, fetch_guest_token
 from backend.infrastructure.firestore_collections import MOVIES, SCHEDULES, SCHEDULES_V2
 from backend.schemas.tix_api import (
@@ -54,6 +54,8 @@ class CineRadarScraper:
         self._last_request_time: float = 0.0
         self._min_interval = 1.0 / rate_limit if rate_limit > 0 else 0
         self._request_count = 0
+        self.error_counts: dict[int, int] = {}
+        self.recent_errors: list[str] = []
 
     async def _rate_limit(self) -> None:
         """Enforce rate limiting between API calls."""
@@ -85,11 +87,13 @@ class CineRadarScraper:
         await self._ensure_client()
         if not self.guest_token:
             raise RuntimeError("Guest token not available")
-        return {
+        headers = {
             "Authorization": f"Bearer {self.guest_token.token}",
             "Content-Type": "application/json",
             "platform": "web",
         }
+        headers.update(BROWSER_HEADERS)
+        return headers
 
     async def fetch_movies(self, city_id: str) -> list[TixMovieItem]:
         """Fetch movies for a city using direct API call."""
@@ -143,6 +147,11 @@ class CineRadarScraper:
             # Date not found in response = no schedules
             return False
 
+        # Track non-200 status codes
+        self.error_counts[response.status_code] = self.error_counts.get(response.status_code, 0) + 1
+        if len(self.recent_errors) < 5:
+            self.recent_errors.append(f"HTTP {response.status_code} on schedule {schedule_id} in city {city_id}")
+        logger.warning(f"⚠️ Schedule availability check returned HTTP {response.status_code} for {schedule_id}")
         return False
 
     async def fetch_movie_schedules(
@@ -430,6 +439,8 @@ class CineRadarScraper:
             "total_cities": len(cities),
             "stats": total_stats,
             "api_requests": self._request_count,
+            "error_counts": self.error_counts,
+            "recent_errors": self.recent_errors,
         }
 
     def transform_for_firestore(self, scrape_result: dict[str, Any]) -> list[dict[str, Any]]:

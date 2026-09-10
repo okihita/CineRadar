@@ -436,7 +436,9 @@ def main() -> None:
         for movie in target_movies:
             tag = movie["hashtag"]
             raw_posts = run_apify_hashtag_search(client, tag, limit=args.limit)
-            video_urls = [str(url) for p in raw_posts if (url := p.get("webVideoUrl"))][:3]
+            video_urls: list[str] = [
+                str(url) for p in raw_posts if (url := p.get("webVideoUrl"))
+            ][:3]
             raw_comments = run_apify_comments_scraper(client, video_urls, comments_per_post=args.comments_per_post)
 
             for p in raw_posts:
