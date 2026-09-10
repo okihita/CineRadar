@@ -193,7 +193,7 @@ Return a STRICT JSON object with these exact keys:
 Ensure positive + mixed + negative equals 100. Output JSON only without markdown fences."""
 
         response = genai_client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.8-flash",
             contents=prompt,
         )
         if response.text:
