@@ -80,3 +80,10 @@ After any successful `--no-ff` merge into `dev` or `main`:
 
 1. **Sweeper Frequency**: The `jit-sweeper` Cloud Scheduler job MUST remain on a **30-minute interval** (`0,30 10-23 * * *`). Do not reduce this frequency without explicit user approval, as 30m saves ~50% (~105,000 reads/day) in Firestore document read operations.
 2. **Cloud Functions Isolation**: Functions in `backend/functions/` (`dispatcher`, `scraper`, `sweeper`) MUST remain 100% self-contained without imports from `backend.*`.
+
+---
+
+## 7. Localization & Time Formatting Standard
+
+1. **24-Hour Time Format**: Indonesia uses the **24-hour military time system (WIB / WITA / WIT)**. All user-facing UI labels, dashboards, scheduler logs, and alerts MUST use 24-hour time notation (e.g., `11:00 WIB`, `18:00 WIB`, `23:00 WIB`, never 12-hour AM/PM formats like `11:00 AM` or `6:00 PM`).
+
