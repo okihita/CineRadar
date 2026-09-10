@@ -171,9 +171,9 @@ function formatWIB(date: string | null | undefined): string {
     timeZone: 'Asia/Jakarta',
     month: 'short',
     day: 'numeric',
-    hour: 'numeric',
+    hour: '2-digit',
     minute: '2-digit',
-    hour12: true,
+    hour12: false,
   }) + ' WIB';
 }
 
@@ -183,7 +183,7 @@ export default async function Home({ searchParams }: Props) {
   const initialMovieId = params.movie as string;
 
   if (!data) {
-    const brandTitle = `🎬 ${id.common.appName}`;
+    const brandTitle = id.common.appName;
     const commandHelp = 'python tix_api.py --schedules';
 
     return (

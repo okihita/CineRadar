@@ -24,17 +24,6 @@ export function getTimeStyle(time: string): string {
     return TIME_STYLES[period] || TIME_STYLES.afternoon;
 }
 
-const TIME_ICONS = {
-    morning: '🌅',
-    afternoon: '☀️',
-    evening: '🌆',
-    night: '🌙',
-} as const;
-
-export function getTimeIcon(time: string): string {
-    const period = getTimeOfDay(time);
-    return TIME_ICONS[period] || '🎬';
-}
 
 // Helper to extract prices from a list of theaters
 export function extractPricesFromTheaters(theaters: TheaterSchedule[] = []): number[] {

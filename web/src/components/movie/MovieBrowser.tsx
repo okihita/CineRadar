@@ -317,8 +317,8 @@ export default function MovieBrowser({ movies, initialMovieId }: MovieBrowserPro
                         {loadingSchedule ? (
                             <div className="flex-1 flex items-center justify-center">
                                 <div className="text-center p-8">
-                                    <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mx-auto mb-4 text-2xl animate-spin shadow-lg">
-                                        🎬
+                                    <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mx-auto mb-4 shadow-lg">
+                                        <Film className="w-6 h-6 text-purple-400 animate-pulse" />
                                     </div>
                                     <p className="text-sm font-bold text-white">{t('common.loadingShowtimes')}</p>
                                     <p className="text-sm text-gray-500 mt-1">{t('common.loadingTelemetry')}</p>

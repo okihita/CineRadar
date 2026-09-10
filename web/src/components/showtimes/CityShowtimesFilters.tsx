@@ -1,6 +1,6 @@
 'use client';
 
-import { MapPin, SlidersHorizontal } from 'lucide-react';
+import { MapPin, SlidersHorizontal, Sunrise, Sun, Sunset, Moon, ChevronDown } from 'lucide-react';
 import { CHAIN_COLORS, ChainName } from '@/lib/constants';
 
 interface CityShowtimesFiltersProps {
@@ -51,9 +51,7 @@ export default function CityShowtimesFilters({
                                     </option>
                                 ))}
                             </select>
-                            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-sm">
-                                ▼
-                            </span>
+                            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 w-3.5 h-3.5" />
                         </div>
                     </div>
 
@@ -109,16 +107,20 @@ export default function CityShowtimesFilters({
                         {t('showtimes.filters.slotsLabel')}
                     </span>
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300 font-medium flex-shrink-0">
-                        🌅 {t('showtimes.filters.slots.morning')}
+                        <Sunrise className="w-3 h-3 text-amber-400" />
+                        {t('showtimes.filters.slots.morning')}
                     </span>
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-sky-500/10 border border-sky-500/20 text-sky-300 font-medium flex-shrink-0">
-                        ☀️ {t('showtimes.filters.slots.afternoon')}
+                        <Sun className="w-3 h-3 text-sky-400" />
+                        {t('showtimes.filters.slots.afternoon')}
                     </span>
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/20 text-purple-300 font-medium flex-shrink-0">
-                        🌆 {t('showtimes.filters.slots.evening')}
+                        <Sunset className="w-3 h-3 text-purple-400" />
+                        {t('showtimes.filters.slots.evening')}
                     </span>
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 font-medium flex-shrink-0">
-                        🌙 {t('showtimes.filters.slots.night')}
+                        <Moon className="w-3 h-3 text-indigo-400" />
+                        {t('showtimes.filters.slots.night')}
                     </span>
                 </div>
             </div>

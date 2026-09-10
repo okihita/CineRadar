@@ -47,6 +47,7 @@ export const en: TranslationSchema = {
     emptySubtitle: "We couldn't find any titles matching your filter. Try adjusting your search query.",
     resetButton: 'Reset All Filters',
     citiesCount: '{count} Cities',
+    singleCity: '1 City',
     cinemaRelease: 'Cinema Release',
   },
   genres: {

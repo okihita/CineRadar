@@ -28,7 +28,6 @@ export type CanonicalGenreKey =
 export interface GenreDefinition {
   key: CanonicalGenreKey;
   canonicalName: string;
-  emoji: string;
   patterns: string[];
 }
 
@@ -36,157 +35,132 @@ export const GENRE_DEFINITIONS: Record<CanonicalGenreKey, GenreDefinition> = {
   drama: {
     key: 'drama',
     canonicalName: 'Drama',
-    emoji: '🎭',
     patterns: ['drama', 'dr'],
   },
   horror: {
     key: 'horror',
     canonicalName: 'Horror',
-    emoji: '👻',
     patterns: ['horror', 'horor', 'ghost', 'hantu'],
   },
   comedy: {
     key: 'comedy',
     canonicalName: 'Comedy',
-    emoji: '😂',
     patterns: ['comedy', 'komedi', 'lucu', 'humor'],
   },
   action: {
     key: 'action',
     canonicalName: 'Action',
-    emoji: '💥',
     patterns: ['action', 'aksi'],
   },
   thriller: {
     key: 'thriller',
     canonicalName: 'Thriller',
-    emoji: '🔪',
-    patterns: ['thriller', 'suspense', 'psychological thriller', 'psychological-thriller', 'psikologis', 'survival'],
+    patterns: ['thriller', 'triler'],
   },
   animation: {
     key: 'animation',
     canonicalName: 'Animation',
-    emoji: '🎨',
-    patterns: ['animation', 'animasi', 'anime', 'kartun', 'animated'],
+    patterns: ['animation', 'animasi', 'anime', 'kartun'],
   },
   romance: {
     key: 'romance',
     canonicalName: 'Romance',
-    emoji: '💖',
-    patterns: ['romance', 'romantis', 'cinta', 'romantic', 'rom-com'],
+    patterns: ['romance', 'romantis', 'cinta', 'love'],
   },
   adventure: {
     key: 'adventure',
     canonicalName: 'Adventure',
-    emoji: '🧗',
     patterns: ['adventure', 'petualangan'],
   },
   sci_fi: {
     key: 'sci_fi',
     canonicalName: 'Sci-Fi',
-    emoji: '🚀',
-    patterns: ['sci-fi', 'scifi', 'sci fi', 'science fiction', 'fiksi ilmiah'],
+    patterns: ['sci-fi', 'sci fi', 'science fiction', 'fiksi ilmiah'],
   },
   fantasy: {
     key: 'fantasy',
     canonicalName: 'Fantasy',
-    emoji: '🧙',
     patterns: ['fantasy', 'fantasi'],
   },
   family: {
     key: 'family',
     canonicalName: 'Family',
-    emoji: '👨‍👩‍👧',
-    patterns: ['family', 'keluarga', 'anak'],
+    patterns: ['family', 'keluarga', 'anak', 'kids'],
   },
   music: {
     key: 'music',
     canonicalName: 'Music',
-    emoji: '🎵',
-    patterns: ['music', 'musik', 'concert', 'konser', 'musical'],
+    patterns: ['music', 'musik', 'musical', 'musikal', 'konser'],
   },
   crime: {
     key: 'crime',
     canonicalName: 'Crime',
-    emoji: '🕵️',
-    patterns: ['crime', 'kriminal', 'detektif'],
+    patterns: ['crime', 'kriminal'],
   },
   history: {
     key: 'history',
     canonicalName: 'History',
-    emoji: '📜',
-    patterns: ['history', 'sejarah', 'historical', 'period'],
+    patterns: ['history', 'sejarah', 'historical'],
   },
   mystery: {
     key: 'mystery',
     canonicalName: 'Mystery',
-    emoji: '🔍',
     patterns: ['mystery', 'misteri'],
   },
   biography: {
     key: 'biography',
     canonicalName: 'Biography',
-    emoji: '👤',
     patterns: ['biography', 'biografi', 'biopic'],
   },
   documentary: {
     key: 'documentary',
     canonicalName: 'Documentary',
-    emoji: '📹',
     patterns: ['documentary', 'dokumenter'],
   },
   sport: {
     key: 'sport',
     canonicalName: 'Sport',
-    emoji: '⚽',
-    patterns: ['sport', 'olahraga', 'football', 'soccer'],
+    patterns: ['sport', 'olahraga'],
   },
   disaster: {
     key: 'disaster',
     canonicalName: 'Disaster',
-    emoji: '🌪️',
     patterns: ['disaster', 'bencana'],
   },
   war: {
     key: 'war',
     canonicalName: 'War',
-    emoji: '🪖',
-    patterns: ['war', 'perang', 'military'],
+    patterns: ['war', 'perang'],
   },
   superhero: {
     key: 'superhero',
     canonicalName: 'Superhero',
-    emoji: '🦸',
-    patterns: ['superhero', 'super hero', 'pahlawan super'],
+    patterns: ['superhero', 'super hero', 'marvel', 'dc'],
   },
   religi: {
     key: 'religi',
-    canonicalName: 'Religious',
-    emoji: '🕌',
-    patterns: ['religi', 'religious', 'islamic', 'spiritual', 'agama'],
+    canonicalName: 'Religi',
+    patterns: ['religi', 'religion', 'islam', 'dakwah', 'spiritual'],
   },
   live_event: {
     key: 'live_event',
     canonicalName: 'Live Event',
-    emoji: '🎟️',
-    patterns: ['live', 'live event', 'nobar', 'screening', 'live viewing'],
+    patterns: ['live event', 'live broadcast', 'tayang tunda'],
   },
   gothic: {
     key: 'gothic',
     canonicalName: 'Gothic',
-    emoji: '🏰',
     patterns: ['gothic', 'gotik'],
   },
   other: {
     key: 'other',
     canonicalName: 'Other',
-    emoji: '🎬',
-    patterns: ['other', 'others', 'lainnya'],
+    patterns: [],
   },
 };
 
 /**
- * Normalizes any raw genre string from Firestore / Scrapers into a CanonicalGenreKey.
+ * Normalizes any freeform genre string from scraping into a canonical genre key.
  */
 export function normalizeGenre(rawGenre: string): CanonicalGenreKey {
   if (!rawGenre || typeof rawGenre !== 'string') return 'other';
@@ -202,14 +176,6 @@ export function normalizeGenre(rawGenre: string): CanonicalGenreKey {
 }
 
 /**
- * Returns the matching emoji for any raw or canonical genre string.
- */
-export function getGenreEmoji(rawOrKey: string): string {
-  const key = normalizeGenre(rawOrKey);
-  return GENRE_DEFINITIONS[key]?.emoji || '🎬';
-}
-
-/**
  * Checks whether a list of raw movie genres matches a selected filter key.
  */
 export function matchesGenreFilter(
@@ -219,25 +185,25 @@ export function matchesGenreFilter(
   if (!selectedFilterKey || selectedFilterKey === 'all') return true;
   if (!rawGenres || rawGenres.length === 0) return false;
 
+  const normalizedFilterKey = selectedFilterKey.toLowerCase();
+
   return rawGenres.some(raw => {
-    // Check if raw token matches directly or normalizes to selected filter key
     const tokens = raw.split(',').map(s => s.trim());
     return tokens.some(token => {
       const canonical = normalizeGenre(token);
-      return canonical === selectedFilterKey || token.toLowerCase() === selectedFilterKey.toLowerCase();
+      return canonical === selectedFilterKey || token.toLowerCase() === normalizedFilterKey;
     });
   });
 }
 
 /**
- * Extracts and aggregates all canonical genres from a movie array with counts and emojis.
+ * Extracts and aggregates all canonical genres from a movie array with counts.
  */
 export function extractCanonicalGenresFromMovies(
   movies: { genres?: string[] }[]
 ): {
   key: CanonicalGenreKey;
   canonicalName: string;
-  emoji: string;
   count: number;
 }[] {
   const counts = new Map<CanonicalGenreKey, number>();
@@ -266,7 +232,6 @@ export function extractCanonicalGenresFromMovies(
       return {
         key,
         canonicalName: def.canonicalName,
-        emoji: def.emoji,
         count,
       };
     });

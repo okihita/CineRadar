@@ -1,3 +1,4 @@
+import { MapPin } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 
 interface TheatreRoom {
@@ -41,7 +42,7 @@ export default function ShowtimeView({ movieTitle, city, schedules, onClose }: S
                     <div>
                         <h2 className="text-2xl font-bold text-white mb-1">{movieTitle}</h2>
                         <p className="text-purple-400 text-sm font-medium flex items-center gap-1.5">
-                            <span>📍</span>
+                            <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
                             <span>{t('showtimes.hero.nowShowing')}</span>
                             <span>•</span>
                             <span>{city}</span>
