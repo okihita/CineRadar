@@ -133,7 +133,7 @@ export default function MovieCatalogGrid({ movies, onSelectMovie }: MovieCatalog
                   : 'bg-white/[0.03] text-gray-400 border border-white/10 hover:text-white hover:bg-white/[0.07]'
               }`}
             >
-              <span>🍿 {t('catalog.tabs.all')}</span>
+              <span>{t('catalog.tabs.all')}</span>
               <span className="text-sm px-1.5 py-0.2 rounded-full bg-white/10 font-mono">{counts.all}</span>
             </button>
 
@@ -182,11 +182,11 @@ export default function MovieCatalogGrid({ movies, onSelectMovie }: MovieCatalog
                     : 'bg-white/[0.04] text-gray-400 border border-white/10 hover:text-white hover:bg-white/[0.08]'
                 }`}
               >
-                <span>✨ {t('catalog.allGenres')}</span>
+                <span>{t('catalog.allGenres')}</span>
               </button>
 
-              {/* Individual Genre Pills with Emojis & Counts */}
-              {genresWithCounts.map(({ key, canonicalName, count, emoji }) => {
+              {/* Individual Genre Pills with Counts */}
+              {genresWithCounts.map(({ key, canonicalName, count }) => {
                 const isSelected = selectedGenre.toLowerCase() === key.toLowerCase();
                 const localizedGenre = t(`genres.${key}` as TranslationKey) || canonicalName;
 
@@ -200,7 +200,6 @@ export default function MovieCatalogGrid({ movies, onSelectMovie }: MovieCatalog
                         : 'bg-white/[0.04] text-gray-400 border border-white/10 hover:text-white hover:bg-white/[0.08]'
                     }`}
                   >
-                    <span>{emoji}</span>
                     <span>{localizedGenre}</span>
                     <span className={`text-sm px-1 py-0.2 rounded-full font-mono ${
                       isSelected ? 'bg-white/20 text-white' : 'bg-white/5 text-gray-500'
@@ -231,7 +230,7 @@ export default function MovieCatalogGrid({ movies, onSelectMovie }: MovieCatalog
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
-            {filteredMovies.map((movie) => (
+            {filteredMovies.map((movie, index) => (
               <div
                 key={movie.id}
                 onClick={() => onSelectMovie(movie)}
@@ -244,6 +243,7 @@ export default function MovieCatalogGrid({ movies, onSelectMovie }: MovieCatalog
                       src={movie.poster}
                       alt={movie.title}
                       fill
+                      priority={index < 4}
                       className="object-cover transition-transform duration-700 group-hover:scale-105"
                       sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
                     />

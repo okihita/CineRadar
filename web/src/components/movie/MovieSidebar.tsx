@@ -129,8 +129,8 @@ export default function MovieSidebar({
                       sizes="44px"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-sm bg-white/5">
-                      🎬
+                    <div className="w-full h-full flex items-center justify-center bg-white/5">
+                      <Film className="w-4 h-4 text-gray-500" />
                     </div>
                   )}
                   {movie.is_presale && (

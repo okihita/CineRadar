@@ -7,7 +7,7 @@ import {
     Database, Calendar, Clapperboard, Sun, Moon, Monitor,
     LogOut, Users as UsersIcon, Share2, ArrowRightLeft,
     TrendingUp, Rss, Settings, Shield, BookOpen, Radio, Swords, Library, BarChart3, Target, Star,
-    Play, Wand2, Sparkles, Video,
+    Play, Wand2, Sparkles, Video, Building2,
     type LucideIcon,
 } from 'lucide-react';
 import { useState, useCallback } from 'react';
@@ -59,17 +59,10 @@ const menuGroups: MenuGroup[] = [
                 adminOnly: false,
             },
             {
-                title: 'Hashtag Extractor',
-                description: 'Auto-detect campaign tags',
-                href: '/tiktok/extractor',
-                icon: Wand2,
-                adminOnly: false,
-            },
-            {
-                title: 'Pipeline Workflow',
-                description: 'Daily processing & AI graph',
-                href: '/tiktok/workflow',
-                icon: Sparkles,
+                title: 'Exhibitor Archive',
+                description: 'XXI, CGV, Cinépolis timeline',
+                href: '/tiktok/exhibitors',
+                icon: Building2,
                 adminOnly: false,
             },
         ],

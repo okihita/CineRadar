@@ -602,9 +602,21 @@ export default function TikTokExplorerPage() {
                                     </p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 shrink-0 text-sm font-mono text-muted-foreground">
-                                <Clock className="w-3.5 h-3.5 text-primary" />
-                                <span>Next Crawl: 11:00 WIB</span>
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 shrink-0">
+                                <div className="flex items-center gap-2 text-sm font-mono text-muted-foreground">
+                                    <Clock className="w-3.5 h-3.5 text-primary" />
+                                    <span>Next Crawl: 18:00 WIB</span>
+                                </div>
+                                <Link href="/tiktok/workflow">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-7 px-2.5 text-xs font-semibold rounded-lg gap-1.5 border-border/60 hover:border-primary/50"
+                                    >
+                                        <Sparkles className="w-3 h-3 text-primary" />
+                                        See Workflow
+                                    </Button>
+                                </Link>
                             </div>
                         </div>
                     ) : (
@@ -856,10 +868,7 @@ export default function TikTokExplorerPage() {
                                     <thead className="bg-muted/40 text-muted-foreground text-sm font-bold uppercase tracking-wider border-b border-border/40">
                                         <tr>
                                             <th className="p-3 pl-4"># Movie Title</th>
-                                            <th className="p-3">Rating</th>
                                             <th className="p-3 text-right">24h Views</th>
-                                            <th className="p-3 text-right">Shares</th>
-                                            <th className="p-3">Sentiment Breakdown</th>
                                             <th className="p-3 pr-4">Top Audience Takeaway</th>
                                         </tr>
                                     </thead>
@@ -876,20 +885,8 @@ export default function TikTokExplorerPage() {
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="p-3">
-                                                        <div className="w-10 h-5 bg-muted/70 rounded" />
-                                                    </td>
                                                     <td className="p-3 text-right">
                                                         <div className="w-16 h-4 bg-muted/70 rounded ml-auto" />
-                                                    </td>
-                                                    <td className="p-3 text-right">
-                                                        <div className="w-12 h-4 bg-muted/60 rounded ml-auto" />
-                                                    </td>
-                                                    <td className="p-3 min-w-[200px]">
-                                                        <div className="space-y-1.5">
-                                                            <div className="w-36 h-3 bg-muted/70 rounded" />
-                                                            <div className="w-full h-1.5 bg-muted/50 rounded-full" />
-                                                        </div>
                                                     </td>
                                                     <td className="p-3 pr-4">
                                                         <div className="w-48 h-4 bg-muted/60 rounded" />
@@ -898,7 +895,7 @@ export default function TikTokExplorerPage() {
                                             ))
                                         ) : todayMovieSentimentList.length === 0 ? (
                                             <tr>
-                                                <td colSpan={6} className="p-8 text-center text-sm text-muted-foreground">
+                                                <td colSpan={3} className="p-8 text-center text-sm text-muted-foreground">
                                                     No active theatrical movies found for {selectedDate}.
                                                 </td>
                                             </tr>
@@ -951,36 +948,8 @@ export default function TikTokExplorerPage() {
                                                                 </div>
                                                             </div>
                                                         </td>
-                                                        <td className="p-3">
-                                                            <Badge variant="outline" className="text-sm font-medium">
-                                                                {movie.age_category}
-                                                            </Badge>
-                                                        </td>
                                                         <td className="p-3 text-right font-mono font-semibold text-foreground">
                                                             {movie.hasSocialCrawl && movie.views > 0 ? movie.views.toLocaleString() : '—'}
-                                                        </td>
-                                                        <td className="p-3 text-right font-mono text-muted-foreground">
-                                                            {movie.hasSocialCrawl && movie.shares > 0 ? movie.shares.toLocaleString() : '—'}
-                                                        </td>
-                                                        <td className="p-3 min-w-[200px]">
-                                                            {movie.hasSocialCrawl && (movie.positivePct > 0 || movie.mixedPct > 0 || movie.negativePct > 0) ? (
-                                                                <div className="space-y-1">
-                                                                    <div className="flex items-center justify-between text-sm font-mono">
-                                                                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{movie.positivePct}% Pos</span>
-                                                                        <span className="text-muted-foreground">{movie.mixedPct}% Mix</span>
-                                                                        <span className="text-rose-500">{movie.negativePct}% Crit</span>
-                                                                    </div>
-                                                                    <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden flex">
-                                                                        <div style={{ width: `${movie.positivePct}%` }} className="bg-emerald-500 h-full" />
-                                                                        <div style={{ width: `${movie.mixedPct}%` }} className="bg-amber-500 h-full" />
-                                                                        <div style={{ width: `${movie.negativePct}%` }} className="bg-rose-500 h-full" />
-                                                                    </div>
-                                                                </div>
-                                                            ) : (
-                                                                <span className="text-sm text-muted-foreground font-mono">
-                                                                    —
-                                                                </span>
-                                                            )}
                                                         </td>
                                                         <td className="p-3 pr-4 text-muted-foreground max-w-[260px]">
                                                             {movie.hasSocialCrawl ? (

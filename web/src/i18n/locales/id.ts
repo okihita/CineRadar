@@ -45,6 +45,7 @@ export const id = {
     emptySubtitle: 'Kami tidak dapat menemukan film yang cocok dengan filter Anda. Coba ubah kata kunci pencarian.',
     resetButton: 'Reset Semua Filter',
     citiesCount: '{count} Kota',
+    singleCity: '1 Kota',
     cinemaRelease: 'Tayang Bioskop',
   },
   genres: {

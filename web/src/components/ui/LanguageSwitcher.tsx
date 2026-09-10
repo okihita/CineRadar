@@ -25,7 +25,6 @@ export default function LanguageSwitcher() {
             title={info.label}
             aria-label={`Switch language to ${info.label}`}
           >
-            <span>{info.flag}</span>
             <span>{info.short}</span>
           </button>
         );
