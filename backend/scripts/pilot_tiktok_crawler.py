@@ -376,7 +376,9 @@ Respond in valid JSON format only with these exact keys:
             if resp.status_code == 200:
                 result = resp.json()
                 raw_json = result["candidates"][0]["content"]["parts"][0]["text"]
-                return json.loads(raw_json)
+                parsed = json.loads(raw_json)
+                if isinstance(parsed, dict):
+                    return parsed
             print(f"[!] Gemini HTTP {resp.status_code}: {resp.text[:200]}")
     except Exception as e:
         print(f"[!] Gemini analysis exception: {e}")
@@ -434,7 +436,7 @@ def main() -> None:
         for movie in target_movies:
             tag = movie["hashtag"]
             raw_posts = run_apify_hashtag_search(client, tag, limit=args.limit)
-            video_urls = [p.get("webVideoUrl") for p in raw_posts if p.get("webVideoUrl")][:3]
+            video_urls = [str(url) for p in raw_posts if (url := p.get("webVideoUrl"))][:3]
             raw_comments = run_apify_comments_scraper(client, video_urls, comments_per_post=args.comments_per_post)
 
             for p in raw_posts:

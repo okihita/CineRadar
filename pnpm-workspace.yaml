@@ -4,49 +4,52 @@ packages:
 
 catalog:
   # Framework & Core
-  next: 16.3.3
-  react: 19.2.8
-  react-dom: 19.2.8
+  next: 16.3.4
+  react: 19.3.0
+  react-dom: 19.3.0
 
   # Shared UI & Styling
   clsx: ^2.1.1
-  lucide-react: ^1.33.0
+  lucide-react: ^1.43.0
   tailwind-merge: ^3.6.0
   tailwindcss: ^4.3.3
   '@tailwindcss/postcss': ^4.3.3
-  '@xyflow/react': ^12.11.5
+  '@xyflow/react': ^12.11.6
 
   # Tooling & Types
   typescript: ^6.0.3
-  eslint: ^10.8.1
-  eslint-config-next: 16.3.3
-  '@playwright/test': ^1.62.1
-  '@types/node': ^26.2.0
+  eslint: ^10.10.0
+  eslint-config-next: 16.3.4
+  '@playwright/test': ^1.63.0
+  '@types/node': ^26.5.0
   '@types/react': ^19.2.18
-  '@types/react-dom': ^19.2.4
+  '@types/react-dom': ^19.2.7
 
 overrides:
   fast-xml-parser: '>=5.3.6'
   brace-expansion: '>=5.0.6'
   postcss: '>=8.5.23'
   '@babel/core': '>=7.29.6'
+  browserslist: '>=4.28.7'
+  sharp: '>=0.35.4'
+  baseline-browser-mapping: '>=2.11.0'
 
 allowBuilds:
   unrs-resolver: true
   sharp: false
 
 minimumReleaseAgeExclude:
-  - '@next/env@16.3.3'
-  - '@next/eslint-plugin-next@16.3.3'
-  - '@next/swc-darwin-arm64@16.3.3'
-  - '@next/swc-darwin-x64@16.3.3'
-  - '@next/swc-linux-arm64-gnu@16.3.3'
-  - '@next/swc-linux-arm64-musl@16.3.3'
-  - '@next/swc-linux-x64-gnu@16.3.3'
-  - '@next/swc-linux-x64-musl@16.3.3'
-  - '@next/swc-win32-arm64-msvc@16.3.3'
-  - '@next/swc-win32-x64-msvc@16.3.3'
-  - eslint-config-next@16.3.3
-  - next@16.3.3
-  - '@xyflow/react@12.11.5'
-  - '@xyflow/system@0.0.81'
+  - '@next/env@16.3.4'
+  - '@next/eslint-plugin-next@16.3.4'
+  - '@next/swc-darwin-arm64@16.3.4'
+  - '@next/swc-darwin-x64@16.3.4'
+  - '@next/swc-linux-arm64-gnu@16.3.4'
+  - '@next/swc-linux-arm64-musl@16.3.4'
+  - '@next/swc-linux-x64-gnu@16.3.4'
+  - '@next/swc-linux-x64-musl@16.3.4'
+  - '@next/swc-win32-arm64-msvc@16.3.4'
+  - '@next/swc-win32-x64-msvc@16.3.4'
+  - eslint-config-next@16.3.4
+  - next@16.3.4
+  - '@xyflow/react@12.11.6'
+  - '@xyflow/system@0.0.82'
