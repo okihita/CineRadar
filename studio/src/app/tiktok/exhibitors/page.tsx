@@ -128,13 +128,13 @@ export default function TikTokExhibitorArchivePage() {
                     className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors mb-3"
                 >
                     <ArrowLeft className="w-4 h-4" />
-                    Back to TikTok Radar Explorer
+                    Back to Theatrical Radar
                 </Link>
 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <PageHeader
-                        title="Exhibitor Circuit 14-Day Timeline Archive"
-                        description="Continuous 3-hourly crawling of promotional trailers & engagement metrics across Cinema XXI, CGV, and Cinépolis."
+                        title="Circuit Channels Archive"
+                        description="Continuous 3-hourly crawling of promotional trailers &amp; engagement metrics across Cinema XXI, CGV, and Cinepolis."
                     />
 
                     <div className="flex items-center gap-2">

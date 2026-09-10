@@ -180,7 +180,7 @@ Brevity is critical. Every sentence must carry new information. No filler.`;
 
             console.error(`[Gemini Error] Attempt ${attempt + 1} failed:`, error instanceof Error ? error.message : error);
             return {
-                summary: `⚠️ Summary temporarily unavailable.`,
+                summary: `[Unavailable] Summary temporarily unavailable.`,
                 model: modelName,
                 retried,
                 hashtags,
@@ -190,5 +190,5 @@ Brevity is critical. Every sentence must carry new information. No filler.`;
     }
 
     // Should never reach here — every loop iteration returns
-    return { summary: '⚠️ Summary temporarily unavailable.', model: modelName, retried: true, hashtags };
+    return { summary: '[Unavailable] Summary temporarily unavailable.', model: modelName, retried: true, hashtags };
 }

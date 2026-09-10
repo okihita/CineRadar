@@ -7,7 +7,7 @@ import {
     Database, Calendar, Clapperboard, Sun, Moon, Monitor,
     LogOut, Users as UsersIcon, Share2, ArrowRightLeft,
     TrendingUp, Rss, Settings, Shield, BookOpen, Radio, Swords, Library, Target,
-    Play, Video, Building2,
+    Play, Video, Building2, Layers,
     type LucideIcon,
 } from 'lucide-react';
 import { useState, useCallback } from 'react';
@@ -47,50 +47,36 @@ const standaloneItems: MenuItem[] = [
 
 const menuGroups: MenuGroup[] = [
     {
-        id: 'tiktok',
-        label: 'TikTok Crawling',
-        icon: Video,
-        items: [
-            {
-                title: 'TikTok Radar',
-                description: 'Daily buzz & sentiment',
-                href: '/tiktok/explorer',
-                icon: Play,
-                adminOnly: false,
-            },
-            {
-                title: 'Exhibitor Archive',
-                description: 'XXI, CGV, Cinépolis timeline',
-                href: '/tiktok/exhibitors',
-                icon: Building2,
-                adminOnly: false,
-            },
-        ],
-    },
-    {
         id: 'social',
         label: 'Social Intelligence',
         icon: Radio,
         items: [
             {
-                title: 'Social Pulse',
-                description: 'Sentiment & buzz tracking',
-                href: '/social-pulse',
-                icon: Share2,
+                title: 'Theatrical Radar',
+                description: 'Daily buzz, sentiment & forensics',
+                href: '/tiktok/explorer',
+                icon: Play,
                 adminOnly: false,
             },
             {
-                title: 'Industry Feed',
-                description: 'Curated social timeline',
+                title: 'Circuit Channels',
+                description: 'XXI, CGV, Cinépolis activity',
+                href: '/tiktok/exhibitors',
+                icon: Building2,
+                adminOnly: false,
+            },
+            {
+                title: 'Distributor Feed',
+                description: 'Official announcements & timeline',
                 href: '/social-feed',
                 icon: Rss,
                 adminOnly: false,
             },
             {
-                title: 'Source Settings',
-                description: 'Manage social sources',
-                href: '/social-feed/settings',
-                icon: Settings,
+                title: 'Ops & Pipeline Hub',
+                description: 'Sources, topology & telemetry',
+                href: '/tiktok/ops',
+                icon: Layers,
                 adminOnly: false,
             },
         ],

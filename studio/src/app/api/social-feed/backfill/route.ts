@@ -356,7 +356,7 @@ export async function POST(request: Request) {
                     });
                     const successfulHours = new Set(
                         existingAnalyses
-                            .filter(a => a.summary && !a.summary.startsWith('⚠️') && a.total_posts > 0)
+                            .filter(a => a.summary && !a.summary.includes('temporarily unavailable') && !a.summary.startsWith('[Unavailable]') && !a.summary.startsWith('\u26a0') && a.total_posts > 0)
                             .map(a => a.hour),
                     );
 

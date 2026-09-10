@@ -10,7 +10,7 @@ import {
     Film, ThumbsUp, Activity, Copy, Check, FileCode,
     CalendarX2, ArrowRight, LayoutGrid, List,
     Trophy, Zap, AlertTriangle, Sun, Moon, Clock, User, Sparkles,
-    Settings, ShieldCheck, Building2, Filter, Database
+    Settings, ShieldCheck, Building2, Filter, Database, Layers
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -607,14 +607,14 @@ export default function TikTokExplorerPage() {
                                     <Clock className="w-3.5 h-3.5 text-primary" />
                                     <span>Next Crawl: 18:00 WIB</span>
                                 </div>
-                                <Link href="/tiktok/workflow">
+                                <Link href="/tiktok/ops?tab=workflow">
                                     <Button
                                         variant="outline"
                                         size="sm"
                                         className="h-7 px-2.5 text-xs font-semibold rounded-lg gap-1.5 border-border/60 hover:border-primary/50"
                                     >
-                                        <Sparkles className="w-3 h-3 text-primary" />
-                                        See Workflow
+                                        <Layers className="w-3 h-3 text-primary" />
+                                        View Pipeline
                                     </Button>
                                 </Link>
                             </div>
@@ -996,26 +996,6 @@ export default function TikTokExplorerPage() {
                                 </div>
 
                                 <div className="flex items-center gap-2">
-                                    <Link href="/tiktok/explorer/settings">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="gap-1 text-sm font-medium h-7 px-2 rounded-lg border-border/60 text-muted-foreground hover:text-foreground"
-                                        >
-                                            <Filter className="w-3 h-3 text-rose-500" />
-                                            {sourcesData?.excluded_hashtags?.length || 26} Noise Tags Filtered
-                                        </Button>
-                                    </Link>
-                                    <Link href="/tiktok/raw">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="gap-1.5 text-sm font-semibold h-7 px-2.5 rounded-lg border-border/60"
-                                        >
-                                            <Database className="w-3.5 h-3.5 text-primary" />
-                                            Raw Data
-                                        </Button>
-                                    </Link>
                                     <Link href="/tiktok/exhibitors">
                                         <Button
                                             variant="outline"
@@ -1023,17 +1003,17 @@ export default function TikTokExplorerPage() {
                                             className="gap-1.5 text-sm font-semibold h-7 px-2.5 rounded-lg border-border/60"
                                         >
                                             <Building2 className="w-3.5 h-3.5 text-amber-500" />
-                                            Exhibitor Archive
+                                            Circuit Channels
                                         </Button>
                                     </Link>
-                                    <Link href="/tiktok/explorer/settings">
+                                    <Link href="/tiktok/ops">
                                         <Button
                                             variant="outline"
                                             size="sm"
                                             className="gap-1.5 text-sm font-semibold h-7 px-2.5 rounded-lg border-border/60"
                                         >
-                                            <Settings className="w-3.5 h-3.5 text-muted-foreground" />
-                                            Manage Seeds ({sourcesData?.sources?.length || 13})
+                                            <Layers className="w-3.5 h-3.5 text-primary" />
+                                            Ops &amp; Pipeline Hub
                                         </Button>
                                     </Link>
                                 </div>

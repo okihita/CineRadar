@@ -9,6 +9,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import useSWR from 'swr';
 import { useRouter, useParams } from 'next/navigation';
 import {
@@ -28,6 +29,7 @@ import {
     Hash,
     RefreshCw,
     Clock,
+    Settings,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -616,7 +618,7 @@ export default function SocialFeedPage() {
         for (const [hour, posts] of hourGroups.entries()) {
             if (posts.length === 0) continue;
             const analysis = analysisMap.get(hour);
-            if (!analysis || analysis.summary?.startsWith('⚠️')) {
+            if (!analysis || analysis.summary?.includes('temporarily unavailable') || analysis.summary?.startsWith('[Unavailable]') || analysis.summary?.startsWith('\u26a0')) {
                 failed.push(hour);
             }
         }
@@ -725,6 +727,17 @@ export default function SocialFeedPage() {
                             )}
                         </Button>
                     )}
+
+                    <Link href="/social-feed/settings">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 px-3 gap-1.5 text-xs font-semibold rounded-xl border-border/60"
+                        >
+                            <Settings className="w-3.5 h-3.5 text-muted-foreground" />
+                            Source Settings
+                        </Button>
+                    </Link>
                 </div>
             </div>
 
@@ -852,7 +865,7 @@ export default function SocialFeedPage() {
                         <div className="p-3 bg-amber-500/5 border border-amber-500/20 rounded-xl space-y-1.5">
                             <div className="flex items-center justify-between">
                                 <p className="text-sm font-bold text-amber-600">
-                                    ⚡ Gemini rate limit — retrying {progress.retryInfo.hour}
+                                    Gemini rate limit — retrying {progress.retryInfo.hour}
                                 </p>
                                 <span className="text-lg font-mono font-black text-amber-500 tabular-nums">
                                     {retryCountdown !== null ? `${retryCountdown}s` : '...'}
@@ -903,8 +916,8 @@ export default function SocialFeedPage() {
                     {/* Done summary */}
                     {progress.done && (
                         <div className="flex items-center gap-4 text-sm">
-                            <span className="text-green-600 font-bold">✓ {progress.videos_written} posts fetched</span>
-                            <span className="text-green-600 font-bold">✓ {progress.analyses_written} hourly analyses</span>
+                            <span className="text-green-600 font-bold">{progress.videos_written} posts fetched</span>
+                            <span className="text-green-600 font-bold">{progress.analyses_written} hourly analyses</span>
                         </div>
                     )}
 
@@ -1103,7 +1116,7 @@ export default function SocialFeedPage() {
 
                                     {/* Full analysis for this hour */}
                                     {postCount > 0 && (() => {
-                                        const isFailed = !analysis || analysis.summary?.startsWith('⚠️');
+                                        const isFailed = !analysis || analysis.summary?.includes('temporarily unavailable') || analysis.summary?.startsWith('[Unavailable]') || analysis.summary?.startsWith('\u26a0');
                                         const isRetrying = retryingHours.has(hourIdx);
 
                                         if (isFailed) {
