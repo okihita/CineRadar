@@ -1,5 +1,5 @@
 import { useTranslation } from '@/i18n';
-import { getTimeStyle, getTimeIcon, getTimeOfDay } from '@/lib/showtime-utils';
+import { getTimeStyle, getTimeOfDay } from '@/lib/showtime-utils';
 import { TheaterSchedule } from '@/types';
 import { CHAIN_COLORS, ChainName } from '@/lib/constants';
 
@@ -22,12 +22,12 @@ export default function TheaterCard({ theater, isBestValue, isMostShowtimes, sho
                         <h4 className="font-bold text-white text-base tracking-tight">{theater.theatre_name}</h4>
                         {isBestValue && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-semibold bg-emerald-500/15 text-emerald-300 rounded-full border border-emerald-500/30 shadow-sm">
-                                💰 {t('showtimes.card.bestValue')}
+                                {t('showtimes.card.bestValue')}
                             </span>
                         )}
                         {isMostShowtimes && showMostShowtimesBadge && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-semibold bg-purple-500/15 text-purple-300 rounded-full border border-purple-500/30 shadow-sm">
-                                🎬 {t('showtimes.hero.stats.dailyShowtimes')}
+                                {t('showtimes.hero.stats.dailyShowtimes')}
                             </span>
                         )}
                     </div>
@@ -75,7 +75,7 @@ export default function TheaterCard({ theater, isBestValue, isMostShowtimes, sho
                                 <span
                                     key={timeIdx}
                                     className={`inline-flex items-center gap-1 px-3 py-1.5 text-sm sm:text-sm rounded-lg font-bold cursor-pointer transition-all duration-200 bg-gradient-to-r ${getTimeStyle(time)} hover:scale-105 hover:shadow-lg shadow-md active:scale-95`}
-                                    title={`${getTimeIcon(time)} ${getTimeOfDay(time)} slot`}
+                                    title={`${getTimeOfDay(time)} slot`}
                                 >
                                     <span>{time}</span>
                                 </span>

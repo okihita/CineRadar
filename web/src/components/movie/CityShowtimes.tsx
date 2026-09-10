@@ -23,7 +23,7 @@ import { TheaterSchedule } from '@/types';
 import { AdmissionStats } from './MovieBrowser';
 import { useTranslation } from '@/i18n';
 import { TranslationKey } from '@/i18n/types';
-import { normalizeGenre, getGenreEmoji } from '@/lib/genres';
+import { normalizeGenre } from '@/lib/genres';
 
 interface Movie {
     id: string;
@@ -139,8 +139,7 @@ export default function CityShowtimes({ movie }: CityShowtimesProps) {
                             />
                         ) : (
                             <div className="w-full h-full flex flex-col items-center justify-center bg-gray-800 text-gray-500">
-                                <Film className="w-12 h-12 mb-2 opacity-50" />
-                                <span className="text-sm">🎬</span>
+                                <Film className="w-12 h-12 opacity-50" />
                             </div>
                         )}
                         {movie.is_presale && (
@@ -195,13 +194,11 @@ export default function CityShowtimes({ movie }: CityShowtimesProps) {
                                 {genres.length > 0 && genres.slice(0, 3).map((genre) => {
                                     const key = normalizeGenre(genre);
                                     const localized = t(`genres.${key}` as TranslationKey) || genre;
-                                    const emoji = getGenreEmoji(key);
                                     return (
                                         <span
                                             key={genre}
                                             className="inline-flex items-center gap-1 px-2.5 py-1 text-sm font-medium text-gray-300 bg-white/[0.04] border border-white/10 rounded-full hover:bg-white/[0.08] transition-colors"
                                         >
-                                            <span>{emoji}</span>
                                             <span>{localized}</span>
                                         </span>
                                     );

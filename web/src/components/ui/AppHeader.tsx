@@ -1,5 +1,6 @@
 'use client';
 
+import { Film } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import LanguageSwitcher from './LanguageSwitcher';
 
@@ -25,7 +26,9 @@ export default function AppHeader({
       <div className="h-full px-3.5 sm:px-6 flex items-center justify-between max-w-7xl mx-auto">
         {/* Logo Section */}
         <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
-          <span className="text-2xl sm:text-3xl flex-shrink-0">🎬</span>
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-md shadow-purple-500/20 flex-shrink-0">
+            <Film className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+          </div>
           <div className="min-w-0">
             <h1 className="text-base sm:text-xl font-bold text-white tracking-tight truncate">
               {t('common.appName')}
