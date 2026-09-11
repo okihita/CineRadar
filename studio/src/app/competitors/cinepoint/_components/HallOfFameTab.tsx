@@ -13,10 +13,10 @@ interface HallOfFameTabProps {
   yearsLoading: boolean;
   yearsError: string | null;
   yearsData: { success: boolean; years: YearSummary[]; total_years: number } | null;
-  loadYears: () => void;
+  loadYears?: () => void;
 }
 
-export function HallOfFameTab({ yearsLoading, yearsError, yearsData, loadYears }: HallOfFameTabProps) {
+export function HallOfFameTab({ yearsLoading, yearsError, yearsData }: HallOfFameTabProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">

@@ -53,7 +53,7 @@ export default function PersonDetailPage() {
 
   const Icon = role === 'director' ? Clapperboard : Star;
   const label = role === 'director' ? 'Director' : 'Actor';
-  const backHref = role === 'director' ? '/competitors/cinepoint/analysis/directors' : '/competitors/cinepoint/analysis/actors';
+  const backHref = role === 'director' ? '/competitors/cinepoint/analysis?tab=directors' : '/competitors/cinepoint/analysis?tab=actors';
 
   if (loading) {
     return (

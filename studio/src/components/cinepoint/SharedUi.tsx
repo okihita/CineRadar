@@ -158,13 +158,13 @@ export function PersonRankingsTable({ rankings, label }: {
                     )}
                   </td>
                   <td className="p-3 text-center">
-                    <button
-                      onClick={() => { window.location.href = `/competitors/cinepoint/analysis/person/${encodeURIComponent(p.name)}`; }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border/40 bg-muted/30 text-sm font-bold uppercase tracking-wider text-muted-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all cursor-pointer"
+                    <Link
+                      href={`/competitors/cinepoint/analysis/person/${encodeURIComponent(p.name)}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border/40 bg-muted/30 text-sm font-bold uppercase tracking-wider text-muted-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
                     >
                       <Eye className="w-3 h-3" />
                       View Details
-                    </button>
+                    </Link>
                   </td>
                 </tr>
               ))}

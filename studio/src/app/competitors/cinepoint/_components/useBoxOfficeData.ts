@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { format, subDays } from 'date-fns';
 import type { CinePointMovie } from '@/features/competitors/types';
-import type { BoxOfficeData, MovieRanking, YearSummary } from '@/lib/cinepoint';
+import type { BoxOfficeData, YearSummary } from '@/lib/cinepoint';
 
 export type RangePreset = '7d' | '14d' | '30d' | '90d';
 
@@ -21,10 +21,10 @@ export function getPresetRange(preset: RangePreset) {
   return { from: format(subDays(today, days), 'yyyy-MM-dd'), to };
 }
 
-export function useBoxOfficeData() {
+export function useBoxOfficeData(enabled: boolean = true) {
   const [data, setData] = useState<BoxOfficeData | null>(null);
   const [yearsData, setYearsData] = useState<{ success: boolean; years: YearSummary[]; total_years: number } | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [yearsLoading, setYearsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [yearsError, setYearsError] = useState<string | null>(null);
@@ -62,7 +62,11 @@ export function useBoxOfficeData() {
     setYearsLoading(false);
   }, []);
 
-  useEffect(() => { loadData(range); }, [range, loadData]);
+  useEffect(() => {
+    if (enabled) {
+      loadData(range);
+    }
+  }, [range, loadData, enabled]);
 
   useEffect(() => {
     if (selectedMovie === null) { setEnrichedMovie(null); return; }
