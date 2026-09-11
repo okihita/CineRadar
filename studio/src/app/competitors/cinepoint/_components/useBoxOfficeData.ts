@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { format, subDays } from 'date-fns';
 import type { CinePointMovie } from '@/features/competitors/types';
-import type { BoxOfficeData, MovieRanking, YearSummary } from '@/lib/cinepoint';
+import type { BoxOfficeData, YearSummary } from '@/lib/cinepoint';
 
 export type RangePreset = '7d' | '14d' | '30d' | '90d';
 
