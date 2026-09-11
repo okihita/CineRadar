@@ -20,7 +20,7 @@ import { useSession, signOut } from 'next-auth/react';
 
 interface MenuItem {
     title: string;
-    description: string;
+    description?: string;
     href: string;
     icon: LucideIcon;
     adminOnly: boolean;
@@ -38,7 +38,6 @@ interface MenuGroup {
 const standaloneItems: MenuItem[] = [
     {
         title: 'Head-to-Head Compare',
-        description: 'Movie performance comparison',
         href: '/compare',
         icon: ArrowRightLeft,
         adminOnly: false,
@@ -327,24 +326,21 @@ export function Sidebar() {
                             key={item.href}
                             href={item.href}
                             className={cn(
-                                'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors',
+                                'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
                                 isActive
                                     ? 'bg-primary text-primary-foreground'
                                     : 'hover:bg-muted text-muted-foreground hover:text-foreground'
                             )}
                             title={collapsed ? item.title : undefined}
                         >
-                            <Icon className="w-5 h-5 flex-shrink-0" />
+                            <Icon className="w-4 h-4 flex-shrink-0" />
                             {!collapsed && (
-                                <div className="overflow-hidden">
-                                    <p className="text-sm font-medium">{item.title}</p>
-                                    <p className={cn(
-                                        'text-sm',
-                                        isActive ? 'text-primary-foreground/70' : 'text-muted-foreground'
-                                    )}>
-                                        {item.description}
-                                    </p>
-                                </div>
+                                <span className={cn(
+                                    'text-sm',
+                                    isActive ? 'font-medium' : ''
+                                )}>
+                                    {item.title}
+                                </span>
                             )}
                         </Link>
                     );
