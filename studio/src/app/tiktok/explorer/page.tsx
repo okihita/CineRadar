@@ -10,7 +10,7 @@ import {
     Film, ThumbsUp, Activity, Copy, Check, FileCode,
     CalendarX2, ArrowRight, LayoutGrid, List,
     Trophy, Zap, AlertTriangle, Sun, Moon, Clock, User, Sparkles,
-    Settings, ShieldCheck, Building2, Filter, Database, Layers
+    ShieldCheck, Building2, Layers
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -431,7 +431,7 @@ export default function TikTokExplorerPage() {
     }, [selectedDate]);
 
     return (
-        <div className="space-y-4 max-w-[1600px] mx-auto p-6">
+        <div className="p-6 space-y-6 w-full">
             {/* Header & Date Controller */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-border/60 pb-3">
                 <div className="flex items-center gap-3">
@@ -439,7 +439,7 @@ export default function TikTokExplorerPage() {
                         <TikTokIcon className="w-5 h-5" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold tracking-tight text-foreground">TikTok Radar</h1>
+                        <h1 className="text-xl font-bold tracking-tight text-foreground">Theatrical Radar</h1>
                         <p className="text-muted-foreground text-sm font-medium">
                             Social buzz, audience sentiment, and national executive summary
                         </p>
@@ -611,7 +611,7 @@ export default function TikTokExplorerPage() {
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        className="h-7 px-2.5 text-xs font-semibold rounded-lg gap-1.5 border-border/60 hover:border-primary/50"
+                                        className="h-7 px-2.5 text-sm font-semibold rounded-lg gap-1.5 border-border/60 hover:border-primary/50"
                                     >
                                         <Layers className="w-3 h-3 text-primary" />
                                         View Pipeline
@@ -867,8 +867,8 @@ export default function TikTokExplorerPage() {
                                 <table className="w-full text-sm text-left">
                                     <thead className="bg-muted/40 text-muted-foreground text-sm font-bold uppercase tracking-wider border-b border-border/40">
                                         <tr>
-                                            <th className="p-3 pl-4"># Movie Title</th>
-                                            <th className="p-3 text-right">24h Views</th>
+                                            <th className="p-3 pl-4 w-1/3 min-w-[240px]"># Movie Title</th>
+                                            <th className="p-3 text-right w-36 whitespace-nowrap">24h Views</th>
                                             <th className="p-3 pr-4">Top Audience Takeaway</th>
                                         </tr>
                                     </thead>
@@ -876,7 +876,7 @@ export default function TikTokExplorerPage() {
                                         {isScheduleLoading ? (
                                             Array.from({ length: 6 }).map((_, idx) => (
                                                 <tr key={idx} className="animate-pulse">
-                                                    <td className="p-3 pl-4">
+                                                    <td className="p-3 pl-4 w-1/3 min-w-[240px]">
                                                         <div className="flex items-center gap-2">
                                                             <div className="w-4 h-4 bg-muted rounded shrink-0" />
                                                             <div className="space-y-1.5 flex-1">
@@ -885,11 +885,11 @@ export default function TikTokExplorerPage() {
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="p-3 text-right">
+                                                    <td className="p-3 text-right w-36">
                                                         <div className="w-16 h-4 bg-muted/70 rounded ml-auto" />
                                                     </td>
                                                     <td className="p-3 pr-4">
-                                                        <div className="w-48 h-4 bg-muted/60 rounded" />
+                                                        <div className="w-full max-w-md h-4 bg-muted/60 rounded" />
                                                     </td>
                                                 </tr>
                                             ))
@@ -951,10 +951,10 @@ export default function TikTokExplorerPage() {
                                                         <td className="p-3 text-right font-mono font-semibold text-foreground">
                                                             {movie.hasSocialCrawl && movie.views > 0 ? movie.views.toLocaleString() : '—'}
                                                         </td>
-                                                        <td className="p-3 pr-4 text-muted-foreground max-w-[260px]">
+                                                        <td className="p-3 pr-4 text-muted-foreground">
                                                             {movie.hasSocialCrawl ? (
-                                                                <div className="flex items-center justify-between gap-2">
-                                                                    <span className="truncate">{movie.topPraise}</span>
+                                                                <div className="flex items-center justify-between gap-3">
+                                                                    <span className="line-clamp-1">{movie.topPraise}</span>
                                                                     <Button
                                                                         variant="ghost"
                                                                         size="sm"
@@ -962,7 +962,7 @@ export default function TikTokExplorerPage() {
                                                                             e.stopPropagation();
                                                                             setModalMovie({ id: movie.id, title: movie.title });
                                                                         }}
-                                                                        className="h-6 px-2 text-xs font-bold text-primary hover:bg-primary/10 gap-1 rounded shrink-0"
+                                                                        className="h-6 px-2 text-sm font-bold text-primary hover:bg-primary/10 gap-1 rounded shrink-0"
                                                                     >
                                                                         <Play className="w-2.5 h-2.5 fill-primary" />
                                                                         Viral
@@ -1020,7 +1020,7 @@ export default function TikTokExplorerPage() {
                             </div>
                         </CardHeader>
                         <CardContent className="p-3 sm:p-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
                                 {todayMovieSentimentList.map((movie) => {
                                     const hasTags = movie.discoveredTags.length > 0;
                                     return (
@@ -1032,7 +1032,7 @@ export default function TikTokExplorerPage() {
                                                 <span className="text-sm font-bold text-foreground truncate">
                                                     {movie.title}
                                                 </span>
-                                                <Badge variant="outline" className="text-xs font-medium shrink-0">
+                                                <Badge variant="outline" className="text-sm font-medium shrink-0">
                                                     {movie.age_category}
                                                 </Badge>
                                             </div>
@@ -1049,7 +1049,7 @@ export default function TikTokExplorerPage() {
                                                                     target="_blank"
                                                                     rel="noopener noreferrer"
                                                                     title={`Verify #${cleanTag} on TikTok`}
-                                                                    className="inline-flex items-center gap-1 font-mono text-xs font-semibold bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-md px-2 py-0.5 transition-colors"
+                                                                    className="inline-flex items-center gap-1 font-mono text-sm font-semibold bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-md px-2 py-0.5 transition-colors"
                                                                 >
                                                                     {tag}
                                                                     <ExternalLink className="w-2.5 h-2.5 opacity-60" />
@@ -1057,8 +1057,8 @@ export default function TikTokExplorerPage() {
                                                             );
                                                         })
                                                     ) : (
-                                                        <span className="text-xs text-muted-foreground italic">
-                                                            ⏱ Pending 08:00 WIB discovery
+                                                        <span className="text-sm text-muted-foreground italic">
+                                                            Pending 08:00 WIB discovery
                                                         </span>
                                                     )}
                                                 </div>
@@ -1068,7 +1068,7 @@ export default function TikTokExplorerPage() {
                                                         variant="ghost"
                                                         size="sm"
                                                         onClick={() => setModalMovie({ id: movie.id, title: movie.title })}
-                                                        className="h-6 px-2 text-xs font-bold text-primary hover:bg-primary/10 gap-1 rounded shrink-0"
+                                                        className="h-6 px-2 text-sm font-bold text-primary hover:bg-primary/10 gap-1 rounded shrink-0"
                                                     >
                                                         <Play className="w-2.5 h-2.5 fill-primary" />
                                                         Viral ({movie.postsCount || 40})
@@ -1166,7 +1166,7 @@ export default function TikTokExplorerPage() {
                             </div>
 
                             {videoLayoutMode === 'grid' ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
                                     {filteredPosts.map((post: ExplorerPost) => (
                                         <Card key={post.id} className="overflow-hidden bg-card border-border/50 flex flex-col justify-between group hover:border-border transition-all">
                                             <div>
@@ -1316,10 +1316,10 @@ export default function TikTokExplorerPage() {
                                                                     </div>
                                                                 )}
                                                                 <div className="min-w-0">
-                                                                    <h4 className="text-sm font-bold text-foreground truncate max-w-[130px]">
+                                                                    <h4 className="text-sm font-bold text-foreground truncate max-w-[200px]">
                                                                         {post.source_name}
                                                                     </h4>
-                                                                    <p className="text-sm text-muted-foreground truncate max-w-[130px]">
+                                                                    <p className="text-sm text-muted-foreground truncate max-w-[200px]">
                                                                         {post.source_handle}
                                                                     </p>
                                                                     <Badge variant="outline" className="text-sm font-normal mt-0.5">
@@ -1330,7 +1330,7 @@ export default function TikTokExplorerPage() {
                                                         </td>
 
                                                         {/* Caption */}
-                                                        <td className="p-3 min-w-[280px] max-w-[420px]">
+                                                        <td className="p-3 min-w-[280px]">
                                                             <p className="text-sm text-foreground/90 line-clamp-2 leading-relaxed whitespace-pre-line font-sans">
                                                                 {post.text}
                                                             </p>
@@ -1402,7 +1402,7 @@ export default function TikTokExplorerPage() {
                                 </span>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
                                 {filteredComments.slice(0, visibleCommentCount).map((comment) => (
                                     <Card key={comment.id} className="bg-card border-border/40 p-3.5 space-y-2.5 flex flex-col justify-between">
                                         <div className="space-y-1.5">
