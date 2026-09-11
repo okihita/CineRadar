@@ -95,19 +95,19 @@ export function useTheatricalRadarData(selectedDate: string) {
         const rawPosts = liveData.posts as ExplorerPost[];
 
         return rawPosts.map((p) => {
-            const rawTag = (p.platform_data?.campaign_hashtag || 'harusnyahorror').toLowerCase().replace('#', '');
+            const rawTag = (p.platform_data?.campaign_hashtag || '').toLowerCase().replace('#', '');
             const likes = p.metrics?.likes || 0;
 
             const matchedMovie = activeShowtimeMovies.find((m) => {
                 const cleanM = normalizeTitleForMatching(m.title);
-                return cleanM.includes(rawTag) || rawTag.includes(cleanM);
+                return cleanM.includes(rawTag) || (rawTag && rawTag.includes(cleanM));
             });
-            const movieTitle = matchedMovie?.title || rawTag.toUpperCase();
+            const movieTitle = matchedMovie?.title || (rawTag ? rawTag.toUpperCase() : 'THEATRICAL POST');
 
             return {
                 id: p.id,
                 movieTitle,
-                hashtag: `#${rawTag}`,
+                hashtag: rawTag ? `#${rawTag}` : '#bioskop',
                 title: p.title || p.text?.slice(0, 80) || '',
                 text: p.text || '',
                 url: p.url || '',
@@ -136,12 +136,12 @@ export function useTheatricalRadarData(selectedDate: string) {
             const authorName = String(c.authorName || 'user');
 
             const matchingPost = postsList.find((p) => p.id.includes(videoId));
-            const rawTag = (matchingPost?.platform_data?.campaign_hashtag || 'harusnyahorror').toLowerCase().replace('#', '');
+            const rawTag = (matchingPost?.platform_data?.campaign_hashtag || '').toLowerCase().replace('#', '');
             const matchedMovie = activeShowtimeMovies.find((m) => {
                 const cleanM = normalizeTitleForMatching(m.title);
-                return cleanM.includes(rawTag) || rawTag.includes(cleanM);
+                return cleanM.includes(rawTag) || (rawTag && rawTag.includes(cleanM));
             });
-            const movieTitle = matchedMovie?.title || rawTag.toUpperCase();
+            const movieTitle = matchedMovie?.title || (rawTag ? rawTag.toUpperCase() : 'AUDIENCE REACTION');
 
             return {
                 id: String(c.id || `live_c_${idx}`),

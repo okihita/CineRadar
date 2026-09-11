@@ -21,7 +21,6 @@ import { summarizeHour } from '@/lib/summarize';
 import { getJakartaHour, getJakartaToday } from '@/lib/auth-helpers';
 import {
     COLLECTIONS,
-    makeHourId,
     type FirestoreSocialPost,
     type FirestoreSocialSource,
     type FirestoreSocialAnalysis,

@@ -4,7 +4,7 @@ Orchestrates multi-movie theatrical slate crawling:
 1. Resolves active theatrical Indonesian movie slate and viral campaign tags.
 2. Crawls video metadata and audience comments via Apify actors.
 3. Normalizes payloads into CineRadar's standard social post schema.
-4. Executes Gemini 2.5 Flash structured sentiment and executive briefing analysis.
+4. Executes Gemini 3.8 Flash structured sentiment and executive briefing analysis.
 5. Persists data to Hot Cache (studio/src/data/tiktok_latest.json) and Firestore (tiktok_crawls).
 
 Usage:
