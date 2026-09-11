@@ -139,7 +139,7 @@ const menuGroups: MenuGroup[] = [
     },
     {
         id: 'cinepoint',
-        label: 'CinePoint Intelligence',
+        label: 'CinePoint Intel',
         icon: Swords,
         items: [
             {
