@@ -62,8 +62,6 @@ async function getSourcesData(): Promise<SourcesData> {
     try {
         const doc = await firestoreRestClient.getDocument<SourcesData>(FIRESTORE_COLLECTION, FIRESTORE_DOC_ID);
         if (doc && Array.isArray(doc.sources)) {
-            // Update local fallback file asynchronously
-            writeLocalSources(doc);
             return {
                 sources: doc.sources,
                 overrides: doc.overrides || {},

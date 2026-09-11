@@ -15,7 +15,7 @@ HTTP & Cloud Scheduler-triggered function that runs every 3 hours (`0 */3 * * *`
 4. Updates the daily circuit snapshot `tiktok_circuit_timeline/{target_date}` for fast 1-read UI access.
 5. Dispatches an aggregated 3-hourly summary alert to Telegram.
 
-⚠️ DEPLOYMENT PROTOCOL ⚠️
+[DEPLOYMENT PROTOCOL]
 DO NOT deploy this function with raw `gcloud functions deploy` commands.
 MUST ALWAYS be deployed via: `./backend/functions/deploy.sh tiktok-exhibitors`
 """
@@ -362,19 +362,19 @@ def format_3hourly_telegram_report(
     movies = discovery_payload.get("movies", {})
 
     mode_str = (
-        "🔥 *7-Day Deep Backfill Complete*"
+        "*7-Day Deep Backfill Complete*"
         if is_backfill
-        else "⏱ *3-Hourly Exhibitor Pulse & Sync*"
+        else "*3-Hourly Exhibitor Pulse & Sync*"
     )
 
     lines: list[str] = [
         f"{mode_str}",
-        f"📅 Date: `{target_date}` | ⏰ Time: `{now_wib.strftime('%H:%M')} WIB`",
+        f"Date: `{target_date}` | Time: `{now_wib.strftime('%H:%M')} WIB`",
         "",
-        f"📥 *Sync Activity*: Scraped `{scraped_count}` latest posts across XXI, CGV, Cinépolis.",
-        f"🏷️ *Theatrical Hashtag Coverage*: `{resolved_count}/{total_movies} movies verified`",
+        f"*Sync Activity*: Scraped `{scraped_count}` latest posts across XXI, CGV, Cinépolis.",
+        f"*Theatrical Hashtag Coverage*: `{resolved_count}/{total_movies} movies verified`",
         "",
-        "🎬 *Top Verified Movie Campaigns*:",
+        "*Top Verified Movie Campaigns*:",
     ]
 
     verified_movies = [m for m in movies.values() if m.get("discovered_hashtags")]
@@ -389,7 +389,7 @@ def format_3hourly_telegram_report(
         lines.append(f"_...and {len(verified_movies) - 8} more verified films_")
 
     lines.append("")
-    lines.append("🔗 [Open Exhibitor Archive](https://studio.cineradar.id/tiktok/exhibitors)")
+    lines.append("[Open Exhibitor Archive](https://studio.cineradar.id/tiktok/exhibitors)")
     return "\n".join(lines)
 
 
@@ -456,18 +456,18 @@ def sync_exhibitors_http(request: Any) -> tuple[str, int, dict[str, str]]:
     except ValueError as val_err:
         logger.error("Configuration error: %s", val_err)
         send_telegram_alert(
-            db, f"🚨 *CineRadar Exhibitor Sync [CONFIG ERROR]*\n❌ Error: `{val_err}`"
+            db, f"[ALERT] *CineRadar Exhibitor Sync [CONFIG ERROR]*\nError: `{val_err}`"
         )
         return json_response({"success": False, "error": str(val_err)}, 400)
     except RuntimeError as run_err:
         logger.error("Scraping execution error: %s", run_err)
         send_telegram_alert(
-            db, f"🚨 *CineRadar Exhibitor Sync [SCRAPE ERROR]*\n❌ Error: `{run_err}`"
+            db, f"[ALERT] *CineRadar Exhibitor Sync [SCRAPE ERROR]*\nError: `{run_err}`"
         )
         return json_response({"success": False, "error": str(run_err)}, 502)
     except Exception as gen_err:
         logger.exception("Unexpected sync failure: %s", gen_err)
         send_telegram_alert(
-            db, f"🚨 *CineRadar Exhibitor Sync [CRITICAL ERROR]*\n❌ Error: `{gen_err}`"
+            db, f"[ALERT] *CineRadar Exhibitor Sync [CRITICAL ERROR]*\nError: `{gen_err}`"
         )
         return json_response({"success": False, "error": f"Internal error: {gen_err}"}, 500)

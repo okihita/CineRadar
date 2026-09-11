@@ -208,14 +208,16 @@ export function CompareControlPanel({
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <Button
-                                        variant={"outline"}
+                                        variant="outline"
                                         className={cn(
-                                            "w-full sm:w-[180px] justify-start text-left font-normal",
+                                            "w-full sm:w-[190px] justify-start text-left font-normal min-w-0",
                                             !dateRange?.from && "text-muted-foreground"
                                         )}
                                     >
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {dateRange?.from ? format(dateRange.from, "PPP") : <span>Pick a date</span>}
+                                        <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                                        <span className="truncate">
+                                            {dateRange?.from ? format(dateRange.from, "d MMM yyyy") : "Pick a date"}
+                                        </span>
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="start">
@@ -241,14 +243,16 @@ export function CompareControlPanel({
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <Button
-                                        variant={"outline"}
+                                        variant="outline"
                                         className={cn(
-                                            "w-full sm:w-[180px] justify-start text-left font-normal",
+                                            "w-full sm:w-[190px] justify-start text-left font-normal min-w-0",
                                             !dateRange?.to && "text-muted-foreground"
                                         )}
                                     >
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {dateRange?.to ? format(dateRange.to, "PPP") : <span>Pick a date</span>}
+                                        <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                                        <span className="truncate">
+                                            {dateRange?.to ? format(dateRange.to, "d MMM yyyy") : "Pick a date"}
+                                        </span>
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="start">
