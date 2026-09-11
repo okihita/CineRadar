@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import Link from 'next/link';
 import {
     ReactFlow,
     Background,
@@ -21,7 +20,7 @@ import '@xyflow/react/dist/style.css';
 import {
     Clock, Film, Bot, Database, Sparkles, LayoutDashboard,
     ArrowRight, CheckCircle2, ChevronRight,
-    DollarSign, Zap, FileJson, Play,
+    DollarSign, Zap, FileJson,
     Activity, Layers,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -528,9 +527,9 @@ export function WorkflowTab() {
 
             {/* Main Visualizer Area */}
             {viewMode === 'canvas' ? (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Xyflow Interactive Graph (2 cols) */}
-                    <div className="lg:col-span-2 h-[560px] rounded-xl border border-border/60 bg-muted/10 overflow-hidden relative shadow-sm">
+                <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {/* Xyflow Interactive Graph (2 cols on lg, 3 cols on xl) */}
+                    <div className="lg:col-span-2 xl:col-span-3 h-[600px] rounded-xl border border-border/60 bg-muted/10 overflow-hidden relative shadow-sm">
                         <ReactFlow
                             nodes={nodes}
                             edges={edges}
@@ -560,17 +559,21 @@ export function WorkflowTab() {
                     </div>
 
                     {/* Stage Inspector Drawer (1 col) */}
-                    <StageInspector stage={selectedStage} />
+                    <div className="lg:col-span-1 xl:col-span-1">
+                        <StageInspector stage={selectedStage} />
+                    </div>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {/* Sequence Diagram View */}
-                    <div className="lg:col-span-2">
+                    <div className="lg:col-span-2 xl:col-span-3">
                         <SequenceDiagramView onSelectStage={setSelectedStageId} selectedStageId={selectedStageId} />
                     </div>
 
                     {/* Stage Inspector */}
-                    <StageInspector stage={selectedStage} />
+                    <div className="lg:col-span-1 xl:col-span-1">
+                        <StageInspector stage={selectedStage} />
+                    </div>
                 </div>
             )}
         </div>

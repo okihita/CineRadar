@@ -150,16 +150,16 @@ export function RawTelemetryTab() {
                         >
                             <div className="space-y-1">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs font-mono font-bold text-muted-foreground truncate">
+                                    <span className="text-sm font-mono font-bold text-muted-foreground truncate">
                                         {target.id}
                                     </span>
-                                    {isSelected && <Badge variant="default" className="text-[10px] h-4 py-0 px-1">Selected</Badge>}
+                                    {isSelected && <Badge variant="default" className="text-sm h-5 py-0 px-1.5">Selected</Badge>}
                                 </div>
                                 <h4 className="text-sm font-bold text-foreground leading-tight">{target.name}</h4>
-                                <p className="text-xs text-muted-foreground line-clamp-2">{target.description}</p>
+                                <p className="text-sm text-muted-foreground line-clamp-2">{target.description}</p>
                             </div>
                             <div className="pt-2 border-t border-border/30">
-                                <span className="text-[11px] font-mono text-primary truncate block">{target.pathFormat}</span>
+                                <span className="text-sm font-mono text-primary truncate block">{target.pathFormat}</span>
                             </div>
                         </Card>
                     );
@@ -184,7 +184,7 @@ export function RawTelemetryTab() {
                                     type="date"
                                     value={selectedDate}
                                     onChange={(e) => setSelectedDate(e.target.value)}
-                                    className="h-8 text-xs font-mono w-36 bg-muted/20"
+                                    className="h-8 text-sm font-mono w-36 bg-muted/20"
                                 />
                             </div>
                         )}
@@ -196,7 +196,7 @@ export function RawTelemetryTab() {
                                     placeholder="Filter by movie_id (e.g. spiderman)..."
                                     value={movieId}
                                     onChange={(e) => setMovieId(e.target.value)}
-                                    className="h-8 text-xs font-mono w-56 bg-muted/20"
+                                    className="h-8 text-sm font-mono w-56 bg-muted/20"
                                 />
                             </div>
                         )}
@@ -215,7 +215,7 @@ export function RawTelemetryTab() {
                             </CardTitle>
                         </div>
                         {rawRes?.total_documents !== undefined && (
-                            <Badge variant="outline" className="font-mono text-xs">
+                            <Badge variant="outline" className="font-mono text-sm">
                                 {rawRes.total_documents} Documents
                             </Badge>
                         )}
@@ -232,12 +232,12 @@ export function RawTelemetryTab() {
                             <p className="text-rose-500 font-semibold">
                                 {rawRes?.message || error?.message || 'No document found at this path.'}
                             </p>
-                            <p className="text-xs font-mono text-muted-foreground">
+                            <p className="text-sm font-mono text-muted-foreground">
                                 Path: /{rawRes?.path || targetConfig.pathFormat}
                             </p>
                         </div>
                     ) : (
-                        <div className="bg-zinc-950 text-zinc-200 p-4 font-mono text-xs leading-relaxed overflow-x-auto max-h-[650px]">
+                        <div className="bg-zinc-950 text-zinc-200 p-4 font-mono text-sm leading-relaxed overflow-x-auto max-h-[650px]">
                             <pre>{formattedJson}</pre>
                         </div>
                     )}

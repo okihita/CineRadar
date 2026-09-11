@@ -523,7 +523,7 @@ export function SourcesTab() {
                                                         {source.priority}
                                                     </Badge>
                                                 </td>
-                                                <td className="p-3 text-muted-foreground text-sm max-w-sm truncate">
+                                                <td className="p-3 text-muted-foreground text-sm max-w-xl truncate">
                                                     {source.notes || '—'}
                                                 </td>
                                                 <td className="p-3 pr-4 text-right">
