@@ -12,21 +12,21 @@ PROJECT_ID="${GOOGLE_CLOUD_PROJECT:-cineradar-481014}"
 REGION="${REGION:-asia-southeast1}"
 PUBSUB_TOPIC="scrape-seat-jit"
 
-echo "🚀 CineRadar Cloud Functions & Socials Deployment"
+echo "[INFO] CineRadar Cloud Functions & Socials Deployment"
 echo "   Project: $PROJECT_ID"
 echo "   Region: $REGION"
 echo ""
 
 deploy_pubsub() {
-    echo "📬 Creating Pub/Sub topic..."
+    echo "[INFO] Creating Pub/Sub topic..."
     gcloud pubsub topics create "$PUBSUB_TOPIC" \
         --project="$PROJECT_ID" \
         2>/dev/null || echo "   Topic already exists"
-    echo "   ✓ Topic: $PUBSUB_TOPIC"
+    echo "   [DONE] Topic: $PUBSUB_TOPIC"
 }
 
 deploy_dispatcher() {
-    echo "📤 Deploying dispatcher function..."
+    echo "[INFO] Deploying dispatcher function..."
     cd dispatcher
     gcloud functions deploy dispatch-jit-jobs \
         --gen2 \
@@ -41,14 +41,14 @@ deploy_dispatcher() {
         --set-env-vars="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,PUBSUB_TOPIC=$PUBSUB_TOPIC" \
         --project="$PROJECT_ID"
     cd ..
-    echo "   ✓ Dispatcher deployed"
+    echo "   [DONE] Dispatcher deployed"
 }
 
 deploy_scraper() {
-    echo "📥 Deploying scraper function..."
+    echo "[INFO] Deploying scraper function..."
     cd scraper
     # =========================================================================
-    # ⚠️ IMPORTANT: max_instances=10 (was 5 until March 11, 2026)
+    # [NOTE] max_instances=10 (was 5 until March 11, 2026)
     # =========================================================================
     # On March 11, 2026, we updated the schedule from T-30/T-15 to T-30/T-20/T-10.
     # The max_instances was increased to 10 to ensure peak bursts of 800+ jobs
@@ -74,11 +74,11 @@ deploy_scraper() {
         --set-env-vars="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,ENABLE_SCHEMA_VALIDATION=true" \
         --project="$PROJECT_ID"
     cd ..
-    echo "   ✓ Scraper deployed (max_instances=10) with 180s timeout"
+    echo "   [DONE] Scraper deployed (max_instances=10) with 180s timeout"
 }
 
 deploy_scheduler() {
-    echo "⏰ Creating Cloud Scheduler job..."
+    echo "[INFO] Creating Cloud Scheduler job..."
     
     # Get dispatcher URL
     DISPATCHER_URL=$(gcloud functions describe dispatch-jit-jobs \
@@ -88,7 +88,7 @@ deploy_scheduler() {
         --format='value(serviceConfig.uri)' 2>/dev/null)
     
     if [ -z "$DISPATCHER_URL" ]; then
-        echo "   ❌ Error: Dispatcher function not found. Deploy dispatcher first."
+        echo "   [ERROR] Dispatcher function not found. Deploy dispatcher first."
         exit 1
     fi
     
@@ -109,11 +109,11 @@ deploy_scheduler() {
         --http-method=POST \
         --project="$PROJECT_ID"
 
-    echo "   ✓ Scheduler: every 5 min (08:00-23:55 WIB)"
+    echo "   [DONE] Scheduler: every 5 min (08:00-23:55 WIB)"
 }
 
 deploy_sweeper() {
-    echo "🧹 Deploying sweeper function..."
+    echo "[INFO] Deploying sweeper function..."
     cd sweeper
     gcloud functions deploy sweeper \
         --gen2 \
@@ -130,7 +130,7 @@ deploy_sweeper() {
     cd ..
     
     # Create Scheduler for Sweeper
-    echo "⏰ Creating Sweeper Scheduler..."
+    echo "[INFO] Creating Sweeper Scheduler..."
     
     SWEEPER_URL=$(gcloud functions describe sweeper \
         --gen2 \
@@ -139,7 +139,7 @@ deploy_sweeper() {
         --format='value(serviceConfig.uri)' 2>/dev/null)
         
     if [ -z "$SWEEPER_URL" ]; then
-        echo "   ❌ Error: Sweeper function URL not found."
+        echo "   [ERROR] Sweeper function URL not found."
     else
         # Delete existing job if present
         gcloud scheduler jobs delete jit-sweeper \
@@ -148,7 +148,7 @@ deploy_sweeper() {
             --quiet 2>/dev/null || true
             
         # =========================================================================
-        # ⚠️ ARCHITECTURAL & COST CONSTRAINT: Sweeper Frequency (30-min intervals)
+        # [NOTE] ARCHITECTURAL & COST CONSTRAINT: Sweeper Frequency (30-min intervals)
         # =========================================================================
         # The sweeper is scheduled at `0,30 10-23 * * *` (every 30 mins) instead of
         # 15 mins. This cuts daily Firestore document reads by ~50% (~105k reads/day)
@@ -163,12 +163,12 @@ deploy_sweeper() {
             --http-method=POST \
             --project="$PROJECT_ID"
             
-        echo "   ✓ Scheduler: Sweeper every 30 min (10:00-23:30 WIB)"
+        echo "   [DONE] Scheduler: Sweeper every 30 min (10:00-23:30 WIB)"
     fi
 }
 
 deploy_discover_hashtags() {
-    echo "🔍 Deploying morning TikTok hashtag discovery function..."
+    echo "[INFO] Deploying morning TikTok hashtag discovery function..."
     cd socials/tiktok/discover_hashtags
     gcloud functions deploy discover-tiktok-hashtags \
         --gen2 \
@@ -184,7 +184,7 @@ deploy_discover_hashtags() {
         --project="$PROJECT_ID"
     cd ../../..
 
-    echo "⏰ Creating Daily 08:00 WIB Discovery Scheduler..."
+    echo "[INFO] Creating Daily 08:00 WIB Discovery Scheduler..."
     DISCOVERY_URL=$(gcloud functions describe discover-tiktok-hashtags \
         --gen2 \
         --region="$REGION" \
@@ -192,7 +192,7 @@ deploy_discover_hashtags() {
         --format='value(serviceConfig.uri)' 2>/dev/null)
 
     if [ -z "$DISCOVERY_URL" ]; then
-        echo "   ❌ Error: discover-tiktok-hashtags function URL not found."
+        echo "   [ERROR] discover-tiktok-hashtags function URL not found."
     else
         gcloud scheduler jobs delete daily-hashtag-discovery \
             --location="$REGION" \
@@ -207,12 +207,12 @@ deploy_discover_hashtags() {
             --http-method=POST \
             --project="$PROJECT_ID"
 
-        echo "   ✓ Scheduler: Daily Hashtag Discovery at 08:00 WIB"
+        echo "   [DONE] Scheduler: Daily Hashtag Discovery at 08:00 WIB"
     fi
 }
 
 deploy_sync_exhibitors() {
-    echo "🎪 Deploying 3-hourly TikTok exhibitor sync function..."
+    echo "[INFO] Deploying 3-hourly TikTok exhibitor sync function..."
     cd socials/tiktok/sync_exhibitors
     gcloud functions deploy sync-tiktok-exhibitors \
         --gen2 \
@@ -229,7 +229,7 @@ deploy_sync_exhibitors() {
     cd ../../../
     
     # Create 3-Hourly Scheduler
-    echo "⏰ Creating 3-Hourly Exhibitor Sync Scheduler..."
+    echo "[INFO] Creating 3-Hourly Exhibitor Sync Scheduler..."
     SYNC_URL=$(gcloud functions describe sync-tiktok-exhibitors \
         --gen2 \
         --region="$REGION" \
@@ -237,7 +237,7 @@ deploy_sync_exhibitors() {
         --format='value(serviceConfig.uri)' 2>/dev/null)
         
     if [ -z "$SYNC_URL" ]; then
-        echo "   ❌ Error: sync-tiktok-exhibitors URL not found."
+        echo "   [ERROR] sync-tiktok-exhibitors URL not found."
     else
         gcloud scheduler jobs delete 3hourly-exhibitor-sync \
             --location="$REGION" \
@@ -253,12 +253,12 @@ deploy_sync_exhibitors() {
             --headers="User-Agent=Google-Cloud-Scheduler" \
             --project="$PROJECT_ID"
             
-        echo "   ✓ Scheduler: 3-Hourly Exhibitor Sync (0 */3 * * * WIB)"
+        echo "   [DONE] Scheduler: 3-Hourly Exhibitor Sync (0 */3 * * * WIB)"
     fi
 }
 
 deploy_daily_pulse() {
-    echo "🔥 Deploying 18:00 WIB Daily TikTok Social Box Office Crawler..."
+    echo "Deploying Multi-Window TikTok Social Box Office Function..."
     cd socials/tiktok/crawl_daily_pulse
     gcloud functions deploy crawl-tiktok-daily-pulse \
         --gen2 \
@@ -274,8 +274,8 @@ deploy_daily_pulse() {
         --project="$PROJECT_ID"
     cd ../../../
     
-    # Create Daily 18:00 WIB Scheduler
-    echo "⏰ Creating Daily 18:00 WIB Social Box Office Scheduler..."
+    # Create Daily Multi-Window Schedulers (11:00 WIB, 18:00 WIB, 23:00 WIB)
+    echo "Configuring Social Box Office Schedulers (11:00 WIB, 18:00 WIB, 23:00 WIB)..."
     PULSE_URL=$(gcloud functions describe crawl-tiktok-daily-pulse \
         --gen2 \
         --region="$REGION" \
@@ -283,8 +283,27 @@ deploy_daily_pulse() {
         --format='value(serviceConfig.uri)' 2>/dev/null)
         
     if [ -z "$PULSE_URL" ]; then
-        echo "   ❌ Error: crawl-tiktok-daily-pulse URL not found."
+        echo "Error: crawl-tiktok-daily-pulse URL not found."
     else
+        # 1. Morning Trajectory Window (11:00 WIB)
+        gcloud scheduler jobs delete daily-social-morning \
+            --location="$REGION" \
+            --project="$PROJECT_ID" \
+            --quiet 2>/dev/null || true
+            
+        gcloud scheduler jobs create http daily-social-morning \
+            --location="$REGION" \
+            --schedule="0 11 * * *" \
+            --time-zone="Asia/Jakarta" \
+            --uri="$PULSE_URL" \
+            --http-method=POST \
+            --message-body='{"window":"morning"}' \
+            --headers="Content-Type=application/json,User-Agent=Google-Cloud-Scheduler" \
+            --project="$PROJECT_ID"
+            
+        echo "   - Scheduler: Morning Trajectory at 11:00 WIB"
+
+        # 2. Main Daily Pulse Window (18:00 WIB)
         gcloud scheduler jobs delete daily-social-pulse \
             --location="$REGION" \
             --project="$PROJECT_ID" \
@@ -296,10 +315,29 @@ deploy_daily_pulse() {
             --time-zone="Asia/Jakarta" \
             --uri="$PULSE_URL" \
             --http-method=POST \
-            --headers="User-Agent=Google-Cloud-Scheduler" \
+            --message-body='{"window":"pulse"}' \
+            --headers="Content-Type=application/json,User-Agent=Google-Cloud-Scheduler" \
             --project="$PROJECT_ID"
             
-        echo "   ✓ Scheduler: Daily Social Box Office Pulse at 18:00 WIB"
+        echo "   - Scheduler: Daily Pulse Crawl at 18:00 WIB"
+
+        # 3. Night Recap Window (23:00 WIB)
+        gcloud scheduler jobs delete daily-social-night \
+            --location="$REGION" \
+            --project="$PROJECT_ID" \
+            --quiet 2>/dev/null || true
+            
+        gcloud scheduler jobs create http daily-social-night \
+            --location="$REGION" \
+            --schedule="0 23 * * *" \
+            --time-zone="Asia/Jakarta" \
+            --uri="$PULSE_URL" \
+            --http-method=POST \
+            --message-body='{"window":"night"}' \
+            --headers="Content-Type=application/json,User-Agent=Google-Cloud-Scheduler" \
+            --project="$PROJECT_ID"
+            
+        echo "   - Scheduler: Night Recap at 23:00 WIB"
     fi
 }
 
@@ -336,7 +374,7 @@ case "${1:-all}" in
         deploy_scheduler
         deploy_sweeper
         echo ""
-        echo "✅ All Theatrical Scraper components deployed!"
+        echo "[DONE] All Theatrical Scraper components deployed!"
         ;;
     all)
         deploy_pubsub
@@ -348,7 +386,7 @@ case "${1:-all}" in
         deploy_sync_exhibitors
         deploy_daily_pulse
         echo ""
-        echo "✅ All components deployed!"
+        echo "[DONE] All components deployed!"
         ;;
     *)
         echo "Usage: $0 [pubsub|dispatcher|scraper|scheduler|sweeper|discover_hashtags|sync_exhibitors|daily_pulse|theatrical|all]"

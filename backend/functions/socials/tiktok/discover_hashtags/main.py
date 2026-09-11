@@ -18,7 +18,7 @@ HTTP-triggered Cloud Function that runs daily at 08:00 WIB:
 
 Triggered by Cloud Scheduler daily at 08:00 WIB (`0 8 * * *` WIB).
 
-⚠️ DEPLOYMENT PROTOCOL ⚠️
+[DEPLOYMENT PROTOCOL]
 DO NOT deploy this function with raw `gcloud functions deploy` commands.
 MUST ALWAYS be deployed via: `./backend/functions/deploy.sh tiktok-hashtags`
 """
@@ -331,10 +331,10 @@ def format_telegram_report(
             unmapped_movies.append(title)
 
     lines: list[str] = [
-        "🍿 *CineRadar Theatrical & Social Pulse*",
-        f"📅 Date: `{target_date}` | 🎬 Theatrical Slate: `{len(active_movies)} Movies`",
+        "*CineRadar Theatrical & Social Pulse*",
+        f"Date: `{target_date}` | Theatrical Slate: `{len(active_movies)} Movies`",
         "",
-        f"✅ *Verified Campaigns ({len(mapped_movies)}/{len(active_movies)})*:",
+        f"*Verified Campaigns ({len(mapped_movies)}/{len(active_movies)})*:",
     ]
 
     for title, tags, srcs in mapped_movies[:15]:
@@ -347,7 +347,7 @@ def format_telegram_report(
 
     if unmapped_movies:
         lines.append("")
-        lines.append(f"⏳ *Pending / No Promo Tags ({len(unmapped_movies)})*:")
+        lines.append(f"*Pending / No Promo Tags ({len(unmapped_movies)})*:")
         sample_unmapped = ", ".join(unmapped_movies[:6])
         if len(unmapped_movies) > 6:
             sample_unmapped += f", +{len(unmapped_movies) - 6} more"
@@ -360,11 +360,11 @@ def format_telegram_report(
     cine_count = len(chains.get("cinepolis_id", {}).get("posts", []))
 
     lines.append("")
-    lines.append("📡 *Exhibitor Feed Pulse*:")
+    lines.append("*Exhibitor Feed Pulse*:")
     lines.append(
         f"• Cinema XXI: `{xxi_count} promos` | CGV: `{cgv_count} promos` | Cinépolis: `{cine_count} promos`"
     )
-    lines.append(f"⏱ *Scan Completed*: `{now_wib.strftime('%H:%M:%S')} WIB`")
+    lines.append(f"*Scan Completed*: `{now_wib.strftime('%H:%M:%S')} WIB`")
 
     return "\n".join(lines)
 
@@ -404,7 +404,7 @@ def discover_hashtags_http(request: Any) -> tuple[str, int, dict[str, str]]:
             error_msg = f"No active theatrical movies found in schedules_v2/{target_date}/movies."
             send_telegram_alert(
                 db,
-                f"🚨 *CineRadar TikTok Discovery Failed*\n📅 Date: `{target_date}`\n❌ Error: {error_msg}",
+                f"[ALERT] *CineRadar TikTok Discovery Failed*\nDate: `{target_date}`\nError: {error_msg}",
             )
             return json_response({"success": False, "error": error_msg}, 404)
 
@@ -455,20 +455,20 @@ def discover_hashtags_http(request: Any) -> tuple[str, int, dict[str, str]]:
         logger.error("Configuration error: %s", val_err)
         send_telegram_alert(
             db,
-            f"🚨 *CineRadar TikTok Discovery [CONFIG ERROR]*\n📅 Date: `{target_date}`\n❌ Error: `{val_err}`",
+            f"[ALERT] *CineRadar TikTok Discovery [CONFIG ERROR]*\nDate: `{target_date}`\nError: `{val_err}`",
         )
         return json_response({"success": False, "error": str(val_err)}, 400)
     except RuntimeError as run_err:
         logger.error("Apify execution error: %s", run_err)
         send_telegram_alert(
             db,
-            f"🚨 *CineRadar TikTok Discovery [APIFY ERROR]*\n📅 Date: `{target_date}`\n❌ Error: `{run_err}`",
+            f"[ALERT] *CineRadar TikTok Discovery [APIFY ERROR]*\nDate: `{target_date}`\nError: `{run_err}`",
         )
         return json_response({"success": False, "error": str(run_err)}, 502)
     except Exception as gen_err:
         logger.exception("Unexpected discovery failure: %s", gen_err)
         send_telegram_alert(
             db,
-            f"🚨 *CineRadar TikTok Discovery [CRITICAL ERROR]*\n📅 Date: `{target_date}`\n❌ Error: `{gen_err}`",
+            f"[ALERT] *CineRadar TikTok Discovery [CRITICAL ERROR]*\nDate: `{target_date}`\nError: `{gen_err}`",
         )
         return json_response({"success": False, "error": f"Internal server error: {gen_err}"}, 500)

@@ -120,7 +120,7 @@ export default function TikTokExhibitorArchivePage() {
     };
 
     return (
-        <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="p-6 space-y-6 w-full">
             {/* Top Header */}
             <div>
                 <Link
@@ -128,13 +128,13 @@ export default function TikTokExhibitorArchivePage() {
                     className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors mb-3"
                 >
                     <ArrowLeft className="w-4 h-4" />
-                    Back to TikTok Radar Explorer
+                    Back to Theatrical Radar
                 </Link>
 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <PageHeader
-                        title="Exhibitor Circuit 14-Day Timeline Archive"
-                        description="Continuous 3-hourly crawling of promotional trailers & engagement metrics across Cinema XXI, CGV, and Cinépolis."
+                        title="Circuit Channels Archive"
+                        description="Continuous 3-hourly crawling of promotional trailers &amp; engagement metrics across Cinema XXI, CGV, and Cinepolis."
                     />
 
                     <div className="flex items-center gap-2">
@@ -344,7 +344,7 @@ export default function TikTokExhibitorArchivePage() {
                             </p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3.5">
                             {allPosts.map((post) => (
                                 <div
                                     key={`archive-post-${post.id}`}

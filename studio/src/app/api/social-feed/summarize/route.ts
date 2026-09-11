@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
         } else {
             // Auto-detect: retry hours where analysis has error summary, or has posts but no analysis
             const failedAnalysisHours = analyses
-                .filter(a => a.summary?.startsWith('⚠️'))
+                .filter(a => a.summary?.includes('temporarily unavailable') || a.summary?.startsWith('[Unavailable]') || a.summary?.startsWith('\u26a0'))
                 .map(a => a.hour);
 
             // Also find hours with posts but no analysis doc at all

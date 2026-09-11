@@ -1,42 +1,13 @@
 import { NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
+import { getTodayJakarta } from '@/lib/timeUtils';
+import type { DailyPulseDoc } from '@/features/tiktok/types';
 
-interface DailyPulseDoc {
-    date: string;
-    updated_at: string;
-    total_movies_tracked: number;
-    leaderboard: Array<{
-        rank: number;
-        movie_id: string;
-        title: string;
-        tier: string;
-        total_views: number;
-        total_likes: number;
-        total_comments: number;
-        total_shares: number;
-        posts_count: number;
-        sentiment?: {
-            positive: number;
-            mixed: number;
-            negative: number;
-            hype_score?: number;
-            praise_points?: string[];
-            criticism_themes?: string[];
-        };
-        top_viral_post?: {
-            id: string;
-            url: string;
-            author: string;
-            views: number;
-            likes: number;
-            snippet: string;
-        };
-    }>;
-}
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
-    const date = searchParams.get('date') || new Date().toISOString().split('T')[0];
+    const date = searchParams.get('date') || getTodayJakarta();
     const movieId = searchParams.get('movie_id');
 
     try {

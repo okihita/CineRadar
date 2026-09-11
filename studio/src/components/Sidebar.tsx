@@ -5,9 +5,9 @@ import { usePathname } from 'next/navigation';
 import {
     MapPin, ChevronLeft, ChevronRight, ChevronDown,
     Database, Calendar, Clapperboard, Sun, Moon, Monitor,
-    LogOut, Users as UsersIcon, Share2, ArrowRightLeft,
-    TrendingUp, Rss, Settings, Shield, BookOpen, Radio, Swords, Library, Target,
-    Play, Video, Building2,
+    LogOut, Users as UsersIcon, ArrowRightLeft,
+    TrendingUp, Rss, Shield, BookOpen, Radio, Swords, Library, Target,
+    Play, Building2, Layers,
     type LucideIcon,
 } from 'lucide-react';
 import { useState, useCallback } from 'react';
@@ -20,7 +20,7 @@ import { useSession, signOut } from 'next-auth/react';
 
 interface MenuItem {
     title: string;
-    description: string;
+    description?: string;
     href: string;
     icon: LucideIcon;
     adminOnly: boolean;
@@ -38,7 +38,6 @@ interface MenuGroup {
 const standaloneItems: MenuItem[] = [
     {
         title: 'Head-to-Head Compare',
-        description: 'Movie performance comparison',
         href: '/compare',
         icon: ArrowRightLeft,
         adminOnly: false,
@@ -47,50 +46,36 @@ const standaloneItems: MenuItem[] = [
 
 const menuGroups: MenuGroup[] = [
     {
-        id: 'tiktok',
-        label: 'TikTok Crawling',
-        icon: Video,
-        items: [
-            {
-                title: 'TikTok Radar',
-                description: 'Daily buzz & sentiment',
-                href: '/tiktok/explorer',
-                icon: Play,
-                adminOnly: false,
-            },
-            {
-                title: 'Exhibitor Archive',
-                description: 'XXI, CGV, Cinépolis timeline',
-                href: '/tiktok/exhibitors',
-                icon: Building2,
-                adminOnly: false,
-            },
-        ],
-    },
-    {
         id: 'social',
         label: 'Social Intelligence',
         icon: Radio,
         items: [
             {
-                title: 'Social Pulse',
-                description: 'Sentiment & buzz tracking',
-                href: '/social-pulse',
-                icon: Share2,
+                title: 'Theatrical Radar',
+                description: 'Daily buzz, sentiment & forensics',
+                href: '/tiktok/explorer',
+                icon: Play,
                 adminOnly: false,
             },
             {
-                title: 'Industry Feed',
-                description: 'Curated social timeline',
+                title: 'Circuit Channels',
+                description: 'XXI, CGV, Cinépolis activity',
+                href: '/tiktok/exhibitors',
+                icon: Building2,
+                adminOnly: false,
+            },
+            {
+                title: 'Distributor Feed',
+                description: 'Official announcements & timeline',
                 href: '/social-feed',
                 icon: Rss,
                 adminOnly: false,
             },
             {
-                title: 'Source Settings',
-                description: 'Manage social sources',
-                href: '/social-feed/settings',
-                icon: Settings,
+                title: 'Ops & Pipeline Hub',
+                description: 'Sources, topology & telemetry',
+                href: '/tiktok/ops',
+                icon: Layers,
                 adminOnly: false,
             },
         ],
@@ -341,24 +326,21 @@ export function Sidebar() {
                             key={item.href}
                             href={item.href}
                             className={cn(
-                                'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors',
+                                'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
                                 isActive
                                     ? 'bg-primary text-primary-foreground'
                                     : 'hover:bg-muted text-muted-foreground hover:text-foreground'
                             )}
                             title={collapsed ? item.title : undefined}
                         >
-                            <Icon className="w-5 h-5 flex-shrink-0" />
+                            <Icon className="w-4 h-4 flex-shrink-0" />
                             {!collapsed && (
-                                <div className="overflow-hidden">
-                                    <p className="text-sm font-medium">{item.title}</p>
-                                    <p className={cn(
-                                        'text-sm',
-                                        isActive ? 'text-primary-foreground/70' : 'text-muted-foreground'
-                                    )}>
-                                        {item.description}
-                                    </p>
-                                </div>
+                                <span className={cn(
+                                    'text-sm',
+                                    isActive ? 'font-medium' : ''
+                                )}>
+                                    {item.title}
+                                </span>
                             )}
                         </Link>
                     );
