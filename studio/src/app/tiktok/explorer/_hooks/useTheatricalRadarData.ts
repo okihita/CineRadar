@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/api';
 import { getTodayJakarta } from '@/lib/timeUtils';
-import { normalizeTitleForMatching } from '@/features/tiktok/utils';
+import { normalizeTitleForMatching, extractMovieTitleFromText } from '@/features/tiktok/utils';
 import type {
     PulseLeaderboardItem,
     ExplorerPost,
@@ -28,7 +28,7 @@ export function useTheatricalRadarData(selectedDate: string) {
         return pulseResponse?.data?.leaderboard || [];
     }, [pulseResponse]);
 
-    const hasPulseData = pulseLeaderboard.length > 0;
+    const hasPulseData = pulseLeaderboard.length > 0 || Boolean(pulseResponse?.data?.ai_insights);
 
     // 2. Fetch real live scraped dataset
     const { data: liveResponse, isLoading: isLiveLoading } = useSWR(
@@ -162,41 +162,12 @@ export function useTheatricalRadarData(selectedDate: string) {
     const actionableInsights: ActionableInsights | null = useMemo(() => {
         if (!hasSocialCrawl) return null;
 
-        // Preferred source 1: Precomputed Gemini AI insights from live dataset
-        if (isDataAvailableForDate && liveData?.ai_insights && allPosts.length > 0) {
-            const ai = liveData.ai_insights;
-            const totalViews = allPosts.reduce((s, p) => s + (p.metrics?.views || 0), 0);
-            const totalShares = allPosts.reduce((s, p) => s + (p.metrics?.shares || 0), 0);
+        // Preferred source 1: Official Firestore Daily Pulse (with Gemini 3.8 Flash intelligence)
+        if (hasPulseData || pulseResponse?.data) {
+            const pulseDoc = pulseResponse?.data;
+            const pulseAi = pulseDoc?.ai_insights;
+            const knownMovies = [...pulseLeaderboard, ...activeShowtimeMovies];
 
-            return {
-                totalViews,
-                totalShares,
-                sovLeader: {
-                    title: ai.share_of_voice_leader || 'HARUSNYA HORROR',
-                    insight: `${((totalViews / 1000000)).toFixed(1)}M daily impressions across theatrical campaigns`,
-                },
-                womWinner: {
-                    title: 'Audience Excitement',
-                    positivePct: 83,
-                    insight: ai.organic_wom_ratio || '83% Organic WoM (High authentic audience conversations)',
-                },
-                viralityLeader: {
-                    title: ai.virality_velocity_leader || 'Daily Momentum',
-                    shares: totalShares || 18450,
-                    insight: ai.virality_velocity_leader ? `Momentum up ${ai.virality_velocity_leader}` : 'High share-to-view conversion across fan edits',
-                },
-                frictionTarget: {
-                    title: 'Showtime Availability',
-                    topComplaint: ai.critical_friction_alert || 'Limited late-night showtimes in non-capital cities',
-                },
-                morningBriefing: ai.morning_briefing || 'Early morning engagement spikes across TikTok creator feeds indicate solid momentum for today\'s theatrical titles.',
-                nightBriefing: ai.night_briefing || 'Evening showtime audience reactions highlighted strong word-of-mouth and high cinema attendance.',
-            };
-        }
-
-        // Preferred source 2: Robust synthesis directly from Firestore Pulse Leaderboard
-        if (hasPulseData) {
-            const pulseAi = pulseResponse?.data?.ai_insights;
             const sortedByViews = [...pulseLeaderboard].sort((a, b) => (b.total_views || 0) - (a.total_views || 0));
             const sortedByLikes = [...pulseLeaderboard].sort((a, b) => (b.total_likes || 0) - (a.total_likes || 0));
             const sortedByShares = [...pulseLeaderboard].sort((a, b) => (b.total_shares || 0) - (a.total_shares || 0));
@@ -206,40 +177,150 @@ export function useTheatricalRadarData(selectedDate: string) {
             const topShareMovie = sortedByShares[0];
             const frictionMovie = pulseLeaderboard.find((m) => (m.sentiment?.negative || 0) > 10) || pulseLeaderboard[pulseLeaderboard.length - 1];
 
-            const totalViews = pulseLeaderboard.reduce((s, m) => s + (m.total_views || 0), 0);
-            const totalShares = pulseLeaderboard.reduce((s, m) => s + (m.total_shares || 0), 0);
-            const totalLikes = pulseLeaderboard.reduce((s, m) => s + (m.total_likes || 0), 0);
+            const totalViews = pulseLeaderboard.reduce((s, m) => s + (m.total_views || 0), 0) || allPosts.reduce((s, p) => s + (p.metrics?.views || 0), 0);
+            const totalShares = pulseLeaderboard.reduce((s, m) => s + (m.total_shares || 0), 0) || allPosts.reduce((s, p) => s + (p.metrics?.shares || 0), 0);
+            const totalLikes = pulseLeaderboard.reduce((s, m) => s + (m.total_likes || 0), 0) || allPosts.reduce((s, p) => s + (p.metrics?.likes || 0), 0);
 
-            const likeRatio = topLikeMovie ? ((topLikeMovie.total_likes / (topLikeMovie.total_views || 1)) * 100).toFixed(1) : '0';
+            // 1. Share of Voice Leader
+            const sovTitle = extractMovieTitleFromText(pulseAi?.share_of_voice_leader, knownMovies)
+                || topViewMovie?.title
+                || allPosts[0]?.movieTitle
+                || activeShowtimeMovies[0]?.title
+                || 'Dominant Theatrical Slate';
+            const sovInsight = pulseAi?.share_of_voice_leader
+                || (topViewMovie ? `${(topViewMovie.total_views || 0).toLocaleString()} views on TikTok (#1 Buzz Leader)` : `${(totalViews / 1000000).toFixed(1)}M daily impressions across theatrical campaigns`);
+            const sovMetricValue = topViewMovie?.total_views
+                ? (topViewMovie.total_views >= 1000000 ? `${(topViewMovie.total_views / 1000000).toFixed(1)}M` : topViewMovie.total_views.toLocaleString())
+                : '#1 Buzz';
+
+            // 2. Organic WoM Ratio
+            const womPctMatch = pulseAi?.organic_wom_ratio?.match(/(\d+)%/);
+            const womPct = womPctMatch
+                ? parseInt(womPctMatch[1], 10)
+                : (topLikeMovie?.sentiment?.positive ?? (pulseLeaderboard.length > 0 ? Math.round(pulseLeaderboard.reduce((s, m) => s + (m.sentiment?.positive || 70), 0) / pulseLeaderboard.length) : 75));
+            const womTitle = topLikeMovie?.title
+                || extractMovieTitleFromText(pulseAi?.organic_wom_ratio, knownMovies)
+                || 'Audience Consensus';
+            const womInsight = pulseAi?.organic_wom_ratio
+                || (topLikeMovie ? `${(topLikeMovie.total_likes || 0).toLocaleString()} likes (${topLikeMovie.total_views ? ((topLikeMovie.total_likes / topLikeMovie.total_views) * 100).toFixed(1) : '0'}% like-to-view ratio)` : `${womPct}% authentic audience conversation ratio`);
+
+            // 3. Virality Velocity
+            const virPctMatch = pulseAi?.virality_velocity_leader?.match(/(\d+(?:\.\d+)?%)/);
+            const virTitle = extractMovieTitleFromText(pulseAi?.virality_velocity_leader, knownMovies)
+                || topShareMovie?.title
+                || 'Viral Momentum';
+            const virShares = topShareMovie?.total_shares || totalShares;
+            const virMetricValue = virPctMatch
+                ? virPctMatch[1]
+                : (virShares > 0 ? (virShares >= 1000000 ? `${(virShares / 1000000).toFixed(1)}M` : virShares.toLocaleString()) : 'Surging');
+            const virInsight = pulseAi?.virality_velocity_leader
+                || (topShareMovie ? `${(topShareMovie.total_shares || 0).toLocaleString()} organic shares across audience feeds` : 'High share-to-view conversion across fan edits');
+
+            // 4. Critical Friction Alert
+            const fricTitle = extractMovieTitleFromText(pulseAi?.critical_friction_alert, knownMovies)
+                || frictionMovie?.title
+                || 'Circuit Allocation & Capacity';
+            const fricComplaint = pulseAi?.critical_friction_alert
+                || frictionMovie?.sentiment?.criticism_themes?.[0]
+                || 'Ketersediaan jam tayang dan pembagian layar bioskop';
 
             return {
                 totalViews,
                 totalShares,
                 sovLeader: {
-                    title: topViewMovie?.title || 'Unknown',
-                    insight: pulseAi?.share_of_voice_leader || `${(topViewMovie?.total_views || 0).toLocaleString()} views on TikTok (#1 Buzz Leader)`,
+                    title: sovTitle,
+                    insight: sovInsight,
+                    metricValue: sovMetricValue,
+                    metricLabel: 'Volume Leader',
                 },
                 womWinner: {
-                    title: topLikeMovie?.title || 'Audience Excitement',
-                    positivePct: topLikeMovie?.sentiment?.positive ?? 80,
-                    insight: pulseAi?.organic_wom_ratio || `${(topLikeMovie?.total_likes || 0).toLocaleString()} likes (${likeRatio}% like-to-view ratio)`,
+                    title: womTitle,
+                    positivePct: womPct,
+                    insight: womInsight,
+                    metricValue: `${womPct}%`,
+                    metricLabel: 'Organic WoM',
                 },
                 viralityLeader: {
-                    title: topShareMovie?.title || 'Daily Momentum',
-                    shares: topShareMovie?.total_shares || 0,
-                    insight: pulseAi?.virality_velocity_leader || `${(topShareMovie?.total_shares || 0).toLocaleString()} organic shares across audience feeds`,
+                    title: virTitle,
+                    shares: virShares,
+                    insight: virInsight,
+                    metricValue: virMetricValue,
+                    metricLabel: virPctMatch ? 'Velocity' : 'Shares',
                 },
                 frictionTarget: {
-                    title: frictionMovie?.title || 'Showtime Availability',
-                    topComplaint: pulseAi?.critical_friction_alert || frictionMovie?.sentiment?.criticism_themes?.[0] || 'Ketersediaan jam tayang dan pembagian layar bioskop',
+                    title: fricTitle,
+                    topComplaint: fricComplaint,
+                    metricValue: 'Watch',
+                    metricLabel: 'Attention Point',
                 },
                 morningBriefing: pulseAi?.morning_briefing || `Daily 18:00 WIB Social Pulse recorded ${pulseLeaderboard.length} active theatrical movies across Cinema XXI, CGV, and Cinepolis with ${(totalViews / 1000000).toFixed(1)}M aggregated views and ${(totalLikes / 1000000).toFixed(1)}M likes.`,
-                nightBriefing: pulseAi?.night_briefing || `Evening showtime tracking confirms sustained engagement for top theatrical releases heading into prime showtimes.`,
+                nightBriefing: pulseAi?.night_briefing || 'Evening showtime tracking confirms sustained engagement for top theatrical releases heading into prime showtimes.',
+            };
+        }
+
+        // Preferred source 2: Dynamic computation from live scraped posts (if pulse doc not yet written)
+        if (isDataAvailableForDate && allPosts.length > 0) {
+            const totalViews = allPosts.reduce((s, p) => s + (p.metrics?.views || 0), 0);
+            const totalShares = allPosts.reduce((s, p) => s + (p.metrics?.shares || 0), 0);
+
+            // Group by movie dynamically
+            const movieMap = new Map<string, { views: number; likes: number; shares: number; postCount: number }>();
+            allPosts.forEach((p) => {
+                const cur = movieMap.get(p.movieTitle) || { views: 0, likes: 0, shares: 0, postCount: 0 };
+                cur.views += p.metrics?.views || 0;
+                cur.likes += p.metrics?.likes || 0;
+                cur.shares += p.metrics?.shares || 0;
+                cur.postCount += 1;
+                movieMap.set(p.movieTitle, cur);
+            });
+
+            const sortedByViews = [...movieMap.entries()].sort((a, b) => b[1].views - a[1].views);
+            const sortedByLikes = [...movieMap.entries()].sort((a, b) => b[1].likes - a[1].likes);
+            const sortedByShares = [...movieMap.entries()].sort((a, b) => b[1].shares - a[1].shares);
+
+            const topView = sortedByViews[0];
+            const topLike = sortedByLikes[0];
+            const topShare = sortedByShares[0];
+
+            const positivePostsCount = allPosts.filter((p) => p.sentiment === 'positive').length;
+            const livePositivePct = allPosts.length > 0 ? Math.round((positivePostsCount / allPosts.length) * 100) : 75;
+
+            return {
+                totalViews,
+                totalShares,
+                sovLeader: {
+                    title: topView ? topView[0] : (activeShowtimeMovies[0]?.title || 'Dominant Title'),
+                    insight: `${((totalViews / 1000000)).toFixed(1)}M daily impressions across tracked theatrical campaigns`,
+                    metricValue: topView ? (topView[1].views >= 1000000 ? `${(topView[1].views / 1000000).toFixed(1)}M` : topView[1].views.toLocaleString()) : '#1 Buzz',
+                    metricLabel: 'Volume Leader',
+                },
+                womWinner: {
+                    title: topLike ? topLike[0] : 'Audience Excitement',
+                    positivePct: livePositivePct,
+                    insight: `${livePositivePct}% organic audience positive sentiment ratio across ${allPosts.length} tracked posts`,
+                    metricValue: `${livePositivePct}%`,
+                    metricLabel: 'Organic WoM',
+                },
+                viralityLeader: {
+                    title: topShare ? topShare[0] : 'Daily Momentum',
+                    shares: topShare ? topShare[1].shares : totalShares,
+                    insight: topShare ? `${topShare[1].shares.toLocaleString()} shares generated across fan edits and reactions` : 'High share-to-view conversion across fan edits',
+                    metricValue: topShare ? (topShare[1].shares >= 1000000 ? `${(topShare[1].shares / 1000000).toFixed(1)}M` : topShare[1].shares.toLocaleString()) : 'Surging',
+                    metricLabel: 'Shares',
+                },
+                frictionTarget: {
+                    title: 'Capacity & Regional Allocation',
+                    topComplaint: 'Limited late-night showtimes and circuit allocation in secondary regions',
+                    metricValue: 'Watch',
+                    metricLabel: 'Attention Point',
+                },
+                morningBriefing: 'Early morning engagement spikes across TikTok creator feeds indicate solid momentum for today\'s theatrical titles.',
+                nightBriefing: 'Evening showtime audience reactions highlighted strong word-of-mouth and high cinema attendance.',
             };
         }
 
         return null;
-    }, [hasSocialCrawl, isDataAvailableForDate, liveData, allPosts, hasPulseData, pulseLeaderboard, pulseResponse]);
+    }, [hasSocialCrawl, hasPulseData, pulseResponse, pulseLeaderboard, activeShowtimeMovies, allPosts, isDataAvailableForDate]);
 
     // --- Per-Movie Sentiment Breakdown for Today's Active Lineup ---
     const todayMovieSentimentList: MovieSentimentItem[] = useMemo(() => {

@@ -130,20 +130,28 @@ export interface ActionableInsights {
     sovLeader: {
         title: string;
         insight: string;
+        metricValue?: string;
+        metricLabel?: string;
     };
     womWinner: {
         title: string;
         positivePct: number;
         insight: string;
+        metricValue?: string;
+        metricLabel?: string;
     };
     viralityLeader: {
         title: string;
         shares: number;
         insight: string;
+        metricValue?: string;
+        metricLabel?: string;
     };
     frictionTarget: {
         title: string;
         topComplaint: string;
+        metricValue?: string;
+        metricLabel?: string;
     };
     morningBriefing: string;
     nightBriefing: string;

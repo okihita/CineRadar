@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import type { ActionableInsights } from '@/features/tiktok/types';
 
 interface ActionableSignalsSectionProps {
@@ -37,109 +38,190 @@ export function ActionableSignalsSection({
                 </span>
             </div>
 
-            {/* 4 Actionable KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {/* Card 1: Share of Voice Leader */}
-                <Card className="bg-gradient-to-br from-indigo-500/5 via-card to-card border-indigo-500/20">
-                    <CardHeader className="p-3.5 pb-1">
-                        <CardDescription className="text-sm font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center justify-between">
-                            Share of Voice Leader
-                            <Trophy className="w-3.5 h-3.5" />
-                        </CardDescription>
-                        <CardTitle className="text-base font-bold text-foreground truncate">
-                            {insights.sovLeader.title}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-3.5 pt-1 space-y-1">
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-black font-mono text-indigo-600 dark:text-indigo-400">
-                                #1 Buzz
-                            </span>
-                        </div>
-                        <p className="text-sm text-muted-foreground truncate">
-                            {insights.sovLeader.insight}
-                        </p>
-                    </CardContent>
-                </Card>
+            {/* 4 Actionable KPI Cards with Balanced Multi-Line Layout & Full Hover Inspection */}
+            <TooltipProvider delayDuration={120}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    {/* Card 1: Share of Voice Leader */}
+                    <Card className="bg-gradient-to-br from-indigo-500/5 via-card to-card border-indigo-500/20 hover:border-indigo-500/40 transition-colors flex flex-col justify-between h-full">
+                        <CardHeader className="p-3.5 pb-1">
+                            <CardDescription className="text-sm font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center justify-between">
+                                <span>Share of Voice Leader</span>
+                                <Trophy className="w-4 h-4 shrink-0 text-indigo-500" />
+                            </CardDescription>
+                            <CardTitle className="text-base font-bold text-foreground truncate" title={insights.sovLeader.title}>
+                                {insights.sovLeader.title}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-3.5 pt-1 space-y-2 flex-1 flex flex-col justify-between">
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-2xl font-black font-mono text-indigo-600 dark:text-indigo-400">
+                                    {insights.sovLeader.metricValue || '#1 Buzz'}
+                                </span>
+                                <span className="text-sm text-muted-foreground font-medium">
+                                    {insights.sovLeader.metricLabel || 'Volume Leader'}
+                                </span>
+                            </div>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <p
+                                        className="text-sm text-muted-foreground line-clamp-3 leading-relaxed cursor-help transition-colors hover:text-foreground/90"
+                                        title={insights.sovLeader.insight}
+                                    >
+                                        {insights.sovLeader.insight}
+                                    </p>
+                                </TooltipTrigger>
+                                <TooltipContent
+                                    side="bottom"
+                                    align="start"
+                                    className="max-w-xs sm:max-w-md p-3 text-sm leading-relaxed bg-popover text-popover-foreground border border-border/80 shadow-xl"
+                                >
+                                    <p className="font-semibold text-foreground mb-1">
+                                        {insights.sovLeader.title}
+                                    </p>
+                                    <p className="text-muted-foreground">
+                                        {insights.sovLeader.insight}
+                                    </p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </CardContent>
+                    </Card>
 
-                {/* Card 2: Organic WoM Winner */}
-                <Card className="bg-gradient-to-br from-emerald-500/5 via-card to-card border-emerald-500/20">
-                    <CardHeader className="p-3.5 pb-1">
-                        <CardDescription className="text-sm font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center justify-between">
-                            Organic WoM Ratio
-                            <ThumbsUp className="w-3.5 h-3.5" />
-                        </CardDescription>
-                        <CardTitle className="text-base font-bold text-foreground truncate">
-                            {insights.womWinner.title || 'Audience Excitement'}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-3.5 pt-1 space-y-1">
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400">
-                                {insights.womWinner.positivePct}%
-                            </span>
-                            <span className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">
-                                High Positive
-                            </span>
-                        </div>
-                        <p className="text-sm text-muted-foreground truncate">
-                            {insights.womWinner.insight}
-                        </p>
-                    </CardContent>
-                </Card>
+                    {/* Card 2: Organic WoM Winner */}
+                    <Card className="bg-gradient-to-br from-emerald-500/5 via-card to-card border-emerald-500/20 hover:border-emerald-500/40 transition-colors flex flex-col justify-between h-full">
+                        <CardHeader className="p-3.5 pb-1">
+                            <CardDescription className="text-sm font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center justify-between">
+                                <span>Organic WoM Ratio</span>
+                                <ThumbsUp className="w-4 h-4 shrink-0 text-emerald-500" />
+                            </CardDescription>
+                            <CardTitle className="text-base font-bold text-foreground truncate" title={insights.womWinner.title}>
+                                {insights.womWinner.title}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-3.5 pt-1 space-y-2 flex-1 flex flex-col justify-between">
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400">
+                                    {insights.womWinner.metricValue || `${insights.womWinner.positivePct}%`}
+                                </span>
+                                <span className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">
+                                    {insights.womWinner.metricLabel || 'Organic WoM'}
+                                </span>
+                            </div>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <p
+                                        className="text-sm text-muted-foreground line-clamp-3 leading-relaxed cursor-help transition-colors hover:text-foreground/90"
+                                        title={insights.womWinner.insight}
+                                    >
+                                        {insights.womWinner.insight}
+                                    </p>
+                                </TooltipTrigger>
+                                <TooltipContent
+                                    side="bottom"
+                                    align="start"
+                                    className="max-w-xs sm:max-w-md p-3 text-sm leading-relaxed bg-popover text-popover-foreground border border-border/80 shadow-xl"
+                                >
+                                    <p className="font-semibold text-foreground mb-1">
+                                        {insights.womWinner.title}
+                                    </p>
+                                    <p className="text-muted-foreground">
+                                        {insights.womWinner.insight}
+                                    </p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </CardContent>
+                    </Card>
 
-                {/* Card 3: Virality Velocity Leader */}
-                <Card className="bg-gradient-to-br from-cyan-500/5 via-card to-card border-cyan-500/20">
-                    <CardHeader className="p-3.5 pb-1">
-                        <CardDescription className="text-sm font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400 flex items-center justify-between">
-                            Virality Velocity
-                            <Zap className="w-3.5 h-3.5" />
-                        </CardDescription>
-                        <CardTitle className="text-base font-bold text-foreground truncate">
-                            {insights.viralityLeader.title || 'Daily Momentum'}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-3.5 pt-1 space-y-1">
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-black font-mono text-cyan-600 dark:text-cyan-400">
-                                {(insights.viralityLeader.shares || 0).toLocaleString()}
-                            </span>
-                            <span className="text-sm text-muted-foreground font-mono">
-                                shares
-                            </span>
-                        </div>
-                        <p className="text-sm text-muted-foreground truncate">
-                            {insights.viralityLeader.insight}
-                        </p>
-                    </CardContent>
-                </Card>
+                    {/* Card 3: Virality Velocity Leader */}
+                    <Card className="bg-gradient-to-br from-cyan-500/5 via-card to-card border-cyan-500/20 hover:border-cyan-500/40 transition-colors flex flex-col justify-between h-full">
+                        <CardHeader className="p-3.5 pb-1">
+                            <CardDescription className="text-sm font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400 flex items-center justify-between">
+                                <span>Virality Velocity</span>
+                                <Zap className="w-4 h-4 shrink-0 text-cyan-500" />
+                            </CardDescription>
+                            <CardTitle className="text-base font-bold text-foreground truncate" title={insights.viralityLeader.title}>
+                                {insights.viralityLeader.title}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-3.5 pt-1 space-y-2 flex-1 flex flex-col justify-between">
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-2xl font-black font-mono text-cyan-600 dark:text-cyan-400">
+                                    {insights.viralityLeader.metricValue || (insights.viralityLeader.shares > 0 ? (insights.viralityLeader.shares).toLocaleString() : 'Surging')}
+                                </span>
+                                <span className="text-sm text-muted-foreground font-mono">
+                                    {insights.viralityLeader.metricLabel || (insights.viralityLeader.shares > 0 ? 'shares' : 'Velocity')}
+                                </span>
+                            </div>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <p
+                                        className="text-sm text-muted-foreground line-clamp-3 leading-relaxed cursor-help transition-colors hover:text-foreground/90"
+                                        title={insights.viralityLeader.insight}
+                                    >
+                                        {insights.viralityLeader.insight}
+                                    </p>
+                                </TooltipTrigger>
+                                <TooltipContent
+                                    side="bottom"
+                                    align="start"
+                                    className="max-w-xs sm:max-w-md p-3 text-sm leading-relaxed bg-popover text-popover-foreground border border-border/80 shadow-xl"
+                                >
+                                    <p className="font-semibold text-foreground mb-1">
+                                        {insights.viralityLeader.title}
+                                    </p>
+                                    <p className="text-muted-foreground">
+                                        {insights.viralityLeader.insight}
+                                    </p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </CardContent>
+                    </Card>
 
-                {/* Card 4: Critical Friction Alert */}
-                <Card className="bg-gradient-to-br from-amber-500/5 via-card to-card border-amber-500/20">
-                    <CardHeader className="p-3.5 pb-1">
-                        <CardDescription className="text-sm font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center justify-between">
-                            Friction Alert
-                            <AlertTriangle className="w-3.5 h-3.5" />
-                        </CardDescription>
-                        <CardTitle className="text-base font-bold text-foreground truncate">
-                            {insights.frictionTarget.title || 'Showtime Availability'}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-3.5 pt-1 space-y-1">
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-black font-mono text-amber-600 dark:text-amber-400">
-                                Watch
-                            </span>
-                            <span className="text-sm text-amber-600 dark:text-amber-400 font-medium">
-                                Attention Point
-                            </span>
-                        </div>
-                        <p className="text-sm text-muted-foreground truncate">
-                            {insights.frictionTarget.topComplaint}
-                        </p>
-                    </CardContent>
-                </Card>
-            </div>
+                    {/* Card 4: Critical Friction Alert */}
+                    <Card className="bg-gradient-to-br from-amber-500/5 via-card to-card border-amber-500/20 hover:border-amber-500/40 transition-colors flex flex-col justify-between h-full">
+                        <CardHeader className="p-3.5 pb-1">
+                            <CardDescription className="text-sm font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center justify-between">
+                                <span>Friction Alert</span>
+                                <AlertTriangle className="w-4 h-4 shrink-0 text-amber-500" />
+                            </CardDescription>
+                            <CardTitle className="text-base font-bold text-foreground truncate" title={insights.frictionTarget.title}>
+                                {insights.frictionTarget.title}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-3.5 pt-1 space-y-2 flex-1 flex flex-col justify-between">
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-2xl font-black font-mono text-amber-600 dark:text-amber-400">
+                                    {insights.frictionTarget.metricValue || 'Watch'}
+                                </span>
+                                <span className="text-sm text-amber-600 dark:text-amber-400 font-medium">
+                                    {insights.frictionTarget.metricLabel || 'Attention Point'}
+                                </span>
+                            </div>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <p
+                                        className="text-sm text-muted-foreground line-clamp-3 leading-relaxed cursor-help transition-colors hover:text-foreground/90"
+                                        title={insights.frictionTarget.topComplaint}
+                                    >
+                                        {insights.frictionTarget.topComplaint}
+                                    </p>
+                                </TooltipTrigger>
+                                <TooltipContent
+                                    side="bottom"
+                                    align="start"
+                                    className="max-w-xs sm:max-w-md p-3 text-sm leading-relaxed bg-popover text-popover-foreground border border-border/80 shadow-xl"
+                                >
+                                    <p className="font-semibold text-foreground mb-1">
+                                        {insights.frictionTarget.title}
+                                    </p>
+                                    <p className="text-muted-foreground">
+                                        {insights.frictionTarget.topComplaint}
+                                    </p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </CardContent>
+                    </Card>
+                </div>
+            </TooltipProvider>
 
             {/* Dual-Column Intelligence Briefings */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
