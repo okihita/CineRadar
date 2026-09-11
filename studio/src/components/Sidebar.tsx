@@ -5,9 +5,9 @@ import { usePathname } from 'next/navigation';
 import {
     MapPin, ChevronLeft, ChevronRight, ChevronDown,
     Database, Calendar, Clapperboard, Sun, Moon, Monitor,
-    LogOut, Users as UsersIcon, Share2, ArrowRightLeft,
-    TrendingUp, Rss, Settings, Shield, BookOpen, Radio, Swords, Library, Target,
-    Play, Video, Building2, Layers,
+    LogOut, Users as UsersIcon, ArrowRightLeft,
+    TrendingUp, Rss, Shield, BookOpen, Radio, Swords, Library, Target,
+    Play, Building2, Layers,
     type LucideIcon,
 } from 'lucide-react';
 import { useState, useCallback } from 'react';

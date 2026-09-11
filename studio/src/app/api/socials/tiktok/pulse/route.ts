@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
+import { getTodayJakarta } from '@/lib/timeUtils';
+
+export const dynamic = 'force-dynamic';
 
 interface DailyPulseDoc {
     date: string;
@@ -36,7 +39,7 @@ interface DailyPulseDoc {
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
-    const date = searchParams.get('date') || new Date().toISOString().split('T')[0];
+    const date = searchParams.get('date') || getTodayJakarta();
     const movieId = searchParams.get('movie_id');
 
     try {

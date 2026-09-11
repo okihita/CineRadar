@@ -92,7 +92,7 @@ export function MovieViralExplorerModal({
     );
 
     const pulseData = response?.data;
-    const posts = pulseData?.posts || [];
+    const posts = React.useMemo(() => pulseData?.posts || [], [pulseData?.posts]);
 
     const sortedPosts = React.useMemo(() => {
         const list = [...posts];
@@ -118,15 +118,15 @@ export function MovieViralExplorerModal({
                                     {movieTitle}
                                 </DialogTitle>
                                 {pulseData?.tier && (
-                                    <Badge variant="secondary" className="text-xs uppercase font-bold tracking-wider">
+                                    <Badge variant="secondary" className="text-sm uppercase font-bold tracking-wider">
                                         {pulseData.tier.replace('_', ' ')}
                                     </Badge>
                                 )}
                             </div>
-                            <DialogDescription className="text-xs sm:text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
-                                <span>📅 Date: <strong className="text-foreground">{date}</strong></span>
+                            <DialogDescription className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
+                                <span>Date: <strong className="text-foreground">{date}</strong></span>
                                 <span>•</span>
-                                <span>🎬 <strong className="text-foreground">{posts.length}</strong> top viral posts captured</span>
+                                <span><strong className="text-foreground">{posts.length}</strong> top viral posts captured</span>
                             </DialogDescription>
                         </div>
 
@@ -136,7 +136,7 @@ export function MovieViralExplorerModal({
                                 {pulseData.campaign_hashtags.map((tag) => (
                                     <span
                                         key={tag}
-                                        className="font-mono text-xs bg-primary/10 text-primary border border-primary/20 rounded-md px-2 py-0.5"
+                                        className="font-mono text-sm bg-primary/10 text-primary border border-primary/20 rounded-md px-2 py-0.5"
                                     >
                                         #{tag}
                                     </span>
@@ -149,25 +149,25 @@ export function MovieViralExplorerModal({
                     {pulseData && (
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3">
                             <div className="bg-background/80 p-2.5 rounded-lg border border-border/40 text-center">
-                                <p className="text-xs text-muted-foreground font-medium">Total Viral Views</p>
+                                <p className="text-sm text-muted-foreground font-medium">Total Viral Views</p>
                                 <p className="text-base sm:text-lg font-black font-mono text-foreground">
                                     {(pulseData.total_views || 0).toLocaleString()}
                                 </p>
                             </div>
                             <div className="bg-background/80 p-2.5 rounded-lg border border-border/40 text-center">
-                                <p className="text-xs text-muted-foreground font-medium">Total Likes</p>
+                                <p className="text-sm text-muted-foreground font-medium">Total Likes</p>
                                 <p className="text-base sm:text-lg font-black font-mono text-rose-500">
                                     {(pulseData.total_likes || 0).toLocaleString()}
                                 </p>
                             </div>
                             <div className="bg-background/80 p-2.5 rounded-lg border border-border/40 text-center">
-                                <p className="text-xs text-muted-foreground font-medium">Total Comments</p>
+                                <p className="text-sm text-muted-foreground font-medium">Total Comments</p>
                                 <p className="text-base sm:text-lg font-black font-mono text-cyan-500">
                                     {(pulseData.total_comments || 0).toLocaleString()}
                                 </p>
                             </div>
                             <div className="bg-background/80 p-2.5 rounded-lg border border-border/40 text-center">
-                                <p className="text-xs text-muted-foreground font-medium">Virality Shares</p>
+                                <p className="text-sm text-muted-foreground font-medium">Virality Shares</p>
                                 <p className="text-base sm:text-lg font-black font-mono text-amber-500">
                                     {(pulseData.total_shares || 0).toLocaleString()}
                                 </p>
@@ -177,7 +177,7 @@ export function MovieViralExplorerModal({
 
                     {/* Gemini AI Sentiment Highlights */}
                     {pulseData?.sentiment && (
-                        <div className="mt-3 p-3 rounded-lg border border-primary/20 bg-primary/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                        <div className="mt-3 p-3 rounded-lg border border-primary/20 bg-primary/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm">
                             <div className="space-y-1">
                                 <div className="flex items-center gap-1.5 font-bold text-primary">
                                     <Sparkles className="w-3.5 h-3.5" />
@@ -210,7 +210,7 @@ export function MovieViralExplorerModal({
                 <div className="p-3 sm:px-5 border-b border-border/30 bg-muted/10 flex items-center justify-between gap-2 shrink-0">
                     <div className="flex items-center gap-1.5">
                         <TrendingUp className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-xs font-semibold text-muted-foreground">Sort By:</span>
+                        <span className="text-sm font-semibold text-muted-foreground">Sort By:</span>
                     </div>
 
                     <div className="flex items-center gap-1">
@@ -218,7 +218,7 @@ export function MovieViralExplorerModal({
                             variant={sortMode === 'views' ? 'default' : 'ghost'}
                             size="sm"
                             onClick={() => setSortMode('views')}
-                            className="h-7 text-xs font-semibold px-2.5"
+                            className="h-7 text-sm font-semibold px-2.5"
                         >
                             Views
                         </Button>
@@ -226,7 +226,7 @@ export function MovieViralExplorerModal({
                             variant={sortMode === 'likes' ? 'default' : 'ghost'}
                             size="sm"
                             onClick={() => setSortMode('likes')}
-                            className="h-7 text-xs font-semibold px-2.5"
+                            className="h-7 text-sm font-semibold px-2.5"
                         >
                             Likes
                         </Button>
@@ -234,7 +234,7 @@ export function MovieViralExplorerModal({
                             variant={sortMode === 'comments' ? 'default' : 'ghost'}
                             size="sm"
                             onClick={() => setSortMode('comments')}
-                            className="h-7 text-xs font-semibold px-2.5"
+                            className="h-7 text-sm font-semibold px-2.5"
                         >
                             Comments
                         </Button>
@@ -242,7 +242,7 @@ export function MovieViralExplorerModal({
                             variant={sortMode === 'recent' ? 'default' : 'ghost'}
                             size="sm"
                             onClick={() => setSortMode('recent')}
-                            className="h-7 text-xs font-semibold px-2.5"
+                            className="h-7 text-sm font-semibold px-2.5"
                         >
                             Recent
                         </Button>
@@ -261,7 +261,7 @@ export function MovieViralExplorerModal({
                         <div className="text-center py-12 space-y-2">
                             <AlertCircle className="w-8 h-8 text-muted-foreground mx-auto" />
                             <p className="text-sm font-semibold text-foreground">No viral posts recorded for this movie yet</p>
-                            <p className="text-xs text-muted-foreground">The 18:00 WIB daily crawler monitors the top theatrical releases.</p>
+                            <p className="text-sm text-muted-foreground">The 18:00 WIB daily crawler monitors the top theatrical releases.</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -273,10 +273,10 @@ export function MovieViralExplorerModal({
                                     <div className="space-y-1.5">
                                         <div className="flex items-center justify-between gap-2">
                                             <div className="flex items-center gap-1.5 truncate">
-                                                <span className="text-xs font-bold text-foreground font-mono">
+                                                <span className="text-sm font-bold text-foreground font-mono">
                                                     #{idx + 1}
                                                 </span>
-                                                <span className="text-xs font-semibold text-primary truncate">
+                                                <span className="text-sm font-semibold text-primary truncate">
                                                     {post.author_handle || post.author_name}
                                                 </span>
                                             </div>
@@ -285,7 +285,7 @@ export function MovieViralExplorerModal({
                                                 href={post.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground font-semibold px-2 py-0.5 rounded bg-muted/40 hover:bg-muted transition-colors shrink-0"
+                                                className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground font-semibold px-2 py-0.5 rounded bg-muted/40 hover:bg-muted transition-colors shrink-0"
                                             >
                                                 <Play className="w-3 h-3 text-rose-500 fill-rose-500" />
                                                 Watch
@@ -293,13 +293,13 @@ export function MovieViralExplorerModal({
                                             </a>
                                         </div>
 
-                                        <p className="text-xs text-foreground/90 line-clamp-2 leading-relaxed">
+                                        <p className="text-sm text-foreground/90 line-clamp-2 leading-relaxed">
                                             {post.caption || 'No caption provided.'}
                                         </p>
                                     </div>
 
                                     {/* Metrics Footer */}
-                                    <div className="pt-2 border-t border-border/20 flex items-center justify-between text-xs text-muted-foreground font-mono">
+                                    <div className="pt-2 border-t border-border/20 flex items-center justify-between text-sm text-muted-foreground font-mono">
                                         <span className="flex items-center gap-1 font-bold text-foreground">
                                             <Play className="w-3 h-3 text-muted-foreground" />
                                             {(post.views || 0).toLocaleString()}
