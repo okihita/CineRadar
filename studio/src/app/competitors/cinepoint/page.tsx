@@ -24,18 +24,19 @@ function BoxOfficeAndCatalogContent() {
     ? (currentTab as BoxOfficeTabKey)
     : 'insights';
 
-  const boxOffice = useBoxOfficeData();
+  const boxOffice = useBoxOfficeData(activeTab === 'insights');
+  const { yearsData, yearsLoading, yearsError, loadYears } = boxOffice;
 
   // Preload Hall of Fame data if navigating directly to it
   useEffect(() => {
-    if (activeTab === 'hall-of-fame' && !boxOffice.yearsData && !boxOffice.yearsLoading) {
-      boxOffice.loadYears();
+    if (activeTab === 'hall-of-fame' && !yearsData && !yearsLoading && !yearsError) {
+      loadYears();
     }
-  }, [activeTab, boxOffice]);
+  }, [activeTab, yearsData, yearsLoading, yearsError, loadYears]);
 
   const handleTabChange = (val: string) => {
-    if (val === 'hall-of-fame' && !boxOffice.yearsData && !boxOffice.yearsLoading) {
-      boxOffice.loadYears();
+    if (val === 'hall-of-fame' && !yearsData && !yearsLoading && !yearsError) {
+      loadYears();
     }
     router.replace(`/competitors/cinepoint?tab=${val}`, { scroll: false });
   };
