@@ -74,7 +74,6 @@ function CompareDashboard() {
     const summaryMetrics = useMemo(() => {
         if (!compareData || !compareData.data) return {};
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const metrics: Record<string, CompareSummaryMetrics> = {};
 
         selectedMovieIds.forEach(id => {
@@ -195,7 +194,7 @@ function CompareDashboard() {
     };
 
     return (
-        <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
+        <div className="p-6 space-y-6 w-full">
             <PageHeader
                 title="Head-to-Head Compare"
                 description="Compare admissions and showtime performance across multiple movies."
