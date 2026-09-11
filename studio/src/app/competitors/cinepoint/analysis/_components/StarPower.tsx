@@ -22,7 +22,7 @@ export function StarPower({ factors, directorRankings, actorRankings }: StarPowe
           <CardHeader className="pb-2 border-b">
             <CardTitle className="text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2">
               <Clapperboard className="w-4 h-4 text-amber-500" /> Top Directors
-              <Link href="/competitors/cinepoint/analysis/directors" className="ml-auto text-sm font-bold text-primary hover:underline normal-case tracking-normal">
+              <Link href="/competitors/cinepoint/analysis?tab=directors" className="ml-auto text-sm font-bold text-primary hover:underline normal-case tracking-normal">
                 View all →
               </Link>
             </CardTitle>
@@ -38,7 +38,7 @@ export function StarPower({ factors, directorRankings, actorRankings }: StarPowe
           <CardHeader className="pb-2 border-b">
             <CardTitle className="text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2">
               <Star className="w-4 h-4 text-indigo-500" /> Top Actors
-              <Link href="/competitors/cinepoint/analysis/actors" className="ml-auto text-sm font-bold text-primary hover:underline normal-case tracking-normal">
+              <Link href="/competitors/cinepoint/analysis?tab=actors" className="ml-auto text-sm font-bold text-primary hover:underline normal-case tracking-normal">
                 View all →
               </Link>
             </CardTitle>
@@ -71,10 +71,12 @@ function PersonTable({ rankings }: { rankings: PersonRanking[] }) {
             <tr key={p.name} className="border-b last:border-0 hover:bg-muted/20">
               <td className="p-2 text-muted-foreground/30 font-mono">{i + 1}</td>
               <td className="p-2">
-                <button onClick={() => { window.location.href = `/competitors/cinepoint/analysis/person/${encodeURIComponent(p.name)}`; }}
-                  className="font-bold hover:text-primary transition-colors text-left cursor-pointer">
+                <Link
+                  href={`/competitors/cinepoint/analysis/person/${encodeURIComponent(p.name)}`}
+                  className="font-bold hover:text-primary transition-colors text-left block"
+                >
                   {p.name}
-                </button>
+                </Link>
               </td>
               <td className="p-2 text-right font-mono text-muted-foreground">{p.movie_count}</td>
               <td className="p-2 text-right font-mono font-bold">{formatAdm(p.avg_admission)}</td>
