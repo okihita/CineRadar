@@ -116,7 +116,7 @@ export default function CinePointMovieDetailPage({
                 <p className="text-sm text-muted-foreground/40 uppercase tracking-widest font-bold">Language</p>
               </div>
             )}
-            <Link href="/competitors/cinepoint/insights">
+            <Link href="/competitors/cinepoint?tab=insights">
               <Button variant="outline" size="sm" className="h-8 gap-2 text-sm font-black uppercase tracking-wider rounded-xl">
                 Insights
                 <ChevronRight className="w-3 h-3" />
