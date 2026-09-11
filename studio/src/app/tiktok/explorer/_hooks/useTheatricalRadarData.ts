@@ -7,6 +7,7 @@ import type {
     PulseLeaderboardItem,
     ExplorerPost,
     ExplorerComment,
+    DailyPulseDoc,
     ActionableInsights,
     MovieSentimentItem,
     TikTokSourcesResponse,
@@ -20,10 +21,7 @@ export function useTheatricalRadarData(selectedDate: string) {
     // 1. Fetch daily 18:00 WIB social pulse leaderboard
     const { data: pulseResponse } = useSWR<{
         success: boolean;
-        data?: {
-            total_movies_tracked: number;
-            leaderboard: PulseLeaderboardItem[];
-        };
+        data?: DailyPulseDoc;
     }>(`/api/socials/tiktok/pulse?date=${selectedDate}`, fetcher, { revalidateOnFocus: false });
 
     const pulseLeaderboard: PulseLeaderboardItem[] = useMemo(() => {
@@ -198,6 +196,7 @@ export function useTheatricalRadarData(selectedDate: string) {
 
         // Preferred source 2: Robust synthesis directly from Firestore Pulse Leaderboard
         if (hasPulseData) {
+            const pulseAi = pulseResponse?.data?.ai_insights;
             const sortedByViews = [...pulseLeaderboard].sort((a, b) => (b.total_views || 0) - (a.total_views || 0));
             const sortedByLikes = [...pulseLeaderboard].sort((a, b) => (b.total_likes || 0) - (a.total_likes || 0));
             const sortedByShares = [...pulseLeaderboard].sort((a, b) => (b.total_shares || 0) - (a.total_shares || 0));
@@ -218,29 +217,29 @@ export function useTheatricalRadarData(selectedDate: string) {
                 totalShares,
                 sovLeader: {
                     title: topViewMovie?.title || 'Unknown',
-                    insight: `${(topViewMovie?.total_views || 0).toLocaleString()} views on TikTok (#1 Buzz Leader)`,
+                    insight: pulseAi?.share_of_voice_leader || `${(topViewMovie?.total_views || 0).toLocaleString()} views on TikTok (#1 Buzz Leader)`,
                 },
                 womWinner: {
                     title: topLikeMovie?.title || 'Audience Excitement',
                     positivePct: topLikeMovie?.sentiment?.positive ?? 80,
-                    insight: `${(topLikeMovie?.total_likes || 0).toLocaleString()} likes (${likeRatio}% like-to-view ratio)`,
+                    insight: pulseAi?.organic_wom_ratio || `${(topLikeMovie?.total_likes || 0).toLocaleString()} likes (${likeRatio}% like-to-view ratio)`,
                 },
                 viralityLeader: {
                     title: topShareMovie?.title || 'Daily Momentum',
                     shares: topShareMovie?.total_shares || 0,
-                    insight: `${(topShareMovie?.total_shares || 0).toLocaleString()} organic shares across audience feeds`,
+                    insight: pulseAi?.virality_velocity_leader || `${(topShareMovie?.total_shares || 0).toLocaleString()} organic shares across audience feeds`,
                 },
                 frictionTarget: {
                     title: frictionMovie?.title || 'Showtime Availability',
-                    topComplaint: frictionMovie?.sentiment?.criticism_themes?.[0] || 'Ketersediaan jam tayang dan pembagian layar bioskop',
+                    topComplaint: pulseAi?.critical_friction_alert || frictionMovie?.sentiment?.criticism_themes?.[0] || 'Ketersediaan jam tayang dan pembagian layar bioskop',
                 },
-                morningBriefing: `Daily 18:00 WIB Social Pulse recorded ${pulseLeaderboard.length} active theatrical movies across Cinema XXI, CGV, and Cinepolis with ${(totalViews / 1000000).toFixed(1)}M aggregated views and ${(totalLikes / 1000000).toFixed(1)}M likes.`,
-                nightBriefing: `Evening showtime tracking confirms sustained engagement for top theatrical releases heading into prime showtimes.`,
+                morningBriefing: pulseAi?.morning_briefing || `Daily 18:00 WIB Social Pulse recorded ${pulseLeaderboard.length} active theatrical movies across Cinema XXI, CGV, and Cinepolis with ${(totalViews / 1000000).toFixed(1)}M aggregated views and ${(totalLikes / 1000000).toFixed(1)}M likes.`,
+                nightBriefing: pulseAi?.night_briefing || `Evening showtime tracking confirms sustained engagement for top theatrical releases heading into prime showtimes.`,
             };
         }
 
         return null;
-    }, [hasSocialCrawl, isDataAvailableForDate, liveData, allPosts, hasPulseData, pulseLeaderboard]);
+    }, [hasSocialCrawl, isDataAvailableForDate, liveData, allPosts, hasPulseData, pulseLeaderboard, pulseResponse]);
 
     // --- Per-Movie Sentiment Breakdown for Today's Active Lineup ---
     const todayMovieSentimentList: MovieSentimentItem[] = useMemo(() => {

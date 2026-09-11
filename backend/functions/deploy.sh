@@ -258,7 +258,7 @@ deploy_sync_exhibitors() {
 }
 
 deploy_daily_pulse() {
-    echo "🔥 Deploying 18:00 WIB Daily TikTok Social Box Office Crawler..."
+    echo "Deploying Multi-Window TikTok Social Box Office Function..."
     cd socials/tiktok/crawl_daily_pulse
     gcloud functions deploy crawl-tiktok-daily-pulse \
         --gen2 \
@@ -274,8 +274,8 @@ deploy_daily_pulse() {
         --project="$PROJECT_ID"
     cd ../../../
     
-    # Create Daily 18:00 WIB Scheduler
-    echo "⏰ Creating Daily 18:00 WIB Social Box Office Scheduler..."
+    # Create Daily Multi-Window Schedulers (11:00 WIB, 18:00 WIB, 23:00 WIB)
+    echo "Configuring Social Box Office Schedulers (11:00 WIB, 18:00 WIB, 23:00 WIB)..."
     PULSE_URL=$(gcloud functions describe crawl-tiktok-daily-pulse \
         --gen2 \
         --region="$REGION" \
@@ -283,8 +283,27 @@ deploy_daily_pulse() {
         --format='value(serviceConfig.uri)' 2>/dev/null)
         
     if [ -z "$PULSE_URL" ]; then
-        echo "   ❌ Error: crawl-tiktok-daily-pulse URL not found."
+        echo "Error: crawl-tiktok-daily-pulse URL not found."
     else
+        # 1. Morning Trajectory Window (11:00 WIB)
+        gcloud scheduler jobs delete daily-social-morning \
+            --location="$REGION" \
+            --project="$PROJECT_ID" \
+            --quiet 2>/dev/null || true
+            
+        gcloud scheduler jobs create http daily-social-morning \
+            --location="$REGION" \
+            --schedule="0 11 * * *" \
+            --time-zone="Asia/Jakarta" \
+            --uri="$PULSE_URL" \
+            --http-method=POST \
+            --message-body='{"window":"morning"}' \
+            --headers="Content-Type=application/json,User-Agent=Google-Cloud-Scheduler" \
+            --project="$PROJECT_ID"
+            
+        echo "   - Scheduler: Morning Trajectory at 11:00 WIB"
+
+        # 2. Main Daily Pulse Window (18:00 WIB)
         gcloud scheduler jobs delete daily-social-pulse \
             --location="$REGION" \
             --project="$PROJECT_ID" \
@@ -296,10 +315,29 @@ deploy_daily_pulse() {
             --time-zone="Asia/Jakarta" \
             --uri="$PULSE_URL" \
             --http-method=POST \
-            --headers="User-Agent=Google-Cloud-Scheduler" \
+            --message-body='{"window":"pulse"}' \
+            --headers="Content-Type=application/json,User-Agent=Google-Cloud-Scheduler" \
             --project="$PROJECT_ID"
             
-        echo "   ✓ Scheduler: Daily Social Box Office Pulse at 18:00 WIB"
+        echo "   - Scheduler: Daily Pulse Crawl at 18:00 WIB"
+
+        # 3. Night Recap Window (23:00 WIB)
+        gcloud scheduler jobs delete daily-social-night \
+            --location="$REGION" \
+            --project="$PROJECT_ID" \
+            --quiet 2>/dev/null || true
+            
+        gcloud scheduler jobs create http daily-social-night \
+            --location="$REGION" \
+            --schedule="0 23 * * *" \
+            --time-zone="Asia/Jakarta" \
+            --uri="$PULSE_URL" \
+            --http-method=POST \
+            --message-body='{"window":"night"}' \
+            --headers="Content-Type=application/json,User-Agent=Google-Cloud-Scheduler" \
+            --project="$PROJECT_ID"
+            
+        echo "   - Scheduler: Night Recap at 23:00 WIB"
     fi
 }
 

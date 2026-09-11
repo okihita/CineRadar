@@ -732,7 +732,7 @@ export default function SocialFeedPage() {
                         <Button
                             variant="outline"
                             size="sm"
-                            className="h-8 px-3 gap-1.5 text-xs font-semibold rounded-xl border-border/60"
+                            className="h-8 px-3 gap-1.5 text-sm font-semibold rounded-xl border-border/60"
                         >
                             <Settings className="w-3.5 h-3.5 text-muted-foreground" />
                             Source Settings

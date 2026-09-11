@@ -88,11 +88,22 @@ export interface PulseLeaderboardItem {
     };
 }
 
+export interface PulseAiInsights {
+    share_of_voice_leader?: string;
+    organic_wom_ratio?: string;
+    virality_velocity_leader?: string;
+    critical_friction_alert?: string;
+    morning_briefing?: string;
+    night_briefing?: string;
+}
+
 export interface DailyPulseDoc {
     date: string;
     updated_at: string;
     total_movies_tracked: number;
     leaderboard: PulseLeaderboardItem[];
+    ai_insights?: PulseAiInsights;
+    gemini_model?: string;
 }
 
 export interface MoviePulseResponse {
