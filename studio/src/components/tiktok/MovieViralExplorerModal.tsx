@@ -25,46 +25,8 @@ import {
     AlertCircle,
 } from 'lucide-react';
 
-interface ViralPost {
-    id: string;
-    url: string;
-    author_name: string;
-    author_handle: string;
-    caption: string;
-    hashtags: string[];
-    views: number;
-    likes: number;
-    comments: number;
-    shares: number;
-    published_at: string;
-}
-
-interface SentimentData {
-    positive: number;
-    mixed: number;
-    negative: number;
-    hype_score?: number;
-    praise_points?: string[];
-    criticism_themes?: string[];
-}
-
-interface MoviePulseResponse {
-    success: boolean;
-    data?: {
-        movie_id: string;
-        title: string;
-        date: string;
-        tier: string;
-        total_posts: number;
-        total_views: number;
-        total_likes: number;
-        total_comments: number;
-        total_shares: number;
-        campaign_hashtags: string[];
-        sentiment?: SentimentData;
-        posts: ViralPost[];
-    };
-}
+import { fetcher } from '@/lib/api';
+import type { MoviePulseResponse } from '@/features/tiktok/types';
 
 interface Props {
     movieId: string | null;
@@ -73,8 +35,6 @@ interface Props {
     isOpen: boolean;
     onClose: () => void;
 }
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export function MovieViralExplorerModal({
     movieId,
