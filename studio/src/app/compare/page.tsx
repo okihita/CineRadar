@@ -3,8 +3,10 @@
 import { useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import useSWR from 'swr';
+import Link from 'next/link';
 import { PageHeader } from '@/components/PageHeader';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Loader2, AlertCircle, Tv } from 'lucide-react';
 import { format, subDays, parseISO } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { fetcher } from '@/lib/api';
@@ -198,7 +200,24 @@ function CompareDashboard() {
             <PageHeader
                 title="Head-to-Head Compare"
                 description="Compare admissions and showtime performance across multiple movies."
-            />
+            >
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 px-4 gap-2 rounded-xl border-border/70 hover:bg-primary hover:text-primary-foreground transition-all shadow-sm group"
+                    asChild
+                >
+                    <Link
+                        href={dateRange.to ? `/stream?date=${format(dateRange.to, 'yyyy-MM-dd')}` : '/stream'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Open full-bleed broadcast quick count backdrop in a new window"
+                    >
+                        <Tv className="w-4 h-4 text-primary group-hover:text-primary-foreground transition-colors" />
+                        <span className="font-bold tracking-tight text-sm uppercase">Quick Count Viewer</span>
+                    </Link>
+                </Button>
+            </PageHeader>
 
             <CompareControlPanel
                 selectedMovieIds={selectedMovieIds}
