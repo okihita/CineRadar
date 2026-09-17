@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 import { Sidebar } from '@/components/Sidebar';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useSession } from 'next-auth/react';
@@ -11,8 +12,19 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
     const { data: session, status } = useSession();
+    const pathname = usePathname();
+    const isStreamRoute = pathname?.startsWith('/stream');
 
-    // 1. Prevent Layout Shift: Show the sidebar shell while checking session
+    // 1. Broadcast / Stream Mode: 100% full-bleed canvas, zero sidebar or layout shift
+    if (isStreamRoute) {
+        return (
+            <main className="w-screen h-screen overflow-hidden bg-zinc-950 text-foreground">
+                <ErrorBoundary>{children}</ErrorBoundary>
+            </main>
+        );
+    }
+
+    // 2. Prevent Layout Shift: Show the sidebar shell while checking session
     if (status === 'loading') {
         return (
             <div className="flex h-screen">
