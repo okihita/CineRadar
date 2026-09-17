@@ -21,7 +21,6 @@ interface StreamHudHeaderProps {
     onRefresh: () => void;
     isRefreshing: boolean;
     showControls: boolean;
-    lastUpdatedAt?: number;
     onOpenSettings?: () => void;
 }
 
@@ -46,7 +45,6 @@ export function StreamHudHeader({
     onRefresh,
     isRefreshing,
     showControls,
-    lastUpdatedAt,
     onOpenSettings,
 }: StreamHudHeaderProps) {
     const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
@@ -61,46 +59,13 @@ export function StreamHudHeader({
         return () => clearInterval(timer);
     }, []);
 
-    // Live countdown to next 30s auto-refresh
-    const [nextRefreshDisplay, setNextRefreshDisplay] = useState<{ time: string; seconds: number }>({
-        time: '--:--:-- WIB',
-        seconds: 30,
-    });
-
-    useEffect(() => {
-        const updateCountdown = () => {
-            const now = Date.now();
-            const base = lastUpdatedAt || now;
-            const target = base + 30000;
-            const diffMs = Math.max(0, target - now);
-            const remainingSec = Math.ceil(diffMs / 1000);
-
-            const formattedTarget = new Intl.DateTimeFormat('en-GB', {
-                timeZone: 'Asia/Jakarta',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false,
-            }).format(new Date(target));
-
-            setNextRefreshDisplay({
-                time: `${formattedTarget} WIB`,
-                seconds: remainingSec,
-            });
-        };
-
-        updateCountdown();
-        const interval = setInterval(updateCountdown, 1000);
-        return () => clearInterval(interval);
-    }, [lastUpdatedAt]);
-
     const tier = getPerformanceTier(summary.nationalAvgOccupancyPct);
 
     return (
         <header className="relative z-30 w-full border-b border-border bg-card/90 backdrop-blur-xl px-4 sm:px-6 py-3 transition-all">
             <div className="flex flex-wrap 2xl:flex-nowrap items-center justify-between gap-3 sm:gap-4">
                 
-                {/* LEFT: Branding, Live Signal & Next Refresh Timer */}
+                {/* LEFT: Branding & Live Signal */}
                 <div className="flex items-center gap-3 sm:gap-4 order-1 flex-shrink-0">
                     {/* Kotak Kantor Station Bug Ident */}
                     <div className="relative h-10 w-14 sm:h-12 sm:w-16 flex-shrink-0 bg-white/95 dark:bg-white rounded-xl p-1 shadow-md shadow-red-950/20 border border-red-500/30 flex items-center justify-center overflow-hidden transition-transform hover:scale-105">
@@ -127,20 +92,13 @@ export function StreamHudHeader({
                                     {clock || '--:--:-- WIB'}
                                 </span>
                             </div>
-                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                            <div className="flex items-center gap-2 mt-0.5">
                                 <h1 className="text-base sm:text-lg font-black uppercase tracking-tight text-foreground flex items-center gap-1.5">
                                     <span className="text-red-600 dark:text-red-400">Kotak Kantor</span>
                                     <span className="text-muted-foreground text-sm font-normal">×</span>
                                     <span>CineRadar</span>
                                     <span className="text-muted-foreground text-sm font-normal font-mono">/ {summary.date}</span>
                                 </h1>
-                                <span className="hidden sm:inline text-muted-foreground/40 font-mono text-sm">|</span>
-                                <div className="flex items-center gap-1 text-sm font-mono text-muted-foreground">
-                                    <span>Next refresh at</span>
-                                    <span className="font-bold text-foreground">
-                                        {isRefreshing ? 'Updating...' : `${nextRefreshDisplay.time} (${nextRefreshDisplay.seconds}s)`}
-                                    </span>
-                                </div>
                             </div>
                         </div>
                     </div>

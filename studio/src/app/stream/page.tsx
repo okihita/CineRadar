@@ -199,7 +199,6 @@ function StreamBackdropContent() {
                 onRefresh={handleManualRefresh}
                 isRefreshing={isRefreshing}
                 showControls={showControls}
-                lastUpdatedAt={lastUpdatedAt}
                 onOpenSettings={() => setSettingsOpen(true)}
             />
 
@@ -230,6 +229,8 @@ function StreamBackdropContent() {
                 <StreamLeaderboard
                     movies={displayData.movies}
                     autoCycle={autoCycle}
+                    lastUpdatedAt={lastUpdatedAt}
+                    isRefreshing={isRefreshing}
                 />
             )}
 

@@ -11,14 +11,51 @@ interface StreamLeaderboardProps {
     movies: StreamMovieItem[];
     layoutMode?: StreamLayoutMode;
     autoCycle?: boolean;
+    lastUpdatedAt?: number;
+    isRefreshing?: boolean;
 }
 
 export function StreamLeaderboard({
     movies,
     layoutMode = 'landscape',
     autoCycle = true,
+    lastUpdatedAt,
+    isRefreshing = false,
 }: StreamLeaderboardProps) {
     const [highlightIndex, setHighlightIndex] = useState(0);
+
+    // Live countdown to next 30s auto-refresh
+    const [nextRefreshDisplay, setNextRefreshDisplay] = useState<{ time: string; seconds: number }>({
+        time: '--:--:-- WIB',
+        seconds: 30,
+    });
+
+    useEffect(() => {
+        const updateCountdown = () => {
+            const now = Date.now();
+            const base = lastUpdatedAt || now;
+            const target = base + 30000;
+            const diffMs = Math.max(0, target - now);
+            const remainingSec = Math.ceil(diffMs / 1000);
+
+            const formattedTarget = new Intl.DateTimeFormat('en-GB', {
+                timeZone: 'Asia/Jakarta',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false,
+            }).format(new Date(target));
+
+            setNextRefreshDisplay({
+                time: `${formattedTarget} WIB`,
+                seconds: remainingSec,
+            });
+        };
+
+        updateCountdown();
+        const interval = setInterval(updateCountdown, 1000);
+        return () => clearInterval(interval);
+    }, [lastUpdatedAt]);
 
     const top5 = useMemo(() => movies.slice(0, 5), [movies]);
     const otherMovies = useMemo(() => (movies.length > 5 ? movies.slice(5) : []), [movies]);
@@ -149,16 +186,23 @@ export function StreamLeaderboard({
         <div className="flex-1 p-4 sm:p-6 overflow-y-auto custom-scrollbar flex flex-col gap-6">
             {/* SECTION 1: Top 5 Theatrical Headliners */}
             <div className="flex flex-col gap-3">
-                <div className="flex items-center justify-between border-b border-border/60 pb-2">
-                    <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between border-b border-border/60 pb-2 gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-mono text-sm font-black uppercase tracking-wider text-foreground">
                             Top 5 Theatrical Headliners
                         </span>
                         <span className="font-mono text-sm text-muted-foreground hidden sm:inline">
                             Live Performance Matrix
                         </span>
+                        <span className="hidden sm:inline text-muted-foreground/40 font-mono text-sm">|</span>
+                        <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground">
+                            <span>Next refresh at</span>
+                            <span className="font-bold text-foreground">
+                                {isRefreshing ? 'Updating...' : `${nextRefreshDisplay.time} (${nextRefreshDisplay.seconds}s)`}
+                            </span>
+                        </div>
                     </div>
-                    <span className="font-mono text-sm text-muted-foreground">
+                    <span className="font-mono text-sm text-muted-foreground shrink-0">
                         {movies.length} Active National Releases
                     </span>
                 </div>
