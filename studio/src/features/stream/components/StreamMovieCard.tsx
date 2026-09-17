@@ -9,9 +9,15 @@ interface StreamMovieCardProps {
     movie: StreamMovieItem;
     highlighted?: boolean;
     compact?: boolean;
+    hero?: boolean;
 }
 
-export function StreamMovieCard({ movie, highlighted = false, compact = false }: StreamMovieCardProps) {
+export function StreamMovieCard({
+    movie,
+    highlighted = false,
+    compact = false,
+    hero = false,
+}: StreamMovieCardProps) {
     const tier = getPerformanceTier(movie.avgOccupancyPct);
 
     // Rank styling: Distinct styling for top podium positions
@@ -21,17 +27,17 @@ export function StreamMovieCard({ movie, highlighted = false, compact = false }:
             ? 'bg-zinc-200 text-black border-zinc-100 shadow-zinc-400/20 shadow-md'
             : movie.rank === 3
                 ? 'bg-amber-700 text-white border-amber-600 shadow-amber-900/20 shadow-md'
-                : 'bg-zinc-800/80 text-zinc-300 border-zinc-700';
+                : 'bg-muted text-muted-foreground border-border';
 
     return (
         <div
             className={`
                 relative overflow-hidden rounded-2xl border transition-all duration-300 flex flex-col justify-between
                 ${highlighted
-                    ? 'border-primary/80 bg-zinc-900/90 shadow-2xl shadow-primary/10 ring-1 ring-primary/40 scale-[1.01]'
-                    : 'border-zinc-800/80 bg-zinc-900/60 backdrop-blur-md hover:border-zinc-700'
+                    ? 'border-primary/80 bg-card/95 shadow-2xl shadow-primary/10 ring-1 ring-primary/40 scale-[1.01]'
+                    : 'border-border/80 bg-card/60 backdrop-blur-md hover:border-border'
                 }
-                ${compact ? 'p-3.5' : 'p-4'}
+                ${hero ? 'p-5 lg:p-6 border-primary/40' : compact ? 'p-3.5' : 'p-4'}
             `}
         >
             {/* Top Accent Line for #1 */}
@@ -39,20 +45,25 @@ export function StreamMovieCard({ movie, highlighted = false, compact = false }:
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 via-amber-300 to-amber-500" />
             )}
 
-            <div className="flex gap-4 items-start">
+            <div className={`flex gap-4 items-start ${hero ? 'sm:gap-6' : ''}`}>
                 {/* Poster & Rank Indicator */}
-                <div className="relative flex-shrink-0 w-20 sm:w-24 aspect-[2/3] rounded-xl overflow-hidden bg-zinc-950 border border-zinc-800 shadow-inner">
+                <div
+                    className={`
+                        relative flex-shrink-0 aspect-[2/3] rounded-xl overflow-hidden bg-muted border border-border shadow-inner
+                        ${hero ? 'w-24 sm:w-32' : 'w-20 sm:w-24'}
+                    `}
+                >
                     {movie.poster ? (
                         <Image
                             src={movie.poster}
                             alt={movie.title}
                             fill
                             className="object-cover"
-                            sizes="(max-width: 768px) 80px, 96px"
+                            sizes={hero ? '(max-width: 768px) 96px, 128px' : '(max-width: 768px) 80px, 96px'}
                         />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center text-zinc-700">
-                            <Film className="w-8 h-8" />
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                            <Film className={hero ? 'w-10 h-10' : 'w-8 h-8'} />
                         </div>
                     )}
 
@@ -79,24 +90,29 @@ export function StreamMovieCard({ movie, highlighted = false, compact = false }:
                     <div>
                         <div className="flex items-center gap-2 flex-wrap mb-1">
                             {movie.ageCategory && (
-                                <span className="px-2 py-0.5 rounded text-sm font-mono font-bold bg-zinc-800 text-zinc-400 border border-zinc-700/60">
+                                <span className="px-2 py-0.5 rounded text-sm font-mono font-bold bg-muted text-muted-foreground border border-border/60">
                                     {movie.ageCategory}
                                 </span>
                             )}
                             {movie.rank === 1 && (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-sm font-bold uppercase bg-amber-400/15 text-amber-300 border border-amber-400/30">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-sm font-bold uppercase bg-amber-400/15 text-amber-600 dark:text-amber-300 border border-amber-400/30">
                                     <Sparkles className="w-3 h-3" />
                                     No. 1 Box Office
                                 </span>
                             )}
                         </div>
 
-                        <h3 className="font-black text-base sm:text-lg text-white leading-tight tracking-tight line-clamp-2 uppercase">
+                        <h3
+                            className={`
+                                font-black text-foreground leading-tight tracking-tight uppercase
+                                ${hero ? 'text-lg sm:text-2xl line-clamp-2' : 'text-base sm:text-lg line-clamp-2'}
+                            `}
+                        >
                             {movie.title}
                         </h3>
 
                         {movie.genres && (
-                            <p className="text-sm text-zinc-400 font-medium truncate mt-0.5">
+                            <p className="text-sm text-muted-foreground font-medium truncate mt-0.5">
                                 {movie.genres}
                             </p>
                         )}
@@ -115,8 +131,8 @@ export function StreamMovieCard({ movie, highlighted = false, compact = false }:
                                     key={circuit}
                                     className={`
                                         px-2 py-0.5 rounded-md text-sm font-mono font-bold border tracking-wider
-                                        ${tw ? tw.badgeLight : 'bg-zinc-800/80 text-zinc-400'}
-                                        ${tw ? tw.text : ''} border-zinc-700/50
+                                        ${tw ? tw.badgeLight : 'bg-muted text-muted-foreground'}
+                                        ${tw ? tw.text : ''} border-border/60
                                     `}
                                 >
                                     {circuit}
@@ -128,15 +144,15 @@ export function StreamMovieCard({ movie, highlighted = false, compact = false }:
             </div>
 
             {/* Quick Count Performance Matrix */}
-            <div className="mt-3 pt-3 border-t border-zinc-800/80 grid grid-cols-3 gap-2">
+            <div className={`mt-3 pt-3 border-t border-border/60 grid grid-cols-3 gap-2 ${hero ? 'sm:gap-3' : ''}`}>
                 {/* Showtimes & Share */}
-                <div className="flex flex-col bg-zinc-950/60 rounded-xl p-2 border border-zinc-800/50">
-                    <div className="flex items-center gap-1 text-zinc-400 text-sm font-medium uppercase">
-                        <Ticket className="w-3 h-3 text-zinc-500" />
+                <div className="flex flex-col bg-muted/40 rounded-xl p-2.5 border border-border/50">
+                    <div className="flex items-center gap-1 text-muted-foreground text-sm font-medium uppercase">
+                        <Ticket className="w-3 h-3 text-muted-foreground/70" />
                         <span>Shows</span>
                     </div>
                     <div className="flex items-baseline gap-1 mt-0.5">
-                        <span className="font-mono font-black text-white text-base sm:text-lg tracking-tight">
+                        <span className={`font-mono font-black text-foreground tracking-tight ${hero ? 'text-lg sm:text-2xl' : 'text-base sm:text-lg'}`}>
                             {movie.showtimes.toLocaleString()}
                         </span>
                     </div>
@@ -146,29 +162,29 @@ export function StreamMovieCard({ movie, highlighted = false, compact = false }:
                 </div>
 
                 {/* Estimated Audience */}
-                <div className="flex flex-col bg-zinc-950/60 rounded-xl p-2 border border-zinc-800/50">
-                    <div className="flex items-center gap-1 text-zinc-400 text-sm font-medium uppercase">
-                        <Users className="w-3 h-3 text-zinc-500" />
+                <div className="flex flex-col bg-muted/40 rounded-xl p-2.5 border border-border/50">
+                    <div className="flex items-center gap-1 text-muted-foreground text-sm font-medium uppercase">
+                        <Users className="w-3 h-3 text-muted-foreground/70" />
                         <span>Audience</span>
                     </div>
                     <div className="flex items-baseline gap-1 mt-0.5">
-                        <span className="font-mono font-black text-white text-base sm:text-lg tracking-tight">
+                        <span className={`font-mono font-black text-foreground tracking-tight ${hero ? 'text-lg sm:text-2xl' : 'text-base sm:text-lg'}`}>
                             {movie.estimatedAdmissions > 0 ? movie.estimatedAdmissions.toLocaleString() : 'Pending'}
                         </span>
                     </div>
-                    <span className="text-sm font-mono text-zinc-400 mt-0.5">
+                    <span className="text-sm font-mono text-muted-foreground mt-0.5">
                         {movie.citiesCount > 0 ? `${movie.citiesCount} cities` : 'National'}
                     </span>
                 </div>
 
                 {/* Occupancy Rate & Tier Badge */}
-                <div className="flex flex-col bg-zinc-950/60 rounded-xl p-2 border border-zinc-800/50">
-                    <div className="flex items-center gap-1 text-zinc-400 text-sm font-medium uppercase">
-                        <Percent className="w-3 h-3 text-zinc-500" />
+                <div className="flex flex-col bg-muted/40 rounded-xl p-2.5 border border-border/50">
+                    <div className="flex items-center gap-1 text-muted-foreground text-sm font-medium uppercase">
+                        <Percent className="w-3 h-3 text-muted-foreground/70" />
                         <span>Occupancy</span>
                     </div>
                     <div className="flex items-baseline gap-1 mt-0.5">
-                        <span className={`font-mono font-black text-base sm:text-lg tracking-tight ${tier.twText}`}>
+                        <span className={`font-mono font-black tracking-tight ${tier.twText} ${hero ? 'text-lg sm:text-2xl' : 'text-base sm:text-lg'}`}>
                             {movie.avgOccupancyPct > 0 ? `${movie.avgOccupancyPct}%` : '0.0%'}
                         </span>
                     </div>

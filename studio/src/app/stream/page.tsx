@@ -12,10 +12,12 @@ import {
 } from '@/features/stream';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useDarkModeContext } from '@/hooks';
 
 function StreamBackdropContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
+    const { darkMode, setDarkMode, followsSystem, resetToSystem } = useDarkModeContext();
 
     const today = getTodayJakarta();
     const dateParam = searchParams.get('date');
@@ -90,6 +92,17 @@ function StreamBackdropContent() {
         setLayoutMode((prev) => (prev === 'landscape' ? 'vertical' : 'landscape'));
     }, []);
 
+    // Cycle theme modes: System -> Light -> Dark -> System
+    const cycleTheme = useCallback(() => {
+        if (followsSystem) {
+            setDarkMode(false);
+        } else if (!darkMode) {
+            setDarkMode(true);
+        } else {
+            resetToSystem();
+        }
+    }, [followsSystem, darkMode, setDarkMode, resetToSystem]);
+
     // Keyboard navigation shortcuts
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -101,6 +114,9 @@ function StreamBackdropContent() {
             } else if (e.key === 'l' || e.key === 'L') {
                 e.preventDefault();
                 toggleLayout();
+            } else if (e.key === 'm' || e.key === 'M') {
+                e.preventDefault();
+                cycleTheme();
             } else if (e.key === 't' || e.key === 'T') {
                 e.preventDefault();
                 setSelectedDate(today);
@@ -116,7 +132,7 @@ function StreamBackdropContent() {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [toggleFullscreen, toggleLayout, today, router]);
+    }, [toggleFullscreen, toggleLayout, cycleTheme, today, router]);
 
     // Handle date change
     const handleDateChange = (newDate: string) => {
@@ -125,7 +141,7 @@ function StreamBackdropContent() {
     };
 
     // Pull real-time aggregated data
-    const { movies, summary, isLoading, error, refresh } = useStreamData(selectedDate);
+    const { movies, summary, isLoading, error, refresh, lastUpdatedAt } = useStreamData(selectedDate);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
     const handleManualRefresh = async () => {
@@ -140,8 +156,8 @@ function StreamBackdropContent() {
     return (
         <div
             className={`
-                w-full h-full min-h-screen bg-zinc-950 text-white flex flex-col justify-between select-none overflow-hidden
-                ${layoutMode === 'vertical' ? 'max-w-2xl mx-auto border-x border-zinc-900 shadow-2xl' : ''}
+                w-full h-full min-h-screen bg-background text-foreground flex flex-col justify-between select-none overflow-hidden
+                ${layoutMode === 'vertical' ? 'max-w-2xl mx-auto border-x border-border shadow-2xl' : ''}
             `}
         >
             {/* Top HUD */}
@@ -156,28 +172,29 @@ function StreamBackdropContent() {
                 onRefresh={handleManualRefresh}
                 isRefreshing={isRefreshing}
                 showControls={showControls}
+                lastUpdatedAt={lastUpdatedAt}
             />
 
             {/* Main Stage / Theatrical Leaderboard */}
             {error ? (
-                <div className="flex-1 flex flex-col items-center justify-center gap-3 text-zinc-500">
+                <div className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground">
                     <AlertCircle className="w-10 h-10 text-red-500" />
-                    <p className="font-mono text-sm uppercase tracking-widest text-red-400">
+                    <p className="font-mono text-sm uppercase tracking-widest text-red-500">
                         Unable to connect to Quick Count Feed
                     </p>
                     <Button
                         variant="outline"
                         size="sm"
                         onClick={handleManualRefresh}
-                        className="font-mono text-sm border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800 mt-2"
+                        className="font-mono text-sm border-border bg-card text-foreground hover:bg-muted mt-2"
                     >
                         Retry Feed
                     </Button>
                 </div>
             ) : isLoading && movies.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center gap-3 text-zinc-500">
+                <div className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground">
                     <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                    <p className="font-mono text-sm uppercase tracking-widest text-zinc-400">
+                    <p className="font-mono text-sm uppercase tracking-widest text-muted-foreground">
                         Connecting to National Quick Count Feed...
                     </p>
                 </div>
@@ -203,7 +220,7 @@ export default function StreamBackdropPage() {
     return (
         <Suspense
             fallback={
-                <div className="w-screen h-screen bg-zinc-950 text-white flex items-center justify-center font-mono text-sm">
+                <div className="w-screen h-screen bg-background text-foreground flex items-center justify-center font-mono text-sm">
                     <Loader2 className="w-6 h-6 animate-spin text-primary mr-2" />
                     INITIALIZING BROADCAST ENGINE...
                 </div>

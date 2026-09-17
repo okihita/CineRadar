@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/api';
 import { ApiResponse } from '@/types';
@@ -13,11 +13,14 @@ interface QuickCountResponse {
 }
 
 export function useStreamData(date: string) {
+    const [lastUpdatedAt, setLastUpdatedAt] = useState<number>(() => Date.now());
+
     // Fetch dedicated real-time quick count feed (refreshes every 30s)
     const {
         data: rawData,
         error,
         isLoading,
+        isValidating,
         mutate,
     } = useSWR<ApiResponse<QuickCountResponse>>(
         date ? `/api/quick-count?date=${date}` : null,
@@ -25,6 +28,9 @@ export function useStreamData(date: string) {
         {
             refreshInterval: 30000,
             revalidateOnFocus: false,
+            onSuccess: () => {
+                setLastUpdatedAt(Date.now());
+            },
         }
     );
 
@@ -64,8 +70,10 @@ export function useStreamData(date: string) {
         movies,
         summary,
         isLoading,
+        isValidating,
         error,
         isThursday,
         refresh: mutate,
+        lastUpdatedAt,
     };
 }

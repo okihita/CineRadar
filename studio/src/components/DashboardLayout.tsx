@@ -18,7 +18,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     // 1. Broadcast / Stream Mode: 100% full-bleed canvas, zero sidebar or layout shift
     if (isStreamRoute) {
         return (
-            <main className="w-screen h-screen overflow-hidden bg-zinc-950 text-foreground">
+            <main className="w-screen h-screen overflow-hidden bg-background text-foreground transition-colors duration-200">
                 <ErrorBoundary>{children}</ErrorBoundary>
             </main>
         );
