@@ -4,17 +4,15 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
     Maximize2, Minimize2, ArrowLeft, RefreshCw,
-    Smartphone, Monitor, Calendar, Sun, Moon, Laptop
+    Calendar, Sun, Moon, Laptop
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { StreamSummaryMetrics, StreamLayoutMode } from '../types';
+import { StreamSummaryMetrics } from '../types';
 import { getPerformanceTier } from '@/lib/constants';
 import { useDarkModeContext } from '@/hooks';
 
 interface StreamHudHeaderProps {
     summary: StreamSummaryMetrics;
-    layoutMode: StreamLayoutMode;
-    onToggleLayout: () => void;
     isFullscreen: boolean;
     onToggleFullscreen: () => void;
     onDateChange: (date: string) => void;
@@ -37,8 +35,6 @@ function getWibLiveTime(): string {
 
 export function StreamHudHeader({
     summary,
-    layoutMode,
-    onToggleLayout,
     isFullscreen,
     onToggleFullscreen,
     onDateChange,
@@ -236,27 +232,6 @@ export function StreamHudHeader({
                             title="Change broadcast date"
                         />
                     </div>
-
-                    {/* Layout Switcher: 16:9 Landscape vs 9:16 Vertical */}
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={onToggleLayout}
-                        className="h-8 px-2.5 gap-1.5 rounded-lg border-border bg-card text-foreground hover:bg-muted"
-                        title={layoutMode === 'landscape' ? 'Switch to Vertical 9:16 (TikTok Studio)' : 'Switch to Landscape 16:9 (TV Wall)'}
-                    >
-                        {layoutMode === 'landscape' ? (
-                            <>
-                                <Smartphone className="w-3.5 h-3.5 text-primary" />
-                                <span className="text-sm font-mono font-bold uppercase hidden sm:inline">9:16</span>
-                            </>
-                        ) : (
-                            <>
-                                <Monitor className="w-3.5 h-3.5 text-primary" />
-                                <span className="text-sm font-mono font-bold uppercase hidden sm:inline">16:9</span>
-                            </>
-                        )}
-                    </Button>
 
                     {/* Refresh Button */}
                     <Button

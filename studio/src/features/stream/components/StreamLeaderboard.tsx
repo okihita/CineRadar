@@ -8,13 +8,13 @@ import { Film } from 'lucide-react';
 
 interface StreamLeaderboardProps {
     movies: StreamMovieItem[];
-    layoutMode: StreamLayoutMode;
+    layoutMode?: StreamLayoutMode;
     autoCycle?: boolean;
 }
 
 export function StreamLeaderboard({
     movies,
-    layoutMode,
+    layoutMode = 'landscape',
     autoCycle = true,
 }: StreamLeaderboardProps) {
     const [highlightIndex, setHighlightIndex] = useState(0);

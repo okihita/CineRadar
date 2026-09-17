@@ -5,7 +5,6 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { getTodayJakarta } from '@/lib/timeUtils';
 import {
     useStreamData,
-    StreamLayoutMode,
     StreamHudHeader,
     StreamLeaderboard,
     StreamTicker,
@@ -30,8 +29,6 @@ function StreamBackdropContent() {
         }
     }, [dateParam, selectedDate]);
 
-    // Layout mode: 'landscape' (16:9 TV wall) vs 'vertical' (9:16 TikTok studio)
-    const [layoutMode, setLayoutMode] = useState<StreamLayoutMode>('landscape');
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [autoCycle, setAutoCycle] = useState(true);
 
@@ -87,11 +84,6 @@ function StreamBackdropContent() {
         return () => document.removeEventListener('fullscreenchange', handleFsChange);
     }, []);
 
-    // Toggle layout mode
-    const toggleLayout = useCallback(() => {
-        setLayoutMode((prev) => (prev === 'landscape' ? 'vertical' : 'landscape'));
-    }, []);
-
     // Cycle theme modes: System -> Light -> Dark -> System
     const cycleTheme = useCallback(() => {
         if (followsSystem) {
@@ -111,9 +103,6 @@ function StreamBackdropContent() {
             if (e.key === 'f' || e.key === 'F') {
                 e.preventDefault();
                 toggleFullscreen();
-            } else if (e.key === 'l' || e.key === 'L') {
-                e.preventDefault();
-                toggleLayout();
             } else if (e.key === 'm' || e.key === 'M') {
                 e.preventDefault();
                 cycleTheme();
@@ -132,7 +121,7 @@ function StreamBackdropContent() {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [toggleFullscreen, toggleLayout, cycleTheme, today, router]);
+    }, [toggleFullscreen, cycleTheme, today, router]);
 
     // Handle date change
     const handleDateChange = (newDate: string) => {
@@ -154,17 +143,10 @@ function StreamBackdropContent() {
     };
 
     return (
-        <div
-            className={`
-                w-full h-full min-h-screen bg-background text-foreground flex flex-col justify-between select-none overflow-hidden
-                ${layoutMode === 'vertical' ? 'max-w-2xl mx-auto border-x border-border shadow-2xl' : ''}
-            `}
-        >
+        <div className="w-full h-full min-h-screen bg-background text-foreground flex flex-col justify-between select-none overflow-hidden">
             {/* Top HUD */}
             <StreamHudHeader
                 summary={summary}
-                layoutMode={layoutMode}
-                onToggleLayout={toggleLayout}
                 isFullscreen={isFullscreen}
                 onToggleFullscreen={toggleFullscreen}
                 onDateChange={handleDateChange}
@@ -201,7 +183,6 @@ function StreamBackdropContent() {
             ) : (
                 <StreamLeaderboard
                     movies={movies}
-                    layoutMode={layoutMode}
                     autoCycle={autoCycle}
                 />
             )}
