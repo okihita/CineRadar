@@ -9,6 +9,7 @@ import {
     YAxis,
     Tooltip as RechartsTooltip,
     Cell,
+    LabelList,
 } from 'recharts';
 import { Ticket, Users } from 'lucide-react';
 import { StreamMovieItem } from '../types';
@@ -75,19 +76,41 @@ function CustomChartTooltip({ active, payload, metricType }: CustomTooltipProps)
 export function StreamCharts({ movies }: StreamChartsProps) {
     const [activeTab, setActiveTab] = useState<'both' | 'showtimes' | 'sales'>('both');
 
-    // Sort by showtimes for showtime chart
+    // Sort by showtimes for showtime chart (keep all lines without truncation)
     const showtimeData = useMemo(() => {
-        return [...movies]
-            .sort((a, b) => b.showtimes - a.showtimes)
-            .slice(0, 12);
+        return [...movies].sort((a, b) => b.showtimes - a.showtimes);
     }, [movies]);
 
-    // Sort by admissions for sales chart
+    // Sort by admissions for sales chart (keep all lines without truncation)
     const salesData = useMemo(() => {
-        return [...movies]
-            .sort((a, b) => b.estimatedAdmissions - a.estimatedAdmissions)
-            .slice(0, 12);
+        return [...movies].sort((a, b) => b.estimatedAdmissions - a.estimatedAdmissions);
     }, [movies]);
+
+    // Calculate dynamic rank coverage info
+    const rankInfo = useMemo(() => {
+        if (movies.length === 0) return '';
+        const ranks = movies.map((m) => m.rank);
+        const minRank = Math.min(...ranks);
+        const maxRank = Math.max(...ranks);
+        return `(Ranks #${minRank} - #${maxRank})`;
+    }, [movies]);
+
+    // Dynamic height based on number of movies (allocates 44px per row + 40px padding)
+    const chartHeight = useMemo(() => {
+        return Math.max(380, movies.length * 44 + 40);
+    }, [movies.length]);
+
+    // Dynamic Y-axis width based on the longest movie title to avoid compressing titles
+    const yAxisWidth = useMemo(() => {
+        const titles = movies.map((m) => m.title || '');
+        if (titles.length === 0) return 200;
+        const maxLen = Math.max(...titles.map((t) => t.length));
+        return Math.min(260, Math.max(200, maxLen * 8 + 20));
+    }, [movies]);
+
+    if (movies.length === 0) {
+        return null;
+    }
 
     return (
         <div className="flex flex-col gap-4 w-full">
@@ -97,9 +120,11 @@ export function StreamCharts({ movies }: StreamChartsProps) {
                     <span className="font-mono text-sm font-black uppercase tracking-wider text-muted-foreground">
                         Theatrical Distribution Charts
                     </span>
-                    <span className="font-mono text-sm text-muted-foreground/60 hidden sm:inline">
-                        (Ranks #6 - #{movies.length})
-                    </span>
+                    {rankInfo && (
+                        <span className="font-mono text-sm text-muted-foreground/60 hidden sm:inline">
+                            {rankInfo}
+                        </span>
+                    )}
                 </div>
 
                 <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl border border-border/50">
@@ -153,39 +178,57 @@ export function StreamCharts({ movies }: StreamChartsProps) {
                             </div>
                         </div>
 
-                        <div className="h-[280px] w-full mt-2">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart
-                                    data={showtimeData}
-                                    layout="vertical"
-                                    margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
-                                >
-                                    <XAxis type="number" hide />
-                                    <YAxis
-                                        type="category"
-                                        dataKey="title"
-                                        width={120}
-                                        tick={{ fill: 'currentColor', fontSize: 12, fontWeight: 600 }}
-                                        tickFormatter={(val: string) => val.length > 15 ? `${val.slice(0, 14)}...` : val}
-                                    />
-                                    <RechartsTooltip
-                                        content={<CustomChartTooltip metricType="showtimes" />}
-                                        cursor={{ fill: 'currentColor', opacity: 0.05 }}
-                                    />
-                                    <Bar
-                                        dataKey="showtimes"
-                                        radius={[0, 6, 6, 0]}
-                                        fill="hsl(var(--primary))"
+                        <div className="w-full overflow-x-auto mt-2 custom-scrollbar">
+                            <div style={{ height: `${chartHeight}px`, minWidth: '460px' }}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart
+                                        data={showtimeData}
+                                        layout="vertical"
+                                        margin={{ top: 10, right: 50, left: 15, bottom: 10 }}
                                     >
-                                        {showtimeData.map((entry, index) => (
-                                            <Cell
-                                                key={`show-${entry.id}`}
-                                                fill={index === 0 ? 'rgba(207, 171, 122, 0.95)' : index < 3 ? 'rgba(207, 171, 122, 0.75)' : 'hsl(var(--primary))'}
+                                        <XAxis
+                                            type="number"
+                                            hide
+                                            domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.18)]}
+                                        />
+                                        <YAxis
+                                            type="category"
+                                            dataKey="title"
+                                            interval={0}
+                                            width={yAxisWidth}
+                                            tickLine={false}
+                                            axisLine={false}
+                                            tick={{ fill: 'currentColor', fontSize: 13, fontWeight: 600 }}
+                                        />
+                                        <RechartsTooltip
+                                            content={<CustomChartTooltip metricType="showtimes" />}
+                                            cursor={{ fill: 'currentColor', opacity: 0.05 }}
+                                        />
+                                        <Bar
+                                            dataKey="showtimes"
+                                            barSize={18}
+                                            radius={[0, 6, 6, 0]}
+                                            fill="hsl(var(--primary))"
+                                        >
+                                            <LabelList
+                                                dataKey="showtimes"
+                                                position="right"
+                                                formatter={(val: unknown) => typeof val === 'number' && val > 0 ? val.toLocaleString() : ''}
+                                                fill="currentColor"
+                                                fontSize={13}
+                                                fontWeight={700}
+                                                className="fill-muted-foreground font-mono"
                                             />
-                                        ))}
-                                    </Bar>
-                                </BarChart>
-                            </ResponsiveContainer>
+                                            {showtimeData.map((entry, index) => (
+                                                <Cell
+                                                    key={`show-${entry.id}`}
+                                                    fill={index === 0 ? 'rgba(207, 171, 122, 0.95)' : index < 3 ? 'rgba(207, 171, 122, 0.75)' : 'hsl(var(--primary))'}
+                                                />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -205,42 +248,60 @@ export function StreamCharts({ movies }: StreamChartsProps) {
                             </div>
                         </div>
 
-                        <div className="h-[280px] w-full mt-2">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart
-                                    data={salesData}
-                                    layout="vertical"
-                                    margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
-                                >
-                                    <XAxis type="number" hide />
-                                    <YAxis
-                                        type="category"
-                                        dataKey="title"
-                                        width={120}
-                                        tick={{ fill: 'currentColor', fontSize: 12, fontWeight: 600 }}
-                                        tickFormatter={(val: string) => val.length > 15 ? `${val.slice(0, 14)}...` : val}
-                                    />
-                                    <RechartsTooltip
-                                        content={<CustomChartTooltip metricType="sales" />}
-                                        cursor={{ fill: 'currentColor', opacity: 0.05 }}
-                                    />
-                                    <Bar
-                                        dataKey="estimatedAdmissions"
-                                        radius={[0, 6, 6, 0]}
-                                        fill="#10b981"
+                        <div className="w-full overflow-x-auto mt-2 custom-scrollbar">
+                            <div style={{ height: `${chartHeight}px`, minWidth: '460px' }}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart
+                                        data={salesData}
+                                        layout="vertical"
+                                        margin={{ top: 10, right: 50, left: 15, bottom: 10 }}
                                     >
-                                        {salesData.map((entry) => {
-                                            const tier = getPerformanceTier(entry.avgOccupancyPct);
-                                            return (
-                                                <Cell
-                                                    key={`sales-${entry.id}`}
-                                                    fill={tier.color || '#10b981'}
-                                                />
-                                            );
-                                        })}
-                                    </Bar>
-                                </BarChart>
-                            </ResponsiveContainer>
+                                        <XAxis
+                                            type="number"
+                                            hide
+                                            domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.18)]}
+                                        />
+                                        <YAxis
+                                            type="category"
+                                            dataKey="title"
+                                            interval={0}
+                                            width={yAxisWidth}
+                                            tickLine={false}
+                                            axisLine={false}
+                                            tick={{ fill: 'currentColor', fontSize: 13, fontWeight: 600 }}
+                                        />
+                                        <RechartsTooltip
+                                            content={<CustomChartTooltip metricType="sales" />}
+                                            cursor={{ fill: 'currentColor', opacity: 0.05 }}
+                                        />
+                                        <Bar
+                                            dataKey="estimatedAdmissions"
+                                            barSize={18}
+                                            radius={[0, 6, 6, 0]}
+                                            fill="#10b981"
+                                        >
+                                            <LabelList
+                                                dataKey="estimatedAdmissions"
+                                                position="right"
+                                                formatter={(val: unknown) => typeof val === 'number' && val > 0 ? val.toLocaleString() : ''}
+                                                fill="currentColor"
+                                                fontSize={13}
+                                                fontWeight={700}
+                                                className="fill-muted-foreground font-mono"
+                                            />
+                                            {salesData.map((entry) => {
+                                                const tier = getPerformanceTier(entry.avgOccupancyPct);
+                                                return (
+                                                    <Cell
+                                                        key={`sales-${entry.id}`}
+                                                        fill={tier.color || '#10b981'}
+                                                    />
+                                                );
+                                            })}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
                         </div>
                     </div>
                 )}
