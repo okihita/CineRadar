@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
     Maximize2, Minimize2, ArrowLeft, RefreshCw,
-    Calendar, Sun, Moon, Laptop
+    Calendar, Sun, Moon, Laptop, Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StreamSummaryMetrics } from '../types';
@@ -21,6 +21,7 @@ interface StreamHudHeaderProps {
     isRefreshing: boolean;
     showControls: boolean;
     lastUpdatedAt?: number;
+    onOpenSettings?: () => void;
 }
 
 function getWibLiveTime(): string {
@@ -43,6 +44,7 @@ export function StreamHudHeader({
     isRefreshing,
     showControls,
     lastUpdatedAt,
+    onOpenSettings,
 }: StreamHudHeaderProps) {
     const [clock, setClock] = useState<string | null>(null);
     const { darkMode, setDarkMode, followsSystem, resetToSystem } = useDarkModeContext();
@@ -244,6 +246,19 @@ export function StreamHudHeader({
                     >
                         <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
                     </Button>
+
+                    {/* Broadcast Settings Button */}
+                    {onOpenSettings && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={onOpenSettings}
+                            className="h-8 w-8 p-0 rounded-lg border-border bg-card text-foreground hover:bg-muted"
+                            title="Broadcast Settings (,)"
+                        >
+                            <Settings className="w-3.5 h-3.5" />
+                        </Button>
+                    )}
 
                     {/* Fullscreen Toggle Button */}
                     <Button

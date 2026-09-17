@@ -8,9 +8,15 @@ interface StreamTickerProps {
     circuits: StreamCircuitBreakdown[];
     movies: StreamMovieItem[];
     lastSweptAt: string | null;
+    showCircuits?: boolean;
 }
 
-export function StreamTicker({ circuits, movies, lastSweptAt }: StreamTickerProps) {
+export function StreamTicker({
+    circuits,
+    movies,
+    lastSweptAt,
+    showCircuits = true,
+}: StreamTickerProps) {
     // Format last swept time
     const formattedSweep = lastSweptAt
         ? new Date(lastSweptAt).toLocaleTimeString('en-GB', {
@@ -25,26 +31,28 @@ export function StreamTicker({ circuits, movies, lastSweptAt }: StreamTickerProp
     return (
         <footer className="relative z-20 w-full border-t border-border bg-card/95 px-4 py-2 flex items-center justify-between gap-4 text-sm font-mono overflow-hidden">
             {/* Circuit Footprint Summary */}
-            <div className="flex items-center gap-3 flex-shrink-0">
-                <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground hidden sm:inline">
-                    Circuits:
-                </span>
-                <div className="flex items-center gap-2">
-                    {circuits.map((c) => (
-                        <div
-                            key={c.name}
-                            className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-muted/60 border border-border/80"
-                        >
-                            <span
-                                className="w-2 h-2 rounded-full flex-shrink-0"
-                                style={{ backgroundColor: getChainColor(c.name) }}
-                            />
-                            <span className="font-bold text-foreground">{c.name}</span>
-                            <span className="text-muted-foreground text-sm">{c.sharePct}%</span>
-                        </div>
-                    ))}
+            {showCircuits && circuits.length > 0 && (
+                <div className="flex items-center gap-3 flex-shrink-0">
+                    <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground hidden sm:inline">
+                        Circuits:
+                    </span>
+                    <div className="flex items-center gap-2">
+                        {circuits.map((c) => (
+                            <div
+                                key={c.name}
+                                className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-muted/60 border border-border/80"
+                            >
+                                <span
+                                    className="w-2 h-2 rounded-full flex-shrink-0"
+                                    style={{ backgroundColor: getChainColor(c.name) }}
+                                />
+                                <span className="font-bold text-foreground">{c.name}</span>
+                                <span className="text-muted-foreground text-sm">{c.sharePct}%</span>
+                            </div>
+                        ))}
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Marquee Ticker */}
             <div className="flex-1 overflow-hidden whitespace-nowrap text-muted-foreground mx-4 hidden md:block">

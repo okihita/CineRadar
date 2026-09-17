@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useEffect, useCallback, useRef } from 'react';
+import { Suspense, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { getTodayJakarta } from '@/lib/timeUtils';
 import {
@@ -8,6 +8,8 @@ import {
     StreamHudHeader,
     StreamLeaderboard,
     StreamTicker,
+    StreamSettingsModal,
+    extrapolateStreamData,
 } from '@/features/stream';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -31,6 +33,27 @@ function StreamBackdropContent() {
 
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [autoCycle, setAutoCycle] = useState(true);
+
+    // Broadcast Settings State (persisted to localStorage)
+    const [settingsOpen, setSettingsOpen] = useState(false);
+    const [showCircuits, setShowCircuits] = useState<boolean>(() => {
+        if (typeof window === 'undefined') return true;
+        return localStorage.getItem('cineradar-stream-show-circuits') !== 'false';
+    });
+    const [extrapolateData, setExtrapolateData] = useState<boolean>(() => {
+        if (typeof window === 'undefined') return false;
+        return localStorage.getItem('cineradar-stream-extrapolate') === 'true';
+    });
+
+    const handleToggleShowCircuits = useCallback((val: boolean) => {
+        setShowCircuits(val);
+        localStorage.setItem('cineradar-stream-show-circuits', String(val));
+    }, []);
+
+    const handleToggleExtrapolateData = useCallback((val: boolean) => {
+        setExtrapolateData(val);
+        localStorage.setItem('cineradar-stream-extrapolate', String(val));
+    }, []);
 
     // Auto-fading controls on mouse idle
     const [showControls, setShowControls] = useState(true);
@@ -106,6 +129,9 @@ function StreamBackdropContent() {
             } else if (e.key === 'm' || e.key === 'M') {
                 e.preventDefault();
                 cycleTheme();
+            } else if (e.key === 's' || e.key === 'S' || e.key === ',') {
+                e.preventDefault();
+                setSettingsOpen((prev) => !prev);
             } else if (e.key === 't' || e.key === 'T') {
                 e.preventDefault();
                 setSelectedDate(today);
@@ -133,6 +159,14 @@ function StreamBackdropContent() {
     const { movies, summary, isLoading, error, refresh, lastUpdatedAt } = useStreamData(selectedDate);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
+    // Apply 5-15% coverage extrapolation if enabled
+    const displayData = useMemo(() => {
+        if (!extrapolateData) {
+            return { movies, summary };
+        }
+        return extrapolateStreamData(movies, summary, selectedDate);
+    }, [extrapolateData, movies, summary, selectedDate]);
+
     const handleManualRefresh = async () => {
         setIsRefreshing(true);
         try {
@@ -146,7 +180,7 @@ function StreamBackdropContent() {
         <div className="w-full h-full min-h-screen bg-background text-foreground flex flex-col justify-between select-none overflow-hidden">
             {/* Top HUD */}
             <StreamHudHeader
-                summary={summary}
+                summary={displayData.summary}
                 isFullscreen={isFullscreen}
                 onToggleFullscreen={toggleFullscreen}
                 onDateChange={handleDateChange}
@@ -155,6 +189,7 @@ function StreamBackdropContent() {
                 isRefreshing={isRefreshing}
                 showControls={showControls}
                 lastUpdatedAt={lastUpdatedAt}
+                onOpenSettings={() => setSettingsOpen(true)}
             />
 
             {/* Main Stage / Theatrical Leaderboard */}
@@ -182,16 +217,27 @@ function StreamBackdropContent() {
                 </div>
             ) : (
                 <StreamLeaderboard
-                    movies={movies}
+                    movies={displayData.movies}
                     autoCycle={autoCycle}
                 />
             )}
 
             {/* Bottom Ticker & Sweeper Telemetry */}
             <StreamTicker
-                circuits={summary.circuits}
-                movies={movies}
+                circuits={displayData.summary.circuits}
+                movies={displayData.movies}
                 lastSweptAt={summary.lastSweptAt}
+                showCircuits={showCircuits}
+            />
+
+            {/* Presentation Settings Modal */}
+            <StreamSettingsModal
+                open={settingsOpen}
+                onOpenChange={setSettingsOpen}
+                showCircuits={showCircuits}
+                onToggleShowCircuits={handleToggleShowCircuits}
+                extrapolateData={extrapolateData}
+                onToggleExtrapolateData={handleToggleExtrapolateData}
             />
         </div>
     );
