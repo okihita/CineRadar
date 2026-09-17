@@ -95,10 +95,10 @@ export function StreamHudHeader({
 
     return (
         <header className="relative z-30 w-full border-b border-border bg-card/90 backdrop-blur-xl px-4 sm:px-6 py-3 transition-all">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex flex-wrap 2xl:flex-nowrap items-center justify-between gap-3 sm:gap-4">
                 
                 {/* LEFT: Branding, Live Signal & Next Refresh Timer */}
-                <div className="flex items-center gap-3 sm:gap-4">
+                <div className="flex items-center gap-3 sm:gap-4 order-1 flex-shrink-0">
                     {/* Kotak Kantor Station Bug Ident */}
                     <div className="relative h-10 w-14 sm:h-12 sm:w-16 flex-shrink-0 bg-white/95 dark:bg-white rounded-xl p-1 shadow-md shadow-red-950/20 border border-red-500/30 flex items-center justify-center overflow-hidden transition-transform hover:scale-105">
                         <Image
@@ -143,24 +143,24 @@ export function StreamHudHeader({
                     </div>
                 </div>
 
-                {/* CENTER: Hero Telemetry Quick Counters */}
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-4 flex-1 max-w-2xl lg:mx-6">
+                {/* CENTER: Hero Telemetry Quick Counters (Full width on < 2xl, center row on >= 2xl) */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3.5 order-3 2xl:order-2 w-full 2xl:w-auto 2xl:flex-1 2xl:max-w-2xl 2xl:mx-6">
                     {/* Shows */}
-                    <div className="bg-muted/40 border border-border rounded-xl px-3 py-1.5 flex flex-col">
-                        <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                    <div className="bg-muted/40 border border-border/80 rounded-xl px-3 py-1.5 sm:py-2 flex flex-col justify-center min-w-0 shadow-sm">
+                        <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground truncate whitespace-nowrap">
                             National Shows
                         </span>
-                        <span className="font-mono font-black text-base sm:text-xl text-foreground tracking-tight">
+                        <span className="font-mono font-black text-base sm:text-lg xl:text-xl text-foreground tracking-tight truncate">
                             {summary.totalShowtimes.toLocaleString()}
                         </span>
                     </div>
 
                     {/* Audience */}
-                    <div className="bg-muted/40 border border-border rounded-xl px-3 py-1.5 flex flex-col">
-                        <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                    <div className="bg-muted/40 border border-border/80 rounded-xl px-3 py-1.5 sm:py-2 flex flex-col justify-center min-w-0 shadow-sm">
+                        <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground truncate whitespace-nowrap">
                             Audience Sold
                         </span>
-                        <span className="font-mono font-black text-base sm:text-xl text-foreground tracking-tight">
+                        <span className="font-mono font-black text-base sm:text-lg xl:text-xl text-foreground tracking-tight truncate">
                             {summary.totalEstimatedAdmissions > 0
                                 ? summary.totalEstimatedAdmissions.toLocaleString()
                                 : 'Sweeping...'}
@@ -168,23 +168,23 @@ export function StreamHudHeader({
                     </div>
 
                     {/* National Occupancy */}
-                    <div className="bg-muted/40 border border-border rounded-xl px-3 py-1.5 flex flex-col">
-                        <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                    <div className="bg-muted/40 border border-border/80 rounded-xl px-3 py-1.5 sm:py-2 flex flex-col justify-center min-w-0 shadow-sm">
+                        <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground truncate whitespace-nowrap">
                             Avg Occupancy
                         </span>
-                        <div className="flex items-baseline gap-1">
-                            <span className={`font-mono font-black text-base sm:text-xl tracking-tight ${tier.twText}`}>
+                        <div className="flex items-baseline gap-1 min-w-0">
+                            <span className={`font-mono font-black text-base sm:text-lg xl:text-xl tracking-tight truncate ${tier.twText}`}>
                                 {summary.nationalAvgOccupancyPct > 0 ? `${summary.nationalAvgOccupancyPct}%` : '0.0%'}
                             </span>
                         </div>
                     </div>
 
                     {/* Active Movies */}
-                    <div className="hidden sm:flex bg-muted/40 border border-border rounded-xl px-3 py-1.5 flex-col">
-                        <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                    <div className="bg-muted/40 border border-border/80 rounded-xl px-3 py-1.5 sm:py-2 flex flex-col justify-center min-w-0 shadow-sm">
+                        <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground truncate whitespace-nowrap">
                             Active Titles
                         </span>
-                        <span className="font-mono font-black text-base sm:text-xl text-primary tracking-tight">
+                        <span className="font-mono font-black text-base sm:text-lg xl:text-xl text-primary tracking-tight truncate">
                             {summary.activeMoviesCount}
                         </span>
                     </div>
@@ -193,7 +193,7 @@ export function StreamHudHeader({
                 {/* RIGHT: Floating Controls (Auto-fades on idle) */}
                 <div
                     className={`
-                        flex items-center gap-2 transition-opacity duration-300
+                        flex items-center gap-2 transition-opacity duration-300 order-2 2xl:order-3 ml-auto 2xl:ml-0 flex-shrink-0
                         ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}
                     `}
                 >
