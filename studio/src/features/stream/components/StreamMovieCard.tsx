@@ -76,13 +76,6 @@ export function StreamMovieCard({
                     >
                         #{movie.rank}
                     </div>
-
-                    {/* Thursday Premiere Tag */}
-                    {movie.isPremiere && (
-                        <div className="absolute bottom-1.5 left-1.5 right-1.5 bg-red-600/95 text-white font-mono text-sm font-black uppercase text-center py-0.5 rounded tracking-wider shadow-sm">
-                            Premiere
-                        </div>
-                    )}
                 </div>
 
                 {/* Film Metadata & Headliner */}
