@@ -13,6 +13,7 @@ interface StreamLeaderboardProps {
     layoutMode?: StreamLayoutMode;
     autoCycle?: boolean;
     isRefreshing?: boolean;
+    showCircuits?: boolean;
 }
 
 export function StreamLeaderboard({
@@ -20,6 +21,7 @@ export function StreamLeaderboard({
     layoutMode = 'landscape',
     autoCycle = true,
     isRefreshing = false,
+    showCircuits = true,
 }: StreamLeaderboardProps) {
     const [highlightIndex, setHighlightIndex] = useState(0);
 
@@ -108,6 +110,7 @@ export function StreamLeaderboard({
                             movie={top1}
                             highlighted={highlightIndex === 0}
                             compact
+                            showCircuits={showCircuits}
                         />
                     </div>
                 )}
@@ -140,6 +143,7 @@ export function StreamLeaderboard({
                                     movie={movie}
                                     highlighted={highlightIndex === idx + 1}
                                     compact
+                                    showCircuits={showCircuits}
                                 />
                             ))}
                         </div>
@@ -149,7 +153,7 @@ export function StreamLeaderboard({
                 {/* Vertical Distribution Charts */}
                 {otherMovies.length > 0 && (
                     <div className="pt-2">
-                        <StreamCharts movies={otherMovies} />
+                        <StreamCharts movies={otherMovies} showCircuits={showCircuits} />
                     </div>
                 )}
 
@@ -168,6 +172,7 @@ export function StreamLeaderboard({
                                     movie={movie}
                                     maxShowtimes={maxOtherShowtimes}
                                     maxAdmissions={maxOtherAdmissions}
+                                    showCircuits={showCircuits}
                                 />
                             ))}
                         </div>
@@ -213,6 +218,7 @@ export function StreamLeaderboard({
                                     movie={top5[0]}
                                     highlighted={highlightIndex === 0}
                                     hero
+                                    showCircuits={showCircuits}
                                 />
                             </div>
                         </div>
@@ -227,6 +233,7 @@ export function StreamLeaderboard({
                                     movie={movie}
                                     highlighted={highlightIndex === idx + 1}
                                     compact={false}
+                                    showCircuits={showCircuits}
                                 />
                             ))}
                         </div>
@@ -236,7 +243,7 @@ export function StreamLeaderboard({
 
             {/* SECTION 2: Theatrical Distribution Charts */}
             <div className="pt-2">
-                <StreamCharts movies={otherMovies.length > 0 ? otherMovies : movies} />
+                <StreamCharts movies={otherMovies.length > 0 ? otherMovies : movies} showCircuits={showCircuits} />
             </div>
 
             {/* SECTION 3: All Remaining Theatrical Releases (#6+) */}
@@ -263,6 +270,7 @@ export function StreamLeaderboard({
                                 movie={movie}
                                 maxShowtimes={maxOtherShowtimes}
                                 maxAdmissions={maxOtherAdmissions}
+                                showCircuits={showCircuits}
                             />
                         ))}
                     </div>

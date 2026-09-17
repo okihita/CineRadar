@@ -231,6 +231,7 @@ function StreamBackdropContent() {
                     movies={displayData.movies}
                     autoCycle={autoCycle}
                     isRefreshing={isRefreshing}
+                    showCircuits={showCircuits}
                 />
             )}
 
