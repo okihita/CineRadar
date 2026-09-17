@@ -10,7 +10,8 @@ import {
     StreamLeaderboard,
     StreamTicker,
 } from '@/features/stream';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 function StreamBackdropContent() {
     const searchParams = useSearchParams();
@@ -124,7 +125,7 @@ function StreamBackdropContent() {
     };
 
     // Pull real-time aggregated data
-    const { movies, summary, isLoading, refresh } = useStreamData(selectedDate);
+    const { movies, summary, isLoading, error, refresh } = useStreamData(selectedDate);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
     const handleManualRefresh = async () => {
@@ -158,7 +159,22 @@ function StreamBackdropContent() {
             />
 
             {/* Main Stage / Theatrical Leaderboard */}
-            {isLoading && movies.length === 0 ? (
+            {error ? (
+                <div className="flex-1 flex flex-col items-center justify-center gap-3 text-zinc-500">
+                    <AlertCircle className="w-10 h-10 text-red-500" />
+                    <p className="font-mono text-sm uppercase tracking-widest text-red-400">
+                        Unable to connect to Quick Count Feed
+                    </p>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleManualRefresh}
+                        className="font-mono text-sm border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800 mt-2"
+                    >
+                        Retry Feed
+                    </Button>
+                </div>
+            ) : isLoading && movies.length === 0 ? (
                 <div className="flex-1 flex flex-col items-center justify-center gap-3 text-zinc-500">
                     <Loader2 className="w-10 h-10 animate-spin text-primary" />
                     <p className="font-mono text-sm uppercase tracking-widest text-zinc-400">
