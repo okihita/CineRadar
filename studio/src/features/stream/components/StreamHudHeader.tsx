@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
     Maximize2, Minimize2, ArrowLeft, RefreshCw,
     Calendar, Sun, Moon, Laptop, Settings
@@ -97,7 +98,18 @@ export function StreamHudHeader({
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 
                 {/* LEFT: Branding, Live Signal & Next Refresh Timer */}
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3 sm:gap-4">
+                    {/* Kotak Kantor Station Bug Ident */}
+                    <div className="relative h-10 w-14 sm:h-12 sm:w-16 flex-shrink-0 bg-white/95 dark:bg-white rounded-xl p-1 shadow-md shadow-red-950/20 border border-red-500/30 flex items-center justify-center overflow-hidden transition-transform hover:scale-105">
+                        <Image
+                            src="/kotak-kantor-logo.png"
+                            alt="Kotak Kantor"
+                            fill
+                            className="object-contain p-0.5"
+                            priority
+                        />
+                    </div>
+
                     <div className="flex items-center gap-2.5">
                         <div className="relative flex h-3 w-3">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
@@ -114,7 +126,9 @@ export function StreamHudHeader({
                             </div>
                             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                                 <h1 className="text-base sm:text-lg font-black uppercase tracking-tight text-foreground flex items-center gap-1.5">
-                                    <span>CineRadar Broadcast</span>
+                                    <span className="text-red-600 dark:text-red-400">Kotak Kantor</span>
+                                    <span className="text-muted-foreground text-sm font-normal">×</span>
+                                    <span>CineRadar</span>
                                     <span className="text-muted-foreground text-sm font-normal font-mono">/ {summary.date}</span>
                                 </h1>
                                 <span className="hidden sm:inline text-muted-foreground/40 font-mono text-sm">|</span>

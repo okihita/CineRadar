@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { getTodayJakarta } from '@/lib/timeUtils';
 import {
     useStreamData,
@@ -177,7 +178,17 @@ function StreamBackdropContent() {
     };
 
     return (
-        <div className="w-full h-full min-h-screen bg-background text-foreground flex flex-col justify-between select-none overflow-hidden">
+        <div className="relative w-full h-full min-h-screen bg-background text-foreground flex flex-col justify-between select-none overflow-hidden">
+            {/* Ambient Broadcast Watermark */}
+            <div className="pointer-events-none fixed right-6 bottom-14 w-72 sm:w-96 aspect-[1024/721] opacity-[0.035] dark:opacity-[0.06] select-none -rotate-6 z-0">
+                <Image
+                    src="/kotak-kantor-logo.png"
+                    alt=""
+                    fill
+                    className="object-contain"
+                />
+            </div>
+
             {/* Top HUD */}
             <StreamHudHeader
                 summary={displayData.summary}

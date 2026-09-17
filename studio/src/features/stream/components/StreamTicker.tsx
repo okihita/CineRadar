@@ -1,5 +1,6 @@
 'use client';
-
+ 
+import Image from 'next/image';
 import { StreamCircuitBreakdown, StreamMovieItem } from '../types';
 import { getChainColor } from '@/lib/constants';
 import { Radio } from 'lucide-react';
@@ -30,6 +31,21 @@ export function StreamTicker({
 
     return (
         <footer className="relative z-20 w-full border-t border-border bg-card/95 px-4 py-2 flex items-center justify-between gap-4 text-sm font-mono overflow-hidden">
+            {/* Kotak Kantor Station Identifier */}
+            <div className="flex items-center gap-2 pr-3 border-r border-border/80 flex-shrink-0">
+                <div className="relative h-6 w-9 bg-white/95 dark:bg-white rounded px-1 py-0.5 shadow-sm border border-red-500/30 flex items-center justify-center overflow-hidden">
+                    <Image
+                        src="/kotak-kantor-logo.png"
+                        alt="Kotak Kantor"
+                        fill
+                        className="object-contain p-0.5"
+                    />
+                </div>
+                <span className="font-bold text-sm tracking-tight text-foreground hidden xl:inline">
+                    KOTAK KANTOR
+                </span>
+            </div>
+
             {/* Circuit Footprint Summary */}
             {showCircuits && circuits.length > 0 && (
                 <div className="flex items-center gap-3 flex-shrink-0">
