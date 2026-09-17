@@ -38,6 +38,7 @@ Deep-dive specifications for consumer and studio intelligence features:
 * **[`03_competitor_tracking.md`](./features/03_competitor_tracking.md)** — CinePoint integration, daily box office, admissions backfill & director rankings.
 * **[`04_social_pulse.md`](./features/04_social_pulse.md)** — Viral Twitter/X & YouTube data ingestion, summarization, and sentiment pulse.
 * **[`05_movie_comparison.md`](./features/05_movie_comparison.md)** — Head-to-head film occupancy comparisons and multi-film benchmark engine.
+* **[`06_live_stream_backdrop.md`](./features/06_live_stream_backdrop.md)** — Live stream backdrop, OBS overlay & Thursday broadcast quick count wall.
 
 ---
 
