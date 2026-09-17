@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { StreamMovieItem, StreamLayoutMode } from '../types';
 import { StreamMovieCard } from './StreamMovieCard';
 import { StreamCharts } from './StreamCharts';
+import { StreamMovieRow } from './StreamMovieRow';
 import { Film } from 'lucide-react';
 
 interface StreamLeaderboardProps {
@@ -19,8 +20,18 @@ export function StreamLeaderboard({
 }: StreamLeaderboardProps) {
     const [highlightIndex, setHighlightIndex] = useState(0);
 
-    const top5 = movies.slice(0, 5);
-    const otherMovies = movies.length > 5 ? movies.slice(5) : movies;
+    const top5 = useMemo(() => movies.slice(0, 5), [movies]);
+    const otherMovies = useMemo(() => (movies.length > 5 ? movies.slice(5) : []), [movies]);
+
+    const maxOtherShowtimes = useMemo(() => {
+        if (otherMovies.length === 0) return 1;
+        return Math.max(...otherMovies.map((m) => m.showtimes), 1);
+    }, [otherMovies]);
+
+    const maxOtherAdmissions = useMemo(() => {
+        if (otherMovies.length === 0) return 1;
+        return Math.max(...otherMovies.map((m) => m.estimatedAdmissions), 1);
+    }, [otherMovies]);
 
     // Auto-cycle through top 5 movies to create subtle visual dynamism during live stream
     useEffect(() => {
@@ -108,6 +119,27 @@ export function StreamLeaderboard({
                         <StreamCharts movies={otherMovies} />
                     </div>
                 )}
+
+                {/* Vertical Remaining Titles */}
+                {otherMovies.length > 0 && (
+                    <div className="flex flex-col gap-2 pt-2">
+                        <div className="flex items-center justify-between border-b border-border/60 pb-1">
+                            <span className="font-mono text-sm font-black uppercase tracking-wider text-foreground">
+                                All Remaining Titles ({otherMovies.length})
+                            </span>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            {otherMovies.map((movie) => (
+                                <StreamMovieRow
+                                    key={movie.id}
+                                    movie={movie}
+                                    maxShowtimes={maxOtherShowtimes}
+                                    maxAdmissions={maxOtherAdmissions}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         );
     }
@@ -162,10 +194,38 @@ export function StreamLeaderboard({
                 </div>
             </div>
 
-            {/* SECTION 2: Remaining Movies Distribution Charts */}
+            {/* SECTION 2: Theatrical Distribution Charts */}
+            <div className="pt-2">
+                <StreamCharts movies={otherMovies.length > 0 ? otherMovies : movies} />
+            </div>
+
+            {/* SECTION 3: All Remaining Theatrical Releases (#6+) */}
             {otherMovies.length > 0 && (
-                <div className="pt-2">
-                    <StreamCharts movies={otherMovies} />
+                <div className="flex flex-col gap-3 pt-2">
+                    <div className="flex items-center justify-between border-b border-border/60 pb-2">
+                        <div className="flex items-center gap-2">
+                            <span className="font-mono text-sm font-black uppercase tracking-wider text-foreground">
+                                All Remaining Titles
+                            </span>
+                            <span className="font-mono text-sm text-muted-foreground hidden sm:inline">
+                                (Ranks #6 - #{movies.length})
+                            </span>
+                        </div>
+                        <span className="font-mono text-sm text-muted-foreground">
+                            {otherMovies.length} Active Releases
+                        </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                        {otherMovies.map((movie) => (
+                            <StreamMovieRow
+                                key={movie.id}
+                                movie={movie}
+                                maxShowtimes={maxOtherShowtimes}
+                                maxAdmissions={maxOtherAdmissions}
+                            />
+                        ))}
+                    </div>
                 </div>
             )}
         </div>

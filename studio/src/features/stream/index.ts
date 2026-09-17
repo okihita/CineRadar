@@ -5,5 +5,6 @@ export * from './components/StreamMovieCard';
 export * from './components/StreamLeaderboard';
 export * from './components/StreamTicker';
 export * from './components/StreamCharts';
+export * from './components/StreamMovieRow';
 export * from './components/StreamSettingsModal';
 export * from './utils/extrapolate';
