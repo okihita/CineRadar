@@ -10,6 +10,7 @@ interface StreamMovieCardProps {
     highlighted?: boolean;
     compact?: boolean;
     hero?: boolean;
+    showCircuits?: boolean;
 }
 
 export function StreamMovieCard({
@@ -17,6 +18,7 @@ export function StreamMovieCard({
     highlighted = false,
     compact = false,
     hero = false,
+    showCircuits = true,
 }: StreamMovieCardProps) {
     const tier = getPerformanceTier(movie.avgOccupancyPct);
 
@@ -112,27 +114,29 @@ export function StreamMovieCard({
                     </div>
 
                     {/* Circuit Availability Badges */}
-                    <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                        {(['XXI', 'CGV', 'Cinépolis', 'FLIX'] as const).map((circuit) => {
-                            const isAvailable = movie.merchants.some(m => m.toUpperCase().includes(circuit.toUpperCase()));
-                            const tw = getChainTailwind(circuit);
+                    {showCircuits && (
+                        <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                            {(['XXI', 'CGV', 'Cinépolis', 'FLIX'] as const).map((circuit) => {
+                                const isAvailable = movie.merchants.some(m => m.toUpperCase().includes(circuit.toUpperCase()));
+                                const tw = getChainTailwind(circuit);
 
-                            if (!isAvailable) return null;
+                                if (!isAvailable) return null;
 
-                            return (
-                                <span
-                                    key={circuit}
-                                    className={`
-                                        px-2 py-0.5 rounded-md text-sm font-mono font-bold border tracking-wider
-                                        ${tw ? tw.badgeLight : 'bg-muted text-muted-foreground'}
-                                        ${tw ? tw.text : ''} border-border/60
-                                    `}
-                                >
-                                    {circuit}
-                                </span>
-                            );
-                        })}
-                    </div>
+                                return (
+                                    <span
+                                        key={circuit}
+                                        className={`
+                                            px-2 py-0.5 rounded-md text-sm font-mono font-bold border tracking-wider
+                                            ${tw ? tw.badgeLight : 'bg-muted text-muted-foreground'}
+                                            ${tw ? tw.text : ''} border-border/60
+                                        `}
+                                    >
+                                        {circuit}
+                                    </span>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
             </div>
 
