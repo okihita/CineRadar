@@ -9,12 +9,14 @@ interface StreamMovieRowProps {
     movie: StreamMovieItem;
     maxShowtimes: number;
     maxAdmissions: number;
+    showCircuits?: boolean;
 }
 
 export function StreamMovieRow({
     movie,
     maxShowtimes,
     maxAdmissions,
+    showCircuits = true,
 }: StreamMovieRowProps) {
     const tier = getPerformanceTier(movie.avgOccupancyPct);
 
@@ -60,23 +62,25 @@ export function StreamMovieRow({
                     <h4 className="font-bold text-sm sm:text-base text-foreground truncate uppercase tracking-tight">
                         {movie.title}
                     </h4>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                        {movie.merchants.slice(0, 2).map((circuit) => {
-                            const tw = getChainTailwind(circuit);
-                            return (
-                                <span
-                                    key={circuit}
-                                    className={`
-                                        px-1.5 py-0.5 rounded text-sm font-mono font-bold border
-                                        ${tw ? tw.badgeLight : 'bg-muted text-muted-foreground'}
-                                        ${tw ? tw.text : ''} border-border/50
-                                    `}
-                                >
-                                    {circuit}
-                                </span>
-                            );
-                        })}
-                    </div>
+                    {showCircuits && (
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                            {movie.merchants.slice(0, 2).map((circuit) => {
+                                const tw = getChainTailwind(circuit);
+                                return (
+                                    <span
+                                        key={circuit}
+                                        className={`
+                                            px-1.5 py-0.5 rounded text-sm font-mono font-bold border
+                                            ${tw ? tw.badgeLight : 'bg-muted text-muted-foreground'}
+                                            ${tw ? tw.text : ''} border-border/50
+                                        `}
+                                    >
+                                        {circuit}
+                                    </span>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
 
                 {/* Line 2: Showtimes Bar */}

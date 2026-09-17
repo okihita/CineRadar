@@ -17,6 +17,7 @@ import { getPerformanceTier } from '@/lib/constants';
 
 interface StreamChartsProps {
     movies: StreamMovieItem[];
+    showCircuits?: boolean;
 }
 
 interface CustomTooltipProps {
@@ -24,9 +25,10 @@ interface CustomTooltipProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     payload?: any[];
     metricType: 'showtimes' | 'sales';
+    showCircuits?: boolean;
 }
 
-function CustomChartTooltip({ active, payload, metricType }: CustomTooltipProps) {
+function CustomChartTooltip({ active, payload, metricType, showCircuits = true }: CustomTooltipProps) {
     if (active && payload && payload.length) {
         const item = payload[0].payload as StreamMovieItem;
         return (
@@ -62,10 +64,12 @@ function CustomChartTooltip({ active, payload, metricType }: CustomTooltipProps)
                             </div>
                         </>
                     )}
-                    <div className="flex items-center justify-between gap-4 pt-1 border-t border-border/50">
-                        <span className="text-muted-foreground">Circuits:</span>
-                        <span className="font-medium text-foreground">{item.merchants.join(', ')}</span>
-                    </div>
+                    {showCircuits && (
+                        <div className="flex items-center justify-between gap-4 pt-1 border-t border-border/50">
+                            <span className="text-muted-foreground">Circuits:</span>
+                            <span className="font-medium text-foreground">{item.merchants.join(', ')}</span>
+                        </div>
+                    )}
                 </div>
             </div>
         );
@@ -73,7 +77,7 @@ function CustomChartTooltip({ active, payload, metricType }: CustomTooltipProps)
     return null;
 }
 
-export function StreamCharts({ movies }: StreamChartsProps) {
+export function StreamCharts({ movies, showCircuits = true }: StreamChartsProps) {
     const [activeTab, setActiveTab] = useState<'both' | 'showtimes' | 'sales'>('both');
 
     // Sort by showtimes for showtime chart (keep all lines without truncation)
@@ -201,7 +205,7 @@ export function StreamCharts({ movies }: StreamChartsProps) {
                                             tick={{ fill: 'currentColor', fontSize: 13, fontWeight: 600 }}
                                         />
                                         <RechartsTooltip
-                                            content={<CustomChartTooltip metricType="showtimes" />}
+                                            content={<CustomChartTooltip metricType="showtimes" showCircuits={showCircuits} />}
                                             cursor={{ fill: 'currentColor', opacity: 0.05 }}
                                         />
                                         <Bar
@@ -271,7 +275,7 @@ export function StreamCharts({ movies }: StreamChartsProps) {
                                             tick={{ fill: 'currentColor', fontSize: 13, fontWeight: 600 }}
                                         />
                                         <RechartsTooltip
-                                            content={<CustomChartTooltip metricType="sales" />}
+                                            content={<CustomChartTooltip metricType="sales" showCircuits={showCircuits} />}
                                             cursor={{ fill: 'currentColor', opacity: 0.05 }}
                                         />
                                         <Bar

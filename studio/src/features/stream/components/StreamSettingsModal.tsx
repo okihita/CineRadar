@@ -44,7 +44,7 @@ export function StreamSettingsModal({
                 </DialogHeader>
 
                 <div className="space-y-4 py-2">
-                    {/* OPTION 1: Show/Hide Bottom Left Circuits */}
+                    {/* OPTION 1: Show/Hide Cinema Circuits Everywhere */}
                     <div className="flex items-start justify-between gap-4 p-3.5 rounded-xl bg-muted/40 border border-border/60">
                         <div className="flex items-start gap-3">
                             <div className="p-2 rounded-lg bg-background border border-border/80 text-muted-foreground mt-0.5">
@@ -52,10 +52,10 @@ export function StreamSettingsModal({
                             </div>
                             <div>
                                 <h4 className="font-bold text-sm text-foreground">
-                                    Bottom Circuit Breakdown
+                                    Cinema Circuit Badges
                                 </h4>
                                 <p className="text-sm text-muted-foreground mt-0.5 leading-relaxed">
-                                    Show cinema circuit share badges (XXI, CGV, Cinépolis, FLIX) at the bottom left footer.
+                                    Display cinema chain identifiers (XXI, CGV, Cinépolis, FLIX) across movie cards, remaining titles, and the bottom ticker.
                                 </p>
                             </div>
                         </div>
