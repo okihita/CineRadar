@@ -6,12 +6,12 @@ import { StreamMovieCard } from './StreamMovieCard';
 import { StreamCharts } from './StreamCharts';
 import { StreamMovieRow } from './StreamMovieRow';
 import { Film } from 'lucide-react';
+import { getNextDropTarget } from '../hooks/useStreamData';
 
 interface StreamLeaderboardProps {
     movies: StreamMovieItem[];
     layoutMode?: StreamLayoutMode;
     autoCycle?: boolean;
-    lastUpdatedAt?: number;
     isRefreshing?: boolean;
 }
 
@@ -19,43 +19,39 @@ export function StreamLeaderboard({
     movies,
     layoutMode = 'landscape',
     autoCycle = true,
-    lastUpdatedAt,
     isRefreshing = false,
 }: StreamLeaderboardProps) {
     const [highlightIndex, setHighlightIndex] = useState(0);
 
-    // Live countdown to next 30s auto-refresh
-    const [nextRefreshDisplay, setNextRefreshDisplay] = useState<{ time: string; seconds: number }>({
-        time: '--:--:-- WIB',
-        seconds: 30,
+    // Live countdown to next scheduled drop (:05 and :35 WIB)
+    const [nextDropDisplay, setNextDropDisplay] = useState<{ time: string; countdown: string }>({
+        time: '--:-- WIB',
+        countdown: '--m --s',
     });
 
     useEffect(() => {
         const updateCountdown = () => {
             const now = Date.now();
-            const base = lastUpdatedAt || now;
-            const target = base + 30000;
-            const diffMs = Math.max(0, target - now);
-            const remainingSec = Math.ceil(diffMs / 1000);
+            const { targetMs, timeStr } = getNextDropTarget(now);
+            const diffMs = Math.max(0, targetMs - now);
+            const totalSec = Math.ceil(diffMs / 1000);
+            const mins = Math.floor(totalSec / 60);
+            const secs = totalSec % 60;
 
-            const formattedTarget = new Intl.DateTimeFormat('en-GB', {
-                timeZone: 'Asia/Jakarta',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false,
-            }).format(new Date(target));
+            const countdown = mins > 0
+                ? `${mins}m ${secs.toString().padStart(2, '0')}s`
+                : `${secs}s`;
 
-            setNextRefreshDisplay({
-                time: `${formattedTarget} WIB`,
-                seconds: remainingSec,
+            setNextDropDisplay({
+                time: timeStr,
+                countdown,
             });
         };
 
         updateCountdown();
         const interval = setInterval(updateCountdown, 1000);
         return () => clearInterval(interval);
-    }, [lastUpdatedAt]);
+    }, []);
 
     const top5 = useMemo(() => movies.slice(0, 5), [movies]);
     const otherMovies = useMemo(() => (movies.length > 5 ? movies.slice(5) : []), [movies]);
@@ -196,9 +192,9 @@ export function StreamLeaderboard({
                         </span>
                         <span className="hidden sm:inline text-muted-foreground/40 font-mono text-sm">|</span>
                         <div className="flex items-center gap-1.5 text-sm font-mono text-muted-foreground">
-                            <span>Next refresh at</span>
+                            <span>Next Drop:</span>
                             <span className="font-bold text-foreground">
-                                {isRefreshing ? 'Updating...' : `${nextRefreshDisplay.time} (${nextRefreshDisplay.seconds}s)`}
+                                {isRefreshing ? 'Syncing...' : `${nextDropDisplay.time} (${nextDropDisplay.countdown})`}
                             </span>
                         </div>
                     </div>

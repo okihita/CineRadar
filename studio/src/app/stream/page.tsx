@@ -157,8 +157,9 @@ function StreamBackdropContent() {
     };
 
     // Pull real-time aggregated data
-    const { movies, summary, isLoading, error, refresh, lastUpdatedAt } = useStreamData(selectedDate);
-    const [isRefreshing, setIsRefreshing] = useState(false);
+    const { movies, summary, isLoading, isValidating, error, refresh } = useStreamData(selectedDate);
+    const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+    const isRefreshing = isManualRefreshing || isValidating;
 
     // Apply 5-15% coverage extrapolation if enabled
     const displayData = useMemo(() => {
@@ -169,11 +170,11 @@ function StreamBackdropContent() {
     }, [extrapolateData, movies, summary, selectedDate]);
 
     const handleManualRefresh = async () => {
-        setIsRefreshing(true);
+        setIsManualRefreshing(true);
         try {
             await refresh();
         } finally {
-            setTimeout(() => setIsRefreshing(false), 600);
+            setTimeout(() => setIsManualRefreshing(false), 600);
         }
     };
 
@@ -229,7 +230,6 @@ function StreamBackdropContent() {
                 <StreamLeaderboard
                     movies={displayData.movies}
                     autoCycle={autoCycle}
-                    lastUpdatedAt={lastUpdatedAt}
                     isRefreshing={isRefreshing}
                 />
             )}
