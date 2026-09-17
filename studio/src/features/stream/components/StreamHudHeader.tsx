@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -35,6 +35,8 @@ function getWibLiveTime(): string {
     }).format(new Date());
 }
 
+const emptySubscribe = () => () => {};
+
 export function StreamHudHeader({
     summary,
     isFullscreen,
@@ -47,6 +49,7 @@ export function StreamHudHeader({
     lastUpdatedAt,
     onOpenSettings,
 }: StreamHudHeaderProps) {
+    const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
     const [clock, setClock] = useState<string | null>(null);
     const { darkMode, setDarkMode, followsSystem, resetToSystem } = useDarkModeContext();
 
@@ -198,16 +201,21 @@ export function StreamHudHeader({
                     `}
                 >
                     {/* Theme Switcher: Light / Dark / System */}
-                    <div className="flex items-center bg-muted/60 border border-border rounded-lg p-0.5" title="Theme (Light / Dark / System)">
+                    <div
+                        className="flex items-center bg-muted/60 border border-border rounded-lg p-0.5"
+                        title="Theme (Light / Dark / System)"
+                        suppressHydrationWarning
+                    >
                         <button
                             type="button"
                             onClick={() => setDarkMode(false)}
                             className={`p-1.5 rounded-md transition-colors ${
-                                !followsSystem && !darkMode
+                                isMounted && !followsSystem && !darkMode
                                     ? 'bg-primary text-primary-foreground shadow-sm'
                                     : 'text-muted-foreground hover:text-foreground'
                             }`}
                             title="Light theme"
+                            suppressHydrationWarning
                         >
                             <Sun className="w-3.5 h-3.5" />
                         </button>
@@ -215,11 +223,12 @@ export function StreamHudHeader({
                             type="button"
                             onClick={() => setDarkMode(true)}
                             className={`p-1.5 rounded-md transition-colors ${
-                                !followsSystem && darkMode
+                                isMounted && !followsSystem && darkMode
                                     ? 'bg-primary text-primary-foreground shadow-sm'
                                     : 'text-muted-foreground hover:text-foreground'
                             }`}
                             title="Dark theme"
+                            suppressHydrationWarning
                         >
                             <Moon className="w-3.5 h-3.5" />
                         </button>
@@ -227,11 +236,12 @@ export function StreamHudHeader({
                             type="button"
                             onClick={resetToSystem}
                             className={`p-1.5 rounded-md transition-colors ${
-                                followsSystem
+                                !isMounted || followsSystem
                                     ? 'bg-primary text-primary-foreground shadow-sm'
                                     : 'text-muted-foreground hover:text-foreground'
                             }`}
                             title="System theme"
+                            suppressHydrationWarning
                         >
                             <Laptop className="w-3.5 h-3.5" />
                         </button>
