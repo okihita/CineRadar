@@ -1,79 +1,210 @@
 {
-  "executed_at": "2026-09-17T19:37:26.664626+00:00",
+  "executed_at": "2026-09-18T08:55:16.225881+00:00",
   "schedule_date": "2026-09-18",
   "is_mock": true,
-  "total_posts": 30,
-  "total_comments": 30,
+  "total_posts": 36,
+  "total_comments": 36,
   "slate": [
     {
-      "title": "HARUSNYA HORROR",
-      "hashtag": "harusnyahorror",
-      "distributor": "MD Pictures",
+      "title": "RESIDENT EVIL",
+      "metadata_id": "2085652682806218752",
+      "hashtag": "residentevil",
+      "distributor": "Theatrical Release",
       "release_status": "Now Playing",
-      "showtimes_count": 343
+      "showtimes_count": 492,
+      "merchants": [
+        "XXI"
+      ],
+      "poster": "https://asset.tix.id/movie_poster_v2/50388a0c-274a-48a8-bebf-d59a32365d91.webp",
+      "genres": [
+        "Sci-fi",
+        "Psychological thriller"
+      ],
+      "age_category": "D"
     },
     {
-      "title": "AYAH, AKU MAU CERITA",
-      "hashtag": "ayahakumaucerita",
-      "distributor": "Starvision Plus",
+      "title": "AGENSI RUMAH TANGGA",
+      "metadata_id": "2074428234790944768",
+      "hashtag": "agensirumahtangga",
+      "distributor": "Theatrical Release",
       "release_status": "Now Playing",
-      "showtimes_count": 223
+      "showtimes_count": 376,
+      "merchants": [
+        "XXI"
+      ],
+      "poster": "https://asset.tix.id/movie_poster_v2/50d6f0ed-0002-4eb0-aa29-3ea3f0e70a52.webp",
+      "genres": [
+        "Drama",
+        "Comedy"
+      ],
+      "age_category": "R"
     },
     {
-      "title": "DAN BANDUNG",
-      "hashtag": "danbandung",
-      "distributor": "Falcon Pictures",
+      "title": "FALL 2: DEADPOINT",
+      "metadata_id": "2085294835174031360",
+      "hashtag": "fall2deadpoint",
+      "distributor": "Theatrical Release",
       "release_status": "Now Playing",
-      "showtimes_count": 126
+      "showtimes_count": 313,
+      "merchants": [
+        "XXI"
+      ],
+      "poster": "https://asset.tix.id/movie_poster_v2/df6fa643-1cbd-428b-9f21-e3c487b2e4fc.webp",
+      "genres": [
+        "Survival",
+        "Psychological thriller"
+      ],
+      "age_category": "D"
     },
     {
-      "title": "DEAR YOU",
-      "hashtag": "filmdearyou",
-      "distributor": "Visinema Pictures",
+      "title": "URANG BUNIAN",
+      "metadata_id": "2070436925705109504",
+      "hashtag": "urangbunian",
+      "distributor": "Theatrical Release",
       "release_status": "Now Playing",
-      "showtimes_count": 49
+      "showtimes_count": 225,
+      "merchants": [
+        "XXI"
+      ],
+      "poster": "https://asset.tix.id/movie_poster_v2/9cf31916-184d-46c5-8f34-d71c8ccd455f.webp",
+      "genres": [
+        "Horror"
+      ],
+      "age_category": "R"
     },
     {
-      "title": "PERUMAHAN LADDALAND",
-      "hashtag": "perumahanladdaland",
-      "distributor": "GDH / Cinepolis",
+      "title": "MUNAFIK: MELAWAN IBLIS",
+      "metadata_id": "2068310918315462656",
+      "hashtag": "munafikmelawaniblis",
+      "distributor": "Theatrical Release",
       "release_status": "Now Playing",
-      "showtimes_count": 20
+      "showtimes_count": 195,
+      "merchants": [
+        "XXI"
+      ],
+      "poster": "https://asset.tix.id/movie_poster_v2/e73ee093-41a4-414c-9a33-fb3b6418ad3c.webp",
+      "genres": [
+        "Horror"
+      ],
+      "age_category": "D"
     },
     {
-      "title": "CEK KHODAM",
-      "hashtag": "filmcekkhodam",
-      "distributor": "Imajinari",
+      "title": "HOPE",
+      "metadata_id": "2085304913214128128",
+      "hashtag": "filmhope",
+      "distributor": "Theatrical Release",
       "release_status": "Now Playing",
-      "showtimes_count": 45
+      "showtimes_count": 144,
+      "merchants": [
+        "XXI",
+        "Cinépolis"
+      ],
+      "poster": "https://asset.tix.id/movie_poster_v2/34b48567-a3e1-4ad1-852e-906e6edb0f4d.webp",
+      "genres": [
+        "Sci-fi",
+        "Mystery"
+      ],
+      "age_category": "R"
     },
     {
-      "title": "SENI MERAYU TUHAN",
-      "hashtag": "senimerayutuhan",
-      "distributor": "SinemArt",
+      "title": "ISTIMEWA",
+      "metadata_id": "2081949794359656448",
+      "hashtag": "istimewa",
+      "distributor": "Theatrical Release",
       "release_status": "Now Playing",
-      "showtimes_count": 38
+      "showtimes_count": 134,
+      "merchants": [
+        "XXI"
+      ],
+      "poster": "https://asset.tix.id/movie_poster_v2/cbf5fad2-1d31-4851-ad9c-78d763486405.webp",
+      "genres": [
+        "Drama"
+      ],
+      "age_category": "SU"
     },
     {
-      "title": "SAJEN SATU SURO",
-      "hashtag": "sajensatusuro",
-      "distributor": "Rapi Films",
+      "title": "INSIDIOUS: OUT OF THE FURTHER",
+      "metadata_id": "2080558628057726976",
+      "hashtag": "insidiousoutofthefurther",
+      "distributor": "Theatrical Release",
       "release_status": "Now Playing",
-      "showtimes_count": 32
+      "showtimes_count": 98,
+      "merchants": [
+        "XXI",
+        "Cinépolis"
+      ],
+      "poster": "https://asset.tix.id/movie_poster_v2/d4d2ccbb-41a8-415c-a75d-7681eda27e4d.webp",
+      "genres": [
+        "Horror"
+      ],
+      "age_category": "R"
     },
     {
-      "title": "PAKET SANTET",
-      "hashtag": "paketsantet",
-      "distributor": "Leo Pictures",
+      "title": "TABOO",
+      "metadata_id": "2085667305718628352",
+      "hashtag": "filmtaboo",
+      "distributor": "Theatrical Release",
       "release_status": "Now Playing",
-      "showtimes_count": 28
+      "showtimes_count": 70,
+      "merchants": [
+        "XXI",
+        "Cinépolis"
+      ],
+      "poster": "https://asset.tix.id/movie_poster_v2/10140851-457c-4270-aaa1-1d4642399b10.webp",
+      "genres": [
+        "Horror"
+      ],
+      "age_category": "D"
+    },
+    {
+      "title": "DETECTIVE CONAN THE MOVIE: FALLEN ANGEL OF THE HIGHWAY",
+      "metadata_id": "2093272903763181568",
+      "hashtag": "detectiveconanthemoviefallenangelofthehighway",
+      "distributor": "Theatrical Release",
+      "release_status": "Now Playing",
+      "showtimes_count": 69,
+      "merchants": [
+        "CGV"
+      ],
+      "poster": "https://asset.tix.id/movie_poster_v2/16c26581-807f-4b43-93ea-3b7060f6ad60.webp",
+      "genres": [
+        "Animation"
+      ],
+      "age_category": "R"
+    },
+    {
+      "title": "RUNNER",
+      "metadata_id": "2093238675717570560",
+      "hashtag": "filmrunner",
+      "distributor": "Theatrical Release",
+      "release_status": "Now Playing",
+      "showtimes_count": 68,
+      "merchants": [
+        "XXI"
+      ],
+      "poster": "https://asset.tix.id/movie_poster_v2/9ccd977f-9c32-4fbe-aadd-f8ef878ab142.webp",
+      "genres": [
+        "Action",
+        "Comedy"
+      ],
+      "age_category": "D"
     },
     {
       "title": "OPERASI PESTA COPET",
+      "metadata_id": "2076869318934609920",
       "hashtag": "operasipestacopet",
-      "distributor": "IDN Pictures",
+      "distributor": "Theatrical Release",
       "release_status": "Now Playing",
-      "showtimes_count": 25
+      "showtimes_count": 60,
+      "merchants": [
+        "XXI",
+        "Cinépolis"
+      ],
+      "poster": "https://asset.tix.id/movie_poster_v2/419ef5df-f434-4961-87fb-ef654c90612f.webp",
+      "genres": [
+        "Drama"
+      ],
+      "age_category": "R"
     }
   ],
   "ai_insights": {
@@ -85,13 +216,13 @@
   },
   "posts": [
     {
-      "id": "tiktok_739120485912384910_harusnyahorror",
+      "id": "tiktok_739120485912384910_residentevil",
       "platform": "tiktok",
-      "title": "Gak nyangka plot twist film HARUSNYA HORROR gokil banget! Wajib nonton weekend i...",
-      "text": "Gak nyangka plot twist film HARUSNYA HORROR gokil banget! Wajib nonton weekend ini di XXI / CGV. #harusnyahorror #BioskopIndonesia #ReviewFilm",
-      "url": "https://www.tiktok.com/@bioskopmania/video/739120485912384910_harusnyahorror",
-      "published_at": "2026-09-17T17:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664407+00:00",
+      "title": "Gak nyangka plot twist film RESIDENT EVIL gokil banget! Wajib nonton weekend ini...",
+      "text": "Gak nyangka plot twist film RESIDENT EVIL gokil banget! Wajib nonton weekend ini di XXI / CGV. #residentevil #BioskopIndonesia #ReviewFilm",
+      "url": "https://www.tiktok.com/@bioskopmania/video/739120485912384910_residentevil",
+      "published_at": "2026-09-18T06:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225595+00:00",
       "source_id": "tiktok_bioskopmania",
       "source_name": "Bioskop Mania ID",
       "source_handle": "@bioskopmania",
@@ -108,18 +239,18 @@
         "bookmarks": 4210
       },
       "platform_data": {
-        "tiktok_sound": "Original Soundtrack - HARUSNYA HORROR",
-        "campaign_hashtag": "harusnyahorror"
+        "tiktok_sound": "Original Soundtrack - RESIDENT EVIL",
+        "campaign_hashtag": "residentevil"
       }
     },
     {
-      "id": "tiktok_739130592819485720_harusnyahorror",
+      "id": "tiktok_739130592819485720_residentevil",
       "platform": "tiktok",
-      "title": "Official Teaser Trailer HARUSNYA HORROR sudah rilis di bioskop XXI, CGV, Cinepol...",
-      "text": "Official Teaser Trailer HARUSNYA HORROR sudah rilis di bioskop XXI, CGV, Cinepolis! Catat tanggal tayangnya. #harusnyahorror #OfficialTrailer",
-      "url": "https://www.tiktok.com/@distributor_id/video/739130592819485720_harusnyahorror",
-      "published_at": "2026-09-17T15:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664419+00:00",
+      "title": "Official Teaser Trailer RESIDENT EVIL sudah rilis di bioskop XXI, CGV, Cinepolis...",
+      "text": "Official Teaser Trailer RESIDENT EVIL sudah rilis di bioskop XXI, CGV, Cinepolis! Catat tanggal tayangnya. #residentevil #OfficialTrailer",
+      "url": "https://www.tiktok.com/@distributor_id/video/739130592819485720_residentevil",
+      "published_at": "2026-09-18T04:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225611+00:00",
       "source_id": "tiktok_distributor_official",
       "source_name": "Official Cinema ID",
       "source_handle": "@distributor_official",
@@ -137,17 +268,17 @@
       },
       "platform_data": {
         "tiktok_sound": "Epic Cinematic Soundtrack",
-        "campaign_hashtag": "harusnyahorror"
+        "campaign_hashtag": "residentevil"
       }
     },
     {
-      "id": "tiktok_739140592819485730_harusnyahorror",
+      "id": "tiktok_739140592819485730_residentevil",
       "platform": "tiktok",
-      "title": "Reaksi penonton bioskop pas nonton HARUSNYA HORROR. Seru parah jangan sampai keh...",
-      "text": "Reaksi penonton bioskop pas nonton HARUSNYA HORROR. Seru parah jangan sampai kehabisan tiket! #harusnyahorror",
-      "url": "https://www.tiktok.com/@nontonkuy/video/739140592819485730_harusnyahorror",
-      "published_at": "2026-09-17T13:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664426+00:00",
+      "title": "Reaksi penonton bioskop pas nonton RESIDENT EVIL. Seru parah jangan sampai kehab...",
+      "text": "Reaksi penonton bioskop pas nonton RESIDENT EVIL. Seru parah jangan sampai kehabisan tiket! #residentevil",
+      "url": "https://www.tiktok.com/@nontonkuy/video/739140592819485730_residentevil",
+      "published_at": "2026-09-18T02:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225621+00:00",
       "source_id": "tiktok_nontonkuy",
       "source_name": "Nonton Kuy",
       "source_handle": "@nontonkuy",
@@ -164,18 +295,18 @@
         "bookmarks": 2980
       },
       "platform_data": {
-        "tiktok_sound": "Theme - HARUSNYA HORROR",
-        "campaign_hashtag": "harusnyahorror"
+        "tiktok_sound": "Theme - RESIDENT EVIL",
+        "campaign_hashtag": "residentevil"
       }
     },
     {
-      "id": "tiktok_739120485912384910_ayahakumaucerita",
+      "id": "tiktok_739120485912384910_agensirumahtangga",
       "platform": "tiktok",
-      "title": "Gak nyangka plot twist film AYAH, AKU MAU CERITA gokil banget! Wajib nonton week...",
-      "text": "Gak nyangka plot twist film AYAH, AKU MAU CERITA gokil banget! Wajib nonton weekend ini di XXI / CGV. #ayahakumaucerita #BioskopIndonesia #ReviewFilm",
-      "url": "https://www.tiktok.com/@bioskopmania/video/739120485912384910_ayahakumaucerita",
-      "published_at": "2026-09-17T17:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664440+00:00",
+      "title": "Gak nyangka plot twist film AGENSI RUMAH TANGGA gokil banget! Wajib nonton weeke...",
+      "text": "Gak nyangka plot twist film AGENSI RUMAH TANGGA gokil banget! Wajib nonton weekend ini di XXI / CGV. #agensirumahtangga #BioskopIndonesia #ReviewFilm",
+      "url": "https://www.tiktok.com/@bioskopmania/video/739120485912384910_agensirumahtangga",
+      "published_at": "2026-09-18T06:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225640+00:00",
       "source_id": "tiktok_bioskopmania",
       "source_name": "Bioskop Mania ID",
       "source_handle": "@bioskopmania",
@@ -192,18 +323,18 @@
         "bookmarks": 4210
       },
       "platform_data": {
-        "tiktok_sound": "Original Soundtrack - AYAH, AKU MAU CERITA",
-        "campaign_hashtag": "ayahakumaucerita"
+        "tiktok_sound": "Original Soundtrack - AGENSI RUMAH TANGGA",
+        "campaign_hashtag": "agensirumahtangga"
       }
     },
     {
-      "id": "tiktok_739130592819485720_ayahakumaucerita",
+      "id": "tiktok_739130592819485720_agensirumahtangga",
       "platform": "tiktok",
-      "title": "Official Teaser Trailer AYAH, AKU MAU CERITA sudah rilis di bioskop XXI, CGV, Ci...",
-      "text": "Official Teaser Trailer AYAH, AKU MAU CERITA sudah rilis di bioskop XXI, CGV, Cinepolis! Catat tanggal tayangnya. #ayahakumaucerita #OfficialTrailer",
-      "url": "https://www.tiktok.com/@distributor_id/video/739130592819485720_ayahakumaucerita",
-      "published_at": "2026-09-17T15:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664444+00:00",
+      "title": "Official Teaser Trailer AGENSI RUMAH TANGGA sudah rilis di bioskop XXI, CGV, Cin...",
+      "text": "Official Teaser Trailer AGENSI RUMAH TANGGA sudah rilis di bioskop XXI, CGV, Cinepolis! Catat tanggal tayangnya. #agensirumahtangga #OfficialTrailer",
+      "url": "https://www.tiktok.com/@distributor_id/video/739130592819485720_agensirumahtangga",
+      "published_at": "2026-09-18T04:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225648+00:00",
       "source_id": "tiktok_distributor_official",
       "source_name": "Official Cinema ID",
       "source_handle": "@distributor_official",
@@ -221,17 +352,17 @@
       },
       "platform_data": {
         "tiktok_sound": "Epic Cinematic Soundtrack",
-        "campaign_hashtag": "ayahakumaucerita"
+        "campaign_hashtag": "agensirumahtangga"
       }
     },
     {
-      "id": "tiktok_739140592819485730_ayahakumaucerita",
+      "id": "tiktok_739140592819485730_agensirumahtangga",
       "platform": "tiktok",
-      "title": "Reaksi penonton bioskop pas nonton AYAH, AKU MAU CERITA. Seru parah jangan sampa...",
-      "text": "Reaksi penonton bioskop pas nonton AYAH, AKU MAU CERITA. Seru parah jangan sampai kehabisan tiket! #ayahakumaucerita",
-      "url": "https://www.tiktok.com/@nontonkuy/video/739140592819485730_ayahakumaucerita",
-      "published_at": "2026-09-17T13:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664449+00:00",
+      "title": "Reaksi penonton bioskop pas nonton AGENSI RUMAH TANGGA. Seru parah jangan sampai...",
+      "text": "Reaksi penonton bioskop pas nonton AGENSI RUMAH TANGGA. Seru parah jangan sampai kehabisan tiket! #agensirumahtangga",
+      "url": "https://www.tiktok.com/@nontonkuy/video/739140592819485730_agensirumahtangga",
+      "published_at": "2026-09-18T02:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225655+00:00",
       "source_id": "tiktok_nontonkuy",
       "source_name": "Nonton Kuy",
       "source_handle": "@nontonkuy",
@@ -248,18 +379,18 @@
         "bookmarks": 2980
       },
       "platform_data": {
-        "tiktok_sound": "Theme - AYAH, AKU MAU CERITA",
-        "campaign_hashtag": "ayahakumaucerita"
+        "tiktok_sound": "Theme - AGENSI RUMAH TANGGA",
+        "campaign_hashtag": "agensirumahtangga"
       }
     },
     {
-      "id": "tiktok_739120485912384910_danbandung",
+      "id": "tiktok_739120485912384910_fall2deadpoint",
       "platform": "tiktok",
-      "title": "Gak nyangka plot twist film DAN BANDUNG gokil banget! Wajib nonton weekend ini d...",
-      "text": "Gak nyangka plot twist film DAN BANDUNG gokil banget! Wajib nonton weekend ini di XXI / CGV. #danbandung #BioskopIndonesia #ReviewFilm",
-      "url": "https://www.tiktok.com/@bioskopmania/video/739120485912384910_danbandung",
-      "published_at": "2026-09-17T17:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664459+00:00",
+      "title": "Gak nyangka plot twist film FALL 2: DEADPOINT gokil banget! Wajib nonton weekend...",
+      "text": "Gak nyangka plot twist film FALL 2: DEADPOINT gokil banget! Wajib nonton weekend ini di XXI / CGV. #fall2deadpoint #BioskopIndonesia #ReviewFilm",
+      "url": "https://www.tiktok.com/@bioskopmania/video/739120485912384910_fall2deadpoint",
+      "published_at": "2026-09-18T06:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225669+00:00",
       "source_id": "tiktok_bioskopmania",
       "source_name": "Bioskop Mania ID",
       "source_handle": "@bioskopmania",
@@ -276,18 +407,18 @@
         "bookmarks": 4210
       },
       "platform_data": {
-        "tiktok_sound": "Original Soundtrack - DAN BANDUNG",
-        "campaign_hashtag": "danbandung"
+        "tiktok_sound": "Original Soundtrack - FALL 2: DEADPOINT",
+        "campaign_hashtag": "fall2deadpoint"
       }
     },
     {
-      "id": "tiktok_739130592819485720_danbandung",
+      "id": "tiktok_739130592819485720_fall2deadpoint",
       "platform": "tiktok",
-      "title": "Official Teaser Trailer DAN BANDUNG sudah rilis di bioskop XXI, CGV, Cinepolis! ...",
-      "text": "Official Teaser Trailer DAN BANDUNG sudah rilis di bioskop XXI, CGV, Cinepolis! Catat tanggal tayangnya. #danbandung #OfficialTrailer",
-      "url": "https://www.tiktok.com/@distributor_id/video/739130592819485720_danbandung",
-      "published_at": "2026-09-17T15:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664463+00:00",
+      "title": "Official Teaser Trailer FALL 2: DEADPOINT sudah rilis di bioskop XXI, CGV, Cinep...",
+      "text": "Official Teaser Trailer FALL 2: DEADPOINT sudah rilis di bioskop XXI, CGV, Cinepolis! Catat tanggal tayangnya. #fall2deadpoint #OfficialTrailer",
+      "url": "https://www.tiktok.com/@distributor_id/video/739130592819485720_fall2deadpoint",
+      "published_at": "2026-09-18T04:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225675+00:00",
       "source_id": "tiktok_distributor_official",
       "source_name": "Official Cinema ID",
       "source_handle": "@distributor_official",
@@ -305,17 +436,17 @@
       },
       "platform_data": {
         "tiktok_sound": "Epic Cinematic Soundtrack",
-        "campaign_hashtag": "danbandung"
+        "campaign_hashtag": "fall2deadpoint"
       }
     },
     {
-      "id": "tiktok_739140592819485730_danbandung",
+      "id": "tiktok_739140592819485730_fall2deadpoint",
       "platform": "tiktok",
-      "title": "Reaksi penonton bioskop pas nonton DAN BANDUNG. Seru parah jangan sampai kehabis...",
-      "text": "Reaksi penonton bioskop pas nonton DAN BANDUNG. Seru parah jangan sampai kehabisan tiket! #danbandung",
-      "url": "https://www.tiktok.com/@nontonkuy/video/739140592819485730_danbandung",
-      "published_at": "2026-09-17T13:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664466+00:00",
+      "title": "Reaksi penonton bioskop pas nonton FALL 2: DEADPOINT. Seru parah jangan sampai k...",
+      "text": "Reaksi penonton bioskop pas nonton FALL 2: DEADPOINT. Seru parah jangan sampai kehabisan tiket! #fall2deadpoint",
+      "url": "https://www.tiktok.com/@nontonkuy/video/739140592819485730_fall2deadpoint",
+      "published_at": "2026-09-18T02:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225682+00:00",
       "source_id": "tiktok_nontonkuy",
       "source_name": "Nonton Kuy",
       "source_handle": "@nontonkuy",
@@ -332,18 +463,18 @@
         "bookmarks": 2980
       },
       "platform_data": {
-        "tiktok_sound": "Theme - DAN BANDUNG",
-        "campaign_hashtag": "danbandung"
+        "tiktok_sound": "Theme - FALL 2: DEADPOINT",
+        "campaign_hashtag": "fall2deadpoint"
       }
     },
     {
-      "id": "tiktok_739120485912384910_filmdearyou",
+      "id": "tiktok_739120485912384910_urangbunian",
       "platform": "tiktok",
-      "title": "Gak nyangka plot twist film DEAR YOU gokil banget! Wajib nonton weekend ini di X...",
-      "text": "Gak nyangka plot twist film DEAR YOU gokil banget! Wajib nonton weekend ini di XXI / CGV. #filmdearyou #BioskopIndonesia #ReviewFilm",
-      "url": "https://www.tiktok.com/@bioskopmania/video/739120485912384910_filmdearyou",
-      "published_at": "2026-09-17T17:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664475+00:00",
+      "title": "Gak nyangka plot twist film URANG BUNIAN gokil banget! Wajib nonton weekend ini ...",
+      "text": "Gak nyangka plot twist film URANG BUNIAN gokil banget! Wajib nonton weekend ini di XXI / CGV. #urangbunian #BioskopIndonesia #ReviewFilm",
+      "url": "https://www.tiktok.com/@bioskopmania/video/739120485912384910_urangbunian",
+      "published_at": "2026-09-18T06:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225695+00:00",
       "source_id": "tiktok_bioskopmania",
       "source_name": "Bioskop Mania ID",
       "source_handle": "@bioskopmania",
@@ -360,18 +491,18 @@
         "bookmarks": 4210
       },
       "platform_data": {
-        "tiktok_sound": "Original Soundtrack - DEAR YOU",
-        "campaign_hashtag": "filmdearyou"
+        "tiktok_sound": "Original Soundtrack - URANG BUNIAN",
+        "campaign_hashtag": "urangbunian"
       }
     },
     {
-      "id": "tiktok_739130592819485720_filmdearyou",
+      "id": "tiktok_739130592819485720_urangbunian",
       "platform": "tiktok",
-      "title": "Official Teaser Trailer DEAR YOU sudah rilis di bioskop XXI, CGV, Cinepolis! Cat...",
-      "text": "Official Teaser Trailer DEAR YOU sudah rilis di bioskop XXI, CGV, Cinepolis! Catat tanggal tayangnya. #filmdearyou #OfficialTrailer",
-      "url": "https://www.tiktok.com/@distributor_id/video/739130592819485720_filmdearyou",
-      "published_at": "2026-09-17T15:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664478+00:00",
+      "title": "Official Teaser Trailer URANG BUNIAN sudah rilis di bioskop XXI, CGV, Cinepolis!...",
+      "text": "Official Teaser Trailer URANG BUNIAN sudah rilis di bioskop XXI, CGV, Cinepolis! Catat tanggal tayangnya. #urangbunian #OfficialTrailer",
+      "url": "https://www.tiktok.com/@distributor_id/video/739130592819485720_urangbunian",
+      "published_at": "2026-09-18T04:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225702+00:00",
       "source_id": "tiktok_distributor_official",
       "source_name": "Official Cinema ID",
       "source_handle": "@distributor_official",
@@ -389,17 +520,17 @@
       },
       "platform_data": {
         "tiktok_sound": "Epic Cinematic Soundtrack",
-        "campaign_hashtag": "filmdearyou"
+        "campaign_hashtag": "urangbunian"
       }
     },
     {
-      "id": "tiktok_739140592819485730_filmdearyou",
+      "id": "tiktok_739140592819485730_urangbunian",
       "platform": "tiktok",
-      "title": "Reaksi penonton bioskop pas nonton DEAR YOU. Seru parah jangan sampai kehabisan ...",
-      "text": "Reaksi penonton bioskop pas nonton DEAR YOU. Seru parah jangan sampai kehabisan tiket! #filmdearyou",
-      "url": "https://www.tiktok.com/@nontonkuy/video/739140592819485730_filmdearyou",
-      "published_at": "2026-09-17T13:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664482+00:00",
+      "title": "Reaksi penonton bioskop pas nonton URANG BUNIAN. Seru parah jangan sampai kehabi...",
+      "text": "Reaksi penonton bioskop pas nonton URANG BUNIAN. Seru parah jangan sampai kehabisan tiket! #urangbunian",
+      "url": "https://www.tiktok.com/@nontonkuy/video/739140592819485730_urangbunian",
+      "published_at": "2026-09-18T02:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225709+00:00",
       "source_id": "tiktok_nontonkuy",
       "source_name": "Nonton Kuy",
       "source_handle": "@nontonkuy",
@@ -416,18 +547,18 @@
         "bookmarks": 2980
       },
       "platform_data": {
-        "tiktok_sound": "Theme - DEAR YOU",
-        "campaign_hashtag": "filmdearyou"
+        "tiktok_sound": "Theme - URANG BUNIAN",
+        "campaign_hashtag": "urangbunian"
       }
     },
     {
-      "id": "tiktok_739120485912384910_perumahanladdaland",
+      "id": "tiktok_739120485912384910_munafikmelawaniblis",
       "platform": "tiktok",
-      "title": "Gak nyangka plot twist film PERUMAHAN LADDALAND gokil banget! Wajib nonton weeke...",
-      "text": "Gak nyangka plot twist film PERUMAHAN LADDALAND gokil banget! Wajib nonton weekend ini di XXI / CGV. #perumahanladdaland #BioskopIndonesia #ReviewFilm",
-      "url": "https://www.tiktok.com/@bioskopmania/video/739120485912384910_perumahanladdaland",
-      "published_at": "2026-09-17T17:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664496+00:00",
+      "title": "Gak nyangka plot twist film MUNAFIK: MELAWAN IBLIS gokil banget! Wajib nonton we...",
+      "text": "Gak nyangka plot twist film MUNAFIK: MELAWAN IBLIS gokil banget! Wajib nonton weekend ini di XXI / CGV. #munafikmelawaniblis #BioskopIndonesia #ReviewFilm",
+      "url": "https://www.tiktok.com/@bioskopmania/video/739120485912384910_munafikmelawaniblis",
+      "published_at": "2026-09-18T06:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225723+00:00",
       "source_id": "tiktok_bioskopmania",
       "source_name": "Bioskop Mania ID",
       "source_handle": "@bioskopmania",
@@ -444,18 +575,18 @@
         "bookmarks": 4210
       },
       "platform_data": {
-        "tiktok_sound": "Original Soundtrack - PERUMAHAN LADDALAND",
-        "campaign_hashtag": "perumahanladdaland"
+        "tiktok_sound": "Original Soundtrack - MUNAFIK: MELAWAN IBLIS",
+        "campaign_hashtag": "munafikmelawaniblis"
       }
     },
     {
-      "id": "tiktok_739130592819485720_perumahanladdaland",
+      "id": "tiktok_739130592819485720_munafikmelawaniblis",
       "platform": "tiktok",
-      "title": "Official Teaser Trailer PERUMAHAN LADDALAND sudah rilis di bioskop XXI, CGV, Cin...",
-      "text": "Official Teaser Trailer PERUMAHAN LADDALAND sudah rilis di bioskop XXI, CGV, Cinepolis! Catat tanggal tayangnya. #perumahanladdaland #OfficialTrailer",
-      "url": "https://www.tiktok.com/@distributor_id/video/739130592819485720_perumahanladdaland",
-      "published_at": "2026-09-17T15:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664501+00:00",
+      "title": "Official Teaser Trailer MUNAFIK: MELAWAN IBLIS sudah rilis di bioskop XXI, CGV, ...",
+      "text": "Official Teaser Trailer MUNAFIK: MELAWAN IBLIS sudah rilis di bioskop XXI, CGV, Cinepolis! Catat tanggal tayangnya. #munafikmelawaniblis #OfficialTrailer",
+      "url": "https://www.tiktok.com/@distributor_id/video/739130592819485720_munafikmelawaniblis",
+      "published_at": "2026-09-18T04:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225729+00:00",
       "source_id": "tiktok_distributor_official",
       "source_name": "Official Cinema ID",
       "source_handle": "@distributor_official",
@@ -473,17 +604,17 @@
       },
       "platform_data": {
         "tiktok_sound": "Epic Cinematic Soundtrack",
-        "campaign_hashtag": "perumahanladdaland"
+        "campaign_hashtag": "munafikmelawaniblis"
       }
     },
     {
-      "id": "tiktok_739140592819485730_perumahanladdaland",
+      "id": "tiktok_739140592819485730_munafikmelawaniblis",
       "platform": "tiktok",
-      "title": "Reaksi penonton bioskop pas nonton PERUMAHAN LADDALAND. Seru parah jangan sampai...",
-      "text": "Reaksi penonton bioskop pas nonton PERUMAHAN LADDALAND. Seru parah jangan sampai kehabisan tiket! #perumahanladdaland",
-      "url": "https://www.tiktok.com/@nontonkuy/video/739140592819485730_perumahanladdaland",
-      "published_at": "2026-09-17T13:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664504+00:00",
+      "title": "Reaksi penonton bioskop pas nonton MUNAFIK: MELAWAN IBLIS. Seru parah jangan sam...",
+      "text": "Reaksi penonton bioskop pas nonton MUNAFIK: MELAWAN IBLIS. Seru parah jangan sampai kehabisan tiket! #munafikmelawaniblis",
+      "url": "https://www.tiktok.com/@nontonkuy/video/739140592819485730_munafikmelawaniblis",
+      "published_at": "2026-09-18T02:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225736+00:00",
       "source_id": "tiktok_nontonkuy",
       "source_name": "Nonton Kuy",
       "source_handle": "@nontonkuy",
@@ -500,18 +631,18 @@
         "bookmarks": 2980
       },
       "platform_data": {
-        "tiktok_sound": "Theme - PERUMAHAN LADDALAND",
-        "campaign_hashtag": "perumahanladdaland"
+        "tiktok_sound": "Theme - MUNAFIK: MELAWAN IBLIS",
+        "campaign_hashtag": "munafikmelawaniblis"
       }
     },
     {
-      "id": "tiktok_739120485912384910_filmcekkhodam",
+      "id": "tiktok_739120485912384910_filmhope",
       "platform": "tiktok",
-      "title": "Gak nyangka plot twist film CEK KHODAM gokil banget! Wajib nonton weekend ini di...",
-      "text": "Gak nyangka plot twist film CEK KHODAM gokil banget! Wajib nonton weekend ini di XXI / CGV. #filmcekkhodam #BioskopIndonesia #ReviewFilm",
-      "url": "https://www.tiktok.com/@bioskopmania/video/739120485912384910_filmcekkhodam",
-      "published_at": "2026-09-17T17:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664535+00:00",
+      "title": "Gak nyangka plot twist film HOPE gokil banget! Wajib nonton weekend ini di XXI /...",
+      "text": "Gak nyangka plot twist film HOPE gokil banget! Wajib nonton weekend ini di XXI / CGV. #filmhope #BioskopIndonesia #ReviewFilm",
+      "url": "https://www.tiktok.com/@bioskopmania/video/739120485912384910_filmhope",
+      "published_at": "2026-09-18T06:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225750+00:00",
       "source_id": "tiktok_bioskopmania",
       "source_name": "Bioskop Mania ID",
       "source_handle": "@bioskopmania",
@@ -528,18 +659,18 @@
         "bookmarks": 4210
       },
       "platform_data": {
-        "tiktok_sound": "Original Soundtrack - CEK KHODAM",
-        "campaign_hashtag": "filmcekkhodam"
+        "tiktok_sound": "Original Soundtrack - HOPE",
+        "campaign_hashtag": "filmhope"
       }
     },
     {
-      "id": "tiktok_739130592819485720_filmcekkhodam",
+      "id": "tiktok_739130592819485720_filmhope",
       "platform": "tiktok",
-      "title": "Official Teaser Trailer CEK KHODAM sudah rilis di bioskop XXI, CGV, Cinepolis! C...",
-      "text": "Official Teaser Trailer CEK KHODAM sudah rilis di bioskop XXI, CGV, Cinepolis! Catat tanggal tayangnya. #filmcekkhodam #OfficialTrailer",
-      "url": "https://www.tiktok.com/@distributor_id/video/739130592819485720_filmcekkhodam",
-      "published_at": "2026-09-17T15:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664540+00:00",
+      "title": "Official Teaser Trailer HOPE sudah rilis di bioskop XXI, CGV, Cinepolis! Catat t...",
+      "text": "Official Teaser Trailer HOPE sudah rilis di bioskop XXI, CGV, Cinepolis! Catat tanggal tayangnya. #filmhope #OfficialTrailer",
+      "url": "https://www.tiktok.com/@distributor_id/video/739130592819485720_filmhope",
+      "published_at": "2026-09-18T04:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225757+00:00",
       "source_id": "tiktok_distributor_official",
       "source_name": "Official Cinema ID",
       "source_handle": "@distributor_official",
@@ -557,17 +688,17 @@
       },
       "platform_data": {
         "tiktok_sound": "Epic Cinematic Soundtrack",
-        "campaign_hashtag": "filmcekkhodam"
+        "campaign_hashtag": "filmhope"
       }
     },
     {
-      "id": "tiktok_739140592819485730_filmcekkhodam",
+      "id": "tiktok_739140592819485730_filmhope",
       "platform": "tiktok",
-      "title": "Reaksi penonton bioskop pas nonton CEK KHODAM. Seru parah jangan sampai kehabisa...",
-      "text": "Reaksi penonton bioskop pas nonton CEK KHODAM. Seru parah jangan sampai kehabisan tiket! #filmcekkhodam",
-      "url": "https://www.tiktok.com/@nontonkuy/video/739140592819485730_filmcekkhodam",
-      "published_at": "2026-09-17T13:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664544+00:00",
+      "title": "Reaksi penonton bioskop pas nonton HOPE. Seru parah jangan sampai kehabisan tike...",
+      "text": "Reaksi penonton bioskop pas nonton HOPE. Seru parah jangan sampai kehabisan tiket! #filmhope",
+      "url": "https://www.tiktok.com/@nontonkuy/video/739140592819485730_filmhope",
+      "published_at": "2026-09-18T02:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225763+00:00",
       "source_id": "tiktok_nontonkuy",
       "source_name": "Nonton Kuy",
       "source_handle": "@nontonkuy",
@@ -584,18 +715,18 @@
         "bookmarks": 2980
       },
       "platform_data": {
-        "tiktok_sound": "Theme - CEK KHODAM",
-        "campaign_hashtag": "filmcekkhodam"
+        "tiktok_sound": "Theme - HOPE",
+        "campaign_hashtag": "filmhope"
       }
     },
     {
-      "id": "tiktok_739120485912384910_senimerayutuhan",
+      "id": "tiktok_739120485912384910_istimewa",
       "platform": "tiktok",
-      "title": "Gak nyangka plot twist film SENI MERAYU TUHAN gokil banget! Wajib nonton weekend...",
-      "text": "Gak nyangka plot twist film SENI MERAYU TUHAN gokil banget! Wajib nonton weekend ini di XXI / CGV. #senimerayutuhan #BioskopIndonesia #ReviewFilm",
-      "url": "https://www.tiktok.com/@bioskopmania/video/739120485912384910_senimerayutuhan",
-      "published_at": "2026-09-17T17:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664556+00:00",
+      "title": "Gak nyangka plot twist film ISTIMEWA gokil banget! Wajib nonton weekend ini di X...",
+      "text": "Gak nyangka plot twist film ISTIMEWA gokil banget! Wajib nonton weekend ini di XXI / CGV. #istimewa #BioskopIndonesia #ReviewFilm",
+      "url": "https://www.tiktok.com/@bioskopmania/video/739120485912384910_istimewa",
+      "published_at": "2026-09-18T06:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225772+00:00",
       "source_id": "tiktok_bioskopmania",
       "source_name": "Bioskop Mania ID",
       "source_handle": "@bioskopmania",
@@ -612,18 +743,18 @@
         "bookmarks": 4210
       },
       "platform_data": {
-        "tiktok_sound": "Original Soundtrack - SENI MERAYU TUHAN",
-        "campaign_hashtag": "senimerayutuhan"
+        "tiktok_sound": "Original Soundtrack - ISTIMEWA",
+        "campaign_hashtag": "istimewa"
       }
     },
     {
-      "id": "tiktok_739130592819485720_senimerayutuhan",
+      "id": "tiktok_739130592819485720_istimewa",
       "platform": "tiktok",
-      "title": "Official Teaser Trailer SENI MERAYU TUHAN sudah rilis di bioskop XXI, CGV, Cinep...",
-      "text": "Official Teaser Trailer SENI MERAYU TUHAN sudah rilis di bioskop XXI, CGV, Cinepolis! Catat tanggal tayangnya. #senimerayutuhan #OfficialTrailer",
-      "url": "https://www.tiktok.com/@distributor_id/video/739130592819485720_senimerayutuhan",
-      "published_at": "2026-09-17T15:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664559+00:00",
+      "title": "Official Teaser Trailer ISTIMEWA sudah rilis di bioskop XXI, CGV, Cinepolis! Cat...",
+      "text": "Official Teaser Trailer ISTIMEWA sudah rilis di bioskop XXI, CGV, Cinepolis! Catat tanggal tayangnya. #istimewa #OfficialTrailer",
+      "url": "https://www.tiktok.com/@distributor_id/video/739130592819485720_istimewa",
+      "published_at": "2026-09-18T04:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225776+00:00",
       "source_id": "tiktok_distributor_official",
       "source_name": "Official Cinema ID",
       "source_handle": "@distributor_official",
@@ -641,17 +772,17 @@
       },
       "platform_data": {
         "tiktok_sound": "Epic Cinematic Soundtrack",
-        "campaign_hashtag": "senimerayutuhan"
+        "campaign_hashtag": "istimewa"
       }
     },
     {
-      "id": "tiktok_739140592819485730_senimerayutuhan",
+      "id": "tiktok_739140592819485730_istimewa",
       "platform": "tiktok",
-      "title": "Reaksi penonton bioskop pas nonton SENI MERAYU TUHAN. Seru parah jangan sampai k...",
-      "text": "Reaksi penonton bioskop pas nonton SENI MERAYU TUHAN. Seru parah jangan sampai kehabisan tiket! #senimerayutuhan",
-      "url": "https://www.tiktok.com/@nontonkuy/video/739140592819485730_senimerayutuhan",
-      "published_at": "2026-09-17T13:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664562+00:00",
+      "title": "Reaksi penonton bioskop pas nonton ISTIMEWA. Seru parah jangan sampai kehabisan ...",
+      "text": "Reaksi penonton bioskop pas nonton ISTIMEWA. Seru parah jangan sampai kehabisan tiket! #istimewa",
+      "url": "https://www.tiktok.com/@nontonkuy/video/739140592819485730_istimewa",
+      "published_at": "2026-09-18T02:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225781+00:00",
       "source_id": "tiktok_nontonkuy",
       "source_name": "Nonton Kuy",
       "source_handle": "@nontonkuy",
@@ -668,18 +799,18 @@
         "bookmarks": 2980
       },
       "platform_data": {
-        "tiktok_sound": "Theme - SENI MERAYU TUHAN",
-        "campaign_hashtag": "senimerayutuhan"
+        "tiktok_sound": "Theme - ISTIMEWA",
+        "campaign_hashtag": "istimewa"
       }
     },
     {
-      "id": "tiktok_739120485912384910_sajensatusuro",
+      "id": "tiktok_739120485912384910_insidiousoutofthefurther",
       "platform": "tiktok",
-      "title": "Gak nyangka plot twist film SAJEN SATU SURO gokil banget! Wajib nonton weekend i...",
-      "text": "Gak nyangka plot twist film SAJEN SATU SURO gokil banget! Wajib nonton weekend ini di XXI / CGV. #sajensatusuro #BioskopIndonesia #ReviewFilm",
-      "url": "https://www.tiktok.com/@bioskopmania/video/739120485912384910_sajensatusuro",
-      "published_at": "2026-09-17T17:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664574+00:00",
+      "title": "Gak nyangka plot twist film INSIDIOUS: OUT OF THE FURTHER gokil banget! Wajib no...",
+      "text": "Gak nyangka plot twist film INSIDIOUS: OUT OF THE FURTHER gokil banget! Wajib nonton weekend ini di XXI / CGV. #insidiousoutofthefurther #BioskopIndonesia #ReviewFilm",
+      "url": "https://www.tiktok.com/@bioskopmania/video/739120485912384910_insidiousoutofthefurther",
+      "published_at": "2026-09-18T06:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225790+00:00",
       "source_id": "tiktok_bioskopmania",
       "source_name": "Bioskop Mania ID",
       "source_handle": "@bioskopmania",
@@ -696,18 +827,18 @@
         "bookmarks": 4210
       },
       "platform_data": {
-        "tiktok_sound": "Original Soundtrack - SAJEN SATU SURO",
-        "campaign_hashtag": "sajensatusuro"
+        "tiktok_sound": "Original Soundtrack - INSIDIOUS: OUT OF THE FURTHER",
+        "campaign_hashtag": "insidiousoutofthefurther"
       }
     },
     {
-      "id": "tiktok_739130592819485720_sajensatusuro",
+      "id": "tiktok_739130592819485720_insidiousoutofthefurther",
       "platform": "tiktok",
-      "title": "Official Teaser Trailer SAJEN SATU SURO sudah rilis di bioskop XXI, CGV, Cinepol...",
-      "text": "Official Teaser Trailer SAJEN SATU SURO sudah rilis di bioskop XXI, CGV, Cinepolis! Catat tanggal tayangnya. #sajensatusuro #OfficialTrailer",
-      "url": "https://www.tiktok.com/@distributor_id/video/739130592819485720_sajensatusuro",
-      "published_at": "2026-09-17T15:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664577+00:00",
+      "title": "Official Teaser Trailer INSIDIOUS: OUT OF THE FURTHER sudah rilis di bioskop XXI...",
+      "text": "Official Teaser Trailer INSIDIOUS: OUT OF THE FURTHER sudah rilis di bioskop XXI, CGV, Cinepolis! Catat tanggal tayangnya. #insidiousoutofthefurther #OfficialTrailer",
+      "url": "https://www.tiktok.com/@distributor_id/video/739130592819485720_insidiousoutofthefurther",
+      "published_at": "2026-09-18T04:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225794+00:00",
       "source_id": "tiktok_distributor_official",
       "source_name": "Official Cinema ID",
       "source_handle": "@distributor_official",
@@ -725,17 +856,17 @@
       },
       "platform_data": {
         "tiktok_sound": "Epic Cinematic Soundtrack",
-        "campaign_hashtag": "sajensatusuro"
+        "campaign_hashtag": "insidiousoutofthefurther"
       }
     },
     {
-      "id": "tiktok_739140592819485730_sajensatusuro",
+      "id": "tiktok_739140592819485730_insidiousoutofthefurther",
       "platform": "tiktok",
-      "title": "Reaksi penonton bioskop pas nonton SAJEN SATU SURO. Seru parah jangan sampai keh...",
-      "text": "Reaksi penonton bioskop pas nonton SAJEN SATU SURO. Seru parah jangan sampai kehabisan tiket! #sajensatusuro",
-      "url": "https://www.tiktok.com/@nontonkuy/video/739140592819485730_sajensatusuro",
-      "published_at": "2026-09-17T13:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664581+00:00",
+      "title": "Reaksi penonton bioskop pas nonton INSIDIOUS: OUT OF THE FURTHER. Seru parah jan...",
+      "text": "Reaksi penonton bioskop pas nonton INSIDIOUS: OUT OF THE FURTHER. Seru parah jangan sampai kehabisan tiket! #insidiousoutofthefurther",
+      "url": "https://www.tiktok.com/@nontonkuy/video/739140592819485730_insidiousoutofthefurther",
+      "published_at": "2026-09-18T02:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225799+00:00",
       "source_id": "tiktok_nontonkuy",
       "source_name": "Nonton Kuy",
       "source_handle": "@nontonkuy",
@@ -752,18 +883,18 @@
         "bookmarks": 2980
       },
       "platform_data": {
-        "tiktok_sound": "Theme - SAJEN SATU SURO",
-        "campaign_hashtag": "sajensatusuro"
+        "tiktok_sound": "Theme - INSIDIOUS: OUT OF THE FURTHER",
+        "campaign_hashtag": "insidiousoutofthefurther"
       }
     },
     {
-      "id": "tiktok_739120485912384910_paketsantet",
+      "id": "tiktok_739120485912384910_filmtaboo",
       "platform": "tiktok",
-      "title": "Gak nyangka plot twist film PAKET SANTET gokil banget! Wajib nonton weekend ini ...",
-      "text": "Gak nyangka plot twist film PAKET SANTET gokil banget! Wajib nonton weekend ini di XXI / CGV. #paketsantet #BioskopIndonesia #ReviewFilm",
-      "url": "https://www.tiktok.com/@bioskopmania/video/739120485912384910_paketsantet",
-      "published_at": "2026-09-17T17:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664590+00:00",
+      "title": "Gak nyangka plot twist film TABOO gokil banget! Wajib nonton weekend ini di XXI ...",
+      "text": "Gak nyangka plot twist film TABOO gokil banget! Wajib nonton weekend ini di XXI / CGV. #filmtaboo #BioskopIndonesia #ReviewFilm",
+      "url": "https://www.tiktok.com/@bioskopmania/video/739120485912384910_filmtaboo",
+      "published_at": "2026-09-18T06:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225808+00:00",
       "source_id": "tiktok_bioskopmania",
       "source_name": "Bioskop Mania ID",
       "source_handle": "@bioskopmania",
@@ -780,18 +911,18 @@
         "bookmarks": 4210
       },
       "platform_data": {
-        "tiktok_sound": "Original Soundtrack - PAKET SANTET",
-        "campaign_hashtag": "paketsantet"
+        "tiktok_sound": "Original Soundtrack - TABOO",
+        "campaign_hashtag": "filmtaboo"
       }
     },
     {
-      "id": "tiktok_739130592819485720_paketsantet",
+      "id": "tiktok_739130592819485720_filmtaboo",
       "platform": "tiktok",
-      "title": "Official Teaser Trailer PAKET SANTET sudah rilis di bioskop XXI, CGV, Cinepolis!...",
-      "text": "Official Teaser Trailer PAKET SANTET sudah rilis di bioskop XXI, CGV, Cinepolis! Catat tanggal tayangnya. #paketsantet #OfficialTrailer",
-      "url": "https://www.tiktok.com/@distributor_id/video/739130592819485720_paketsantet",
-      "published_at": "2026-09-17T15:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664593+00:00",
+      "title": "Official Teaser Trailer TABOO sudah rilis di bioskop XXI, CGV, Cinepolis! Catat ...",
+      "text": "Official Teaser Trailer TABOO sudah rilis di bioskop XXI, CGV, Cinepolis! Catat tanggal tayangnya. #filmtaboo #OfficialTrailer",
+      "url": "https://www.tiktok.com/@distributor_id/video/739130592819485720_filmtaboo",
+      "published_at": "2026-09-18T04:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225812+00:00",
       "source_id": "tiktok_distributor_official",
       "source_name": "Official Cinema ID",
       "source_handle": "@distributor_official",
@@ -809,17 +940,17 @@
       },
       "platform_data": {
         "tiktok_sound": "Epic Cinematic Soundtrack",
-        "campaign_hashtag": "paketsantet"
+        "campaign_hashtag": "filmtaboo"
       }
     },
     {
-      "id": "tiktok_739140592819485730_paketsantet",
+      "id": "tiktok_739140592819485730_filmtaboo",
       "platform": "tiktok",
-      "title": "Reaksi penonton bioskop pas nonton PAKET SANTET. Seru parah jangan sampai kehabi...",
-      "text": "Reaksi penonton bioskop pas nonton PAKET SANTET. Seru parah jangan sampai kehabisan tiket! #paketsantet",
-      "url": "https://www.tiktok.com/@nontonkuy/video/739140592819485730_paketsantet",
-      "published_at": "2026-09-17T13:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664599+00:00",
+      "title": "Reaksi penonton bioskop pas nonton TABOO. Seru parah jangan sampai kehabisan tik...",
+      "text": "Reaksi penonton bioskop pas nonton TABOO. Seru parah jangan sampai kehabisan tiket! #filmtaboo",
+      "url": "https://www.tiktok.com/@nontonkuy/video/739140592819485730_filmtaboo",
+      "published_at": "2026-09-18T02:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225816+00:00",
       "source_id": "tiktok_nontonkuy",
       "source_name": "Nonton Kuy",
       "source_handle": "@nontonkuy",
@@ -836,8 +967,176 @@
         "bookmarks": 2980
       },
       "platform_data": {
-        "tiktok_sound": "Theme - PAKET SANTET",
-        "campaign_hashtag": "paketsantet"
+        "tiktok_sound": "Theme - TABOO",
+        "campaign_hashtag": "filmtaboo"
+      }
+    },
+    {
+      "id": "tiktok_739120485912384910_detectiveconanthemoviefallenangelofthehighway",
+      "platform": "tiktok",
+      "title": "Gak nyangka plot twist film DETECTIVE CONAN THE MOVIE: FALLEN ANGEL OF THE HIGHW...",
+      "text": "Gak nyangka plot twist film DETECTIVE CONAN THE MOVIE: FALLEN ANGEL OF THE HIGHWAY gokil banget! Wajib nonton weekend ini di XXI / CGV. #detectiveconanthemoviefallenangelofthehighway #BioskopIndonesia #ReviewFilm",
+      "url": "https://www.tiktok.com/@bioskopmania/video/739120485912384910_detectiveconanthemoviefallenangelofthehighway",
+      "published_at": "2026-09-18T06:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225826+00:00",
+      "source_id": "tiktok_bioskopmania",
+      "source_name": "Bioskop Mania ID",
+      "source_handle": "@bioskopmania",
+      "source_avatar": "https://p16-sign.tiktokcdn.com/avatar1.jpeg",
+      "source_category": "community",
+      "content_type": "community",
+      "thumbnail": "https://p16-sign.tiktokcdn.com/avatar1.jpeg",
+      "media": [],
+      "metrics": {
+        "views": 245000,
+        "likes": 38400,
+        "comments": 512,
+        "shares": 2840,
+        "bookmarks": 4210
+      },
+      "platform_data": {
+        "tiktok_sound": "Original Soundtrack - DETECTIVE CONAN THE MOVIE: FALLEN ANGEL OF THE HIGHWAY",
+        "campaign_hashtag": "detectiveconanthemoviefallenangelofthehighway"
+      }
+    },
+    {
+      "id": "tiktok_739130592819485720_detectiveconanthemoviefallenangelofthehighway",
+      "platform": "tiktok",
+      "title": "Official Teaser Trailer DETECTIVE CONAN THE MOVIE: FALLEN ANGEL OF THE HIGHWAY s...",
+      "text": "Official Teaser Trailer DETECTIVE CONAN THE MOVIE: FALLEN ANGEL OF THE HIGHWAY sudah rilis di bioskop XXI, CGV, Cinepolis! Catat tanggal tayangnya. #detectiveconanthemoviefallenangelofthehighway #OfficialTrailer",
+      "url": "https://www.tiktok.com/@distributor_id/video/739130592819485720_detectiveconanthemoviefallenangelofthehighway",
+      "published_at": "2026-09-18T04:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225830+00:00",
+      "source_id": "tiktok_distributor_official",
+      "source_name": "Official Cinema ID",
+      "source_handle": "@distributor_official",
+      "source_avatar": "https://p16-sign.tiktokcdn.com/avatar2.jpeg",
+      "source_category": "community",
+      "content_type": "community",
+      "thumbnail": "https://p16-sign.tiktokcdn.com/avatar2.jpeg",
+      "media": [],
+      "metrics": {
+        "views": 420000,
+        "likes": 59100,
+        "comments": 890,
+        "shares": 5120,
+        "bookmarks": 7890
+      },
+      "platform_data": {
+        "tiktok_sound": "Epic Cinematic Soundtrack",
+        "campaign_hashtag": "detectiveconanthemoviefallenangelofthehighway"
+      }
+    },
+    {
+      "id": "tiktok_739140592819485730_detectiveconanthemoviefallenangelofthehighway",
+      "platform": "tiktok",
+      "title": "Reaksi penonton bioskop pas nonton DETECTIVE CONAN THE MOVIE: FALLEN ANGEL OF TH...",
+      "text": "Reaksi penonton bioskop pas nonton DETECTIVE CONAN THE MOVIE: FALLEN ANGEL OF THE HIGHWAY. Seru parah jangan sampai kehabisan tiket! #detectiveconanthemoviefallenangelofthehighway",
+      "url": "https://www.tiktok.com/@nontonkuy/video/739140592819485730_detectiveconanthemoviefallenangelofthehighway",
+      "published_at": "2026-09-18T02:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225835+00:00",
+      "source_id": "tiktok_nontonkuy",
+      "source_name": "Nonton Kuy",
+      "source_handle": "@nontonkuy",
+      "source_avatar": "https://p16-sign.tiktokcdn.com/avatar3.jpeg",
+      "source_category": "community",
+      "content_type": "community",
+      "thumbnail": "https://p16-sign.tiktokcdn.com/avatar3.jpeg",
+      "media": [],
+      "metrics": {
+        "views": 185000,
+        "likes": 24300,
+        "comments": 340,
+        "shares": 1920,
+        "bookmarks": 2980
+      },
+      "platform_data": {
+        "tiktok_sound": "Theme - DETECTIVE CONAN THE MOVIE: FALLEN ANGEL OF THE HIGHWAY",
+        "campaign_hashtag": "detectiveconanthemoviefallenangelofthehighway"
+      }
+    },
+    {
+      "id": "tiktok_739120485912384910_filmrunner",
+      "platform": "tiktok",
+      "title": "Gak nyangka plot twist film RUNNER gokil banget! Wajib nonton weekend ini di XXI...",
+      "text": "Gak nyangka plot twist film RUNNER gokil banget! Wajib nonton weekend ini di XXI / CGV. #filmrunner #BioskopIndonesia #ReviewFilm",
+      "url": "https://www.tiktok.com/@bioskopmania/video/739120485912384910_filmrunner",
+      "published_at": "2026-09-18T06:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225844+00:00",
+      "source_id": "tiktok_bioskopmania",
+      "source_name": "Bioskop Mania ID",
+      "source_handle": "@bioskopmania",
+      "source_avatar": "https://p16-sign.tiktokcdn.com/avatar1.jpeg",
+      "source_category": "community",
+      "content_type": "community",
+      "thumbnail": "https://p16-sign.tiktokcdn.com/avatar1.jpeg",
+      "media": [],
+      "metrics": {
+        "views": 245000,
+        "likes": 38400,
+        "comments": 512,
+        "shares": 2840,
+        "bookmarks": 4210
+      },
+      "platform_data": {
+        "tiktok_sound": "Original Soundtrack - RUNNER",
+        "campaign_hashtag": "filmrunner"
+      }
+    },
+    {
+      "id": "tiktok_739130592819485720_filmrunner",
+      "platform": "tiktok",
+      "title": "Official Teaser Trailer RUNNER sudah rilis di bioskop XXI, CGV, Cinepolis! Catat...",
+      "text": "Official Teaser Trailer RUNNER sudah rilis di bioskop XXI, CGV, Cinepolis! Catat tanggal tayangnya. #filmrunner #OfficialTrailer",
+      "url": "https://www.tiktok.com/@distributor_id/video/739130592819485720_filmrunner",
+      "published_at": "2026-09-18T04:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225848+00:00",
+      "source_id": "tiktok_distributor_official",
+      "source_name": "Official Cinema ID",
+      "source_handle": "@distributor_official",
+      "source_avatar": "https://p16-sign.tiktokcdn.com/avatar2.jpeg",
+      "source_category": "community",
+      "content_type": "community",
+      "thumbnail": "https://p16-sign.tiktokcdn.com/avatar2.jpeg",
+      "media": [],
+      "metrics": {
+        "views": 420000,
+        "likes": 59100,
+        "comments": 890,
+        "shares": 5120,
+        "bookmarks": 7890
+      },
+      "platform_data": {
+        "tiktok_sound": "Epic Cinematic Soundtrack",
+        "campaign_hashtag": "filmrunner"
+      }
+    },
+    {
+      "id": "tiktok_739140592819485730_filmrunner",
+      "platform": "tiktok",
+      "title": "Reaksi penonton bioskop pas nonton RUNNER. Seru parah jangan sampai kehabisan ti...",
+      "text": "Reaksi penonton bioskop pas nonton RUNNER. Seru parah jangan sampai kehabisan tiket! #filmrunner",
+      "url": "https://www.tiktok.com/@nontonkuy/video/739140592819485730_filmrunner",
+      "published_at": "2026-09-18T02:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225852+00:00",
+      "source_id": "tiktok_nontonkuy",
+      "source_name": "Nonton Kuy",
+      "source_handle": "@nontonkuy",
+      "source_avatar": "https://p16-sign.tiktokcdn.com/avatar3.jpeg",
+      "source_category": "community",
+      "content_type": "community",
+      "thumbnail": "https://p16-sign.tiktokcdn.com/avatar3.jpeg",
+      "media": [],
+      "metrics": {
+        "views": 185000,
+        "likes": 24300,
+        "comments": 340,
+        "shares": 1920,
+        "bookmarks": 2980
+      },
+      "platform_data": {
+        "tiktok_sound": "Theme - RUNNER",
+        "campaign_hashtag": "filmrunner"
       }
     },
     {
@@ -846,8 +1145,8 @@
       "title": "Gak nyangka plot twist film OPERASI PESTA COPET gokil banget! Wajib nonton weeke...",
       "text": "Gak nyangka plot twist film OPERASI PESTA COPET gokil banget! Wajib nonton weekend ini di XXI / CGV. #operasipestacopet #BioskopIndonesia #ReviewFilm",
       "url": "https://www.tiktok.com/@bioskopmania/video/739120485912384910_operasipestacopet",
-      "published_at": "2026-09-17T17:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664609+00:00",
+      "published_at": "2026-09-18T06:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225860+00:00",
       "source_id": "tiktok_bioskopmania",
       "source_name": "Bioskop Mania ID",
       "source_handle": "@bioskopmania",
@@ -874,8 +1173,8 @@
       "title": "Official Teaser Trailer OPERASI PESTA COPET sudah rilis di bioskop XXI, CGV, Cin...",
       "text": "Official Teaser Trailer OPERASI PESTA COPET sudah rilis di bioskop XXI, CGV, Cinepolis! Catat tanggal tayangnya. #operasipestacopet #OfficialTrailer",
       "url": "https://www.tiktok.com/@distributor_id/video/739130592819485720_operasipestacopet",
-      "published_at": "2026-09-17T15:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664612+00:00",
+      "published_at": "2026-09-18T04:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225865+00:00",
       "source_id": "tiktok_distributor_official",
       "source_name": "Official Cinema ID",
       "source_handle": "@distributor_official",
@@ -902,8 +1201,8 @@
       "title": "Reaksi penonton bioskop pas nonton OPERASI PESTA COPET. Seru parah jangan sampai...",
       "text": "Reaksi penonton bioskop pas nonton OPERASI PESTA COPET. Seru parah jangan sampai kehabisan tiket! #operasipestacopet",
       "url": "https://www.tiktok.com/@nontonkuy/video/739140592819485730_operasipestacopet",
-      "published_at": "2026-09-17T13:37:26+00:00",
-      "fetched_at": "2026-09-17T19:37:26.664616+00:00",
+      "published_at": "2026-09-18T02:55:16+00:00",
+      "fetched_at": "2026-09-18T08:55:16.225869+00:00",
       "source_id": "tiktok_nontonkuy",
       "source_name": "Nonton Kuy",
       "source_handle": "@nontonkuy",
@@ -927,220 +1226,268 @@
   ],
   "comments": [
     {
-      "videoId": "739120485912384910_harusnyahorror",
-      "id": "c101_harusnyahorror",
-      "text": "Akting di film HARUSNYA HORROR keren banget, merinding pas scene terakhir!",
+      "videoId": "739120485912384910_residentevil",
+      "id": "c101_residentevil",
+      "text": "Akting di film RESIDENT EVIL keren banget, merinding pas scene terakhir!",
       "diggCount": 142,
       "authorName": "cinemalover_jkt",
-      "createTime": 1789670246
+      "createTime": 1789718116
     },
     {
-      "videoId": "739120485912384910_harusnyahorror",
-      "id": "c102_harusnyahorror",
+      "videoId": "739120485912384910_residentevil",
+      "id": "c102_residentevil",
       "text": "Tiket XXI di kotaku udah sold out dari kemarin, terpaksa nonton CGV besok.",
       "diggCount": 89,
       "authorName": "rendy_moviefan",
-      "createTime": 1789670846
+      "createTime": 1789718716
     },
     {
-      "videoId": "739120485912384910_harusnyahorror",
-      "id": "c103_harusnyahorror",
+      "videoId": "739120485912384910_residentevil",
+      "id": "c103_residentevil",
       "text": "Pacingnya agak lambat di awal, tapi endingnya super memuaskan 8.5/10.",
       "diggCount": 65,
       "authorName": "sarah_nonton",
-      "createTime": 1789671446
+      "createTime": 1789719316
     },
     {
-      "videoId": "739120485912384910_ayahakumaucerita",
-      "id": "c101_ayahakumaucerita",
-      "text": "Akting di film AYAH, AKU MAU CERITA keren banget, merinding pas scene terakhir!",
+      "videoId": "739120485912384910_agensirumahtangga",
+      "id": "c101_agensirumahtangga",
+      "text": "Akting di film AGENSI RUMAH TANGGA keren banget, merinding pas scene terakhir!",
       "diggCount": 142,
       "authorName": "cinemalover_jkt",
-      "createTime": 1789670246
+      "createTime": 1789718116
     },
     {
-      "videoId": "739120485912384910_ayahakumaucerita",
-      "id": "c102_ayahakumaucerita",
+      "videoId": "739120485912384910_agensirumahtangga",
+      "id": "c102_agensirumahtangga",
       "text": "Tiket XXI di kotaku udah sold out dari kemarin, terpaksa nonton CGV besok.",
       "diggCount": 89,
       "authorName": "rendy_moviefan",
-      "createTime": 1789670846
+      "createTime": 1789718716
     },
     {
-      "videoId": "739120485912384910_ayahakumaucerita",
-      "id": "c103_ayahakumaucerita",
+      "videoId": "739120485912384910_agensirumahtangga",
+      "id": "c103_agensirumahtangga",
       "text": "Pacingnya agak lambat di awal, tapi endingnya super memuaskan 8.5/10.",
       "diggCount": 65,
       "authorName": "sarah_nonton",
-      "createTime": 1789671446
+      "createTime": 1789719316
     },
     {
-      "videoId": "739120485912384910_danbandung",
-      "id": "c101_danbandung",
-      "text": "Akting di film DAN BANDUNG keren banget, merinding pas scene terakhir!",
+      "videoId": "739120485912384910_fall2deadpoint",
+      "id": "c101_fall2deadpoint",
+      "text": "Akting di film FALL 2: DEADPOINT keren banget, merinding pas scene terakhir!",
       "diggCount": 142,
       "authorName": "cinemalover_jkt",
-      "createTime": 1789670246
+      "createTime": 1789718116
     },
     {
-      "videoId": "739120485912384910_danbandung",
-      "id": "c102_danbandung",
+      "videoId": "739120485912384910_fall2deadpoint",
+      "id": "c102_fall2deadpoint",
       "text": "Tiket XXI di kotaku udah sold out dari kemarin, terpaksa nonton CGV besok.",
       "diggCount": 89,
       "authorName": "rendy_moviefan",
-      "createTime": 1789670846
+      "createTime": 1789718716
     },
     {
-      "videoId": "739120485912384910_danbandung",
-      "id": "c103_danbandung",
+      "videoId": "739120485912384910_fall2deadpoint",
+      "id": "c103_fall2deadpoint",
       "text": "Pacingnya agak lambat di awal, tapi endingnya super memuaskan 8.5/10.",
       "diggCount": 65,
       "authorName": "sarah_nonton",
-      "createTime": 1789671446
+      "createTime": 1789719316
     },
     {
-      "videoId": "739120485912384910_filmdearyou",
-      "id": "c101_filmdearyou",
-      "text": "Akting di film DEAR YOU keren banget, merinding pas scene terakhir!",
+      "videoId": "739120485912384910_urangbunian",
+      "id": "c101_urangbunian",
+      "text": "Akting di film URANG BUNIAN keren banget, merinding pas scene terakhir!",
       "diggCount": 142,
       "authorName": "cinemalover_jkt",
-      "createTime": 1789670246
+      "createTime": 1789718116
     },
     {
-      "videoId": "739120485912384910_filmdearyou",
-      "id": "c102_filmdearyou",
+      "videoId": "739120485912384910_urangbunian",
+      "id": "c102_urangbunian",
       "text": "Tiket XXI di kotaku udah sold out dari kemarin, terpaksa nonton CGV besok.",
       "diggCount": 89,
       "authorName": "rendy_moviefan",
-      "createTime": 1789670846
+      "createTime": 1789718716
     },
     {
-      "videoId": "739120485912384910_filmdearyou",
-      "id": "c103_filmdearyou",
+      "videoId": "739120485912384910_urangbunian",
+      "id": "c103_urangbunian",
       "text": "Pacingnya agak lambat di awal, tapi endingnya super memuaskan 8.5/10.",
       "diggCount": 65,
       "authorName": "sarah_nonton",
-      "createTime": 1789671446
+      "createTime": 1789719316
     },
     {
-      "videoId": "739120485912384910_perumahanladdaland",
-      "id": "c101_perumahanladdaland",
-      "text": "Akting di film PERUMAHAN LADDALAND keren banget, merinding pas scene terakhir!",
+      "videoId": "739120485912384910_munafikmelawaniblis",
+      "id": "c101_munafikmelawaniblis",
+      "text": "Akting di film MUNAFIK: MELAWAN IBLIS keren banget, merinding pas scene terakhir!",
       "diggCount": 142,
       "authorName": "cinemalover_jkt",
-      "createTime": 1789670246
+      "createTime": 1789718116
     },
     {
-      "videoId": "739120485912384910_perumahanladdaland",
-      "id": "c102_perumahanladdaland",
+      "videoId": "739120485912384910_munafikmelawaniblis",
+      "id": "c102_munafikmelawaniblis",
       "text": "Tiket XXI di kotaku udah sold out dari kemarin, terpaksa nonton CGV besok.",
       "diggCount": 89,
       "authorName": "rendy_moviefan",
-      "createTime": 1789670846
+      "createTime": 1789718716
     },
     {
-      "videoId": "739120485912384910_perumahanladdaland",
-      "id": "c103_perumahanladdaland",
+      "videoId": "739120485912384910_munafikmelawaniblis",
+      "id": "c103_munafikmelawaniblis",
       "text": "Pacingnya agak lambat di awal, tapi endingnya super memuaskan 8.5/10.",
       "diggCount": 65,
       "authorName": "sarah_nonton",
-      "createTime": 1789671446
+      "createTime": 1789719316
     },
     {
-      "videoId": "739120485912384910_filmcekkhodam",
-      "id": "c101_filmcekkhodam",
-      "text": "Akting di film CEK KHODAM keren banget, merinding pas scene terakhir!",
+      "videoId": "739120485912384910_filmhope",
+      "id": "c101_filmhope",
+      "text": "Akting di film HOPE keren banget, merinding pas scene terakhir!",
       "diggCount": 142,
       "authorName": "cinemalover_jkt",
-      "createTime": 1789670246
+      "createTime": 1789718116
     },
     {
-      "videoId": "739120485912384910_filmcekkhodam",
-      "id": "c102_filmcekkhodam",
+      "videoId": "739120485912384910_filmhope",
+      "id": "c102_filmhope",
       "text": "Tiket XXI di kotaku udah sold out dari kemarin, terpaksa nonton CGV besok.",
       "diggCount": 89,
       "authorName": "rendy_moviefan",
-      "createTime": 1789670846
+      "createTime": 1789718716
     },
     {
-      "videoId": "739120485912384910_filmcekkhodam",
-      "id": "c103_filmcekkhodam",
+      "videoId": "739120485912384910_filmhope",
+      "id": "c103_filmhope",
       "text": "Pacingnya agak lambat di awal, tapi endingnya super memuaskan 8.5/10.",
       "diggCount": 65,
       "authorName": "sarah_nonton",
-      "createTime": 1789671446
+      "createTime": 1789719316
     },
     {
-      "videoId": "739120485912384910_senimerayutuhan",
-      "id": "c101_senimerayutuhan",
-      "text": "Akting di film SENI MERAYU TUHAN keren banget, merinding pas scene terakhir!",
+      "videoId": "739120485912384910_istimewa",
+      "id": "c101_istimewa",
+      "text": "Akting di film ISTIMEWA keren banget, merinding pas scene terakhir!",
       "diggCount": 142,
       "authorName": "cinemalover_jkt",
-      "createTime": 1789670246
+      "createTime": 1789718116
     },
     {
-      "videoId": "739120485912384910_senimerayutuhan",
-      "id": "c102_senimerayutuhan",
+      "videoId": "739120485912384910_istimewa",
+      "id": "c102_istimewa",
       "text": "Tiket XXI di kotaku udah sold out dari kemarin, terpaksa nonton CGV besok.",
       "diggCount": 89,
       "authorName": "rendy_moviefan",
-      "createTime": 1789670846
+      "createTime": 1789718716
     },
     {
-      "videoId": "739120485912384910_senimerayutuhan",
-      "id": "c103_senimerayutuhan",
+      "videoId": "739120485912384910_istimewa",
+      "id": "c103_istimewa",
       "text": "Pacingnya agak lambat di awal, tapi endingnya super memuaskan 8.5/10.",
       "diggCount": 65,
       "authorName": "sarah_nonton",
-      "createTime": 1789671446
+      "createTime": 1789719316
     },
     {
-      "videoId": "739120485912384910_sajensatusuro",
-      "id": "c101_sajensatusuro",
-      "text": "Akting di film SAJEN SATU SURO keren banget, merinding pas scene terakhir!",
+      "videoId": "739120485912384910_insidiousoutofthefurther",
+      "id": "c101_insidiousoutofthefurther",
+      "text": "Akting di film INSIDIOUS: OUT OF THE FURTHER keren banget, merinding pas scene terakhir!",
       "diggCount": 142,
       "authorName": "cinemalover_jkt",
-      "createTime": 1789670246
+      "createTime": 1789718116
     },
     {
-      "videoId": "739120485912384910_sajensatusuro",
-      "id": "c102_sajensatusuro",
+      "videoId": "739120485912384910_insidiousoutofthefurther",
+      "id": "c102_insidiousoutofthefurther",
       "text": "Tiket XXI di kotaku udah sold out dari kemarin, terpaksa nonton CGV besok.",
       "diggCount": 89,
       "authorName": "rendy_moviefan",
-      "createTime": 1789670846
+      "createTime": 1789718716
     },
     {
-      "videoId": "739120485912384910_sajensatusuro",
-      "id": "c103_sajensatusuro",
+      "videoId": "739120485912384910_insidiousoutofthefurther",
+      "id": "c103_insidiousoutofthefurther",
       "text": "Pacingnya agak lambat di awal, tapi endingnya super memuaskan 8.5/10.",
       "diggCount": 65,
       "authorName": "sarah_nonton",
-      "createTime": 1789671446
+      "createTime": 1789719316
     },
     {
-      "videoId": "739120485912384910_paketsantet",
-      "id": "c101_paketsantet",
-      "text": "Akting di film PAKET SANTET keren banget, merinding pas scene terakhir!",
+      "videoId": "739120485912384910_filmtaboo",
+      "id": "c101_filmtaboo",
+      "text": "Akting di film TABOO keren banget, merinding pas scene terakhir!",
       "diggCount": 142,
       "authorName": "cinemalover_jkt",
-      "createTime": 1789670246
+      "createTime": 1789718116
     },
     {
-      "videoId": "739120485912384910_paketsantet",
-      "id": "c102_paketsantet",
+      "videoId": "739120485912384910_filmtaboo",
+      "id": "c102_filmtaboo",
       "text": "Tiket XXI di kotaku udah sold out dari kemarin, terpaksa nonton CGV besok.",
       "diggCount": 89,
       "authorName": "rendy_moviefan",
-      "createTime": 1789670846
+      "createTime": 1789718716
     },
     {
-      "videoId": "739120485912384910_paketsantet",
-      "id": "c103_paketsantet",
+      "videoId": "739120485912384910_filmtaboo",
+      "id": "c103_filmtaboo",
       "text": "Pacingnya agak lambat di awal, tapi endingnya super memuaskan 8.5/10.",
       "diggCount": 65,
       "authorName": "sarah_nonton",
-      "createTime": 1789671446
+      "createTime": 1789719316
+    },
+    {
+      "videoId": "739120485912384910_detectiveconanthemoviefallenangelofthehighway",
+      "id": "c101_detectiveconanthemoviefallenangelofthehighway",
+      "text": "Akting di film DETECTIVE CONAN THE MOVIE: FALLEN ANGEL OF THE HIGHWAY keren banget, merinding pas scene terakhir!",
+      "diggCount": 142,
+      "authorName": "cinemalover_jkt",
+      "createTime": 1789718116
+    },
+    {
+      "videoId": "739120485912384910_detectiveconanthemoviefallenangelofthehighway",
+      "id": "c102_detectiveconanthemoviefallenangelofthehighway",
+      "text": "Tiket XXI di kotaku udah sold out dari kemarin, terpaksa nonton CGV besok.",
+      "diggCount": 89,
+      "authorName": "rendy_moviefan",
+      "createTime": 1789718716
+    },
+    {
+      "videoId": "739120485912384910_detectiveconanthemoviefallenangelofthehighway",
+      "id": "c103_detectiveconanthemoviefallenangelofthehighway",
+      "text": "Pacingnya agak lambat di awal, tapi endingnya super memuaskan 8.5/10.",
+      "diggCount": 65,
+      "authorName": "sarah_nonton",
+      "createTime": 1789719316
+    },
+    {
+      "videoId": "739120485912384910_filmrunner",
+      "id": "c101_filmrunner",
+      "text": "Akting di film RUNNER keren banget, merinding pas scene terakhir!",
+      "diggCount": 142,
+      "authorName": "cinemalover_jkt",
+      "createTime": 1789718116
+    },
+    {
+      "videoId": "739120485912384910_filmrunner",
+      "id": "c102_filmrunner",
+      "text": "Tiket XXI di kotaku udah sold out dari kemarin, terpaksa nonton CGV besok.",
+      "diggCount": 89,
+      "authorName": "rendy_moviefan",
+      "createTime": 1789718716
+    },
+    {
+      "videoId": "739120485912384910_filmrunner",
+      "id": "c103_filmrunner",
+      "text": "Pacingnya agak lambat di awal, tapi endingnya super memuaskan 8.5/10.",
+      "diggCount": 65,
+      "authorName": "sarah_nonton",
+      "createTime": 1789719316
     },
     {
       "videoId": "739120485912384910_operasipestacopet",
@@ -1148,7 +1495,7 @@
       "text": "Akting di film OPERASI PESTA COPET keren banget, merinding pas scene terakhir!",
       "diggCount": 142,
       "authorName": "cinemalover_jkt",
-      "createTime": 1789670246
+      "createTime": 1789718116
     },
     {
       "videoId": "739120485912384910_operasipestacopet",
@@ -1156,7 +1503,7 @@
       "text": "Tiket XXI di kotaku udah sold out dari kemarin, terpaksa nonton CGV besok.",
       "diggCount": 89,
       "authorName": "rendy_moviefan",
-      "createTime": 1789670846
+      "createTime": 1789718716
     },
     {
       "videoId": "739120485912384910_operasipestacopet",
@@ -1164,7 +1511,7 @@
       "text": "Pacingnya agak lambat di awal, tapi endingnya super memuaskan 8.5/10.",
       "diggCount": 65,
       "authorName": "sarah_nonton",
-      "createTime": 1789671446
+      "createTime": 1789719316
     }
   ]
 }
