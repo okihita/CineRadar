@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Link from 'next/link';
 import useSWR from 'swr';
-import { PageHeader } from '@/components/PageHeader';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,8 +16,6 @@ import {
     Flame,
     Eye,
     Heart,
-    MessageCircle,
-    Share2,
     AlertTriangle,
     CheckCircle2,
     Play,
@@ -32,7 +30,10 @@ import {
     Calendar,
     Edit3,
     X,
+    Activity,
+    Layers,
 } from 'lucide-react';
+import { TikTokIcon } from '@/components/BrandIcons';
 import { fetcher } from '@/lib/api';
 import {
     formatIdr,
@@ -40,6 +41,7 @@ import {
     computeHashtagUnitCost,
     computeAggregateCost,
     USD_TO_IDR,
+    APIFY_STARTER_MONTHLY_CREDITS_USD,
 } from '@/lib/tiktokCostEngine';
 import { toast } from 'sonner';
 import type { TrackedHashtag, HashtagPulseStats } from '@/types/tiktokHashtags';
@@ -76,17 +78,17 @@ interface HashtagsApiResponse {
 }
 
 const CADENCE_OPTIONS = [
-    { value: 1, label: '1x / hari (Recommended)', sub: 'Daily Evening Sweep' },
-    { value: 2, label: '2x / hari', sub: '11:00 & 18:00 WIB' },
-    { value: 3, label: '3x / hari', sub: '11:00, 18:00 & 23:00 WIB' },
-    { value: 4, label: '4x / hari', sub: 'Every 6 Hours' },
+    { value: 1, label: '1x / hari', desc: 'Daily Sweep' },
+    { value: 2, label: '2x / hari', desc: '11:00 & 18:00' },
+    { value: 3, label: '3x / hari', desc: '3 Windows' },
+    { value: 4, label: '4x / hari', desc: '6-Hour Pulse' },
 ];
 
 const DEPTH_OPTIONS = [
-    { value: 20, label: '20 posts', sub: 'Economy' },
-    { value: 40, label: '40 posts (Recommended)', sub: 'Standard Viral Tier' },
-    { value: 80, label: '80 posts', sub: 'Deep Discovery' },
-    { value: 100, label: '100 posts', sub: 'Exhaustive Crawl' },
+    { value: 20, label: '20 posts' },
+    { value: 40, label: '40 posts' },
+    { value: 80, label: '80 posts' },
+    { value: 100, label: '100 posts' },
 ];
 
 const START_HOUR_OPTIONS = [
@@ -110,12 +112,11 @@ export default function CustomHashtagTrackerPage() {
         fetcher
     );
 
-    // Filter and search
+    // Search and Filter State
     const [searchQuery, setSearchQuery] = useState('');
     const [categoryFilter, setCategoryFilter] = useState<'all' | 'campaign' | 'competitor' | 'meme' | 'talent' | 'general'>('all');
 
     // Add New Hashtag Form State
-    const [isAddOpen, setIsAddOpen] = useState(false);
     const [newTag, setNewTag] = useState('');
     const [newLabel, setNewLabel] = useState('');
     const [newCategory, setNewCategory] = useState<'campaign' | 'competitor' | 'meme' | 'talent' | 'general'>('campaign');
@@ -135,33 +136,16 @@ export default function CustomHashtagTrackerPage() {
     const [editIncludeComments, setEditIncludeComments] = useState<boolean>(true);
     const [isEditSubmitting, setIsEditSubmitting] = useState(false);
 
-    // Interactive Cost Simulator State
-    const [simTagsCount, setSimTagsCount] = useState<number>(5);
+    // Simulation State (What-If Adding New Hashtag/s)
+    const [simAddTagsCount, setSimAddTagsCount] = useState<number>(1);
     const [simCadence, setSimCadence] = useState<number>(1);
     const [simPostsPerTag, setSimPostsPerTag] = useState<number>(40);
     const [simIncludeComments, setSimIncludeComments] = useState<boolean>(true);
 
-    const simulatedCost = useMemo(() => {
-        const unit = computeHashtagUnitCost({
-            postsPerCrawl: simPostsPerTag,
-            includeComments: simIncludeComments,
-            crawlsPerDay: simCadence,
-        });
-        const dailyUsd = unit.dailyCostUsd * simTagsCount;
-        const monthlyUsd = unit.monthlyCostUsd * simTagsCount;
-        return {
-            unit,
-            dailyUsd,
-            monthlyUsd,
-            dailyIdr: Math.round(dailyUsd * USD_TO_IDR),
-            monthlyIdr: Math.round(monthlyUsd * USD_TO_IDR),
-            totalMonthlyItems: unit.estimatedItemsPerCrawl * simCadence * simTagsCount * 30,
-        };
-    }, [simTagsCount, simCadence, simPostsPerTag, simIncludeComments]);
-
     const tags = data?.tracked_hashtags || [];
     const forecast = data?.cost_forecast;
 
+    // Filtered list
     const filteredTags = useMemo(() => {
         return tags.filter((t) => {
             const matchesQuery =
@@ -172,7 +156,61 @@ export default function CustomHashtagTrackerPage() {
         });
     }, [tags, searchQuery, categoryFilter]);
 
-    // Handle Active Toggle
+    // Live cost preview for Add Form
+    const currentFormCost = useMemo(() => {
+        return computeHashtagUnitCost({
+            postsPerCrawl: newTargetPosts,
+            includeComments: newIncludeComments,
+            crawlsPerDay: newCadence,
+        });
+    }, [newTargetPosts, newIncludeComments, newCadence]);
+
+    // Live cost preview for Edit Form
+    const editFormCost = useMemo(() => {
+        return computeHashtagUnitCost({
+            postsPerCrawl: editTargetPosts,
+            includeComments: editIncludeComments,
+            crawlsPerDay: editCadence,
+        });
+    }, [editTargetPosts, editIncludeComments, editCadence]);
+
+    // Simulation calculations: incremental impact on top of current baseline
+    const simulationResult = useMemo(() => {
+        const unit = computeHashtagUnitCost({
+            postsPerCrawl: simPostsPerTag,
+            includeComments: simIncludeComments,
+            crawlsPerDay: simCadence,
+        });
+
+        const additionalDailyUsd = unit.dailyCostUsd * simAddTagsCount;
+        const additionalMonthlyUsd = unit.monthlyCostUsd * simAddTagsCount;
+        const additionalDailyIdr = Math.round(additionalDailyUsd * USD_TO_IDR);
+        const additionalMonthlyIdr = Math.round(additionalMonthlyUsd * USD_TO_IDR);
+        const additionalItemsScraped = unit.estimatedItemsPerCrawl * simCadence * simAddTagsCount * 30;
+
+        const currentMonthlyUsd = forecast?.monthlyCostUsd ?? 0;
+        const projectedTotalMonthlyUsd = currentMonthlyUsd + additionalMonthlyUsd;
+        const projectedTotalMonthlyIdr = Math.round(projectedTotalMonthlyUsd * USD_TO_IDR);
+
+        const projectedCreditsPct =
+            APIFY_STARTER_MONTHLY_CREDITS_USD > 0
+                ? Math.round((projectedTotalMonthlyUsd / APIFY_STARTER_MONTHLY_CREDITS_USD) * 100)
+                : 0;
+
+        return {
+            unit,
+            additionalDailyUsd,
+            additionalMonthlyUsd,
+            additionalDailyIdr,
+            additionalMonthlyIdr,
+            additionalItemsScraped,
+            projectedTotalMonthlyUsd,
+            projectedTotalMonthlyIdr,
+            projectedCreditsPct,
+        };
+    }, [simAddTagsCount, simCadence, simPostsPerTag, simIncludeComments, forecast?.monthlyCostUsd]);
+
+    // Active Toggle Handler
     const handleToggleActive = async (tag: TrackedHashtagWithCost) => {
         try {
             const res = await fetch('/api/socials/tiktok/hashtags', {
@@ -203,7 +241,7 @@ export default function CustomHashtagTrackerPage() {
         setEditIncludeComments(tag.include_comments ?? true);
     };
 
-    // Save Edit
+    // Save Edit Handler
     const handleSaveEdit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingTag) return;
@@ -238,7 +276,7 @@ export default function CustomHashtagTrackerPage() {
         }
     };
 
-    // Handle Delete
+    // Delete Handler
     const handleDeleteTag = async (tagId: string, tagName: string) => {
         if (!confirm(`Are you sure you want to stop tracking #${tagName}?`)) return;
         try {
@@ -257,7 +295,7 @@ export default function CustomHashtagTrackerPage() {
         }
     };
 
-    // Handle Add Tag
+    // Add Tag Handler
     const handleCreateTag = async (e: React.FormEvent) => {
         e.preventDefault();
         const clean = newTag.replace(/^#/, '').toLowerCase().trim();
@@ -284,10 +322,9 @@ export default function CustomHashtagTrackerPage() {
             });
             const result = await res.json();
             if (result.success) {
-                toast.success(`Hashtag #${clean} added to daily tracking!`);
+                toast.success(`Hashtag #${clean} added to daily tracking`);
                 setNewTag('');
                 setNewLabel('');
-                setIsAddOpen(false);
                 mutate();
             } else {
                 toast.error(result.error || 'Failed to add hashtag');
@@ -299,7 +336,7 @@ export default function CustomHashtagTrackerPage() {
         }
     };
 
-    // Handle Dry-run or test scrape
+    // Dry-run Test Handler
     const [testingTag, setTestingTag] = useState<string | null>(null);
     const handleTestRun = async (tag: string) => {
         setTestingTag(tag);
@@ -323,179 +360,307 @@ export default function CustomHashtagTrackerPage() {
         }
     };
 
-    // Calculate live cost for form
-    const currentFormCost = useMemo(() => {
-        return computeHashtagUnitCost({
-            postsPerCrawl: newTargetPosts,
-            includeComments: newIncludeComments,
-            crawlsPerDay: newCadence,
-        });
-    }, [newTargetPosts, newIncludeComments, newCadence]);
-
-    const editFormCost = useMemo(() => {
-        return computeHashtagUnitCost({
-            postsPerCrawl: editTargetPosts,
-            includeComments: editIncludeComments,
-            crawlsPerDay: editCadence,
-        });
-    }, [editTargetPosts, editIncludeComments, editCadence]);
-
     return (
-        <div className="p-6 space-y-6 w-full max-w-7xl mx-auto">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <PageHeader
-                        title="Custom Hashtag Tracker"
-                        description="Track arbitrary promotional campaigns, studio stunts, or competitor hashtags with real-time transparent IDR cost forecasting."
-                    />
-                </div>
+        <div className="p-6 space-y-6 w-full">
+            {/* Standard CineRadar Section Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/60 pb-4">
                 <div className="flex items-center gap-3">
-                    <Button
-                        onClick={() => setIsAddOpen(!isAddOpen)}
-                        className="gap-2 font-bold shadow-sm"
-                    >
-                        <Plus className="w-4 h-4" />
-                        {isAddOpen ? 'Close Form' : 'Track New Hashtag'}
-                    </Button>
-                </div>
-            </div>
-
-            {/* Top Metrics Banner (IDR First) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card className="border-border/60 bg-card">
-                    <CardHeader className="p-4 pb-2">
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                Tracked Hashtags
-                            </span>
-                            <Hash className="w-4 h-4 text-primary" />
-                        </div>
-                        <div className="flex items-baseline gap-2 mt-1">
-                            <span className="text-2xl font-black">{forecast?.activeTags ?? 0}</span>
-                            <span className="text-xs text-muted-foreground">
-                                active of {forecast?.totalTags ?? 0} total
-                            </span>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="p-4 pt-0">
-                        <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
-                            <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
-                            Multi-cadence 24-Hour WIB scheduler
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="border-border/60 bg-card">
-                    <CardHeader className="p-4 pb-2">
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                Daily Crawl Burn
-                            </span>
-                            <Zap className="w-4 h-4 text-amber-500" />
-                        </div>
-                        <div className="flex items-baseline gap-2 mt-1">
-                            <span className="text-2xl font-black text-foreground">
-                                {formatIdr(forecast?.dailyCostIdr ?? 0)}
-                            </span>
-                            <span className="text-xs text-muted-foreground font-mono">
-                                / hari ({formatUsd(forecast?.dailyCostUsd ?? 0)})
-                            </span>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="p-4 pt-0">
-                        <div className="text-xs text-muted-foreground mt-1">
-                            ~{forecast?.dailyItemsScraped ?? 0} items processed / hari
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="border-border/60 bg-card">
-                    <CardHeader className="p-4 pb-2">
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                30-Day Projected Burn
-                            </span>
-                            <DollarSign className="w-4 h-4 text-emerald-500" />
-                        </div>
-                        <div className="flex items-baseline gap-2 mt-1">
-                            <span className="text-2xl font-black text-emerald-500">
-                                {formatIdr(forecast?.monthlyCostIdr ?? 0)}
-                            </span>
-                            <span className="text-xs text-muted-foreground font-mono">
-                                / bln ({formatUsd(forecast?.monthlyCostUsd ?? 0)})
-                            </span>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="p-4 pt-0">
-                        <div className="text-xs text-muted-foreground mt-1">
-                            Apify Posts + Comments + Gemini AI @ Rp 17.500
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="border-border/60 bg-card">
-                    <CardHeader className="p-4 pb-2">
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                Starter Allowance ($29)
-                            </span>
-                            {forecast?.creditsStatus === 'safe' ? (
-                                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                            ) : (
-                                <AlertTriangle className="w-4 h-4 text-rose-500" />
-                            )}
-                        </div>
-                        <div className="flex items-baseline gap-2 mt-1">
-                            <span className="text-2xl font-black">
-                                {forecast?.percentOfStarterCredits ?? 0}%
-                            </span>
-                            <Badge
-                                variant="outline"
-                                className={`text-[10px] font-bold uppercase ${
-                                    forecast?.creditsStatus === 'safe'
-                                        ? 'border-emerald-500/40 text-emerald-500 bg-emerald-500/10'
-                                        : forecast?.creditsStatus === 'warning'
-                                        ? 'border-amber-500/40 text-amber-500 bg-amber-500/10'
-                                        : 'border-rose-500/40 text-rose-500 bg-rose-500/10'
-                                }`}
-                            >
-                                {forecast?.creditsStatus}
+                    <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center border border-rose-500/20 shrink-0">
+                        <TikTokIcon className="w-5 h-5" />
+                    </div>
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <h1 className="text-xl font-bold tracking-tight text-foreground">Hashtag Tracker</h1>
+                            <Badge variant="outline" className="text-[10px] font-mono border-rose-500/30 text-rose-500">
+                                Social Pulse
                             </Badge>
                         </div>
-                    </CardHeader>
-                    <CardContent className="p-4 pt-0">
-                        <div className="w-full bg-muted/60 rounded-full h-1.5 mt-1 overflow-hidden">
-                            <div
-                                className={`h-full rounded-full transition-all ${
-                                    forecast?.creditsStatus === 'safe'
-                                        ? 'bg-emerald-500'
-                                        : forecast?.creditsStatus === 'warning'
-                                        ? 'bg-amber-500'
-                                        : 'bg-rose-500'
-                                }`}
-                                style={{ width: `${Math.min(100, forecast?.percentOfStarterCredits ?? 0)}%` }}
-                            />
-                        </div>
-                    </CardContent>
-                </Card>
+                        <p className="text-muted-foreground text-sm font-medium">
+                            Multi-cadence promotional campaigns, competitor stunts &amp; real-time IDR cost management
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2.5 flex-wrap">
+                    <div className="flex items-center gap-2 bg-muted/40 px-3 py-1.5 rounded-lg border border-border/60 text-xs">
+                        <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="font-bold text-foreground">{forecast?.activeTags ?? 0} Active</span>
+                        <span className="text-muted-foreground">·</span>
+                        <span className="font-mono text-muted-foreground">{formatIdr(forecast?.dailyCostIdr ?? 0)}/hari</span>
+                    </div>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => mutate()}
+                        disabled={isLoading}
+                        className="h-8 px-2.5 text-xs font-semibold rounded-lg border-border/60 hover:bg-muted gap-1.5"
+                        title="Refresh telemetry"
+                    >
+                        <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+                        Refresh
+                    </Button>
+
+                    <Link href="/tiktok/explorer">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 gap-1.5 px-3 text-xs font-semibold rounded-lg border-border/60 hover:bg-muted"
+                        >
+                            <TikTokIcon className="w-3.5 h-3.5 text-rose-500" />
+                            Theatrical Radar
+                        </Button>
+                    </Link>
+
+                    <Link href="/tiktok/ops">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 gap-1.5 px-3 text-xs font-semibold rounded-lg border-border/60 hover:bg-muted"
+                        >
+                            <Layers className="w-3.5 h-3.5 text-primary" />
+                            Ops Hub
+                        </Button>
+                    </Link>
+                </div>
             </div>
 
-            {/* Add New Hashtag Form (Collapsible with Best-Practice Pre-fills) */}
-            {isAddOpen && (
-                <Card className="border-primary/40 bg-card shadow-md">
-                    <CardHeader className="p-5 pb-3">
-                        <CardTitle className="text-base font-bold flex items-center gap-2">
-                            <Hash className="w-4 h-4 text-primary" />
-                            Track Custom Hashtag
-                        </CardTitle>
-                        <CardDescription className="text-xs">
-                            Configure an ad-hoc hashtag to scrape daily. Form is pre-filled with best practice defaults (40 posts, 1x/day, 18:00 WIB prime evening window).
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-5 pt-0">
-                        <form onSubmit={handleCreateTag} className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Split 2-Column Layout: Left (2/3) & Right (1/3) with Full Horizontal Expansion */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full">
+                {/* Left Side: 2/3 Width (Tracked Hashtags & Stats) */}
+                <div className="lg:col-span-8 space-y-4 w-full">
+                    <Card className="border-border/60 bg-card overflow-hidden">
+                        <CardHeader className="p-4 border-b border-border/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                                <Hash className="w-4 h-4 text-primary" />
+                                <CardTitle className="text-sm font-bold text-foreground">
+                                    Tracked Hashtag Roster ({filteredTags.length})
+                                </CardTitle>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <div className="relative w-48 sm:w-64">
+                                    <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Search tag or label..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="h-8 pl-8 text-xs rounded-lg"
+                                    />
+                                </div>
+                                <select
+                                    value={categoryFilter}
+                                    onChange={(e) => setCategoryFilter(e.target.value as any)}
+                                    className="h-8 rounded-lg border border-input bg-background px-2.5 text-xs font-semibold shadow-sm"
+                                >
+                                    <option value="all">All Categories</option>
+                                    <option value="campaign">Campaign</option>
+                                    <option value="competitor">Competitor</option>
+                                    <option value="meme">Meme/Trend</option>
+                                    <option value="talent">Talent</option>
+                                    <option value="general">General</option>
+                                </select>
+                            </div>
+                        </CardHeader>
+
+                        <CardContent className="p-0">
+                            {isLoading ? (
+                                <div className="p-16 text-center text-xs text-muted-foreground">
+                                    Loading tracked custom hashtags &amp; telemetry...
+                                </div>
+                            ) : filteredTags.length === 0 ? (
+                                <div className="p-16 text-center space-y-2">
+                                    <Hash className="w-8 h-8 text-muted-foreground/40 mx-auto" />
+                                    <div className="text-sm font-bold text-foreground">No Custom Hashtags Found</div>
+                                    <div className="text-xs text-muted-foreground max-w-sm mx-auto">
+                                        Use the form on the right to configure and begin tracking your first custom hashtag.
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-xs">
+                                        <thead className="bg-muted/40 border-b border-border/40 text-muted-foreground font-semibold uppercase text-[10px]">
+                                            <tr>
+                                                <th className="py-2.5 px-4">Hashtag &amp; Label</th>
+                                                <th className="py-2.5 px-3">Category</th>
+                                                <th className="py-2.5 px-3">Schedule &amp; Depth</th>
+                                                <th className="py-2.5 px-3">Est. Unit Cost (IDR)</th>
+                                                <th className="py-2.5 px-3">Latest Telemetry</th>
+                                                <th className="py-2.5 px-3">Status</th>
+                                                <th className="py-2.5 px-4 text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-border/30">
+                                            {filteredTags.map((t) => (
+                                                <tr key={t.id} className="hover:bg-muted/20 transition-colors">
+                                                    <td className="py-3 px-4">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-mono font-bold text-foreground text-sm">
+                                                                #{t.tag}
+                                                            </span>
+                                                            <a
+                                                                href={`https://www.tiktok.com/tag/${t.tag}`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="text-muted-foreground hover:text-primary transition-colors"
+                                                            >
+                                                                <ExternalLink className="w-3 h-3" />
+                                                            </a>
+                                                        </div>
+                                                        <div className="text-[11px] text-muted-foreground mt-0.5">
+                                                            {t.label}
+                                                        </div>
+                                                    </td>
+
+                                                    <td className="py-3 px-3">
+                                                        <Badge
+                                                            variant="secondary"
+                                                            className="text-[10px] font-semibold capitalize"
+                                                        >
+                                                            {t.category}
+                                                        </Badge>
+                                                    </td>
+
+                                                    <td className="py-3 px-3">
+                                                        <div className="font-medium text-foreground">
+                                                            {t.target_posts} posts · {t.cadence ?? 1}x/hari
+                                                        </div>
+                                                        <div className="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                                                            <Clock className="w-3 h-3" />
+                                                            {(t.start_hour ?? 18).toString().padStart(2, '0')}:00 WIB
+                                                            {t.include_comments && ' (+ comments)'}
+                                                        </div>
+                                                    </td>
+
+                                                    <td className="py-3 px-3">
+                                                        <div className="font-bold text-foreground">
+                                                            {formatIdr(t.cost.dailyCostIdr)} / hari
+                                                        </div>
+                                                        <div className="text-[10px] text-muted-foreground font-mono">
+                                                            ~{formatIdr(t.cost.monthlyCostIdr)}/bln ({formatUsd(t.cost.monthlyCostUsd)})
+                                                        </div>
+                                                    </td>
+
+                                                    <td className="py-3 px-3">
+                                                        {t.latest_stats ? (
+                                                            <div className="space-y-0.5">
+                                                                <div className="flex items-center gap-2 font-bold text-foreground">
+                                                                    <span className="flex items-center gap-1">
+                                                                        <Eye className="w-3 h-3 text-primary" />
+                                                                        {(t.latest_stats.total_views || 0).toLocaleString()}
+                                                                    </span>
+                                                                    <span className="flex items-center gap-1 text-[11px]">
+                                                                        <Heart className="w-2.5 h-2.5 text-rose-500" />
+                                                                        {(t.latest_stats.total_likes || 0).toLocaleString()}
+                                                                    </span>
+                                                                </div>
+                                                                {t.latest_stats.sentiment && (
+                                                                    <Badge
+                                                                        variant="outline"
+                                                                        className="text-[9px] font-bold border-emerald-500/30 text-emerald-500"
+                                                                    >
+                                                                        {t.latest_stats.sentiment.positive}% Positive
+                                                                    </Badge>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <span className="font-mono text-muted-foreground text-[11px]">
+                                                                Pending crawl
+                                                            </span>
+                                                        )}
+                                                    </td>
+
+                                                    <td className="py-3 px-3">
+                                                        <Badge
+                                                            variant={t.active ? 'default' : 'outline'}
+                                                            className={`text-[10px] font-bold uppercase ${
+                                                                t.active
+                                                                    ? 'bg-emerald-500 hover:bg-emerald-600'
+                                                                    : 'text-muted-foreground border-muted-foreground/40'
+                                                            }`}
+                                                        >
+                                                            {t.active ? 'Active' : 'Paused'}
+                                                        </Badge>
+                                                    </td>
+
+                                                    <td className="py-3 px-4 text-right">
+                                                        <div className="flex items-center justify-end gap-1.5">
+                                                            <Button
+                                                                size="sm"
+                                                                variant="ghost"
+                                                                className="h-7 w-7 p-0"
+                                                                title={t.active ? 'Pause Tracking' : 'Resume Tracking'}
+                                                                onClick={() => handleToggleActive(t)}
+                                                            >
+                                                                {t.active ? (
+                                                                    <Pause className="w-3.5 h-3.5 text-amber-500" />
+                                                                ) : (
+                                                                    <Play className="w-3.5 h-3.5 text-emerald-500" />
+                                                                )}
+                                                            </Button>
+
+                                                            <Button
+                                                                size="sm"
+                                                                variant="ghost"
+                                                                className="h-7 w-7 p-0"
+                                                                title="Edit Settings"
+                                                                onClick={() => handleOpenEdit(t)}
+                                                            >
+                                                                <Edit3 className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
+                                                            </Button>
+
+                                                            <Button
+                                                                size="sm"
+                                                                variant="ghost"
+                                                                className="h-7 w-7 p-0"
+                                                                title="Test Scrape Now (Dry-Run)"
+                                                                disabled={testingTag === t.tag}
+                                                                onClick={() => handleTestRun(t.tag)}
+                                                            >
+                                                                <RefreshCw
+                                                                    className={`w-3.5 h-3.5 text-primary ${
+                                                                        testingTag === t.tag ? 'animate-spin' : ''
+                                                                    }`}
+                                                                />
+                                                            </Button>
+
+                                                            <Button
+                                                                size="sm"
+                                                                variant="ghost"
+                                                                className="h-7 w-7 p-0 text-muted-foreground hover:text-rose-500"
+                                                                title="Remove Hashtag"
+                                                                onClick={() => handleDeleteTag(t.id, t.tag)}
+                                                            >
+                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                            </Button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Right Side: 1/3 Width (Top to Bottom Stack) */}
+                <div className="lg:col-span-4 space-y-5 w-full">
+                    {/* 1. Adding New Hashtag */}
+                    <Card className="border-border/60 bg-card shadow-sm">
+                        <CardHeader className="p-4 pb-2 border-b border-border/40">
+                            <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
+                                <Plus className="w-4 h-4 text-primary" />
+                                Add Tracked Hashtag
+                            </CardTitle>
+                            <CardDescription className="text-xs">
+                                Configure a custom hashtag. Defaults are pre-filled by best practices.
+                            </CardDescription>
+                        </CardHeader>
+
+                        <CardContent className="p-4 pt-3">
+                            <form onSubmit={handleCreateTag} className="space-y-3.5">
                                 <div>
                                     <label className="text-xs font-semibold text-muted-foreground block mb-1">
                                         Hashtag Name (without #)
@@ -505,188 +670,322 @@ export default function CustomHashtagTrackerPage() {
                                         value={newTag}
                                         onChange={(e) => setNewTag(e.target.value)}
                                         required
-                                        className="h-9 font-mono"
+                                        className="h-8 font-mono text-xs"
                                     />
                                 </div>
-                                <div>
-                                    <label className="text-xs font-semibold text-muted-foreground block mb-1">
-                                        Campaign / Descriptive Label
-                                    </label>
-                                    <Input
-                                        placeholder="e.g. Indie Horror Promo Wave"
-                                        value={newLabel}
-                                        onChange={(e) => setNewLabel(e.target.value)}
-                                        className="h-9"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-semibold text-muted-foreground block mb-1">
-                                        Category
-                                    </label>
-                                    <select
-                                        value={newCategory}
-                                        onChange={(e) => setNewCategory(e.target.value as any)}
-                                        className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
-                                    >
-                                        <option value="campaign">Movie Campaign</option>
-                                        <option value="competitor">Competitor Brand</option>
-                                        <option value="meme">Viral Meme / Trend</option>
-                                        <option value="talent">Director / Actor Stunt</option>
-                                        <option value="general">General Film Topic</option>
-                                    </select>
-                                </div>
-                            </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-                                {/* Cadence Selector */}
-                                <div className="space-y-1.5 bg-muted/20 p-3 rounded-lg border border-border/50">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                                            <Calendar className="w-3.5 h-3.5 text-primary" />
-                                            Cadence
-                                        </span>
-                                        <Badge variant="secondary" className="text-[10px]">
-                                            {newCadence}x per hari
-                                        </Badge>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label className="text-xs font-semibold text-muted-foreground block mb-1">
+                                            Campaign Label
+                                        </label>
+                                        <Input
+                                            placeholder="Optional tag label"
+                                            value={newLabel}
+                                            onChange={(e) => setNewLabel(e.target.value)}
+                                            className="h-8 text-xs"
+                                        />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-1.5 pt-1">
-                                        {CADENCE_OPTIONS.map((c) => (
-                                            <Button
-                                                key={c.value}
-                                                type="button"
-                                                variant={newCadence === c.value ? 'default' : 'outline'}
-                                                size="sm"
-                                                className="h-8 text-xs font-semibold px-2 flex flex-col items-center justify-center"
-                                                onClick={() => setNewCadence(c.value)}
-                                            >
-                                                <span>{c.value}x / hari</span>
-                                            </Button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Scrape Depth */}
-                                <div className="space-y-1.5 bg-muted/20 p-3 rounded-lg border border-border/50">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                                            <Sliders className="w-3.5 h-3.5 text-primary" />
-                                            Scrape Depth
-                                        </span>
-                                        <Badge variant="secondary" className="text-[10px]">
-                                            {newTargetPosts} posts
-                                        </Badge>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-1.5 pt-1">
-                                        {DEPTH_OPTIONS.map((d) => (
-                                            <Button
-                                                key={d.value}
-                                                type="button"
-                                                variant={newTargetPosts === d.value ? 'default' : 'outline'}
-                                                size="sm"
-                                                className="h-8 text-xs font-semibold px-2"
-                                                onClick={() => setNewTargetPosts(d.value)}
-                                            >
-                                                {d.value} posts
-                                            </Button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Start Timer */}
-                                <div className="space-y-1.5 bg-muted/20 p-3 rounded-lg border border-border/50">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                                            <Clock className="w-3.5 h-3.5 text-primary" />
-                                            Start Timer (WIB)
-                                        </span>
-                                        <Badge variant="secondary" className="text-[10px] font-mono">
-                                            {newStartHour.toString().padStart(2, '0')}:00 WIB
-                                        </Badge>
-                                    </div>
-                                    <div className="pt-1">
+                                    <div>
+                                        <label className="text-xs font-semibold text-muted-foreground block mb-1">
+                                            Category
+                                        </label>
                                         <select
-                                            value={newStartHour}
-                                            onChange={(e) => setNewStartHour(Number(e.target.value))}
-                                            className="w-full h-8 rounded-md border border-input bg-background px-2.5 py-1 text-xs font-medium shadow-sm"
+                                            value={newCategory}
+                                            onChange={(e) => setNewCategory(e.target.value as any)}
+                                            className="w-full h-8 rounded-md border border-input bg-background px-2 py-1 text-xs shadow-sm"
                                         >
-                                            {START_HOUR_OPTIONS.map((opt) => (
-                                                <option key={opt.value} value={opt.value}>
-                                                    {opt.label}
-                                                </option>
-                                            ))}
+                                            <option value="campaign">Campaign</option>
+                                            <option value="competitor">Competitor</option>
+                                            <option value="meme">Meme/Trend</option>
+                                            <option value="talent">Talent</option>
+                                            <option value="general">General</option>
                                         </select>
-                                        <div className="text-[10px] text-muted-foreground mt-1">
-                                            Peak Indonesian cinema social buzz begins at 18:00 WIB.
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2 pt-1">
+                                    <div>
+                                        <label className="text-xs font-semibold text-muted-foreground block mb-1">
+                                            Cadence
+                                        </label>
+                                        <div className="grid grid-cols-2 gap-1">
+                                            {CADENCE_OPTIONS.map((c) => (
+                                                <Button
+                                                    key={c.value}
+                                                    type="button"
+                                                    variant={newCadence === c.value ? 'default' : 'outline'}
+                                                    size="sm"
+                                                    className="h-7 text-[11px] px-1 font-semibold"
+                                                    onClick={() => setNewCadence(c.value)}
+                                                >
+                                                    {c.value}x / hari
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-xs font-semibold text-muted-foreground block mb-1">
+                                            Scrape Depth
+                                        </label>
+                                        <div className="grid grid-cols-2 gap-1">
+                                            {DEPTH_OPTIONS.map((d) => (
+                                                <Button
+                                                    key={d.value}
+                                                    type="button"
+                                                    variant={newTargetPosts === d.value ? 'default' : 'outline'}
+                                                    size="sm"
+                                                    className="h-7 text-[11px] px-1 font-semibold"
+                                                    onClick={() => setNewTargetPosts(d.value)}
+                                                >
+                                                    {d.value} posts
+                                                </Button>
+                                            ))}
                                         </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Audience Sentiment Toggle */}
-                            <div className="flex items-center justify-between bg-muted/20 p-3 rounded-lg border border-border/50">
                                 <div>
-                                    <div className="text-xs font-bold text-foreground">
-                                        Audience Sentiment Analysis
-                                    </div>
-                                    <div className="text-[11px] text-muted-foreground">
-                                        Scrapes top 30 comments and runs Gemini 3.8 Flash sentiment &amp; hype classification
-                                    </div>
+                                    <label className="text-xs font-semibold text-muted-foreground block mb-1">
+                                        Start Timer (24-Hour WIB)
+                                    </label>
+                                    <select
+                                        value={newStartHour}
+                                        onChange={(e) => setNewStartHour(Number(e.target.value))}
+                                        className="w-full h-8 rounded-md border border-input bg-background px-2.5 py-1 text-xs shadow-sm"
+                                    >
+                                        {START_HOUR_OPTIONS.map((opt) => (
+                                            <option key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
-                                <Button
-                                    type="button"
-                                    variant={newIncludeComments ? 'default' : 'outline'}
-                                    size="sm"
-                                    className="h-7 px-3 text-xs font-bold"
-                                    onClick={() => setNewIncludeComments(!newIncludeComments)}
-                                >
-                                    {newIncludeComments ? 'Enabled' : 'Disabled'}
-                                </Button>
-                            </div>
 
-                            {/* Live Unit Cost Preview (IDR First) */}
-                            <div className="bg-primary/5 border border-primary/20 rounded-lg p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                                <div className="space-y-0.5">
-                                    <div className="flex items-center gap-2">
-                                        <Calculator className="w-4 h-4 text-primary" />
-                                        <span className="font-semibold text-foreground">
-                                            Estimasi Biaya Scraping:
-                                        </span>
-                                        <strong className="text-sm font-black text-primary">
-                                            {formatIdr(currentFormCost.dailyCostIdr)} / hari
-                                        </strong>
-                                        <span className="text-muted-foreground font-medium">
-                                            ({formatIdr(currentFormCost.monthlyCostIdr)} / bln)
-                                        </span>
+                                <div className="flex items-center justify-between bg-muted/20 p-2.5 rounded-lg border border-border/50 text-xs">
+                                    <div>
+                                        <div className="font-semibold text-foreground">Audience Sentiment</div>
+                                        <div className="text-[10px] text-muted-foreground">30 comments + Gemini AI</div>
                                     </div>
-                                    <div className="text-[11px] text-muted-foreground pl-6">
-                                        {formatUsd(currentFormCost.totalPerCrawlUsd)}/crawl · {formatUsd(currentFormCost.monthlyCostUsd)}/bulan @ Rp 17.500/USD
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2">
                                     <Button
                                         type="button"
-                                        variant="ghost"
+                                        variant={newIncludeComments ? 'default' : 'outline'}
                                         size="sm"
-                                        className="h-8 text-xs"
-                                        onClick={() => setIsAddOpen(false)}
+                                        className="h-6 px-2.5 text-[11px] font-bold"
+                                        onClick={() => setNewIncludeComments(!newIncludeComments)}
                                     >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        type="submit"
-                                        size="sm"
-                                        disabled={isSubmitting}
-                                        className="h-8 text-xs font-bold gap-1 px-4"
-                                    >
-                                        <CheckCircle2 className="w-3.5 h-3.5" />
-                                        Save &amp; Track
+                                        {newIncludeComments ? 'Enabled' : 'Disabled'}
                                     </Button>
                                 </div>
+
+                                {/* Live Cost Preview for this tag */}
+                                <div className="bg-primary/5 border border-primary/20 rounded-lg p-2.5 text-xs space-y-1">
+                                    <div className="flex justify-between items-baseline">
+                                        <span className="text-muted-foreground">Biaya Tambahan:</span>
+                                        <strong className="text-primary font-bold">
+                                            {formatIdr(currentFormCost.dailyCostIdr)} / hari
+                                        </strong>
+                                    </div>
+                                    <div className="text-[11px] text-muted-foreground flex justify-between">
+                                        <span>Proyeksi Bulanan:</span>
+                                        <span className="font-medium text-foreground">
+                                            {formatIdr(currentFormCost.monthlyCostIdr)} / bln ({formatUsd(currentFormCost.monthlyCostUsd)})
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <Button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className="w-full h-8 text-xs font-bold gap-1.5"
+                                >
+                                    <CheckCircle2 className="w-3.5 h-3.5" />
+                                    Save &amp; Track Hashtag
+                                </Button>
+                            </form>
+                        </CardContent>
+                    </Card>
+
+                    {/* 2. Current Total API Burnrate */}
+                    <Card className="border-border/60 bg-card shadow-sm">
+                        <CardHeader className="p-4 pb-2 border-b border-border/40">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
+                                    <Activity className="w-4 h-4 text-amber-500" />
+                                    Current Total API Burnrate
+                                </CardTitle>
+                                <Badge
+                                    variant="outline"
+                                    className={`text-[9px] font-bold uppercase ${
+                                        forecast?.creditsStatus === 'safe'
+                                            ? 'border-emerald-500/40 text-emerald-500 bg-emerald-500/10'
+                                            : forecast?.creditsStatus === 'warning'
+                                            ? 'border-amber-500/40 text-amber-500 bg-amber-500/10'
+                                            : 'border-rose-500/40 text-rose-500 bg-rose-500/10'
+                                    }`}
+                                >
+                                    {forecast?.creditsStatus ?? 'safe'}
+                                </Badge>
                             </div>
-                        </form>
-                    </CardContent>
-                </Card>
-            )}
+                            <CardDescription className="text-xs">
+                                Live operational expenditure across all active custom hashtags.
+                            </CardDescription>
+                        </CardHeader>
+
+                        <CardContent className="p-4 space-y-3.5 text-xs">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="bg-muted/20 p-2.5 rounded-lg border border-border/40">
+                                    <span className="text-muted-foreground block text-[11px]">Daily Burn</span>
+                                    <span className="font-black text-sm text-foreground">
+                                        {formatIdr(forecast?.dailyCostIdr ?? 0)}
+                                    </span>
+                                    <span className="text-[10px] text-muted-foreground block font-mono">
+                                        / hari ({formatUsd(forecast?.dailyCostUsd ?? 0)})
+                                    </span>
+                                </div>
+
+                                <div className="bg-muted/20 p-2.5 rounded-lg border border-border/40">
+                                    <span className="text-muted-foreground block text-[11px]">30-Day Projected</span>
+                                    <span className="font-black text-sm text-emerald-500">
+                                        {formatIdr(forecast?.monthlyCostIdr ?? 0)}
+                                    </span>
+                                    <span className="text-[10px] text-muted-foreground block font-mono">
+                                        / bln ({formatUsd(forecast?.monthlyCostUsd ?? 0)})
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="space-y-1.5 pt-1">
+                                <div className="flex justify-between text-[11px]">
+                                    <span className="text-muted-foreground">Starter Allowance ($29 / Rp 507.500)</span>
+                                    <strong className="text-foreground font-mono">{forecast?.percentOfStarterCredits ?? 0}%</strong>
+                                </div>
+                                <div className="w-full bg-muted/60 rounded-full h-1.5 overflow-hidden">
+                                    <div
+                                        className={`h-full rounded-full transition-all ${
+                                            forecast?.creditsStatus === 'safe'
+                                                ? 'bg-emerald-500'
+                                                : forecast?.creditsStatus === 'warning'
+                                                ? 'bg-amber-500'
+                                                : 'bg-rose-500'
+                                        }`}
+                                        style={{ width: `${Math.min(100, forecast?.percentOfStarterCredits ?? 0)}%` }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between text-[11px] text-muted-foreground border-t border-border/40 pt-2.5">
+                                <span>Active Tags: <strong className="text-foreground">{forecast?.activeTags ?? 0}</strong> of {forecast?.totalTags ?? 0}</span>
+                                <span>Volume: <strong className="text-foreground">{forecast?.dailyItemsScraped ?? 0}</strong> items / hari</span>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* 3. Simulation of Adding New Hashtag/s */}
+                    <Card className="border-border/60 bg-card shadow-sm">
+                        <CardHeader className="p-4 pb-2 border-b border-border/40">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
+                                    <Sliders className="w-4 h-4 text-primary" />
+                                    Capacity &amp; Impact Simulator
+                                </CardTitle>
+                                <Badge variant="outline" className="text-[9px] font-mono">
+                                    What-If Analysis
+                                </Badge>
+                            </div>
+                            <CardDescription className="text-xs">
+                                Simulate adding new hashtags and evaluate budget impact before deploying.
+                            </CardDescription>
+                        </CardHeader>
+
+                        <CardContent className="p-4 space-y-3.5 text-xs">
+                            <div>
+                                <div className="flex justify-between text-[11px] font-semibold mb-1">
+                                    <span>Simulate Adding Tags:</span>
+                                    <span className="text-primary font-bold">+{simAddTagsCount} hashtag{simAddTagsCount > 1 ? 's' : ''}</span>
+                                </div>
+                                <input
+                                    type="range"
+                                    min="1"
+                                    max="20"
+                                    value={simAddTagsCount}
+                                    onChange={(e) => setSimAddTagsCount(Number(e.target.value))}
+                                    className="w-full accent-primary h-1.5 bg-muted rounded-lg cursor-pointer"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label className="text-[11px] font-semibold text-muted-foreground block mb-1">
+                                        Cadence
+                                    </label>
+                                    <div className="grid grid-cols-2 gap-1">
+                                        {[1, 2, 3, 4].map((num) => (
+                                            <Button
+                                                key={num}
+                                                type="button"
+                                                variant={simCadence === num ? 'default' : 'outline'}
+                                                size="sm"
+                                                className="h-6 text-[11px] px-1 font-semibold"
+                                                onClick={() => setSimCadence(num)}
+                                            >
+                                                {num}x / hari
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-[11px] font-semibold text-muted-foreground block mb-1">
+                                        Scrape Depth
+                                    </label>
+                                    <div className="grid grid-cols-2 gap-1">
+                                        {[20, 40, 80, 100].map((num) => (
+                                            <Button
+                                                key={num}
+                                                type="button"
+                                                variant={simPostsPerTag === num ? 'default' : 'outline'}
+                                                size="sm"
+                                                className="h-6 text-[11px] px-1 font-semibold"
+                                                onClick={() => setSimPostsPerTag(num)}
+                                            >
+                                                {num}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Simulated Cost Impact Output */}
+                            <div className="bg-muted/20 p-3 rounded-lg border border-border/40 space-y-2">
+                                <div className="flex justify-between items-center text-[11px]">
+                                    <span className="text-muted-foreground">Incremental Daily:</span>
+                                    <strong className="text-foreground font-bold">
+                                        +{formatIdr(simulationResult.additionalDailyIdr)} / hari
+                                    </strong>
+                                </div>
+                                <div className="flex justify-between items-center text-[11px]">
+                                    <span className="text-muted-foreground">Incremental Monthly:</span>
+                                    <strong className="text-emerald-500 font-bold">
+                                        +{formatIdr(simulationResult.additionalMonthlyIdr)} / bln
+                                    </strong>
+                                </div>
+                                <div className="border-t border-border/40 pt-1.5 flex justify-between items-center text-[11px]">
+                                    <span className="text-foreground font-semibold">New Projected Total:</span>
+                                    <strong className="text-primary font-bold">
+                                        {formatIdr(simulationResult.projectedTotalMonthlyIdr)} / bln
+                                    </strong>
+                                </div>
+                                <div className="text-[10px] text-muted-foreground flex justify-between">
+                                    <span>New Credit Usage:</span>
+                                    <span className="font-mono">{simulationResult.projectedCreditsPct}% of $29 tier</span>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
 
             {/* Edit Hashtag Modal */}
             {editingTag && (
@@ -720,7 +1019,7 @@ export default function CustomHashtagTrackerPage() {
                                     <Input
                                         value={editLabel}
                                         onChange={(e) => setEditLabel(e.target.value)}
-                                        className="h-9"
+                                        className="h-9 text-xs"
                                     />
                                 </div>
 
@@ -844,345 +1143,6 @@ export default function CustomHashtagTrackerPage() {
                     </Card>
                 </div>
             )}
-
-            {/* Interactive "What-If" Cost Simulator Bento (IDR First) */}
-            <Card className="border-border/60 bg-card">
-                <CardHeader className="p-4 pb-2 border-b border-border/40">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <Sliders className="w-4 h-4 text-primary" />
-                            <CardTitle className="text-sm font-bold text-foreground">
-                                Real-Time Unit Economics &amp; Capacity Simulator (IDR First)
-                            </CardTitle>
-                        </div>
-                        <Badge variant="outline" className="text-[10px] font-mono">
-                            Apify $3/1k · Gemini 3.8 Flash · Rp 17.500/USD
-                        </Badge>
-                    </div>
-                </CardHeader>
-                <CardContent className="p-4">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
-                        <div className="space-y-4">
-                            <div>
-                                <div className="flex justify-between text-xs font-semibold mb-1">
-                                    <span>Number of Custom Hashtags</span>
-                                    <span className="text-primary font-bold">{simTagsCount} tags</span>
-                                </div>
-                                <input
-                                    type="range"
-                                    min="1"
-                                    max="50"
-                                    value={simTagsCount}
-                                    onChange={(e) => setSimTagsCount(Number(e.target.value))}
-                                    className="w-full accent-primary h-1.5 bg-muted rounded-lg cursor-pointer"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <div className="text-xs font-semibold mb-1">Cadence / Hari</div>
-                                    <div className="flex items-center gap-1">
-                                        {[1, 2, 3, 4].map((num) => (
-                                            <Button
-                                                key={num}
-                                                variant={simCadence === num ? 'default' : 'outline'}
-                                                size="sm"
-                                                className="h-6 text-[11px] px-2 font-bold flex-1"
-                                                onClick={() => setSimCadence(num)}
-                                            >
-                                                {num}x
-                                            </Button>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="text-xs font-semibold mb-1">Depth / Crawl</div>
-                                    <div className="flex items-center gap-1">
-                                        {[20, 40, 80, 100].map((num) => (
-                                            <Button
-                                                key={num}
-                                                variant={simPostsPerTag === num ? 'default' : 'outline'}
-                                                size="sm"
-                                                className="h-6 text-[11px] px-1.5 font-bold flex-1"
-                                                onClick={() => setSimPostsPerTag(num)}
-                                            >
-                                                {num}
-                                            </Button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-3 bg-muted/20 p-4 rounded-xl border border-border/50">
-                            <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                                Forecast for {simTagsCount} Tags @ {simCadence}x/hari
-                            </div>
-                            <div className="grid grid-cols-2 gap-2 text-xs">
-                                <div>
-                                    <span className="text-muted-foreground block">Daily Crawl Cost:</span>
-                                    <span className="font-bold text-sm text-foreground">
-                                        {formatIdr(simulatedCost.dailyIdr)}
-                                    </span>
-                                    <span className="text-[10px] text-muted-foreground block font-mono">
-                                        / hari ({formatUsd(simulatedCost.dailyUsd)})
-                                    </span>
-                                </div>
-                                <div>
-                                    <span className="text-muted-foreground block">Monthly Total:</span>
-                                    <span className="font-bold text-sm text-emerald-500">
-                                        {formatIdr(simulatedCost.monthlyIdr)}
-                                    </span>
-                                    <span className="text-[10px] text-muted-foreground block font-mono">
-                                        / bln ({formatUsd(simulatedCost.monthlyUsd)})
-                                    </span>
-                                </div>
-                            </div>
-                            <div className="text-[11px] text-muted-foreground border-t border-border/40 pt-2">
-                                Monthly Volume: <strong>{simulatedCost.totalMonthlyItems.toLocaleString()}</strong> items scraped.
-                            </div>
-                        </div>
-
-                        <div className="p-4 rounded-xl border border-border/50 bg-background flex flex-col justify-center">
-                            <div className="text-xs font-bold text-foreground mb-1">
-                                Monthly Budget Impact
-                            </div>
-                            <p className="text-xs text-muted-foreground leading-relaxed">
-                                Tracking {simTagsCount} custom tags at {simCadence}x/hari adds{' '}
-                                <strong className="text-foreground">
-                                    {formatIdr(simulatedCost.monthlyIdr)}/bln
-                                </strong>{' '}
-                                ({formatUsd(simulatedCost.monthlyUsd)} USD) to CineRadar infrastructure.
-                            </p>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* Hashtag Catalog */}
-            <Card className="border-border/60 bg-card overflow-hidden">
-                <CardHeader className="p-4 border-b border-border/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                        <Hash className="w-4 h-4 text-primary" />
-                        <CardTitle className="text-sm font-bold text-foreground">
-                            Active Custom Hashtag Slate ({filteredTags.length})
-                        </CardTitle>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <div className="relative w-48 sm:w-64">
-                            <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-muted-foreground" />
-                            <Input
-                                placeholder="Search tag or label..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="h-8 pl-8 text-xs rounded-lg"
-                            />
-                        </div>
-                        <select
-                            value={categoryFilter}
-                            onChange={(e) => setCategoryFilter(e.target.value as any)}
-                            className="h-8 rounded-lg border border-input bg-background px-2.5 text-xs font-semibold shadow-sm"
-                        >
-                            <option value="all">All Categories</option>
-                            <option value="campaign">Campaign</option>
-                            <option value="competitor">Competitor</option>
-                            <option value="meme">Meme/Trend</option>
-                            <option value="talent">Talent</option>
-                            <option value="general">General</option>
-                        </select>
-                    </div>
-                </CardHeader>
-
-                <CardContent className="p-0">
-                    {isLoading ? (
-                        <div className="p-12 text-center text-xs text-muted-foreground">
-                            Loading custom hashtags &amp; unit economics...
-                        </div>
-                    ) : filteredTags.length === 0 ? (
-                        <div className="p-12 text-center space-y-2">
-                            <Hash className="w-8 h-8 text-muted-foreground/40 mx-auto" />
-                            <div className="text-sm font-bold text-foreground">No Custom Hashtags Found</div>
-                            <div className="text-xs text-muted-foreground max-w-sm mx-auto">
-                                Add your first custom hashtag above to begin tracking ad-hoc promotional campaigns and buzz.
-                            </div>
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                className="mt-2 text-xs font-bold"
-                                onClick={() => setIsAddOpen(true)}
-                            >
-                                <Plus className="w-3.5 h-3.5 mr-1" />
-                                Add First Hashtag
-                            </Button>
-                        </div>
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left text-xs">
-                                <thead className="bg-muted/40 border-b border-border/40 text-muted-foreground font-semibold uppercase text-[10px]">
-                                    <tr>
-                                        <th className="py-2.5 px-4">Hashtag &amp; Label</th>
-                                        <th className="py-2.5 px-3">Category</th>
-                                        <th className="py-2.5 px-3">Schedule &amp; Depth</th>
-                                        <th className="py-2.5 px-3">Est. Unit Cost (IDR)</th>
-                                        <th className="py-2.5 px-3">Latest Telemetry</th>
-                                        <th className="py-2.5 px-3">Status</th>
-                                        <th className="py-2.5 px-4 text-right">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-border/30">
-                                    {filteredTags.map((t) => (
-                                        <tr key={t.id} className="hover:bg-muted/20 transition-colors">
-                                            <td className="py-3 px-4">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-mono font-bold text-foreground text-sm">
-                                                        #{t.tag}
-                                                    </span>
-                                                    <a
-                                                        href={`https://www.tiktok.com/tag/${t.tag}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-muted-foreground hover:text-primary transition-colors"
-                                                    >
-                                                        <ExternalLink className="w-3 h-3" />
-                                                    </a>
-                                                </div>
-                                                <div className="text-[11px] text-muted-foreground mt-0.5">
-                                                    {t.label}
-                                                </div>
-                                            </td>
-
-                                            <td className="py-3 px-3">
-                                                <Badge
-                                                    variant="secondary"
-                                                    className="text-[10px] font-semibold capitalize"
-                                                >
-                                                    {t.category}
-                                                </Badge>
-                                            </td>
-
-                                            <td className="py-3 px-3">
-                                                <div className="font-medium text-foreground">
-                                                    {t.target_posts} posts · {t.cadence ?? 1}x/hari
-                                                </div>
-                                                <div className="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                                                    <Clock className="w-3 h-3" />
-                                                    {(t.start_hour ?? 18).toString().padStart(2, '0')}:00 WIB
-                                                    {t.include_comments && ' (+ 30 comments)'}
-                                                </div>
-                                            </td>
-
-                                            <td className="py-3 px-3">
-                                                <div className="font-bold text-foreground">
-                                                    {formatIdr(t.cost.dailyCostIdr)} / hari
-                                                </div>
-                                                <div className="text-[10px] text-muted-foreground">
-                                                    ~{formatIdr(t.cost.monthlyCostIdr)}/bln ({formatUsd(t.cost.monthlyCostUsd)})
-                                                </div>
-                                            </td>
-
-                                            <td className="py-3 px-3">
-                                                {t.latest_stats ? (
-                                                    <div className="space-y-0.5">
-                                                        <div className="flex items-center gap-2 font-bold text-foreground">
-                                                            <span className="flex items-center gap-1">
-                                                                <Eye className="w-3 h-3 text-primary" />
-                                                                {(t.latest_stats.total_views || 0).toLocaleString()}
-                                                            </span>
-                                                            <span className="flex items-center gap-1 text-[11px]">
-                                                                <Heart className="w-2.5 h-2.5 text-rose-500" />
-                                                                {(t.latest_stats.total_likes || 0).toLocaleString()}
-                                                            </span>
-                                                        </div>
-                                                        {t.latest_stats.sentiment && (
-                                                            <Badge
-                                                                variant="outline"
-                                                                className="text-[9px] font-bold border-emerald-500/30 text-emerald-500"
-                                                            >
-                                                                {t.latest_stats.sentiment.positive}% Positive
-                                                            </Badge>
-                                                        )}
-                                                    </div>
-                                                ) : (
-                                                    <span className="font-mono text-muted-foreground text-[11px]">
-                                                        Pending daily pulse
-                                                    </span>
-                                                )}
-                                            </td>
-
-                                            <td className="py-3 px-3">
-                                                <Badge
-                                                    variant={t.active ? 'default' : 'outline'}
-                                                    className={`text-[10px] font-bold uppercase ${
-                                                        t.active
-                                                            ? 'bg-emerald-500 hover:bg-emerald-600'
-                                                            : 'text-muted-foreground border-muted-foreground/40'
-                                                    }`}
-                                                >
-                                                    {t.active ? 'Active' : 'Paused'}
-                                                </Badge>
-                                            </td>
-
-                                            <td className="py-3 px-4 text-right">
-                                                <div className="flex items-center justify-end gap-1.5">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        className="h-7 w-7 p-0"
-                                                        title={t.active ? 'Pause Tracking' : 'Resume Tracking'}
-                                                        onClick={() => handleToggleActive(t)}
-                                                    >
-                                                        {t.active ? (
-                                                            <Pause className="w-3.5 h-3.5 text-amber-500" />
-                                                        ) : (
-                                                            <Play className="w-3.5 h-3.5 text-emerald-500" />
-                                                        )}
-                                                    </Button>
-
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        className="h-7 w-7 p-0"
-                                                        title="Edit Settings"
-                                                        onClick={() => handleOpenEdit(t)}
-                                                    >
-                                                        <Edit3 className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
-                                                    </Button>
-
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        className="h-7 w-7 p-0"
-                                                        title="Test Scrape Now (Dry-Run)"
-                                                        disabled={testingTag === t.tag}
-                                                        onClick={() => handleTestRun(t.tag)}
-                                                    >
-                                                        <RefreshCw
-                                                            className={`w-3.5 h-3.5 text-primary ${
-                                                                testingTag === t.tag ? 'animate-spin' : ''
-                                                            }`}
-                                                        />
-                                                    </Button>
-
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        className="h-7 w-7 p-0 text-muted-foreground hover:text-rose-500"
-                                                        title="Remove Hashtag"
-                                                        onClick={() => handleDeleteTag(t.id, t.tag)}
-                                                    >
-                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                    </Button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
         </div>
     );
 }
