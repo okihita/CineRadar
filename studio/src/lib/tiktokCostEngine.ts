@@ -11,10 +11,10 @@
  * - Typical sentiment batch (30 comments): ~2,000 input tokens, ~150 output tokens
  *   = (2000 * 0.00000075) + (150 * 0.00000375) = $0.0015 + $0.00056 = $0.00206 per movie/tag
  *
- * Base Exchange Rate: Rp 16.000 / USD
+ * Base Exchange Rate: Rp 17.500 / USD
  */
 
-export const USD_TO_IDR = 16000;
+export const USD_TO_IDR = 17500;
 export const APIFY_STARTER_MONTHLY_CREDITS_USD = 29.0;
 
 export interface HashtagCostConfig {
@@ -40,7 +40,7 @@ export interface UnitCostBreakdown {
 export function computeHashtagUnitCost(config: HashtagCostConfig): UnitCostBreakdown {
     const posts = Math.max(0, config.postsPerCrawl || 40);
     const comments = config.includeComments ? (config.commentsPerCrawl ?? 30) : 0;
-    const frequency = config.crawlsPerDay ?? 1;
+    const frequency = Math.max(1, config.crawlsPerDay ?? 1);
 
     // Apify charges $3.00 per 1,000 dataset items
     const apifyPostsUsd = (posts / 1000) * 3.0;
@@ -85,7 +85,7 @@ export interface AggregateCostForecast {
 }
 
 export function computeAggregateCost(
-    items: Array<{ active: boolean; target_posts?: number; include_comments?: boolean }>
+    items: Array<{ active: boolean; target_posts?: number; include_comments?: boolean; cadence?: number }>
 ): AggregateCostForecast {
     let dailyCostUsd = 0;
     let dailyItems = 0;
@@ -94,12 +94,14 @@ export function computeAggregateCost(
     for (const item of items) {
         if (!item.active) continue;
         activeCount++;
+        const cadence = Math.max(1, item.cadence ?? 1);
         const cost = computeHashtagUnitCost({
             postsPerCrawl: item.target_posts ?? 40,
             includeComments: item.include_comments ?? true,
+            crawlsPerDay: cadence,
         });
         dailyCostUsd += cost.dailyCostUsd;
-        dailyItems += cost.estimatedItemsPerCrawl;
+        dailyItems += cost.estimatedItemsPerCrawl * cadence;
     }
 
     const monthlyCostUsd = dailyCostUsd * 30;

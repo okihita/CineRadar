@@ -108,12 +108,16 @@ export async function GET() {
         }
 
         const tagsWithCost = tags.map((t) => {
+            const cadence = Math.max(1, t.cadence ?? 1);
             const unit = computeHashtagUnitCost({
                 postsPerCrawl: t.target_posts,
                 includeComments: t.include_comments,
+                crawlsPerDay: cadence,
             });
             return {
                 ...t,
+                cadence,
+                start_hour: t.start_hour !== undefined ? t.start_hour : 18,
                 cost: unit,
                 latest_stats: latestPulseMap[t.tag.toLowerCase()] || null,
             };
@@ -159,6 +163,10 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        const cadence = Math.max(1, Math.min(4, Number(body.cadence) || 1));
+        const rawStartHour = body.start_hour !== undefined ? Number(body.start_hour) : 18;
+        const startHour = isNaN(rawStartHour) ? 18 : Math.max(0, Math.min(23, rawStartHour));
+
         const newEntry: TrackedHashtag = {
             id: `ht-${cleanTag}-${Date.now().toString(36)}`,
             tag: cleanTag,
@@ -167,6 +175,8 @@ export async function POST(req: NextRequest) {
                 ? body.category
                 : 'general',
             target_posts: Number(body.target_posts) || 40,
+            cadence,
+            start_hour: startHour,
             include_comments: body.include_comments !== false,
             active: body.active !== false,
             created_at: new Date().toISOString(),
@@ -197,7 +207,7 @@ export async function POST(req: NextRequest) {
     }
 }
 
-// PUT: Update hashtag configuration (e.g. toggle active, adjust posts, comments)
+// PUT: Update hashtag configuration (e.g. toggle active, adjust posts, comments, cadence, start_hour)
 export async function PUT(req: NextRequest) {
     try {
         const body = await req.json();
@@ -220,6 +230,14 @@ export async function PUT(req: NextRequest) {
             label: body.label !== undefined ? String(body.label).trim() : current.label,
             category: body.category || current.category,
             target_posts: body.target_posts !== undefined ? Number(body.target_posts) : current.target_posts,
+            cadence:
+                body.cadence !== undefined
+                    ? Math.max(1, Math.min(4, Number(body.cadence) || 1))
+                    : (current.cadence ?? 1),
+            start_hour:
+                body.start_hour !== undefined
+                    ? Math.max(0, Math.min(23, Number(body.start_hour) || 18))
+                    : (current.start_hour ?? 18),
             include_comments:
                 body.include_comments !== undefined ? Boolean(body.include_comments) : current.include_comments,
             active: body.active !== undefined ? Boolean(body.active) : current.active,

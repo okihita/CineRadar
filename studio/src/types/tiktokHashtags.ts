@@ -4,6 +4,8 @@ export interface TrackedHashtag {
     label: string;
     category: 'campaign' | 'competitor' | 'meme' | 'talent' | 'general';
     target_posts: number;
+    cadence?: number; // Runs per day (1, 2, 3, 4) - default 1
+    start_hour?: number; // Start hour in 24-hour WIB format (0-23) - default 18
     include_comments: boolean;
     active: boolean;
     created_at: string;

@@ -707,6 +707,11 @@ async def execute_daily_crawl_async(
                         creds["gemini_key"], f"#{ct['tag']}", comments_list
                     )
 
+            raw_cadence = ct.get("cadence")
+            raw_start_hour = ct.get("start_hour")
+            cadence_val = int(raw_cadence) if raw_cadence is not None else 1
+            start_hour_val = int(raw_start_hour) if raw_start_hour is not None else 18
+
             custom_stats_map[ct["tag"].lower()] = {
                 "total_posts": len(top_c_posts),
                 "total_views": c_views,
@@ -714,6 +719,8 @@ async def execute_daily_crawl_async(
                 "total_comments": c_comments,
                 "total_shares": c_shares,
                 "sentiment": c_sent,
+                "cadence": cadence_val,
+                "start_hour": start_hour_val,
                 "crawled_at": now_wib.isoformat(),
                 "top_video_url": top_c_posts[0].get("url") if top_c_posts else None,
             }
