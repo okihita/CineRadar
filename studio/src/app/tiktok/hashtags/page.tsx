@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import useSWR from 'swr';
+import { useSession } from 'next-auth/react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,9 +33,12 @@ import {
     X,
     Activity,
     Layers,
+    Database,
 } from 'lucide-react';
 import { TikTokIcon } from '@/components/BrandIcons';
 import { fetcher } from '@/lib/api';
+import { getTodayJakarta } from '@/lib/timeUtils';
+import { getFirestoreConsoleUrl } from '@/lib/constants';
 import {
     formatIdr,
     formatUsd,
@@ -107,6 +111,10 @@ const START_HOUR_OPTIONS = [
 ];
 
 export default function CustomHashtagTrackerPage() {
+    const { data: session } = useSession();
+    const isAdmin = (session as unknown as { user?: { role?: string } })?.user?.role === 'admin';
+    const todayJakarta = getTodayJakarta();
+
     const { data, mutate, isLoading } = useSWR<HashtagsApiResponse>(
         '/api/socials/tiktok/hashtags',
         fetcher
@@ -491,26 +499,48 @@ export default function CustomHashtagTrackerPage() {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-border/30">
-                                            {filteredTags.map((t) => (
-                                                <tr key={t.id} className="hover:bg-muted/20 transition-colors">
-                                                    <td className="py-3 px-4">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="font-mono font-bold text-foreground text-sm">
-                                                                #{t.tag}
-                                                            </span>
-                                                            <a
-                                                                href={`https://www.tiktok.com/tag/${t.tag}`}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="text-muted-foreground hover:text-primary transition-colors"
-                                                            >
-                                                                <ExternalLink className="w-3 h-3" />
-                                                            </a>
-                                                        </div>
-                                                        <div className="text-[11px] text-muted-foreground mt-0.5">
-                                                            {t.label}
-                                                        </div>
-                                                    </td>
+                                            {filteredTags.map((t) => {
+                                                const statsDate = t.latest_stats?.crawled_at
+                                                    ? t.latest_stats.crawled_at.split('T')[0]
+                                                    : todayJakarta;
+                                                const firestoreUrl = getFirestoreConsoleUrl('tiktok_custom_pulse', statsDate);
+
+                                                return (
+                                                    <tr key={t.id} className="hover:bg-muted/20 transition-colors">
+                                                        <td className="py-3 px-4">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-mono font-bold text-foreground text-sm">
+                                                                    #{t.tag}
+                                                                </span>
+                                                                <a
+                                                                    href={`https://www.tiktok.com/tag/${t.tag}`}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="text-muted-foreground hover:text-primary transition-colors"
+                                                                    title={`Open #${t.tag} on TikTok`}
+                                                                >
+                                                                    <ExternalLink className="w-3 h-3" />
+                                                                </a>
+                                                            </div>
+                                                            <div className="flex items-center justify-between gap-2 mt-0.5 min-w-0">
+                                                                <span className="text-[11px] text-muted-foreground truncate">
+                                                                    {t.label}
+                                                                </span>
+                                                                {isAdmin && (
+                                                                    <a
+                                                                        href={firestoreUrl}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-500/80 hover:text-amber-500 hover:underline transition-colors shrink-0 ml-auto"
+                                                                        title={`Open Firestore: tiktok_custom_pulse/${statsDate}`}
+                                                                    >
+                                                                        <Database className="w-2.5 h-2.5" />
+                                                                        <span>Firestore</span>
+                                                                        <ExternalLink className="w-2.5 h-2.5 opacity-60" />
+                                                                    </a>
+                                                                )}
+                                                            </div>
+                                                        </td>
 
                                                     <td className="py-3 px-3">
                                                         <Badge
@@ -636,7 +666,8 @@ export default function CustomHashtagTrackerPage() {
                                                         </div>
                                                     </td>
                                                 </tr>
-                                            ))}
+                                            );
+                                        })}
                                         </tbody>
                                     </table>
                                 </div>
