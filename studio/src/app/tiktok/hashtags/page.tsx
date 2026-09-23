@@ -34,7 +34,15 @@ import {
     Activity,
     Database,
     BarChart2,
+    MoreHorizontal,
 } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import { TikTokIcon } from '@/components/BrandIcons';
 import { fetcher } from '@/lib/api';
 import { getTodayJakarta } from '@/lib/timeUtils';
@@ -612,82 +620,101 @@ export default function CustomHashtagTrackerPage() {
                                                     </td>
 
                                                     <td className="py-3 px-4 text-right">
-                                                        <div className="flex items-center justify-end gap-1.5">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            {/* Primary Action: View Results */}
                                                             <Button
                                                                 size="sm"
-                                                                variant="ghost"
+                                                                variant="outline"
                                                                 asChild
-                                                                className="h-7 w-7 p-0"
-                                                                title="View Dedicated Intelligence Results"
+                                                                className="h-8 px-2.5 text-xs font-semibold rounded-lg border-border/60 hover:bg-muted gap-1.5"
+                                                                title={`View intelligence results for #${t.tag}`}
                                                             >
                                                                 <Link href={`/tiktok/hashtags/results/${t.tag}`}>
-                                                                    <BarChart2 className="w-3.5 h-3.5 text-primary hover:text-primary/80" />
+                                                                    <BarChart2 className="w-3.5 h-3.5 text-primary" />
+                                                                    <span>Results</span>
                                                                 </Link>
                                                             </Button>
 
+                                                            {/* Secondary Action: Scrape Live */}
                                                             <Button
                                                                 size="sm"
-                                                                variant="ghost"
-                                                                className="h-7 w-7 p-0"
-                                                                title="Scrape Live Now (Real Apify & Gemini)"
+                                                                variant="outline"
                                                                 disabled={scrapingLiveTag === t.tag}
                                                                 onClick={() => handleScrapeLive(t.tag)}
+                                                                className="h-8 px-2.5 text-xs font-semibold rounded-lg border-amber-500/30 text-amber-500 hover:bg-amber-500/10 hover:text-amber-400 gap-1.5"
+                                                                title="Scrape Live Now (Real Apify & Gemini)"
                                                             >
                                                                 <Zap
-                                                                    className={`w-3.5 h-3.5 text-amber-500 hover:text-amber-400 ${
+                                                                    className={`w-3.5 h-3.5 ${
                                                                         scrapingLiveTag === t.tag ? 'animate-spin' : ''
                                                                     }`}
                                                                 />
+                                                                <span>{scrapingLiveTag === t.tag ? 'Scraping...' : 'Scrape'}</span>
                                                             </Button>
 
-                                                            <Button
-                                                                size="sm"
-                                                                variant="ghost"
-                                                                className="h-7 w-7 p-0"
-                                                                title={t.active ? 'Pause Tracking' : 'Resume Tracking'}
-                                                                onClick={() => handleToggleActive(t)}
-                                                            >
-                                                                {t.active ? (
-                                                                    <Pause className="w-3.5 h-3.5 text-amber-500" />
-                                                                ) : (
-                                                                    <Play className="w-3.5 h-3.5 text-emerald-500" />
-                                                                )}
-                                                            </Button>
+                                                            {/* Overflow Menu: Administrative & Utility Actions */}
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="ghost"
+                                                                        className="h-8 w-8 p-0 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground"
+                                                                        title="More actions"
+                                                                    >
+                                                                        <MoreHorizontal className="w-4 h-4" />
+                                                                        <span className="sr-only">More options for #{t.tag}</span>
+                                                                    </Button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end" className="w-48 bg-card border border-border/80 shadow-lg">
+                                                                    <DropdownMenuItem
+                                                                        onClick={() => handleToggleActive(t)}
+                                                                        className="gap-2 text-xs cursor-pointer"
+                                                                    >
+                                                                        {t.active ? (
+                                                                            <>
+                                                                                <Pause className="w-3.5 h-3.5 text-amber-500" />
+                                                                                <span>Pause Tracking</span>
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <Play className="w-3.5 h-3.5 text-emerald-500" />
+                                                                                <span>Resume Tracking</span>
+                                                                            </>
+                                                                        )}
+                                                                    </DropdownMenuItem>
 
-                                                            <Button
-                                                                size="sm"
-                                                                variant="ghost"
-                                                                className="h-7 w-7 p-0"
-                                                                title="Edit Settings"
-                                                                onClick={() => handleOpenEdit(t)}
-                                                            >
-                                                                <Edit3 className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
-                                                            </Button>
+                                                                    <DropdownMenuItem
+                                                                        onClick={() => handleOpenEdit(t)}
+                                                                        className="gap-2 text-xs cursor-pointer"
+                                                                    >
+                                                                        <Edit3 className="w-3.5 h-3.5 text-muted-foreground" />
+                                                                        <span>Edit Parameters</span>
+                                                                    </DropdownMenuItem>
 
-                                                            <Button
-                                                                size="sm"
-                                                                variant="ghost"
-                                                                className="h-7 w-7 p-0"
-                                                                title="Test Scrape Now (Dry-Run)"
-                                                                disabled={testingTag === t.tag}
-                                                                onClick={() => handleTestRun(t.tag)}
-                                                            >
-                                                                <RefreshCw
-                                                                    className={`w-3.5 h-3.5 text-muted-foreground hover:text-foreground ${
-                                                                        testingTag === t.tag ? 'animate-spin' : ''
-                                                                    }`}
-                                                                />
-                                                            </Button>
+                                                                    <DropdownMenuItem
+                                                                        disabled={testingTag === t.tag}
+                                                                        onClick={() => handleTestRun(t.tag)}
+                                                                        className="gap-2 text-xs cursor-pointer"
+                                                                    >
+                                                                        <RefreshCw
+                                                                            className={`w-3.5 h-3.5 text-muted-foreground ${
+                                                                                testingTag === t.tag ? 'animate-spin' : ''
+                                                                            }`}
+                                                                        />
+                                                                        <span>Run Test (Dry-Run)</span>
+                                                                    </DropdownMenuItem>
 
-                                                            <Button
-                                                                size="sm"
-                                                                variant="ghost"
-                                                                className="h-7 w-7 p-0 text-muted-foreground hover:text-rose-500"
-                                                                title="Remove Hashtag"
-                                                                onClick={() => handleDeleteTag(t.id, t.tag)}
-                                                            >
-                                                                <Trash2 className="w-3.5 h-3.5" />
-                                                            </Button>
+                                                                    <DropdownMenuSeparator className="bg-border/60" />
+
+                                                                    <DropdownMenuItem
+                                                                        onClick={() => handleDeleteTag(t.id, t.tag)}
+                                                                        className="gap-2 text-xs cursor-pointer text-rose-500 focus:text-rose-600 focus:bg-rose-500/10 hover:bg-rose-500/10"
+                                                                    >
+                                                                        <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                                                                        <span>Remove Hashtag</span>
+                                                                    </DropdownMenuItem>
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
                                                         </div>
                                                     </td>
                                                 </tr>
