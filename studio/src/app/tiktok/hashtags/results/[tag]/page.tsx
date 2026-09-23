@@ -23,12 +23,17 @@ import {
     ChevronLeft,
     ChevronRight,
     ArrowUpDown,
+    Copy,
+    User,
+    Flame,
+    Activity,
+    RotateCcw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { getTodayJakarta, formatWIB } from '@/lib/timeUtils';
+import { getTodayJakarta } from '@/lib/timeUtils';
 import type {
     TrackedHashtag,
     TikTokHashtagDetailSnapshot,
@@ -36,6 +41,39 @@ import type {
 } from '@/types/tiktokHashtags';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+// Strict 24-Hour WIB Time Formatters
+function formatWIB24(dateStr: string | null | undefined): string {
+    if (!dateStr) return 'N/A';
+    const d = new Date(dateStr.endsWith('Z') || dateStr.includes('+') ? dateStr : dateStr + 'Z');
+    if (isNaN(d.getTime())) return dateStr;
+    const timeStr = d.toLocaleTimeString('en-GB', {
+        timeZone: 'Asia/Jakarta',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+    });
+    return `${timeStr} WIB`;
+}
+
+function formatWIBFull24(dateStr: string | null | undefined): string {
+    if (!dateStr) return 'N/A';
+    const d = new Date(dateStr.endsWith('Z') || dateStr.includes('+') ? dateStr : dateStr + 'Z');
+    if (isNaN(d.getTime())) return dateStr;
+    const dateFormatted = d.toLocaleDateString('en-GB', {
+        timeZone: 'Asia/Jakarta',
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+    });
+    const timeFormatted = d.toLocaleTimeString('en-GB', {
+        timeZone: 'Asia/Jakarta',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+    });
+    return `${dateFormatted}, ${timeFormatted} WIB`;
+}
 
 export default function TikTokHashtagResultDetailPage() {
     const params = useParams<{ tag: string }>();
@@ -72,12 +110,13 @@ export default function TikTokHashtagResultDetailPage() {
     const [isScraping, setIsScraping] = useState(false);
     const [scrapeStep, setScrapeStep] = useState<string | null>(null);
 
-    // Video sorting and pagination state
-    const [sortBy, setSortBy] = useState<'views' | 'likes' | 'comments' | 'shares' | 'date'>('views');
+    // Video sorting, pagination, and active inspection state
+    const [sortBy, setSortBy] = useState<'date' | 'views' | 'likes' | 'comments' | 'shares'>('date');
     const [sortDirection, setSortDirection] = useState<'desc' | 'asc'>('desc');
     const [filterQuery, setFilterQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState<number>(6);
+    const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
     const config = data?.config;
     const snapshot = data?.snapshot;
@@ -85,6 +124,7 @@ export default function TikTokHashtagResultDetailPage() {
 
     const handleDateChange = (newDate: string) => {
         setSelectedDate(newDate);
+        setSelectedPostId(null);
         router.push(`/tiktok/hashtags/results/${cleanTag}?date=${newDate}`);
     };
 
@@ -167,7 +207,25 @@ export default function TikTokHashtagResultDetailPage() {
     const startIndex = (safeCurrentPage - 1) * pageSize;
     const paginatedPosts = filteredPosts.slice(startIndex, startIndex + pageSize);
 
-    const handleSortChange = (newSort: 'views' | 'likes' | 'comments' | 'shares' | 'date') => {
+    // Active Inspector Post Resolution
+    const activePost = React.useMemo(() => {
+        if (!filteredPosts || filteredPosts.length === 0) return null;
+        if (selectedPostId) {
+            const found = filteredPosts.find((p) => (p.id && p.id === selectedPostId) || p.url === selectedPostId);
+            if (found) return found;
+        }
+        return filteredPosts[0] || null;
+    }, [filteredPosts, selectedPostId]);
+
+    // Benchmark helpers
+    const avgViews = snapshot && snapshot.total_posts > 0 ? Math.round(snapshot.total_views / snapshot.total_posts) : 0;
+    const topPostId = React.useMemo(() => {
+        if (!snapshot?.posts || snapshot.posts.length === 0) return null;
+        const sortedByViews = [...snapshot.posts].sort((a, b) => b.views - a.views);
+        return sortedByViews[0]?.id || sortedByViews[0]?.url;
+    }, [snapshot?.posts]);
+
+    const handleSortChange = (newSort: 'date' | 'views' | 'likes' | 'comments' | 'shares') => {
         if (sortBy === newSort) {
             setSortDirection((prev) => (prev === 'desc' ? 'asc' : 'desc'));
         } else {
@@ -187,11 +245,24 @@ export default function TikTokHashtagResultDetailPage() {
         setCurrentPage(1);
     };
 
+    const handleCopyUrl = (url: string) => {
+        if (typeof window !== 'undefined' && navigator.clipboard) {
+            navigator.clipboard.writeText(url);
+            toast.success('Video link copied to clipboard');
+        }
+    };
+
+    const handleFilterByCreator = (handle: string) => {
+        setFilterQuery(handle);
+        setCurrentPage(1);
+        toast.info(`Filtering timeline by creator @${handle}`);
+    };
+
     const firestoreConfigUrl = `https://console.firebase.google.com/project/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'cineradar-481014'}/firestore/databases/-default-/data/~2Ftiktok_tracked_hashtags~2F${cleanTag}`;
     const firestoreSnapshotUrl = `https://console.firebase.google.com/project/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'cineradar-481014'}/firestore/databases/-default-/data/~2Ftiktok_custom_pulse~2F${selectedDate}~2Fhashtags~2F${cleanTag}`;
 
     return (
-        <div className="p-6 space-y-6 w-full">
+        <div className="p-4 sm:p-6 space-y-6 w-full max-w-[1750px] mx-auto">
             {/* Top Navigation Bar */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/60 pb-4">
                 <div className="flex items-center gap-3">
@@ -237,7 +308,7 @@ export default function TikTokHashtagResultDetailPage() {
                 </div>
 
                 <div className="flex items-center gap-2.5 flex-wrap">
-                    {/* Date Selector */}
+                    {/* Date Selector in 24-Hour WIB Context */}
                     <div className="flex items-center gap-2 bg-muted/40 px-3 py-1.5 rounded-lg border border-border/60 text-xs">
                         <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
                         <input
@@ -247,7 +318,7 @@ export default function TikTokHashtagResultDetailPage() {
                             max={todayJakarta}
                             className="bg-transparent text-xs font-mono font-bold text-foreground focus:outline-none cursor-pointer"
                         />
-                        <span className="text-[10px] text-muted-foreground">WIB</span>
+                        <span className="text-[10px] text-muted-foreground font-mono">WIB</span>
                     </div>
 
                     {/* External TikTok Link */}
@@ -355,441 +426,474 @@ export default function TikTokHashtagResultDetailPage() {
                 </Card>
             )}
 
-            {/* Main Telemetry & Intelligence View */}
+            {/* Main Telemetry: Three-Column Timeline Architecture */}
             {snapshot && (
-                <>
-                    {/* Execution Stamp Banner */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-muted-foreground bg-muted/30 border border-border/50 px-4 py-2 rounded-lg gap-2">
-                        <div className="flex items-center gap-2">
-                            <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
-                            <span>
-                                Ingestion Mode: <strong className="text-foreground capitalize">{snapshot.source.replace('_', ' ')}</strong>
-                            </span>
-                            <span>·</span>
-                            <span>
-                                Captured: <strong className="text-foreground">{formatWIB(snapshot.crawled_at)}</strong>
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-3 font-mono text-[11px]">
-                            <span>Analyzed: {snapshot.total_posts} video posts</span>
-                            <a
-                                href={firestoreSnapshotUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-amber-500/80 hover:text-amber-500 hover:underline flex items-center gap-1"
-                            >
-                                <span>Doc Payload</span>
-                                <ExternalLink className="w-2.5 h-2.5" />
-                            </a>
-                        </div>
-                    </div>
-
-                    {/* KPI Metric Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    {/* LEFT COLUMN: Macro Stats & AI Sentiment (Sticky) */}
+                    <div className="lg:col-span-3 xl:col-span-3 space-y-4 lg:sticky lg:top-6">
+                        {/* Macro Velocity Card */}
                         <Card className="border-border/60 bg-card rounded-xl shadow-none">
-                            <CardContent className="p-4 space-y-1">
-                                <div className="text-[11px] font-medium text-muted-foreground flex items-center justify-between">
-                                    <span>Total Views</span>
-                                    <Eye className="w-3.5 h-3.5 text-primary" />
-                                </div>
-                                <div className="text-2xl font-bold font-mono text-foreground">
-                                    {(snapshot.total_views || 0).toLocaleString()}
-                                </div>
-                                <div className="text-[10px] text-muted-foreground">
-                                    Avg ~{snapshot.total_posts > 0 ? Math.round(snapshot.total_views / snapshot.total_posts).toLocaleString() : 0} / video
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="border-border/60 bg-card rounded-xl shadow-none">
-                            <CardContent className="p-4 space-y-1">
-                                <div className="text-[11px] font-medium text-muted-foreground flex items-center justify-between">
-                                    <span>Total Likes</span>
-                                    <Heart className="w-3.5 h-3.5 text-rose-500" />
-                                </div>
-                                <div className="text-2xl font-bold font-mono text-foreground">
-                                    {(snapshot.total_likes || 0).toLocaleString()}
-                                </div>
-                                <div className="text-[10px] text-muted-foreground">
-                                    {snapshot.total_views > 0
-                                        ? ((snapshot.total_likes / snapshot.total_views) * 100).toFixed(2)
-                                        : 0}% like ratio
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="border-border/60 bg-card rounded-xl shadow-none">
-                            <CardContent className="p-4 space-y-1">
-                                <div className="text-[11px] font-medium text-muted-foreground flex items-center justify-between">
-                                    <span>Total Comments</span>
-                                    <MessageCircle className="w-3.5 h-3.5 text-blue-500" />
-                                </div>
-                                <div className="text-2xl font-bold font-mono text-foreground">
-                                    {(snapshot.total_comments || 0).toLocaleString()}
-                                </div>
-                                <div className="text-[10px] text-muted-foreground">
-                                    Discussion volume
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="border-border/60 bg-card rounded-xl shadow-none">
-                            <CardContent className="p-4 space-y-1">
-                                <div className="text-[11px] font-medium text-muted-foreground flex items-center justify-between">
-                                    <span>Total Shares</span>
-                                    <Share2 className="w-3.5 h-3.5 text-emerald-500" />
-                                </div>
-                                <div className="text-2xl font-bold font-mono text-foreground">
-                                    {(snapshot.total_shares || 0).toLocaleString()}
-                                </div>
-                                <div className="text-[10px] text-muted-foreground">
-                                    Viral transmission rate
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="border-border/60 bg-card rounded-xl shadow-none col-span-2 md:col-span-1">
-                            <CardContent className="p-4 space-y-1">
-                                <div className="text-[11px] font-medium text-muted-foreground flex items-center justify-between">
-                                    <span>Hype Score</span>
-                                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                                </div>
-                                <div className="text-2xl font-bold font-mono text-foreground flex items-baseline gap-1.5">
-                                    <span>{snapshot.sentiment?.hype_score ?? 80}</span>
-                                    <span className="text-xs text-muted-foreground font-normal">/ 100</span>
-                                </div>
-                                <div className="text-[10px] font-semibold text-emerald-500">
-                                    {snapshot.sentiment?.positive ?? 75}% positive buzz
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    {/* AI Sentiment Radar & Analysis */}
-                    {snapshot.sentiment && (
-                        <Card className="border-border/60 bg-card rounded-xl shadow-none">
-                            <CardHeader className="pb-3 border-b border-border/40">
+                            <CardHeader className="p-4 pb-2 border-b border-border/40">
                                 <div className="flex items-center justify-between">
-                                    <div className="space-y-0.5">
-                                        <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
-                                            <Sparkles className="w-4 h-4 text-primary" />
-                                            Gemini 3.8 Flash Audience Sentiment Analysis
-                                        </CardTitle>
-                                        <CardDescription className="text-xs text-muted-foreground">
-                                            Extracted directly from top viral comment threads and discussion velocity
-                                        </CardDescription>
-                                    </div>
-                                    <Badge variant="outline" className="text-[10px] font-mono border-primary/30 text-primary">
-                                        AI Pulse
+                                    <CardTitle className="text-xs font-bold text-foreground flex items-center gap-2">
+                                        <Activity className="w-3.5 h-3.5 text-primary" />
+                                        <span>Campaign Velocity</span>
+                                    </CardTitle>
+                                    <Badge variant="outline" className="text-[10px] font-mono">
+                                        {snapshot.total_posts} posts
                                     </Badge>
                                 </div>
                             </CardHeader>
-                            <CardContent className="pt-4 space-y-4">
-                                {/* Segmented Progress Bar */}
-                                <div className="space-y-1.5">
-                                    <div className="flex items-center justify-between text-xs font-mono font-semibold">
-                                        <span className="text-emerald-500">
-                                            Positive: {snapshot.sentiment.positive}%
-                                        </span>
-                                        <span className="text-amber-500">
-                                            Mixed: {snapshot.sentiment.mixed}%
-                                        </span>
-                                        <span className="text-rose-500">
-                                            Negative: {snapshot.sentiment.negative}%
-                                        </span>
+                            <CardContent className="p-4 space-y-3">
+                                {/* Hype Score Spotlight */}
+                                <div className="p-3 bg-muted/40 rounded-lg border border-border/40 flex items-center justify-between">
+                                    <div>
+                                        <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+                                            Hype Score
+                                        </div>
+                                        <div className="text-2xl font-bold font-mono text-foreground flex items-baseline gap-1 mt-0.5">
+                                            <span>{snapshot.sentiment?.hype_score ?? 80}</span>
+                                            <span className="text-xs text-muted-foreground font-normal">/ 100</span>
+                                        </div>
                                     </div>
-                                    <div className="w-full h-2.5 rounded-full bg-muted/60 overflow-hidden flex">
-                                        <div
-                                            style={{ width: `${snapshot.sentiment.positive}%` }}
-                                            className="bg-emerald-500 h-full"
-                                            title={`Positive: ${snapshot.sentiment.positive}%`}
-                                        />
-                                        <div
-                                            style={{ width: `${snapshot.sentiment.mixed}%` }}
-                                            className="bg-amber-500 h-full"
-                                            title={`Mixed: ${snapshot.sentiment.mixed}%`}
-                                        />
-                                        <div
-                                            style={{ width: `${snapshot.sentiment.negative}%` }}
-                                            className="bg-rose-500 h-full"
-                                            title={`Negative: ${snapshot.sentiment.negative}%`}
-                                        />
+                                    <div className="text-right">
+                                        <Badge variant="outline" className="text-[10px] font-mono border-emerald-500/40 text-emerald-500">
+                                            {snapshot.sentiment?.positive ?? 75}% Positive
+                                        </Badge>
+                                        <div className="text-[9px] text-muted-foreground mt-1">
+                                            Community buzz
+                                        </div>
                                     </div>
                                 </div>
 
-                                {/* Dual-Column Insights Deck */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-                                    <div className="p-3.5 rounded-lg border border-emerald-500/20 bg-emerald-500/5 space-y-2">
-                                        <div className="flex items-center gap-2 text-xs font-bold text-emerald-500">
-                                            <CheckCircle2 className="w-3.5 h-3.5" />
-                                            <span>Audience Praise Highlights</span>
+                                {/* 2x2 Metric Scoreboard */}
+                                <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+                                    <div className="p-2.5 rounded-lg bg-muted/30 border border-border/40 space-y-0.5">
+                                        <div className="text-[10px] text-muted-foreground font-sans flex items-center justify-between">
+                                            <span>Views</span>
+                                            <Eye className="w-3 h-3 text-primary" />
                                         </div>
-                                        <ul className="space-y-1 text-xs text-foreground/90">
+                                        <div className="text-sm font-bold text-foreground">
+                                            {(snapshot.total_views || 0).toLocaleString()}
+                                        </div>
+                                        <div className="text-[9px] text-muted-foreground font-sans">
+                                            ~{avgViews.toLocaleString()}/vid
+                                        </div>
+                                    </div>
+
+                                    <div className="p-2.5 rounded-lg bg-muted/30 border border-border/40 space-y-0.5">
+                                        <div className="text-[10px] text-muted-foreground font-sans flex items-center justify-between">
+                                            <span>Likes</span>
+                                            <Heart className="w-3 h-3 text-rose-500" />
+                                        </div>
+                                        <div className="text-sm font-bold text-rose-500">
+                                            {(snapshot.total_likes || 0).toLocaleString()}
+                                        </div>
+                                        <div className="text-[9px] text-muted-foreground font-sans">
+                                            {snapshot.total_views > 0
+                                                ? ((snapshot.total_likes / snapshot.total_views) * 100).toFixed(1)
+                                                : 0}% ratio
+                                        </div>
+                                    </div>
+
+                                    <div className="p-2.5 rounded-lg bg-muted/30 border border-border/40 space-y-0.5">
+                                        <div className="text-[10px] text-muted-foreground font-sans flex items-center justify-between">
+                                            <span>Comments</span>
+                                            <MessageCircle className="w-3 h-3 text-blue-500" />
+                                        </div>
+                                        <div className="text-sm font-bold text-blue-500">
+                                            {(snapshot.total_comments || 0).toLocaleString()}
+                                        </div>
+                                        <div className="text-[9px] text-muted-foreground font-sans">
+                                            Discourse
+                                        </div>
+                                    </div>
+
+                                    <div className="p-2.5 rounded-lg bg-muted/30 border border-border/40 space-y-0.5">
+                                        <div className="text-[10px] text-muted-foreground font-sans flex items-center justify-between">
+                                            <span>Shares</span>
+                                            <Share2 className="w-3 h-3 text-emerald-500" />
+                                        </div>
+                                        <div className="text-sm font-bold text-emerald-500">
+                                            {(snapshot.total_shares || 0).toLocaleString()}
+                                        </div>
+                                        <div className="text-[9px] text-muted-foreground font-sans">
+                                            Transfers
+                                        </div>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* AI Sentiment Radar Card */}
+                        {snapshot.sentiment && (
+                            <Card className="border-border/60 bg-card rounded-xl shadow-none">
+                                <CardHeader className="p-4 pb-2 border-b border-border/40">
+                                    <div className="flex items-center justify-between">
+                                        <CardTitle className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                                            <Sparkles className="w-3.5 h-3.5 text-primary" />
+                                            <span>AI Sentiment Pulse</span>
+                                        </CardTitle>
+                                        <span className="text-[10px] font-mono text-muted-foreground">Gemini 3.8</span>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="p-4 space-y-3">
+                                    {/* Segmented Sentiment Bar */}
+                                    <div className="space-y-1">
+                                        <div className="flex items-center justify-between text-[11px] font-mono font-semibold">
+                                            <span className="text-emerald-500">
+                                                {snapshot.sentiment.positive}% Pos
+                                            </span>
+                                            <span className="text-amber-500">
+                                                {snapshot.sentiment.mixed}% Mix
+                                            </span>
+                                            <span className="text-rose-500">
+                                                {snapshot.sentiment.negative}% Neg
+                                            </span>
+                                        </div>
+                                        <div className="w-full h-2 rounded-full bg-muted/60 overflow-hidden flex">
+                                            <div
+                                                style={{ width: `${snapshot.sentiment.positive}%` }}
+                                                className="bg-emerald-500 h-full"
+                                            />
+                                            <div
+                                                style={{ width: `${snapshot.sentiment.mixed}%` }}
+                                                className="bg-amber-500 h-full"
+                                            />
+                                            <div
+                                                style={{ width: `${snapshot.sentiment.negative}%` }}
+                                                className="bg-rose-500 h-full"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Praise Highlights */}
+                                    <div className="p-2.5 rounded-lg border border-emerald-500/20 bg-emerald-500/5 space-y-1.5">
+                                        <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-500">
+                                            <CheckCircle2 className="w-3 h-3" />
+                                            <span>Praise Points</span>
+                                        </div>
+                                        <ul className="space-y-1 text-[11px] text-foreground/90">
                                             {(snapshot.sentiment.praise_points || [
-                                                'Viral traction and solid brand association in TikTok comments',
-                                            ]).map((point, idx) => (
-                                                <li key={idx} className="flex items-start gap-1.5">
+                                                'Viral traction in TikTok comments',
+                                            ]).slice(0, 3).map((point, idx) => (
+                                                <li key={idx} className="flex items-start gap-1">
                                                     <span className="text-emerald-500 font-bold">·</span>
-                                                    <span>{point}</span>
+                                                    <span className="leading-tight">{point}</span>
                                                 </li>
                                             ))}
                                         </ul>
                                     </div>
 
-                                    <div className="p-3.5 rounded-lg border border-amber-500/20 bg-amber-500/5 space-y-2">
-                                        <div className="flex items-center gap-2 text-xs font-bold text-amber-500">
-                                            <AlertCircle className="w-3.5 h-3.5" />
-                                            <span>Criticism &amp; Concern Themes</span>
+                                    {/* Criticism & Concern Themes */}
+                                    <div className="p-2.5 rounded-lg border border-amber-500/20 bg-amber-500/5 space-y-1.5">
+                                        <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-500">
+                                            <AlertCircle className="w-3 h-3" />
+                                            <span>Criticism Themes</span>
                                         </div>
-                                        <ul className="space-y-1 text-xs text-foreground/90">
+                                        <ul className="space-y-1 text-[11px] text-foreground/90">
                                             {(snapshot.sentiment.criticism_themes && snapshot.sentiment.criticism_themes.length > 0
                                                 ? snapshot.sentiment.criticism_themes
-                                                : ['Tidak ditemukan anomali atau sentimen penolakan mayoritas.']
-                                            ).map((point, idx) => (
-                                                <li key={idx} className="flex items-start gap-1.5">
+                                                : ['Tidak ditemukan anomali penolakan mayoritas.']
+                                            ).slice(0, 3).map((point, idx) => (
+                                                <li key={idx} className="flex items-start gap-1">
                                                     <span className="text-amber-500 font-bold">·</span>
-                                                    <span>{point}</span>
+                                                    <span className="leading-tight">{point}</span>
                                                 </li>
                                             ))}
                                         </ul>
                                     </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
+                                </CardContent>
+                            </Card>
+                        )}
 
-                    {/* Historical Velocity Mini-Table */}
-                    {history.length > 1 && (
-                        <Card className="border-border/60 bg-card rounded-xl shadow-none">
-                            <CardHeader className="pb-3 border-b border-border/40">
-                                <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
-                                    <TrendingUp className="w-4 h-4 text-emerald-500" />
-                                    7-Day Historical Trajectory
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-3">
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-xs text-left">
-                                        <thead>
-                                            <tr className="border-b border-border/40 text-muted-foreground text-[11px]">
-                                                <th className="py-2 px-3 font-semibold">Date (WIB)</th>
-                                                <th className="py-2 px-3 font-semibold">Total Views</th>
-                                                <th className="py-2 px-3 font-semibold">Total Likes</th>
-                                                <th className="py-2 px-3 font-semibold">Comments</th>
-                                                <th className="py-2 px-3 font-semibold">Hype Score</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-border/20 font-mono">
-                                            {history.map((h) => (
-                                                <tr
-                                                    key={h.date}
-                                                    onClick={() => handleDateChange(h.date)}
-                                                    className={`hover:bg-muted/20 cursor-pointer transition-colors ${
-                                                        h.date === selectedDate ? 'bg-muted/40 font-bold' : ''
-                                                    }`}
-                                                >
-                                                    <td className="py-2 px-3 text-foreground">{h.date}</td>
-                                                    <td className="py-2 px-3">{h.views.toLocaleString()}</td>
-                                                    <td className="py-2 px-3 text-rose-500">{h.likes.toLocaleString()}</td>
-                                                    <td className="py-2 px-3 text-blue-500">{h.comments.toLocaleString()}</td>
-                                                    <td className="py-2 px-3 text-emerald-500">{h.hype_score} / 100</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {/* Viral Video Leaderboard */}
-                    <div className="space-y-3">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                            <div>
-                                <h2 className="text-base font-bold text-foreground flex items-center gap-2">
-                                    <span>Top Viral Videos</span>
-                                    <Badge variant="outline" className="text-[10px] font-mono">
-                                        {filteredPosts.length} posts
-                                    </Badge>
-                                </h2>
-                                <p className="text-xs text-muted-foreground">
-                                    Ranked by TikTok play count and user engagement
-                                </p>
-                            </div>
-
-                            <div className="flex items-center gap-2 flex-wrap">
-                                {/* Search Filter */}
-                                <div className="flex items-center gap-1.5 bg-muted/40 px-2.5 py-1 rounded-lg border border-border/60 text-xs">
-                                    <Filter className="w-3 h-3 text-muted-foreground" />
-                                    <input
-                                        type="text"
-                                        placeholder="Filter creator or caption..."
-                                        value={filterQuery}
-                                        onChange={(e) => handleFilterChange(e.target.value)}
-                                        className="bg-transparent text-xs text-foreground placeholder:text-muted-foreground focus:outline-none w-40 sm:w-48"
-                                    />
-                                </div>
-
-                                {/* Multi-Dimension Sorting Buttons */}
-                                <div className="flex items-center bg-muted/40 rounded-lg border border-border/60 p-0.5 text-xs font-semibold">
-                                    {(['views', 'likes', 'comments', 'shares', 'date'] as const).map((key) => {
-                                        const isActive = sortBy === key;
-                                        const labelMap = {
-                                            views: 'Views',
-                                            likes: 'Likes',
-                                            comments: 'Comments',
-                                            shares: 'Shares',
-                                            date: 'Date',
-                                        };
-                                        return (
-                                            <button
-                                                key={key}
-                                                type="button"
-                                                onClick={() => handleSortChange(key)}
-                                                className={`px-2 py-1 rounded-md transition-colors flex items-center gap-1 ${
-                                                    isActive
-                                                        ? 'bg-background text-foreground shadow-sm'
-                                                        : 'text-muted-foreground hover:text-foreground'
+                        {/* 7-Day Historical Trajectory Card */}
+                        {history.length > 1 && (
+                            <Card className="border-border/60 bg-card rounded-xl shadow-none">
+                                <CardHeader className="p-4 pb-2 border-b border-border/40">
+                                    <CardTitle className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                                        <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+                                        <span>7-Day Trajectory</span>
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="p-2 pt-1">
+                                    <div className="divide-y divide-border/20 text-[11px] font-mono">
+                                        {history.slice(0, 5).map((h) => (
+                                            <div
+                                                key={h.date}
+                                                onClick={() => handleDateChange(h.date)}
+                                                className={`p-2 flex items-center justify-between rounded hover:bg-muted/30 cursor-pointer transition-colors ${
+                                                    h.date === selectedDate ? 'bg-muted/50 font-bold text-foreground' : 'text-muted-foreground'
                                                 }`}
-                                                title={`Sort by ${labelMap[key]} (${isActive && sortDirection === 'asc' ? 'ascending' : 'descending'})`}
                                             >
-                                                <span>{labelMap[key]}</span>
-                                                {isActive && (
-                                                    <span className="font-mono text-[10px] text-primary">
-                                                        {sortDirection === 'desc' ? '↓' : '↑'}
-                                                    </span>
-                                                )}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
+                                                <span>{h.date}</span>
+                                                <span>{h.views.toLocaleString()}</span>
+                                                <span className="text-emerald-500">{h.hype_score} pts</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
 
-                                {/* Page Size Selector */}
-                                <div className="flex items-center gap-1 bg-muted/40 rounded-lg border border-border/60 p-0.5 text-[11px] font-semibold">
-                                    <span className="text-muted-foreground px-1.5 text-[10px] font-mono">Per page:</span>
-                                    {[6, 12, 24].map((size) => (
-                                        <button
-                                            key={size}
-                                            type="button"
-                                            onClick={() => handlePageSizeChange(size)}
-                                            className={`px-2 py-0.5 rounded-md transition-colors font-mono ${
-                                                pageSize === size
-                                                    ? 'bg-background text-foreground shadow-sm font-bold'
-                                                    : 'text-muted-foreground hover:text-foreground'
-                                            }`}
-                                        >
-                                            {size}
-                                        </button>
-                                    ))}
-                                </div>
+                        {/* Telemetry Footer */}
+                        <div className="p-3 bg-muted/20 border border-border/40 rounded-xl text-[10px] text-muted-foreground space-y-1 font-mono">
+                            <div className="flex items-center justify-between">
+                                <span>Source:</span>
+                                <strong className="text-foreground capitalize">{snapshot.source.replace('_', ' ')}</strong>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span>Captured:</span>
+                                <strong className="text-foreground">{formatWIB24(snapshot.crawled_at)}</strong>
+                            </div>
+                            <div className="pt-1 border-t border-border/30 flex items-center justify-between">
+                                <span>Raw Payload:</span>
+                                <a
+                                    href={firestoreSnapshotUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-amber-500/90 hover:underline flex items-center gap-0.5"
+                                >
+                                    <span>Doc Link</span>
+                                    <ExternalLink className="w-2.5 h-2.5" />
+                                </a>
                             </div>
                         </div>
+                    </div>
 
-                        {/* Video Posts Grid */}
+                    {/* MIDDLE COLUMN: Posts Structured Like a Timeline */}
+                    <div className="lg:col-span-5 xl:col-span-5 space-y-4 min-w-0">
+                        {/* Timeline Header & Control Bar */}
+                        <Card className="border-border/60 bg-card rounded-xl shadow-none">
+                            <CardContent className="p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
+                                            <span>Campaign Timeline</span>
+                                            <Badge variant="outline" className="text-[10px] font-mono">
+                                                {filteredPosts.length} posts
+                                            </Badge>
+                                        </h2>
+                                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                                            Chronological post sequence and viral engagement
+                                        </p>
+                                    </div>
+
+                                    {/* Page Size Selector */}
+                                    <div className="flex items-center gap-1 bg-muted/40 rounded-lg border border-border/60 p-0.5 text-[10px] font-semibold">
+                                        <span className="text-muted-foreground px-1 font-mono">Per page:</span>
+                                        {[6, 12, 24].map((size) => (
+                                            <button
+                                                key={size}
+                                                type="button"
+                                                onClick={() => handlePageSizeChange(size)}
+                                                className={`px-1.5 py-0.5 rounded transition-colors font-mono ${
+                                                    pageSize === size
+                                                        ? 'bg-background text-foreground shadow-sm font-bold'
+                                                        : 'text-muted-foreground hover:text-foreground'
+                                                }`}
+                                            >
+                                                {size}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Search Filter Bar */}
+                                <div className="flex items-center gap-2 bg-muted/40 px-2.5 py-1.5 rounded-lg border border-border/60 text-xs">
+                                    <Filter className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                                    <input
+                                        type="text"
+                                        placeholder="Filter by creator (@handle) or caption text..."
+                                        value={filterQuery}
+                                        onChange={(e) => handleFilterChange(e.target.value)}
+                                        className="bg-transparent text-xs text-foreground placeholder:text-muted-foreground focus:outline-none w-full"
+                                    />
+                                    {filterQuery && (
+                                        <button
+                                            type="button"
+                                            onClick={() => handleFilterChange('')}
+                                            className="text-muted-foreground hover:text-foreground text-[10px] font-mono px-1"
+                                        >
+                                            Clear
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Sort Parameter Buttons */}
+                                <div className="flex items-center justify-between gap-1 flex-wrap pt-0.5">
+                                    <span className="text-[10px] font-mono text-muted-foreground">Sort order:</span>
+                                    <div className="flex items-center bg-muted/40 rounded-lg border border-border/60 p-0.5 text-[11px] font-semibold">
+                                        {(['date', 'views', 'likes', 'comments', 'shares'] as const).map((key) => {
+                                            const isActive = sortBy === key;
+                                            const labelMap = {
+                                                date: 'Timeline (Date)',
+                                                views: 'Views',
+                                                likes: 'Likes',
+                                                comments: 'Comments',
+                                                shares: 'Shares',
+                                            };
+                                            return (
+                                                <button
+                                                    key={key}
+                                                    type="button"
+                                                    onClick={() => handleSortChange(key)}
+                                                    className={`px-2 py-0.5 rounded transition-colors flex items-center gap-1 ${
+                                                        isActive
+                                                            ? 'bg-background text-foreground shadow-sm font-bold'
+                                                            : 'text-muted-foreground hover:text-foreground'
+                                                    }`}
+                                                    title={`Sort by ${labelMap[key]} (${isActive && sortDirection === 'asc' ? 'ascending' : 'descending'})`}
+                                                >
+                                                    <span>{labelMap[key]}</span>
+                                                    {isActive && (
+                                                        <span className="font-mono text-[9px] text-primary">
+                                                            {sortDirection === 'desc' ? '↓' : '↑'}
+                                                        </span>
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Vertical Timeline Stream */}
                         {filteredPosts.length === 0 ? (
                             <Card className="border-border/60 bg-card rounded-xl p-8 text-center text-xs text-muted-foreground shadow-none">
                                 No video posts found matching the active filter.
                             </Card>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                                {paginatedPosts.map((post, idx) => (
-                                    <Card
-                                        key={post.id || idx}
-                                        className="border-border/60 bg-card rounded-xl shadow-none hover:border-border transition-all flex flex-col justify-between"
-                                    >
-                                        <CardHeader className="p-4 pb-2 space-y-1.5">
-                                            <div className="flex items-center justify-between text-xs">
-                                                <div className="flex items-center gap-1.5 min-w-0">
-                                                    <span className="font-bold text-foreground truncate">
-                                                        {post.author_handle}
-                                                    </span>
-                                                    {post.author_name && (
-                                                        <span className="text-[11px] text-muted-foreground truncate hidden sm:inline">
-                                                            ({post.author_name})
+                            <div className="relative pl-6 sm:pl-7 border-l-2 border-border/70 space-y-4 my-2">
+                                {paginatedPosts.map((post, idx) => {
+                                    const postUniqueKey = post.id || post.url || String(idx);
+                                    const isSelected = activePost && (activePost.id === post.id || activePost.url === post.url);
+                                    const isTopPost = (post.id && post.id === topPostId) || post.url === topPostId;
+
+                                    return (
+                                        <div key={postUniqueKey} className="relative group">
+                                            {/* Timeline Node on the Left Axis */}
+                                            <div
+                                                className={`absolute -left-[31px] sm:-left-[35px] top-4 w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] transition-all bg-card ${
+                                                    isSelected
+                                                        ? 'border-primary bg-primary text-primary-foreground font-bold ring-2 ring-primary/30'
+                                                        : isTopPost
+                                                        ? 'border-amber-500 bg-amber-500/10 text-amber-500 font-bold'
+                                                        : 'border-border/80 text-muted-foreground group-hover:border-primary/60'
+                                                }`}
+                                            >
+                                                {isTopPost ? (
+                                                    <Flame className="w-3 h-3 text-amber-500" />
+                                                ) : (
+                                                    <Clock className="w-3 h-3" />
+                                                )}
+                                            </div>
+
+                                            {/* Timeline Post Card */}
+                                            <Card
+                                                onClick={() => setSelectedPostId(post.id || post.url)}
+                                                className={`border rounded-xl transition-all cursor-pointer shadow-none flex flex-col justify-between ${
+                                                    isSelected
+                                                        ? 'border-primary bg-muted/20 ring-1 ring-primary'
+                                                        : 'border-border/60 bg-card hover:border-border hover:bg-muted/10'
+                                                }`}
+                                            >
+                                                <CardHeader className="p-3.5 pb-2 space-y-1.5">
+                                                    {/* Top Row: Timestamp badge and Creator Info */}
+                                                    <div className="flex items-center justify-between text-xs gap-2">
+                                                        <div className="flex items-center gap-1.5 min-w-0">
+                                                            <span className="font-bold text-foreground truncate">
+                                                                @{post.author_handle}
+                                                            </span>
+                                                            {post.author_name && (
+                                                                <span className="text-[11px] text-muted-foreground truncate hidden sm:inline">
+                                                                    ({post.author_name})
+                                                                </span>
+                                                            )}
+                                                        </div>
+
+                                                        <div className="flex items-center gap-1.5 shrink-0">
+                                                            {isTopPost && (
+                                                                <Badge variant="outline" className="text-[9px] font-mono border-amber-500/40 text-amber-500 bg-amber-500/5">
+                                                                    #1 Views
+                                                                </Badge>
+                                                            )}
+                                                            <span className="text-[10px] font-mono font-bold text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded border border-border/40 flex items-center gap-1">
+                                                                <Clock className="w-2.5 h-2.5" />
+                                                                {formatWIB24(post.published_at)}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Caption snippet */}
+                                                    <p className="text-xs text-foreground/90 line-clamp-2 leading-relaxed font-sans">
+                                                        {post.caption}
+                                                    </p>
+                                                </CardHeader>
+
+                                                <CardContent className="p-3.5 pt-1 space-y-2">
+                                                    {/* Metrics Pill Grid */}
+                                                    <div className="grid grid-cols-4 gap-1 py-1.5 px-2 bg-muted/40 rounded-lg border border-border/40 text-center font-mono text-[10px]">
+                                                        <div>
+                                                            <div className="text-muted-foreground flex items-center justify-center gap-0.5">
+                                                                <Eye className="w-2.5 h-2.5 text-primary" />
+                                                                <span>Views</span>
+                                                            </div>
+                                                            <div className="font-bold text-foreground mt-0.5">
+                                                                {post.views >= 1000
+                                                                    ? `${(post.views / 1000).toFixed(1)}k`
+                                                                    : post.views}
+                                                            </div>
+                                                        </div>
+
+                                                        <div>
+                                                            <div className="text-muted-foreground flex items-center justify-center gap-0.5">
+                                                                <Heart className="w-2.5 h-2.5 text-rose-500" />
+                                                                <span>Likes</span>
+                                                            </div>
+                                                            <div className="font-bold text-rose-500 mt-0.5">
+                                                                {post.likes >= 1000
+                                                                    ? `${(post.likes / 1000).toFixed(1)}k`
+                                                                    : post.likes}
+                                                            </div>
+                                                        </div>
+
+                                                        <div>
+                                                            <div className="text-muted-foreground flex items-center justify-center gap-0.5">
+                                                                <MessageCircle className="w-2.5 h-2.5 text-blue-500" />
+                                                                <span>Comments</span>
+                                                            </div>
+                                                            <div className="font-bold text-blue-500 mt-0.5">
+                                                                {post.comments}
+                                                            </div>
+                                                        </div>
+
+                                                        <div>
+                                                            <div className="text-muted-foreground flex items-center justify-center gap-0.5">
+                                                                <Share2 className="w-2.5 h-2.5 text-emerald-500" />
+                                                                <span>Shares</span>
+                                                            </div>
+                                                            <div className="font-bold text-emerald-500 mt-0.5">
+                                                                {post.shares}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Bottom Indicator */}
+                                                    <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-0.5">
+                                                        <span className="font-mono text-[9px]">
+                                                            {isSelected ? 'Active in Inspector' : 'Click to inspect video'}
                                                         </span>
-                                                    )}
-                                                </div>
-                                                <a
-                                                    href={post.url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-muted-foreground hover:text-primary transition-colors shrink-0"
-                                                    title="Open video on TikTok"
-                                                >
-                                                    <ExternalLink className="w-3.5 h-3.5" />
-                                                </a>
-                                            </div>
-                                            <p className="text-xs text-foreground/90 line-clamp-3 leading-relaxed">
-                                                {post.caption}
-                                            </p>
-                                        </CardHeader>
-
-                                        <CardContent className="p-4 pt-2 space-y-3">
-                                            {/* Metrics Row */}
-                                            <div className="grid grid-cols-4 gap-1 py-2 px-2.5 bg-muted/40 rounded-lg border border-border/40 text-center font-mono text-[11px]">
-                                                <div>
-                                                    <div className="text-[10px] text-muted-foreground flex items-center justify-center gap-1">
-                                                        <Eye className="w-2.5 h-2.5 text-primary" />
-                                                        <span>Views</span>
+                                                        <span className="text-primary font-semibold flex items-center gap-0.5">
+                                                            {isSelected ? 'Inspecting' : 'Forensics →'}
+                                                        </span>
                                                     </div>
-                                                    <div className="font-bold text-foreground">
-                                                        {post.views >= 1000
-                                                            ? `${(post.views / 1000).toFixed(1)}k`
-                                                            : post.views}
-                                                    </div>
-                                                </div>
-
-                                                <div>
-                                                    <div className="text-[10px] text-muted-foreground flex items-center justify-center gap-1">
-                                                        <Heart className="w-2.5 h-2.5 text-rose-500" />
-                                                        <span>Likes</span>
-                                                    </div>
-                                                    <div className="font-bold text-rose-500">
-                                                        {post.likes >= 1000
-                                                            ? `${(post.likes / 1000).toFixed(1)}k`
-                                                            : post.likes}
-                                                    </div>
-                                                </div>
-
-                                                <div>
-                                                    <div className="text-[10px] text-muted-foreground flex items-center justify-center gap-1">
-                                                        <MessageCircle className="w-2.5 h-2.5 text-blue-500" />
-                                                        <span>Comments</span>
-                                                    </div>
-                                                    <div className="font-bold text-blue-500">
-                                                        {post.comments}
-                                                    </div>
-                                                </div>
-
-                                                <div>
-                                                    <div className="text-[10px] text-muted-foreground flex items-center justify-center gap-1">
-                                                        <Share2 className="w-2.5 h-2.5 text-emerald-500" />
-                                                        <span>Shares</span>
-                                                    </div>
-                                                    <div className="font-bold text-emerald-500">
-                                                        {post.shares}
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Published timestamp */}
-                                            <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                                                <span className="flex items-center gap-1">
-                                                    <Clock className="w-2.5 h-2.5" />
-                                                    {formatWIB(post.published_at)}
-                                                </span>
-                                                <a
-                                                    href={post.url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="font-semibold text-primary hover:underline"
-                                                >
-                                                    Watch on TikTok →
-                                                </a>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                ))}
+                                                </CardContent>
+                                            </Card>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         )}
 
@@ -866,7 +970,245 @@ export default function TikTokHashtagResultDetailPage() {
                             </div>
                         )}
                     </div>
-                </>
+
+                    {/* RIGHT COLUMN: Active Post Inspector & Audience Intelligence (Sticky) */}
+                    <div className="lg:col-span-4 xl:col-span-4 space-y-4 lg:sticky lg:top-6">
+                        {activePost ? (
+                            <Card className="border-border/60 bg-card rounded-xl shadow-none">
+                                <CardHeader className="p-4 pb-2 border-b border-border/40">
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <CardTitle className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                                                <Eye className="w-3.5 h-3.5 text-primary" />
+                                                <span>Active Post Inspector</span>
+                                            </CardTitle>
+                                            <CardDescription className="text-[10px] text-muted-foreground">
+                                                Granular performance forensics and community response
+                                            </CardDescription>
+                                        </div>
+
+                                        {selectedPostId && (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => setSelectedPostId(null)}
+                                                className="h-7 px-2 text-[10px] font-mono text-muted-foreground hover:text-foreground gap-1"
+                                                title="Reset to default catalyst"
+                                            >
+                                                <RotateCcw className="w-3 h-3" />
+                                                <span>Reset</span>
+                                            </Button>
+                                        )}
+                                    </div>
+                                </CardHeader>
+
+                                <CardContent className="p-4 space-y-4">
+                                    {/* Creator Profile Header */}
+                                    <div className="p-3 bg-muted/40 rounded-xl border border-border/40 space-y-2.5">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2.5">
+                                                <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold text-xs">
+                                                    <User className="w-4 h-4" />
+                                                </div>
+                                                <div>
+                                                    <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                                                        <span>@{activePost.author_handle}</span>
+                                                        <a
+                                                            href={`https://www.tiktok.com/@${activePost.author_handle}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-muted-foreground hover:text-primary transition-colors"
+                                                            title="View TikTok creator profile"
+                                                        >
+                                                            <ExternalLink className="w-3 h-3" />
+                                                        </a>
+                                                    </div>
+                                                    {activePost.author_name && (
+                                                        <div className="text-[11px] text-muted-foreground">
+                                                            {activePost.author_name}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <Badge variant="outline" className="text-[10px] font-mono">
+                                                Published
+                                            </Badge>
+                                        </div>
+
+                                        <div className="text-[11px] font-mono text-muted-foreground flex items-center gap-1.5 pt-1 border-t border-border/30">
+                                            <Clock className="w-3 h-3 text-muted-foreground" />
+                                            <span>{formatWIBFull24(activePost.published_at)}</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Action Buttons: Watch on TikTok, Copy Link, Filter Author */}
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <Button
+                                            variant="default"
+                                            size="sm"
+                                            asChild
+                                            className="h-8 text-xs font-bold gap-1 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground"
+                                        >
+                                            <a
+                                                href={activePost.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                <span>Watch</span>
+                                                <ExternalLink className="w-3 h-3" />
+                                            </a>
+                                        </Button>
+
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleCopyUrl(activePost.url)}
+                                            className="h-8 text-xs font-medium gap-1 rounded-lg border-border/60 hover:bg-muted"
+                                        >
+                                            <Copy className="w-3 h-3 text-muted-foreground" />
+                                            <span>Copy URL</span>
+                                        </Button>
+
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleFilterByCreator(activePost.author_handle)}
+                                            className="h-8 text-xs font-medium gap-1 rounded-lg border-border/60 hover:bg-muted"
+                                            title="Filter timeline for this creator"
+                                        >
+                                            <Filter className="w-3 h-3 text-muted-foreground" />
+                                            <span>Author</span>
+                                        </Button>
+                                    </div>
+
+                                    {/* Granular Post Performance Metrics (2x2 Grid) */}
+                                    <div className="space-y-1.5">
+                                        <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold">
+                                            Post Metric Breakdown
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+                                            <div className="p-3 bg-muted/30 border border-border/40 rounded-lg space-y-1">
+                                                <div className="text-[10px] text-muted-foreground font-sans flex items-center justify-between">
+                                                    <span>Views</span>
+                                                    <Eye className="w-3 h-3 text-primary" />
+                                                </div>
+                                                <div className="text-base font-bold text-foreground">
+                                                    {(activePost.views || 0).toLocaleString()}
+                                                </div>
+                                                <div className="text-[9px] text-primary font-sans">
+                                                    {avgViews > 0
+                                                        ? `${((activePost.views / avgViews)).toFixed(1)}x hashtag average`
+                                                        : 'Baseline'}
+                                                </div>
+                                            </div>
+
+                                            <div className="p-3 bg-muted/30 border border-border/40 rounded-lg space-y-1">
+                                                <div className="text-[10px] text-muted-foreground font-sans flex items-center justify-between">
+                                                    <span>Likes</span>
+                                                    <Heart className="w-3 h-3 text-rose-500" />
+                                                </div>
+                                                <div className="text-base font-bold text-rose-500">
+                                                    {(activePost.likes || 0).toLocaleString()}
+                                                </div>
+                                                <div className="text-[9px] text-muted-foreground font-sans">
+                                                    {activePost.views > 0
+                                                        ? ((activePost.likes / activePost.views) * 100).toFixed(2)
+                                                        : 0}% like ratio
+                                                </div>
+                                            </div>
+
+                                            <div className="p-3 bg-muted/30 border border-border/40 rounded-lg space-y-1">
+                                                <div className="text-[10px] text-muted-foreground font-sans flex items-center justify-between">
+                                                    <span>Comments</span>
+                                                    <MessageCircle className="w-3 h-3 text-blue-500" />
+                                                </div>
+                                                <div className="text-base font-bold text-blue-500">
+                                                    {(activePost.comments || 0).toLocaleString()}
+                                                </div>
+                                                <div className="text-[9px] text-muted-foreground font-sans">
+                                                    Community chatter
+                                                </div>
+                                            </div>
+
+                                            <div className="p-3 bg-muted/30 border border-border/40 rounded-lg space-y-1">
+                                                <div className="text-[10px] text-muted-foreground font-sans flex items-center justify-between">
+                                                    <span>Shares</span>
+                                                    <Share2 className="w-3 h-3 text-emerald-500" />
+                                                </div>
+                                                <div className="text-base font-bold text-emerald-500">
+                                                    {(activePost.shares || 0).toLocaleString()}
+                                                </div>
+                                                <div className="text-[9px] text-muted-foreground font-sans">
+                                                    Viral transfers
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Full Caption Box */}
+                                    <div className="space-y-1.5">
+                                        <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold flex items-center justify-between">
+                                            <span>Full Video Caption</span>
+                                            <span className="text-[9px]">{activePost.caption.length} chars</span>
+                                        </div>
+                                        <div className="p-3 bg-muted/20 border border-border/40 rounded-xl text-xs text-foreground leading-relaxed whitespace-pre-wrap font-sans max-h-48 overflow-y-auto">
+                                            {activePost.caption}
+                                        </div>
+                                    </div>
+
+                                    {/* Hashtags Chips if present */}
+                                    {activePost.hashtags && activePost.hashtags.length > 0 && (
+                                        <div className="space-y-1.5">
+                                            <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold">
+                                                Associated Hashtags
+                                            </div>
+                                            <div className="flex flex-wrap gap-1">
+                                                {activePost.hashtags.map((tag) => (
+                                                    <Badge
+                                                        key={tag}
+                                                        variant="outline"
+                                                        className="text-[10px] font-mono border-border/60 hover:bg-muted cursor-pointer"
+                                                        onClick={() => handleFilterChange(tag)}
+                                                    >
+                                                        #{tag}
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Direct Deep Link to Video */}
+                                    <div className="p-3 rounded-lg border border-border/40 bg-muted/30 flex items-center justify-between gap-2">
+                                        <div className="truncate text-[11px] font-mono text-muted-foreground">
+                                            {activePost.url}
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            asChild
+                                            className="h-6 px-2 text-[10px] font-semibold text-primary shrink-0 gap-1 hover:bg-muted"
+                                        >
+                                            <a
+                                                href={activePost.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                <span>Open</span>
+                                                <ExternalLink className="w-2.5 h-2.5" />
+                                            </a>
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ) : (
+                            <Card className="border-border/60 bg-card rounded-xl p-8 text-center text-xs text-muted-foreground shadow-none">
+                                <AlertCircle className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
+                                Select any video card in the campaign timeline to inspect individual metrics and creator forensics.
+                            </Card>
+                        )}
+                    </div>
+                </div>
             )}
         </div>
     );
