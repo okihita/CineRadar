@@ -34,6 +34,7 @@ import {
     Activity,
     Layers,
     Database,
+    BarChart2,
 } from 'lucide-react';
 import { TikTokIcon } from '@/components/BrandIcons';
 import { fetcher } from '@/lib/api';
@@ -368,6 +369,33 @@ export default function CustomHashtagTrackerPage() {
         }
     };
 
+    // Live On-Demand Scrape Handler
+    const [scrapingLiveTag, setScrapingLiveTag] = useState<string | null>(null);
+    const handleScrapeLive = async (tag: string) => {
+        setScrapingLiveTag(tag);
+        toast.info(`Initiating live Apify scrape for #${tag}...`);
+        try {
+            const res = await fetch('/api/socials/tiktok/hashtags/scrape', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tag, force: false, dryRun: false }),
+            });
+            const result = await res.json();
+            if (result.success) {
+                toast.success(result.message || `Live crawl completed for #${tag}!`);
+                mutate();
+            } else if (result.cooldown) {
+                toast.error(result.error);
+            } else {
+                toast.error(result.error || 'Live scrape failed');
+            }
+        } catch {
+            toast.error('Network error during live scrape');
+        } finally {
+            setScrapingLiveTag(null);
+        }
+    };
+
     return (
         <div className="p-6 space-y-6 w-full">
             {/* Standard CineRadar Section Header */}
@@ -509,9 +537,13 @@ export default function CustomHashtagTrackerPage() {
                                                     <tr key={t.id} className="hover:bg-muted/20 transition-colors">
                                                         <td className="py-3 px-4">
                                                             <div className="flex items-center gap-2">
-                                                                <span className="font-mono font-bold text-foreground text-sm">
+                                                                <Link
+                                                                    href={`/tiktok/hashtags/results/${t.tag}`}
+                                                                    className="font-mono font-bold text-foreground text-sm hover:text-primary hover:underline transition-colors"
+                                                                    title={`View intelligence results for #${t.tag}`}
+                                                                >
                                                                     #{t.tag}
-                                                                </span>
+                                                                </Link>
                                                                 <a
                                                                     href={`https://www.tiktok.com/tag/${t.tag}`}
                                                                     target="_blank"
@@ -618,6 +650,33 @@ export default function CustomHashtagTrackerPage() {
                                                             <Button
                                                                 size="sm"
                                                                 variant="ghost"
+                                                                asChild
+                                                                className="h-7 w-7 p-0"
+                                                                title="View Dedicated Intelligence Results"
+                                                            >
+                                                                <Link href={`/tiktok/hashtags/results/${t.tag}`}>
+                                                                    <BarChart2 className="w-3.5 h-3.5 text-primary hover:text-primary/80" />
+                                                                </Link>
+                                                            </Button>
+
+                                                            <Button
+                                                                size="sm"
+                                                                variant="ghost"
+                                                                className="h-7 w-7 p-0"
+                                                                title="Scrape Live Now (Real Apify & Gemini)"
+                                                                disabled={scrapingLiveTag === t.tag}
+                                                                onClick={() => handleScrapeLive(t.tag)}
+                                                            >
+                                                                <Zap
+                                                                    className={`w-3.5 h-3.5 text-amber-500 hover:text-amber-400 ${
+                                                                        scrapingLiveTag === t.tag ? 'animate-spin' : ''
+                                                                    }`}
+                                                                />
+                                                            </Button>
+
+                                                            <Button
+                                                                size="sm"
+                                                                variant="ghost"
                                                                 className="h-7 w-7 p-0"
                                                                 title={t.active ? 'Pause Tracking' : 'Resume Tracking'}
                                                                 onClick={() => handleToggleActive(t)}
@@ -648,7 +707,7 @@ export default function CustomHashtagTrackerPage() {
                                                                 onClick={() => handleTestRun(t.tag)}
                                                             >
                                                                 <RefreshCw
-                                                                    className={`w-3.5 h-3.5 text-primary ${
+                                                                    className={`w-3.5 h-3.5 text-muted-foreground hover:text-foreground ${
                                                                         testingTag === t.tag ? 'animate-spin' : ''
                                                                     }`}
                                                                 />

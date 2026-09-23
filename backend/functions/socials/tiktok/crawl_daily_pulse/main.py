@@ -728,6 +728,35 @@ async def execute_daily_crawl_async(
                 "top_video_url": top_c_posts[0].get("url") if top_c_posts else None,
             }
 
+            # Persist detailed post snapshot to subcollection
+            clean_tag = ct["tag"].lower()
+            db.collection("tiktok_custom_pulse").document(target_date).collection("hashtags").document(clean_tag).set(
+                {
+                    "tag": clean_tag,
+                    "label": ct.get("label") or clean_tag,
+                    "category": ct.get("category") or "general",
+                    "date": target_date,
+                    "crawled_at": now_wib.isoformat(),
+                    "source": "scheduled_pulse",
+                    "total_posts": len(top_c_posts),
+                    "total_views": c_views,
+                    "total_likes": c_likes,
+                    "total_comments": c_comments,
+                    "total_shares": c_shares,
+                    "sentiment": c_sent,
+                    "posts": top_c_posts,
+                }
+            )
+
+            # Update tracked hashtag metadata with latest snapshot
+            db.collection("tiktok_tracked_hashtags").document(clean_tag).set(
+                {
+                    "last_scraped_at": now_wib.isoformat(),
+                    "latest_stats": custom_stats_map[clean_tag],
+                },
+                merge=True,
+            )
+
         db.collection("tiktok_custom_pulse").document(target_date).set(
             {
                 "date": target_date,
