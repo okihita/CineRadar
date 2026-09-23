@@ -979,106 +979,75 @@ export default function TikTokHashtagResultDetailPage() {
                                             </div>
 
                                             {/* Post Card Container */}
-                                            <div className="flex-1 min-w-0 pb-3.5">
+                                            <div className="flex-1 min-w-0 pb-2.5">
                                                 <Card
                                                     onClick={() => setSelectedPostId(post.id || post.url)}
-                                                    className={`border rounded-xl transition-all cursor-pointer shadow-none flex flex-col justify-between ${
+                                                    className={`p-3 border rounded-xl transition-all cursor-pointer shadow-none space-y-2 ${
                                                         isSelected
                                                             ? 'border-primary bg-muted/20 ring-1 ring-primary'
                                                             : 'border-border/60 bg-card hover:border-border hover:bg-muted/10'
                                                     }`}
                                                 >
-                                                    <CardHeader className="p-3.5 pb-2 space-y-1.5">
-                                                        {/* Top Row: Timestamp badge and Creator Info */}
-                                                        <div className="flex items-center justify-between text-xs gap-2">
-                                                            <div className="flex items-center gap-1.5 min-w-0">
-                                                                <span className="font-bold text-foreground truncate">
-                                                                    {formatHandle(post.author_handle)}
-                                                                </span>
-                                                                {post.author_name && (
-                                                                    <span className="text-[11px] text-muted-foreground truncate hidden sm:inline">
-                                                                        ({post.author_name})
-                                                                    </span>
-                                                                )}
-                                                            </div>
-
-                                                            <div className="flex items-center gap-1.5 shrink-0">
-                                                                {isTopPost && (
-                                                                    <Badge variant="outline" className="text-[9px] font-mono border-amber-500/40 text-amber-500 bg-amber-500/5">
-                                                                        #1 Views
-                                                                    </Badge>
-                                                                )}
-                                                                <span className="text-[10px] font-mono font-bold text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded border border-border/40 flex items-center gap-1">
-                                                                    <Clock className="w-2.5 h-2.5" />
-                                                                    {formatWIB24(post.published_at)}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Caption snippet */}
-                                                        <p className="text-xs text-foreground/90 line-clamp-2 leading-relaxed font-sans">
-                                                            {post.caption}
-                                                        </p>
-                                                    </CardHeader>
-
-                                                    <CardContent className="p-3.5 pt-1 space-y-2">
-                                                        {/* Metrics Pill Grid */}
-                                                        <div className="grid grid-cols-4 gap-1 py-1.5 px-2 bg-muted/40 rounded-lg border border-border/40 text-center font-mono text-[10px]">
-                                                            <div>
-                                                                <div className="text-muted-foreground flex items-center justify-center gap-0.5">
-                                                                    <Eye className="w-2.5 h-2.5 text-primary" />
-                                                                    <span>Views</span>
-                                                                </div>
-                                                                <div className="font-bold text-foreground mt-0.5">
-                                                                    {post.views >= 1000
-                                                                        ? `${(post.views / 1000).toFixed(1)}k`
-                                                                        : post.views}
-                                                                </div>
-                                                            </div>
-
-                                                            <div>
-                                                                <div className="text-muted-foreground flex items-center justify-center gap-0.5">
-                                                                    <Heart className="w-2.5 h-2.5 text-rose-500" />
-                                                                    <span>Likes</span>
-                                                                </div>
-                                                                <div className="font-bold text-rose-500 mt-0.5">
-                                                                    {post.likes >= 1000
-                                                                        ? `${(post.likes / 1000).toFixed(1)}k`
-                                                                        : post.likes}
-                                                                </div>
-                                                            </div>
-
-                                                            <div>
-                                                                <div className="text-muted-foreground flex items-center justify-center gap-0.5">
-                                                                    <MessageCircle className="w-2.5 h-2.5 text-blue-500" />
-                                                                    <span>Comments</span>
-                                                                </div>
-                                                                <div className="font-bold text-blue-500 mt-0.5">
-                                                                    {post.comments}
-                                                                </div>
-                                                            </div>
-
-                                                            <div>
-                                                                <div className="text-muted-foreground flex items-center justify-center gap-0.5">
-                                                                    <Share2 className="w-2.5 h-2.5 text-emerald-500" />
-                                                                    <span>Shares</span>
-                                                                </div>
-                                                                <div className="font-bold text-emerald-500 mt-0.5">
-                                                                    {post.shares}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Bottom Indicator */}
-                                                        <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-0.5">
-                                                            <span className="font-mono text-[9px]">
-                                                                {isSelected ? 'Active in Inspector' : 'Click or J/K to inspect'}
+                                                    {/* Top Row: Timestamp badge and Creator Info */}
+                                                    <div className="flex items-center justify-between text-xs gap-2">
+                                                        <div className="flex items-center gap-1.5 min-w-0">
+                                                            <span className="font-bold text-foreground truncate">
+                                                                {formatHandle(post.author_handle)}
                                                             </span>
-                                                            <span className="text-primary font-semibold flex items-center gap-0.5">
-                                                                {isSelected ? 'Inspecting' : 'Forensics →'}
+                                                            {post.author_name && (
+                                                                <span className="text-[11px] text-muted-foreground truncate hidden sm:inline">
+                                                                    ({post.author_name})
+                                                                </span>
+                                                            )}
+                                                        </div>
+
+                                                        <div className="flex items-center gap-1.5 shrink-0">
+                                                            {isTopPost && (
+                                                                <Badge variant="outline" className="text-[9px] font-mono border-amber-500/40 text-amber-500 bg-amber-500/5">
+                                                                    #1 Views
+                                                                </Badge>
+                                                            )}
+                                                            <span className="text-[10px] font-mono font-bold text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded border border-border/40 flex items-center gap-1">
+                                                                <Clock className="w-2.5 h-2.5" />
+                                                                {formatWIB24(post.published_at)}
                                                             </span>
                                                         </div>
-                                                    </CardContent>
+                                                    </div>
+
+                                                    {/* Caption snippet */}
+                                                    <p className="text-xs text-foreground/90 line-clamp-2 leading-relaxed font-sans">
+                                                        {post.caption}
+                                                    </p>
+
+                                                    {/* Inlined Single-Line Metric Strip */}
+                                                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/30 text-[11px] font-mono">
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="inline-flex items-center gap-1 font-bold text-foreground" title="Views">
+                                                                <Eye className="w-3 h-3 text-primary" />
+                                                                <span>{post.views >= 1000 ? `${(post.views / 1000).toFixed(1)}k` : post.views}</span>
+                                                            </span>
+                                                            <span className="inline-flex items-center gap-1 font-bold text-rose-500" title="Likes">
+                                                                <Heart className="w-3 h-3" />
+                                                                <span>{post.likes >= 1000 ? `${(post.likes / 1000).toFixed(1)}k` : post.likes}</span>
+                                                            </span>
+                                                            <span className="inline-flex items-center gap-1 font-bold text-blue-500" title="Comments">
+                                                                <MessageCircle className="w-3 h-3" />
+                                                                <span>{post.comments}</span>
+                                                            </span>
+                                                            <span className="inline-flex items-center gap-1 font-bold text-emerald-500" title="Shares">
+                                                                <Share2 className="w-3 h-3" />
+                                                                <span>{post.shares}</span>
+                                                            </span>
+                                                        </div>
+
+                                                        <span className="text-[10px] font-sans font-medium text-muted-foreground group-hover:text-primary transition-colors flex items-center gap-0.5">
+                                                            {isSelected ? (
+                                                                <span className="font-semibold text-primary">Inspecting</span>
+                                                            ) : (
+                                                                <span>Forensics →</span>
+                                                            )}
+                                                        </span>
+                                                    </div>
                                                 </Card>
                                             </div>
                                         </div>
