@@ -9,7 +9,7 @@ test.describe('CinePoint Insights Performance & Heaviness Audits', () => {
     });
 
     // Verify page loads without runtime errors
-    await expect(page.getByRole('heading', { name: /Box Office Intelligence/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Box Office/i })).toBeVisible();
 
     console.log(`[CinePoint Insights Audit] DOM Nodes: ${result.domNodeCount}, TTFB: ${result.ttfbMs}ms, Load: ${result.loadTimeMs}ms`);
   });

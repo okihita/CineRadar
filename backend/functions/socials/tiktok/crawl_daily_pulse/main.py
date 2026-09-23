@@ -615,6 +615,12 @@ async def execute_daily_crawl_async(
         "Scraping %d Tier 1 films (40 posts + 30 comments) concurrently", len(tier1_list)
     )
 
+    # Read active custom tracked hashtags from tiktok_sources/config
+    sources_doc = db.collection("tiktok_sources").document("config").get()
+    sources_data = sources_doc.to_dict() or {} if sources_doc.exists else {}
+    tracked_tags = sources_data.get("tracked_hashtags", [])
+    active_custom_tags = [t for t in tracked_tags if isinstance(t, dict) and t.get("active") and t.get("tag")]
+
     limits = [40] * len(tier1_list)
     combined_movies = tier1_list
 
@@ -623,7 +629,21 @@ async def execute_daily_crawl_async(
             async_scrape_hashtag_posts(http_client, creds["apify_token"], m["hashtags"], limit)
             for m, limit in zip(combined_movies, limits, strict=False)
         ]
-        all_raw_posts = await asyncio.gather(*scrape_tasks)
+
+        # Add custom hashtag scrape tasks
+        custom_scrape_tasks = [
+            async_scrape_hashtag_posts(
+                http_client,
+                creds["apify_token"],
+                [ct["tag"]],
+                int(ct.get("target_posts") or 40),
+            )
+            for ct in active_custom_tags
+        ]
+
+        all_movie_raw_posts = await asyncio.gather(*scrape_tasks)
+        all_custom_raw_posts = await asyncio.gather(*custom_scrape_tasks) if custom_scrape_tasks else []
+        all_raw_posts = all_movie_raw_posts
 
         comment_tasks = []
         for idx, _ in enumerate(tier1_list):
@@ -639,7 +659,80 @@ async def execute_daily_crawl_async(
                 )
             )
 
+        # Comments for custom hashtags with include_comments == True
+        custom_comment_tasks = []
+        for idx, ct in enumerate(active_custom_tags):
+            if ct.get("include_comments") is not False:
+                raw_c_posts = all_custom_raw_posts[idx]
+                c_urls = [
+                    str(p.get("webVideoUrl") or p.get("url") or "")
+                    for p in raw_c_posts[:2]
+                    if p.get("id")
+                ]
+                custom_comment_tasks.append(
+                    async_scrape_comments(
+                        http_client, creds["apify_token"], c_urls, max_comments=30
+                    )
+                )
+            else:
+                custom_comment_tasks.append(asyncio.sleep(0, result=[]))
+
         all_comments = await asyncio.gather(*comment_tasks)
+        all_custom_comments = await asyncio.gather(*custom_comment_tasks) if custom_comment_tasks else []
+
+    # Process and Persist Custom Hashtags Telemetry
+    if active_custom_tags:
+        custom_stats_map: dict[str, Any] = {}
+        for idx, ct in enumerate(active_custom_tags):
+            raw_posts = all_custom_raw_posts[idx] if idx < len(all_custom_raw_posts) else []
+            clean_c_posts: list[dict[str, Any]] = []
+            seen_c_ids = set()
+            for p in raw_posts:
+                item = sanitize_post(p)
+                if item["id"] and item["id"] not in seen_c_ids:
+                    seen_c_ids.add(item["id"])
+                    clean_c_posts.append(item)
+            clean_c_posts.sort(key=lambda x: x["views"], reverse=True)
+            top_c_posts = clean_c_posts[:int(ct.get("target_posts") or 40)]
+            c_views = sum(p["views"] for p in top_c_posts)
+            c_likes = sum(p["likes"] for p in top_c_posts)
+            c_comments = sum(p["comments"] for p in top_c_posts)
+            c_shares = sum(p["shares"] for p in top_c_posts)
+
+            c_sent = {"positive": 75, "mixed": 20, "negative": 5, "hype_score": 80}
+            if ct.get("include_comments") is not False and idx < len(all_custom_comments):
+                comments_list = all_custom_comments[idx]
+                if comments_list:
+                    c_sent = analyze_sentiment_with_gemini(
+                        creds["gemini_key"], f"#{ct['tag']}", comments_list
+                    )
+
+            raw_cadence = ct.get("cadence")
+            raw_start_hour = ct.get("start_hour")
+            cadence_val = int(raw_cadence) if raw_cadence is not None else 1
+            start_hour_val = int(raw_start_hour) if raw_start_hour is not None else 18
+
+            custom_stats_map[ct["tag"].lower()] = {
+                "total_posts": len(top_c_posts),
+                "total_views": c_views,
+                "total_likes": c_likes,
+                "total_comments": c_comments,
+                "total_shares": c_shares,
+                "sentiment": c_sent,
+                "cadence": cadence_val,
+                "start_hour": start_hour_val,
+                "crawled_at": now_wib.isoformat(),
+                "top_video_url": top_c_posts[0].get("url") if top_c_posts else None,
+            }
+
+        db.collection("tiktok_custom_pulse").document(target_date).set(
+            {
+                "date": target_date,
+                "updated_at": now_wib.isoformat(),
+                "stats": custom_stats_map,
+            },
+            merge=True,
+        )
 
     # Process posts and build initial leaderboard items
     leaderboard: list[dict[str, Any]] = []
