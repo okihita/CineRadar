@@ -7,7 +7,7 @@ import {
     Database, Calendar, Clapperboard, Sun, Moon, Monitor,
     LogOut, Users as UsersIcon, ArrowRightLeft,
     TrendingUp, Rss, Shield, BookOpen, Radio, Swords, Library, Target,
-    Play, Building2, Layers,
+    Play, Building2, Layers, Hash,
     type LucideIcon,
 } from 'lucide-react';
 import { useState, useCallback } from 'react';
@@ -62,6 +62,13 @@ const menuGroups: MenuGroup[] = [
                 description: 'XXI, CGV, Cinépolis activity',
                 href: '/tiktok/exhibitors',
                 icon: Building2,
+                adminOnly: false,
+            },
+            {
+                title: 'Hashtag Tracker',
+                description: 'Custom campaigns & cost forecast',
+                href: '/tiktok/hashtags',
+                icon: Hash,
                 adminOnly: false,
             },
             {
