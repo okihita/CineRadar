@@ -20,6 +20,9 @@ import {
     AlertCircle,
     CheckCircle2,
     Filter,
+    ChevronLeft,
+    ChevronRight,
+    ArrowUpDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -69,9 +72,12 @@ export default function TikTokHashtagResultDetailPage() {
     const [isScraping, setIsScraping] = useState(false);
     const [scrapeStep, setScrapeStep] = useState<string | null>(null);
 
-    // Video sorting state
-    const [sortBy, setSortBy] = useState<'views' | 'likes' | 'date'>('views');
+    // Video sorting and pagination state
+    const [sortBy, setSortBy] = useState<'views' | 'likes' | 'comments' | 'shares' | 'date'>('views');
+    const [sortDirection, setSortDirection] = useState<'desc' | 'asc'>('desc');
     const [filterQuery, setFilterQuery] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState<number>(6);
 
     const config = data?.config;
     const snapshot = data?.snapshot;
@@ -137,16 +143,49 @@ export default function TikTokHashtagResultDetailPage() {
             );
         }
 
-        if (sortBy === 'views') {
-            list.sort((a, b) => b.views - a.views);
-        } else if (sortBy === 'likes') {
-            list.sort((a, b) => b.likes - a.likes);
-        } else if (sortBy === 'date') {
-            list.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime());
-        }
+        list.sort((a, b) => {
+            let diff = 0;
+            if (sortBy === 'views') {
+                diff = b.views - a.views;
+            } else if (sortBy === 'likes') {
+                diff = b.likes - a.likes;
+            } else if (sortBy === 'comments') {
+                diff = b.comments - a.comments;
+            } else if (sortBy === 'shares') {
+                diff = b.shares - a.shares;
+            } else if (sortBy === 'date') {
+                diff = new Date(b.published_at).getTime() - new Date(a.published_at).getTime();
+            }
+            return sortDirection === 'asc' ? -diff : diff;
+        });
 
         return list;
-    }, [snapshot?.posts, filterQuery, sortBy]);
+    }, [snapshot?.posts, filterQuery, sortBy, sortDirection]);
+
+    const totalPages = Math.max(1, Math.ceil(filteredPosts.length / pageSize));
+    const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+    const startIndex = (safeCurrentPage - 1) * pageSize;
+    const paginatedPosts = filteredPosts.slice(startIndex, startIndex + pageSize);
+
+    const handleSortChange = (newSort: 'views' | 'likes' | 'comments' | 'shares' | 'date') => {
+        if (sortBy === newSort) {
+            setSortDirection((prev) => (prev === 'desc' ? 'asc' : 'desc'));
+        } else {
+            setSortBy(newSort);
+            setSortDirection('desc');
+        }
+        setCurrentPage(1);
+    };
+
+    const handleFilterChange = (val: string) => {
+        setFilterQuery(val);
+        setCurrentPage(1);
+    };
+
+    const handlePageSizeChange = (size: number) => {
+        setPageSize(size);
+        setCurrentPage(1);
+    };
 
     const firestoreConfigUrl = `https://console.firebase.google.com/project/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'cineradar-481014'}/firestore/databases/-default-/data/~2Ftiktok_tracked_hashtags~2F${cleanTag}`;
     const firestoreSnapshotUrl = `https://console.firebase.google.com/project/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'cineradar-481014'}/firestore/databases/-default-/data/~2Ftiktok_custom_pulse~2F${selectedDate}~2Fhashtags~2F${cleanTag}`;
@@ -578,46 +617,70 @@ export default function TikTokHashtagResultDetailPage() {
                                 </p>
                             </div>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                {/* Search Filter */}
                                 <div className="flex items-center gap-1.5 bg-muted/40 px-2.5 py-1 rounded-lg border border-border/60 text-xs">
                                     <Filter className="w-3 h-3 text-muted-foreground" />
                                     <input
                                         type="text"
                                         placeholder="Filter creator or caption..."
                                         value={filterQuery}
-                                        onChange={(e) => setFilterQuery(e.target.value)}
-                                        className="bg-transparent text-xs text-foreground placeholder:text-muted-foreground focus:outline-none w-44"
+                                        onChange={(e) => handleFilterChange(e.target.value)}
+                                        className="bg-transparent text-xs text-foreground placeholder:text-muted-foreground focus:outline-none w-40 sm:w-48"
                                     />
                                 </div>
 
+                                {/* Multi-Dimension Sorting Buttons */}
                                 <div className="flex items-center bg-muted/40 rounded-lg border border-border/60 p-0.5 text-xs font-semibold">
-                                    <button
-                                        type="button"
-                                        onClick={() => setSortBy('views')}
-                                        className={`px-2.5 py-1 rounded-md transition-colors ${
-                                            sortBy === 'views' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                                        }`}
-                                    >
-                                        Views
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setSortBy('likes')}
-                                        className={`px-2.5 py-1 rounded-md transition-colors ${
-                                            sortBy === 'likes' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                                        }`}
-                                    >
-                                        Likes
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setSortBy('date')}
-                                        className={`px-2.5 py-1 rounded-md transition-colors ${
-                                            sortBy === 'date' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                                        }`}
-                                    >
-                                        Date
-                                    </button>
+                                    {(['views', 'likes', 'comments', 'shares', 'date'] as const).map((key) => {
+                                        const isActive = sortBy === key;
+                                        const labelMap = {
+                                            views: 'Views',
+                                            likes: 'Likes',
+                                            comments: 'Comments',
+                                            shares: 'Shares',
+                                            date: 'Date',
+                                        };
+                                        return (
+                                            <button
+                                                key={key}
+                                                type="button"
+                                                onClick={() => handleSortChange(key)}
+                                                className={`px-2 py-1 rounded-md transition-colors flex items-center gap-1 ${
+                                                    isActive
+                                                        ? 'bg-background text-foreground shadow-sm'
+                                                        : 'text-muted-foreground hover:text-foreground'
+                                                }`}
+                                                title={`Sort by ${labelMap[key]} (${isActive && sortDirection === 'asc' ? 'ascending' : 'descending'})`}
+                                            >
+                                                <span>{labelMap[key]}</span>
+                                                {isActive && (
+                                                    <span className="font-mono text-[10px] text-primary">
+                                                        {sortDirection === 'desc' ? '↓' : '↑'}
+                                                    </span>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Page Size Selector */}
+                                <div className="flex items-center gap-1 bg-muted/40 rounded-lg border border-border/60 p-0.5 text-[11px] font-semibold">
+                                    <span className="text-muted-foreground px-1.5 text-[10px] font-mono">Per page:</span>
+                                    {[6, 12, 24].map((size) => (
+                                        <button
+                                            key={size}
+                                            type="button"
+                                            onClick={() => handlePageSizeChange(size)}
+                                            className={`px-2 py-0.5 rounded-md transition-colors font-mono ${
+                                                pageSize === size
+                                                    ? 'bg-background text-foreground shadow-sm font-bold'
+                                                    : 'text-muted-foreground hover:text-foreground'
+                                            }`}
+                                        >
+                                            {size}
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
                         </div>
@@ -629,7 +692,7 @@ export default function TikTokHashtagResultDetailPage() {
                             </Card>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                                {filteredPosts.map((post, idx) => (
+                                {paginatedPosts.map((post, idx) => (
                                     <Card
                                         key={post.id || idx}
                                         className="border-border/60 bg-card rounded-xl shadow-none hover:border-border transition-all flex flex-col justify-between"
@@ -727,6 +790,79 @@ export default function TikTokHashtagResultDetailPage() {
                                         </CardContent>
                                     </Card>
                                 ))}
+                            </div>
+                        )}
+
+                        {/* Pagination Bar */}
+                        {filteredPosts.length > 0 && (
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-border/40">
+                                <div className="text-xs text-muted-foreground font-mono">
+                                    Showing <strong className="text-foreground">{startIndex + 1}</strong>–<strong className="text-foreground">{Math.min(startIndex + pageSize, filteredPosts.length)}</strong> of <strong className="text-foreground">{filteredPosts.length}</strong> videos
+                                    {filteredPosts.length !== snapshot.posts.length && ` (filtered from ${snapshot.posts.length})`}
+                                </div>
+
+                                <div className="flex items-center gap-1.5">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={safeCurrentPage === 1}
+                                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                        className="h-8 px-2.5 text-xs font-semibold rounded-lg border-border/60 hover:bg-muted gap-1"
+                                    >
+                                        <ChevronLeft className="w-3.5 h-3.5" />
+                                        <span>Prev</span>
+                                    </Button>
+
+                                    {/* Page number buttons */}
+                                    <div className="flex items-center gap-1">
+                                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
+                                            if (
+                                                totalPages <= 7 ||
+                                                pageNum === 1 ||
+                                                pageNum === totalPages ||
+                                                Math.abs(pageNum - safeCurrentPage) <= 1
+                                            ) {
+                                                return (
+                                                    <Button
+                                                        key={pageNum}
+                                                        variant={safeCurrentPage === pageNum ? 'default' : 'outline'}
+                                                        size="sm"
+                                                        onClick={() => setCurrentPage(pageNum)}
+                                                        className={`h-8 w-8 p-0 text-xs font-mono font-bold rounded-lg ${
+                                                            safeCurrentPage === pageNum
+                                                                ? 'bg-primary text-primary-foreground'
+                                                                : 'border-border/60 hover:bg-muted text-muted-foreground hover:text-foreground'
+                                                        }`}
+                                                    >
+                                                        {pageNum}
+                                                    </Button>
+                                                );
+                                            }
+                                            if (
+                                                (pageNum === 2 && safeCurrentPage > 3) ||
+                                                (pageNum === totalPages - 1 && safeCurrentPage < totalPages - 2)
+                                            ) {
+                                                return (
+                                                    <span key={pageNum} className="text-muted-foreground px-1 text-xs font-mono">
+                                                        …
+                                                    </span>
+                                                );
+                                            }
+                                            return null;
+                                        })}
+                                    </div>
+
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={safeCurrentPage === totalPages}
+                                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                                        className="h-8 px-2.5 text-xs font-semibold rounded-lg border-border/60 hover:bg-muted gap-1"
+                                    >
+                                        <span>Next</span>
+                                        <ChevronRight className="w-3.5 h-3.5" />
+                                    </Button>
+                                </div>
                             </div>
                         )}
                     </div>

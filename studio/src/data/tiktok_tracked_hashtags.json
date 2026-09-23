@@ -2,15 +2,37 @@
   {
     "id": "sitisivampir",
     "_name": "projects/cineradar-481014/databases/(default)/documents/tiktok_tracked_hashtags/sitisivampir",
-    "active": true,
-    "start_hour": 18,
+    "category": "campaign",
     "label": "sitisivampir",
     "cadence": 1,
-    "updated_at": "2026-09-23T09:46:06.754Z",
-    "category": "campaign",
-    "target_posts": 40,
-    "created_at": "2026-09-23T09:46:06.754Z",
     "include_comments": true,
-    "tag": "sitisivampir"
+    "last_scraped_at": "2026-09-23T11:56:37.139Z",
+    "active": true,
+    "target_posts": 40,
+    "tag": "sitisivampir",
+    "latest_stats": {
+      "total_comments": 988,
+      "cadence": 1,
+      "total_posts": 40,
+      "total_views": 1143001,
+      "sentiment": {
+        "negative": 7,
+        "criticism_themes": [],
+        "mixed": 18,
+        "hype_score": 80,
+        "positive": 75,
+        "praise_points": [
+          "Trafik video viral terpantau aktif di TikTok"
+        ]
+      },
+      "total_likes": 49475,
+      "total_shares": 1707,
+      "top_video_url": "https://www.tiktok.com/@zonaclip.co/video/7682290665518107925",
+      "crawled_at": "2026-09-23T11:56:37.139Z",
+      "start_hour": 18
+    },
+    "created_at": "2026-09-23T09:46:06.754Z",
+    "updated_at": "2026-09-23T11:56:37.139Z",
+    "start_hour": 18
   }
 ]
