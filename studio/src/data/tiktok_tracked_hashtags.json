@@ -2,37 +2,41 @@
   {
     "id": "sitisivampir",
     "_name": "projects/cineradar-481014/databases/(default)/documents/tiktok_tracked_hashtags/sitisivampir",
-    "category": "campaign",
-    "label": "sitisivampir",
-    "cadence": 1,
-    "include_comments": true,
-    "last_scraped_at": "2026-09-23T11:56:37.139Z",
-    "active": true,
-    "target_posts": 40,
-    "tag": "sitisivampir",
     "latest_stats": {
-      "total_comments": 988,
-      "cadence": 1,
-      "total_posts": 40,
-      "total_views": 1143001,
+      "start_hour": 18,
       "sentiment": {
-        "negative": 7,
-        "criticism_themes": [],
-        "mixed": 18,
-        "hype_score": 80,
-        "positive": 75,
+        "criticism_themes": [
+          "Tidak ditemukan anomali atau sentimen penolakan mayoritas"
+        ],
+        "hype_score": 82,
+        "negative": 6,
         "praise_points": [
-          "Trafik video viral terpantau aktif di TikTok"
-        ]
+          "Trafik video viral terpantau aktif dan eksposure tinggi di FYP TikTok",
+          "Resonansi audiens kuat dengan antusiasme penonton bioskop",
+          "Rekomendasi Word-of-Mouth (WoM) dominan di interaksi kreator"
+        ],
+        "mixed": 16,
+        "positive": 78
       },
-      "total_likes": 49475,
-      "total_shares": 1707,
+      "total_shares": 2102,
+      "cadence": 1,
+      "crawled_at": "2026-09-23T13:06:27.486Z",
+      "total_likes": 53244,
+      "total_posts": 100,
       "top_video_url": "https://www.tiktok.com/@zonaclip.co/video/7682290665518107925",
-      "crawled_at": "2026-09-23T11:56:37.139Z",
-      "start_hour": 18
+      "total_views": 1384805,
+      "total_comments": 1094
     },
+    "updated_at": "2026-09-23T13:06:27.486Z",
+    "include_comments": true,
+    "target_posts": 40,
+    "start_hour": 18,
+    "active": true,
+    "tag": "sitisivampir",
+    "last_scraped_at": "2026-09-23T13:06:27.486Z",
+    "cadence": 1,
+    "category": "campaign",
     "created_at": "2026-09-23T09:46:06.754Z",
-    "updated_at": "2026-09-23T11:56:37.139Z",
-    "start_hour": 18
+    "label": "sitisivampir"
   }
 ]

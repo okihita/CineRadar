@@ -423,6 +423,88 @@ export default function TikTokHashtagResultDetailPage() {
     const firestoreConfigUrl = `https://console.firebase.google.com/project/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'cineradar-481014'}/firestore/databases/-default-/data/~2Ftiktok_tracked_hashtags~2F${cleanTag}`;
     const firestoreSnapshotUrl = `https://console.firebase.google.com/project/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'cineradar-481014'}/firestore/databases/-default-/data/~2Ftiktok_custom_pulse~2F${selectedDate}~2Fhashtags~2F${cleanTag}`;
 
+    const renderPaginationBar = (position: 'top' | 'bottom') => {
+        if (!snapshot || filteredPosts.length === 0) return null;
+
+        return (
+            <div
+                className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                    position === 'top'
+                        ? 'pb-2 border-b border-border/40'
+                        : 'pt-3 border-t border-border/40'
+                }`}
+            >
+                <div className="text-xs text-muted-foreground font-mono">
+                    Showing <strong className="text-foreground">{startIndex + 1}</strong>–<strong className="text-foreground">{Math.min(startIndex + pageSize, filteredPosts.length)}</strong> of <strong className="text-foreground">{filteredPosts.length}</strong> videos
+                    {filteredPosts.length !== snapshot.posts.length && ` (filtered from ${snapshot.posts.length})`}
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={safeCurrentPage === 1}
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        className="h-8 px-2.5 text-xs font-semibold rounded-lg border-border/60 hover:bg-muted gap-1"
+                    >
+                        <ChevronLeft className="w-3.5 h-3.5" />
+                        <span>Prev</span>
+                    </Button>
+
+                    {/* Page number buttons */}
+                    <div className="flex items-center gap-1">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
+                            if (
+                                totalPages <= 7 ||
+                                pageNum === 1 ||
+                                pageNum === totalPages ||
+                                Math.abs(pageNum - safeCurrentPage) <= 1
+                            ) {
+                                return (
+                                    <Button
+                                        key={`${position}-page-${pageNum}`}
+                                        variant={safeCurrentPage === pageNum ? 'default' : 'outline'}
+                                        size="sm"
+                                        onClick={() => setCurrentPage(pageNum)}
+                                        className={`h-8 w-8 p-0 text-xs font-mono font-bold rounded-lg ${
+                                            safeCurrentPage === pageNum
+                                                ? 'bg-primary text-primary-foreground'
+                                                : 'border-border/60 hover:bg-muted text-muted-foreground hover:text-foreground'
+                                        }`}
+                                    >
+                                        {pageNum}
+                                    </Button>
+                                );
+                            }
+                            if (
+                                (pageNum === 2 && safeCurrentPage > 3) ||
+                                (pageNum === totalPages - 1 && safeCurrentPage < totalPages - 2)
+                            ) {
+                                return (
+                                    <span key={`${position}-ellipsis-${pageNum}`} className="text-muted-foreground px-1 text-xs font-mono">
+                                        …
+                                    </span>
+                                );
+                            }
+                            return null;
+                        })}
+                    </div>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={safeCurrentPage === totalPages}
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        className="h-8 px-2.5 text-xs font-semibold rounded-lg border-border/60 hover:bg-muted gap-1"
+                    >
+                        <span>Next</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                    </Button>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="p-4 sm:p-6 space-y-6 w-full max-w-[1750px] mx-auto">
             {/* Top Navigation Bar */}
@@ -1032,6 +1114,9 @@ export default function TikTokHashtagResultDetailPage() {
                             </CardContent>
                         </Card>
 
+                        {/* Top Pagination Bar */}
+                        {renderPaginationBar('top')}
+
                         {/* Vertical Timeline Stream with Rock-Solid Flex Architecture */}
                         {filteredPosts.length === 0 ? (
                             <Card className="border-border/60 bg-card rounded-xl p-8 text-center text-xs text-muted-foreground shadow-none">
@@ -1149,78 +1234,8 @@ export default function TikTokHashtagResultDetailPage() {
                             </div>
                         )}
 
-                        {/* Pagination Bar */}
-                        {filteredPosts.length > 0 && (
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-border/40">
-                                <div className="text-xs text-muted-foreground font-mono">
-                                    Showing <strong className="text-foreground">{startIndex + 1}</strong>–<strong className="text-foreground">{Math.min(startIndex + pageSize, filteredPosts.length)}</strong> of <strong className="text-foreground">{filteredPosts.length}</strong> videos
-                                    {filteredPosts.length !== snapshot.posts.length && ` (filtered from ${snapshot.posts.length})`}
-                                </div>
-
-                                <div className="flex items-center gap-1.5">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={safeCurrentPage === 1}
-                                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                                        className="h-8 px-2.5 text-xs font-semibold rounded-lg border-border/60 hover:bg-muted gap-1"
-                                    >
-                                        <ChevronLeft className="w-3.5 h-3.5" />
-                                        <span>Prev</span>
-                                    </Button>
-
-                                    {/* Page number buttons */}
-                                    <div className="flex items-center gap-1">
-                                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
-                                            if (
-                                                totalPages <= 7 ||
-                                                pageNum === 1 ||
-                                                pageNum === totalPages ||
-                                                Math.abs(pageNum - safeCurrentPage) <= 1
-                                            ) {
-                                                return (
-                                                    <Button
-                                                        key={pageNum}
-                                                        variant={safeCurrentPage === pageNum ? 'default' : 'outline'}
-                                                        size="sm"
-                                                        onClick={() => setCurrentPage(pageNum)}
-                                                        className={`h-8 w-8 p-0 text-xs font-mono font-bold rounded-lg ${
-                                                            safeCurrentPage === pageNum
-                                                                ? 'bg-primary text-primary-foreground'
-                                                                : 'border-border/60 hover:bg-muted text-muted-foreground hover:text-foreground'
-                                                        }`}
-                                                    >
-                                                        {pageNum}
-                                                    </Button>
-                                                );
-                                            }
-                                            if (
-                                                (pageNum === 2 && safeCurrentPage > 3) ||
-                                                (pageNum === totalPages - 1 && safeCurrentPage < totalPages - 2)
-                                            ) {
-                                                return (
-                                                    <span key={pageNum} className="text-muted-foreground px-1 text-xs font-mono">
-                                                        …
-                                                    </span>
-                                                );
-                                            }
-                                            return null;
-                                        })}
-                                    </div>
-
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={safeCurrentPage === totalPages}
-                                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                                        className="h-8 px-2.5 text-xs font-semibold rounded-lg border-border/60 hover:bg-muted gap-1"
-                                    >
-                                        <span>Next</span>
-                                        <ChevronRight className="w-3.5 h-3.5" />
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
+                        {/* Bottom Pagination Bar */}
+                        {renderPaginationBar('bottom')}
                     </div>
 
                     {/* RIGHT COLUMN: Active Post Inspector & Audience Intelligence (Sticky) */}
