@@ -9,8 +9,8 @@ test.describe('TikTok Radar Performance & Heaviness Audits', () => {
     });
 
     // Verify critical elements render properly
-    await expect(page.getByRole('heading', { name: 'TikTok Radar' })).toBeVisible();
-    await expect(page.getByText(/Theatrical Signals|Market Signals|Theatrical Lineup|Social Crawl Scheduled|No Crawl Snapshot|Scheduled Data Pipeline/i).first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Theatrical Radar/i })).toBeVisible();
+    await expect(page.getByText(/Social buzz, audience sentiment|National Lineup|Buzz Velocity/i).first()).toBeVisible();
 
     // Verify tab interactions work smoothly if data is present
     const commentsTab = page.getByRole('tab', { name: /Audience Comments/i });
@@ -31,8 +31,8 @@ test.describe('TikTok Radar Performance & Heaviness Audits', () => {
       maxLoadTimeMs: 15000,
     });
 
-    // Verify header and pipeline stages
-    await expect(page.getByRole('heading', { name: /TikTok Intelligence Pipeline/i })).toBeVisible();
+    // Verify header and pipeline stages on redirected Ops Hub
+    await expect(page.getByRole('heading', { name: /Ops & Pipeline Hub/i })).toBeVisible();
     await page.waitForLoadState('networkidle');
     await page.waitForSelector('.react-flow__renderer', { state: 'visible', timeout: 8000 });
 
@@ -51,7 +51,7 @@ test.describe('TikTok Radar Performance & Heaviness Audits', () => {
       maxLoadTimeMs: 15000,
     });
 
-    await expect(page.getByRole('heading', { name: /Hashtag Discovery Settings/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Ops & Pipeline Hub/i })).toBeVisible();
     await expect(page.getByText(/Truth Seed Accounts/i).first()).toBeVisible();
     await expect(page.getByText(/Cinema XXI/i)).toBeVisible();
 
