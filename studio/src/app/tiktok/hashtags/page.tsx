@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Link from 'next/link';
 import useSWR from 'swr';
-import { PageHeader } from '@/components/PageHeader';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -33,6 +33,7 @@ import {
     Activity,
     Layers,
 } from 'lucide-react';
+import { TikTokIcon } from '@/components/BrandIcons';
 import { fetcher } from '@/lib/api';
 import {
     formatIdr,
@@ -360,19 +361,74 @@ export default function CustomHashtagTrackerPage() {
     };
 
     return (
-        <div className="p-6 space-y-6 w-full max-w-[1680px] mx-auto">
-            {/* Page Header */}
-            <div>
-                <PageHeader
-                    title="Custom Hashtag Tracker"
-                    description="Track arbitrary promotional campaigns, studio stunts, or competitor hashtags with real-time transparent IDR cost forecasting."
-                />
+        <div className="p-6 space-y-6 w-full">
+            {/* Standard CineRadar Section Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/60 pb-4">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center border border-rose-500/20 shrink-0">
+                        <TikTokIcon className="w-5 h-5" />
+                    </div>
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <h1 className="text-xl font-bold tracking-tight text-foreground">Hashtag Tracker</h1>
+                            <Badge variant="outline" className="text-[10px] font-mono border-rose-500/30 text-rose-500">
+                                Social Pulse
+                            </Badge>
+                        </div>
+                        <p className="text-muted-foreground text-sm font-medium">
+                            Multi-cadence promotional campaigns, competitor stunts &amp; real-time IDR cost management
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2.5 flex-wrap">
+                    <div className="flex items-center gap-2 bg-muted/40 px-3 py-1.5 rounded-lg border border-border/60 text-xs">
+                        <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="font-bold text-foreground">{forecast?.activeTags ?? 0} Active</span>
+                        <span className="text-muted-foreground">·</span>
+                        <span className="font-mono text-muted-foreground">{formatIdr(forecast?.dailyCostIdr ?? 0)}/hari</span>
+                    </div>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => mutate()}
+                        disabled={isLoading}
+                        className="h-8 px-2.5 text-xs font-semibold rounded-lg border-border/60 hover:bg-muted gap-1.5"
+                        title="Refresh telemetry"
+                    >
+                        <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+                        Refresh
+                    </Button>
+
+                    <Link href="/tiktok/explorer">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 gap-1.5 px-3 text-xs font-semibold rounded-lg border-border/60 hover:bg-muted"
+                        >
+                            <TikTokIcon className="w-3.5 h-3.5 text-rose-500" />
+                            Theatrical Radar
+                        </Button>
+                    </Link>
+
+                    <Link href="/tiktok/ops">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 gap-1.5 px-3 text-xs font-semibold rounded-lg border-border/60 hover:bg-muted"
+                        >
+                            <Layers className="w-3.5 h-3.5 text-primary" />
+                            Ops Hub
+                        </Button>
+                    </Link>
+                </div>
             </div>
 
-            {/* Split 2-Column Layout: Left (2/3) & Right (1/3) */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Split 2-Column Layout: Left (2/3) & Right (1/3) with Full Horizontal Expansion */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full">
                 {/* Left Side: 2/3 Width (Tracked Hashtags & Stats) */}
-                <div className="lg:col-span-8 space-y-4">
+                <div className="lg:col-span-8 space-y-4 w-full">
                     <Card className="border-border/60 bg-card overflow-hidden">
                         <CardHeader className="p-4 border-b border-border/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
@@ -590,7 +646,7 @@ export default function CustomHashtagTrackerPage() {
                 </div>
 
                 {/* Right Side: 1/3 Width (Top to Bottom Stack) */}
-                <div className="lg:col-span-4 space-y-5">
+                <div className="lg:col-span-4 space-y-5 w-full">
                     {/* 1. Adding New Hashtag */}
                     <Card className="border-border/60 bg-card shadow-sm">
                         <CardHeader className="p-4 pb-2 border-b border-border/40">
