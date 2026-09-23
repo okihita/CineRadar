@@ -4,7 +4,7 @@ packages:
 
 catalog:
   # Framework & Core
-  next: 16.3.5
+  next: 16.3.6
   react: 19.3.0
   react-dom: 19.3.0
 
@@ -19,7 +19,7 @@ catalog:
   # Tooling & Types
   typescript: ^6.0.3
   eslint: ^10.11.0
-  eslint-config-next: 16.3.5
+  eslint-config-next: 16.3.6
   '@playwright/test': ^1.63.0
   '@types/node': ^26.6.2
   '@types/react': ^19.3.0
@@ -39,17 +39,17 @@ allowBuilds:
   sharp: false
 
 minimumReleaseAgeExclude:
-  - '@next/env@16.3.5'
-  - '@next/eslint-plugin-next@16.3.5'
-  - '@next/swc-darwin-arm64@16.3.5'
-  - '@next/swc-darwin-x64@16.3.5'
-  - '@next/swc-linux-arm64-gnu@16.3.5'
-  - '@next/swc-linux-arm64-musl@16.3.5'
-  - '@next/swc-linux-x64-gnu@16.3.5'
-  - '@next/swc-linux-x64-musl@16.3.5'
-  - '@next/swc-win32-arm64-msvc@16.3.5'
-  - '@next/swc-win32-x64-msvc@16.3.5'
-  - eslint-config-next@16.3.5
-  - next@16.3.5
+  - '@next/env@16.3.6'
+  - '@next/eslint-plugin-next@16.3.6'
+  - '@next/swc-darwin-arm64@16.3.6'
+  - '@next/swc-darwin-x64@16.3.6'
+  - '@next/swc-linux-arm64-gnu@16.3.6'
+  - '@next/swc-linux-arm64-musl@16.3.6'
+  - '@next/swc-linux-x64-gnu@16.3.6'
+  - '@next/swc-linux-x64-musl@16.3.6'
+  - '@next/swc-win32-arm64-msvc@16.3.6'
+  - '@next/swc-win32-x64-msvc@16.3.6'
+  - eslint-config-next@16.3.6
+  - next@16.3.6
   - '@xyflow/react@12.11.6'
   - '@xyflow/system@0.0.82'
