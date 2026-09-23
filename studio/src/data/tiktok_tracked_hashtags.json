@@ -2,15 +2,15 @@
   {
     "id": "sitisivampir",
     "_name": "projects/cineradar-481014/databases/(default)/documents/tiktok_tracked_hashtags/sitisivampir",
-    "category": "campaign",
-    "tag": "sitisivampir",
-    "updated_at": "2026-09-23T09:46:06.754Z",
-    "cadence": 1,
     "label": "sitisivampir",
-    "start_hour": 18,
-    "target_posts": 40,
     "created_at": "2026-09-23T09:46:06.754Z",
+    "start_hour": 18,
     "active": true,
-    "include_comments": true
+    "category": "campaign",
+    "target_posts": 40,
+    "updated_at": "2026-09-23T09:46:06.754Z",
+    "include_comments": true,
+    "cadence": 1,
+    "tag": "sitisivampir"
   }
 ]

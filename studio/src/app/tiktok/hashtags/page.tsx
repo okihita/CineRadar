@@ -32,7 +32,6 @@ import {
     Edit3,
     X,
     Activity,
-    Layers,
     Database,
     BarChart2,
 } from 'lucide-react';
@@ -425,39 +424,6 @@ export default function CustomHashtagTrackerPage() {
                         <span className="font-mono text-muted-foreground">{formatIdr(forecast?.dailyCostIdr ?? 0)}/hari</span>
                     </div>
 
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => mutate()}
-                        disabled={isLoading}
-                        className="h-8 px-2.5 text-xs font-semibold rounded-lg border-border/60 hover:bg-muted gap-1.5"
-                        title="Refresh telemetry"
-                    >
-                        <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-                        Refresh
-                    </Button>
-
-                    <Link href="/tiktok/explorer">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8 gap-1.5 px-3 text-xs font-semibold rounded-lg border-border/60 hover:bg-muted"
-                        >
-                            <TikTokIcon className="w-3.5 h-3.5 text-rose-500" />
-                            Theatrical Radar
-                        </Button>
-                    </Link>
-
-                    <Link href="/tiktok/ops">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8 gap-1.5 px-3 text-xs font-semibold rounded-lg border-border/60 hover:bg-muted"
-                        >
-                            <Layers className="w-3.5 h-3.5 text-primary" />
-                            Ops Hub
-                        </Button>
-                    </Link>
                 </div>
             </div>
 
