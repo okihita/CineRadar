@@ -10,6 +10,8 @@ export interface TrackedHashtag {
     active: boolean;
     created_at: string;
     updated_at: string;
+    last_scraped_at?: string;
+    latest_stats?: HashtagPulseStats | null;
 }
 
 export interface CustomHashtagsConfigDoc {
@@ -35,6 +37,45 @@ export interface HashtagPulseStats {
         praise_points?: string[];
         criticism_themes?: string[];
     };
+    cadence?: number;
+    start_hour?: number;
     crawled_at?: string;
     top_video_url?: string;
+}
+
+export interface TikTokPostItem {
+    id: string;
+    url: string;
+    author_handle: string;
+    author_name?: string;
+    caption: string;
+    hashtags?: string[];
+    views: number;
+    likes: number;
+    comments: number;
+    shares: number;
+    published_at: string;
+}
+
+export interface TikTokHashtagDetailSnapshot {
+    tag: string;
+    label: string;
+    category: string;
+    date: string;
+    crawled_at: string;
+    source: 'live_manual' | 'scheduled_pulse' | 'simulated';
+    total_posts: number;
+    total_views: number;
+    total_likes: number;
+    total_comments: number;
+    total_shares: number;
+    sentiment?: {
+        positive: number;
+        mixed: number;
+        negative: number;
+        hype_score: number;
+        praise_points?: string[];
+        criticism_themes?: string[];
+    };
+    posts: TikTokPostItem[];
 }

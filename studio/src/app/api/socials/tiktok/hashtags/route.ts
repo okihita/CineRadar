@@ -3,98 +3,62 @@ import fs from 'fs';
 import path from 'path';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { computeAggregateCost, computeHashtagUnitCost } from '@/lib/tiktokCostEngine';
-import type { TrackedHashtag, CustomHashtagsConfigDoc, HashtagPulseStats } from '@/types/tiktokHashtags';
+import type { TrackedHashtag, HashtagPulseStats } from '@/types/tiktokHashtags';
 
-const FIRESTORE_COLLECTION = 'tiktok_sources';
-const FIRESTORE_DOC_ID = 'config';
+const FIRESTORE_COLLECTION = 'tiktok_tracked_hashtags';
+const SOURCES_COLLECTION = 'tiktok_sources';
+const SOURCES_DOC_ID = 'config';
 
-function getLocalConfigPath(): string {
-    return path.join(process.cwd(), 'src/data/tiktok_sources.json');
+function getLocalBackupPath(): string {
+    return path.join(process.cwd(), 'src/data/tiktok_tracked_hashtags.json');
 }
 
-function readLocalConfig(): CustomHashtagsConfigDoc {
-    const filePath = getLocalConfigPath();
+function readLocalBackup(): TrackedHashtag[] {
+    const filePath = getLocalBackupPath();
     if (!fs.existsSync(filePath)) {
-        return { tracked_hashtags: [] };
+        return [];
     }
     try {
         const raw = fs.readFileSync(filePath, 'utf-8');
-        return JSON.parse(raw);
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
     } catch {
-        return { tracked_hashtags: [] };
+        return [];
     }
 }
 
-function writeLocalConfig(data: CustomHashtagsConfigDoc): void {
+function writeLocalBackup(tags: TrackedHashtag[]): void {
     try {
-        const filePath = getLocalConfigPath();
-        fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+        const filePath = getLocalBackupPath();
+        fs.writeFileSync(filePath, JSON.stringify(tags, null, 2), 'utf-8');
     } catch (e) {
-        console.warn('[TikTok Hashtags API] Failed to update local config backup:', e);
+        console.warn('[TikTok Hashtags API] Failed to update local backup:', e);
     }
 }
 
-async function getHashtagConfig(): Promise<{ doc: CustomHashtagsConfigDoc; tags: TrackedHashtag[] }> {
+async function getTrackedHashtags(): Promise<TrackedHashtag[]> {
     try {
-        const doc = await firestoreRestClient.getDocument<CustomHashtagsConfigDoc>(
-            FIRESTORE_COLLECTION,
-            FIRESTORE_DOC_ID
-        );
-        if (doc) {
-            return {
-                doc,
-                tags: Array.isArray(doc.tracked_hashtags) ? doc.tracked_hashtags : [],
-            };
+        const docs = await firestoreRestClient.getCollection<TrackedHashtag>(FIRESTORE_COLLECTION);
+        if (docs && docs.length > 0) {
+            writeLocalBackup(docs);
+            return docs;
         }
     } catch (err) {
-        console.warn('[TikTok Hashtags API] Firestore read fallback to local JSON:', err);
+        console.warn('[TikTok Hashtags API] Firestore read fallback to local backup:', err);
     }
 
-    const local = readLocalConfig();
-    return {
-        doc: local,
-        tags: Array.isArray(local.tracked_hashtags) ? local.tracked_hashtags : [],
-    };
+    return readLocalBackup();
 }
 
-async function persistHashtagConfig(updatedTags: TrackedHashtag[]): Promise<boolean> {
-    const { doc } = await getHashtagConfig();
-    const updatedDoc: CustomHashtagsConfigDoc = {
-        ...doc,
-        tracked_hashtags: updatedTags,
-        updated_at: new Date().toISOString(),
-    };
-
-    // Update local file backup
-    writeLocalConfig(updatedDoc);
-
-    // Update Firestore
-    try {
-        const success = await firestoreRestClient.updateDocument(
-            FIRESTORE_COLLECTION,
-            FIRESTORE_DOC_ID,
-            {
-                tracked_hashtags: updatedTags,
-                updated_at: new Date().toISOString(),
-            }
-        );
-        return success;
-    } catch (err) {
-        console.error('[TikTok Hashtags API] Failed to persist to Firestore:', err);
-        return false;
-    }
-}
-
-// GET: Return all tracked hashtags, cost forecast, and recent stats
+// GET: Return all tracked hashtags from dedicated collection, cost forecast, and recent stats
 export async function GET() {
     try {
-        const { doc, tags } = await getHashtagConfig();
+        const tags = await getTrackedHashtags();
         const forecast = computeAggregateCost(tags);
 
         // Fetch recent pulse telemetry if available
         const latestPulseMap: Record<string, HashtagPulseStats> = {};
         try {
-            // Try fetching latest custom pulse data
             const today = new Date().toISOString().split('T')[0];
             const pulseDoc = await firestoreRestClient.getDocument<{ stats?: Record<string, HashtagPulseStats> }>(
                 'tiktok_custom_pulse',
@@ -105,6 +69,18 @@ export async function GET() {
             }
         } catch {
             // Ignore telemetry fetch errors
+        }
+
+        // Fetch excluded hashtags for search/suggestions
+        let excludedHashtags: string[] = [];
+        try {
+            const sourcesDoc = await firestoreRestClient.getDocument<{ excluded_hashtags?: string[] }>(
+                SOURCES_COLLECTION,
+                SOURCES_DOC_ID
+            );
+            excludedHashtags = sourcesDoc?.excluded_hashtags || [];
+        } catch {
+            // Fallback to empty
         }
 
         const tagsWithCost = tags.map((t) => {
@@ -127,8 +103,8 @@ export async function GET() {
             success: true,
             tracked_hashtags: tagsWithCost,
             cost_forecast: forecast,
-            excluded_hashtags: doc.excluded_hashtags || [],
-            updated_at: doc.updated_at,
+            excluded_hashtags: excludedHashtags,
+            updated_at: new Date().toISOString(),
         });
     } catch (error) {
         console.error('[TikTok Hashtags API GET Error]:', error);
@@ -139,7 +115,7 @@ export async function GET() {
     }
 }
 
-// POST: Add a new custom hashtag
+// POST: Add a new custom hashtag into dedicated tiktok_tracked_hashtags collection
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
@@ -153,10 +129,9 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const { doc, tags } = await getHashtagConfig();
-
         // Check if already tracked
-        if (tags.some((t) => t.tag.toLowerCase() === cleanTag)) {
+        const existing = await firestoreRestClient.getDocument<TrackedHashtag>(FIRESTORE_COLLECTION, cleanTag);
+        if (existing) {
             return NextResponse.json(
                 { success: false, error: `Hashtag #${cleanTag} is already being tracked` },
                 { status: 409 }
@@ -167,8 +142,9 @@ export async function POST(req: NextRequest) {
         const rawStartHour = body.start_hour !== undefined ? Number(body.start_hour) : 18;
         const startHour = isNaN(rawStartHour) ? 18 : Math.max(0, Math.min(23, rawStartHour));
 
+        const now = new Date().toISOString();
         const newEntry: TrackedHashtag = {
-            id: `ht-${cleanTag}-${Date.now().toString(36)}`,
+            id: cleanTag,
             tag: cleanTag,
             label: String(body.label || cleanTag).trim(),
             category: ['campaign', 'competitor', 'meme', 'talent', 'general'].includes(body.category)
@@ -179,16 +155,19 @@ export async function POST(req: NextRequest) {
             start_hour: startHour,
             include_comments: body.include_comments !== false,
             active: body.active !== false,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
+            created_at: now,
+            updated_at: now,
         };
 
-        const updated = [newEntry, ...tags];
-        const success = await persistHashtagConfig(updated);
+        const success = await firestoreRestClient.createDocument(
+            FIRESTORE_COLLECTION,
+            cleanTag,
+            newEntry as unknown as Record<string, unknown>
+        );
 
         if (!success) {
             return NextResponse.json(
-                { success: false, error: 'Failed to save hashtag to database' },
+                { success: false, error: 'Failed to save hashtag to dedicated database collection' },
                 { status: 500 }
             );
         }
@@ -196,7 +175,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
             success: true,
             data: newEntry,
-            message: `Hashtag #${cleanTag} added successfully`,
+            message: `Hashtag #${cleanTag} added successfully to ${FIRESTORE_COLLECTION}`,
         });
     } catch (error) {
         console.error('[TikTok Hashtags API POST Error]:', error);
@@ -207,57 +186,66 @@ export async function POST(req: NextRequest) {
     }
 }
 
-// PUT: Update hashtag configuration (e.g. toggle active, adjust posts, comments, cadence, start_hour)
+// PUT: Update hashtag document in tiktok_tracked_hashtags
 export async function PUT(req: NextRequest) {
     try {
         const body = await req.json();
-        const tagId = String(body.id || '').trim();
+        const rawId = String(body.id || body.tag || '').trim();
+        const cleanTag = rawId.replace(/^ht-/, '').replace(/^#/, '').toLowerCase().trim();
 
-        if (!tagId) {
-            return NextResponse.json({ success: false, error: 'Hashtag ID is required' }, { status: 400 });
+        if (!cleanTag) {
+            return NextResponse.json({ success: false, error: 'Hashtag identifier is required' }, { status: 400 });
         }
 
-        const { tags } = await getHashtagConfig();
-        const index = tags.findIndex((t) => t.id === tagId);
-
-        if (index === -1) {
-            return NextResponse.json({ success: false, error: 'Tracked hashtag not found' }, { status: 404 });
+        let current = await firestoreRestClient.getDocument<TrackedHashtag>(FIRESTORE_COLLECTION, cleanTag);
+        if (!current && rawId !== cleanTag) {
+            current = await firestoreRestClient.getDocument<TrackedHashtag>(FIRESTORE_COLLECTION, rawId);
         }
 
-        const current = tags[index];
-        const updatedEntry: TrackedHashtag = {
-            ...current,
-            label: body.label !== undefined ? String(body.label).trim() : current.label,
-            category: body.category || current.category,
-            target_posts: body.target_posts !== undefined ? Number(body.target_posts) : current.target_posts,
-            cadence:
-                body.cadence !== undefined
-                    ? Math.max(1, Math.min(4, Number(body.cadence) || 1))
-                    : (current.cadence ?? 1),
-            start_hour:
-                body.start_hour !== undefined
-                    ? Math.max(0, Math.min(23, Number(body.start_hour) || 18))
-                    : (current.start_hour ?? 18),
-            include_comments:
-                body.include_comments !== undefined ? Boolean(body.include_comments) : current.include_comments,
-            active: body.active !== undefined ? Boolean(body.active) : current.active,
+        if (!current) {
+            return NextResponse.json({ success: false, error: 'Tracked hashtag document not found' }, { status: 404 });
+        }
+
+        const docId = current.tag || cleanTag;
+        const updates: Partial<TrackedHashtag> = {
             updated_at: new Date().toISOString(),
         };
 
-        tags[index] = updatedEntry;
-        const success = await persistHashtagConfig(tags);
+        if (body.label !== undefined) updates.label = String(body.label).trim();
+        if (body.category !== undefined) updates.category = body.category;
+        if (body.target_posts !== undefined) updates.target_posts = Number(body.target_posts);
+        if (body.cadence !== undefined) {
+            updates.cadence = Math.max(1, Math.min(4, Number(body.cadence) || 1));
+        }
+        if (body.start_hour !== undefined) {
+            updates.start_hour = Math.max(0, Math.min(23, Number(body.start_hour) || 18));
+        }
+        if (body.include_comments !== undefined) {
+            updates.include_comments = Boolean(body.include_comments);
+        }
+        if (body.active !== undefined) {
+            updates.active = Boolean(body.active);
+        }
+
+        const success = await firestoreRestClient.updateDocument(
+            FIRESTORE_COLLECTION,
+            docId,
+            updates as unknown as Record<string, unknown>
+        );
 
         if (!success) {
             return NextResponse.json(
-                { success: false, error: 'Failed to update hashtag in database' },
+                { success: false, error: 'Failed to update hashtag document' },
                 { status: 500 }
             );
         }
 
+        const updatedEntry = { ...current, ...updates };
+
         return NextResponse.json({
             success: true,
             data: updatedEntry,
-            message: `Hashtag #${updatedEntry.tag} updated`,
+            message: `Hashtag #${docId} updated`,
         });
     } catch (error) {
         console.error('[TikTok Hashtags API PUT Error]:', error);
@@ -268,34 +256,33 @@ export async function PUT(req: NextRequest) {
     }
 }
 
-// DELETE: Remove a tracked hashtag
+// DELETE: Remove a tracked hashtag document from tiktok_tracked_hashtags
 export async function DELETE(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
-        const tagId = searchParams.get('id');
+        const rawId = searchParams.get('id') || searchParams.get('tag') || '';
+        const cleanTag = rawId.replace(/^ht-/, '').replace(/^#/, '').toLowerCase().trim();
 
-        if (!tagId) {
-            return NextResponse.json({ success: false, error: 'Hashtag ID is required' }, { status: 400 });
+        if (!cleanTag) {
+            return NextResponse.json({ success: false, error: 'Hashtag identifier is required' }, { status: 400 });
         }
 
-        const { tags } = await getHashtagConfig();
-        const filtered = tags.filter((t) => t.id !== tagId);
-
-        if (filtered.length === tags.length) {
-            return NextResponse.json({ success: false, error: 'Tracked hashtag not found' }, { status: 404 });
+        // Attempt delete by normalized tag or rawId
+        let success = await firestoreRestClient.deleteDocument(FIRESTORE_COLLECTION, cleanTag);
+        if (!success && rawId !== cleanTag) {
+            success = await firestoreRestClient.deleteDocument(FIRESTORE_COLLECTION, rawId);
         }
 
-        const success = await persistHashtagConfig(filtered);
         if (!success) {
             return NextResponse.json(
-                { success: false, error: 'Failed to delete hashtag from database' },
+                { success: false, error: 'Failed to delete hashtag document from collection' },
                 { status: 500 }
             );
         }
 
         return NextResponse.json({
             success: true,
-            message: 'Hashtag removed from tracking',
+            message: `Hashtag #${cleanTag} removed from tracking`,
         });
     } catch (error) {
         console.error('[TikTok Hashtags API DELETE Error]:', error);

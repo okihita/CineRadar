@@ -1,0 +1,82 @@
+[
+  {
+    "id": "sitisivampir",
+    "_name": "projects/cineradar-481014/databases/(default)/documents/tiktok_tracked_hashtags/sitisivampir",
+    "last_scraped_at": "2026-09-23T13:06:27.486Z",
+    "include_comments": true,
+    "category": "campaign",
+    "created_at": "2026-09-23T09:46:06.754Z",
+    "latest_stats": {
+      "sentiment": {
+        "criticism_themes": [
+          "Tidak ditemukan anomali atau sentimen penolakan mayoritas"
+        ],
+        "negative": 6,
+        "hype_score": 82,
+        "mixed": 16,
+        "positive": 78,
+        "praise_points": [
+          "Trafik video viral terpantau aktif dan eksposure tinggi di FYP TikTok",
+          "Resonansi audiens kuat dengan antusiasme penonton bioskop",
+          "Rekomendasi Word-of-Mouth (WoM) dominan di interaksi kreator"
+        ]
+      },
+      "total_posts": 100,
+      "cadence": 1,
+      "total_comments": 1094,
+      "total_views": 1384805,
+      "total_shares": 2102,
+      "start_hour": 18,
+      "crawled_at": "2026-09-23T13:06:27.486Z",
+      "top_video_url": "https://www.tiktok.com/@zonaclip.co/video/7682290665518107925",
+      "total_likes": 53244
+    },
+    "label": "sitisivampir",
+    "updated_at": "2026-09-23T13:06:27.486Z",
+    "cadence": 1,
+    "target_posts": 40,
+    "tag": "sitisivampir",
+    "start_hour": 18,
+    "active": true
+  },
+  {
+    "id": "wargarusun609",
+    "_name": "projects/cineradar-481014/databases/(default)/documents/tiktok_tracked_hashtags/wargarusun609",
+    "start_hour": 18,
+    "tag": "wargarusun609",
+    "last_scraped_at": "2026-09-23T13:11:22.680Z",
+    "include_comments": true,
+    "updated_at": "2026-09-23T13:11:22.680Z",
+    "created_at": "2026-09-23T13:11:05.802Z",
+    "label": "wargarusun609",
+    "latest_stats": {
+      "start_hour": 18,
+      "total_posts": 100,
+      "sentiment": {
+        "negative": 6,
+        "hype_score": 82,
+        "criticism_themes": [
+          "Tidak ditemukan anomali atau sentimen penolakan mayoritas"
+        ],
+        "praise_points": [
+          "Trafik video viral terpantau aktif dan eksposure tinggi di FYP TikTok",
+          "Resonansi audiens kuat dengan antusiasme penonton bioskop",
+          "Rekomendasi Word-of-Mouth (WoM) dominan di interaksi kreator"
+        ],
+        "positive": 78,
+        "mixed": 16
+      },
+      "total_comments": 5142,
+      "crawled_at": "2026-09-23T13:11:22.680Z",
+      "total_views": 5637650,
+      "top_video_url": "https://www.tiktok.com/@dhim.dhim.dhim/video/7676817009803398421",
+      "total_likes": 484930,
+      "cadence": 1,
+      "total_shares": 198406
+    },
+    "target_posts": 100,
+    "category": "campaign",
+    "cadence": 1,
+    "active": true
+  }
+]

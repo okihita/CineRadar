@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
-import type { TrackedHashtag, CustomHashtagsConfigDoc } from '@/types/tiktokHashtags';
+import type { TrackedHashtag, HashtagPulseStats } from '@/types/tiktokHashtags';
 
 // Mock/Live Runner trigger: scrapes sample posts or simulates execution for selected hashtag
 export async function POST(req: NextRequest) {
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
         if (isDryRun) {
             // Mock preview data for testing without burning credits
-            const simulatedStats = {
+            const simulatedStats: HashtagPulseStats = {
                 total_posts: 40,
                 total_views: Math.floor(Math.random() * 800000) + 120000,
                 total_likes: Math.floor(Math.random() * 45000) + 8000,
@@ -45,14 +45,30 @@ export async function POST(req: NextRequest) {
                 top_video_url: `https://www.tiktok.com/tag/${tag}`,
             };
 
-            // Save to tiktok_custom_pulse
-            await firestoreRestClient.createDocument('tiktok_custom_pulse', today, {
-                date: today,
-                updated_at: now,
-                stats: {
-                    [tag]: simulatedStats,
-                },
-            });
+            // Fetch existing today pulse document if present to merge
+            const existingPulseDoc = await firestoreRestClient.getDocument<{ stats?: Record<string, HashtagPulseStats> }>(
+                'tiktok_custom_pulse',
+                today
+            );
+
+            const mergedStats: Record<string, HashtagPulseStats> = {
+                ...(existingPulseDoc?.stats || {}),
+                [tag]: simulatedStats,
+            };
+
+            if (existingPulseDoc) {
+                await firestoreRestClient.updateDocument('tiktok_custom_pulse', today, {
+                    date: today,
+                    updated_at: now,
+                    stats: mergedStats,
+                });
+            } else {
+                await firestoreRestClient.createDocument('tiktok_custom_pulse', today, {
+                    date: today,
+                    updated_at: now,
+                    stats: mergedStats,
+                });
+            }
 
             return NextResponse.json({
                 success: true,

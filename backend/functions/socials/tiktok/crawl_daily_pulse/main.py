@@ -615,11 +615,14 @@ async def execute_daily_crawl_async(
         "Scraping %d Tier 1 films (40 posts + 30 comments) concurrently", len(tier1_list)
     )
 
-    # Read active custom tracked hashtags from tiktok_sources/config
-    sources_doc = db.collection("tiktok_sources").document("config").get()
-    sources_data = sources_doc.to_dict() or {} if sources_doc.exists else {}
-    tracked_tags = sources_data.get("tracked_hashtags", [])
-    active_custom_tags = [t for t in tracked_tags if isinstance(t, dict) and t.get("active") and t.get("tag")]
+    # Read active custom tracked hashtags from dedicated tiktok_tracked_hashtags collection
+    tags_stream = db.collection("tiktok_tracked_hashtags").stream()
+    active_custom_tags: list[dict[str, Any]] = []
+    for doc in tags_stream:
+        t_data = doc.to_dict() or {}
+        if t_data.get("active") and t_data.get("tag"):
+            t_data["id"] = doc.id
+            active_custom_tags.append(t_data)
 
     limits = [40] * len(tier1_list)
     combined_movies = tier1_list
@@ -724,6 +727,35 @@ async def execute_daily_crawl_async(
                 "crawled_at": now_wib.isoformat(),
                 "top_video_url": top_c_posts[0].get("url") if top_c_posts else None,
             }
+
+            # Persist detailed post snapshot to subcollection
+            clean_tag = ct["tag"].lower()
+            db.collection("tiktok_custom_pulse").document(target_date).collection("hashtags").document(clean_tag).set(
+                {
+                    "tag": clean_tag,
+                    "label": ct.get("label") or clean_tag,
+                    "category": ct.get("category") or "general",
+                    "date": target_date,
+                    "crawled_at": now_wib.isoformat(),
+                    "source": "scheduled_pulse",
+                    "total_posts": len(top_c_posts),
+                    "total_views": c_views,
+                    "total_likes": c_likes,
+                    "total_comments": c_comments,
+                    "total_shares": c_shares,
+                    "sentiment": c_sent,
+                    "posts": top_c_posts,
+                }
+            )
+
+            # Update tracked hashtag metadata with latest snapshot
+            db.collection("tiktok_tracked_hashtags").document(clean_tag).set(
+                {
+                    "last_scraped_at": now_wib.isoformat(),
+                    "latest_stats": custom_stats_map[clean_tag],
+                },
+                merge=True,
+            )
 
         db.collection("tiktok_custom_pulse").document(target_date).set(
             {

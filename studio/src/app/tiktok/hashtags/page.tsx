@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import useSWR from 'swr';
+import { useSession } from 'next-auth/react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,35 +12,39 @@ import {
     Hash,
     Plus,
     Trash2,
-    DollarSign,
-    Sparkles,
-    Flame,
     Eye,
     Heart,
-    AlertTriangle,
     CheckCircle2,
     Play,
     Pause,
     RefreshCw,
     Sliders,
     Search,
-    Calculator,
     Zap,
     ExternalLink,
     Clock,
-    Calendar,
     Edit3,
     X,
     Activity,
-    Layers,
+    Database,
+    BarChart2,
+    MoreHorizontal,
 } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import { TikTokIcon } from '@/components/BrandIcons';
 import { fetcher } from '@/lib/api';
+import { getTodayJakarta } from '@/lib/timeUtils';
+import { getFirestoreConsoleUrl } from '@/lib/constants';
 import {
     formatIdr,
     formatUsd,
     computeHashtagUnitCost,
-    computeAggregateCost,
     USD_TO_IDR,
     APIFY_STARTER_MONTHLY_CREDITS_USD,
 } from '@/lib/tiktokCostEngine';
@@ -107,6 +112,10 @@ const START_HOUR_OPTIONS = [
 ];
 
 export default function CustomHashtagTrackerPage() {
+    const { data: session } = useSession();
+    const isAdmin = (session as unknown as { user?: { role?: string } })?.user?.role === 'admin';
+    const todayJakarta = getTodayJakarta();
+
     const { data, mutate, isLoading } = useSWR<HashtagsApiResponse>(
         '/api/socials/tiktok/hashtags',
         fetcher
@@ -140,13 +149,13 @@ export default function CustomHashtagTrackerPage() {
     const [simAddTagsCount, setSimAddTagsCount] = useState<number>(1);
     const [simCadence, setSimCadence] = useState<number>(1);
     const [simPostsPerTag, setSimPostsPerTag] = useState<number>(40);
-    const [simIncludeComments, setSimIncludeComments] = useState<boolean>(true);
+    const [simIncludeComments] = useState<boolean>(true);
 
-    const tags = data?.tracked_hashtags || [];
     const forecast = data?.cost_forecast;
 
     // Filtered list
     const filteredTags = useMemo(() => {
+        const tags = data?.tracked_hashtags || [];
         return tags.filter((t) => {
             const matchesQuery =
                 t.tag.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -154,7 +163,7 @@ export default function CustomHashtagTrackerPage() {
             const matchesCat = categoryFilter === 'all' || t.category === categoryFilter;
             return matchesQuery && matchesCat;
         });
-    }, [tags, searchQuery, categoryFilter]);
+    }, [data?.tracked_hashtags, searchQuery, categoryFilter]);
 
     // Live cost preview for Add Form
     const currentFormCost = useMemo(() => {
@@ -360,6 +369,33 @@ export default function CustomHashtagTrackerPage() {
         }
     };
 
+    // Live On-Demand Scrape Handler
+    const [scrapingLiveTag, setScrapingLiveTag] = useState<string | null>(null);
+    const handleScrapeLive = async (tag: string) => {
+        setScrapingLiveTag(tag);
+        toast.info(`Initiating live Apify scrape for #${tag}...`);
+        try {
+            const res = await fetch('/api/socials/tiktok/hashtags/scrape', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tag, force: false, dryRun: false }),
+            });
+            const result = await res.json();
+            if (result.success) {
+                toast.success(result.message || `Live crawl completed for #${tag}!`);
+                mutate();
+            } else if (result.cooldown) {
+                toast.error(result.error);
+            } else {
+                toast.error(result.error || 'Live scrape failed');
+            }
+        } catch {
+            toast.error('Network error during live scrape');
+        } finally {
+            setScrapingLiveTag(null);
+        }
+    };
+
     return (
         <div className="p-6 space-y-6 w-full">
             {/* Standard CineRadar Section Header */}
@@ -382,46 +418,13 @@ export default function CustomHashtagTrackerPage() {
                 </div>
 
                 <div className="flex items-center gap-2.5 flex-wrap">
-                    <div className="flex items-center gap-2 bg-muted/40 px-3 py-1.5 rounded-lg border border-border/60 text-xs">
+                    <div className="flex items-center gap-2 bg-muted/40 px-3 py-1.5 rounded-lg border border-border/60 text-sm">
                         <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                         <span className="font-bold text-foreground">{forecast?.activeTags ?? 0} Active</span>
                         <span className="text-muted-foreground">·</span>
                         <span className="font-mono text-muted-foreground">{formatIdr(forecast?.dailyCostIdr ?? 0)}/hari</span>
                     </div>
 
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => mutate()}
-                        disabled={isLoading}
-                        className="h-8 px-2.5 text-xs font-semibold rounded-lg border-border/60 hover:bg-muted gap-1.5"
-                        title="Refresh telemetry"
-                    >
-                        <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-                        Refresh
-                    </Button>
-
-                    <Link href="/tiktok/explorer">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8 gap-1.5 px-3 text-xs font-semibold rounded-lg border-border/60 hover:bg-muted"
-                        >
-                            <TikTokIcon className="w-3.5 h-3.5 text-rose-500" />
-                            Theatrical Radar
-                        </Button>
-                    </Link>
-
-                    <Link href="/tiktok/ops">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8 gap-1.5 px-3 text-xs font-semibold rounded-lg border-border/60 hover:bg-muted"
-                        >
-                            <Layers className="w-3.5 h-3.5 text-primary" />
-                            Ops Hub
-                        </Button>
-                    </Link>
                 </div>
             </div>
 
@@ -445,13 +448,13 @@ export default function CustomHashtagTrackerPage() {
                                         placeholder="Search tag or label..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="h-8 pl-8 text-xs rounded-lg"
+                                        className="h-8 pl-8 text-sm rounded-lg"
                                     />
                                 </div>
                                 <select
                                     value={categoryFilter}
-                                    onChange={(e) => setCategoryFilter(e.target.value as any)}
-                                    className="h-8 rounded-lg border border-input bg-background px-2.5 text-xs font-semibold shadow-sm"
+                                    onChange={(e) => setCategoryFilter(e.target.value as typeof categoryFilter)}
+                                    className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm font-semibold shadow-sm"
                                 >
                                     <option value="all">All Categories</option>
                                     <option value="campaign">Campaign</option>
@@ -465,20 +468,20 @@ export default function CustomHashtagTrackerPage() {
 
                         <CardContent className="p-0">
                             {isLoading ? (
-                                <div className="p-16 text-center text-xs text-muted-foreground">
+                                <div className="p-16 text-center text-sm text-muted-foreground">
                                     Loading tracked custom hashtags &amp; telemetry...
                                 </div>
                             ) : filteredTags.length === 0 ? (
                                 <div className="p-16 text-center space-y-2">
                                     <Hash className="w-8 h-8 text-muted-foreground/40 mx-auto" />
                                     <div className="text-sm font-bold text-foreground">No Custom Hashtags Found</div>
-                                    <div className="text-xs text-muted-foreground max-w-sm mx-auto">
+                                    <div className="text-sm text-muted-foreground max-w-sm mx-auto">
                                         Use the form on the right to configure and begin tracking your first custom hashtag.
                                     </div>
                                 </div>
                             ) : (
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-left text-xs">
+                                    <table className="w-full text-left text-sm">
                                         <thead className="bg-muted/40 border-b border-border/40 text-muted-foreground font-semibold uppercase text-[10px]">
                                             <tr>
                                                 <th className="py-2.5 px-4">Hashtag &amp; Label</th>
@@ -491,26 +494,52 @@ export default function CustomHashtagTrackerPage() {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-border/30">
-                                            {filteredTags.map((t) => (
-                                                <tr key={t.id} className="hover:bg-muted/20 transition-colors">
-                                                    <td className="py-3 px-4">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="font-mono font-bold text-foreground text-sm">
-                                                                #{t.tag}
-                                                            </span>
-                                                            <a
-                                                                href={`https://www.tiktok.com/tag/${t.tag}`}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="text-muted-foreground hover:text-primary transition-colors"
-                                                            >
-                                                                <ExternalLink className="w-3 h-3" />
-                                                            </a>
-                                                        </div>
-                                                        <div className="text-[11px] text-muted-foreground mt-0.5">
-                                                            {t.label}
-                                                        </div>
-                                                    </td>
+                                            {filteredTags.map((t) => {
+                                                const statsDate = t.latest_stats?.crawled_at
+                                                    ? t.latest_stats.crawled_at.split('T')[0]
+                                                    : todayJakarta;
+                                                const firestoreUrl = getFirestoreConsoleUrl('tiktok_tracked_hashtags', t.tag);
+
+                                                return (
+                                                    <tr key={t.id} className="hover:bg-muted/20 transition-colors">
+                                                        <td className="py-3 px-4">
+                                                            <div className="flex items-center gap-2">
+                                                                <Link
+                                                                    href={`/tiktok/hashtags/results/${t.tag}?date=${statsDate}`}
+                                                                    className="font-mono font-bold text-foreground text-sm hover:text-primary hover:underline transition-colors"
+                                                                    title={`View intelligence results for #${t.tag}`}
+                                                                >
+                                                                    #{t.tag}
+                                                                </Link>
+                                                                <a
+                                                                    href={`https://www.tiktok.com/tag/${t.tag}`}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="text-muted-foreground hover:text-primary transition-colors"
+                                                                    title={`Open #${t.tag} on TikTok`}
+                                                                >
+                                                                    <ExternalLink className="w-3 h-3" />
+                                                                </a>
+                                                            </div>
+                                                            <div className="flex items-center justify-between gap-2 mt-0.5 min-w-0">
+                                                                <span className="text-sm text-muted-foreground truncate">
+                                                                    {t.label}
+                                                                </span>
+                                                                {isAdmin && (
+                                                                    <a
+                                                                        href={firestoreUrl}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-500/80 hover:text-amber-500 hover:underline transition-colors shrink-0 ml-auto"
+                                                                        title={`Open Firestore: tiktok_tracked_hashtags/${t.tag}`}
+                                                                    >
+                                                                        <Database className="w-2.5 h-2.5" />
+                                                                        <span>Firestore</span>
+                                                                        <ExternalLink className="w-2.5 h-2.5 opacity-60" />
+                                                                    </a>
+                                                                )}
+                                                            </div>
+                                                        </td>
 
                                                     <td className="py-3 px-3">
                                                         <Badge
@@ -584,59 +613,106 @@ export default function CustomHashtagTrackerPage() {
                                                     </td>
 
                                                     <td className="py-3 px-4 text-right">
-                                                        <div className="flex items-center justify-end gap-1.5">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            {/* Primary Action: View Results */}
                                                             <Button
                                                                 size="sm"
-                                                                variant="ghost"
-                                                                className="h-7 w-7 p-0"
-                                                                title={t.active ? 'Pause Tracking' : 'Resume Tracking'}
-                                                                onClick={() => handleToggleActive(t)}
+                                                                variant="outline"
+                                                                asChild
+                                                                className="h-8 px-2.5 text-sm font-semibold rounded-lg border-border/60 hover:bg-muted gap-1.5"
+                                                                title={`View intelligence results for #${t.tag}`}
                                                             >
-                                                                {t.active ? (
-                                                                    <Pause className="w-3.5 h-3.5 text-amber-500" />
-                                                                ) : (
-                                                                    <Play className="w-3.5 h-3.5 text-emerald-500" />
-                                                                )}
+                                                                <Link href={`/tiktok/hashtags/results/${t.tag}`}>
+                                                                    <BarChart2 className="w-3.5 h-3.5 text-primary" />
+                                                                    <span>Results</span>
+                                                                </Link>
                                                             </Button>
 
+                                                            {/* Secondary Action: Scrape Live */}
                                                             <Button
                                                                 size="sm"
-                                                                variant="ghost"
-                                                                className="h-7 w-7 p-0"
-                                                                title="Edit Settings"
-                                                                onClick={() => handleOpenEdit(t)}
+                                                                variant="outline"
+                                                                disabled={scrapingLiveTag === t.tag}
+                                                                onClick={() => handleScrapeLive(t.tag)}
+                                                                className="h-8 px-2.5 text-sm font-semibold rounded-lg border-amber-500/30 text-amber-500 hover:bg-amber-500/10 hover:text-amber-400 gap-1.5"
+                                                                title="Scrape Live Now (Real Apify & Gemini)"
                                                             >
-                                                                <Edit3 className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
-                                                            </Button>
-
-                                                            <Button
-                                                                size="sm"
-                                                                variant="ghost"
-                                                                className="h-7 w-7 p-0"
-                                                                title="Test Scrape Now (Dry-Run)"
-                                                                disabled={testingTag === t.tag}
-                                                                onClick={() => handleTestRun(t.tag)}
-                                                            >
-                                                                <RefreshCw
-                                                                    className={`w-3.5 h-3.5 text-primary ${
-                                                                        testingTag === t.tag ? 'animate-spin' : ''
+                                                                <Zap
+                                                                    className={`w-3.5 h-3.5 ${
+                                                                        scrapingLiveTag === t.tag ? 'animate-spin' : ''
                                                                     }`}
                                                                 />
+                                                                <span>{scrapingLiveTag === t.tag ? 'Scraping...' : 'Scrape'}</span>
                                                             </Button>
 
-                                                            <Button
-                                                                size="sm"
-                                                                variant="ghost"
-                                                                className="h-7 w-7 p-0 text-muted-foreground hover:text-rose-500"
-                                                                title="Remove Hashtag"
-                                                                onClick={() => handleDeleteTag(t.id, t.tag)}
-                                                            >
-                                                                <Trash2 className="w-3.5 h-3.5" />
-                                                            </Button>
+                                                            {/* Overflow Menu: Administrative & Utility Actions */}
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="ghost"
+                                                                        className="h-8 w-8 p-0 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground"
+                                                                        title="More actions"
+                                                                    >
+                                                                        <MoreHorizontal className="w-4 h-4" />
+                                                                        <span className="sr-only">More options for #{t.tag}</span>
+                                                                    </Button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end" className="w-48 bg-card border border-border/80 shadow-lg">
+                                                                    <DropdownMenuItem
+                                                                        onClick={() => handleToggleActive(t)}
+                                                                        className="gap-2 text-sm cursor-pointer"
+                                                                    >
+                                                                        {t.active ? (
+                                                                            <>
+                                                                                <Pause className="w-3.5 h-3.5 text-amber-500" />
+                                                                                <span>Pause Tracking</span>
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <Play className="w-3.5 h-3.5 text-emerald-500" />
+                                                                                <span>Resume Tracking</span>
+                                                                            </>
+                                                                        )}
+                                                                    </DropdownMenuItem>
+
+                                                                    <DropdownMenuItem
+                                                                        onClick={() => handleOpenEdit(t)}
+                                                                        className="gap-2 text-sm cursor-pointer"
+                                                                    >
+                                                                        <Edit3 className="w-3.5 h-3.5 text-muted-foreground" />
+                                                                        <span>Edit Parameters</span>
+                                                                    </DropdownMenuItem>
+
+                                                                    <DropdownMenuItem
+                                                                        disabled={testingTag === t.tag}
+                                                                        onClick={() => handleTestRun(t.tag)}
+                                                                        className="gap-2 text-sm cursor-pointer"
+                                                                    >
+                                                                        <RefreshCw
+                                                                            className={`w-3.5 h-3.5 text-muted-foreground ${
+                                                                                testingTag === t.tag ? 'animate-spin' : ''
+                                                                            }`}
+                                                                        />
+                                                                        <span>Run Test (Dry-Run)</span>
+                                                                    </DropdownMenuItem>
+
+                                                                    <DropdownMenuSeparator className="bg-border/60" />
+
+                                                                    <DropdownMenuItem
+                                                                        onClick={() => handleDeleteTag(t.id, t.tag)}
+                                                                        className="gap-2 text-sm cursor-pointer text-rose-500 focus:text-rose-600 focus:bg-rose-500/10 hover:bg-rose-500/10"
+                                                                    >
+                                                                        <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                                                                        <span>Remove Hashtag</span>
+                                                                    </DropdownMenuItem>
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
                                                         </div>
                                                     </td>
                                                 </tr>
-                                            ))}
+                                            );
+                                        })}
                                         </tbody>
                                     </table>
                                 </div>
@@ -654,7 +730,7 @@ export default function CustomHashtagTrackerPage() {
                                 <Plus className="w-4 h-4 text-primary" />
                                 Add Tracked Hashtag
                             </CardTitle>
-                            <CardDescription className="text-xs">
+                            <CardDescription className="text-sm">
                                 Configure a custom hashtag. Defaults are pre-filled by best practices.
                             </CardDescription>
                         </CardHeader>
@@ -662,7 +738,7 @@ export default function CustomHashtagTrackerPage() {
                         <CardContent className="p-4 pt-3">
                             <form onSubmit={handleCreateTag} className="space-y-3.5">
                                 <div>
-                                    <label className="text-xs font-semibold text-muted-foreground block mb-1">
+                                    <label className="text-sm font-semibold text-muted-foreground block mb-1">
                                         Hashtag Name (without #)
                                     </label>
                                     <Input
@@ -670,30 +746,30 @@ export default function CustomHashtagTrackerPage() {
                                         value={newTag}
                                         onChange={(e) => setNewTag(e.target.value)}
                                         required
-                                        className="h-8 font-mono text-xs"
+                                        className="h-8 font-mono text-sm"
                                     />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-2">
                                     <div>
-                                        <label className="text-xs font-semibold text-muted-foreground block mb-1">
+                                        <label className="text-sm font-semibold text-muted-foreground block mb-1">
                                             Campaign Label
                                         </label>
                                         <Input
                                             placeholder="Optional tag label"
                                             value={newLabel}
                                             onChange={(e) => setNewLabel(e.target.value)}
-                                            className="h-8 text-xs"
+                                            className="h-8 text-sm"
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-xs font-semibold text-muted-foreground block mb-1">
+                                        <label className="text-sm font-semibold text-muted-foreground block mb-1">
                                             Category
                                         </label>
                                         <select
                                             value={newCategory}
-                                            onChange={(e) => setNewCategory(e.target.value as any)}
-                                            className="w-full h-8 rounded-md border border-input bg-background px-2 py-1 text-xs shadow-sm"
+                                            onChange={(e) => setNewCategory(e.target.value as typeof newCategory)}
+                                            className="w-full h-8 rounded-md border border-input bg-background px-2 py-1 text-sm shadow-sm"
                                         >
                                             <option value="campaign">Campaign</option>
                                             <option value="competitor">Competitor</option>
@@ -706,7 +782,7 @@ export default function CustomHashtagTrackerPage() {
 
                                 <div className="grid grid-cols-2 gap-2 pt-1">
                                     <div>
-                                        <label className="text-xs font-semibold text-muted-foreground block mb-1">
+                                        <label className="text-sm font-semibold text-muted-foreground block mb-1">
                                             Cadence
                                         </label>
                                         <div className="grid grid-cols-2 gap-1">
@@ -726,7 +802,7 @@ export default function CustomHashtagTrackerPage() {
                                     </div>
 
                                     <div>
-                                        <label className="text-xs font-semibold text-muted-foreground block mb-1">
+                                        <label className="text-sm font-semibold text-muted-foreground block mb-1">
                                             Scrape Depth
                                         </label>
                                         <div className="grid grid-cols-2 gap-1">
@@ -747,13 +823,13 @@ export default function CustomHashtagTrackerPage() {
                                 </div>
 
                                 <div>
-                                    <label className="text-xs font-semibold text-muted-foreground block mb-1">
+                                    <label className="text-sm font-semibold text-muted-foreground block mb-1">
                                         Start Timer (24-Hour WIB)
                                     </label>
                                     <select
                                         value={newStartHour}
                                         onChange={(e) => setNewStartHour(Number(e.target.value))}
-                                        className="w-full h-8 rounded-md border border-input bg-background px-2.5 py-1 text-xs shadow-sm"
+                                        className="w-full h-8 rounded-md border border-input bg-background px-2.5 py-1 text-sm shadow-sm"
                                     >
                                         {START_HOUR_OPTIONS.map((opt) => (
                                             <option key={opt.value} value={opt.value}>
@@ -763,7 +839,7 @@ export default function CustomHashtagTrackerPage() {
                                     </select>
                                 </div>
 
-                                <div className="flex items-center justify-between bg-muted/20 p-2.5 rounded-lg border border-border/50 text-xs">
+                                <div className="flex items-center justify-between bg-muted/20 p-2.5 rounded-lg border border-border/50 text-sm">
                                     <div>
                                         <div className="font-semibold text-foreground">Audience Sentiment</div>
                                         <div className="text-[10px] text-muted-foreground">30 comments + Gemini AI</div>
@@ -780,7 +856,7 @@ export default function CustomHashtagTrackerPage() {
                                 </div>
 
                                 {/* Live Cost Preview for this tag */}
-                                <div className="bg-primary/5 border border-primary/20 rounded-lg p-2.5 text-xs space-y-1">
+                                <div className="bg-primary/5 border border-primary/20 rounded-lg p-2.5 text-sm space-y-1">
                                     <div className="flex justify-between items-baseline">
                                         <span className="text-muted-foreground">Biaya Tambahan:</span>
                                         <strong className="text-primary font-bold">
@@ -798,7 +874,7 @@ export default function CustomHashtagTrackerPage() {
                                 <Button
                                     type="submit"
                                     disabled={isSubmitting}
-                                    className="w-full h-8 text-xs font-bold gap-1.5"
+                                    className="w-full h-8 text-sm font-bold gap-1.5"
                                 >
                                     <CheckCircle2 className="w-3.5 h-3.5" />
                                     Save &amp; Track Hashtag
@@ -828,12 +904,12 @@ export default function CustomHashtagTrackerPage() {
                                     {forecast?.creditsStatus ?? 'safe'}
                                 </Badge>
                             </div>
-                            <CardDescription className="text-xs">
+                            <CardDescription className="text-sm">
                                 Live operational expenditure across all active custom hashtags.
                             </CardDescription>
                         </CardHeader>
 
-                        <CardContent className="p-4 space-y-3.5 text-xs">
+                        <CardContent className="p-4 space-y-3.5 text-sm">
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="bg-muted/20 p-2.5 rounded-lg border border-border/40">
                                     <span className="text-muted-foreground block text-[11px]">Daily Burn</span>
@@ -894,12 +970,12 @@ export default function CustomHashtagTrackerPage() {
                                     What-If Analysis
                                 </Badge>
                             </div>
-                            <CardDescription className="text-xs">
+                            <CardDescription className="text-sm">
                                 Simulate adding new hashtags and evaluate budget impact before deploying.
                             </CardDescription>
                         </CardHeader>
 
-                        <CardContent className="p-4 space-y-3.5 text-xs">
+                        <CardContent className="p-4 space-y-3.5 text-sm">
                             <div>
                                 <div className="flex justify-between text-[11px] font-semibold mb-1">
                                     <span>Simulate Adding Tags:</span>
@@ -997,7 +1073,7 @@ export default function CustomHashtagTrackerPage() {
                                     <Edit3 className="w-4 h-4 text-primary" />
                                     Edit Tracking Settings: #{editingTag.tag}
                                 </CardTitle>
-                                <CardDescription className="text-xs">
+                                <CardDescription className="text-sm">
                                     Update cadence, scrape depth, and start timer for this hashtag.
                                 </CardDescription>
                             </div>
@@ -1013,25 +1089,25 @@ export default function CustomHashtagTrackerPage() {
                         <CardContent className="p-4">
                             <form onSubmit={handleSaveEdit} className="space-y-4">
                                 <div>
-                                    <label className="text-xs font-semibold text-muted-foreground block mb-1">
+                                    <label className="text-sm font-semibold text-muted-foreground block mb-1">
                                         Campaign / Descriptive Label
                                     </label>
                                     <Input
                                         value={editLabel}
                                         onChange={(e) => setEditLabel(e.target.value)}
-                                        className="h-9 text-xs"
+                                        className="h-9 text-sm"
                                     />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label className="text-xs font-semibold text-muted-foreground block mb-1">
+                                        <label className="text-sm font-semibold text-muted-foreground block mb-1">
                                             Category
                                         </label>
                                         <select
                                             value={editCategory}
-                                            onChange={(e) => setEditCategory(e.target.value as any)}
-                                            className="w-full h-8 rounded-md border border-input bg-background px-2.5 py-1 text-xs shadow-sm"
+                                            onChange={(e) => setEditCategory(e.target.value as typeof editCategory)}
+                                            className="w-full h-8 rounded-md border border-input bg-background px-2.5 py-1 text-sm shadow-sm"
                                         >
                                             <option value="campaign">Movie Campaign</option>
                                             <option value="competitor">Competitor Brand</option>
@@ -1041,13 +1117,13 @@ export default function CustomHashtagTrackerPage() {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="text-xs font-semibold text-muted-foreground block mb-1">
+                                        <label className="text-sm font-semibold text-muted-foreground block mb-1">
                                             Start Timer (WIB)
                                         </label>
                                         <select
                                             value={editStartHour}
                                             onChange={(e) => setEditStartHour(Number(e.target.value))}
-                                            className="w-full h-8 rounded-md border border-input bg-background px-2.5 py-1 text-xs shadow-sm"
+                                            className="w-full h-8 rounded-md border border-input bg-background px-2.5 py-1 text-sm shadow-sm"
                                         >
                                             {START_HOUR_OPTIONS.map((opt) => (
                                                 <option key={opt.value} value={opt.value}>
@@ -1060,7 +1136,7 @@ export default function CustomHashtagTrackerPage() {
 
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label className="text-xs font-semibold text-muted-foreground block mb-1">
+                                        <label className="text-sm font-semibold text-muted-foreground block mb-1">
                                             Cadence (Runs / Hari)
                                         </label>
                                         <div className="grid grid-cols-2 gap-1">
@@ -1070,7 +1146,7 @@ export default function CustomHashtagTrackerPage() {
                                                     type="button"
                                                     variant={editCadence === num ? 'default' : 'outline'}
                                                     size="sm"
-                                                    className="h-7 text-xs font-bold"
+                                                    className="h-7 text-sm font-bold"
                                                     onClick={() => setEditCadence(num)}
                                                 >
                                                     {num}x / hari
@@ -1079,7 +1155,7 @@ export default function CustomHashtagTrackerPage() {
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="text-xs font-semibold text-muted-foreground block mb-1">
+                                        <label className="text-sm font-semibold text-muted-foreground block mb-1">
                                             Scrape Depth
                                         </label>
                                         <div className="grid grid-cols-2 gap-1">
@@ -1089,7 +1165,7 @@ export default function CustomHashtagTrackerPage() {
                                                     type="button"
                                                     variant={editTargetPosts === num ? 'default' : 'outline'}
                                                     size="sm"
-                                                    className="h-7 text-xs font-bold"
+                                                    className="h-7 text-sm font-bold"
                                                     onClick={() => setEditTargetPosts(num)}
                                                 >
                                                     {num} posts
@@ -1099,7 +1175,7 @@ export default function CustomHashtagTrackerPage() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between bg-muted/20 p-2.5 rounded-lg border border-border/50 text-xs">
+                                <div className="flex items-center justify-between bg-muted/20 p-2.5 rounded-lg border border-border/50 text-sm">
                                     <span className="font-semibold text-foreground">Audience Sentiment (Gemini 3.8)</span>
                                     <Button
                                         type="button"
@@ -1112,7 +1188,7 @@ export default function CustomHashtagTrackerPage() {
                                     </Button>
                                 </div>
 
-                                <div className="bg-primary/5 border border-primary/20 rounded-lg p-2.5 text-xs flex justify-between items-center">
+                                <div className="bg-primary/5 border border-primary/20 rounded-lg p-2.5 text-sm flex justify-between items-center">
                                     <span className="text-muted-foreground">New Estimated Cost:</span>
                                     <strong className="text-primary font-bold">
                                         {formatIdr(editFormCost.dailyCostIdr)} / hari ({formatIdr(editFormCost.monthlyCostIdr)} / bln)
@@ -1124,7 +1200,7 @@ export default function CustomHashtagTrackerPage() {
                                         type="button"
                                         variant="ghost"
                                         size="sm"
-                                        className="h-8 text-xs"
+                                        className="h-8 text-sm"
                                         onClick={() => setEditingTag(null)}
                                     >
                                         Cancel
@@ -1133,7 +1209,7 @@ export default function CustomHashtagTrackerPage() {
                                         type="submit"
                                         size="sm"
                                         disabled={isEditSubmitting}
-                                        className="h-8 text-xs font-bold px-4"
+                                        className="h-8 text-sm font-bold px-4"
                                     >
                                         Save Changes
                                     </Button>
