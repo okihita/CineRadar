@@ -615,11 +615,14 @@ async def execute_daily_crawl_async(
         "Scraping %d Tier 1 films (40 posts + 30 comments) concurrently", len(tier1_list)
     )
 
-    # Read active custom tracked hashtags from tiktok_sources/config
-    sources_doc = db.collection("tiktok_sources").document("config").get()
-    sources_data = sources_doc.to_dict() or {} if sources_doc.exists else {}
-    tracked_tags = sources_data.get("tracked_hashtags", [])
-    active_custom_tags = [t for t in tracked_tags if isinstance(t, dict) and t.get("active") and t.get("tag")]
+    # Read active custom tracked hashtags from dedicated tiktok_tracked_hashtags collection
+    tags_stream = db.collection("tiktok_tracked_hashtags").stream()
+    active_custom_tags: list[dict[str, Any]] = []
+    for doc in tags_stream:
+        t_data = doc.to_dict() or {}
+        if t_data.get("active") and t_data.get("tag"):
+            t_data["id"] = doc.id
+            active_custom_tags.append(t_data)
 
     limits = [40] * len(tier1_list)
     combined_movies = tier1_list

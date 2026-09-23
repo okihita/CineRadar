@@ -62,12 +62,20 @@ const FIRESTORE_TARGETS = [
         supportsMovieId: false,
     },
     {
-        id: 'tiktok_movie_trends',
-        name: 'Movie Lifetime Trend Series',
-        pathFormat: 'tiktok_movie_trends/{movie_id}',
-        description: '60-day historical time-series curves and cumulative virality metrics.',
+        id: 'tiktok_tracked_hashtags',
+        name: 'Tracked Custom Hashtags',
+        pathFormat: 'tiktok_tracked_hashtags/{tag}',
+        description: 'Dedicated collection for custom campaign and competitor hashtag configurations.',
         supportsDate: false,
-        supportsMovieId: true,
+        supportsMovieId: false,
+    },
+    {
+        id: 'tiktok_custom_pulse',
+        name: 'Custom Hashtag Pulse Telemetry',
+        pathFormat: 'tiktok_custom_pulse/{date}',
+        description: 'Scraping results, view rollups, and sentiment metrics for custom hashtags.',
+        supportsDate: true,
+        supportsMovieId: false,
     },
 ];
 

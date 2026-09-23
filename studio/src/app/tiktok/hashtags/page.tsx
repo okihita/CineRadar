@@ -503,7 +503,7 @@ export default function CustomHashtagTrackerPage() {
                                                 const statsDate = t.latest_stats?.crawled_at
                                                     ? t.latest_stats.crawled_at.split('T')[0]
                                                     : todayJakarta;
-                                                const firestoreUrl = getFirestoreConsoleUrl('tiktok_custom_pulse', statsDate);
+                                                const firestoreUrl = getFirestoreConsoleUrl('tiktok_tracked_hashtags', t.tag);
 
                                                 return (
                                                     <tr key={t.id} className="hover:bg-muted/20 transition-colors">
@@ -532,7 +532,7 @@ export default function CustomHashtagTrackerPage() {
                                                                         target="_blank"
                                                                         rel="noopener noreferrer"
                                                                         className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-500/80 hover:text-amber-500 hover:underline transition-colors shrink-0 ml-auto"
-                                                                        title={`Open Firestore: tiktok_custom_pulse/${statsDate}`}
+                                                                        title={`Open Firestore: tiktok_tracked_hashtags/${t.tag}`}
                                                                     >
                                                                         <Database className="w-2.5 h-2.5" />
                                                                         <span>Firestore</span>
