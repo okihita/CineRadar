@@ -76,6 +76,11 @@ function formatWIBFull24(dateStr: string | null | undefined): string {
     return `${dateFormatted}, ${timeFormatted} WIB`;
 }
 
+function formatHandle(handle: string | null | undefined): string {
+    if (!handle) return '@creator';
+    return `@${handle.replace(/^@+/, '')}`;
+}
+
 export default function TikTokHashtagResultDetailPage() {
     const params = useParams<{ tag: string }>();
     const searchParams = useSearchParams();
@@ -366,9 +371,10 @@ export default function TikTokHashtagResultDetailPage() {
     };
 
     const handleFilterByCreator = (handle: string) => {
-        setFilterQuery(handle);
+        const cleanHandle = handle.replace(/^@+/, '');
+        setFilterQuery(cleanHandle);
         setCurrentPage(1);
-        toast.info(`Filtering timeline by creator @${handle}`);
+        toast.info(`Filtering timeline by creator @${cleanHandle}`);
     };
 
     const firestoreConfigUrl = `https://console.firebase.google.com/project/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'cineradar-481014'}/firestore/databases/-default-/data/~2Ftiktok_tracked_hashtags~2F${cleanTag}`;
@@ -987,7 +993,7 @@ export default function TikTokHashtagResultDetailPage() {
                                                         <div className="flex items-center justify-between text-xs gap-2">
                                                             <div className="flex items-center gap-1.5 min-w-0">
                                                                 <span className="font-bold text-foreground truncate">
-                                                                    @{post.author_handle}
+                                                                    {formatHandle(post.author_handle)}
                                                                 </span>
                                                                 {post.author_name && (
                                                                     <span className="text-[11px] text-muted-foreground truncate hidden sm:inline">
@@ -1196,9 +1202,9 @@ export default function TikTokHashtagResultDetailPage() {
                                                 </div>
                                                 <div>
                                                     <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                                                        <span>@{activePost.author_handle}</span>
+                                                        <span>{formatHandle(activePost.author_handle)}</span>
                                                         <a
-                                                            href={`https://www.tiktok.com/@${activePost.author_handle.replace(/^@/, '')}`}
+                                                            href={`https://www.tiktok.com/@${activePost.author_handle.replace(/^@+/, '')}`}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             className="text-muted-foreground hover:text-primary transition-colors"
