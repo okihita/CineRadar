@@ -55,7 +55,6 @@ import { getTodayJakarta } from '@/lib/timeUtils';
 import type {
     TrackedHashtag,
     TikTokHashtagDetailSnapshot,
-    TikTokPostItem,
 } from '@/types/tiktokHashtags';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -112,7 +111,7 @@ export default function TikTokHashtagResultDetailPage() {
 
     // Fetch snapshot and configuration
     const apiUrl = `/api/socials/tiktok/hashtags/results?tag=${encodeURIComponent(cleanTag)}&date=${selectedDate}`;
-    const { data, error, isLoading, mutate } = useSWR<{
+    const { data, isLoading, mutate } = useSWR<{
         success: boolean;
         tag: string;
         targetDate: string;
@@ -434,7 +433,7 @@ export default function TikTokHashtagResultDetailPage() {
                         : 'pt-3 border-t border-border/40'
                 }`}
             >
-                <div className="text-xs text-muted-foreground font-mono">
+                <div className="text-sm text-muted-foreground font-mono">
                     Showing <strong className="text-foreground">{startIndex + 1}</strong>–<strong className="text-foreground">{Math.min(startIndex + pageSize, filteredPosts.length)}</strong> of <strong className="text-foreground">{filteredPosts.length}</strong> videos
                     {filteredPosts.length !== snapshot.posts.length && ` (filtered from ${snapshot.posts.length})`}
                 </div>
@@ -445,7 +444,7 @@ export default function TikTokHashtagResultDetailPage() {
                         size="sm"
                         disabled={safeCurrentPage === 1}
                         onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                        className="h-8 px-2.5 text-xs font-semibold rounded-lg border-border/60 hover:bg-muted gap-1"
+                        className="h-8 px-2.5 text-sm font-semibold rounded-lg border-border/60 hover:bg-muted gap-1"
                     >
                         <ChevronLeft className="w-3.5 h-3.5" />
                         <span>Prev</span>
@@ -466,7 +465,7 @@ export default function TikTokHashtagResultDetailPage() {
                                         variant={safeCurrentPage === pageNum ? 'default' : 'outline'}
                                         size="sm"
                                         onClick={() => setCurrentPage(pageNum)}
-                                        className={`h-8 w-8 p-0 text-xs font-mono font-bold rounded-lg ${
+                                        className={`h-8 w-8 p-0 text-sm font-mono font-bold rounded-lg ${
                                             safeCurrentPage === pageNum
                                                 ? 'bg-primary text-primary-foreground'
                                                 : 'border-border/60 hover:bg-muted text-muted-foreground hover:text-foreground'
@@ -481,7 +480,7 @@ export default function TikTokHashtagResultDetailPage() {
                                 (pageNum === totalPages - 1 && safeCurrentPage < totalPages - 2)
                             ) {
                                 return (
-                                    <span key={`${position}-ellipsis-${pageNum}`} className="text-muted-foreground px-1 text-xs font-mono">
+                                    <span key={`${position}-ellipsis-${pageNum}`} className="text-muted-foreground px-1 text-sm font-mono">
                                         …
                                     </span>
                                 );
@@ -495,7 +494,7 @@ export default function TikTokHashtagResultDetailPage() {
                         size="sm"
                         disabled={safeCurrentPage === totalPages}
                         onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                        className="h-8 px-2.5 text-xs font-semibold rounded-lg border-border/60 hover:bg-muted gap-1"
+                        className="h-8 px-2.5 text-sm font-semibold rounded-lg border-border/60 hover:bg-muted gap-1"
                     >
                         <span>Next</span>
                         <ChevronRight className="w-3.5 h-3.5" />
@@ -514,7 +513,7 @@ export default function TikTokHashtagResultDetailPage() {
                         variant="outline"
                         size="sm"
                         asChild
-                        className="h-9 px-3 rounded-lg border-border/60 hover:bg-muted gap-2 text-xs font-semibold"
+                        className="h-9 px-3 rounded-lg border-border/60 hover:bg-muted gap-2 text-sm font-semibold"
                     >
                         <Link href="/tiktok/hashtags">
                             <ArrowLeft className="w-3.5 h-3.5" />
@@ -545,7 +544,7 @@ export default function TikTokHashtagResultDetailPage() {
                                 {config?.active ? 'Active' : 'Paused'}
                             </Badge>
                         </div>
-                        <p className="text-muted-foreground text-xs font-medium mt-0.5">
+                        <p className="text-muted-foreground text-sm font-medium mt-0.5">
                             {config?.label || cleanTag} · Target depth: {config?.target_posts || 40} posts · {config?.cadence || 1}x/hari at {(config?.start_hour || 18).toString().padStart(2, '0')}:00 WIB
                         </p>
                     </div>
@@ -553,14 +552,14 @@ export default function TikTokHashtagResultDetailPage() {
 
                 <div className="flex items-center gap-2.5 flex-wrap">
                     {/* Date Selector in 24-Hour WIB Context */}
-                    <div className="flex items-center gap-2 bg-muted/40 px-3 py-1.5 rounded-lg border border-border/60 text-xs">
+                    <div className="flex items-center gap-2 bg-muted/40 px-3 py-1.5 rounded-lg border border-border/60 text-sm">
                         <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
                         <input
                             type="date"
                             value={selectedDate}
                             onChange={(e) => handleDateChange(e.target.value)}
                             max={todayJakarta}
-                            className="bg-transparent text-xs font-mono font-bold text-foreground focus:outline-none cursor-pointer"
+                            className="bg-transparent text-sm font-mono font-bold text-foreground focus:outline-none cursor-pointer"
                         />
                         <span className="text-[10px] text-muted-foreground font-mono">WIB</span>
                     </div>
@@ -570,7 +569,7 @@ export default function TikTokHashtagResultDetailPage() {
                         variant="outline"
                         size="sm"
                         asChild
-                        className="h-9 px-3 rounded-lg border-border/60 hover:bg-muted text-xs font-semibold gap-1.5"
+                        className="h-9 px-3 rounded-lg border-border/60 hover:bg-muted text-sm font-semibold gap-1.5"
                     >
                         <a
                             href={`https://www.tiktok.com/tag/${cleanTag}`}
@@ -587,7 +586,7 @@ export default function TikTokHashtagResultDetailPage() {
                         variant="outline"
                         size="sm"
                         asChild
-                        className="h-9 px-3 rounded-lg border-border/60 hover:bg-muted text-xs font-mono text-amber-500/90 gap-1.5"
+                        className="h-9 px-3 rounded-lg border-border/60 hover:bg-muted text-sm font-mono text-amber-500/90 gap-1.5"
                         title="View Firestore configuration"
                     >
                         <a href={firestoreConfigUrl} target="_blank" rel="noopener noreferrer">
@@ -604,7 +603,7 @@ export default function TikTokHashtagResultDetailPage() {
                             size="sm"
                             disabled={isScraping || isLoading}
                             onClick={() => handleRequestScrape(40)}
-                            className="h-9 px-3.5 rounded-l-lg rounded-r-none text-xs font-bold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground border-r border-primary-foreground/20"
+                            className="h-9 px-3.5 rounded-l-lg rounded-r-none text-sm font-bold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground border-r border-primary-foreground/20"
                         >
                             <RefreshCw className={`w-3.5 h-3.5 ${isScraping ? 'animate-spin' : ''}`} />
                             <span>{isScraping ? `Scraping (${scrapeTargetDepth})...` : 'Scrape Live'}</span>
@@ -627,7 +626,7 @@ export default function TikTokHashtagResultDetailPage() {
                                     onClick={() => handleRequestScrape(40)}
                                     className="cursor-pointer flex flex-col items-start gap-0.5 p-2 rounded-lg hover:bg-muted"
                                 >
-                                    <div className="text-xs font-bold text-foreground flex items-center justify-between w-full">
+                                    <div className="text-sm font-bold text-foreground flex items-center justify-between w-full">
                                         <span>Standard Depth (40 posts)</span>
                                         <Badge variant="outline" className="text-[9px] font-mono">Standard</Badge>
                                     </div>
@@ -642,7 +641,7 @@ export default function TikTokHashtagResultDetailPage() {
                                     onClick={() => handleRequestScrape(100)}
                                     className="cursor-pointer flex flex-col items-start gap-0.5 p-2 rounded-lg hover:bg-muted text-primary"
                                 >
-                                    <div className="text-xs font-bold text-foreground flex items-center justify-between w-full">
+                                    <div className="text-sm font-bold text-foreground flex items-center justify-between w-full">
                                         <span className="flex items-center gap-1.5 text-primary">
                                             <Flame className="w-3.5 h-3.5 text-amber-500" />
                                             <span>Deep Intelligence (100 posts)</span>
@@ -672,12 +671,12 @@ export default function TikTokHashtagResultDetailPage() {
                             <div className="text-sm font-bold text-foreground">
                                 Live Scraping in Progress
                             </div>
-                            <div className="text-xs text-muted-foreground font-mono">
+                            <div className="text-sm text-muted-foreground font-mono">
                                 {scrapeStep || 'Executing pipeline...'}
                             </div>
                         </div>
                     </div>
-                    <div className="text-xs font-mono text-primary font-bold">
+                    <div className="text-sm font-mono text-primary font-bold">
                         Estimated {scrapeTargetDepth > 40 ? '~42s' : '~20s'}
                     </div>
                 </div>
@@ -693,7 +692,7 @@ export default function TikTokHashtagResultDetailPage() {
                         <CardTitle className="text-lg font-bold text-foreground">
                             No Crawl Telemetry for {selectedDate}
                         </CardTitle>
-                        <CardDescription className="text-xs text-muted-foreground">
+                        <CardDescription className="text-sm text-muted-foreground">
                             Hashtag #{cleanTag} has not been crawled for this date window. You can trigger an on-demand scrape right now or wait for the standing 18:00 WIB daily pulse.
                         </CardDescription>
                     </CardHeader>
@@ -703,7 +702,7 @@ export default function TikTokHashtagResultDetailPage() {
                             size="sm"
                             disabled={isScraping}
                             onClick={() => handleRequestScrape(40)}
-                            className="rounded-lg text-xs font-bold gap-2"
+                            className="rounded-lg text-sm font-bold gap-2"
                         >
                             <RefreshCw className="w-3.5 h-3.5" />
                             Trigger First Scrape Now
@@ -712,7 +711,7 @@ export default function TikTokHashtagResultDetailPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleDateChange(todayJakarta)}
-                            className="rounded-lg text-xs font-medium"
+                            className="rounded-lg text-sm font-medium"
                         >
                             Jump to Today
                         </Button>
@@ -729,7 +728,7 @@ export default function TikTokHashtagResultDetailPage() {
                         <Card className="border-border/60 bg-card rounded-xl shadow-none">
                             <CardHeader className="p-4 pb-2 border-b border-border/40">
                                 <div className="flex items-center justify-between">
-                                    <CardTitle className="text-xs font-bold text-foreground flex items-center gap-2">
+                                    <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
                                         <Activity className="w-3.5 h-3.5 text-primary" />
                                         <span>Campaign Velocity</span>
                                     </CardTitle>
@@ -747,7 +746,7 @@ export default function TikTokHashtagResultDetailPage() {
                                         </div>
                                         <div className="text-2xl font-bold font-mono text-foreground flex items-baseline gap-1 mt-0.5">
                                             <span>{snapshot.sentiment?.hype_score ?? 80}</span>
-                                            <span className="text-xs text-muted-foreground font-normal">/ 100</span>
+                                            <span className="text-sm text-muted-foreground font-normal">/ 100</span>
                                         </div>
                                     </div>
                                     <div className="text-right">
@@ -761,7 +760,7 @@ export default function TikTokHashtagResultDetailPage() {
                                 </div>
 
                                 {/* 2x2 Metric Scoreboard */}
-                                <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+                                <div className="grid grid-cols-2 gap-2 text-sm font-mono">
                                     <div className="p-2.5 rounded-lg bg-muted/30 border border-border/40 space-y-0.5">
                                         <div className="text-[10px] text-muted-foreground font-sans flex items-center justify-between">
                                             <span>Views</span>
@@ -824,7 +823,7 @@ export default function TikTokHashtagResultDetailPage() {
                             <Card className="border-border/60 bg-card rounded-xl shadow-none">
                                 <CardHeader className="p-4 pb-2 border-b border-border/40">
                                     <div className="flex items-center justify-between">
-                                        <CardTitle className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                                        <CardTitle className="text-sm font-bold text-foreground flex items-center gap-1.5">
                                             <Sparkles className="w-3.5 h-3.5 text-primary" />
                                             <span>AI Sentiment Pulse</span>
                                         </CardTitle>
@@ -901,7 +900,7 @@ export default function TikTokHashtagResultDetailPage() {
                             <Card className="border-border/60 bg-card rounded-xl shadow-none">
                                 <CardHeader className="p-4 pb-2 border-b border-border/40">
                                     <div className="flex items-center justify-between">
-                                        <CardTitle className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                                        <CardTitle className="text-sm font-bold text-foreground flex items-center gap-1.5">
                                             <Hash className="w-3.5 h-3.5 text-primary" />
                                             <span>Associated Hashtags</span>
                                         </CardTitle>
@@ -965,7 +964,7 @@ export default function TikTokHashtagResultDetailPage() {
                         {history.length > 1 && (
                             <Card className="border-border/60 bg-card rounded-xl shadow-none">
                                 <CardHeader className="p-4 pb-2 border-b border-border/40">
-                                    <CardTitle className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                                    <CardTitle className="text-sm font-bold text-foreground flex items-center gap-1.5">
                                         <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
                                         <span>7-Day Trajectory</span>
                                     </CardTitle>
@@ -1055,14 +1054,14 @@ export default function TikTokHashtagResultDetailPage() {
                                 </div>
 
                                 {/* Search Filter Bar */}
-                                <div className="flex items-center gap-2 bg-muted/40 px-2.5 py-1.5 rounded-lg border border-border/60 text-xs">
+                                <div className="flex items-center gap-2 bg-muted/40 px-2.5 py-1.5 rounded-lg border border-border/60 text-sm">
                                     <Filter className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                                     <input
                                         type="text"
                                         placeholder="Filter by creator (@handle) or caption text..."
                                         value={filterQuery}
                                         onChange={(e) => handleFilterChange(e.target.value)}
-                                        className="bg-transparent text-xs text-foreground placeholder:text-muted-foreground focus:outline-none w-full"
+                                        className="bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none w-full"
                                     />
                                     {filterQuery && (
                                         <button
@@ -1119,7 +1118,7 @@ export default function TikTokHashtagResultDetailPage() {
 
                         {/* Vertical Timeline Stream with Rock-Solid Flex Architecture */}
                         {filteredPosts.length === 0 ? (
-                            <Card className="border-border/60 bg-card rounded-xl p-8 text-center text-xs text-muted-foreground shadow-none">
+                            <Card className="border-border/60 bg-card rounded-xl p-8 text-center text-sm text-muted-foreground shadow-none">
                                 No video posts found matching the active filter.
                             </Card>
                         ) : (
@@ -1167,7 +1166,7 @@ export default function TikTokHashtagResultDetailPage() {
                                                     }`}
                                                 >
                                                     {/* Top Row: Timestamp badge and Creator Info */}
-                                                    <div className="flex items-center justify-between text-xs gap-2">
+                                                    <div className="flex items-center justify-between text-sm gap-2">
                                                         <div className="flex items-center gap-1.5 min-w-0">
                                                             <span className="font-bold text-foreground truncate">
                                                                 {formatHandle(post.author_handle)}
@@ -1193,7 +1192,7 @@ export default function TikTokHashtagResultDetailPage() {
                                                     </div>
 
                                                     {/* Caption snippet */}
-                                                    <p className="text-xs text-foreground/90 line-clamp-2 leading-relaxed font-sans">
+                                                    <p className="text-sm text-foreground/90 line-clamp-2 leading-relaxed font-sans">
                                                         {post.caption}
                                                     </p>
 
@@ -1245,7 +1244,7 @@ export default function TikTokHashtagResultDetailPage() {
                                 <CardHeader className="p-4 pb-2 border-b border-border/40">
                                     <div className="flex items-center justify-between">
                                         <div className="space-y-0.5">
-                                            <CardTitle className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                                            <CardTitle className="text-sm font-bold text-foreground flex items-center gap-1.5">
                                                 <Eye className="w-3.5 h-3.5 text-primary" />
                                                 <span>Active Post Inspector</span>
                                             </CardTitle>
@@ -1274,11 +1273,11 @@ export default function TikTokHashtagResultDetailPage() {
                                     <div className="p-3 bg-muted/40 rounded-xl border border-border/40 space-y-2.5">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2.5">
-                                                <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold text-xs">
+                                                <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold text-sm">
                                                     <User className="w-4 h-4" />
                                                 </div>
                                                 <div>
-                                                    <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                                                    <div className="text-sm font-bold text-foreground flex items-center gap-1.5">
                                                         <span>{formatHandle(activePost.author_handle)}</span>
                                                         <a
                                                             href={`https://www.tiktok.com/@${activePost.author_handle.replace(/^@+/, '')}`}
@@ -1315,7 +1314,7 @@ export default function TikTokHashtagResultDetailPage() {
                                             variant="default"
                                             size="sm"
                                             asChild
-                                            className="h-8 text-xs font-bold gap-1 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground"
+                                            className="h-8 text-sm font-bold gap-1 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground"
                                         >
                                             <a
                                                 href={activePost.url}
@@ -1331,7 +1330,7 @@ export default function TikTokHashtagResultDetailPage() {
                                             variant="outline"
                                             size="sm"
                                             onClick={() => handleCopyUrl(activePost.url)}
-                                            className="h-8 text-xs font-medium gap-1 rounded-lg border-border/60 hover:bg-muted"
+                                            className="h-8 text-sm font-medium gap-1 rounded-lg border-border/60 hover:bg-muted"
                                         >
                                             <Copy className="w-3 h-3 text-muted-foreground" />
                                             <span>Copy URL</span>
@@ -1341,7 +1340,7 @@ export default function TikTokHashtagResultDetailPage() {
                                             variant="outline"
                                             size="sm"
                                             onClick={() => handleFilterByCreator(activePost.author_handle)}
-                                            className="h-8 text-xs font-medium gap-1 rounded-lg border-border/60 hover:bg-muted"
+                                            className="h-8 text-sm font-medium gap-1 rounded-lg border-border/60 hover:bg-muted"
                                             title="Filter timeline for this creator"
                                         >
                                             <Filter className="w-3 h-3 text-muted-foreground" />
@@ -1354,7 +1353,7 @@ export default function TikTokHashtagResultDetailPage() {
                                         <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold">
                                             Post Metric Breakdown
                                         </div>
-                                        <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+                                        <div className="grid grid-cols-2 gap-2 text-sm font-mono">
                                             <div className="p-3 bg-muted/30 border border-border/40 rounded-lg space-y-1">
                                                 <div className="text-[10px] text-muted-foreground font-sans flex items-center justify-between">
                                                     <span>Views</span>
@@ -1419,7 +1418,7 @@ export default function TikTokHashtagResultDetailPage() {
                                             <span>Full Video Caption</span>
                                             <span className="text-[9px]">{activePost.caption.length} chars</span>
                                         </div>
-                                        <div className="p-3 bg-muted/20 border border-border/40 rounded-xl text-xs text-foreground leading-relaxed whitespace-pre-wrap font-sans max-h-48 overflow-y-auto">
+                                        <div className="p-3 bg-muted/20 border border-border/40 rounded-xl text-sm text-foreground leading-relaxed whitespace-pre-wrap font-sans max-h-48 overflow-y-auto">
                                             {activePost.caption}
                                         </div>
                                     </div>
@@ -1469,7 +1468,7 @@ export default function TikTokHashtagResultDetailPage() {
                                 </CardContent>
                             </Card>
                         ) : (
-                            <Card className="border-border/60 bg-card rounded-xl p-8 text-center text-xs text-muted-foreground shadow-none">
+                            <Card className="border-border/60 bg-card rounded-xl p-8 text-center text-sm text-muted-foreground shadow-none">
                                 <AlertCircle className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
                                 Select any video card in the campaign timeline to inspect individual metrics and creator forensics.
                             </Card>
@@ -1486,12 +1485,12 @@ export default function TikTokHashtagResultDetailPage() {
                             <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
                             <span>Confirm Live Scraping Execution</span>
                         </DialogTitle>
-                        <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
+                        <DialogDescription className="text-sm text-muted-foreground leading-relaxed">
                             Review operational depth, latency, and estimated Apify credit consumption before triggering live crawler.
                         </DialogDescription>
                     </DialogHeader>
 
-                    <div className="space-y-3 pt-2 text-xs">
+                    <div className="space-y-3 pt-2 text-sm">
                         {/* Summary Table */}
                         <div className="bg-muted/40 border border-border/60 rounded-lg p-3 space-y-2 font-mono text-[11px]">
                             <div className="flex items-center justify-between">
@@ -1535,7 +1534,7 @@ export default function TikTokHashtagResultDetailPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => setConfirmModalOpen(false)}
-                            className="h-8 px-3 text-xs font-semibold rounded-lg border-border/60 hover:bg-muted"
+                            className="h-8 px-3 text-sm font-semibold rounded-lg border-border/60 hover:bg-muted"
                         >
                             Cancel
                         </Button>
@@ -1543,7 +1542,7 @@ export default function TikTokHashtagResultDetailPage() {
                             variant="default"
                             size="sm"
                             onClick={() => executeScrape(pendingDepth, true)}
-                            className="h-8 px-3 text-xs font-bold rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5"
+                            className="h-8 px-3 text-sm font-bold rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5"
                         >
                             <RefreshCw className="w-3 h-3" />
                             <span>Confirm &amp; Scrape ({pendingDepth} Posts)</span>

@@ -250,7 +250,7 @@ export async function POST(req: NextRequest) {
             const totalShares = posts.reduce((sum, p) => sum + p.shares, 0);
 
             // Fetch comments if configured
-            let audienceComments: string[] = [];
+            const audienceComments: string[] = [];
             if (includeComments && posts.length > 0) {
                 const topVideoUrls = posts.slice(0, 2).map((p) => p.url);
                 try {
