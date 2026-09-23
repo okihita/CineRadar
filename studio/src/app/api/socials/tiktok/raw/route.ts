@@ -100,6 +100,31 @@ export async function GET(request: Request) {
             });
         }
 
+        if (collection === 'tiktok_tracked_hashtags') {
+            const tags = await firestoreRestClient.getCollection<Record<string, unknown>>('tiktok_tracked_hashtags');
+            return NextResponse.json({
+                success: true,
+                collection,
+                path: 'tiktok_tracked_hashtags',
+                total_documents: tags.length,
+                data: tags,
+            });
+        }
+
+        if (collection === 'tiktok_custom_pulse') {
+            const targetDocId = docId || date;
+            const doc = await firestoreRestClient.getDocument<Record<string, unknown>>(
+                'tiktok_custom_pulse',
+                targetDocId
+            );
+            return NextResponse.json({
+                success: true,
+                collection,
+                path: `tiktok_custom_pulse/${targetDocId}`,
+                data: doc || null,
+            });
+        }
+
         return NextResponse.json({
             success: false,
             message: `Unsupported collection: ${collection}`,
