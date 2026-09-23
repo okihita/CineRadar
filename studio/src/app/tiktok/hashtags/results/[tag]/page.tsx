@@ -29,10 +29,27 @@ import {
     RotateCcw,
     Hash,
     Keyboard,
+    ChevronDown,
+    AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { getTodayJakarta } from '@/lib/timeUtils';
 import type {
@@ -115,6 +132,9 @@ export default function TikTokHashtagResultDetailPage() {
     // Scraping Execution State
     const [isScraping, setIsScraping] = useState(false);
     const [scrapeStep, setScrapeStep] = useState<string | null>(null);
+    const [scrapeTargetDepth, setScrapeTargetDepth] = useState<number>(40);
+    const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+    const [pendingDepth, setPendingDepth] = useState<number>(40);
 
     // Video sorting, pagination, and active inspection state (10 default, then 25, then 50)
     const [sortBy, setSortBy] = useState<'date' | 'views' | 'likes' | 'comments' | 'shares'>('date');
@@ -130,30 +150,53 @@ export default function TikTokHashtagResultDetailPage() {
     const snapshot = data?.snapshot;
     const history = data?.history || [];
 
+    // Cooldown Detection (15-Minute Window)
+    const lastScrapedMs = config?.last_scraped_at
+        ? new Date(config.last_scraped_at).getTime()
+        : snapshot?.crawled_at
+        ? new Date(snapshot.crawled_at).getTime()
+        : 0;
+    const isCooldownActive = lastScrapedMs > 0 && Date.now() - lastScrapedMs < 15 * 60 * 1000;
+    const elapsedMinutes = lastScrapedMs > 0
+        ? Math.max(1, Math.round((Date.now() - lastScrapedMs) / 60000))
+        : null;
+
     const handleDateChange = (newDate: string) => {
         setSelectedDate(newDate);
         setSelectedPostId(null);
         router.push(`/tiktok/hashtags/results/${cleanTag}?date=${newDate}`);
     };
 
-    // Live Scraping Trigger
-    const handleTriggerScrape = async (force: boolean = false) => {
+    // Live Scraping Trigger Request with Cost Guardrail
+    const handleRequestScrape = (depth: number) => {
+        setPendingDepth(depth);
+        if (isCooldownActive || depth > 40) {
+            setConfirmModalOpen(true);
+        } else {
+            executeScrape(depth, false);
+        }
+    };
+
+    const executeScrape = async (depth: number, force: boolean) => {
+        setConfirmModalOpen(false);
         setIsScraping(true);
+        setScrapeTargetDepth(depth);
         setScrapeStep('Connecting to Apify TikTok scraper...');
         try {
             setTimeout(() => {
-                setScrapeStep('Extracting public video posts and engagement...');
+                setScrapeStep(`Extracting ${depth} public video posts and engagement...`);
             }, 3000);
 
             setTimeout(() => {
                 setScrapeStep('Analyzing audience sentiment with Gemini 3.8 Flash...');
-            }, 8000);
+            }, depth > 40 ? 15000 : 8000);
 
             const res = await fetch('/api/socials/tiktok/hashtags/scrape', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     tag: cleanTag,
+                    targetPosts: depth,
                     force,
                     dryRun: false,
                 }),
@@ -161,7 +204,7 @@ export default function TikTokHashtagResultDetailPage() {
 
             const result = await res.json();
             if (result.success) {
-                toast.success(result.message || `Scrape completed for #${cleanTag}`);
+                toast.success(result.message || `Scrape completed for #${cleanTag} (${depth} posts)`);
                 mutate();
             } else if (result.cooldown) {
                 toast.error(result.error);
@@ -472,17 +515,67 @@ export default function TikTokHashtagResultDetailPage() {
                         </a>
                     </Button>
 
-                    {/* On-Demand Scrape Live Button */}
-                    <Button
-                        variant="default"
-                        size="sm"
-                        disabled={isScraping || isLoading}
-                        onClick={() => handleTriggerScrape(false)}
-                        className="h-9 px-3.5 rounded-lg text-xs font-bold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
-                    >
-                        <RefreshCw className={`w-3.5 h-3.5 ${isScraping ? 'animate-spin' : ''}`} />
-                        {isScraping ? 'Scraping Live...' : 'Scrape Live Now'}
-                    </Button>
+                    {/* Split Button: Scrape Live with Depth Options */}
+                    <div className="inline-flex rounded-lg shadow-sm">
+                        <Button
+                            variant="default"
+                            size="sm"
+                            disabled={isScraping || isLoading}
+                            onClick={() => handleRequestScrape(40)}
+                            className="h-9 px-3.5 rounded-l-lg rounded-r-none text-xs font-bold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground border-r border-primary-foreground/20"
+                        >
+                            <RefreshCw className={`w-3.5 h-3.5 ${isScraping ? 'animate-spin' : ''}`} />
+                            <span>{isScraping ? `Scraping (${scrapeTargetDepth})...` : 'Scrape Live'}</span>
+                        </Button>
+
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="default"
+                                    size="sm"
+                                    disabled={isScraping || isLoading}
+                                    className="h-9 px-2 rounded-l-none rounded-r-lg bg-primary hover:bg-primary/90 text-primary-foreground"
+                                    title="Select Scrape Depth"
+                                >
+                                    <ChevronDown className="w-3.5 h-3.5" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-64 bg-card border-border/80 p-1.5 space-y-1">
+                                <DropdownMenuItem
+                                    onClick={() => handleRequestScrape(40)}
+                                    className="cursor-pointer flex flex-col items-start gap-0.5 p-2 rounded-lg hover:bg-muted"
+                                >
+                                    <div className="text-xs font-bold text-foreground flex items-center justify-between w-full">
+                                        <span>Standard Depth (40 posts)</span>
+                                        <Badge variant="outline" className="text-[9px] font-mono">Standard</Badge>
+                                    </div>
+                                    <div className="text-[10px] text-muted-foreground font-mono">
+                                        ~18s latency · ~0.20 USD (~3,200 IDR)
+                                    </div>
+                                </DropdownMenuItem>
+
+                                <DropdownMenuSeparator className="bg-border/40 my-1" />
+
+                                <DropdownMenuItem
+                                    onClick={() => handleRequestScrape(100)}
+                                    className="cursor-pointer flex flex-col items-start gap-0.5 p-2 rounded-lg hover:bg-muted text-primary"
+                                >
+                                    <div className="text-xs font-bold text-foreground flex items-center justify-between w-full">
+                                        <span className="flex items-center gap-1.5 text-primary">
+                                            <Flame className="w-3.5 h-3.5 text-amber-500" />
+                                            <span>Deep Intelligence (100 posts)</span>
+                                        </span>
+                                        <Badge variant="outline" className="text-[9px] font-mono border-amber-500/40 text-amber-500">
+                                            Deep
+                                        </Badge>
+                                    </div>
+                                    <div className="text-[10px] text-muted-foreground font-mono">
+                                        ~42s latency · ~0.50 USD (~8,000 IDR)
+                                    </div>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
                 </div>
             </div>
 
@@ -503,7 +596,7 @@ export default function TikTokHashtagResultDetailPage() {
                         </div>
                     </div>
                     <div className="text-xs font-mono text-primary font-bold">
-                        Estimated ~20s
+                        Estimated {scrapeTargetDepth > 40 ? '~42s' : '~20s'}
                     </div>
                 </div>
             )}
@@ -527,7 +620,7 @@ export default function TikTokHashtagResultDetailPage() {
                             variant="default"
                             size="sm"
                             disabled={isScraping}
-                            onClick={() => handleTriggerScrape(false)}
+                            onClick={() => handleRequestScrape(40)}
                             className="rounded-lg text-xs font-bold gap-2"
                         >
                             <RefreshCw className="w-3.5 h-3.5" />
@@ -1369,6 +1462,80 @@ export default function TikTokHashtagResultDetailPage() {
                     </div>
                 </div>
             )}
+
+            {/* Depth and Cost Confirmation Modal */}
+            <Dialog open={confirmModalOpen} onOpenChange={setConfirmModalOpen}>
+                <DialogContent className="max-w-md bg-card border-border/80 text-foreground p-5 rounded-xl shadow-xl">
+                    <DialogHeader className="space-y-1.5">
+                        <DialogTitle className="text-sm font-bold flex items-center gap-2">
+                            <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                            <span>Confirm Live Scraping Execution</span>
+                        </DialogTitle>
+                        <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
+                            Review operational depth, latency, and estimated Apify credit consumption before triggering live crawler.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-3 pt-2 text-xs">
+                        {/* Summary Table */}
+                        <div className="bg-muted/40 border border-border/60 rounded-lg p-3 space-y-2 font-mono text-[11px]">
+                            <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground font-sans">Campaign Tag:</span>
+                                <span className="font-bold text-foreground">#{cleanTag}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground font-sans">Target Depth:</span>
+                                <span className="font-bold text-primary">
+                                    {pendingDepth} Video Posts {pendingDepth > 40 ? '(Deep Intelligence)' : '(Standard)'}
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground font-sans">Estimated Cost:</span>
+                                <span className="font-bold text-amber-500">
+                                    {pendingDepth > 40 ? '~0.50 USD (~8,000 IDR)' : '~0.20 USD (~3,200 IDR)'}
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground font-sans">Estimated Latency:</span>
+                                <span className="text-foreground">{pendingDepth > 40 ? '~42 seconds' : '~18 seconds'}</span>
+                            </div>
+                        </div>
+
+                        {/* Cooldown Warning Alert */}
+                        {isCooldownActive && (
+                            <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg space-y-1">
+                                <div className="flex items-center gap-1.5 font-bold text-amber-500 text-[11px]">
+                                    <AlertCircle className="w-3.5 h-3.5" />
+                                    <span>Cooldown Lockout Active</span>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground leading-relaxed">
+                                    This hashtag was scraped {elapsedMinutes} minute{elapsedMinutes === 1 ? '' : 's'} ago. Proceeding now will apply a force override and consume fresh Apify compute units.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
+                    <DialogFooter className="flex items-center justify-end gap-2 pt-3 border-t border-border/40">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setConfirmModalOpen(false)}
+                            className="h-8 px-3 text-xs font-semibold rounded-lg border-border/60 hover:bg-muted"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => executeScrape(pendingDepth, true)}
+                            className="h-8 px-3 text-xs font-bold rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5"
+                        >
+                            <RefreshCw className="w-3 h-3" />
+                            <span>Confirm &amp; Scrape ({pendingDepth} Posts)</span>
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
