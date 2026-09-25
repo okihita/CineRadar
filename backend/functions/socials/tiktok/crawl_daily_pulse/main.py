@@ -703,8 +703,9 @@ async def execute_daily_crawl_async(
             c_shares = sum(p["shares"] for p in top_c_posts)
 
             c_sent = {"positive": 75, "mixed": 20, "negative": 5, "hype_score": 80}
+            comments_list: list[str] = []
             if ct.get("include_comments") is not False and idx < len(all_custom_comments):
-                comments_list = all_custom_comments[idx]
+                comments_list = all_custom_comments[idx] or []
                 if comments_list:
                     c_sent = analyze_sentiment_with_gemini(
                         creds["gemini_key"], f"#{ct['tag']}", comments_list
@@ -748,11 +749,18 @@ async def execute_daily_crawl_async(
                 }
             )
 
-            # Update tracked hashtag metadata with latest snapshot
+            # Compute estimated unit cost for this execution (Apify posts + comments + Gemini sentiment)
+            c_posts_count = len(top_c_posts)
+            c_comments_count = len(comments_list)
+            crawl_cost_usd = round((c_posts_count * 0.003) + (c_comments_count * 0.003) + 0.00206, 4)
+
+            # Update tracked hashtag metadata with latest snapshot and atomic increment
             db.collection("tiktok_tracked_hashtags").document(clean_tag).set(
                 {
                     "last_scraped_at": now_wib.isoformat(),
                     "latest_stats": custom_stats_map[clean_tag],
+                    "scrape_count": firestore.Increment(1),
+                    "total_cost_usd": firestore.Increment(crawl_cost_usd),
                 },
                 merge=True,
             )

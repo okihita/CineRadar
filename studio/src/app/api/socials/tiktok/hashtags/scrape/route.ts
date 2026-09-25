@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { getTodayJakarta } from '@/lib/timeUtils';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { computeHashtagUnitCost, USD_TO_IDR } from '@/lib/tiktokCostEngine';
 import type {
     TrackedHashtag,
     HashtagPulseStats,
     TikTokPostItem,
     TikTokHashtagDetailSnapshot,
+    ScrapeExecutionLog,
 } from '@/types/tiktokHashtags';
 
 interface ScrapeRequestBody {
@@ -14,8 +16,10 @@ interface ScrapeRequestBody {
     force?: boolean;
     dryRun?: boolean;
     targetPosts?: number;
+    targetDate?: string;
 }
 
+export const maxDuration = 300; // Allow execution up to 5 minutes for studio-scale 1000-post extractions
 const COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes cooldown
 
 export async function POST(req: NextRequest) {
@@ -39,9 +43,10 @@ export async function POST(req: NextRequest) {
             cleanTag
         );
 
+        const requestedPosts = Number(body.targetPosts || tagDoc?.target_posts || 40);
         const targetPosts = Math.min(
-            body.targetPosts || tagDoc?.target_posts || 40,
-            100
+            Math.max(10, isNaN(requestedPosts) ? 40 : requestedPosts),
+            2000
         );
         const includeComments = tagDoc ? tagDoc.include_comments !== false : true;
 
@@ -81,6 +86,10 @@ export async function POST(req: NextRequest) {
 
         const isDryRun = body.dryRun === true || !apifyToken;
         const today = getTodayJakarta();
+        const effectiveDate =
+            body.targetDate && /^\d{4}-\d{2}-\d{2}$/.test(body.targetDate)
+                ? body.targetDate
+                : today;
 
         let posts: TikTokPostItem[] = [];
         let summaryStats: HashtagPulseStats;
@@ -177,7 +186,7 @@ export async function POST(req: NextRequest) {
                     shouldDownloadVideos: false,
                     shouldDownloadCovers: false,
                 }),
-                signal: AbortSignal.timeout(75000),
+                signal: AbortSignal.timeout(180000),
             });
 
             if (!apifyRes.ok) {
@@ -303,7 +312,7 @@ export async function POST(req: NextRequest) {
             if (geminiApiKey && textSources.length > 0) {
                 try {
                     const genAI = new GoogleGenerativeAI(geminiApiKey);
-                    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+                    const model = genAI.getGenerativeModel({ model: 'gemini-3.8-flash' });
                     const sampleTexts = textSources.slice(0, 50).map((c) => `- ${c}`).join('\n');
                     const prompt = `You are CineRadar's box office sentiment analyst. Analyze these real Indonesian audience comments and creator captions for the hashtag campaign "#${cleanTag}".
 Feedback and Captions:
@@ -356,10 +365,10 @@ Ensure positive + mixed + negative equals 100. Include 2-3 specific praise point
         }
 
         // 4. Atomic Firestore Persistence
-        // A. Update summary document in tiktok_custom_pulse/{today}
+        // A. Update summary document in tiktok_custom_pulse/{effectiveDate}
         const existingPulseDoc = await firestoreRestClient.getDocument<{
             stats?: Record<string, HashtagPulseStats>;
-        }>('tiktok_custom_pulse', today);
+        }>('tiktok_custom_pulse', effectiveDate);
 
         const mergedStats = {
             ...(existingPulseDoc?.stats || {}),
@@ -367,25 +376,25 @@ Ensure positive + mixed + negative equals 100. Include 2-3 specific praise point
         };
 
         if (existingPulseDoc) {
-            await firestoreRestClient.updateDocument('tiktok_custom_pulse', today, {
-                date: today,
+            await firestoreRestClient.updateDocument('tiktok_custom_pulse', effectiveDate, {
+                date: effectiveDate,
                 updated_at: nowIso,
                 stats: mergedStats,
             });
         } else {
-            await firestoreRestClient.createDocument('tiktok_custom_pulse', today, {
-                date: today,
+            await firestoreRestClient.createDocument('tiktok_custom_pulse', effectiveDate, {
+                date: effectiveDate,
                 updated_at: nowIso,
                 stats: mergedStats,
             });
         }
 
-        // B. Persist granular posts snapshot to subcollection tiktok_custom_pulse/{today}/hashtags/{cleanTag}
+        // B. Persist granular posts snapshot to subcollection tiktok_custom_pulse/{effectiveDate}/hashtags/{cleanTag}
         const detailSnapshot: TikTokHashtagDetailSnapshot = {
             tag: cleanTag,
             label: tagDoc?.label || cleanTag,
             category: tagDoc?.category || 'general',
-            date: today,
+            date: effectiveDate,
             crawled_at: nowIso,
             source: isDryRun ? 'simulated' : 'live_manual',
             total_posts: posts.length,
@@ -397,7 +406,7 @@ Ensure positive + mixed + negative equals 100. Include 2-3 specific praise point
             posts,
         };
 
-        const subcollectionPath = `tiktok_custom_pulse/${today}/hashtags`;
+        const subcollectionPath = `tiktok_custom_pulse/${effectiveDate}/hashtags`;
         const updatedDetail = await firestoreRestClient.updateDocument(
             subcollectionPath,
             cleanTag,
@@ -411,11 +420,45 @@ Ensure positive + mixed + negative equals 100. Include 2-3 specific praise point
             );
         }
 
-        // C. Update tracked hashtag metadata with last_scraped_at
+        // C. Update tracked hashtag metadata with last_scraped_at, scrape_count, total_cost_usd, and execution history
+        const runUnitCost = computeHashtagUnitCost({
+            postsPerCrawl: targetPosts,
+            includeComments,
+            crawlsPerDay: tagDoc?.cadence ?? 1,
+        });
+
+        const executionLogItem: ScrapeExecutionLog = {
+            timestamp: nowIso,
+            source: isDryRun ? 'simulated' : 'live_manual',
+            depth: targetPosts,
+            posts_scraped: posts.length,
+            cost_usd: runUnitCost.totalPerCrawlUsd,
+            cost_idr: Math.round(runUnitCost.totalPerCrawlUsd * USD_TO_IDR),
+            status: 'success',
+        };
+
         if (tagDoc) {
+            const currentScrapes =
+                tagDoc.scrape_count !== undefined && tagDoc.scrape_count !== null
+                    ? tagDoc.scrape_count
+                    : tagDoc.last_scraped_at
+                    ? 1
+                    : 0;
+            const newScrapeCount = currentScrapes + 1;
+            const prevCostUsd = tagDoc.total_cost_usd ?? currentScrapes * runUnitCost.totalPerCrawlUsd;
+            const newTotalCostUsd = Number((prevCostUsd + runUnitCost.totalPerCrawlUsd).toFixed(4));
+
+            const existingHistory: ScrapeExecutionLog[] = Array.isArray(tagDoc.scrape_history)
+                ? tagDoc.scrape_history
+                : [];
+            const updatedHistory = [executionLogItem, ...existingHistory].slice(0, 20);
+
             await firestoreRestClient.updateDocument('tiktok_tracked_hashtags', cleanTag, {
                 last_scraped_at: nowIso,
                 latest_stats: summaryStats,
+                scrape_count: newScrapeCount,
+                total_cost_usd: newTotalCostUsd,
+                scrape_history: updatedHistory,
                 updated_at: nowIso,
             });
         }
@@ -425,6 +468,10 @@ Ensure positive + mixed + negative equals 100. Include 2-3 specific praise point
             mode: isDryRun ? 'simulated' : 'live',
             message: `Scrape completed for #${cleanTag}`,
             data: detailSnapshot,
+            cost: {
+                run_cost_usd: runUnitCost.totalPerCrawlUsd,
+                run_cost_idr: Math.round(runUnitCost.totalPerCrawlUsd * USD_TO_IDR),
+            },
         });
     } catch (error) {
         console.error('[TikTok Live Scrape Error]:', error);

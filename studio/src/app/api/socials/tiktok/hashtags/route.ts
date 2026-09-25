@@ -90,10 +90,23 @@ export async function GET() {
                 includeComments: t.include_comments,
                 crawlsPerDay: cadence,
             });
+            const scrapeCount =
+                t.scrape_count !== undefined && t.scrape_count !== null
+                    ? t.scrape_count
+                    : t.last_scraped_at
+                    ? 1
+                    : 0;
+            const totalCostUsd =
+                t.total_cost_usd !== undefined && t.total_cost_usd !== null
+                    ? t.total_cost_usd
+                    : Number((scrapeCount * unit.totalPerCrawlUsd).toFixed(4));
+
             return {
                 ...t,
                 cadence,
                 start_hour: t.start_hour !== undefined ? t.start_hour : 18,
+                scrape_count: scrapeCount,
+                total_cost_usd: totalCostUsd,
                 cost: unit,
                 latest_stats: latestPulseMap[t.tag.toLowerCase()] || null,
             };
@@ -150,7 +163,7 @@ export async function POST(req: NextRequest) {
             category: ['campaign', 'competitor', 'meme', 'talent', 'general'].includes(body.category)
                 ? body.category
                 : 'general',
-            target_posts: Number(body.target_posts) || 40,
+            target_posts: Math.min(2000, Math.max(10, Number(body.target_posts) || 40)),
             cadence,
             start_hour: startHour,
             include_comments: body.include_comments !== false,
@@ -213,7 +226,9 @@ export async function PUT(req: NextRequest) {
 
         if (body.label !== undefined) updates.label = String(body.label).trim();
         if (body.category !== undefined) updates.category = body.category;
-        if (body.target_posts !== undefined) updates.target_posts = Number(body.target_posts);
+        if (body.target_posts !== undefined) {
+            updates.target_posts = Math.min(2000, Math.max(10, Number(body.target_posts) || 40));
+        }
         if (body.cadence !== undefined) {
             updates.cadence = Math.max(1, Math.min(4, Number(body.cadence) || 1));
         }

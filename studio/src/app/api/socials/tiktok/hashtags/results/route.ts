@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { getTodayJakarta } from '@/lib/timeUtils';
+import { computeHashtagUnitCost, USD_TO_IDR } from '@/lib/tiktokCostEngine';
 import type {
     TrackedHashtag,
     HashtagPulseStats,
     TikTokHashtagDetailSnapshot,
+    HashtagCostTelemetry,
 } from '@/types/tiktokHashtags';
 
 export async function GET(req: NextRequest) {
@@ -22,7 +24,6 @@ export async function GET(req: NextRequest) {
 
         const cleanTag = rawTag.replace(/^#/, '').toLowerCase().trim();
         const today = getTodayJakarta();
-        const targetDate = dateParam || today;
 
         // 1. Fetch tag configuration
         const tagDoc = await firestoreRestClient.getDocument<TrackedHashtag>(
@@ -30,11 +31,35 @@ export async function GET(req: NextRequest) {
             cleanTag
         );
 
-        // 2. Fetch granular snapshot from subcollection
-        let snapshot = await firestoreRestClient.getDocument<TikTokHashtagDetailSnapshot>(
-            `tiktok_custom_pulse/${targetDate}/hashtags`,
-            cleanTag
-        );
+        // If dateParam is not specified, check if today has data; if not, fallback to tag's last_scraped_at or scrape_history
+        let targetDate = dateParam;
+        let snapshot: TikTokHashtagDetailSnapshot | null = null;
+
+        if (!targetDate) {
+            targetDate = today;
+            const todaySnapshot = await firestoreRestClient.getDocument<TikTokHashtagDetailSnapshot>(
+                `tiktok_custom_pulse/${today}/hashtags`,
+                cleanTag
+            );
+            if (todaySnapshot) {
+                snapshot = todaySnapshot;
+            } else if (tagDoc?.last_scraped_at) {
+                targetDate = tagDoc.last_scraped_at.split('T')[0];
+            } else if (Array.isArray(tagDoc?.scrape_history) && tagDoc.scrape_history.length > 0) {
+                const latestLog = tagDoc.scrape_history[0];
+                if (latestLog?.timestamp) {
+                    targetDate = latestLog.timestamp.split('T')[0];
+                }
+            }
+        }
+
+        // 2. Fetch granular snapshot from subcollection if not already retrieved
+        if (!snapshot) {
+            snapshot = await firestoreRestClient.getDocument<TikTokHashtagDetailSnapshot>(
+                `tiktok_custom_pulse/${targetDate}/hashtags`,
+                cleanTag
+            );
+        }
 
         // 3. Fallback: Check root pulse document if subcollection not yet populated
         if (!snapshot) {
@@ -102,13 +127,86 @@ export async function GET(req: NextRequest) {
             if (item) history.push(item);
         }
 
+        // 5. Discover all historical scrape dates available for this hashtag
+        const availableDatesSet = new Set<string>();
+        for (const item of resolvedHistory) {
+            if (item && item.date) availableDatesSet.add(item.date);
+        }
+        if (Array.isArray(tagDoc?.scrape_history)) {
+            for (const log of tagDoc.scrape_history) {
+                if (log.timestamp) availableDatesSet.add(log.timestamp.split('T')[0]);
+            }
+        }
+        if (tagDoc?.last_scraped_at) {
+            availableDatesSet.add(tagDoc.last_scraped_at.split('T')[0]);
+        }
+        if (snapshot) {
+            availableDatesSet.add(targetDate);
+        }
+
+        const availableDates = Array.from(availableDatesSet).sort().reverse();
+
+        // 6. Compute Unit Economics & Scrape Frequency Telemetry
+        const targetPosts = tagDoc?.target_posts || 40;
+        const includeComments = tagDoc?.include_comments ?? true;
+        const cadence = Math.max(1, tagDoc?.cadence ?? 1);
+
+        const unitCost = computeHashtagUnitCost({
+            postsPerCrawl: targetPosts,
+            includeComments,
+            crawlsPerDay: cadence,
+        });
+
+        const deepCost = computeHashtagUnitCost({
+            postsPerCrawl: 100,
+            includeComments,
+            crawlsPerDay: cadence,
+        });
+
+        const discoveredCount = availableDates.length;
+        const scrapeCount =
+            tagDoc?.scrape_count !== undefined && tagDoc?.scrape_count !== null
+                ? Math.max(tagDoc.scrape_count, discoveredCount)
+                : Math.max(discoveredCount, tagDoc?.last_scraped_at ? 1 : 0);
+
+        const calculatedUsd = Number((scrapeCount * unitCost.totalPerCrawlUsd).toFixed(4));
+        const totalCostUsd =
+            tagDoc?.total_cost_usd !== undefined && tagDoc?.total_cost_usd !== null && tagDoc.total_cost_usd >= calculatedUsd
+                ? tagDoc.total_cost_usd
+                : calculatedUsd;
+
+        // Synthesize fallback audit entries from discovered dates if document has no history
+        let scrapeHistory = Array.isArray(tagDoc?.scrape_history) ? [...tagDoc.scrape_history] : [];
+        if (scrapeHistory.length === 0 && availableDates.length > 0) {
+            scrapeHistory = availableDates.map((dateStr) => ({
+                timestamp: `${dateStr}T18:00:00.000Z`,
+                source: 'scheduled_pulse' as const,
+                depth: targetPosts,
+                posts_scraped: targetPosts,
+                cost_usd: unitCost.totalPerCrawlUsd,
+                cost_idr: Math.round(unitCost.totalPerCrawlUsd * USD_TO_IDR),
+                status: 'success' as const,
+            }));
+        }
+
+        const costTelemetry: HashtagCostTelemetry = {
+            unitCost,
+            deepCost,
+            scrape_count: scrapeCount,
+            total_cost_usd: totalCostUsd,
+            total_cost_idr: Math.round(totalCostUsd * USD_TO_IDR),
+            scrape_history: scrapeHistory,
+        };
+
         return NextResponse.json({
             success: true,
             tag: cleanTag,
             targetDate,
             config: tagDoc || null,
+            cost: costTelemetry,
             snapshot: snapshot || null,
             history,
+            available_dates: availableDates,
         });
     } catch (error) {
         console.error('[TikTok Hashtag Results API Error]:', error);

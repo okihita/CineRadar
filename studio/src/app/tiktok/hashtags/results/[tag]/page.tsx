@@ -31,8 +31,14 @@ import {
     Keyboard,
     ChevronDown,
     AlertTriangle,
+    Coins,
+    Layers,
+    History,
+    DollarSign,
+    SlidersHorizontal,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
@@ -52,9 +58,11 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { getTodayJakarta } from '@/lib/timeUtils';
+import { computeHashtagUnitCost, formatIdr, formatUsd, USD_TO_IDR } from '@/lib/tiktokCostEngine';
 import type {
     TrackedHashtag,
     TikTokHashtagDetailSnapshot,
+    HashtagCostTelemetry,
 } from '@/types/tiktokHashtags';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -106,16 +114,17 @@ export default function TikTokHashtagResultDetailPage() {
     const cleanTag = decodeURIComponent(rawTag).replace(/^#/, '').toLowerCase().trim();
 
     const todayJakarta = getTodayJakarta();
-    const queryDate = searchParams.get('date') || todayJakarta;
-    const [selectedDate, setSelectedDate] = useState<string>(queryDate);
+    const queryDate = searchParams.get('date');
+    const [selectedDate, setSelectedDate] = useState<string>(queryDate || todayJakarta);
 
-    // Fetch snapshot and configuration
-    const apiUrl = `/api/socials/tiktok/hashtags/results?tag=${encodeURIComponent(cleanTag)}&date=${selectedDate}`;
+    // Fetch snapshot and configuration (omit date if user has not explicitly chosen one)
+    const apiUrl = `/api/socials/tiktok/hashtags/results?tag=${encodeURIComponent(cleanTag)}${queryDate ? `&date=${queryDate}` : ''}`;
     const { data, isLoading, mutate } = useSWR<{
         success: boolean;
         tag: string;
         targetDate: string;
         config: TrackedHashtag | null;
+        cost?: HashtagCostTelemetry | null;
         snapshot: TikTokHashtagDetailSnapshot | null;
         history: Array<{
             date: string;
@@ -124,16 +133,30 @@ export default function TikTokHashtagResultDetailPage() {
             comments: number;
             hype_score: number;
         }>;
+        available_dates?: string[];
     }>(cleanTag ? apiUrl : null, fetcher, {
         revalidateOnFocus: false,
     });
+
+    // Synchronize selectedDate when data returns targetDate or searchParams change
+    useEffect(() => {
+        if (queryDate) {
+            setSelectedDate(queryDate);
+            setScrapeAnchorDate(queryDate);
+        } else if (data?.targetDate) {
+            setSelectedDate(data.targetDate);
+            setScrapeAnchorDate(data.targetDate);
+        }
+    }, [queryDate, data?.targetDate]);
 
     // Scraping Execution State
     const [isScraping, setIsScraping] = useState(false);
     const [scrapeStep, setScrapeStep] = useState<string | null>(null);
     const [scrapeTargetDepth, setScrapeTargetDepth] = useState<number>(40);
     const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+    const [auditModalOpen, setAuditModalOpen] = useState(false);
     const [pendingDepth, setPendingDepth] = useState<number>(40);
+    const [scrapeAnchorDate, setScrapeAnchorDate] = useState<string>(queryDate || todayJakarta);
 
     // Video sorting, pagination, and active inspection state (10 default, then 25, then 50)
     const [sortBy, setSortBy] = useState<'date' | 'views' | 'likes' | 'comments' | 'shares'>('date');
@@ -148,6 +171,47 @@ export default function TikTokHashtagResultDetailPage() {
     const config = data?.config;
     const snapshot = data?.snapshot;
     const history = data?.history || [];
+    const costData = data?.cost;
+    const availableDates = data?.available_dates || [];
+
+    // Unit Economics and Execution Frequency Derived Metrics
+    const totalScrapes =
+        costData?.scrape_count ??
+        (config?.scrape_count ?? (config?.last_scraped_at ? 1 : 0));
+    const currentUnitCostUsd = costData?.unitCost.totalPerCrawlUsd ?? 0.21;
+    const currentUnitCostIdr =
+        costData?.unitCost.dailyCostIdr ?? Math.round(currentUnitCostUsd * 17500);
+    const deepUnitCostUsd = costData?.deepCost.totalPerCrawlUsd ?? 0.39;
+    const deepUnitCostIdr =
+        costData?.deepCost.dailyCostIdr ?? Math.round(deepUnitCostUsd * 17500);
+    const totalCostUsd =
+        costData?.total_cost_usd ??
+        (config?.total_cost_usd ?? Number((totalScrapes * currentUnitCostUsd).toFixed(4)));
+    const totalCostIdr =
+        costData?.total_cost_idr ?? Math.round(totalCostUsd * 17500);
+    const scrapeHistory = costData?.scrape_history ?? config?.scrape_history ?? [];
+
+    // Dynamic Cost & Latency Modeling for Arbitrary Depth
+    const pendingCost = useMemo(() => {
+        return computeHashtagUnitCost({
+            postsPerCrawl: pendingDepth,
+            includeComments: config?.include_comments !== false,
+        });
+    }, [pendingDepth, config?.include_comments]);
+
+    const scale1000Cost = useMemo(() => {
+        return computeHashtagUnitCost({
+            postsPerCrawl: 1000,
+            includeComments: config?.include_comments !== false,
+        });
+    }, [config?.include_comments]);
+
+    const estimatedLatencySeconds = useMemo(() => {
+        if (pendingDepth <= 40) return 18;
+        if (pendingDepth <= 100) return 42;
+        if (pendingDepth <= 500) return 75;
+        return 120;
+    }, [pendingDepth]);
 
     // Cooldown Detection (15-Minute Window)
     const lastScrapedMs = config?.last_scraped_at
@@ -162,25 +226,30 @@ export default function TikTokHashtagResultDetailPage() {
 
     const handleDateChange = (newDate: string) => {
         setSelectedDate(newDate);
+        setScrapeAnchorDate(newDate);
         setSelectedPostId(null);
         router.push(`/tiktok/hashtags/results/${cleanTag}?date=${newDate}`);
     };
 
-    // Live Scraping Trigger Request with Cost Guardrail
-    const handleRequestScrape = (depth: number) => {
+    // Live Scraping Trigger Request with Cost Guardrail & Backdating Option
+    const handleRequestScrape = (depth: number, targetDateOverride?: string) => {
         setPendingDepth(depth);
-        if (isCooldownActive || depth > 40) {
+        const anchor = targetDateOverride || selectedDate;
+        setScrapeAnchorDate(anchor);
+
+        if (isCooldownActive || depth > 40 || anchor !== todayJakarta) {
             setConfirmModalOpen(true);
         } else {
-            executeScrape(depth, false);
+            executeScrape(depth, false, anchor);
         }
     };
 
-    const executeScrape = async (depth: number, force: boolean) => {
+    const executeScrape = async (depth: number, force: boolean, targetDateOverride?: string) => {
         setConfirmModalOpen(false);
         setIsScraping(true);
         setScrapeTargetDepth(depth);
-        setScrapeStep('Connecting to Apify TikTok scraper...');
+        const effectiveTargetDate = targetDateOverride || scrapeAnchorDate || selectedDate;
+        setScrapeStep(`Connecting to Apify TikTok scraper for ${effectiveTargetDate}...`);
         try {
             setTimeout(() => {
                 setScrapeStep(`Extracting ${depth} public video posts and engagement...`);
@@ -196,6 +265,7 @@ export default function TikTokHashtagResultDetailPage() {
                 body: JSON.stringify({
                     tag: cleanTag,
                     targetPosts: depth,
+                    targetDate: effectiveTargetDate,
                     force,
                     dryRun: false,
                 }),
@@ -203,8 +273,14 @@ export default function TikTokHashtagResultDetailPage() {
 
             const result = await res.json();
             if (result.success) {
-                toast.success(result.message || `Scrape completed for #${cleanTag} (${depth} posts)`);
+                toast.success(
+                    result.message ||
+                    `Scrape completed for #${cleanTag} (${depth} posts${effectiveTargetDate !== todayJakarta ? ` on ${effectiveTargetDate}` : ''})`
+                );
                 mutate();
+                if (effectiveTargetDate !== selectedDate) {
+                    handleDateChange(effectiveTargetDate);
+                }
             } else if (result.cooldown) {
                 toast.error(result.error);
             } else {
@@ -433,9 +509,13 @@ export default function TikTokHashtagResultDetailPage() {
                         : 'pt-3 border-t border-border/40'
                 }`}
             >
-                <div className="text-sm text-muted-foreground font-mono">
-                    Showing <strong className="text-foreground">{startIndex + 1}</strong>–<strong className="text-foreground">{Math.min(startIndex + pageSize, filteredPosts.length)}</strong> of <strong className="text-foreground">{filteredPosts.length}</strong> videos
-                    {filteredPosts.length !== snapshot.posts.length && ` (filtered from ${snapshot.posts.length})`}
+                <div className="text-sm text-muted-foreground font-sans">
+                    Showing <span className="font-mono font-bold text-foreground tabular-nums">{startIndex + 1}</span>–<span className="font-mono font-bold text-foreground tabular-nums">{Math.min(startIndex + pageSize, filteredPosts.length)}</span> of <span className="font-mono font-bold text-foreground tabular-nums">{filteredPosts.length}</span> videos
+                    {filteredPosts.length !== snapshot.posts.length && (
+                        <span className="text-xs text-muted-foreground/80 font-sans">
+                            {' '}(filtered from <span className="font-mono font-semibold text-foreground tabular-nums">{snapshot.posts.length}</span>)
+                        </span>
+                    )}
                 </div>
 
                 <div className="flex items-center gap-1.5">
@@ -444,7 +524,7 @@ export default function TikTokHashtagResultDetailPage() {
                         size="sm"
                         disabled={safeCurrentPage === 1}
                         onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                        className="h-8 px-2.5 text-sm font-semibold rounded-lg border-border/60 hover:bg-muted gap-1"
+                        className="h-8 px-2.5 text-sm font-medium rounded-lg border-border/60 hover:bg-muted gap-1"
                     >
                         <ChevronLeft className="w-3.5 h-3.5" />
                         <span>Prev</span>
@@ -494,7 +574,7 @@ export default function TikTokHashtagResultDetailPage() {
                         size="sm"
                         disabled={safeCurrentPage === totalPages}
                         onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                        className="h-8 px-2.5 text-sm font-semibold rounded-lg border-border/60 hover:bg-muted gap-1"
+                        className="h-8 px-2.5 text-sm font-medium rounded-lg border-border/60 hover:bg-muted gap-1"
                     >
                         <span>Next</span>
                         <ChevronRight className="w-3.5 h-3.5" />
@@ -517,7 +597,7 @@ export default function TikTokHashtagResultDetailPage() {
                     >
                         <Link href="/tiktok/hashtags">
                             <ArrowLeft className="w-3.5 h-3.5" />
-                            Back to Hashtag Roster
+                            Back to Tracked Hashtags
                         </Link>
                     </Button>
 
@@ -564,6 +644,52 @@ export default function TikTokHashtagResultDetailPage() {
                         <span className="text-[10px] text-muted-foreground font-mono">WIB</span>
                     </div>
 
+                    {/* Previous Snapshots Quick Selector Dropdown */}
+                    {availableDates.length > 0 && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-9 px-2.5 rounded-lg border-border/60 hover:bg-muted text-xs font-semibold gap-1.5"
+                                    title="View Available Historical Scrapes"
+                                >
+                                    <History className="w-3.5 h-3.5 text-primary" />
+                                    <span>Snapshots ({availableDates.length})</span>
+                                    <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56 bg-card border-border/80 p-1.5 space-y-1 max-h-72 overflow-y-auto">
+                                <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                                    Historical Crawl Dates
+                                </div>
+                                {availableDates.map((d) => {
+                                    const isSelected = d === selectedDate;
+                                    const isToday = d === todayJakarta;
+                                    return (
+                                        <DropdownMenuItem
+                                            key={d}
+                                            onClick={() => handleDateChange(d)}
+                                            className={`cursor-pointer flex items-center justify-between p-2 rounded-lg text-xs font-mono ${
+                                                isSelected ? 'bg-primary text-primary-foreground font-bold' : 'hover:bg-muted text-foreground'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-1.5">
+                                                <span>{d}</span>
+                                                {isToday && (
+                                                    <Badge variant="outline" className={`text-[8px] font-sans font-semibold uppercase ${isSelected ? 'border-primary-foreground/40 text-primary-foreground' : 'border-border text-muted-foreground'}`}>
+                                                        Today
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
+                                        </DropdownMenuItem>
+                                    );
+                                })}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
+
                     {/* External TikTok Link */}
                     <Button
                         variant="outline"
@@ -586,7 +712,7 @@ export default function TikTokHashtagResultDetailPage() {
                         variant="outline"
                         size="sm"
                         asChild
-                        className="h-9 px-3 rounded-lg border-border/60 hover:bg-muted text-sm font-mono text-amber-500/90 gap-1.5"
+                        className="h-9 px-3 rounded-lg border-border/60 hover:bg-muted text-sm font-medium text-amber-500/90 gap-1.5"
                         title="View Firestore configuration"
                     >
                         <a href={firestoreConfigUrl} target="_blank" rel="noopener noreferrer">
@@ -621,38 +747,70 @@ export default function TikTokHashtagResultDetailPage() {
                                     <ChevronDown className="w-3.5 h-3.5" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-64 bg-card border-border/80 p-1.5 space-y-1">
+                            <DropdownMenuContent align="end" className="w-72 bg-card border-border/80 p-1.5 space-y-1">
                                 <DropdownMenuItem
                                     onClick={() => handleRequestScrape(40)}
                                     className="cursor-pointer flex flex-col items-start gap-0.5 p-2 rounded-lg hover:bg-muted"
                                 >
                                     <div className="text-sm font-bold text-foreground flex items-center justify-between w-full">
                                         <span>Standard Depth (40 posts)</span>
-                                        <Badge variant="outline" className="text-[9px] font-mono">Standard</Badge>
+                                        <Badge variant="outline" className="text-[9px] font-sans font-semibold">Standard</Badge>
                                     </div>
-                                    <div className="text-[10px] text-muted-foreground font-mono">
-                                        ~18s latency · ~0.20 USD (~3,200 IDR)
+                                    <div className="text-[10px] text-muted-foreground font-sans">
+                                        <span className="font-mono">~18s</span> latency · <span className="font-mono font-medium">{formatIdr(currentUnitCostIdr)}</span> <span className="font-mono text-muted-foreground/80">({formatUsd(currentUnitCostUsd)})</span>
+                                    </div>
+                                </DropdownMenuItem>
+
+                                <DropdownMenuItem
+                                    onClick={() => handleRequestScrape(100)}
+                                    className="cursor-pointer flex flex-col items-start gap-0.5 p-2 rounded-lg hover:bg-muted"
+                                >
+                                    <div className="text-sm font-bold text-foreground flex items-center justify-between w-full">
+                                        <span className="flex items-center gap-1.5 text-foreground">
+                                            <Flame className="w-3.5 h-3.5 text-amber-500" />
+                                            <span>Deep Intelligence (100 posts)</span>
+                                        </span>
+                                        <Badge variant="outline" className="text-[9px] font-sans font-semibold border-amber-500/40 text-amber-500">
+                                            Deep
+                                        </Badge>
+                                    </div>
+                                    <div className="text-[10px] text-muted-foreground font-sans">
+                                        <span className="font-mono">~42s</span> latency · <span className="font-mono font-medium">{formatIdr(deepUnitCostIdr)}</span> <span className="font-mono text-muted-foreground/80">({formatUsd(deepUnitCostUsd)})</span>
+                                    </div>
+                                </DropdownMenuItem>
+
+                                <DropdownMenuItem
+                                    onClick={() => handleRequestScrape(1000)}
+                                    className="cursor-pointer flex flex-col items-start gap-0.5 p-2 rounded-lg hover:bg-muted"
+                                >
+                                    <div className="text-sm font-bold text-foreground flex items-center justify-between w-full">
+                                        <span className="flex items-center gap-1.5 text-foreground">
+                                            <Sparkles className="w-3.5 h-3.5 text-primary" />
+                                            <span>Studio Scale (1,000 posts)</span>
+                                        </span>
+                                        <Badge variant="outline" className="text-[9px] font-sans font-semibold border-primary/40 text-primary">
+                                            Studio
+                                        </Badge>
+                                    </div>
+                                    <div className="text-[10px] text-muted-foreground font-sans">
+                                        <span className="font-mono">~90-120s</span> latency · <span className="font-mono font-medium">{formatIdr(scale1000Cost.dailyCostIdr)}</span> <span className="font-mono text-muted-foreground/80">({formatUsd(scale1000Cost.totalPerCrawlUsd)})</span>
                                     </div>
                                 </DropdownMenuItem>
 
                                 <DropdownMenuSeparator className="bg-border/40 my-1" />
 
                                 <DropdownMenuItem
-                                    onClick={() => handleRequestScrape(100)}
-                                    className="cursor-pointer flex flex-col items-start gap-0.5 p-2 rounded-lg hover:bg-muted text-primary"
+                                    onClick={() => {
+                                        setPendingDepth(500);
+                                        setConfirmModalOpen(true);
+                                    }}
+                                    className="cursor-pointer flex items-center justify-between p-2 rounded-lg hover:bg-muted text-sm font-semibold"
                                 >
-                                    <div className="text-sm font-bold text-foreground flex items-center justify-between w-full">
-                                        <span className="flex items-center gap-1.5 text-primary">
-                                            <Flame className="w-3.5 h-3.5 text-amber-500" />
-                                            <span>Deep Intelligence (100 posts)</span>
-                                        </span>
-                                        <Badge variant="outline" className="text-[9px] font-mono border-amber-500/40 text-amber-500">
-                                            Deep
-                                        </Badge>
-                                    </div>
-                                    <div className="text-[10px] text-muted-foreground font-mono">
-                                        ~42s latency · ~0.50 USD (~8,000 IDR)
-                                    </div>
+                                    <span className="flex items-center gap-1.5 text-foreground">
+                                        <SlidersHorizontal className="w-3.5 h-3.5 text-muted-foreground" />
+                                        <span>Custom Depth...</span>
+                                    </span>
+                                    <span className="text-[10px] font-mono text-muted-foreground">Up to 2,000</span>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -677,46 +835,444 @@ export default function TikTokHashtagResultDetailPage() {
                         </div>
                     </div>
                     <div className="text-sm font-mono text-primary font-bold">
-                        Estimated {scrapeTargetDepth > 40 ? '~42s' : '~20s'}
+                        Estimated {scrapeTargetDepth > 500 ? '~90-120s' : scrapeTargetDepth > 40 ? '~42s' : '~20s'}
                     </div>
                 </div>
             )}
 
-            {/* Cold Start / Empty State */}
-            {!isLoading && !snapshot && (
-                <Card className="border-border/60 bg-card rounded-xl text-center py-12 px-4 shadow-none">
-                    <CardHeader className="max-w-md mx-auto space-y-2">
-                        <div className="w-12 h-12 rounded-xl bg-muted/60 text-muted-foreground flex items-center justify-center mx-auto border border-border/60">
-                            <AlertCircle className="w-6 h-6" />
-                        </div>
-                        <CardTitle className="text-lg font-bold text-foreground">
-                            No Crawl Telemetry for {selectedDate}
+            {/* Scrape Execution & Unit Cost Telemetry Strip */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {/* 1. Crawl Frequency & Execution Counter */}
+                <Card className="border-border/60 bg-card rounded-xl shadow-none">
+                    <CardHeader className="p-3.5 pb-1 flex flex-row items-center justify-between space-y-0">
+                        <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-sans flex items-center gap-1.5">
+                            <RotateCcw className="w-3.5 h-3.5 text-primary" />
+                            <span>Crawl Executions</span>
                         </CardTitle>
-                        <CardDescription className="text-sm text-muted-foreground">
-                            Hashtag #{cleanTag} has not been crawled for this date window. You can trigger an on-demand scrape right now or wait for the standing 18:00 WIB daily pulse.
-                        </CardDescription>
+                        {scrapeHistory.length > 0 && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setAuditModalOpen(true)}
+                                className="h-6 px-2 text-[10px] font-semibold gap-1 border-border/60 hover:bg-muted text-foreground"
+                                title="Inspect Scrape Execution Audit Trail"
+                            >
+                                <History className="w-3 h-3 text-primary" />
+                                <span>Audit ({scrapeHistory.length})</span>
+                            </Button>
+                        )}
                     </CardHeader>
-                    <CardContent className="flex justify-center gap-3 pt-2">
-                        <Button
-                            variant="default"
-                            size="sm"
-                            disabled={isScraping}
-                            onClick={() => handleRequestScrape(40)}
-                            className="rounded-lg text-sm font-bold gap-2"
-                        >
-                            <RefreshCw className="w-3.5 h-3.5" />
-                            Trigger First Scrape Now
-                        </Button>
+                    <CardContent className="p-3.5 pt-1 space-y-1">
+                        <div className="flex items-baseline gap-1.5">
+                            <span className="text-2xl font-bold font-mono tabular-nums text-foreground">
+                                {totalScrapes}
+                            </span>
+                            <span className="text-xs text-muted-foreground font-sans">
+                                {totalScrapes === 1 ? 'scrape run' : 'scrape runs'}
+                            </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground font-medium truncate font-sans">
+                            Cadence: {config?.cadence || 1}x/hari at {(config?.start_hour || 18).toString().padStart(2, '0')}:00 WIB
+                        </p>
+                    </CardContent>
+                </Card>
+
+                {/* 2. Unit Cost Per Scrape (Rupiah First) */}
+                <Card className="border-border/60 bg-card rounded-xl shadow-none">
+                    <CardHeader className="p-3.5 pb-1 flex flex-row items-center justify-between space-y-0">
+                        <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-sans flex items-center gap-1.5">
+                            <Coins className="w-3.5 h-3.5 text-amber-500" />
+                            <span>Cost Per Scrape</span>
+                        </CardTitle>
+                        <Badge variant="outline" className="text-[9px] font-sans font-semibold border-amber-500/30 text-amber-500">
+                            Unit Econ
+                        </Badge>
+                    </CardHeader>
+                    <CardContent className="p-3.5 pt-1 space-y-1">
+                        <div className="flex items-baseline gap-1.5">
+                            <span className="text-2xl font-bold font-mono tabular-nums text-foreground">
+                                {formatIdr(currentUnitCostIdr)}
+                            </span>
+                            <span className="text-xs font-mono text-muted-foreground">
+                                ({formatUsd(currentUnitCostUsd)})
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-sans">
+                            <span>Standard: <span className="font-mono tabular-nums">{config?.target_posts || 40}</span> posts</span>
+                            <span>·</span>
+                            <span className="text-foreground/80 font-semibold font-mono">Deep: {formatIdr(deepUnitCostIdr)} ({formatUsd(deepUnitCostUsd)})</span>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* 3. Cumulative Scraping Spend (Rupiah First) */}
+                <Card className="border-border/60 bg-card rounded-xl shadow-none">
+                    <CardHeader className="p-3.5 pb-1 flex flex-row items-center justify-between space-y-0">
+                        <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-sans flex items-center gap-1.5">
+                            <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+                            <span>Cumulative Spend</span>
+                        </CardTitle>
+                        <Badge variant="outline" className="text-[9px] font-sans font-semibold border-emerald-500/30 text-emerald-500">
+                            All-Time
+                        </Badge>
+                    </CardHeader>
+                    <CardContent className="p-3.5 pt-1 space-y-1">
+                        <div className="flex items-baseline gap-1.5">
+                            <span className="text-2xl font-bold font-mono tabular-nums text-foreground">
+                                {formatIdr(totalCostIdr)}
+                            </span>
+                            <span className="text-xs font-mono text-muted-foreground">
+                                ({formatUsd(totalCostUsd)})
+                            </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground font-medium truncate font-sans">
+                            Lifetime burn across <span className="font-mono font-bold text-foreground tabular-nums">{totalScrapes}</span> execution{totalScrapes === 1 ? '' : 's'}
+                        </p>
+                    </CardContent>
+                </Card>
+
+                {/* 4. Unit Cost Breakdown Strip (Rupiah First) */}
+                <Card className="border-border/60 bg-card rounded-xl shadow-none">
+                    <CardHeader className="p-3.5 pb-1 flex flex-row items-center justify-between space-y-0">
+                        <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-sans flex items-center gap-1.5">
+                            <Layers className="w-3.5 h-3.5 text-primary" />
+                            <span>Unit Breakdown</span>
+                        </CardTitle>
+                        <span className="text-[9px] font-sans text-muted-foreground">Per Crawl</span>
+                    </CardHeader>
+                    <CardContent className="p-3.5 pt-1 space-y-1 text-[11px]">
+                        <div className="flex items-center justify-between text-muted-foreground">
+                            <span className="font-sans">Apify Posts ({config?.target_posts || 40}):</span>
+                            <span className="font-semibold text-foreground font-mono">
+                                {formatIdr(Math.round((costData?.unitCost?.apifyPostsUsd ?? 0.12) * USD_TO_IDR))} <span className="text-muted-foreground font-normal">({formatUsd(costData?.unitCost?.apifyPostsUsd ?? 0.12)})</span>
+                            </span>
+                        </div>
+                        <div className="flex items-center justify-between text-muted-foreground">
+                            <span className="font-sans">Apify Comments (30):</span>
+                            <span className="font-semibold text-foreground font-mono">
+                                {formatIdr(Math.round((costData?.unitCost?.apifyCommentsUsd ?? 0.09) * USD_TO_IDR))} <span className="text-muted-foreground font-normal">({formatUsd(costData?.unitCost?.apifyCommentsUsd ?? 0.09)})</span>
+                            </span>
+                        </div>
+                        <div className="flex items-center justify-between text-muted-foreground">
+                            <span className="font-sans">Gemini 3.8 Sentiment:</span>
+                            <span className="font-semibold text-foreground font-mono">
+                                {formatIdr(Math.round((costData?.unitCost?.geminiSentimentUsd ?? 0.002) * USD_TO_IDR))} <span className="text-muted-foreground font-normal">({formatUsd(costData?.unitCost?.geminiSentimentUsd ?? 0.002)})</span>
+                            </span>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Empty State / Pending Pulse Operational Dashboard */}
+            {!isLoading && !snapshot && (
+                <div className="space-y-4">
+                    {/* Status Alert Banner */}
+                    <div className="bg-card border border-border/80 rounded-xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-none">
+                        <div className="flex items-start sm:items-center gap-3.5 flex-1 min-w-0">
+                            <div className="w-10 h-10 rounded-xl bg-muted/70 text-muted-foreground flex items-center justify-center shrink-0 border border-border/60">
+                                <Clock className="w-5 h-5 text-primary" />
+                            </div>
+                            <div className="space-y-1 flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-base font-bold text-foreground font-sans">
+                                        No Recorded Crawl for {selectedDate}
+                                    </span>
+                                    <Badge variant="outline" className="text-[10px] font-sans font-semibold">
+                                        {selectedDate === todayJakarta ? 'Standing 18:00 WIB Pulse' : 'Unrecorded Window'}
+                                    </Badge>
+                                </div>
+                                <p className="text-sm text-muted-foreground leading-relaxed font-sans">
+                                    {selectedDate === todayJakarta
+                                        ? `Hashtag #${cleanTag} has not been crawled for this date window. You can trigger an on-demand scrape right now or wait for the standing 18:00 WIB daily pulse.`
+                                        : `Hashtag #${cleanTag} has no snapshot recorded for ${selectedDate}. You can backfill and scrape for this date window, or jump to a date with recorded telemetry.`}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                            <Button
+                                variant="default"
+                                size="sm"
+                                disabled={isScraping}
+                                onClick={() => handleRequestScrape(40, selectedDate)}
+                                className="rounded-lg text-xs font-bold gap-2 h-9"
+                            >
+                                <RefreshCw className={`w-3.5 h-3.5 ${isScraping ? 'animate-spin' : ''}`} />
+                                <span>
+                                    {selectedDate === todayJakarta
+                                        ? 'Trigger First Scrape Now'
+                                        : `Backfill & Scrape for ${selectedDate}`}
+                                </span>
+                            </Button>
+                            {availableDates.length > 0 && availableDates[0] !== selectedDate && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleDateChange(availableDates[0])}
+                                    className="rounded-lg text-xs font-semibold gap-1.5 h-9 border-border/80"
+                                >
+                                    <History className="w-3.5 h-3.5 text-primary" />
+                                    <span>View Latest Scrape ({availableDates[0]})</span>
+                                </Button>
+                            )}
+                            {selectedDate !== todayJakarta && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleDateChange(todayJakarta)}
+                                    className="rounded-lg text-xs font-medium h-9 border-border/80"
+                                >
+                                    Jump to Today
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Operational Details & Historical Execution Archives */}
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                        {/* LEFT COLUMN: Pipeline Configuration & Diagnostics */}
+                        <div className="lg:col-span-4 xl:col-span-4 space-y-4">
+                            <Card className="border-border/60 bg-card rounded-xl shadow-none">
+                                <CardHeader className="p-4 pb-2 border-b border-border/40">
+                                    <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2 font-sans">
+                                        <Database className="w-3.5 h-3.5 text-primary" />
+                                        <span>Pipeline Parameters</span>
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="p-4 space-y-3 text-xs">
+                                    <div className="flex items-center justify-between pb-2 border-b border-border/30">
+                                        <span className="text-muted-foreground font-sans">Registered Tag:</span>
+                                        <span className="font-semibold text-primary font-sans">#{cleanTag}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between pb-2 border-b border-border/30">
+                                        <span className="text-muted-foreground font-sans">Label:</span>
+                                        <span className="font-semibold text-foreground font-sans">{config?.label || cleanTag}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between pb-2 border-b border-border/30">
+                                        <span className="text-muted-foreground font-sans">Category:</span>
+                                        <Badge variant="outline" className="text-[10px] font-sans font-medium capitalize">
+                                            {config?.category || 'general'}
+                                        </Badge>
+                                    </div>
+                                    <div className="flex items-center justify-between pb-2 border-b border-border/30">
+                                        <span className="text-muted-foreground font-sans">Ingestion Target:</span>
+                                        <span className="font-semibold text-foreground font-sans">
+                                            <span className="font-mono tabular-nums">{config?.target_posts || 40}</span> posts / run
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between pb-2 border-b border-border/30">
+                                        <span className="text-muted-foreground font-sans">Comment Ingestion:</span>
+                                        <span className="font-semibold text-foreground font-sans">
+                                            {config?.include_comments ? 'Top 30 Comments' : 'Disabled'}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between pb-2 border-b border-border/30">
+                                        <span className="text-muted-foreground font-sans">Sentiment Engine:</span>
+                                        <span className="font-semibold text-foreground font-sans">Gemini 3.8 Flash</span>
+                                    </div>
+                                    <div className="flex items-center justify-between pb-2 border-b border-border/30">
+                                        <span className="text-muted-foreground font-sans">Pulse Schedule:</span>
+                                        <span className="font-semibold text-foreground font-sans">18:00 WIB Daily</span>
+                                    </div>
+                                    <div className="flex items-center justify-between pb-2 border-b border-border/30">
+                                        <span className="text-muted-foreground font-sans">Unit Cost:</span>
+                                        <span className="font-mono font-bold text-foreground">
+                                            {formatIdr(currentUnitCostIdr)} <span className="text-muted-foreground font-normal text-xs">({formatUsd(currentUnitCostUsd)})</span>
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-muted-foreground font-sans">Crawler Cooldown:</span>
+                                        <Badge
+                                            variant="outline"
+                                            className={`text-[10px] font-sans font-medium ${
+                                                isCooldownActive
+                                                    ? 'border-amber-500/40 text-amber-500 bg-amber-500/5'
+                                                    : 'border-emerald-500/40 text-emerald-500 bg-emerald-500/5'
+                                            }`}
+                                        >
+                                            {isCooldownActive ? (
+                                                <span>
+                                                    Cooldown (<span className="font-mono tabular-nums">{15 - (elapsedMinutes || 0)}m</span>)
+                                                </span>
+                                            ) : (
+                                                'Ready to Run'
+                                            )}
+                                        </Badge>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        {/* RIGHT COLUMN: Execution Audit Trail & Available Snapshots */}
+                        <div className="lg:col-span-8 xl:col-span-8 space-y-4">
+                            <Card className="border-border/60 bg-card rounded-xl shadow-none">
+                                <CardHeader className="p-4 pb-2 border-b border-border/40 flex flex-row items-center justify-between space-y-0">
+                                    <div>
+                                        <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2 font-sans">
+                                            <History className="w-3.5 h-3.5 text-primary" />
+                                            <span>Recorded Crawls & Execution Audit</span>
+                                        </CardTitle>
+                                        <CardDescription className="text-xs text-muted-foreground mt-0.5 font-sans">
+                                            Historical snapshots and on-demand trigger history for #{cleanTag}
+                                        </CardDescription>
+                                    </div>
+                                    <Badge variant="outline" className="text-[10px] font-sans font-medium">
+                                        <span className="font-mono font-bold tabular-nums">{availableDates.length}</span> snapshots
+                                    </Badge>
+                                </CardHeader>
+                                <CardContent className="p-4 space-y-4">
+                                    {/* Available Date Chips */}
+                                    {availableDates.length > 0 && (
+                                        <div className="p-3 bg-muted/30 rounded-lg border border-border/40 space-y-2">
+                                            <div className="text-[11px] font-sans text-muted-foreground uppercase tracking-wider font-semibold">
+                                                Jump to Recorded Snapshot:
+                                            </div>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {availableDates.map((d) => (
+                                                    <Badge
+                                                        key={d}
+                                                        variant="outline"
+                                                        onClick={() => handleDateChange(d)}
+                                                        className={`text-xs font-mono cursor-pointer transition-colors ${
+                                                            d === selectedDate
+                                                                ? 'bg-primary text-primary-foreground font-bold border-primary'
+                                                                : 'border-border/80 hover:bg-primary hover:text-primary-foreground hover:border-primary'
+                                                        }`}
+                                                    >
+                                                        {d}
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Scrape Execution Logs Table */}
+                                    {scrapeHistory.length > 0 ? (
+                                        <div className="border border-border/60 rounded-xl overflow-hidden">
+                                            <div className="max-h-72 overflow-y-auto">
+                                                <table className="w-full text-xs text-left">
+                                                    <thead className="bg-muted/60 text-muted-foreground font-semibold border-b border-border/60 sticky top-0 text-[11px] uppercase tracking-wider font-sans">
+                                                        <tr>
+                                                            <th className="p-2.5">Time (WIB)</th>
+                                                            <th className="p-2.5">Source</th>
+                                                            <th className="p-2.5">Depth</th>
+                                                            <th className="p-2.5">Cost (IDR)</th>
+                                                            <th className="p-2.5">Cost (USD)</th>
+                                                            <th className="p-2.5">Status</th>
+                                                            <th className="p-2.5 text-right">Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-border/40 font-mono">
+                                                        {scrapeHistory.map((item, idx) => {
+                                                            const itemDate = item.timestamp ? item.timestamp.split('T')[0] : '';
+                                                            return (
+                                                                <tr key={idx} className="hover:bg-muted/30 transition-colors">
+                                                                    <td className="p-2.5 text-foreground font-bold whitespace-nowrap">
+                                                                        {formatWIBFull24(item.timestamp)}
+                                                                    </td>
+                                                                    <td className="p-2.5 whitespace-nowrap font-sans">
+                                                                        <Badge
+                                                                            variant="outline"
+                                                                            className={`text-[9px] font-sans font-medium capitalize ${
+                                                                                item.source === 'live_manual'
+                                                                                    ? 'border-primary/40 text-primary bg-primary/5'
+                                                                                    : item.source === 'scheduled_pulse'
+                                                                                    ? 'border-emerald-500/40 text-emerald-500 bg-emerald-500/5'
+                                                                                    : 'text-muted-foreground'
+                                                                            }`}
+                                                                        >
+                                                                            {item.source.replace('_', ' ')}
+                                                                        </Badge>
+                                                                    </td>
+                                                                    <td className="p-2.5 whitespace-nowrap text-muted-foreground font-sans">
+                                                                        <span className="font-mono tabular-nums text-foreground">{item.depth}</span> posts
+                                                                    </td>
+                                                                    <td className="p-2.5 whitespace-nowrap font-bold text-foreground">
+                                                                        {formatIdr(item.cost_idr)}
+                                                                    </td>
+                                                                    <td className="p-2.5 whitespace-nowrap text-muted-foreground text-[11px]">
+                                                                        {formatUsd(item.cost_usd)}
+                                                                    </td>
+                                                                    <td className="p-2.5 whitespace-nowrap font-sans">
+                                                                        <Badge
+                                                                            variant="outline"
+                                                                            className={`text-[9px] font-sans font-semibold capitalize ${
+                                                                                item.status === 'success'
+                                                                                    ? 'border-emerald-500/40 text-emerald-500'
+                                                                                    : 'border-rose-500/40 text-rose-500'
+                                                                            }`}
+                                                                        >
+                                                                            {item.status}
+                                                                        </Badge>
+                                                                    </td>
+                                                                    <td className="p-2.5 text-right whitespace-nowrap font-sans">
+                                                                        {itemDate && (
+                                                                            <Button
+                                                                                variant="ghost"
+                                                                                size="sm"
+                                                                                onClick={() => handleDateChange(itemDate)}
+                                                                                className="h-6 px-2 text-[11px] font-semibold text-primary hover:text-primary hover:bg-primary/10"
+                                                                            >
+                                                                                View
+                                                                            </Button>
+                                                                        )}
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        })}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="p-6 text-center bg-muted/20 border border-border/40 rounded-xl text-xs text-muted-foreground font-sans">
+                                            No execution logs recorded in the local buffer yet. Subsequent live or scheduled crawls will log here.
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Historical Crawl Context Banner */}
+            {snapshot && selectedDate !== todayJakarta && (
+                <div className="bg-card border border-border/80 rounded-xl p-3 sm:px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-none">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20">
+                            <History className="w-4 h-4" />
+                        </div>
+                        <div>
+                            <div className="text-xs font-bold text-foreground flex items-center gap-2">
+                                <span>Viewing Historical Snapshot:</span>
+                                <span className="font-mono text-primary font-bold">{selectedDate}</span>
+                            </div>
+                            <div className="text-[11px] text-muted-foreground">
+                                Standing daily pulse for today ({todayJakarta}) executes at 18:00 WIB.
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
                         <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleDateChange(todayJakarta)}
-                            className="rounded-lg text-sm font-medium"
+                            className="h-8 text-xs font-semibold rounded-lg border-border/80 hover:bg-muted"
                         >
                             Jump to Today
                         </Button>
-                    </CardContent>
-                </Card>
+                        <Button
+                            variant="default"
+                            size="sm"
+                            disabled={isScraping}
+                            onClick={() => handleRequestScrape(40, todayJakarta)}
+                            className="h-8 text-xs font-bold rounded-lg gap-1.5"
+                        >
+                            <RefreshCw className="w-3.5 h-3.5" />
+                            <span>Scrape Today</span>
+                        </Button>
+                    </div>
+                </div>
             )}
 
             {/* Main Telemetry: Three-Column Timeline Architecture */}
@@ -732,8 +1288,8 @@ export default function TikTokHashtagResultDetailPage() {
                                         <Activity className="w-3.5 h-3.5 text-primary" />
                                         <span>Campaign Velocity</span>
                                     </CardTitle>
-                                    <Badge variant="outline" className="text-[10px] font-mono">
-                                        {snapshot.total_posts} posts
+                                    <Badge variant="outline" className="text-[10px] font-sans font-medium">
+                                        <span className="font-mono font-bold tabular-nums">{snapshot.total_posts}</span> posts
                                     </Badge>
                                 </div>
                             </CardHeader>
@@ -750,8 +1306,8 @@ export default function TikTokHashtagResultDetailPage() {
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <Badge variant="outline" className="text-[10px] font-mono border-emerald-500/40 text-emerald-500">
-                                            {snapshot.sentiment?.positive ?? 75}% Positive
+                                        <Badge variant="outline" className="text-[10px] font-sans font-medium border-emerald-500/40 text-emerald-500">
+                                            <span className="font-mono font-bold tabular-nums">{snapshot.sentiment?.positive ?? 75}%</span> Positive
                                         </Badge>
                                         <div className="text-[9px] text-muted-foreground mt-1">
                                             Community buzz
@@ -827,21 +1383,21 @@ export default function TikTokHashtagResultDetailPage() {
                                             <Sparkles className="w-3.5 h-3.5 text-primary" />
                                             <span>AI Sentiment Pulse</span>
                                         </CardTitle>
-                                        <span className="text-[10px] font-mono text-muted-foreground">Gemini 3.8</span>
+                                        <span className="text-[10px] font-sans font-medium text-muted-foreground">Gemini 3.8</span>
                                     </div>
                                 </CardHeader>
                                 <CardContent className="p-4 space-y-3">
                                     {/* Segmented Sentiment Bar */}
                                     <div className="space-y-1">
-                                        <div className="flex items-center justify-between text-[11px] font-mono font-semibold">
-                                            <span className="text-emerald-500">
-                                                {snapshot.sentiment.positive}% Pos
+                                        <div className="flex items-center justify-between text-[11px] font-semibold">
+                                            <span className="text-emerald-500 font-sans">
+                                                <span className="font-mono tabular-nums">{snapshot.sentiment.positive}%</span> Pos
                                             </span>
-                                            <span className="text-amber-500">
-                                                {snapshot.sentiment.mixed}% Mix
+                                            <span className="text-amber-500 font-sans">
+                                                <span className="font-mono tabular-nums">{snapshot.sentiment.mixed}%</span> Mix
                                             </span>
-                                            <span className="text-rose-500">
-                                                {snapshot.sentiment.negative}% Neg
+                                            <span className="text-rose-500 font-sans">
+                                                <span className="font-mono tabular-nums">{snapshot.sentiment.negative}%</span> Neg
                                             </span>
                                         </div>
                                         <div className="w-full h-2 rounded-full bg-muted/60 overflow-hidden flex">
@@ -904,8 +1460,8 @@ export default function TikTokHashtagResultDetailPage() {
                                             <Hash className="w-3.5 h-3.5 text-primary" />
                                             <span>Associated Hashtags</span>
                                         </CardTitle>
-                                        <Badge variant="outline" className="text-[10px] font-mono">
-                                            {associatedHashtags.length} tags
+                                        <Badge variant="outline" className="text-[10px] font-sans font-medium">
+                                            <span className="font-mono font-bold tabular-nums">{associatedHashtags.length}</span> tags
                                         </Badge>
                                     </div>
                                     <CardDescription className="text-[10px] text-muted-foreground">
@@ -952,8 +1508,8 @@ export default function TikTokHashtagResultDetailPage() {
                                         })}
                                     </div>
                                     {associatedHashtags.length > 16 && (
-                                        <div className="text-[10px] text-muted-foreground font-mono text-center pt-2">
-                                            +{associatedHashtags.length - 16} more tags discovered
+                                        <div className="text-[10px] text-muted-foreground font-sans text-center pt-2">
+                                            +<span className="font-mono font-semibold tabular-nums">{associatedHashtags.length - 16}</span> more tags discovered
                                         </div>
                                     )}
                                 </CardContent>
@@ -990,14 +1546,14 @@ export default function TikTokHashtagResultDetailPage() {
                         )}
 
                         {/* Telemetry Footer */}
-                        <div className="p-3 bg-muted/20 border border-border/40 rounded-xl text-[10px] text-muted-foreground space-y-1 font-mono">
+                        <div className="p-3 bg-muted/20 border border-border/40 rounded-xl text-[10px] text-muted-foreground space-y-1 font-sans">
                             <div className="flex items-center justify-between">
                                 <span>Source:</span>
-                                <strong className="text-foreground capitalize">{snapshot.source.replace('_', ' ')}</strong>
+                                <strong className="text-foreground capitalize font-medium">{snapshot.source.replace('_', ' ')}</strong>
                             </div>
                             <div className="flex items-center justify-between">
                                 <span>Captured:</span>
-                                <strong className="text-foreground">{formatWIB24(snapshot.crawled_at)}</strong>
+                                <strong className="text-foreground font-mono">{formatWIB24(snapshot.crawled_at)}</strong>
                             </div>
                             <div className="pt-1 border-t border-border/30 flex items-center justify-between">
                                 <span>Raw Payload:</span>
@@ -1005,7 +1561,7 @@ export default function TikTokHashtagResultDetailPage() {
                                     href={firestoreSnapshotUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-amber-500/90 hover:underline flex items-center gap-0.5"
+                                    className="text-amber-500/90 hover:underline flex items-center gap-0.5 font-mono"
                                 >
                                     <span>Doc Link</span>
                                     <ExternalLink className="w-2.5 h-2.5" />
@@ -1023,25 +1579,25 @@ export default function TikTokHashtagResultDetailPage() {
                                     <div>
                                         <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
                                             <span>Campaign Timeline</span>
-                                            <Badge variant="outline" className="text-[10px] font-mono">
-                                                {filteredPosts.length} posts
+                                            <Badge variant="outline" className="text-[10px] font-sans font-medium">
+                                                <span className="font-mono font-bold tabular-nums">{filteredPosts.length}</span> posts
                                             </Badge>
                                         </h2>
-                                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-mono mt-0.5">
+                                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-sans mt-0.5">
                                             <Keyboard className="w-3 h-3 text-primary" />
-                                            <span>Browse: J / K or ↑ / ↓ keys</span>
+                                            <span>Browse: <span className="font-mono font-semibold text-foreground">J</span> / <span className="font-mono font-semibold text-foreground">K</span> or <span className="font-mono font-semibold text-foreground">↑</span> / <span className="font-mono font-semibold text-foreground">↓</span> keys</span>
                                         </div>
                                     </div>
 
                                     {/* Page Size Selector (Default 10, then 25, then 50) */}
                                     <div className="flex items-center gap-1 bg-muted/40 rounded-lg border border-border/60 p-0.5 text-[10px] font-semibold">
-                                        <span className="text-muted-foreground px-1 font-mono">Per page:</span>
+                                        <span className="text-muted-foreground px-1 font-sans">Per page:</span>
                                         {[10, 25, 50].map((size) => (
                                             <button
                                                 key={size}
                                                 type="button"
                                                 onClick={() => handlePageSizeChange(size)}
-                                                className={`px-2 py-0.5 rounded transition-colors font-mono ${
+                                                className={`px-2 py-0.5 rounded transition-colors font-mono tabular-nums ${
                                                     pageSize === size
                                                         ? 'bg-background text-foreground shadow-sm font-bold'
                                                         : 'text-muted-foreground hover:text-foreground'
@@ -1067,7 +1623,7 @@ export default function TikTokHashtagResultDetailPage() {
                                         <button
                                             type="button"
                                             onClick={() => handleFilterChange('')}
-                                            className="text-muted-foreground hover:text-foreground text-[10px] font-mono px-1"
+                                            className="text-muted-foreground hover:text-foreground text-xs font-sans font-medium px-1"
                                         >
                                             Clear
                                         </button>
@@ -1076,7 +1632,7 @@ export default function TikTokHashtagResultDetailPage() {
 
                                 {/* Sort Parameter Buttons */}
                                 <div className="flex items-center justify-between gap-1 flex-wrap pt-0.5">
-                                    <span className="text-[10px] font-mono text-muted-foreground">Sort order:</span>
+                                    <span className="text-[10px] font-sans font-medium text-muted-foreground">Sort order:</span>
                                     <div className="flex items-center bg-muted/40 rounded-lg border border-border/60 p-0.5 text-[11px] font-semibold">
                                         {(['date', 'views', 'likes', 'comments', 'shares'] as const).map((key) => {
                                             const isActive = sortBy === key;
@@ -1099,7 +1655,7 @@ export default function TikTokHashtagResultDetailPage() {
                                                     }`}
                                                     title={`Sort by ${labelMap[key]} (${isActive && sortDirection === 'asc' ? 'ascending' : 'descending'})`}
                                                 >
-                                                    <span>{labelMap[key]}</span>
+                                                    <span className="font-sans">{labelMap[key]}</span>
                                                     {isActive && (
                                                         <span className="font-mono text-[9px] text-primary">
                                                             {sortDirection === 'desc' ? '↓' : '↑'}
@@ -1180,8 +1736,8 @@ export default function TikTokHashtagResultDetailPage() {
 
                                                         <div className="flex items-center gap-1.5 shrink-0">
                                                             {isTopPost && (
-                                                                <Badge variant="outline" className="text-[9px] font-mono border-amber-500/40 text-amber-500 bg-amber-500/5">
-                                                                    #1 Views
+                                                                <Badge variant="outline" className="text-[9px] font-sans font-semibold border-amber-500/40 text-amber-500 bg-amber-500/5">
+                                                                    <span className="font-mono tabular-nums">#1</span> Views
                                                                 </Badge>
                                                             )}
                                                             <span className="text-[10px] font-mono font-bold text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded border border-border/40 flex items-center gap-1">
@@ -1258,7 +1814,7 @@ export default function TikTokHashtagResultDetailPage() {
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => setSelectedPostId(null)}
-                                                className="h-7 px-2 text-[10px] font-mono text-muted-foreground hover:text-foreground gap-1"
+                                                className="h-7 px-2 text-xs font-sans font-medium text-muted-foreground hover:text-foreground gap-1"
                                                 title="Reset to default catalyst"
                                             >
                                                 <RotateCcw className="w-3 h-3" />
@@ -1297,7 +1853,7 @@ export default function TikTokHashtagResultDetailPage() {
                                                 </div>
                                             </div>
 
-                                            <Badge variant="outline" className="text-[10px] font-mono">
+                                            <Badge variant="outline" className="text-[10px] font-sans font-medium">
                                                 Published
                                             </Badge>
                                         </div>
@@ -1350,7 +1906,7 @@ export default function TikTokHashtagResultDetailPage() {
 
                                     {/* Granular Post Performance Metrics (2x2 Grid) */}
                                     <div className="space-y-1.5">
-                                        <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold">
+                                        <div className="text-[10px] font-sans uppercase tracking-wider text-muted-foreground font-semibold">
                                             Post Metric Breakdown
                                         </div>
                                         <div className="grid grid-cols-2 gap-2 text-sm font-mono">
@@ -1414,9 +1970,11 @@ export default function TikTokHashtagResultDetailPage() {
 
                                     {/* Full Caption Box */}
                                     <div className="space-y-1.5">
-                                        <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold flex items-center justify-between">
+                                        <div className="text-[10px] font-sans uppercase tracking-wider text-muted-foreground font-semibold flex items-center justify-between">
                                             <span>Full Video Caption</span>
-                                            <span className="text-[9px]">{activePost.caption.length} chars</span>
+                                            <span className="text-[9px] font-sans text-muted-foreground">
+                                                <span className="font-mono tabular-nums">{activePost.caption.length}</span> chars
+                                            </span>
                                         </div>
                                         <div className="p-3 bg-muted/20 border border-border/40 rounded-xl text-sm text-foreground leading-relaxed whitespace-pre-wrap font-sans max-h-48 overflow-y-auto">
                                             {activePost.caption}
@@ -1426,7 +1984,7 @@ export default function TikTokHashtagResultDetailPage() {
                                     {/* Hashtags Chips if present */}
                                     {activePost.hashtags && activePost.hashtags.length > 0 && (
                                         <div className="space-y-1.5">
-                                            <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold">
+                                            <div className="text-[10px] font-sans uppercase tracking-wider text-muted-foreground font-semibold">
                                                 Associated Hashtags
                                             </div>
                                             <div className="flex flex-wrap gap-1">
@@ -1491,6 +2049,49 @@ export default function TikTokHashtagResultDetailPage() {
                     </DialogHeader>
 
                     <div className="space-y-3 pt-2 text-sm">
+                        {/* Depth Presets & Custom Input */}
+                        <div className="p-3 bg-muted/30 border border-border/50 rounded-lg space-y-2">
+                            <div className="flex items-center justify-between">
+                                <label className="text-xs font-semibold text-foreground">
+                                    Target Post Volume:
+                                </label>
+                                <span className="text-[10px] font-mono text-muted-foreground">
+                                    10 – 2,000 posts
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-4 gap-1.5">
+                                {[40, 100, 500, 1000].map((d) => (
+                                    <button
+                                        key={d}
+                                        type="button"
+                                        onClick={() => setPendingDepth(d)}
+                                        className={`py-1.5 px-2 rounded-md text-xs font-mono font-bold border transition-colors ${
+                                            pendingDepth === d
+                                                ? 'bg-primary text-primary-foreground border-primary'
+                                                : 'bg-card text-foreground border-border hover:bg-muted'
+                                        }`}
+                                    >
+                                        {d >= 1000 ? `${d / 1000}k posts` : `${d} posts`}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="flex items-center gap-2 pt-1">
+                                <span className="text-xs text-muted-foreground font-sans shrink-0">Custom posts:</span>
+                                <Input
+                                    type="number"
+                                    min={10}
+                                    max={2000}
+                                    step={10}
+                                    value={pendingDepth}
+                                    onChange={(e) => {
+                                        const v = Number(e.target.value);
+                                        setPendingDepth(Math.max(10, Math.min(2000, isNaN(v) ? 40 : v)));
+                                    }}
+                                    className="h-8 font-mono text-xs bg-background"
+                                />
+                            </div>
+                        </div>
+
                         {/* Summary Table */}
                         <div className="bg-muted/40 border border-border/60 rounded-lg p-3 space-y-2 font-mono text-[11px]">
                             <div className="flex items-center justify-between">
@@ -1500,18 +2101,51 @@ export default function TikTokHashtagResultDetailPage() {
                             <div className="flex items-center justify-between">
                                 <span className="text-muted-foreground font-sans">Target Depth:</span>
                                 <span className="font-bold text-primary">
-                                    {pendingDepth} Video Posts {pendingDepth > 40 ? '(Deep Intelligence)' : '(Standard)'}
+                                    {pendingDepth.toLocaleString()} Video Posts {pendingDepth >= 1000 ? '(Studio Scale)' : pendingDepth > 40 ? '(Deep Intelligence)' : '(Standard)'}
                                 </span>
                             </div>
                             <div className="flex items-center justify-between">
                                 <span className="text-muted-foreground font-sans">Estimated Cost:</span>
                                 <span className="font-bold text-amber-500">
-                                    {pendingDepth > 40 ? '~0.50 USD (~8,000 IDR)' : '~0.20 USD (~3,200 IDR)'}
+                                    {formatIdr(pendingCost.dailyCostIdr)} ({formatUsd(pendingCost.totalPerCrawlUsd)})
                                 </span>
                             </div>
                             <div className="flex items-center justify-between">
                                 <span className="text-muted-foreground font-sans">Estimated Latency:</span>
-                                <span className="text-foreground">{pendingDepth > 40 ? '~42 seconds' : '~18 seconds'}</span>
+                                <span className="text-foreground">~{estimatedLatencySeconds} seconds</span>
+                            </div>
+                        </div>
+
+                        {/* Target Date Destination Option */}
+                        <div className="p-2.5 bg-muted/30 border border-border/40 rounded-lg space-y-1.5">
+                            <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold font-sans">
+                                Snapshot Date Destination:
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setScrapeAnchorDate(selectedDate)}
+                                    className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-mono border transition-all ${
+                                        scrapeAnchorDate === selectedDate
+                                            ? 'bg-primary text-primary-foreground border-primary font-bold'
+                                            : 'bg-card text-muted-foreground border-border hover:bg-muted'
+                                    }`}
+                                >
+                                    {selectedDate === todayJakarta ? `Today (${todayJakarta})` : `Backdate to ${selectedDate}`}
+                                </button>
+                                {selectedDate !== todayJakarta && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setScrapeAnchorDate(todayJakarta)}
+                                        className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-mono border transition-all ${
+                                            scrapeAnchorDate === todayJakarta
+                                                ? 'bg-primary text-primary-foreground border-primary font-bold'
+                                                : 'bg-card text-muted-foreground border-border hover:bg-muted'
+                                        }`}
+                                    >
+                                        Today ({todayJakarta})
+                                    </button>
+                                )}
                             </div>
                         </div>
 
@@ -1541,11 +2175,111 @@ export default function TikTokHashtagResultDetailPage() {
                         <Button
                             variant="default"
                             size="sm"
-                            onClick={() => executeScrape(pendingDepth, true)}
+                            onClick={() => executeScrape(pendingDepth, true, scrapeAnchorDate)}
                             className="h-8 px-3 text-sm font-bold rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5"
                         >
                             <RefreshCw className="w-3 h-3" />
-                            <span>Confirm &amp; Scrape ({pendingDepth} Posts)</span>
+                            <span>Confirm &amp; Scrape ({pendingDepth.toLocaleString()} Posts)</span>
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Scrape Execution Audit Trail Modal */}
+            <Dialog open={auditModalOpen} onOpenChange={setAuditModalOpen}>
+                <DialogContent className="max-w-2xl bg-card border-border/80 text-foreground p-5 rounded-xl shadow-xl">
+                    <DialogHeader className="space-y-1">
+                        <DialogTitle className="text-base font-bold flex items-center gap-2">
+                            <History className="w-4 h-4 text-primary" />
+                            <span>Scrape Execution Audit Trail — #{cleanTag}</span>
+                        </DialogTitle>
+                        <DialogDescription className="text-sm text-muted-foreground">
+                            Historical audit log of on-demand crawler executions and scheduled daily pulse crawls for this hashtag.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-3 pt-2">
+                        {scrapeHistory.length === 0 ? (
+                            <div className="p-8 text-center bg-muted/20 border border-border/60 rounded-xl text-sm text-muted-foreground">
+                                No historical execution logs recorded in the local buffer yet. Subsequent live or scheduled crawls will log here.
+                            </div>
+                        ) : (
+                            <div className="border border-border/60 rounded-xl overflow-hidden">
+                                <div className="max-h-80 overflow-y-auto">
+                                    <table className="w-full text-xs text-left">
+                                        <thead className="bg-muted/60 text-muted-foreground font-semibold border-b border-border/60 sticky top-0 font-sans text-[11px] uppercase tracking-wider">
+                                            <tr>
+                                                <th className="p-2.5">Time (WIB)</th>
+                                                <th className="p-2.5">Trigger Source</th>
+                                                <th className="p-2.5">Depth</th>
+                                                <th className="p-2.5">Cost (IDR)</th>
+                                                <th className="p-2.5">Cost (USD)</th>
+                                                <th className="p-2.5 text-right">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-border/40 font-mono">
+                                            {scrapeHistory.map((item, idx) => (
+                                                <tr key={idx} className="hover:bg-muted/30 transition-colors">
+                                                    <td className="p-2.5 text-foreground font-bold whitespace-nowrap">
+                                                        {formatWIBFull24(item.timestamp)}
+                                                    </td>
+                                                    <td className="p-2.5 whitespace-nowrap font-sans">
+                                                        <Badge
+                                                            variant="outline"
+                                                            className={`text-[9px] font-sans font-medium capitalize ${
+                                                                item.source === 'live_manual'
+                                                                    ? 'border-primary/40 text-primary bg-primary/5'
+                                                                    : item.source === 'scheduled_pulse'
+                                                                    ? 'border-emerald-500/40 text-emerald-500 bg-emerald-500/5'
+                                                                    : 'text-muted-foreground'
+                                                            }`}
+                                                        >
+                                                            {item.source.replace('_', ' ')}
+                                                        </Badge>
+                                                    </td>
+                                                    <td className="p-2.5 whitespace-nowrap text-muted-foreground font-sans">
+                                                        <span className="font-mono tabular-nums text-foreground">{item.depth}</span> posts
+                                                    </td>
+                                                    <td className="p-2.5 whitespace-nowrap font-bold text-foreground">
+                                                        {formatIdr(item.cost_idr)}
+                                                    </td>
+                                                    <td className="p-2.5 whitespace-nowrap text-muted-foreground text-[11px]">
+                                                        {formatUsd(item.cost_usd)}
+                                                    </td>
+                                                    <td className="p-2.5 text-right whitespace-nowrap font-sans">
+                                                        <Badge
+                                                            variant="outline"
+                                                            className={`text-[9px] font-sans font-semibold capitalize ${
+                                                                item.status === 'success'
+                                                                    ? 'border-emerald-500/40 text-emerald-500'
+                                                                    : 'border-rose-500/40 text-rose-500'
+                                                            }`}
+                                                        >
+                                                            {item.status}
+                                                        </Badge>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="flex items-center justify-between text-[11px] font-sans text-muted-foreground bg-muted/30 p-2.5 rounded-lg border border-border/40">
+                            <span>Lifetime Scrapes: <strong className="font-mono font-bold text-foreground tabular-nums">{totalScrapes}</strong></span>
+                            <span>Total Spend: <strong className="font-mono font-bold text-foreground tabular-nums">{formatIdr(totalCostIdr)}</strong> <span className="font-mono text-muted-foreground">({formatUsd(totalCostUsd)})</span></span>
+                        </div>
+                    </div>
+
+                    <DialogFooter className="pt-2 border-t border-border/40">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setAuditModalOpen(false)}
+                            className="h-8 px-3 text-sm font-semibold rounded-lg border-border/60 hover:bg-muted"
+                        >
+                            Close
                         </Button>
                     </DialogFooter>
                 </DialogContent>
