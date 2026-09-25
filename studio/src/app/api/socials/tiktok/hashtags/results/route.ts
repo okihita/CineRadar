@@ -24,7 +24,6 @@ export async function GET(req: NextRequest) {
 
         const cleanTag = rawTag.replace(/^#/, '').toLowerCase().trim();
         const today = getTodayJakarta();
-        const targetDate = dateParam || today;
 
         // 1. Fetch tag configuration
         const tagDoc = await firestoreRestClient.getDocument<TrackedHashtag>(
@@ -32,11 +31,35 @@ export async function GET(req: NextRequest) {
             cleanTag
         );
 
-        // 2. Fetch granular snapshot from subcollection
-        let snapshot = await firestoreRestClient.getDocument<TikTokHashtagDetailSnapshot>(
-            `tiktok_custom_pulse/${targetDate}/hashtags`,
-            cleanTag
-        );
+        // If dateParam is not specified, check if today has data; if not, fallback to tag's last_scraped_at or scrape_history
+        let targetDate = dateParam;
+        let snapshot: TikTokHashtagDetailSnapshot | null = null;
+
+        if (!targetDate) {
+            targetDate = today;
+            const todaySnapshot = await firestoreRestClient.getDocument<TikTokHashtagDetailSnapshot>(
+                `tiktok_custom_pulse/${today}/hashtags`,
+                cleanTag
+            );
+            if (todaySnapshot) {
+                snapshot = todaySnapshot;
+            } else if (tagDoc?.last_scraped_at) {
+                targetDate = tagDoc.last_scraped_at.split('T')[0];
+            } else if (Array.isArray(tagDoc?.scrape_history) && tagDoc.scrape_history.length > 0) {
+                const latestLog = tagDoc.scrape_history[0];
+                if (latestLog?.timestamp) {
+                    targetDate = latestLog.timestamp.split('T')[0];
+                }
+            }
+        }
+
+        // 2. Fetch granular snapshot from subcollection if not already retrieved
+        if (!snapshot) {
+            snapshot = await firestoreRestClient.getDocument<TikTokHashtagDetailSnapshot>(
+                `tiktok_custom_pulse/${targetDate}/hashtags`,
+                cleanTag
+            );
+        }
 
         // 3. Fallback: Check root pulse document if subcollection not yet populated
         if (!snapshot) {

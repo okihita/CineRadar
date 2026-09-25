@@ -112,11 +112,11 @@ export default function TikTokHashtagResultDetailPage() {
     const cleanTag = decodeURIComponent(rawTag).replace(/^#/, '').toLowerCase().trim();
 
     const todayJakarta = getTodayJakarta();
-    const queryDate = searchParams.get('date') || todayJakarta;
-    const [selectedDate, setSelectedDate] = useState<string>(queryDate);
+    const queryDate = searchParams.get('date');
+    const [selectedDate, setSelectedDate] = useState<string>(queryDate || todayJakarta);
 
-    // Fetch snapshot and configuration
-    const apiUrl = `/api/socials/tiktok/hashtags/results?tag=${encodeURIComponent(cleanTag)}&date=${selectedDate}`;
+    // Fetch snapshot and configuration (omit date if user has not explicitly chosen one)
+    const apiUrl = `/api/socials/tiktok/hashtags/results?tag=${encodeURIComponent(cleanTag)}${queryDate ? `&date=${queryDate}` : ''}`;
     const { data, isLoading, mutate } = useSWR<{
         success: boolean;
         tag: string;
@@ -136,6 +136,17 @@ export default function TikTokHashtagResultDetailPage() {
         revalidateOnFocus: false,
     });
 
+    // Synchronize selectedDate when data returns targetDate or searchParams change
+    useEffect(() => {
+        if (queryDate) {
+            setSelectedDate(queryDate);
+            setScrapeAnchorDate(queryDate);
+        } else if (data?.targetDate) {
+            setSelectedDate(data.targetDate);
+            setScrapeAnchorDate(data.targetDate);
+        }
+    }, [queryDate, data?.targetDate]);
+
     // Scraping Execution State
     const [isScraping, setIsScraping] = useState(false);
     const [scrapeStep, setScrapeStep] = useState<string | null>(null);
@@ -143,7 +154,7 @@ export default function TikTokHashtagResultDetailPage() {
     const [confirmModalOpen, setConfirmModalOpen] = useState(false);
     const [auditModalOpen, setAuditModalOpen] = useState(false);
     const [pendingDepth, setPendingDepth] = useState<number>(40);
-    const [scrapeAnchorDate, setScrapeAnchorDate] = useState<string>(queryDate);
+    const [scrapeAnchorDate, setScrapeAnchorDate] = useState<string>(queryDate || todayJakarta);
 
     // Video sorting, pagination, and active inspection state (10 default, then 25, then 50)
     const [sortBy, setSortBy] = useState<'date' | 'views' | 'likes' | 'comments' | 'shares'>('date');
@@ -892,83 +903,308 @@ export default function TikTokHashtagResultDetailPage() {
                 </Card>
             </div>
 
-            {/* Cold Start / Empty State */}
+            {/* Empty State / Pending Pulse Operational Dashboard */}
             {!isLoading && !snapshot && (
-                <Card className="border-border/60 bg-card rounded-xl text-center py-10 px-4 shadow-none">
-                    <CardHeader className="max-w-lg mx-auto space-y-2">
-                        <div className="w-12 h-12 rounded-xl bg-muted/60 text-muted-foreground flex items-center justify-center mx-auto border border-border/60">
-                            <AlertCircle className="w-6 h-6" />
-                        </div>
-                        <CardTitle className="text-lg font-bold text-foreground">
-                            No Crawl Telemetry for {selectedDate}
-                        </CardTitle>
-                        <CardDescription className="text-sm text-muted-foreground">
-                            Hashtag #{cleanTag} has no recorded snapshot for this date window. You can backfill and scrape for {selectedDate}, or jump to a date with recorded telemetry.
-                        </CardDescription>
-
-                        {availableDates.length > 0 && (
-                            <div className="pt-2 text-left bg-muted/30 p-3 rounded-lg border border-border/40 space-y-1.5">
-                                <div className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider font-semibold">
-                                    Previous Snapshots Available ({availableDates.length}):
-                                </div>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {availableDates.slice(0, 8).map((d) => (
-                                        <Badge
-                                            key={d}
-                                            variant="outline"
-                                            onClick={() => handleDateChange(d)}
-                                            className="text-xs font-mono border-border/80 hover:bg-primary hover:text-primary-foreground hover:border-primary cursor-pointer transition-colors"
-                                        >
-                                            {d}
-                                        </Badge>
-                                    ))}
-                                    {availableDates.length > 8 && (
-                                        <span className="text-[10px] font-mono text-muted-foreground self-center">
-                                            +{availableDates.length - 8} more
-                                        </span>
-                                    )}
-                                </div>
+                <div className="space-y-4">
+                    {/* Status Alert Banner */}
+                    <div className="bg-card border border-border/80 rounded-xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-none">
+                        <div className="flex items-start sm:items-center gap-3.5">
+                            <div className="w-10 h-10 rounded-xl bg-muted/70 text-muted-foreground flex items-center justify-center shrink-0 border border-border/60">
+                                <Clock className="w-5 h-5 text-primary" />
                             </div>
-                        )}
-                    </CardHeader>
-                    <CardContent className="flex justify-center gap-3 pt-3 flex-wrap">
+                            <div className="space-y-0.5">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-sm font-bold text-foreground">
+                                        No Recorded Crawl for {selectedDate}
+                                    </span>
+                                    <Badge variant="outline" className="text-[10px] font-mono">
+                                        {selectedDate === todayJakarta ? 'Standing 18:00 WIB Pulse' : 'Unrecorded Window'}
+                                    </Badge>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    {selectedDate === todayJakarta
+                                        ? `Hashtag #${cleanTag} has not been crawled for this date window. You can trigger an on-demand scrape right now or wait for the standing 18:00 WIB daily pulse.`
+                                        : `Hashtag #${cleanTag} has no snapshot recorded for ${selectedDate}. You can backfill and scrape for this date window, or jump to a date with recorded telemetry.`}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                            <Button
+                                variant="default"
+                                size="sm"
+                                disabled={isScraping}
+                                onClick={() => handleRequestScrape(40, selectedDate)}
+                                className="rounded-lg text-xs font-bold gap-2 h-9"
+                            >
+                                <RefreshCw className={`w-3.5 h-3.5 ${isScraping ? 'animate-spin' : ''}`} />
+                                <span>
+                                    {selectedDate === todayJakarta
+                                        ? 'Trigger First Scrape Now'
+                                        : `Backfill & Scrape for ${selectedDate}`}
+                                </span>
+                            </Button>
+                            {availableDates.length > 0 && availableDates[0] !== selectedDate && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleDateChange(availableDates[0])}
+                                    className="rounded-lg text-xs font-semibold gap-1.5 h-9 border-border/80"
+                                >
+                                    <History className="w-3.5 h-3.5 text-primary" />
+                                    <span>View Latest Scrape ({availableDates[0]})</span>
+                                </Button>
+                            )}
+                            {selectedDate !== todayJakarta && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleDateChange(todayJakarta)}
+                                    className="rounded-lg text-xs font-medium h-9 border-border/80"
+                                >
+                                    Jump to Today
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Operational Details & Historical Execution Archives */}
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                        {/* LEFT COLUMN: Pipeline Configuration & Diagnostics */}
+                        <div className="lg:col-span-4 xl:col-span-4 space-y-4">
+                            <Card className="border-border/60 bg-card rounded-xl shadow-none">
+                                <CardHeader className="p-4 pb-2 border-b border-border/40">
+                                    <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
+                                        <Database className="w-3.5 h-3.5 text-primary" />
+                                        <span>Pipeline Parameters</span>
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="p-4 space-y-3 text-xs">
+                                    <div className="flex items-center justify-between pb-2 border-b border-border/30">
+                                        <span className="text-muted-foreground">Registered Tag:</span>
+                                        <span className="font-mono font-bold text-primary">#{cleanTag}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between pb-2 border-b border-border/30">
+                                        <span className="text-muted-foreground">Label:</span>
+                                        <span className="font-semibold text-foreground">{config?.label || cleanTag}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between pb-2 border-b border-border/30">
+                                        <span className="text-muted-foreground">Category:</span>
+                                        <Badge variant="outline" className="text-[10px] font-mono capitalize">
+                                            {config?.category || 'general'}
+                                        </Badge>
+                                    </div>
+                                    <div className="flex items-center justify-between pb-2 border-b border-border/30">
+                                        <span className="text-muted-foreground">Ingestion Target:</span>
+                                        <span className="font-mono font-bold text-foreground">
+                                            {config?.target_posts || 40} posts / run
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between pb-2 border-b border-border/30">
+                                        <span className="text-muted-foreground">Comment Ingestion:</span>
+                                        <span className="font-semibold text-foreground">
+                                            {config?.include_comments ? 'Top 30 Comments' : 'Disabled'}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between pb-2 border-b border-border/30">
+                                        <span className="text-muted-foreground">Sentiment Engine:</span>
+                                        <span className="font-semibold text-foreground">Gemini 3.8 Flash</span>
+                                    </div>
+                                    <div className="flex items-center justify-between pb-2 border-b border-border/30">
+                                        <span className="text-muted-foreground">Pulse Schedule:</span>
+                                        <span className="font-mono font-semibold text-foreground">18:00 WIB Daily</span>
+                                    </div>
+                                    <div className="flex items-center justify-between pb-2 border-b border-border/30">
+                                        <span className="text-muted-foreground">Unit Cost:</span>
+                                        <span className="font-mono font-bold text-foreground">
+                                            {formatUsd(currentUnitCostUsd)} (~{formatIdr(currentUnitCostIdr)})
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-muted-foreground">Crawler Cooldown:</span>
+                                        <Badge
+                                            variant="outline"
+                                            className={`text-[10px] font-mono ${
+                                                isCooldownActive
+                                                    ? 'border-amber-500/40 text-amber-500 bg-amber-500/5'
+                                                    : 'border-emerald-500/40 text-emerald-500 bg-emerald-500/5'
+                                            }`}
+                                        >
+                                            {isCooldownActive
+                                                ? `Cooldown (${15 - (elapsedMinutes || 0)}m)`
+                                                : 'Ready to Run'}
+                                        </Badge>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        {/* RIGHT COLUMN: Execution Audit Trail & Available Snapshots */}
+                        <div className="lg:col-span-8 xl:col-span-8 space-y-4">
+                            <Card className="border-border/60 bg-card rounded-xl shadow-none">
+                                <CardHeader className="p-4 pb-2 border-b border-border/40 flex flex-row items-center justify-between space-y-0">
+                                    <div>
+                                        <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
+                                            <History className="w-3.5 h-3.5 text-primary" />
+                                            <span>Recorded Crawls & Execution Audit</span>
+                                        </CardTitle>
+                                        <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                                            Historical snapshots and on-demand trigger history for #{cleanTag}
+                                        </CardDescription>
+                                    </div>
+                                    <Badge variant="outline" className="text-[10px] font-mono">
+                                        {availableDates.length} snapshots
+                                    </Badge>
+                                </CardHeader>
+                                <CardContent className="p-4 space-y-4">
+                                    {/* Available Date Chips */}
+                                    {availableDates.length > 0 && (
+                                        <div className="p-3 bg-muted/30 rounded-lg border border-border/40 space-y-2">
+                                            <div className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider font-semibold">
+                                                Jump to Recorded Snapshot:
+                                            </div>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {availableDates.map((d) => (
+                                                    <Badge
+                                                        key={d}
+                                                        variant="outline"
+                                                        onClick={() => handleDateChange(d)}
+                                                        className={`text-xs font-mono cursor-pointer transition-colors ${
+                                                            d === selectedDate
+                                                                ? 'bg-primary text-primary-foreground font-bold border-primary'
+                                                                : 'border-border/80 hover:bg-primary hover:text-primary-foreground hover:border-primary'
+                                                        }`}
+                                                    >
+                                                        {d}
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Scrape Execution Logs Table */}
+                                    {scrapeHistory.length > 0 ? (
+                                        <div className="border border-border/60 rounded-xl overflow-hidden">
+                                            <div className="max-h-72 overflow-y-auto">
+                                                <table className="w-full text-xs font-mono text-left">
+                                                    <thead className="bg-muted/60 text-muted-foreground font-semibold border-b border-border/60 sticky top-0">
+                                                        <tr>
+                                                            <th className="p-2.5">Time (WIB)</th>
+                                                            <th className="p-2.5">Source</th>
+                                                            <th className="p-2.5">Depth</th>
+                                                            <th className="p-2.5">Cost</th>
+                                                            <th className="p-2.5">Status</th>
+                                                            <th className="p-2.5 text-right">Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-border/40">
+                                                        {scrapeHistory.map((item, idx) => {
+                                                            const itemDate = item.timestamp ? item.timestamp.split('T')[0] : '';
+                                                            return (
+                                                                <tr key={idx} className="hover:bg-muted/30 transition-colors">
+                                                                    <td className="p-2.5 text-foreground font-bold whitespace-nowrap">
+                                                                        {formatWIBFull24(item.timestamp)}
+                                                                    </td>
+                                                                    <td className="p-2.5 whitespace-nowrap">
+                                                                        <Badge
+                                                                            variant="outline"
+                                                                            className={`text-[9px] font-mono capitalize ${
+                                                                                item.source === 'live_manual'
+                                                                                    ? 'border-primary/40 text-primary bg-primary/5'
+                                                                                    : item.source === 'scheduled_pulse'
+                                                                                    ? 'border-emerald-500/40 text-emerald-500 bg-emerald-500/5'
+                                                                                    : 'text-muted-foreground'
+                                                                            }`}
+                                                                        >
+                                                                            {item.source.replace('_', ' ')}
+                                                                        </Badge>
+                                                                    </td>
+                                                                    <td className="p-2.5 whitespace-nowrap text-muted-foreground">
+                                                                        {item.depth} posts
+                                                                    </td>
+                                                                    <td className="p-2.5 whitespace-nowrap font-bold text-foreground">
+                                                                        {formatUsd(item.cost_usd)}
+                                                                    </td>
+                                                                    <td className="p-2.5 whitespace-nowrap">
+                                                                        <Badge
+                                                                            variant="outline"
+                                                                            className={`text-[9px] font-mono ${
+                                                                                item.status === 'success'
+                                                                                    ? 'border-emerald-500/40 text-emerald-500'
+                                                                                    : 'border-rose-500/40 text-rose-500'
+                                                                            }`}
+                                                                        >
+                                                                            {item.status}
+                                                                        </Badge>
+                                                                    </td>
+                                                                    <td className="p-2.5 text-right whitespace-nowrap">
+                                                                        {itemDate && (
+                                                                            <Button
+                                                                                variant="ghost"
+                                                                                size="sm"
+                                                                                onClick={() => handleDateChange(itemDate)}
+                                                                                className="h-6 px-2 text-[11px] font-semibold text-primary hover:text-primary hover:bg-primary/10"
+                                                                            >
+                                                                                View
+                                                                            </Button>
+                                                                        )}
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        })}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="p-6 text-center bg-muted/20 border border-border/40 rounded-xl text-xs text-muted-foreground">
+                                            No execution logs recorded in the local buffer yet. Subsequent live or scheduled crawls will log here.
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Historical Crawl Context Banner */}
+            {snapshot && selectedDate !== todayJakarta && (
+                <div className="bg-card border border-border/80 rounded-xl p-3 sm:px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-none">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20">
+                            <History className="w-4 h-4" />
+                        </div>
+                        <div>
+                            <div className="text-xs font-bold text-foreground flex items-center gap-2">
+                                <span>Viewing Historical Snapshot:</span>
+                                <span className="font-mono text-primary font-bold">{selectedDate}</span>
+                            </div>
+                            <div className="text-[11px] text-muted-foreground">
+                                Standing daily pulse for today ({todayJakarta}) executes at 18:00 WIB.
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDateChange(todayJakarta)}
+                            className="h-8 text-xs font-semibold rounded-lg border-border/80 hover:bg-muted"
+                        >
+                            Jump to Today
+                        </Button>
                         <Button
                             variant="default"
                             size="sm"
                             disabled={isScraping}
-                            onClick={() => handleRequestScrape(40, selectedDate)}
-                            className="rounded-lg text-sm font-bold gap-2"
+                            onClick={() => handleRequestScrape(40, todayJakarta)}
+                            className="h-8 text-xs font-bold rounded-lg gap-1.5"
                         >
                             <RefreshCw className="w-3.5 h-3.5" />
-                            <span>
-                                {selectedDate === todayJakarta
-                                    ? 'Trigger First Scrape Now'
-                                    : `Backfill & Scrape for ${selectedDate}`}
-                            </span>
+                            <span>Scrape Today</span>
                         </Button>
-                        {availableDates.length > 0 && availableDates[0] !== selectedDate && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDateChange(availableDates[0])}
-                                className="rounded-lg text-sm font-medium gap-1.5"
-                            >
-                                <History className="w-3.5 h-3.5 text-primary" />
-                                <span>View Latest Scrape ({availableDates[0]})</span>
-                            </Button>
-                        )}
-                        {selectedDate !== todayJakarta && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDateChange(todayJakarta)}
-                                className="rounded-lg text-sm font-medium"
-                            >
-                                Jump to Today
-                            </Button>
-                        )}
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
             )}
 
             {/* Main Telemetry: Three-Column Timeline Architecture */}
