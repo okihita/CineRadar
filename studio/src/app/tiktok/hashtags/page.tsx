@@ -437,7 +437,7 @@ export default function CustomHashtagTrackerPage() {
                             <div className="flex items-center gap-2">
                                 <Hash className="w-4 h-4 text-primary" />
                                 <CardTitle className="text-sm font-bold text-foreground">
-                                    Tracked Hashtag Roster ({filteredTags.length})
+                                    Tracked Hashtags ({filteredTags.length})
                                 </CardTitle>
                             </div>
 

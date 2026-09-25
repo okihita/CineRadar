@@ -573,7 +573,7 @@ export default function TikTokHashtagResultDetailPage() {
                     >
                         <Link href="/tiktok/hashtags">
                             <ArrowLeft className="w-3.5 h-3.5" />
-                            Back to Hashtag Roster
+                            Back to Tracked Hashtags
                         </Link>
                     </Button>
 
