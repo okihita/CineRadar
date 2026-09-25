@@ -485,9 +485,13 @@ export default function TikTokHashtagResultDetailPage() {
                         : 'pt-3 border-t border-border/40'
                 }`}
             >
-                <div className="text-sm text-muted-foreground font-mono">
-                    Showing <strong className="text-foreground">{startIndex + 1}</strong>–<strong className="text-foreground">{Math.min(startIndex + pageSize, filteredPosts.length)}</strong> of <strong className="text-foreground">{filteredPosts.length}</strong> videos
-                    {filteredPosts.length !== snapshot.posts.length && ` (filtered from ${snapshot.posts.length})`}
+                <div className="text-sm text-muted-foreground font-sans">
+                    Showing <span className="font-mono font-bold text-foreground tabular-nums">{startIndex + 1}</span>–<span className="font-mono font-bold text-foreground tabular-nums">{Math.min(startIndex + pageSize, filteredPosts.length)}</span> of <span className="font-mono font-bold text-foreground tabular-nums">{filteredPosts.length}</span> videos
+                    {filteredPosts.length !== snapshot.posts.length && (
+                        <span className="text-xs text-muted-foreground/80 font-sans">
+                            {' '}(filtered from <span className="font-mono font-semibold text-foreground tabular-nums">{snapshot.posts.length}</span>)
+                        </span>
+                    )}
                 </div>
 
                 <div className="flex items-center gap-1.5">
@@ -496,7 +500,7 @@ export default function TikTokHashtagResultDetailPage() {
                         size="sm"
                         disabled={safeCurrentPage === 1}
                         onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                        className="h-8 px-2.5 text-sm font-semibold rounded-lg border-border/60 hover:bg-muted gap-1"
+                        className="h-8 px-2.5 text-sm font-medium rounded-lg border-border/60 hover:bg-muted gap-1"
                     >
                         <ChevronLeft className="w-3.5 h-3.5" />
                         <span>Prev</span>
@@ -546,7 +550,7 @@ export default function TikTokHashtagResultDetailPage() {
                         size="sm"
                         disabled={safeCurrentPage === totalPages}
                         onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                        className="h-8 px-2.5 text-sm font-semibold rounded-lg border-border/60 hover:bg-muted gap-1"
+                        className="h-8 px-2.5 text-sm font-medium rounded-lg border-border/60 hover:bg-muted gap-1"
                     >
                         <span>Next</span>
                         <ChevronRight className="w-3.5 h-3.5" />
@@ -649,7 +653,7 @@ export default function TikTokHashtagResultDetailPage() {
                                             <div className="flex items-center gap-1.5">
                                                 <span>{d}</span>
                                                 {isToday && (
-                                                    <Badge variant="outline" className={`text-[8px] font-mono uppercase ${isSelected ? 'border-primary-foreground/40 text-primary-foreground' : 'border-border text-muted-foreground'}`}>
+                                                    <Badge variant="outline" className={`text-[8px] font-sans font-semibold uppercase ${isSelected ? 'border-primary-foreground/40 text-primary-foreground' : 'border-border text-muted-foreground'}`}>
                                                         Today
                                                     </Badge>
                                                 )}
@@ -684,7 +688,7 @@ export default function TikTokHashtagResultDetailPage() {
                         variant="outline"
                         size="sm"
                         asChild
-                        className="h-9 px-3 rounded-lg border-border/60 hover:bg-muted text-sm font-mono text-amber-500/90 gap-1.5"
+                        className="h-9 px-3 rounded-lg border-border/60 hover:bg-muted text-sm font-medium text-amber-500/90 gap-1.5"
                         title="View Firestore configuration"
                     >
                         <a href={firestoreConfigUrl} target="_blank" rel="noopener noreferrer">
@@ -726,10 +730,10 @@ export default function TikTokHashtagResultDetailPage() {
                                 >
                                     <div className="text-sm font-bold text-foreground flex items-center justify-between w-full">
                                         <span>Standard Depth (40 posts)</span>
-                                        <Badge variant="outline" className="text-[9px] font-mono">Standard</Badge>
+                                        <Badge variant="outline" className="text-[9px] font-sans font-semibold">Standard</Badge>
                                     </div>
-                                    <div className="text-[10px] text-muted-foreground font-mono">
-                                        ~18s latency · {formatIdr(currentUnitCostIdr)} ({formatUsd(currentUnitCostUsd)})
+                                    <div className="text-[10px] text-muted-foreground font-sans">
+                                        <span className="font-mono">~18s</span> latency · <span className="font-mono font-medium">{formatIdr(currentUnitCostIdr)}</span> <span className="font-mono text-muted-foreground/80">({formatUsd(currentUnitCostUsd)})</span>
                                     </div>
                                 </DropdownMenuItem>
 
@@ -744,12 +748,12 @@ export default function TikTokHashtagResultDetailPage() {
                                             <Flame className="w-3.5 h-3.5 text-amber-500" />
                                             <span>Deep Intelligence (100 posts)</span>
                                         </span>
-                                        <Badge variant="outline" className="text-[9px] font-mono border-amber-500/40 text-amber-500">
+                                        <Badge variant="outline" className="text-[9px] font-sans font-semibold border-amber-500/40 text-amber-500">
                                             Deep
                                         </Badge>
                                     </div>
-                                    <div className="text-[10px] text-muted-foreground font-mono">
-                                        ~42s latency · {formatIdr(deepUnitCostIdr)} ({formatUsd(deepUnitCostUsd)})
+                                    <div className="text-[10px] text-muted-foreground font-sans">
+                                        <span className="font-mono">~42s</span> latency · <span className="font-mono font-medium">{formatIdr(deepUnitCostIdr)}</span> <span className="font-mono text-muted-foreground/80">({formatUsd(deepUnitCostUsd)})</span>
                                     </div>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -824,7 +828,7 @@ export default function TikTokHashtagResultDetailPage() {
                             <Coins className="w-3.5 h-3.5 text-amber-500" />
                             <span>Cost Per Scrape</span>
                         </CardTitle>
-                        <Badge variant="outline" className="text-[9px] font-mono border-amber-500/30 text-amber-500">
+                        <Badge variant="outline" className="text-[9px] font-sans font-semibold border-amber-500/30 text-amber-500">
                             Unit Econ
                         </Badge>
                     </CardHeader>
@@ -838,7 +842,7 @@ export default function TikTokHashtagResultDetailPage() {
                             </span>
                         </div>
                         <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-sans">
-                            <span>Standard: {config?.target_posts || 40} posts</span>
+                            <span>Standard: <span className="font-mono tabular-nums">{config?.target_posts || 40}</span> posts</span>
                             <span>·</span>
                             <span className="text-foreground/80 font-semibold font-mono">Deep: {formatIdr(deepUnitCostIdr)} ({formatUsd(deepUnitCostUsd)})</span>
                         </div>
@@ -852,7 +856,7 @@ export default function TikTokHashtagResultDetailPage() {
                             <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
                             <span>Cumulative Spend</span>
                         </CardTitle>
-                        <Badge variant="outline" className="text-[9px] font-mono border-emerald-500/30 text-emerald-500">
+                        <Badge variant="outline" className="text-[9px] font-sans font-semibold border-emerald-500/30 text-emerald-500">
                             Recorded
                         </Badge>
                     </CardHeader>
@@ -866,7 +870,7 @@ export default function TikTokHashtagResultDetailPage() {
                             </span>
                         </div>
                         <p className="text-[11px] text-muted-foreground font-medium truncate font-sans">
-                            Incurred across {totalScrapes} execution{totalScrapes === 1 ? '' : 's'}
+                            Incurred across <span className="font-mono font-bold text-foreground tabular-nums">{totalScrapes}</span> execution{totalScrapes === 1 ? '' : 's'}
                         </p>
                     </CardContent>
                 </Card>
@@ -917,7 +921,7 @@ export default function TikTokHashtagResultDetailPage() {
                                     <span className="text-base font-bold text-foreground font-sans">
                                         No Recorded Crawl for {selectedDate}
                                     </span>
-                                    <Badge variant="outline" className="text-[10px] font-mono">
+                                    <Badge variant="outline" className="text-[10px] font-sans font-semibold">
                                         {selectedDate === todayJakarta ? 'Standing 18:00 WIB Pulse' : 'Unrecorded Window'}
                                     </Badge>
                                 </div>
@@ -989,7 +993,7 @@ export default function TikTokHashtagResultDetailPage() {
                                     </div>
                                     <div className="flex items-center justify-between pb-2 border-b border-border/30">
                                         <span className="text-muted-foreground font-sans">Category:</span>
-                                        <Badge variant="outline" className="text-[10px] font-mono capitalize">
+                                        <Badge variant="outline" className="text-[10px] font-sans font-medium capitalize">
                                             {config?.category || 'general'}
                                         </Badge>
                                     </div>
@@ -1023,15 +1027,19 @@ export default function TikTokHashtagResultDetailPage() {
                                         <span className="text-muted-foreground font-sans">Crawler Cooldown:</span>
                                         <Badge
                                             variant="outline"
-                                            className={`text-[10px] font-mono ${
+                                            className={`text-[10px] font-sans font-medium ${
                                                 isCooldownActive
                                                     ? 'border-amber-500/40 text-amber-500 bg-amber-500/5'
                                                     : 'border-emerald-500/40 text-emerald-500 bg-emerald-500/5'
                                             }`}
                                         >
-                                            {isCooldownActive
-                                                ? `Cooldown (${15 - (elapsedMinutes || 0)}m)`
-                                                : 'Ready to Run'}
+                                            {isCooldownActive ? (
+                                                <span>
+                                                    Cooldown (<span className="font-mono tabular-nums">{15 - (elapsedMinutes || 0)}m</span>)
+                                                </span>
+                                            ) : (
+                                                'Ready to Run'
+                                            )}
                                         </Badge>
                                     </div>
                                 </CardContent>
@@ -1051,8 +1059,8 @@ export default function TikTokHashtagResultDetailPage() {
                                             Historical snapshots and on-demand trigger history for #{cleanTag}
                                         </CardDescription>
                                     </div>
-                                    <Badge variant="outline" className="text-[10px] font-mono">
-                                        {availableDates.length} snapshots
+                                    <Badge variant="outline" className="text-[10px] font-sans font-medium">
+                                        <span className="font-mono font-bold tabular-nums">{availableDates.length}</span> snapshots
                                     </Badge>
                                 </CardHeader>
                                 <CardContent className="p-4 space-y-4">
@@ -1108,7 +1116,7 @@ export default function TikTokHashtagResultDetailPage() {
                                                                     <td className="p-2.5 whitespace-nowrap font-sans">
                                                                         <Badge
                                                                             variant="outline"
-                                                                            className={`text-[9px] font-mono capitalize ${
+                                                                            className={`text-[9px] font-sans font-medium capitalize ${
                                                                                 item.source === 'live_manual'
                                                                                     ? 'border-primary/40 text-primary bg-primary/5'
                                                                                     : item.source === 'scheduled_pulse'
@@ -1119,8 +1127,8 @@ export default function TikTokHashtagResultDetailPage() {
                                                                             {item.source.replace('_', ' ')}
                                                                         </Badge>
                                                                     </td>
-                                                                    <td className="p-2.5 whitespace-nowrap text-muted-foreground">
-                                                                        {item.depth} posts
+                                                                    <td className="p-2.5 whitespace-nowrap text-muted-foreground font-sans">
+                                                                        <span className="font-mono tabular-nums text-foreground">{item.depth}</span> posts
                                                                     </td>
                                                                     <td className="p-2.5 whitespace-nowrap font-bold text-foreground">
                                                                         {formatIdr(item.cost_idr)}
@@ -1131,7 +1139,7 @@ export default function TikTokHashtagResultDetailPage() {
                                                                     <td className="p-2.5 whitespace-nowrap font-sans">
                                                                         <Badge
                                                                             variant="outline"
-                                                                            className={`text-[9px] font-mono ${
+                                                                            className={`text-[9px] font-sans font-semibold capitalize ${
                                                                                 item.status === 'success'
                                                                                     ? 'border-emerald-500/40 text-emerald-500'
                                                                                     : 'border-rose-500/40 text-rose-500'
@@ -1224,8 +1232,8 @@ export default function TikTokHashtagResultDetailPage() {
                                         <Activity className="w-3.5 h-3.5 text-primary" />
                                         <span>Campaign Velocity</span>
                                     </CardTitle>
-                                    <Badge variant="outline" className="text-[10px] font-mono">
-                                        {snapshot.total_posts} posts
+                                    <Badge variant="outline" className="text-[10px] font-sans font-medium">
+                                        <span className="font-mono font-bold tabular-nums">{snapshot.total_posts}</span> posts
                                     </Badge>
                                 </div>
                             </CardHeader>
@@ -1242,8 +1250,8 @@ export default function TikTokHashtagResultDetailPage() {
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <Badge variant="outline" className="text-[10px] font-mono border-emerald-500/40 text-emerald-500">
-                                            {snapshot.sentiment?.positive ?? 75}% Positive
+                                        <Badge variant="outline" className="text-[10px] font-sans font-medium border-emerald-500/40 text-emerald-500">
+                                            <span className="font-mono font-bold tabular-nums">{snapshot.sentiment?.positive ?? 75}%</span> Positive
                                         </Badge>
                                         <div className="text-[9px] text-muted-foreground mt-1">
                                             Community buzz
@@ -1319,21 +1327,21 @@ export default function TikTokHashtagResultDetailPage() {
                                             <Sparkles className="w-3.5 h-3.5 text-primary" />
                                             <span>AI Sentiment Pulse</span>
                                         </CardTitle>
-                                        <span className="text-[10px] font-mono text-muted-foreground">Gemini 3.8</span>
+                                        <span className="text-[10px] font-sans font-medium text-muted-foreground">Gemini 3.8</span>
                                     </div>
                                 </CardHeader>
                                 <CardContent className="p-4 space-y-3">
                                     {/* Segmented Sentiment Bar */}
                                     <div className="space-y-1">
-                                        <div className="flex items-center justify-between text-[11px] font-mono font-semibold">
-                                            <span className="text-emerald-500">
-                                                {snapshot.sentiment.positive}% Pos
+                                        <div className="flex items-center justify-between text-[11px] font-semibold">
+                                            <span className="text-emerald-500 font-sans">
+                                                <span className="font-mono tabular-nums">{snapshot.sentiment.positive}%</span> Pos
                                             </span>
-                                            <span className="text-amber-500">
-                                                {snapshot.sentiment.mixed}% Mix
+                                            <span className="text-amber-500 font-sans">
+                                                <span className="font-mono tabular-nums">{snapshot.sentiment.mixed}%</span> Mix
                                             </span>
-                                            <span className="text-rose-500">
-                                                {snapshot.sentiment.negative}% Neg
+                                            <span className="text-rose-500 font-sans">
+                                                <span className="font-mono tabular-nums">{snapshot.sentiment.negative}%</span> Neg
                                             </span>
                                         </div>
                                         <div className="w-full h-2 rounded-full bg-muted/60 overflow-hidden flex">
@@ -1396,8 +1404,8 @@ export default function TikTokHashtagResultDetailPage() {
                                             <Hash className="w-3.5 h-3.5 text-primary" />
                                             <span>Associated Hashtags</span>
                                         </CardTitle>
-                                        <Badge variant="outline" className="text-[10px] font-mono">
-                                            {associatedHashtags.length} tags
+                                        <Badge variant="outline" className="text-[10px] font-sans font-medium">
+                                            <span className="font-mono font-bold tabular-nums">{associatedHashtags.length}</span> tags
                                         </Badge>
                                     </div>
                                     <CardDescription className="text-[10px] text-muted-foreground">
@@ -1444,8 +1452,8 @@ export default function TikTokHashtagResultDetailPage() {
                                         })}
                                     </div>
                                     {associatedHashtags.length > 16 && (
-                                        <div className="text-[10px] text-muted-foreground font-mono text-center pt-2">
-                                            +{associatedHashtags.length - 16} more tags discovered
+                                        <div className="text-[10px] text-muted-foreground font-sans text-center pt-2">
+                                            +<span className="font-mono font-semibold tabular-nums">{associatedHashtags.length - 16}</span> more tags discovered
                                         </div>
                                     )}
                                 </CardContent>
@@ -1482,14 +1490,14 @@ export default function TikTokHashtagResultDetailPage() {
                         )}
 
                         {/* Telemetry Footer */}
-                        <div className="p-3 bg-muted/20 border border-border/40 rounded-xl text-[10px] text-muted-foreground space-y-1 font-mono">
+                        <div className="p-3 bg-muted/20 border border-border/40 rounded-xl text-[10px] text-muted-foreground space-y-1 font-sans">
                             <div className="flex items-center justify-between">
                                 <span>Source:</span>
-                                <strong className="text-foreground capitalize">{snapshot.source.replace('_', ' ')}</strong>
+                                <strong className="text-foreground capitalize font-medium">{snapshot.source.replace('_', ' ')}</strong>
                             </div>
                             <div className="flex items-center justify-between">
                                 <span>Captured:</span>
-                                <strong className="text-foreground">{formatWIB24(snapshot.crawled_at)}</strong>
+                                <strong className="text-foreground font-mono">{formatWIB24(snapshot.crawled_at)}</strong>
                             </div>
                             <div className="pt-1 border-t border-border/30 flex items-center justify-between">
                                 <span>Raw Payload:</span>
@@ -1497,7 +1505,7 @@ export default function TikTokHashtagResultDetailPage() {
                                     href={firestoreSnapshotUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-amber-500/90 hover:underline flex items-center gap-0.5"
+                                    className="text-amber-500/90 hover:underline flex items-center gap-0.5 font-mono"
                                 >
                                     <span>Doc Link</span>
                                     <ExternalLink className="w-2.5 h-2.5" />
@@ -1515,25 +1523,25 @@ export default function TikTokHashtagResultDetailPage() {
                                     <div>
                                         <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
                                             <span>Campaign Timeline</span>
-                                            <Badge variant="outline" className="text-[10px] font-mono">
-                                                {filteredPosts.length} posts
+                                            <Badge variant="outline" className="text-[10px] font-sans font-medium">
+                                                <span className="font-mono font-bold tabular-nums">{filteredPosts.length}</span> posts
                                             </Badge>
                                         </h2>
-                                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-mono mt-0.5">
+                                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-sans mt-0.5">
                                             <Keyboard className="w-3 h-3 text-primary" />
-                                            <span>Browse: J / K or ↑ / ↓ keys</span>
+                                            <span>Browse: <span className="font-mono font-semibold text-foreground">J</span> / <span className="font-mono font-semibold text-foreground">K</span> or <span className="font-mono font-semibold text-foreground">↑</span> / <span className="font-mono font-semibold text-foreground">↓</span> keys</span>
                                         </div>
                                     </div>
 
                                     {/* Page Size Selector (Default 10, then 25, then 50) */}
                                     <div className="flex items-center gap-1 bg-muted/40 rounded-lg border border-border/60 p-0.5 text-[10px] font-semibold">
-                                        <span className="text-muted-foreground px-1 font-mono">Per page:</span>
+                                        <span className="text-muted-foreground px-1 font-sans">Per page:</span>
                                         {[10, 25, 50].map((size) => (
                                             <button
                                                 key={size}
                                                 type="button"
                                                 onClick={() => handlePageSizeChange(size)}
-                                                className={`px-2 py-0.5 rounded transition-colors font-mono ${
+                                                className={`px-2 py-0.5 rounded transition-colors font-mono tabular-nums ${
                                                     pageSize === size
                                                         ? 'bg-background text-foreground shadow-sm font-bold'
                                                         : 'text-muted-foreground hover:text-foreground'
@@ -1559,7 +1567,7 @@ export default function TikTokHashtagResultDetailPage() {
                                         <button
                                             type="button"
                                             onClick={() => handleFilterChange('')}
-                                            className="text-muted-foreground hover:text-foreground text-[10px] font-mono px-1"
+                                            className="text-muted-foreground hover:text-foreground text-xs font-sans font-medium px-1"
                                         >
                                             Clear
                                         </button>
@@ -1568,7 +1576,7 @@ export default function TikTokHashtagResultDetailPage() {
 
                                 {/* Sort Parameter Buttons */}
                                 <div className="flex items-center justify-between gap-1 flex-wrap pt-0.5">
-                                    <span className="text-[10px] font-mono text-muted-foreground">Sort order:</span>
+                                    <span className="text-[10px] font-sans font-medium text-muted-foreground">Sort order:</span>
                                     <div className="flex items-center bg-muted/40 rounded-lg border border-border/60 p-0.5 text-[11px] font-semibold">
                                         {(['date', 'views', 'likes', 'comments', 'shares'] as const).map((key) => {
                                             const isActive = sortBy === key;
@@ -1591,7 +1599,7 @@ export default function TikTokHashtagResultDetailPage() {
                                                     }`}
                                                     title={`Sort by ${labelMap[key]} (${isActive && sortDirection === 'asc' ? 'ascending' : 'descending'})`}
                                                 >
-                                                    <span>{labelMap[key]}</span>
+                                                    <span className="font-sans">{labelMap[key]}</span>
                                                     {isActive && (
                                                         <span className="font-mono text-[9px] text-primary">
                                                             {sortDirection === 'desc' ? '↓' : '↑'}
@@ -1672,8 +1680,8 @@ export default function TikTokHashtagResultDetailPage() {
 
                                                         <div className="flex items-center gap-1.5 shrink-0">
                                                             {isTopPost && (
-                                                                <Badge variant="outline" className="text-[9px] font-mono border-amber-500/40 text-amber-500 bg-amber-500/5">
-                                                                    #1 Views
+                                                                <Badge variant="outline" className="text-[9px] font-sans font-semibold border-amber-500/40 text-amber-500 bg-amber-500/5">
+                                                                    <span className="font-mono tabular-nums">#1</span> Views
                                                                 </Badge>
                                                             )}
                                                             <span className="text-[10px] font-mono font-bold text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded border border-border/40 flex items-center gap-1">
@@ -1750,7 +1758,7 @@ export default function TikTokHashtagResultDetailPage() {
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => setSelectedPostId(null)}
-                                                className="h-7 px-2 text-[10px] font-mono text-muted-foreground hover:text-foreground gap-1"
+                                                className="h-7 px-2 text-xs font-sans font-medium text-muted-foreground hover:text-foreground gap-1"
                                                 title="Reset to default catalyst"
                                             >
                                                 <RotateCcw className="w-3 h-3" />
@@ -1789,7 +1797,7 @@ export default function TikTokHashtagResultDetailPage() {
                                                 </div>
                                             </div>
 
-                                            <Badge variant="outline" className="text-[10px] font-mono">
+                                            <Badge variant="outline" className="text-[10px] font-sans font-medium">
                                                 Published
                                             </Badge>
                                         </div>
@@ -1842,7 +1850,7 @@ export default function TikTokHashtagResultDetailPage() {
 
                                     {/* Granular Post Performance Metrics (2x2 Grid) */}
                                     <div className="space-y-1.5">
-                                        <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold">
+                                        <div className="text-[10px] font-sans uppercase tracking-wider text-muted-foreground font-semibold">
                                             Post Metric Breakdown
                                         </div>
                                         <div className="grid grid-cols-2 gap-2 text-sm font-mono">
@@ -1906,9 +1914,11 @@ export default function TikTokHashtagResultDetailPage() {
 
                                     {/* Full Caption Box */}
                                     <div className="space-y-1.5">
-                                        <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold flex items-center justify-between">
+                                        <div className="text-[10px] font-sans uppercase tracking-wider text-muted-foreground font-semibold flex items-center justify-between">
                                             <span>Full Video Caption</span>
-                                            <span className="text-[9px]">{activePost.caption.length} chars</span>
+                                            <span className="text-[9px] font-sans text-muted-foreground">
+                                                <span className="font-mono tabular-nums">{activePost.caption.length}</span> chars
+                                            </span>
                                         </div>
                                         <div className="p-3 bg-muted/20 border border-border/40 rounded-xl text-sm text-foreground leading-relaxed whitespace-pre-wrap font-sans max-h-48 overflow-y-auto">
                                             {activePost.caption}
@@ -1918,7 +1928,7 @@ export default function TikTokHashtagResultDetailPage() {
                                     {/* Hashtags Chips if present */}
                                     {activePost.hashtags && activePost.hashtags.length > 0 && (
                                         <div className="space-y-1.5">
-                                            <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold">
+                                            <div className="text-[10px] font-sans uppercase tracking-wider text-muted-foreground font-semibold">
                                                 Associated Hashtags
                                             </div>
                                             <div className="flex flex-wrap gap-1">
@@ -2011,7 +2021,7 @@ export default function TikTokHashtagResultDetailPage() {
 
                         {/* Target Date Destination Option */}
                         <div className="p-2.5 bg-muted/30 border border-border/40 rounded-lg space-y-1.5">
-                            <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold font-mono">
+                            <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold font-sans">
                                 Snapshot Date Destination:
                             </div>
                             <div className="flex items-center gap-2">
@@ -2119,7 +2129,7 @@ export default function TikTokHashtagResultDetailPage() {
                                                     <td className="p-2.5 whitespace-nowrap font-sans">
                                                         <Badge
                                                             variant="outline"
-                                                            className={`text-[9px] font-mono capitalize ${
+                                                            className={`text-[9px] font-sans font-medium capitalize ${
                                                                 item.source === 'live_manual'
                                                                     ? 'border-primary/40 text-primary bg-primary/5'
                                                                     : item.source === 'scheduled_pulse'
@@ -2130,8 +2140,8 @@ export default function TikTokHashtagResultDetailPage() {
                                                             {item.source.replace('_', ' ')}
                                                         </Badge>
                                                     </td>
-                                                    <td className="p-2.5 whitespace-nowrap text-muted-foreground">
-                                                        {item.depth} posts
+                                                    <td className="p-2.5 whitespace-nowrap text-muted-foreground font-sans">
+                                                        <span className="font-mono tabular-nums text-foreground">{item.depth}</span> posts
                                                     </td>
                                                     <td className="p-2.5 whitespace-nowrap font-bold text-foreground">
                                                         {formatIdr(item.cost_idr)}
@@ -2142,11 +2152,11 @@ export default function TikTokHashtagResultDetailPage() {
                                                     <td className="p-2.5 text-right whitespace-nowrap font-sans">
                                                         <Badge
                                                             variant="outline"
-                                                            className={`text-[9px] font-mono ${
+                                                            className={`text-[9px] font-sans font-semibold capitalize ${
                                                                 item.status === 'success'
                                                                     ? 'border-emerald-500/40 text-emerald-500'
                                                                     : 'border-rose-500/40 text-rose-500'
-                                                              }`}
+                                                            }`}
                                                         >
                                                             {item.status}
                                                         </Badge>
@@ -2159,9 +2169,9 @@ export default function TikTokHashtagResultDetailPage() {
                             </div>
                         )}
 
-                        <div className="flex items-center justify-between text-[11px] font-mono text-muted-foreground bg-muted/30 p-2.5 rounded-lg border border-border/40">
-                            <span>Lifetime Scrapes: <strong className="text-foreground">{totalScrapes}</strong></span>
-                            <span>Total Spend: <strong className="text-foreground">{formatIdr(totalCostIdr)}</strong> ({formatUsd(totalCostUsd)})</span>
+                        <div className="flex items-center justify-between text-[11px] font-sans text-muted-foreground bg-muted/30 p-2.5 rounded-lg border border-border/40">
+                            <span>Lifetime Scrapes: <strong className="font-mono font-bold text-foreground tabular-nums">{totalScrapes}</strong></span>
+                            <span>Total Spend: <strong className="font-mono font-bold text-foreground tabular-nums">{formatIdr(totalCostIdr)}</strong> <span className="font-mono text-muted-foreground">({formatUsd(totalCostUsd)})</span></span>
                         </div>
                     </div>
 
