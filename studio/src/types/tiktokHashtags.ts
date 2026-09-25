@@ -1,3 +1,13 @@
+export interface ScrapeExecutionLog {
+    timestamp: string;
+    source: 'live_manual' | 'scheduled_pulse' | 'simulated';
+    depth: number;
+    posts_scraped: number;
+    cost_usd: number;
+    cost_idr: number;
+    status: 'success' | 'failed';
+}
+
 export interface TrackedHashtag {
     id: string;
     tag: string;
@@ -11,7 +21,41 @@ export interface TrackedHashtag {
     created_at: string;
     updated_at: string;
     last_scraped_at?: string;
+    scrape_count?: number; // Total number of times scraping has been triggered
+    total_cost_usd?: number; // Cumulative scraping cost in USD
+    scrape_history?: ScrapeExecutionLog[]; // Recent execution audit trail
     latest_stats?: HashtagPulseStats | null;
+}
+
+export interface HashtagCostTelemetry {
+    unitCost: {
+        apifyPostsUsd: number;
+        apifyCommentsUsd: number;
+        apifyTotalUsd: number;
+        geminiSentimentUsd: number;
+        totalPerCrawlUsd: number;
+        dailyCostUsd: number;
+        monthlyCostUsd: number;
+        dailyCostIdr: number;
+        monthlyCostIdr: number;
+        estimatedItemsPerCrawl: number;
+    };
+    deepCost: {
+        apifyPostsUsd: number;
+        apifyCommentsUsd: number;
+        apifyTotalUsd: number;
+        geminiSentimentUsd: number;
+        totalPerCrawlUsd: number;
+        dailyCostUsd: number;
+        monthlyCostUsd: number;
+        dailyCostIdr: number;
+        monthlyCostIdr: number;
+        estimatedItemsPerCrawl: number;
+    };
+    scrape_count: number;
+    total_cost_usd: number;
+    total_cost_idr: number;
+    scrape_history: ScrapeExecutionLog[];
 }
 
 export interface CustomHashtagsConfigDoc {
