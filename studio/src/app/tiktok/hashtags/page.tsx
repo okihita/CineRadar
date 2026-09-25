@@ -484,7 +484,7 @@ export default function CustomHashtagTrackerPage() {
                                     <table className="w-full text-left text-sm">
                                         <thead className="bg-muted/40 border-b border-border/40 text-muted-foreground font-semibold uppercase text-[10px]">
                                             <tr>
-                                                <th className="py-2.5 px-4">Hashtag &amp; Label</th>
+                                                <th className="py-2.5 px-4">Hashtag</th>
                                                 <th className="py-2.5 px-3">Category</th>
                                                 <th className="py-2.5 px-3">Schedule &amp; Depth</th>
                                                 <th className="py-2.5 px-3">Est. Unit Cost (IDR)</th>
@@ -521,24 +521,21 @@ export default function CustomHashtagTrackerPage() {
                                                                     <ExternalLink className="w-3 h-3" />
                                                                 </a>
                                                             </div>
-                                                            <div className="flex items-center justify-between gap-2 mt-0.5 min-w-0">
-                                                                <span className="text-sm text-muted-foreground truncate">
-                                                                    {t.label}
-                                                                </span>
-                                                                {isAdmin && (
+                                                            {isAdmin && (
+                                                                <div className="mt-0.5">
                                                                     <a
                                                                         href={firestoreUrl}
                                                                         target="_blank"
                                                                         rel="noopener noreferrer"
-                                                                        className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-500/80 hover:text-amber-500 hover:underline transition-colors shrink-0 ml-auto"
+                                                                        className="inline-flex items-center gap-1 text-[10px] font-sans font-medium text-amber-500/80 hover:text-amber-500 hover:underline transition-colors"
                                                                         title={`Open Firestore: tiktok_tracked_hashtags/${t.tag}`}
                                                                     >
                                                                         <Database className="w-2.5 h-2.5" />
                                                                         <span>Firestore</span>
                                                                         <ExternalLink className="w-2.5 h-2.5 opacity-60" />
                                                                     </a>
-                                                                )}
-                                                            </div>
+                                                                </div>
+                                                            )}
                                                         </td>
 
                                                     <td className="py-3 px-3">
