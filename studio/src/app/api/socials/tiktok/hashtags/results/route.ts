@@ -104,7 +104,26 @@ export async function GET(req: NextRequest) {
             if (item) history.push(item);
         }
 
-        // 5. Compute Unit Economics & Scrape Frequency Telemetry
+        // 5. Discover all historical scrape dates available for this hashtag
+        const availableDatesSet = new Set<string>();
+        for (const item of resolvedHistory) {
+            if (item && item.date) availableDatesSet.add(item.date);
+        }
+        if (Array.isArray(tagDoc?.scrape_history)) {
+            for (const log of tagDoc.scrape_history) {
+                if (log.timestamp) availableDatesSet.add(log.timestamp.split('T')[0]);
+            }
+        }
+        if (tagDoc?.last_scraped_at) {
+            availableDatesSet.add(tagDoc.last_scraped_at.split('T')[0]);
+        }
+        if (snapshot) {
+            availableDatesSet.add(targetDate);
+        }
+
+        const availableDates = Array.from(availableDatesSet).sort().reverse();
+
+        // 6. Compute Unit Economics & Scrape Frequency Telemetry
         const targetPosts = tagDoc?.target_posts || 40;
         const includeComments = tagDoc?.include_comments ?? true;
         const cadence = Math.max(1, tagDoc?.cadence ?? 1);
@@ -150,6 +169,7 @@ export async function GET(req: NextRequest) {
             cost: costTelemetry,
             snapshot: snapshot || null,
             history,
+            available_dates: availableDates,
         });
     } catch (error) {
         console.error('[TikTok Hashtag Results API Error]:', error);

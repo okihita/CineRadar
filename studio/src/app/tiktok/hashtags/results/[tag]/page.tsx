@@ -131,6 +131,7 @@ export default function TikTokHashtagResultDetailPage() {
             comments: number;
             hype_score: number;
         }>;
+        available_dates?: string[];
     }>(cleanTag ? apiUrl : null, fetcher, {
         revalidateOnFocus: false,
     });
@@ -142,6 +143,7 @@ export default function TikTokHashtagResultDetailPage() {
     const [confirmModalOpen, setConfirmModalOpen] = useState(false);
     const [auditModalOpen, setAuditModalOpen] = useState(false);
     const [pendingDepth, setPendingDepth] = useState<number>(40);
+    const [scrapeAnchorDate, setScrapeAnchorDate] = useState<string>(queryDate);
 
     // Video sorting, pagination, and active inspection state (10 default, then 25, then 50)
     const [sortBy, setSortBy] = useState<'date' | 'views' | 'likes' | 'comments' | 'shares'>('date');
@@ -157,6 +159,7 @@ export default function TikTokHashtagResultDetailPage() {
     const snapshot = data?.snapshot;
     const history = data?.history || [];
     const costData = data?.cost;
+    const availableDates = data?.available_dates || [];
 
     // Unit Economics and Execution Frequency Derived Metrics
     const totalScrapes =
@@ -188,25 +191,30 @@ export default function TikTokHashtagResultDetailPage() {
 
     const handleDateChange = (newDate: string) => {
         setSelectedDate(newDate);
+        setScrapeAnchorDate(newDate);
         setSelectedPostId(null);
         router.push(`/tiktok/hashtags/results/${cleanTag}?date=${newDate}`);
     };
 
-    // Live Scraping Trigger Request with Cost Guardrail
-    const handleRequestScrape = (depth: number) => {
+    // Live Scraping Trigger Request with Cost Guardrail & Backdating Option
+    const handleRequestScrape = (depth: number, targetDateOverride?: string) => {
         setPendingDepth(depth);
-        if (isCooldownActive || depth > 40) {
+        const anchor = targetDateOverride || selectedDate;
+        setScrapeAnchorDate(anchor);
+
+        if (isCooldownActive || depth > 40 || anchor !== todayJakarta) {
             setConfirmModalOpen(true);
         } else {
-            executeScrape(depth, false);
+            executeScrape(depth, false, anchor);
         }
     };
 
-    const executeScrape = async (depth: number, force: boolean) => {
+    const executeScrape = async (depth: number, force: boolean, targetDateOverride?: string) => {
         setConfirmModalOpen(false);
         setIsScraping(true);
         setScrapeTargetDepth(depth);
-        setScrapeStep('Connecting to Apify TikTok scraper...');
+        const effectiveTargetDate = targetDateOverride || scrapeAnchorDate || selectedDate;
+        setScrapeStep(`Connecting to Apify TikTok scraper for ${effectiveTargetDate}...`);
         try {
             setTimeout(() => {
                 setScrapeStep(`Extracting ${depth} public video posts and engagement...`);
@@ -222,6 +230,7 @@ export default function TikTokHashtagResultDetailPage() {
                 body: JSON.stringify({
                     tag: cleanTag,
                     targetPosts: depth,
+                    targetDate: effectiveTargetDate,
                     force,
                     dryRun: false,
                 }),
@@ -229,8 +238,14 @@ export default function TikTokHashtagResultDetailPage() {
 
             const result = await res.json();
             if (result.success) {
-                toast.success(result.message || `Scrape completed for #${cleanTag} (${depth} posts)`);
+                toast.success(
+                    result.message ||
+                    `Scrape completed for #${cleanTag} (${depth} posts${effectiveTargetDate !== todayJakarta ? ` on ${effectiveTargetDate}` : ''})`
+                );
                 mutate();
+                if (effectiveTargetDate !== selectedDate) {
+                    handleDateChange(effectiveTargetDate);
+                }
             } else if (result.cooldown) {
                 toast.error(result.error);
             } else {
@@ -590,6 +605,52 @@ export default function TikTokHashtagResultDetailPage() {
                         <span className="text-[10px] text-muted-foreground font-mono">WIB</span>
                     </div>
 
+                    {/* Previous Snapshots Quick Selector Dropdown */}
+                    {availableDates.length > 0 && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-9 px-2.5 rounded-lg border-border/60 hover:bg-muted text-xs font-mono font-semibold gap-1.5"
+                                    title="View Available Historical Scrapes"
+                                >
+                                    <History className="w-3.5 h-3.5 text-primary" />
+                                    <span>Snapshots ({availableDates.length})</span>
+                                    <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56 bg-card border-border/80 p-1.5 space-y-1 max-h-72 overflow-y-auto">
+                                <div className="px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold">
+                                    Historical Crawl Dates
+                                </div>
+                                {availableDates.map((d) => {
+                                    const isSelected = d === selectedDate;
+                                    const isToday = d === todayJakarta;
+                                    return (
+                                        <DropdownMenuItem
+                                            key={d}
+                                            onClick={() => handleDateChange(d)}
+                                            className={`cursor-pointer flex items-center justify-between p-2 rounded-lg text-xs font-mono ${
+                                                isSelected ? 'bg-primary text-primary-foreground font-bold' : 'hover:bg-muted text-foreground'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-1.5">
+                                                <span>{d}</span>
+                                                {isToday && (
+                                                    <Badge variant="outline" className={`text-[8px] font-mono uppercase ${isSelected ? 'border-primary-foreground/40 text-primary-foreground' : 'border-border text-muted-foreground'}`}>
+                                                        Today
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
+                                        </DropdownMenuItem>
+                                    );
+                                })}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
+
                     {/* External TikTok Link */}
                     <Button
                         variant="outline"
@@ -833,8 +894,8 @@ export default function TikTokHashtagResultDetailPage() {
 
             {/* Cold Start / Empty State */}
             {!isLoading && !snapshot && (
-                <Card className="border-border/60 bg-card rounded-xl text-center py-12 px-4 shadow-none">
-                    <CardHeader className="max-w-md mx-auto space-y-2">
+                <Card className="border-border/60 bg-card rounded-xl text-center py-10 px-4 shadow-none">
+                    <CardHeader className="max-w-lg mx-auto space-y-2">
                         <div className="w-12 h-12 rounded-xl bg-muted/60 text-muted-foreground flex items-center justify-center mx-auto border border-border/60">
                             <AlertCircle className="w-6 h-6" />
                         </div>
@@ -842,28 +903,70 @@ export default function TikTokHashtagResultDetailPage() {
                             No Crawl Telemetry for {selectedDate}
                         </CardTitle>
                         <CardDescription className="text-sm text-muted-foreground">
-                            Hashtag #{cleanTag} has not been crawled for this date window. You can trigger an on-demand scrape right now or wait for the standing 18:00 WIB daily pulse.
+                            Hashtag #{cleanTag} has no recorded snapshot for this date window. You can backfill and scrape for {selectedDate}, or jump to a date with recorded telemetry.
                         </CardDescription>
+
+                        {availableDates.length > 0 && (
+                            <div className="pt-2 text-left bg-muted/30 p-3 rounded-lg border border-border/40 space-y-1.5">
+                                <div className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider font-semibold">
+                                    Previous Snapshots Available ({availableDates.length}):
+                                </div>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {availableDates.slice(0, 8).map((d) => (
+                                        <Badge
+                                            key={d}
+                                            variant="outline"
+                                            onClick={() => handleDateChange(d)}
+                                            className="text-xs font-mono border-border/80 hover:bg-primary hover:text-primary-foreground hover:border-primary cursor-pointer transition-colors"
+                                        >
+                                            {d}
+                                        </Badge>
+                                    ))}
+                                    {availableDates.length > 8 && (
+                                        <span className="text-[10px] font-mono text-muted-foreground self-center">
+                                            +{availableDates.length - 8} more
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </CardHeader>
-                    <CardContent className="flex justify-center gap-3 pt-2">
+                    <CardContent className="flex justify-center gap-3 pt-3 flex-wrap">
                         <Button
                             variant="default"
                             size="sm"
                             disabled={isScraping}
-                            onClick={() => handleRequestScrape(40)}
+                            onClick={() => handleRequestScrape(40, selectedDate)}
                             className="rounded-lg text-sm font-bold gap-2"
                         >
                             <RefreshCw className="w-3.5 h-3.5" />
-                            Trigger First Scrape Now
+                            <span>
+                                {selectedDate === todayJakarta
+                                    ? 'Trigger First Scrape Now'
+                                    : `Backfill & Scrape for ${selectedDate}`}
+                            </span>
                         </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDateChange(todayJakarta)}
-                            className="rounded-lg text-sm font-medium"
-                        >
-                            Jump to Today
-                        </Button>
+                        {availableDates.length > 0 && availableDates[0] !== selectedDate && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDateChange(availableDates[0])}
+                                className="rounded-lg text-sm font-medium gap-1.5"
+                            >
+                                <History className="w-3.5 h-3.5 text-primary" />
+                                <span>View Latest Scrape ({availableDates[0]})</span>
+                            </Button>
+                        )}
+                        {selectedDate !== todayJakarta && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDateChange(todayJakarta)}
+                                className="rounded-lg text-sm font-medium"
+                            >
+                                Jump to Today
+                            </Button>
+                        )}
                     </CardContent>
                 </Card>
             )}
@@ -1666,6 +1769,39 @@ export default function TikTokHashtagResultDetailPage() {
                             </div>
                         </div>
 
+                        {/* Target Date Destination Option */}
+                        <div className="p-2.5 bg-muted/30 border border-border/40 rounded-lg space-y-1.5">
+                            <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold font-mono">
+                                Snapshot Date Destination:
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setScrapeAnchorDate(selectedDate)}
+                                    className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-mono border transition-all ${
+                                        scrapeAnchorDate === selectedDate
+                                            ? 'bg-primary text-primary-foreground border-primary font-bold'
+                                            : 'bg-card text-muted-foreground border-border hover:bg-muted'
+                                    }`}
+                                >
+                                    {selectedDate === todayJakarta ? `Today (${todayJakarta})` : `Backdate to ${selectedDate}`}
+                                </button>
+                                {selectedDate !== todayJakarta && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setScrapeAnchorDate(todayJakarta)}
+                                        className={`flex-1 py-1.5 px-2 rounded-md text-[11px] font-mono border transition-all ${
+                                            scrapeAnchorDate === todayJakarta
+                                                ? 'bg-primary text-primary-foreground border-primary font-bold'
+                                                : 'bg-card text-muted-foreground border-border hover:bg-muted'
+                                        }`}
+                                    >
+                                        Today ({todayJakarta})
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
                         {/* Cooldown Warning Alert */}
                         {isCooldownActive && (
                             <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg space-y-1">
@@ -1692,7 +1828,7 @@ export default function TikTokHashtagResultDetailPage() {
                         <Button
                             variant="default"
                             size="sm"
-                            onClick={() => executeScrape(pendingDepth, true)}
+                            onClick={() => executeScrape(pendingDepth, true, scrapeAnchorDate)}
                             className="h-8 px-3 text-sm font-bold rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5"
                         >
                             <RefreshCw className="w-3 h-3" />

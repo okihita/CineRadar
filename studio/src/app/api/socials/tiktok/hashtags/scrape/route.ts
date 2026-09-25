@@ -16,6 +16,7 @@ interface ScrapeRequestBody {
     force?: boolean;
     dryRun?: boolean;
     targetPosts?: number;
+    targetDate?: string;
 }
 
 const COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes cooldown
@@ -83,6 +84,10 @@ export async function POST(req: NextRequest) {
 
         const isDryRun = body.dryRun === true || !apifyToken;
         const today = getTodayJakarta();
+        const effectiveDate =
+            body.targetDate && /^\d{4}-\d{2}-\d{2}$/.test(body.targetDate)
+                ? body.targetDate
+                : today;
 
         let posts: TikTokPostItem[] = [];
         let summaryStats: HashtagPulseStats;
@@ -358,10 +363,10 @@ Ensure positive + mixed + negative equals 100. Include 2-3 specific praise point
         }
 
         // 4. Atomic Firestore Persistence
-        // A. Update summary document in tiktok_custom_pulse/{today}
+        // A. Update summary document in tiktok_custom_pulse/{effectiveDate}
         const existingPulseDoc = await firestoreRestClient.getDocument<{
             stats?: Record<string, HashtagPulseStats>;
-        }>('tiktok_custom_pulse', today);
+        }>('tiktok_custom_pulse', effectiveDate);
 
         const mergedStats = {
             ...(existingPulseDoc?.stats || {}),
@@ -369,25 +374,25 @@ Ensure positive + mixed + negative equals 100. Include 2-3 specific praise point
         };
 
         if (existingPulseDoc) {
-            await firestoreRestClient.updateDocument('tiktok_custom_pulse', today, {
-                date: today,
+            await firestoreRestClient.updateDocument('tiktok_custom_pulse', effectiveDate, {
+                date: effectiveDate,
                 updated_at: nowIso,
                 stats: mergedStats,
             });
         } else {
-            await firestoreRestClient.createDocument('tiktok_custom_pulse', today, {
-                date: today,
+            await firestoreRestClient.createDocument('tiktok_custom_pulse', effectiveDate, {
+                date: effectiveDate,
                 updated_at: nowIso,
                 stats: mergedStats,
             });
         }
 
-        // B. Persist granular posts snapshot to subcollection tiktok_custom_pulse/{today}/hashtags/{cleanTag}
+        // B. Persist granular posts snapshot to subcollection tiktok_custom_pulse/{effectiveDate}/hashtags/{cleanTag}
         const detailSnapshot: TikTokHashtagDetailSnapshot = {
             tag: cleanTag,
             label: tagDoc?.label || cleanTag,
             category: tagDoc?.category || 'general',
-            date: today,
+            date: effectiveDate,
             crawled_at: nowIso,
             source: isDryRun ? 'simulated' : 'live_manual',
             total_posts: posts.length,
@@ -399,7 +404,7 @@ Ensure positive + mixed + negative equals 100. Include 2-3 specific praise point
             posts,
         };
 
-        const subcollectionPath = `tiktok_custom_pulse/${today}/hashtags`;
+        const subcollectionPath = `tiktok_custom_pulse/${effectiveDate}/hashtags`;
         const updatedDetail = await firestoreRestClient.updateDocument(
             subcollectionPath,
             cleanTag,
