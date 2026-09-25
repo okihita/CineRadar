@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { getTodayJakarta } from '@/lib/timeUtils';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { computeHashtagUnitCost, USD_TO_IDR } from '@/lib/tiktokCostEngine';
 import type {
     TrackedHashtag,
     HashtagPulseStats,
     TikTokPostItem,
     TikTokHashtagDetailSnapshot,
+    ScrapeExecutionLog,
 } from '@/types/tiktokHashtags';
 
 interface ScrapeRequestBody {
@@ -411,11 +413,45 @@ Ensure positive + mixed + negative equals 100. Include 2-3 specific praise point
             );
         }
 
-        // C. Update tracked hashtag metadata with last_scraped_at
+        // C. Update tracked hashtag metadata with last_scraped_at, scrape_count, total_cost_usd, and execution history
+        const runUnitCost = computeHashtagUnitCost({
+            postsPerCrawl: targetPosts,
+            includeComments,
+            crawlsPerDay: tagDoc?.cadence ?? 1,
+        });
+
+        const executionLogItem: ScrapeExecutionLog = {
+            timestamp: nowIso,
+            source: isDryRun ? 'simulated' : 'live_manual',
+            depth: targetPosts,
+            posts_scraped: posts.length,
+            cost_usd: runUnitCost.totalPerCrawlUsd,
+            cost_idr: Math.round(runUnitCost.totalPerCrawlUsd * USD_TO_IDR),
+            status: 'success',
+        };
+
         if (tagDoc) {
+            const currentScrapes =
+                tagDoc.scrape_count !== undefined && tagDoc.scrape_count !== null
+                    ? tagDoc.scrape_count
+                    : tagDoc.last_scraped_at
+                    ? 1
+                    : 0;
+            const newScrapeCount = currentScrapes + 1;
+            const prevCostUsd = tagDoc.total_cost_usd ?? currentScrapes * runUnitCost.totalPerCrawlUsd;
+            const newTotalCostUsd = Number((prevCostUsd + runUnitCost.totalPerCrawlUsd).toFixed(4));
+
+            const existingHistory: ScrapeExecutionLog[] = Array.isArray(tagDoc.scrape_history)
+                ? tagDoc.scrape_history
+                : [];
+            const updatedHistory = [executionLogItem, ...existingHistory].slice(0, 20);
+
             await firestoreRestClient.updateDocument('tiktok_tracked_hashtags', cleanTag, {
                 last_scraped_at: nowIso,
                 latest_stats: summaryStats,
+                scrape_count: newScrapeCount,
+                total_cost_usd: newTotalCostUsd,
+                scrape_history: updatedHistory,
                 updated_at: nowIso,
             });
         }
@@ -425,6 +461,10 @@ Ensure positive + mixed + negative equals 100. Include 2-3 specific praise point
             mode: isDryRun ? 'simulated' : 'live',
             message: `Scrape completed for #${cleanTag}`,
             data: detailSnapshot,
+            cost: {
+                run_cost_usd: runUnitCost.totalPerCrawlUsd,
+                run_cost_idr: Math.round(runUnitCost.totalPerCrawlUsd * USD_TO_IDR),
+            },
         });
     } catch (error) {
         console.error('[TikTok Live Scrape Error]:', error);

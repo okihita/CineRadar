@@ -90,10 +90,23 @@ export async function GET() {
                 includeComments: t.include_comments,
                 crawlsPerDay: cadence,
             });
+            const scrapeCount =
+                t.scrape_count !== undefined && t.scrape_count !== null
+                    ? t.scrape_count
+                    : t.last_scraped_at
+                    ? 1
+                    : 0;
+            const totalCostUsd =
+                t.total_cost_usd !== undefined && t.total_cost_usd !== null
+                    ? t.total_cost_usd
+                    : Number((scrapeCount * unit.totalPerCrawlUsd).toFixed(4));
+
             return {
                 ...t,
                 cadence,
                 start_hour: t.start_hour !== undefined ? t.start_hour : 18,
+                scrape_count: scrapeCount,
+                total_cost_usd: totalCostUsd,
                 cost: unit,
                 latest_stats: latestPulseMap[t.tag.toLowerCase()] || null,
             };

@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { getTodayJakarta } from '@/lib/timeUtils';
+import { computeHashtagUnitCost, USD_TO_IDR } from '@/lib/tiktokCostEngine';
 import type {
     TrackedHashtag,
     HashtagPulseStats,
     TikTokHashtagDetailSnapshot,
+    HashtagCostTelemetry,
 } from '@/types/tiktokHashtags';
 
 export async function GET(req: NextRequest) {
@@ -102,11 +104,50 @@ export async function GET(req: NextRequest) {
             if (item) history.push(item);
         }
 
+        // 5. Compute Unit Economics & Scrape Frequency Telemetry
+        const targetPosts = tagDoc?.target_posts || 40;
+        const includeComments = tagDoc?.include_comments ?? true;
+        const cadence = Math.max(1, tagDoc?.cadence ?? 1);
+
+        const unitCost = computeHashtagUnitCost({
+            postsPerCrawl: targetPosts,
+            includeComments,
+            crawlsPerDay: cadence,
+        });
+
+        const deepCost = computeHashtagUnitCost({
+            postsPerCrawl: 100,
+            includeComments,
+            crawlsPerDay: cadence,
+        });
+
+        const scrapeCount =
+            tagDoc?.scrape_count !== undefined && tagDoc?.scrape_count !== null
+                ? tagDoc.scrape_count
+                : tagDoc?.last_scraped_at
+                ? 1
+                : 0;
+
+        const totalCostUsd =
+            tagDoc?.total_cost_usd !== undefined && tagDoc?.total_cost_usd !== null
+                ? tagDoc.total_cost_usd
+                : Number((scrapeCount * unitCost.totalPerCrawlUsd).toFixed(4));
+
+        const costTelemetry: HashtagCostTelemetry = {
+            unitCost,
+            deepCost,
+            scrape_count: scrapeCount,
+            total_cost_usd: totalCostUsd,
+            total_cost_idr: Math.round(totalCostUsd * USD_TO_IDR),
+            scrape_history: Array.isArray(tagDoc?.scrape_history) ? tagDoc.scrape_history : [],
+        };
+
         return NextResponse.json({
             success: true,
             tag: cleanTag,
             targetDate,
             config: tagDoc || null,
+            cost: costTelemetry,
             snapshot: snapshot || null,
             history,
         });

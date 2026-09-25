@@ -31,6 +31,10 @@ import {
     Keyboard,
     ChevronDown,
     AlertTriangle,
+    Coins,
+    Layers,
+    History,
+    DollarSign,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -52,9 +56,11 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { getTodayJakarta } from '@/lib/timeUtils';
+import { formatIdr, formatUsd } from '@/lib/tiktokCostEngine';
 import type {
     TrackedHashtag,
     TikTokHashtagDetailSnapshot,
+    HashtagCostTelemetry,
 } from '@/types/tiktokHashtags';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -116,6 +122,7 @@ export default function TikTokHashtagResultDetailPage() {
         tag: string;
         targetDate: string;
         config: TrackedHashtag | null;
+        cost?: HashtagCostTelemetry | null;
         snapshot: TikTokHashtagDetailSnapshot | null;
         history: Array<{
             date: string;
@@ -133,6 +140,7 @@ export default function TikTokHashtagResultDetailPage() {
     const [scrapeStep, setScrapeStep] = useState<string | null>(null);
     const [scrapeTargetDepth, setScrapeTargetDepth] = useState<number>(40);
     const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+    const [auditModalOpen, setAuditModalOpen] = useState(false);
     const [pendingDepth, setPendingDepth] = useState<number>(40);
 
     // Video sorting, pagination, and active inspection state (10 default, then 25, then 50)
@@ -148,6 +156,24 @@ export default function TikTokHashtagResultDetailPage() {
     const config = data?.config;
     const snapshot = data?.snapshot;
     const history = data?.history || [];
+    const costData = data?.cost;
+
+    // Unit Economics and Execution Frequency Derived Metrics
+    const totalScrapes =
+        costData?.scrape_count ??
+        (config?.scrape_count ?? (config?.last_scraped_at ? 1 : 0));
+    const currentUnitCostUsd = costData?.unitCost.totalPerCrawlUsd ?? 0.21;
+    const currentUnitCostIdr =
+        costData?.unitCost.dailyCostIdr ?? Math.round(currentUnitCostUsd * 17500);
+    const deepUnitCostUsd = costData?.deepCost.totalPerCrawlUsd ?? 0.39;
+    const deepUnitCostIdr =
+        costData?.deepCost.dailyCostIdr ?? Math.round(deepUnitCostUsd * 17500);
+    const totalCostUsd =
+        costData?.total_cost_usd ??
+        (config?.total_cost_usd ?? Number((totalScrapes * currentUnitCostUsd).toFixed(4)));
+    const totalCostIdr =
+        costData?.total_cost_idr ?? Math.round(totalCostUsd * 17500);
+    const scrapeHistory = costData?.scrape_history ?? config?.scrape_history ?? [];
 
     // Cooldown Detection (15-Minute Window)
     const lastScrapedMs = config?.last_scraped_at
@@ -631,7 +657,7 @@ export default function TikTokHashtagResultDetailPage() {
                                         <Badge variant="outline" className="text-[9px] font-mono">Standard</Badge>
                                     </div>
                                     <div className="text-[10px] text-muted-foreground font-mono">
-                                        ~18s latency · ~0.20 USD (~3,200 IDR)
+                                        ~18s latency · {formatUsd(currentUnitCostUsd)} (~{formatIdr(currentUnitCostIdr)})
                                     </div>
                                 </DropdownMenuItem>
 
@@ -651,7 +677,7 @@ export default function TikTokHashtagResultDetailPage() {
                                         </Badge>
                                     </div>
                                     <div className="text-[10px] text-muted-foreground font-mono">
-                                        ~42s latency · ~0.50 USD (~8,000 IDR)
+                                        ~42s latency · {formatUsd(deepUnitCostUsd)} (~{formatIdr(deepUnitCostIdr)})
                                     </div>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -681,6 +707,129 @@ export default function TikTokHashtagResultDetailPage() {
                     </div>
                 </div>
             )}
+
+            {/* Scrape Execution & Unit Cost Telemetry Strip */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {/* 1. Crawl Frequency & Execution Counter */}
+                <Card className="border-border/60 bg-card rounded-xl shadow-none">
+                    <CardHeader className="p-3.5 pb-1 flex flex-row items-center justify-between space-y-0">
+                        <CardTitle className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1.5">
+                            <RotateCcw className="w-3.5 h-3.5 text-primary" />
+                            <span>Crawl Executions</span>
+                        </CardTitle>
+                        {scrapeHistory.length > 0 && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setAuditModalOpen(true)}
+                                className="h-6 px-2 text-[10px] font-mono font-semibold gap-1 border-border/60 hover:bg-muted text-foreground"
+                                title="Inspect Scrape Execution Audit Trail"
+                            >
+                                <History className="w-3 h-3 text-primary" />
+                                <span>Audit ({scrapeHistory.length})</span>
+                            </Button>
+                        )}
+                    </CardHeader>
+                    <CardContent className="p-3.5 pt-1 space-y-1">
+                        <div className="flex items-baseline gap-1.5">
+                            <span className="text-2xl font-bold font-mono text-foreground">
+                                {totalScrapes}
+                            </span>
+                            <span className="text-xs font-mono text-muted-foreground">
+                                {totalScrapes === 1 ? 'scrape run' : 'scrape runs'}
+                            </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground font-medium truncate">
+                            Cadence: {config?.cadence || 1}x/hari at {(config?.start_hour || 18).toString().padStart(2, '0')}:00 WIB
+                        </p>
+                    </CardContent>
+                </Card>
+
+                {/* 2. Unit Cost Per Scrape */}
+                <Card className="border-border/60 bg-card rounded-xl shadow-none">
+                    <CardHeader className="p-3.5 pb-1 flex flex-row items-center justify-between space-y-0">
+                        <CardTitle className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1.5">
+                            <Coins className="w-3.5 h-3.5 text-amber-500" />
+                            <span>Cost Per Scrape</span>
+                        </CardTitle>
+                        <Badge variant="outline" className="text-[9px] font-mono border-amber-500/30 text-amber-500">
+                            Unit Econ
+                        </Badge>
+                    </CardHeader>
+                    <CardContent className="p-3.5 pt-1 space-y-1">
+                        <div className="flex items-baseline gap-1.5">
+                            <span className="text-2xl font-bold font-mono text-foreground">
+                                {formatUsd(currentUnitCostUsd)}
+                            </span>
+                            <span className="text-xs font-mono text-muted-foreground">
+                                (~{formatIdr(currentUnitCostIdr)})
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-mono">
+                            <span>Standard: {config?.target_posts || 40} posts</span>
+                            <span>·</span>
+                            <span className="text-foreground/80 font-semibold">Deep: {formatUsd(deepUnitCostUsd)}</span>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* 3. Cumulative Scraping Spend */}
+                <Card className="border-border/60 bg-card rounded-xl shadow-none">
+                    <CardHeader className="p-3.5 pb-1 flex flex-row items-center justify-between space-y-0">
+                        <CardTitle className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1.5">
+                            <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+                            <span>Cumulative Spend</span>
+                        </CardTitle>
+                        <Badge variant="outline" className="text-[9px] font-mono border-emerald-500/30 text-emerald-500">
+                            Recorded
+                        </Badge>
+                    </CardHeader>
+                    <CardContent className="p-3.5 pt-1 space-y-1">
+                        <div className="flex items-baseline gap-1.5">
+                            <span className="text-2xl font-bold font-mono text-foreground">
+                                {formatUsd(totalCostUsd)}
+                            </span>
+                            <span className="text-xs font-mono text-muted-foreground">
+                                (~{formatIdr(totalCostIdr)})
+                            </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground font-medium truncate">
+                            Incurred across {totalScrapes} execution{totalScrapes === 1 ? '' : 's'}
+                        </p>
+                    </CardContent>
+                </Card>
+
+                {/* 4. Unit Cost Breakdown Strip */}
+                <Card className="border-border/60 bg-card rounded-xl shadow-none">
+                    <CardHeader className="p-3.5 pb-1 flex flex-row items-center justify-between space-y-0">
+                        <CardTitle className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1.5">
+                            <Layers className="w-3.5 h-3.5 text-primary" />
+                            <span>Unit Breakdown</span>
+                        </CardTitle>
+                        <span className="text-[9px] font-mono text-muted-foreground">Per Crawl</span>
+                    </CardHeader>
+                    <CardContent className="p-3.5 pt-1 space-y-1 font-mono text-[11px]">
+                        <div className="flex items-center justify-between text-muted-foreground">
+                            <span>Apify Posts ({config?.target_posts || 40}):</span>
+                            <span className="font-semibold text-foreground">
+                                {formatUsd(costData?.unitCost?.apifyPostsUsd ?? 0.12)}
+                            </span>
+                        </div>
+                        <div className="flex items-center justify-between text-muted-foreground">
+                            <span>Apify Comments (30):</span>
+                            <span className="font-semibold text-foreground">
+                                {formatUsd(costData?.unitCost?.apifyCommentsUsd ?? 0.09)}
+                            </span>
+                        </div>
+                        <div className="flex items-center justify-between text-muted-foreground">
+                            <span>Gemini 3.8 Sentiment:</span>
+                            <span className="font-semibold text-foreground">
+                                {formatUsd(costData?.unitCost?.geminiSentimentUsd ?? 0.002)}
+                            </span>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
 
             {/* Cold Start / Empty State */}
             {!isLoading && !snapshot && (
@@ -1506,7 +1655,9 @@ export default function TikTokHashtagResultDetailPage() {
                             <div className="flex items-center justify-between">
                                 <span className="text-muted-foreground font-sans">Estimated Cost:</span>
                                 <span className="font-bold text-amber-500">
-                                    {pendingDepth > 40 ? '~0.50 USD (~8,000 IDR)' : '~0.20 USD (~3,200 IDR)'}
+                                    {pendingDepth > 40
+                                        ? `${formatUsd(deepUnitCostUsd)} (~${formatIdr(deepUnitCostIdr)})`
+                                        : `${formatUsd(currentUnitCostUsd)} (~${formatIdr(currentUnitCostIdr)})`}
                                 </span>
                             </div>
                             <div className="flex items-center justify-between">
@@ -1546,6 +1697,106 @@ export default function TikTokHashtagResultDetailPage() {
                         >
                             <RefreshCw className="w-3 h-3" />
                             <span>Confirm &amp; Scrape ({pendingDepth} Posts)</span>
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Scrape Execution Audit Trail Modal */}
+            <Dialog open={auditModalOpen} onOpenChange={setAuditModalOpen}>
+                <DialogContent className="max-w-2xl bg-card border-border/80 text-foreground p-5 rounded-xl shadow-xl">
+                    <DialogHeader className="space-y-1">
+                        <DialogTitle className="text-base font-bold flex items-center gap-2">
+                            <History className="w-4 h-4 text-primary" />
+                            <span>Scrape Execution Audit Trail — #{cleanTag}</span>
+                        </DialogTitle>
+                        <DialogDescription className="text-sm text-muted-foreground">
+                            Historical audit log of on-demand crawler executions and scheduled daily pulse crawls for this hashtag.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-3 pt-2">
+                        {scrapeHistory.length === 0 ? (
+                            <div className="p-8 text-center bg-muted/20 border border-border/60 rounded-xl text-sm text-muted-foreground">
+                                No historical execution logs recorded in the local buffer yet. Subsequent live or scheduled crawls will log here.
+                            </div>
+                        ) : (
+                            <div className="border border-border/60 rounded-xl overflow-hidden">
+                                <div className="max-h-80 overflow-y-auto">
+                                    <table className="w-full text-xs font-mono text-left">
+                                        <thead className="bg-muted/60 text-muted-foreground font-semibold border-b border-border/60 sticky top-0">
+                                            <tr>
+                                                <th className="p-2.5">Time (WIB)</th>
+                                                <th className="p-2.5">Trigger Source</th>
+                                                <th className="p-2.5">Depth</th>
+                                                <th className="p-2.5">Cost (USD)</th>
+                                                <th className="p-2.5">Cost (IDR)</th>
+                                                <th className="p-2.5 text-right">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-border/40">
+                                            {scrapeHistory.map((item, idx) => (
+                                                <tr key={idx} className="hover:bg-muted/30 transition-colors">
+                                                    <td className="p-2.5 text-foreground font-bold whitespace-nowrap">
+                                                        {formatWIBFull24(item.timestamp)}
+                                                    </td>
+                                                    <td className="p-2.5 whitespace-nowrap">
+                                                        <Badge
+                                                            variant="outline"
+                                                            className={`text-[9px] font-mono capitalize ${
+                                                                item.source === 'live_manual'
+                                                                    ? 'border-primary/40 text-primary bg-primary/5'
+                                                                    : item.source === 'scheduled_pulse'
+                                                                    ? 'border-emerald-500/40 text-emerald-500 bg-emerald-500/5'
+                                                                    : 'text-muted-foreground'
+                                                            }`}
+                                                        >
+                                                            {item.source.replace('_', ' ')}
+                                                        </Badge>
+                                                    </td>
+                                                    <td className="p-2.5 whitespace-nowrap text-muted-foreground">
+                                                        {item.depth} posts
+                                                    </td>
+                                                    <td className="p-2.5 whitespace-nowrap font-bold text-foreground">
+                                                        {formatUsd(item.cost_usd)}
+                                                    </td>
+                                                    <td className="p-2.5 whitespace-nowrap text-muted-foreground">
+                                                        {formatIdr(item.cost_idr)}
+                                                    </td>
+                                                    <td className="p-2.5 text-right whitespace-nowrap">
+                                                        <Badge
+                                                            variant="outline"
+                                                            className={`text-[9px] font-mono ${
+                                                                item.status === 'success'
+                                                                    ? 'border-emerald-500/40 text-emerald-500'
+                                                                    : 'border-rose-500/40 text-rose-500'
+                                                            }`}
+                                                        >
+                                                            {item.status}
+                                                        </Badge>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="flex items-center justify-between text-[11px] font-mono text-muted-foreground bg-muted/30 p-2.5 rounded-lg border border-border/40">
+                            <span>Lifetime Scrapes: <strong className="text-foreground">{totalScrapes}</strong></span>
+                            <span>Total Spend: <strong className="text-foreground">{formatUsd(totalCostUsd)}</strong> ({formatIdr(totalCostIdr)})</span>
+                        </div>
+                    </div>
+
+                    <DialogFooter className="pt-2 border-t border-border/40">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setAuditModalOpen(false)}
+                            className="h-8 px-3 text-sm font-semibold rounded-lg border-border/60 hover:bg-muted"
+                        >
+                            Close
                         </Button>
                     </DialogFooter>
                 </DialogContent>
