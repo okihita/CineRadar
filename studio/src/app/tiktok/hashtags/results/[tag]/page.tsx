@@ -581,7 +581,7 @@ export default function TikTokHashtagResultDetailPage() {
 
                     <div>
                         <div className="flex items-center gap-2">
-                            <h1 className="text-xl font-bold tracking-tight text-foreground">
+                            <h1 className="text-xl font-bold tracking-tight text-foreground font-mono">
                                 #{cleanTag}
                             </h1>
                             {config?.category && (
