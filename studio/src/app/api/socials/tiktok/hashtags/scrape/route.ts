@@ -312,7 +312,7 @@ export async function POST(req: NextRequest) {
             if (geminiApiKey && textSources.length > 0) {
                 try {
                     const genAI = new GoogleGenerativeAI(geminiApiKey);
-                    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+                    const model = genAI.getGenerativeModel({ model: 'gemini-3.8-flash' });
                     const sampleTexts = textSources.slice(0, 50).map((c) => `- ${c}`).join('\n');
                     const prompt = `You are CineRadar's box office sentiment analyst. Analyze these real Indonesian audience comments and creator captions for the hashtag campaign "#${cleanTag}".
 Feedback and Captions:
