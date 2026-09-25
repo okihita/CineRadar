@@ -857,7 +857,7 @@ export default function TikTokHashtagResultDetailPage() {
                             <span>Cumulative Spend</span>
                         </CardTitle>
                         <Badge variant="outline" className="text-[9px] font-sans font-semibold border-emerald-500/30 text-emerald-500">
-                            Recorded
+                            All-Time
                         </Badge>
                     </CardHeader>
                     <CardContent className="p-3.5 pt-1 space-y-1">
@@ -870,7 +870,7 @@ export default function TikTokHashtagResultDetailPage() {
                             </span>
                         </div>
                         <p className="text-[11px] text-muted-foreground font-medium truncate font-sans">
-                            Incurred across <span className="font-mono font-bold text-foreground tabular-nums">{totalScrapes}</span> execution{totalScrapes === 1 ? '' : 's'}
+                            Lifetime burn across <span className="font-mono font-bold text-foreground tabular-nums">{totalScrapes}</span> execution{totalScrapes === 1 ? '' : 's'}
                         </p>
                     </CardContent>
                 </Card>

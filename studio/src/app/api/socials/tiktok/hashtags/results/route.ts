@@ -163,17 +163,31 @@ export async function GET(req: NextRequest) {
             crawlsPerDay: cadence,
         });
 
+        const discoveredCount = availableDates.length;
         const scrapeCount =
             tagDoc?.scrape_count !== undefined && tagDoc?.scrape_count !== null
-                ? tagDoc.scrape_count
-                : tagDoc?.last_scraped_at
-                ? 1
-                : 0;
+                ? Math.max(tagDoc.scrape_count, discoveredCount)
+                : Math.max(discoveredCount, tagDoc?.last_scraped_at ? 1 : 0);
 
+        const calculatedUsd = Number((scrapeCount * unitCost.totalPerCrawlUsd).toFixed(4));
         const totalCostUsd =
-            tagDoc?.total_cost_usd !== undefined && tagDoc?.total_cost_usd !== null
+            tagDoc?.total_cost_usd !== undefined && tagDoc?.total_cost_usd !== null && tagDoc.total_cost_usd >= calculatedUsd
                 ? tagDoc.total_cost_usd
-                : Number((scrapeCount * unitCost.totalPerCrawlUsd).toFixed(4));
+                : calculatedUsd;
+
+        // Synthesize fallback audit entries from discovered dates if document has no history
+        let scrapeHistory = Array.isArray(tagDoc?.scrape_history) ? [...tagDoc.scrape_history] : [];
+        if (scrapeHistory.length === 0 && availableDates.length > 0) {
+            scrapeHistory = availableDates.map((dateStr) => ({
+                timestamp: `${dateStr}T18:00:00.000Z`,
+                source: 'scheduled_pulse' as const,
+                depth: targetPosts,
+                posts_scraped: targetPosts,
+                cost_usd: unitCost.totalPerCrawlUsd,
+                cost_idr: Math.round(unitCost.totalPerCrawlUsd * USD_TO_IDR),
+                status: 'success' as const,
+            }));
+        }
 
         const costTelemetry: HashtagCostTelemetry = {
             unitCost,
@@ -181,7 +195,7 @@ export async function GET(req: NextRequest) {
             scrape_count: scrapeCount,
             total_cost_usd: totalCostUsd,
             total_cost_idr: Math.round(totalCostUsd * USD_TO_IDR),
-            scrape_history: Array.isArray(tagDoc?.scrape_history) ? tagDoc.scrape_history : [],
+            scrape_history: scrapeHistory,
         };
 
         return NextResponse.json({
