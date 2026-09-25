@@ -90,10 +90,10 @@ const CADENCE_OPTIONS = [
 ];
 
 const DEPTH_OPTIONS = [
-    { value: 20, label: '20 posts' },
     { value: 40, label: '40 posts' },
-    { value: 80, label: '80 posts' },
     { value: 100, label: '100 posts' },
+    { value: 500, label: '500 posts' },
+    { value: 1000, label: '1,000 posts' },
 ];
 
 const START_HOUR_OPTIONS = [
@@ -799,9 +799,14 @@ export default function CustomHashtagTrackerPage() {
                                     </div>
 
                                     <div>
-                                        <label className="text-sm font-semibold text-muted-foreground block mb-1">
-                                            Scrape Depth
-                                        </label>
+                                        <div className="flex items-center justify-between mb-1">
+                                            <label className="text-sm font-semibold text-muted-foreground block">
+                                                Scrape Depth
+                                            </label>
+                                            <span className="text-[10px] font-mono text-muted-foreground">
+                                                10 – 2,000 posts
+                                            </span>
+                                        </div>
                                         <div className="grid grid-cols-2 gap-1">
                                             {DEPTH_OPTIONS.map((d) => (
                                                 <Button
@@ -812,9 +817,25 @@ export default function CustomHashtagTrackerPage() {
                                                     className="h-7 text-[11px] px-1 font-semibold"
                                                     onClick={() => setNewTargetPosts(d.value)}
                                                 >
-                                                    {d.value} posts
+                                                    {d.label}
                                                 </Button>
                                             ))}
+                                        </div>
+                                        <div className="flex items-center gap-1.5 mt-1.5">
+                                            <span className="text-[11px] text-muted-foreground font-sans shrink-0">Custom:</span>
+                                            <Input
+                                                type="number"
+                                                min={10}
+                                                max={2000}
+                                                step={10}
+                                                value={newTargetPosts}
+                                                onChange={(e) => {
+                                                    const v = Number(e.target.value);
+                                                    setNewTargetPosts(Math.max(10, Math.min(2000, isNaN(v) ? 40 : v)));
+                                                }}
+                                                className="h-7 text-xs font-mono bg-background"
+                                                placeholder="10 - 2,000"
+                                            />
                                         </div>
                                     </div>
                                 </div>
@@ -1010,11 +1031,16 @@ export default function CustomHashtagTrackerPage() {
                                 </div>
 
                                 <div>
-                                    <label className="text-[11px] font-semibold text-muted-foreground block mb-1">
-                                        Scrape Depth
-                                    </label>
+                                    <div className="flex items-center justify-between mb-1">
+                                        <label className="text-[11px] font-semibold text-muted-foreground block">
+                                            Scrape Depth
+                                        </label>
+                                        <span className="text-[10px] font-mono text-muted-foreground">
+                                            10 – 2,000 posts
+                                        </span>
+                                    </div>
                                     <div className="grid grid-cols-2 gap-1">
-                                        {[20, 40, 80, 100].map((num) => (
+                                        {[40, 100, 500, 1000].map((num) => (
                                             <Button
                                                 key={num}
                                                 type="button"
@@ -1023,9 +1049,25 @@ export default function CustomHashtagTrackerPage() {
                                                 className="h-6 text-[11px] px-1 font-semibold"
                                                 onClick={() => setSimPostsPerTag(num)}
                                             >
-                                                {num}
+                                                {num >= 1000 ? `${num / 1000}k posts` : `${num} posts`}
                                             </Button>
                                         ))}
+                                    </div>
+                                    <div className="flex items-center gap-1.5 mt-1.5">
+                                        <span className="text-[10px] text-muted-foreground font-sans shrink-0">Custom:</span>
+                                        <Input
+                                            type="number"
+                                            min={10}
+                                            max={2000}
+                                            step={10}
+                                            value={simPostsPerTag}
+                                            onChange={(e) => {
+                                                const v = Number(e.target.value);
+                                                setSimPostsPerTag(Math.max(10, Math.min(2000, isNaN(v) ? 40 : v)));
+                                            }}
+                                            className="h-6 text-[11px] font-mono bg-background"
+                                            placeholder="10 - 2,000"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -1152,22 +1194,43 @@ export default function CustomHashtagTrackerPage() {
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="text-sm font-semibold text-muted-foreground block mb-1">
-                                            Scrape Depth
-                                        </label>
+                                        <div className="flex items-center justify-between mb-1">
+                                            <label className="text-sm font-semibold text-muted-foreground block">
+                                                Scrape Depth
+                                            </label>
+                                            <span className="text-[10px] font-mono text-muted-foreground">
+                                                10 – 2,000 posts
+                                            </span>
+                                        </div>
                                         <div className="grid grid-cols-2 gap-1">
-                                            {[20, 40, 80, 100].map((num) => (
+                                            {DEPTH_OPTIONS.map((d) => (
                                                 <Button
-                                                    key={num}
+                                                    key={d.value}
                                                     type="button"
-                                                    variant={editTargetPosts === num ? 'default' : 'outline'}
+                                                    variant={editTargetPosts === d.value ? 'default' : 'outline'}
                                                     size="sm"
-                                                    className="h-7 text-sm font-bold"
-                                                    onClick={() => setEditTargetPosts(num)}
+                                                    className="h-7 text-xs font-bold"
+                                                    onClick={() => setEditTargetPosts(d.value)}
                                                 >
-                                                    {num} posts
+                                                    {d.label}
                                                 </Button>
                                             ))}
+                                        </div>
+                                        <div className="flex items-center gap-1.5 mt-1.5">
+                                            <span className="text-[11px] text-muted-foreground font-sans shrink-0">Custom:</span>
+                                            <Input
+                                                type="number"
+                                                min={10}
+                                                max={2000}
+                                                step={10}
+                                                value={editTargetPosts}
+                                                onChange={(e) => {
+                                                    const v = Number(e.target.value);
+                                                    setEditTargetPosts(Math.max(10, Math.min(2000, isNaN(v) ? 40 : v)));
+                                                }}
+                                                className="h-7 text-xs font-mono bg-background"
+                                                placeholder="10 - 2,000"
+                                            />
                                         </div>
                                     </div>
                                 </div>

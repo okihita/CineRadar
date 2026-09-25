@@ -163,7 +163,7 @@ export async function POST(req: NextRequest) {
             category: ['campaign', 'competitor', 'meme', 'talent', 'general'].includes(body.category)
                 ? body.category
                 : 'general',
-            target_posts: Number(body.target_posts) || 40,
+            target_posts: Math.min(2000, Math.max(10, Number(body.target_posts) || 40)),
             cadence,
             start_hour: startHour,
             include_comments: body.include_comments !== false,
@@ -226,7 +226,9 @@ export async function PUT(req: NextRequest) {
 
         if (body.label !== undefined) updates.label = String(body.label).trim();
         if (body.category !== undefined) updates.category = body.category;
-        if (body.target_posts !== undefined) updates.target_posts = Number(body.target_posts);
+        if (body.target_posts !== undefined) {
+            updates.target_posts = Math.min(2000, Math.max(10, Number(body.target_posts) || 40));
+        }
         if (body.cadence !== undefined) {
             updates.cadence = Math.max(1, Math.min(4, Number(body.cadence) || 1));
         }
