@@ -19,6 +19,7 @@ interface ScrapeRequestBody {
     targetDate?: string;
 }
 
+export const maxDuration = 300; // Allow execution up to 5 minutes for studio-scale 1000-post extractions
 const COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes cooldown
 
 export async function POST(req: NextRequest) {
@@ -42,9 +43,10 @@ export async function POST(req: NextRequest) {
             cleanTag
         );
 
+        const requestedPosts = Number(body.targetPosts || tagDoc?.target_posts || 40);
         const targetPosts = Math.min(
-            body.targetPosts || tagDoc?.target_posts || 40,
-            100
+            Math.max(10, isNaN(requestedPosts) ? 40 : requestedPosts),
+            2000
         );
         const includeComments = tagDoc ? tagDoc.include_comments !== false : true;
 
@@ -184,7 +186,7 @@ export async function POST(req: NextRequest) {
                     shouldDownloadVideos: false,
                     shouldDownloadCovers: false,
                 }),
-                signal: AbortSignal.timeout(75000),
+                signal: AbortSignal.timeout(180000),
             });
 
             if (!apifyRes.ok) {

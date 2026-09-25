@@ -35,8 +35,10 @@ import {
     Layers,
     History,
     DollarSign,
+    SlidersHorizontal,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
@@ -56,7 +58,7 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { getTodayJakarta } from '@/lib/timeUtils';
-import { formatIdr, formatUsd, USD_TO_IDR } from '@/lib/tiktokCostEngine';
+import { computeHashtagUnitCost, formatIdr, formatUsd, USD_TO_IDR } from '@/lib/tiktokCostEngine';
 import type {
     TrackedHashtag,
     TikTokHashtagDetailSnapshot,
@@ -188,6 +190,28 @@ export default function TikTokHashtagResultDetailPage() {
     const totalCostIdr =
         costData?.total_cost_idr ?? Math.round(totalCostUsd * 17500);
     const scrapeHistory = costData?.scrape_history ?? config?.scrape_history ?? [];
+
+    // Dynamic Cost & Latency Modeling for Arbitrary Depth
+    const pendingCost = useMemo(() => {
+        return computeHashtagUnitCost({
+            postsPerCrawl: pendingDepth,
+            includeComments: config?.include_comments !== false,
+        });
+    }, [pendingDepth, config?.include_comments]);
+
+    const scale1000Cost = useMemo(() => {
+        return computeHashtagUnitCost({
+            postsPerCrawl: 1000,
+            includeComments: config?.include_comments !== false,
+        });
+    }, [config?.include_comments]);
+
+    const estimatedLatencySeconds = useMemo(() => {
+        if (pendingDepth <= 40) return 18;
+        if (pendingDepth <= 100) return 42;
+        if (pendingDepth <= 500) return 75;
+        return 120;
+    }, [pendingDepth]);
 
     // Cooldown Detection (15-Minute Window)
     const lastScrapedMs = config?.last_scraped_at
@@ -723,7 +747,7 @@ export default function TikTokHashtagResultDetailPage() {
                                     <ChevronDown className="w-3.5 h-3.5" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-64 bg-card border-border/80 p-1.5 space-y-1">
+                            <DropdownMenuContent align="end" className="w-72 bg-card border-border/80 p-1.5 space-y-1">
                                 <DropdownMenuItem
                                     onClick={() => handleRequestScrape(40)}
                                     className="cursor-pointer flex flex-col items-start gap-0.5 p-2 rounded-lg hover:bg-muted"
@@ -737,14 +761,12 @@ export default function TikTokHashtagResultDetailPage() {
                                     </div>
                                 </DropdownMenuItem>
 
-                                <DropdownMenuSeparator className="bg-border/40 my-1" />
-
                                 <DropdownMenuItem
                                     onClick={() => handleRequestScrape(100)}
-                                    className="cursor-pointer flex flex-col items-start gap-0.5 p-2 rounded-lg hover:bg-muted text-primary"
+                                    className="cursor-pointer flex flex-col items-start gap-0.5 p-2 rounded-lg hover:bg-muted"
                                 >
                                     <div className="text-sm font-bold text-foreground flex items-center justify-between w-full">
-                                        <span className="flex items-center gap-1.5 text-primary">
+                                        <span className="flex items-center gap-1.5 text-foreground">
                                             <Flame className="w-3.5 h-3.5 text-amber-500" />
                                             <span>Deep Intelligence (100 posts)</span>
                                         </span>
@@ -755,6 +777,40 @@ export default function TikTokHashtagResultDetailPage() {
                                     <div className="text-[10px] text-muted-foreground font-sans">
                                         <span className="font-mono">~42s</span> latency · <span className="font-mono font-medium">{formatIdr(deepUnitCostIdr)}</span> <span className="font-mono text-muted-foreground/80">({formatUsd(deepUnitCostUsd)})</span>
                                     </div>
+                                </DropdownMenuItem>
+
+                                <DropdownMenuItem
+                                    onClick={() => handleRequestScrape(1000)}
+                                    className="cursor-pointer flex flex-col items-start gap-0.5 p-2 rounded-lg hover:bg-muted"
+                                >
+                                    <div className="text-sm font-bold text-foreground flex items-center justify-between w-full">
+                                        <span className="flex items-center gap-1.5 text-foreground">
+                                            <Sparkles className="w-3.5 h-3.5 text-primary" />
+                                            <span>Studio Scale (1,000 posts)</span>
+                                        </span>
+                                        <Badge variant="outline" className="text-[9px] font-sans font-semibold border-primary/40 text-primary">
+                                            Studio
+                                        </Badge>
+                                    </div>
+                                    <div className="text-[10px] text-muted-foreground font-sans">
+                                        <span className="font-mono">~90-120s</span> latency · <span className="font-mono font-medium">{formatIdr(scale1000Cost.dailyCostIdr)}</span> <span className="font-mono text-muted-foreground/80">({formatUsd(scale1000Cost.totalPerCrawlUsd)})</span>
+                                    </div>
+                                </DropdownMenuItem>
+
+                                <DropdownMenuSeparator className="bg-border/40 my-1" />
+
+                                <DropdownMenuItem
+                                    onClick={() => {
+                                        setPendingDepth(500);
+                                        setConfirmModalOpen(true);
+                                    }}
+                                    className="cursor-pointer flex items-center justify-between p-2 rounded-lg hover:bg-muted text-sm font-semibold"
+                                >
+                                    <span className="flex items-center gap-1.5 text-foreground">
+                                        <SlidersHorizontal className="w-3.5 h-3.5 text-muted-foreground" />
+                                        <span>Custom Depth...</span>
+                                    </span>
+                                    <span className="text-[10px] font-mono text-muted-foreground">Up to 2,000</span>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -779,7 +835,7 @@ export default function TikTokHashtagResultDetailPage() {
                         </div>
                     </div>
                     <div className="text-sm font-mono text-primary font-bold">
-                        Estimated {scrapeTargetDepth > 40 ? '~42s' : '~20s'}
+                        Estimated {scrapeTargetDepth > 500 ? '~90-120s' : scrapeTargetDepth > 40 ? '~42s' : '~20s'}
                     </div>
                 </div>
             )}
@@ -1993,6 +2049,49 @@ export default function TikTokHashtagResultDetailPage() {
                     </DialogHeader>
 
                     <div className="space-y-3 pt-2 text-sm">
+                        {/* Depth Presets & Custom Input */}
+                        <div className="p-3 bg-muted/30 border border-border/50 rounded-lg space-y-2">
+                            <div className="flex items-center justify-between">
+                                <label className="text-xs font-semibold text-foreground">
+                                    Target Post Volume:
+                                </label>
+                                <span className="text-[10px] font-mono text-muted-foreground">
+                                    10 – 2,000 posts
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-4 gap-1.5">
+                                {[40, 100, 500, 1000].map((d) => (
+                                    <button
+                                        key={d}
+                                        type="button"
+                                        onClick={() => setPendingDepth(d)}
+                                        className={`py-1.5 px-2 rounded-md text-xs font-mono font-bold border transition-colors ${
+                                            pendingDepth === d
+                                                ? 'bg-primary text-primary-foreground border-primary'
+                                                : 'bg-card text-foreground border-border hover:bg-muted'
+                                        }`}
+                                    >
+                                        {d >= 1000 ? `${d / 1000}k posts` : `${d} posts`}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="flex items-center gap-2 pt-1">
+                                <span className="text-xs text-muted-foreground font-sans shrink-0">Custom posts:</span>
+                                <Input
+                                    type="number"
+                                    min={10}
+                                    max={2000}
+                                    step={10}
+                                    value={pendingDepth}
+                                    onChange={(e) => {
+                                        const v = Number(e.target.value);
+                                        setPendingDepth(Math.max(10, Math.min(2000, isNaN(v) ? 40 : v)));
+                                    }}
+                                    className="h-8 font-mono text-xs bg-background"
+                                />
+                            </div>
+                        </div>
+
                         {/* Summary Table */}
                         <div className="bg-muted/40 border border-border/60 rounded-lg p-3 space-y-2 font-mono text-[11px]">
                             <div className="flex items-center justify-between">
@@ -2002,20 +2101,18 @@ export default function TikTokHashtagResultDetailPage() {
                             <div className="flex items-center justify-between">
                                 <span className="text-muted-foreground font-sans">Target Depth:</span>
                                 <span className="font-bold text-primary">
-                                    {pendingDepth} Video Posts {pendingDepth > 40 ? '(Deep Intelligence)' : '(Standard)'}
+                                    {pendingDepth.toLocaleString()} Video Posts {pendingDepth >= 1000 ? '(Studio Scale)' : pendingDepth > 40 ? '(Deep Intelligence)' : '(Standard)'}
                                 </span>
                             </div>
                             <div className="flex items-center justify-between">
                                 <span className="text-muted-foreground font-sans">Estimated Cost:</span>
                                 <span className="font-bold text-amber-500">
-                                    {pendingDepth > 40
-                                        ? `${formatIdr(deepUnitCostIdr)} (${formatUsd(deepUnitCostUsd)})`
-                                        : `${formatIdr(currentUnitCostIdr)} (${formatUsd(currentUnitCostUsd)})`}
+                                    {formatIdr(pendingCost.dailyCostIdr)} ({formatUsd(pendingCost.totalPerCrawlUsd)})
                                 </span>
                             </div>
                             <div className="flex items-center justify-between">
                                 <span className="text-muted-foreground font-sans">Estimated Latency:</span>
-                                <span className="text-foreground">{pendingDepth > 40 ? '~42 seconds' : '~18 seconds'}</span>
+                                <span className="text-foreground">~{estimatedLatencySeconds} seconds</span>
                             </div>
                         </div>
 
@@ -2082,7 +2179,7 @@ export default function TikTokHashtagResultDetailPage() {
                             className="h-8 px-3 text-sm font-bold rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5"
                         >
                             <RefreshCw className="w-3 h-3" />
-                            <span>Confirm &amp; Scrape ({pendingDepth} Posts)</span>
+                            <span>Confirm &amp; Scrape ({pendingDepth.toLocaleString()} Posts)</span>
                         </Button>
                     </DialogFooter>
                 </DialogContent>
