@@ -56,7 +56,7 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { getTodayJakarta } from '@/lib/timeUtils';
-import { formatIdr, formatUsd } from '@/lib/tiktokCostEngine';
+import { formatIdr, formatUsd, USD_TO_IDR } from '@/lib/tiktokCostEngine';
 import type {
     TrackedHashtag,
     TikTokHashtagDetailSnapshot,
@@ -577,7 +577,7 @@ export default function TikTokHashtagResultDetailPage() {
 
                     <div>
                         <div className="flex items-center gap-2">
-                            <h1 className="text-xl font-bold tracking-tight text-foreground font-mono">
+                            <h1 className="text-xl font-bold tracking-tight text-foreground">
                                 #{cleanTag}
                             </h1>
                             {config?.category && (
@@ -623,7 +623,7 @@ export default function TikTokHashtagResultDetailPage() {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="h-9 px-2.5 rounded-lg border-border/60 hover:bg-muted text-xs font-mono font-semibold gap-1.5"
+                                    className="h-9 px-2.5 rounded-lg border-border/60 hover:bg-muted text-xs font-semibold gap-1.5"
                                     title="View Available Historical Scrapes"
                                 >
                                     <History className="w-3.5 h-3.5 text-primary" />
@@ -632,7 +632,7 @@ export default function TikTokHashtagResultDetailPage() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-56 bg-card border-border/80 p-1.5 space-y-1 max-h-72 overflow-y-auto">
-                                <div className="px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold">
+                                <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
                                     Historical Crawl Dates
                                 </div>
                                 {availableDates.map((d) => {
@@ -729,7 +729,7 @@ export default function TikTokHashtagResultDetailPage() {
                                         <Badge variant="outline" className="text-[9px] font-mono">Standard</Badge>
                                     </div>
                                     <div className="text-[10px] text-muted-foreground font-mono">
-                                        ~18s latency · {formatUsd(currentUnitCostUsd)} (~{formatIdr(currentUnitCostIdr)})
+                                        ~18s latency · {formatIdr(currentUnitCostIdr)} ({formatUsd(currentUnitCostUsd)})
                                     </div>
                                 </DropdownMenuItem>
 
@@ -749,7 +749,7 @@ export default function TikTokHashtagResultDetailPage() {
                                         </Badge>
                                     </div>
                                     <div className="text-[10px] text-muted-foreground font-mono">
-                                        ~42s latency · {formatUsd(deepUnitCostUsd)} (~{formatIdr(deepUnitCostIdr)})
+                                        ~42s latency · {formatIdr(deepUnitCostIdr)} ({formatUsd(deepUnitCostUsd)})
                                     </div>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -785,7 +785,7 @@ export default function TikTokHashtagResultDetailPage() {
                 {/* 1. Crawl Frequency & Execution Counter */}
                 <Card className="border-border/60 bg-card rounded-xl shadow-none">
                     <CardHeader className="p-3.5 pb-1 flex flex-row items-center justify-between space-y-0">
-                        <CardTitle className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1.5">
+                        <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-sans flex items-center gap-1.5">
                             <RotateCcw className="w-3.5 h-3.5 text-primary" />
                             <span>Crawl Executions</span>
                         </CardTitle>
@@ -794,7 +794,7 @@ export default function TikTokHashtagResultDetailPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setAuditModalOpen(true)}
-                                className="h-6 px-2 text-[10px] font-mono font-semibold gap-1 border-border/60 hover:bg-muted text-foreground"
+                                className="h-6 px-2 text-[10px] font-semibold gap-1 border-border/60 hover:bg-muted text-foreground"
                                 title="Inspect Scrape Execution Audit Trail"
                             >
                                 <History className="w-3 h-3 text-primary" />
@@ -804,23 +804,23 @@ export default function TikTokHashtagResultDetailPage() {
                     </CardHeader>
                     <CardContent className="p-3.5 pt-1 space-y-1">
                         <div className="flex items-baseline gap-1.5">
-                            <span className="text-2xl font-bold font-mono text-foreground">
+                            <span className="text-2xl font-bold font-mono tabular-nums text-foreground">
                                 {totalScrapes}
                             </span>
-                            <span className="text-xs font-mono text-muted-foreground">
+                            <span className="text-xs text-muted-foreground font-sans">
                                 {totalScrapes === 1 ? 'scrape run' : 'scrape runs'}
                             </span>
                         </div>
-                        <p className="text-[11px] text-muted-foreground font-medium truncate">
+                        <p className="text-[11px] text-muted-foreground font-medium truncate font-sans">
                             Cadence: {config?.cadence || 1}x/hari at {(config?.start_hour || 18).toString().padStart(2, '0')}:00 WIB
                         </p>
                     </CardContent>
                 </Card>
 
-                {/* 2. Unit Cost Per Scrape */}
+                {/* 2. Unit Cost Per Scrape (Rupiah First) */}
                 <Card className="border-border/60 bg-card rounded-xl shadow-none">
                     <CardHeader className="p-3.5 pb-1 flex flex-row items-center justify-between space-y-0">
-                        <CardTitle className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1.5">
+                        <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-sans flex items-center gap-1.5">
                             <Coins className="w-3.5 h-3.5 text-amber-500" />
                             <span>Cost Per Scrape</span>
                         </CardTitle>
@@ -830,25 +830,25 @@ export default function TikTokHashtagResultDetailPage() {
                     </CardHeader>
                     <CardContent className="p-3.5 pt-1 space-y-1">
                         <div className="flex items-baseline gap-1.5">
-                            <span className="text-2xl font-bold font-mono text-foreground">
-                                {formatUsd(currentUnitCostUsd)}
+                            <span className="text-2xl font-bold font-mono tabular-nums text-foreground">
+                                {formatIdr(currentUnitCostIdr)}
                             </span>
                             <span className="text-xs font-mono text-muted-foreground">
-                                (~{formatIdr(currentUnitCostIdr)})
+                                ({formatUsd(currentUnitCostUsd)})
                             </span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-mono">
+                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-sans">
                             <span>Standard: {config?.target_posts || 40} posts</span>
                             <span>·</span>
-                            <span className="text-foreground/80 font-semibold">Deep: {formatUsd(deepUnitCostUsd)}</span>
+                            <span className="text-foreground/80 font-semibold font-mono">Deep: {formatIdr(deepUnitCostIdr)} ({formatUsd(deepUnitCostUsd)})</span>
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* 3. Cumulative Scraping Spend */}
+                {/* 3. Cumulative Scraping Spend (Rupiah First) */}
                 <Card className="border-border/60 bg-card rounded-xl shadow-none">
                     <CardHeader className="p-3.5 pb-1 flex flex-row items-center justify-between space-y-0">
-                        <CardTitle className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1.5">
+                        <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-sans flex items-center gap-1.5">
                             <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
                             <span>Cumulative Spend</span>
                         </CardTitle>
@@ -858,45 +858,45 @@ export default function TikTokHashtagResultDetailPage() {
                     </CardHeader>
                     <CardContent className="p-3.5 pt-1 space-y-1">
                         <div className="flex items-baseline gap-1.5">
-                            <span className="text-2xl font-bold font-mono text-foreground">
-                                {formatUsd(totalCostUsd)}
+                            <span className="text-2xl font-bold font-mono tabular-nums text-foreground">
+                                {formatIdr(totalCostIdr)}
                             </span>
                             <span className="text-xs font-mono text-muted-foreground">
-                                (~{formatIdr(totalCostIdr)})
+                                ({formatUsd(totalCostUsd)})
                             </span>
                         </div>
-                        <p className="text-[11px] text-muted-foreground font-medium truncate">
+                        <p className="text-[11px] text-muted-foreground font-medium truncate font-sans">
                             Incurred across {totalScrapes} execution{totalScrapes === 1 ? '' : 's'}
                         </p>
                     </CardContent>
                 </Card>
 
-                {/* 4. Unit Cost Breakdown Strip */}
+                {/* 4. Unit Cost Breakdown Strip (Rupiah First) */}
                 <Card className="border-border/60 bg-card rounded-xl shadow-none">
                     <CardHeader className="p-3.5 pb-1 flex flex-row items-center justify-between space-y-0">
-                        <CardTitle className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1.5">
+                        <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-sans flex items-center gap-1.5">
                             <Layers className="w-3.5 h-3.5 text-primary" />
                             <span>Unit Breakdown</span>
                         </CardTitle>
-                        <span className="text-[9px] font-mono text-muted-foreground">Per Crawl</span>
+                        <span className="text-[9px] font-sans text-muted-foreground">Per Crawl</span>
                     </CardHeader>
-                    <CardContent className="p-3.5 pt-1 space-y-1 font-mono text-[11px]">
+                    <CardContent className="p-3.5 pt-1 space-y-1 text-[11px]">
                         <div className="flex items-center justify-between text-muted-foreground">
-                            <span>Apify Posts ({config?.target_posts || 40}):</span>
-                            <span className="font-semibold text-foreground">
-                                {formatUsd(costData?.unitCost?.apifyPostsUsd ?? 0.12)}
+                            <span className="font-sans">Apify Posts ({config?.target_posts || 40}):</span>
+                            <span className="font-semibold text-foreground font-mono">
+                                {formatIdr(Math.round((costData?.unitCost?.apifyPostsUsd ?? 0.12) * USD_TO_IDR))} <span className="text-muted-foreground font-normal">({formatUsd(costData?.unitCost?.apifyPostsUsd ?? 0.12)})</span>
                             </span>
                         </div>
                         <div className="flex items-center justify-between text-muted-foreground">
-                            <span>Apify Comments (30):</span>
-                            <span className="font-semibold text-foreground">
-                                {formatUsd(costData?.unitCost?.apifyCommentsUsd ?? 0.09)}
+                            <span className="font-sans">Apify Comments (30):</span>
+                            <span className="font-semibold text-foreground font-mono">
+                                {formatIdr(Math.round((costData?.unitCost?.apifyCommentsUsd ?? 0.09) * USD_TO_IDR))} <span className="text-muted-foreground font-normal">({formatUsd(costData?.unitCost?.apifyCommentsUsd ?? 0.09)})</span>
                             </span>
                         </div>
                         <div className="flex items-center justify-between text-muted-foreground">
-                            <span>Gemini 3.8 Sentiment:</span>
-                            <span className="font-semibold text-foreground">
-                                {formatUsd(costData?.unitCost?.geminiSentimentUsd ?? 0.002)}
+                            <span className="font-sans">Gemini 3.8 Sentiment:</span>
+                            <span className="font-semibold text-foreground font-mono">
+                                {formatIdr(Math.round((costData?.unitCost?.geminiSentimentUsd ?? 0.002) * USD_TO_IDR))} <span className="text-muted-foreground font-normal">({formatUsd(costData?.unitCost?.geminiSentimentUsd ?? 0.002)})</span>
                             </span>
                         </div>
                     </CardContent>
@@ -908,20 +908,20 @@ export default function TikTokHashtagResultDetailPage() {
                 <div className="space-y-4">
                     {/* Status Alert Banner */}
                     <div className="bg-card border border-border/80 rounded-xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-none">
-                        <div className="flex items-start sm:items-center gap-3.5">
+                        <div className="flex items-start sm:items-center gap-3.5 flex-1 min-w-0">
                             <div className="w-10 h-10 rounded-xl bg-muted/70 text-muted-foreground flex items-center justify-center shrink-0 border border-border/60">
                                 <Clock className="w-5 h-5 text-primary" />
                             </div>
-                            <div className="space-y-0.5">
+                            <div className="space-y-1 flex-1 min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-sm font-bold text-foreground">
+                                    <span className="text-base font-bold text-foreground font-sans">
                                         No Recorded Crawl for {selectedDate}
                                     </span>
                                     <Badge variant="outline" className="text-[10px] font-mono">
                                         {selectedDate === todayJakarta ? 'Standing 18:00 WIB Pulse' : 'Unrecorded Window'}
                                     </Badge>
                                 </div>
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-sm text-muted-foreground leading-relaxed font-sans">
                                     {selectedDate === todayJakarta
                                         ? `Hashtag #${cleanTag} has not been crawled for this date window. You can trigger an on-demand scrape right now or wait for the standing 18:00 WIB daily pulse.`
                                         : `Hashtag #${cleanTag} has no snapshot recorded for ${selectedDate}. You can backfill and scrape for this date window, or jump to a date with recorded telemetry.`}
@@ -973,54 +973,54 @@ export default function TikTokHashtagResultDetailPage() {
                         <div className="lg:col-span-4 xl:col-span-4 space-y-4">
                             <Card className="border-border/60 bg-card rounded-xl shadow-none">
                                 <CardHeader className="p-4 pb-2 border-b border-border/40">
-                                    <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
+                                    <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2 font-sans">
                                         <Database className="w-3.5 h-3.5 text-primary" />
                                         <span>Pipeline Parameters</span>
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-4 space-y-3 text-xs">
                                     <div className="flex items-center justify-between pb-2 border-b border-border/30">
-                                        <span className="text-muted-foreground">Registered Tag:</span>
-                                        <span className="font-mono font-bold text-primary">#{cleanTag}</span>
+                                        <span className="text-muted-foreground font-sans">Registered Tag:</span>
+                                        <span className="font-semibold text-primary font-sans">#{cleanTag}</span>
                                     </div>
                                     <div className="flex items-center justify-between pb-2 border-b border-border/30">
-                                        <span className="text-muted-foreground">Label:</span>
-                                        <span className="font-semibold text-foreground">{config?.label || cleanTag}</span>
+                                        <span className="text-muted-foreground font-sans">Label:</span>
+                                        <span className="font-semibold text-foreground font-sans">{config?.label || cleanTag}</span>
                                     </div>
                                     <div className="flex items-center justify-between pb-2 border-b border-border/30">
-                                        <span className="text-muted-foreground">Category:</span>
+                                        <span className="text-muted-foreground font-sans">Category:</span>
                                         <Badge variant="outline" className="text-[10px] font-mono capitalize">
                                             {config?.category || 'general'}
                                         </Badge>
                                     </div>
                                     <div className="flex items-center justify-between pb-2 border-b border-border/30">
-                                        <span className="text-muted-foreground">Ingestion Target:</span>
-                                        <span className="font-mono font-bold text-foreground">
-                                            {config?.target_posts || 40} posts / run
+                                        <span className="text-muted-foreground font-sans">Ingestion Target:</span>
+                                        <span className="font-semibold text-foreground font-sans">
+                                            <span className="font-mono tabular-nums">{config?.target_posts || 40}</span> posts / run
                                         </span>
                                     </div>
                                     <div className="flex items-center justify-between pb-2 border-b border-border/30">
-                                        <span className="text-muted-foreground">Comment Ingestion:</span>
-                                        <span className="font-semibold text-foreground">
+                                        <span className="text-muted-foreground font-sans">Comment Ingestion:</span>
+                                        <span className="font-semibold text-foreground font-sans">
                                             {config?.include_comments ? 'Top 30 Comments' : 'Disabled'}
                                         </span>
                                     </div>
                                     <div className="flex items-center justify-between pb-2 border-b border-border/30">
-                                        <span className="text-muted-foreground">Sentiment Engine:</span>
-                                        <span className="font-semibold text-foreground">Gemini 3.8 Flash</span>
+                                        <span className="text-muted-foreground font-sans">Sentiment Engine:</span>
+                                        <span className="font-semibold text-foreground font-sans">Gemini 3.8 Flash</span>
                                     </div>
                                     <div className="flex items-center justify-between pb-2 border-b border-border/30">
-                                        <span className="text-muted-foreground">Pulse Schedule:</span>
-                                        <span className="font-mono font-semibold text-foreground">18:00 WIB Daily</span>
+                                        <span className="text-muted-foreground font-sans">Pulse Schedule:</span>
+                                        <span className="font-semibold text-foreground font-sans">18:00 WIB Daily</span>
                                     </div>
                                     <div className="flex items-center justify-between pb-2 border-b border-border/30">
-                                        <span className="text-muted-foreground">Unit Cost:</span>
+                                        <span className="text-muted-foreground font-sans">Unit Cost:</span>
                                         <span className="font-mono font-bold text-foreground">
-                                            {formatUsd(currentUnitCostUsd)} (~{formatIdr(currentUnitCostIdr)})
+                                            {formatIdr(currentUnitCostIdr)} <span className="text-muted-foreground font-normal text-xs">({formatUsd(currentUnitCostUsd)})</span>
                                         </span>
                                     </div>
                                     <div className="flex items-center justify-between">
-                                        <span className="text-muted-foreground">Crawler Cooldown:</span>
+                                        <span className="text-muted-foreground font-sans">Crawler Cooldown:</span>
                                         <Badge
                                             variant="outline"
                                             className={`text-[10px] font-mono ${
@@ -1043,11 +1043,11 @@ export default function TikTokHashtagResultDetailPage() {
                             <Card className="border-border/60 bg-card rounded-xl shadow-none">
                                 <CardHeader className="p-4 pb-2 border-b border-border/40 flex flex-row items-center justify-between space-y-0">
                                     <div>
-                                        <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
+                                        <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2 font-sans">
                                             <History className="w-3.5 h-3.5 text-primary" />
                                             <span>Recorded Crawls & Execution Audit</span>
                                         </CardTitle>
-                                        <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                                        <CardDescription className="text-xs text-muted-foreground mt-0.5 font-sans">
                                             Historical snapshots and on-demand trigger history for #{cleanTag}
                                         </CardDescription>
                                     </div>
@@ -1059,7 +1059,7 @@ export default function TikTokHashtagResultDetailPage() {
                                     {/* Available Date Chips */}
                                     {availableDates.length > 0 && (
                                         <div className="p-3 bg-muted/30 rounded-lg border border-border/40 space-y-2">
-                                            <div className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider font-semibold">
+                                            <div className="text-[11px] font-sans text-muted-foreground uppercase tracking-wider font-semibold">
                                                 Jump to Recorded Snapshot:
                                             </div>
                                             <div className="flex flex-wrap gap-1.5">
@@ -1085,18 +1085,19 @@ export default function TikTokHashtagResultDetailPage() {
                                     {scrapeHistory.length > 0 ? (
                                         <div className="border border-border/60 rounded-xl overflow-hidden">
                                             <div className="max-h-72 overflow-y-auto">
-                                                <table className="w-full text-xs font-mono text-left">
-                                                    <thead className="bg-muted/60 text-muted-foreground font-semibold border-b border-border/60 sticky top-0">
+                                                <table className="w-full text-xs text-left">
+                                                    <thead className="bg-muted/60 text-muted-foreground font-semibold border-b border-border/60 sticky top-0 text-[11px] uppercase tracking-wider font-sans">
                                                         <tr>
                                                             <th className="p-2.5">Time (WIB)</th>
                                                             <th className="p-2.5">Source</th>
                                                             <th className="p-2.5">Depth</th>
-                                                            <th className="p-2.5">Cost</th>
+                                                            <th className="p-2.5">Cost (IDR)</th>
+                                                            <th className="p-2.5">Cost (USD)</th>
                                                             <th className="p-2.5">Status</th>
                                                             <th className="p-2.5 text-right">Action</th>
                                                         </tr>
                                                     </thead>
-                                                    <tbody className="divide-y divide-border/40">
+                                                    <tbody className="divide-y divide-border/40 font-mono">
                                                         {scrapeHistory.map((item, idx) => {
                                                             const itemDate = item.timestamp ? item.timestamp.split('T')[0] : '';
                                                             return (
@@ -1104,7 +1105,7 @@ export default function TikTokHashtagResultDetailPage() {
                                                                     <td className="p-2.5 text-foreground font-bold whitespace-nowrap">
                                                                         {formatWIBFull24(item.timestamp)}
                                                                     </td>
-                                                                    <td className="p-2.5 whitespace-nowrap">
+                                                                    <td className="p-2.5 whitespace-nowrap font-sans">
                                                                         <Badge
                                                                             variant="outline"
                                                                             className={`text-[9px] font-mono capitalize ${
@@ -1122,9 +1123,12 @@ export default function TikTokHashtagResultDetailPage() {
                                                                         {item.depth} posts
                                                                     </td>
                                                                     <td className="p-2.5 whitespace-nowrap font-bold text-foreground">
+                                                                        {formatIdr(item.cost_idr)}
+                                                                    </td>
+                                                                    <td className="p-2.5 whitespace-nowrap text-muted-foreground text-[11px]">
                                                                         {formatUsd(item.cost_usd)}
                                                                     </td>
-                                                                    <td className="p-2.5 whitespace-nowrap">
+                                                                    <td className="p-2.5 whitespace-nowrap font-sans">
                                                                         <Badge
                                                                             variant="outline"
                                                                             className={`text-[9px] font-mono ${
@@ -1136,7 +1140,7 @@ export default function TikTokHashtagResultDetailPage() {
                                                                             {item.status}
                                                                         </Badge>
                                                                     </td>
-                                                                    <td className="p-2.5 text-right whitespace-nowrap">
+                                                                    <td className="p-2.5 text-right whitespace-nowrap font-sans">
                                                                         {itemDate && (
                                                                             <Button
                                                                                 variant="ghost"
@@ -1156,7 +1160,7 @@ export default function TikTokHashtagResultDetailPage() {
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="p-6 text-center bg-muted/20 border border-border/40 rounded-xl text-xs text-muted-foreground">
+                                        <div className="p-6 text-center bg-muted/20 border border-border/40 rounded-xl text-xs text-muted-foreground font-sans">
                                             No execution logs recorded in the local buffer yet. Subsequent live or scheduled crawls will log here.
                                         </div>
                                     )}
@@ -1995,8 +1999,8 @@ export default function TikTokHashtagResultDetailPage() {
                                 <span className="text-muted-foreground font-sans">Estimated Cost:</span>
                                 <span className="font-bold text-amber-500">
                                     {pendingDepth > 40
-                                        ? `${formatUsd(deepUnitCostUsd)} (~${formatIdr(deepUnitCostIdr)})`
-                                        : `${formatUsd(currentUnitCostUsd)} (~${formatIdr(currentUnitCostIdr)})`}
+                                        ? `${formatIdr(deepUnitCostIdr)} (${formatUsd(deepUnitCostUsd)})`
+                                        : `${formatIdr(currentUnitCostIdr)} (${formatUsd(currentUnitCostUsd)})`}
                                 </span>
                             </div>
                             <div className="flex items-center justify-between">
@@ -2095,24 +2099,24 @@ export default function TikTokHashtagResultDetailPage() {
                         ) : (
                             <div className="border border-border/60 rounded-xl overflow-hidden">
                                 <div className="max-h-80 overflow-y-auto">
-                                    <table className="w-full text-xs font-mono text-left">
-                                        <thead className="bg-muted/60 text-muted-foreground font-semibold border-b border-border/60 sticky top-0">
+                                    <table className="w-full text-xs text-left">
+                                        <thead className="bg-muted/60 text-muted-foreground font-semibold border-b border-border/60 sticky top-0 font-sans text-[11px] uppercase tracking-wider">
                                             <tr>
                                                 <th className="p-2.5">Time (WIB)</th>
                                                 <th className="p-2.5">Trigger Source</th>
                                                 <th className="p-2.5">Depth</th>
-                                                <th className="p-2.5">Cost (USD)</th>
                                                 <th className="p-2.5">Cost (IDR)</th>
+                                                <th className="p-2.5">Cost (USD)</th>
                                                 <th className="p-2.5 text-right">Status</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-border/40">
+                                        <tbody className="divide-y divide-border/40 font-mono">
                                             {scrapeHistory.map((item, idx) => (
                                                 <tr key={idx} className="hover:bg-muted/30 transition-colors">
                                                     <td className="p-2.5 text-foreground font-bold whitespace-nowrap">
                                                         {formatWIBFull24(item.timestamp)}
                                                     </td>
-                                                    <td className="p-2.5 whitespace-nowrap">
+                                                    <td className="p-2.5 whitespace-nowrap font-sans">
                                                         <Badge
                                                             variant="outline"
                                                             className={`text-[9px] font-mono capitalize ${
@@ -2130,19 +2134,19 @@ export default function TikTokHashtagResultDetailPage() {
                                                         {item.depth} posts
                                                     </td>
                                                     <td className="p-2.5 whitespace-nowrap font-bold text-foreground">
-                                                        {formatUsd(item.cost_usd)}
-                                                    </td>
-                                                    <td className="p-2.5 whitespace-nowrap text-muted-foreground">
                                                         {formatIdr(item.cost_idr)}
                                                     </td>
-                                                    <td className="p-2.5 text-right whitespace-nowrap">
+                                                    <td className="p-2.5 whitespace-nowrap text-muted-foreground text-[11px]">
+                                                        {formatUsd(item.cost_usd)}
+                                                    </td>
+                                                    <td className="p-2.5 text-right whitespace-nowrap font-sans">
                                                         <Badge
                                                             variant="outline"
                                                             className={`text-[9px] font-mono ${
                                                                 item.status === 'success'
                                                                     ? 'border-emerald-500/40 text-emerald-500'
                                                                     : 'border-rose-500/40 text-rose-500'
-                                                            }`}
+                                                              }`}
                                                         >
                                                             {item.status}
                                                         </Badge>
@@ -2157,7 +2161,7 @@ export default function TikTokHashtagResultDetailPage() {
 
                         <div className="flex items-center justify-between text-[11px] font-mono text-muted-foreground bg-muted/30 p-2.5 rounded-lg border border-border/40">
                             <span>Lifetime Scrapes: <strong className="text-foreground">{totalScrapes}</strong></span>
-                            <span>Total Spend: <strong className="text-foreground">{formatUsd(totalCostUsd)}</strong> ({formatIdr(totalCostIdr)})</span>
+                            <span>Total Spend: <strong className="text-foreground">{formatIdr(totalCostIdr)}</strong> ({formatUsd(totalCostUsd)})</span>
                         </div>
                     </div>
 
