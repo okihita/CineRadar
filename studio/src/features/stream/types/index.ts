@@ -10,6 +10,7 @@ export interface StreamMovieItem {
     estimatedAdmissions: number;
     totalSeats: number;
     avgOccupancyPct: number;
+    grossRevenue: number;
     merchants: string[];
     citiesCount: number;
     genres?: string;
@@ -31,6 +32,7 @@ export interface StreamSummaryMetrics {
     totalEstimatedAdmissions: number;
     totalMonitoredSeats: number;
     nationalAvgOccupancyPct: number;
+    totalGrossRevenue: number;
     activeMoviesCount: number;
     circuits: StreamCircuitBreakdown[];
     lastSweptAt: string | null;

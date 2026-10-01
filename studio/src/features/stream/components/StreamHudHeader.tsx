@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { StreamSummaryMetrics } from '../types';
 import { getPerformanceTier } from '@/lib/constants';
 import { useDarkModeContext } from '@/hooks';
+import { formatRupiahCompact } from '@/features/performances/utils/format';
 
 interface StreamHudHeaderProps {
     summary: StreamSummaryMetrics;
@@ -62,13 +63,13 @@ export function StreamHudHeader({
     const tier = getPerformanceTier(summary.nationalAvgOccupancyPct);
 
     return (
-        <header className="relative z-30 w-full border-b border-border bg-card/90 backdrop-blur-xl px-4 sm:px-6 py-3 transition-all">
+        <header className="relative z-30 w-full border-b border-border bg-card px-4 sm:px-6 py-3 transition-all">
             <div className="flex flex-wrap 2xl:flex-nowrap items-center justify-between gap-3 sm:gap-4">
                 
                 {/* LEFT: Branding & Live Signal */}
                 <div className="flex items-center gap-3 sm:gap-4 order-1 flex-shrink-0">
                     {/* Kotak Kantor Station Bug Ident */}
-                    <div className="relative h-10 w-14 sm:h-12 sm:w-16 flex-shrink-0 bg-white/95 dark:bg-white rounded-xl p-1 shadow-md shadow-red-950/20 border border-red-500/30 flex items-center justify-center overflow-hidden transition-transform hover:scale-105">
+                    <div className="relative h-10 w-14 sm:h-12 sm:w-16 flex-shrink-0 bg-white dark:bg-card rounded-xl p-1 shadow-sm border border-border/80 flex items-center justify-center overflow-hidden transition-transform hover:scale-105">
                         <Image
                             src="/kotak-kantor-logo.png"
                             alt="Kotak Kantor"
@@ -105,7 +106,7 @@ export function StreamHudHeader({
                 </div>
 
                 {/* CENTER: Hero Telemetry Quick Counters (Full width on < 2xl, center row on >= 2xl) */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3.5 order-3 2xl:order-2 w-full 2xl:w-auto 2xl:flex-1 2xl:max-w-2xl 2xl:mx-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2 sm:gap-3 order-3 2xl:order-2 w-full 2xl:w-auto 2xl:flex-1 2xl:max-w-4xl 2xl:mx-6">
                     {/* Shows */}
                     <div className="bg-muted/40 border border-border/80 rounded-xl px-3 py-1.5 sm:py-2 flex flex-col justify-center min-w-0 shadow-sm">
                         <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground truncate whitespace-nowrap">
@@ -124,6 +125,18 @@ export function StreamHudHeader({
                         <span className="font-mono font-black text-base sm:text-lg xl:text-xl text-foreground tracking-tight truncate">
                             {summary.totalEstimatedAdmissions > 0
                                 ? summary.totalEstimatedAdmissions.toLocaleString()
+                                : 'Sweeping...'}
+                        </span>
+                    </div>
+
+                    {/* Est. Gross */}
+                    <div className="bg-muted/40 border border-border/80 rounded-xl px-3 py-1.5 sm:py-2 flex flex-col justify-center min-w-0 shadow-sm">
+                        <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground truncate whitespace-nowrap">
+                            Est. Gross
+                        </span>
+                        <span className="font-mono font-black text-base sm:text-lg xl:text-xl text-emerald-500 tracking-tight truncate">
+                            {summary.totalGrossRevenue > 0
+                                ? formatRupiahCompact(summary.totalGrossRevenue)
                                 : 'Sweeping...'}
                         </span>
                     </div>

@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Activity, Target, Users, Zap, Globe } from 'lucide-react';
-import { formatOccupancy } from '../../utils/format';
+import { Activity, Target, Users, Zap, Globe, Coins } from 'lucide-react';
+import { formatOccupancy, formatRupiahCompact } from '../../utils/format';
 import { ForensicHealthSheet } from '../ForensicHealthSheet';
 import { DiagnosticData } from '../../types/performance';
 
@@ -11,6 +11,7 @@ interface NationalPulseHudProps {
     totalSold: number;
     totalShows: number;
     activeCount: number;
+    totalGrossRevenue?: number;
     diagnostic?: DiagnosticData | null;
     telemetry?: { elapsed: number; size: number } | null;
 }
@@ -20,6 +21,7 @@ export function NationalPulseHud({
     totalSold, 
     totalShows, 
     activeCount,
+    totalGrossRevenue,
     diagnostic,
     telemetry
 }: NationalPulseHudProps) {
@@ -28,7 +30,7 @@ export function NationalPulseHud({
             <div className="flex items-center gap-3 pr-6 border-r border-border/30">
                 <div className="relative">
                     <Activity className="w-5 h-5 text-green-500 animate-pulse" />
-                    <div className="absolute inset-0 bg-green-500/20 blur-md rounded-full animate-pulse" />
+                    <div className="absolute inset-0 bg-green-500/20 rounded-full animate-pulse" />
                 </div>
                 <div>
                     <p className="text-sm font-black uppercase tracking-widest text-muted-foreground/60 leading-none mb-1">National Pulse Today</p>
@@ -64,6 +66,17 @@ export function NationalPulseHud({
                         {totalSold.toLocaleString()}
                     </span>
                 </div>
+
+                {totalGrossRevenue !== undefined && (
+                    <div className="flex flex-col">
+                        <span className="text-sm font-black uppercase tracking-widest text-muted-foreground/50 mb-0.5 flex items-center gap-1.5">
+                            <Coins className="w-2.5 h-2.5 text-emerald-600" /> Est. Gross
+                        </span>
+                        <span className="text-xl font-black font-mono tracking-tighter text-emerald-600 dark:text-emerald-400 tabular-nums">
+                            {formatRupiahCompact(totalGrossRevenue)}
+                        </span>
+                    </div>
+                )}
 
                 <div className="flex flex-col">
                     <span className="text-sm font-black uppercase tracking-widest text-muted-foreground/50 mb-0.5 flex items-center gap-1.5">

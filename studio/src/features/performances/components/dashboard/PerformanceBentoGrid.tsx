@@ -3,8 +3,8 @@
 import React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Trophy, Target, Users, TrendingUp, Zap } from 'lucide-react';
-import { formatOccupancy } from '../../utils/format';
+import { Trophy, Target, Users, TrendingUp, Zap, Coins } from 'lucide-react';
+import { formatOccupancy, formatRupiahCompact, DEFAULT_TICKET_PRICE } from '../../utils/format';
 import { getOccupancyColor } from '../../utils/colors';
 import { MovieWithStats } from '../../types/performance';
 import { cn } from '@/lib/utils';
@@ -88,7 +88,7 @@ export function PerformanceBentoGrid({ movies }: PerformanceBentoGridProps) {
                                                 {formatOccupancy(podium[0].today?.avg_occupancy_pct ?? 0)}<span className="text-sm ml-0.5 opacity-40">%</span>
                                             </p>
                                         </div>
-                                        <div className="flex gap-8 text-right">
+                                        <div className="flex gap-6 text-right">
                                             <div className="space-y-1">
                                                 <p className="text-sm font-black text-white/30 uppercase tracking-widest flex items-center gap-1.5 justify-end">
                                                     <Zap className="w-3 h-3" /> Shows
@@ -103,6 +103,14 @@ export function PerformanceBentoGrid({ movies }: PerformanceBentoGridProps) {
                                                 </p>
                                                 <p className="text-2xl font-black font-mono text-white leading-none tabular-nums">
                                                     {podium[0].today?.total_sold.toLocaleString() || '0'}
+                                                </p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-sm font-black text-emerald-400/80 uppercase tracking-widest flex items-center gap-1.5 justify-end">
+                                                    <Coins className="w-3 h-3 text-emerald-400" /> Gross
+                                                </p>
+                                                <p className="text-2xl font-black font-mono text-emerald-400 leading-none tabular-nums">
+                                                    {formatRupiahCompact(podium[0].today?.gross_revenue ?? ((podium[0].today?.total_sold ?? 0) * DEFAULT_TICKET_PRICE))}
                                                 </p>
                                             </div>
                                         </div>
@@ -135,7 +143,7 @@ export function PerformanceBentoGrid({ movies }: PerformanceBentoGridProps) {
                                     <h4 className="text-xl font-black tracking-tight line-clamp-1 mb-4 group-hover:text-primary transition-colors">
                                         {movie.title}
                                     </h4>
-                                    <div className="flex items-center gap-6">
+                                    <div className="flex items-center gap-4">
                                         <div>
                                             <p className="text-sm font-black text-muted-foreground/50 uppercase tracking-widest mb-0.5">OCR</p>
                                             <p className={cn("text-xl font-black font-mono leading-none", getOccupancyColor(movie.today?.avg_occupancy_pct ?? 0))}>
@@ -154,6 +162,13 @@ export function PerformanceBentoGrid({ movies }: PerformanceBentoGridProps) {
                                             <p className="text-sm font-black text-muted-foreground/50 uppercase tracking-widest mb-0.5">Audience</p>
                                             <p className="text-xl font-black font-mono text-foreground leading-none tabular-nums">
                                                 {movie.today?.total_sold.toLocaleString() || '0'}
+                                            </p>
+                                        </div>
+                                        <div className="h-6 w-px bg-border/40" />
+                                        <div>
+                                            <p className="text-sm font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-0.5">Gross</p>
+                                            <p className="text-xl font-black font-mono text-emerald-600 dark:text-emerald-400 leading-none tabular-nums">
+                                                {formatRupiahCompact(movie.today?.gross_revenue ?? ((movie.today?.total_sold ?? 0) * DEFAULT_TICKET_PRICE))}
                                             </p>
                                         </div>
                                     </div>

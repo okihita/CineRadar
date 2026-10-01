@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { Film, Ticket, Users } from 'lucide-react';
 import { StreamMovieItem } from '../types';
 import { getPerformanceTier, getChainTailwind } from '@/lib/constants';
+import { formatRupiahCompact } from '@/features/performances/utils/format';
 
 interface StreamMovieRowProps {
     movie: StreamMovieItem;
@@ -32,7 +33,7 @@ export function StreamMovieRow({
             : 0;
 
     return (
-        <div className="flex items-center gap-3.5 p-3 rounded-2xl border border-border/80 bg-card/75 backdrop-blur-md hover:border-border hover:bg-card transition-all">
+        <div className="flex items-center gap-3.5 p-3 rounded-2xl border border-border/80 bg-card hover:border-border transition-all">
             {/* LEFT: Movie Poster with Rank Badge */}
             <div className="relative flex-shrink-0 w-14 sm:w-16 aspect-[2/3] rounded-xl overflow-hidden bg-muted border border-border shadow-sm">
                 {movie.poster ? (
@@ -114,6 +115,11 @@ export function StreamMovieRow({
                                     ? `${movie.estimatedAdmissions.toLocaleString()} sold`
                                     : 'Pending JIT'}
                             </span>
+                            {movie.grossRevenue > 0 && (
+                                <span className="text-emerald-500 font-bold ml-1">
+                                    · {formatRupiahCompact(movie.grossRevenue)}
+                                </span>
+                            )}
                         </span>
                         <span className={`font-bold ${tier.twText}`}>
                             {movie.avgOccupancyPct > 0 ? `${movie.avgOccupancyPct}% occ` : tier.label}
