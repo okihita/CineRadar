@@ -3,7 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Clapperboard, Users, Zap, Coins } from 'lucide-react';
+import { Clapperboard, Users, Coins } from 'lucide-react';
 import { formatOccupancy, formatRupiahCompact, DEFAULT_TICKET_PRICE } from '../../utils/format';
 import { getOccupancyColor } from '../../utils/colors';
 import { MovieWithStats } from '../../types/performance';

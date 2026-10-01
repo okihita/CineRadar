@@ -16,6 +16,7 @@ import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 import { DailyPerformance } from '../types/performance';
+import { DEFAULT_TICKET_PRICE, formatRupiah, formatRupiahCompact } from '../utils/format';
 
 interface PerformanceTrendChartsProps {
     history: DailyPerformance[];
@@ -49,7 +50,7 @@ const DeltaBadge = ({ value }: { value: number | null }) => {
 const CustomTooltip = ({ active, payload, label }: { active?: boolean, payload?: { color: string, name: string, value: number | string, dataKey: string, payload: Record<string, unknown> }[], label?: string }) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-background/95 backdrop-blur-md border border-border/40 rounded-xl shadow-2xl p-4 min-w-[220px] animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-popover text-popover-foreground border border-border rounded-xl shadow-2xl p-4 min-w-[220px] animate-in fade-in zoom-in-95 duration-200">
                 <p className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-3 border-b border-border/20 pb-2">{label}</p>
                 <div className="space-y-3">
                     {payload.map((entry, index) => {
@@ -57,6 +58,7 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean, payload?:
                         const dataKey = entry.dataKey;
                         const deltaKey = `${dataKey}_delta`;
                         const deltaValue = (entry.payload[deltaKey] as number) ?? null;
+                        const isCurrency = entry.name.includes('Revenue') || entry.name.includes('Gross') || dataKey.includes('gross');
 
                         return (
                             <div key={index} className="flex flex-col gap-0.5">
@@ -72,7 +74,9 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean, payload?:
                                         <span className="font-mono text-sm font-black text-foreground">
                                             {entry.name.includes('Occupancy')
                                                 ? `${Number(entry.value).toFixed(1)}%`
-                                                : Number(entry.value).toLocaleString()}
+                                                : isCurrency
+                                                    ? formatRupiah(Number(entry.value))
+                                                    : Number(entry.value).toLocaleString()}
                                         </span>
                                     </div>
                                 </div>
@@ -95,22 +99,26 @@ export function PerformanceTrendCharts({ history }: PerformanceTrendChartsProps)
     // 1. Sort history oldest to newest for chronological chart mapping
     const sortedHistory = [...history].sort((a, b) => a.date.localeCompare(b.date));
 
-    // 2. Enrich with deltas
+    // 2. Enrich with deltas and gross revenue
     const chartData = sortedHistory.map((day, i) => {
         const prevDay = i > 0 ? sortedHistory[i - 1] : null;
+        const gross = day.gross_revenue ?? ((day.total_sold || 0) * DEFAULT_TICKET_PRICE);
+        const prevGross = prevDay ? (prevDay.gross_revenue ?? ((prevDay.total_sold || 0) * DEFAULT_TICKET_PRICE)) : null;
         
         return {
             ...day,
+            gross_revenue: gross,
             shortDate: day.date.substring(5),
             // Pre-calculate deltas for all key metrics
             avg_occupancy_pct_delta: prevDay ? calculateDelta(day.avg_occupancy_pct, prevDay.avg_occupancy_pct) : null,
             total_sold_delta: prevDay ? calculateDelta(day.total_sold, prevDay.total_sold) : null,
             total_seats_delta: prevDay ? calculateDelta(day.total_seats, prevDay.total_seats) : null,
+            gross_revenue_delta: prevGross !== null ? calculateDelta(gross, prevGross) : null,
         };
     });
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
             <Card>
                 <CardHeader className="pb-2">
                     <CardTitle className="text-base font-semibold">Average Occupancy Trend</CardTitle>
@@ -178,12 +186,48 @@ export function PerformanceTrendCharts({ history }: PerformanceTrendChartsProps)
                                 dataKey="total_seats"
                                 fill="var(--chart-2)"
                                 radius={[4, 4, 0, 0]}
-                                barSize={20}
+                                barSize={16}
                             />
                             <Bar
                                 name="Tickets Sold"
                                 dataKey="total_sold"
                                 fill="var(--primary)"
+                                radius={[4, 4, 0, 0]}
+                                barSize={16}
+                            />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-base font-semibold">Daily Gross Revenue</CardTitle>
+                    <CardDescription>Daily estimated gross box office</CardDescription>
+                </CardHeader>
+                <CardContent className="h-[250px] w-full pb-4">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData} margin={{ top: 10, right: 10, left: 5, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                            <XAxis
+                                dataKey="shortDate"
+                                axisLine={false}
+                                tickLine={false}
+                                tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
+                                dy={10}
+                            />
+                            <YAxis
+                                axisLine={false}
+                                tickLine={false}
+                                tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
+                                tickFormatter={(value) => formatRupiahCompact(value)}
+                            />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                            <Bar
+                                name="Gross Revenue"
+                                dataKey="gross_revenue"
+                                fill="#10b981"
                                 radius={[4, 4, 0, 0]}
                                 barSize={20}
                             />

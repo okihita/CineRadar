@@ -14,6 +14,7 @@ import {
 import { Ticket, Users } from 'lucide-react';
 import { StreamMovieItem } from '../types';
 import { getPerformanceTier } from '@/lib/constants';
+import { formatRupiahCompact } from '@/features/performances/utils/format';
 
 interface StreamChartsProps {
     movies: StreamMovieItem[];
@@ -56,6 +57,12 @@ function CustomChartTooltip({ active, payload, metricType, showCircuits = true }
                                 <span className="text-muted-foreground">Audience Sold:</span>
                                 <span className="font-bold text-emerald-500">
                                     {item.estimatedAdmissions > 0 ? item.estimatedAdmissions.toLocaleString() : 'Pending JIT'}
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between gap-4">
+                                <span className="text-muted-foreground">Est. Gross:</span>
+                                <span className="font-bold text-emerald-400">
+                                    {item.grossRevenue > 0 ? formatRupiahCompact(item.grossRevenue) : 'Rp 0'}
                                 </span>
                             </div>
                             <div className="flex items-center justify-between gap-4">
