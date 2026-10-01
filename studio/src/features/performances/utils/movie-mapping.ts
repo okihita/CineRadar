@@ -1,4 +1,5 @@
 import { CastMember, MovieSummary } from '../types/performance';
+import { DEFAULT_TICKET_PRICE } from './format';
 
 /** Raw movie metadata as stored in Firestore */
 interface MovieMetadata {
@@ -76,5 +77,6 @@ export function buildMovieSummary(
             : [],
         last_updated: perfDoc?.last_swept_at || '',
         marketing: perfDoc?.marketing || undefined,
+        gross_revenue: (perfDoc?.gross_revenue as number) || (((perfDoc?.total_sold as number) || 0) * DEFAULT_TICKET_PRICE),
     } as unknown as MovieSummary;
 }

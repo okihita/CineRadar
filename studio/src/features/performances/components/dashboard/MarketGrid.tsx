@@ -3,8 +3,8 @@
 import React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Clapperboard, Users, Zap } from 'lucide-react';
-import { formatOccupancy } from '../../utils/format';
+import { Clapperboard, Users, Zap, Coins } from 'lucide-react';
+import { formatOccupancy, formatRupiahCompact, DEFAULT_TICKET_PRICE } from '../../utils/format';
 import { getOccupancyColor } from '../../utils/colors';
 import { MovieWithStats } from '../../types/performance';
 import { cn } from '@/lib/utils';
@@ -46,8 +46,8 @@ export function MarketGrid({ movies }: MarketGridProps) {
                                 className="object-cover transition-transform duration-500 group-hover:scale-110"
                                 sizes="250px"
                             />
-                            {/* Glassmorphism OCR Overlay */}
-                            <div className="absolute top-2 right-2 px-2 py-1 rounded-lg backdrop-blur-md bg-zinc-900/60 border border-white/10">
+                            {/* High-Contrast OCR Overlay */}
+                            <div className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-zinc-950 border border-zinc-800">
                                 <span className={cn("text-sm font-black font-mono italic", getOccupancyColor(movie.today?.avg_occupancy_pct ?? 0))}>
                                     {formatOccupancy(movie.today?.avg_occupancy_pct ?? 0)}%
                                 </span>
@@ -57,21 +57,16 @@ export function MarketGrid({ movies }: MarketGridProps) {
 
                         <div className="px-1">
                             <h3 className="text-sm font-bold leading-tight line-clamp-1 mb-1 group-hover:text-primary transition-colors">{movie.title}</h3>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center justify-between gap-1 text-sm font-black font-mono text-muted-foreground tabular-nums">
                                 <div className="flex items-center gap-1">
                                     <Users className="w-2.5 h-2.5 text-muted-foreground/60" />
-                                    <span className="text-sm font-black font-mono text-muted-foreground tabular-nums tracking-tighter">
-                                        {(movie.today?.total_sold ?? 0).toLocaleString()}
-                                    </span>
+                                    <span>{(movie.today?.total_sold ?? 0).toLocaleString()}</span>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                    <Zap className="w-2.5 h-2.5 text-amber-500/50" />
-                                    <span className="text-sm font-black font-mono text-muted-foreground tabular-nums">
-                                        {movie.today?.total_showtimes ?? 0}
-                                    </span>
+                                <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                                    <Coins className="w-2.5 h-2.5" />
+                                    <span>{formatRupiahCompact(movie.today?.gross_revenue ?? ((movie.today?.total_sold ?? 0) * DEFAULT_TICKET_PRICE))}</span>
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 ))}

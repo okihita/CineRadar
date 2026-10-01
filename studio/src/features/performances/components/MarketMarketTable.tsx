@@ -5,11 +5,11 @@ import { MapPin, ChevronRight } from 'lucide-react';
 import { ShowtimeSnapshot, SortDirection } from '../types/performance';
 import { calculateForensicAggregation } from '../utils/performance-math';
 import { getOccupancyColor } from '../utils/colors';
-import { formatOccupancy } from '../utils/format';
+import { formatOccupancy, formatRupiahCompact } from '../utils/format';
 import { ForensicAuditProgress } from './ForensicAuditProgress';
 import { cn } from '@/lib/utils';
 
-type SortField = 'city' | 'showtime_count' | 'theatre_count' | 'total_sold' | 'true_occupancy_pct';
+type SortField = 'city' | 'showtime_count' | 'theatre_count' | 'total_sold' | 'total_gross_revenue' | 'true_occupancy_pct';
 
 interface MarketMarketTableProps {
     showtimes: ShowtimeSnapshot[];
@@ -53,6 +53,7 @@ export function MarketMarketTable({ showtimes, onDrillDown }: MarketMarketTableP
             else if (sortField === 'showtime_count') comp = a.showtime_count - b.showtime_count;
             else if (sortField === 'theatre_count') comp = a.theatre_count - b.theatre_count;
             else if (sortField === 'total_sold') comp = a.total_sold - b.total_sold;
+            else if (sortField === 'total_gross_revenue') comp = a.total_gross_revenue - b.total_gross_revenue;
             else if (sortField === 'true_occupancy_pct') comp = a.true_occupancy_pct - b.true_occupancy_pct;
             return sortDirection === 'asc' ? comp : -comp;
         });
@@ -68,6 +69,7 @@ export function MarketMarketTable({ showtimes, onDrillDown }: MarketMarketTableP
                         <th className="p-4 text-right cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('showtime_count')}>Shows</th>
                         <th className="p-4 text-center hidden md:table-cell">Audit Progress</th>
                         <th className="p-4 text-right cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('total_sold')}>Sold</th>
+                        <th className="p-4 text-right cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('total_gross_revenue')}>Gross</th>
                         <th className="p-4 text-right cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('true_occupancy_pct')}>True OCR %</th>
                         <th className="p-4 w-10"></th>
                     </tr>
@@ -97,6 +99,9 @@ export function MarketMarketTable({ showtimes, onDrillDown }: MarketMarketTableP
                                 <td className="p-4 text-right font-black font-mono text-sm tabular-nums">
                                     {market.total_sold.toLocaleString()}
                                     <span className="text-muted-foreground/30 font-normal ml-1">/{market.total_seats.toLocaleString()}</span>
+                                </td>
+                                <td className="p-4 text-right font-mono font-bold text-sm text-emerald-600 dark:text-emerald-400 tabular-nums">
+                                    {formatRupiahCompact(market.total_gross_revenue)}
                                 </td>
                                 <td className="py-4 px-4 text-right">
                                     <span className={cn(

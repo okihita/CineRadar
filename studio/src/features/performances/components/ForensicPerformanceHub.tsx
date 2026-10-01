@@ -119,7 +119,7 @@ export function ForensicPerformanceHub({ showtimes, movieId, date }: ForensicPer
         <div ref={hubRef} className="w-full relative scroll-mt-32 min-h-[600px] flex flex-col">
             
             {/* 1. STICKY COMMAND BAR (The 10/10 Upgrade) */}
-            <div className="sticky top-0 z-40 bg-background/90 backdrop-blur-md pb-4 pt-2 -mx-2 px-2 border-b border-border/40 shadow-sm mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="sticky top-0 z-40 bg-background pb-4 pt-2 -mx-2 px-2 border-b border-border/40 shadow-sm mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 
                 {/* Left: Spatial Navigation */}
                 <div className="flex items-center gap-3 overflow-x-auto no-scrollbar">

@@ -10,9 +10,9 @@ import { UpdateTimer } from "./UpdateTimer";
 import { firestoreRestClient } from "@/lib/firestore-rest";
 import { DailyPerformance } from '../types/performance';
 import { buildMovieSummary } from "../utils/movie-mapping";
-import { formatCompactNumber, formatOccupancy } from "../utils/format";
+import { formatCompactNumber, formatOccupancy, formatRupiahCompact, DEFAULT_TICKET_PRICE } from "../utils/format";
 import { getOccupancyColor } from "../utils/colors";
-import { Target, Users, Armchair, MapPin, ChevronLeft } from "lucide-react";
+import { Target, Users, Armchair, MapPin, ChevronLeft, Coins } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
@@ -91,6 +91,17 @@ export async function DailyPerformanceDetail({
                     </div>
                     <span className="text-xl font-black font-mono tracking-tighter tabular-nums text-foreground">
                         {formatCompactNumber(dailyStats.total_sold)}
+                    </span>
+                </div>
+
+                {/* Est. Gross */}
+                <div className="flex flex-col items-center">
+                    <div className="flex items-center gap-1.5 text-sm font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
+                        <Coins className="w-3 h-3 text-emerald-500" />
+                        Est. Gross
+                    </div>
+                    <span className="text-xl font-black font-mono tracking-tighter tabular-nums text-emerald-600 dark:text-emerald-400">
+                        {formatRupiahCompact(dailyStats.gross_revenue ?? (dailyStats.total_sold * DEFAULT_TICKET_PRICE))}
                     </span>
                 </div>
 

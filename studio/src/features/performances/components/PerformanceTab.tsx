@@ -29,9 +29,10 @@ export function PerformanceTab({ movies, diagnostic, isLoading, error }: Perform
         const totalSold = movies.reduce((sum: number, m: MovieWithStats) => sum + (m.today?.total_sold ?? 0), 0);
         const totalSeats = movies.reduce((sum: number, m: MovieWithStats) => sum + (m.today?.total_seats ?? 0), 0);
         const totalShows = movies.reduce((sum: number, m: MovieWithStats) => sum + (m.today?.total_showtimes ?? 0), 0);
+        const totalGrossRevenue = movies.reduce((sum: number, m: MovieWithStats) => sum + (m.today?.gross_revenue ?? ((m.today?.total_sold ?? 0) * 45000)), 0);
         const avgOCR = totalSeats > 0 ? (totalSold / totalSeats * 100) : 0;
         
-        return { totalSold, totalShows, avgOCR, activeCount: movies.length };
+        return { totalSold, totalSeats, totalShows, totalGrossRevenue, avgOCR, activeCount: movies.length };
     }, [movies]);
 
     // --- Slicing for Bento vs Grid ---
@@ -75,6 +76,7 @@ export function PerformanceTab({ movies, diagnostic, isLoading, error }: Perform
                 avgOCR={nationalPulse.avgOCR}
                 totalSold={nationalPulse.totalSold}
                 totalShows={nationalPulse.totalShows}
+                totalGrossRevenue={nationalPulse.totalGrossRevenue}
                 activeCount={nationalPulse.activeCount}
                 diagnostic={diagnostic}
             />

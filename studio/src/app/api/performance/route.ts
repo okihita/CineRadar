@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { firestoreRestClient } from '@/lib/firestore-rest';
 import { getTodayJakarta, isValidDateFormat } from '@/lib/timeUtils';
 import { DiagnosticItem, MovieWithStats } from '@/features/performances/types/performance';
+import { DEFAULT_TICKET_PRICE } from '@/features/performances/utils/format';
 import { auth } from '@/auth';
 
 export const dynamic = 'force-dynamic';
@@ -87,6 +88,7 @@ export async function GET(request: Request) {
                                 avg_occupancy_pct: (todayStats?.avg_occupancy_pct as number) || 0,
                                 total_seats: (todayStats?.total_seats as number) || 0,
                                 total_sold: (todayStats?.total_sold as number) || 0,
+                                gross_revenue: (todayStats?.gross_revenue as number) || (((todayStats?.total_sold as number) || 0) * DEFAULT_TICKET_PRICE),
                                 cities: (todayStats?.cities as string[]) || Object.keys(scheduleV2?.cities || {}),
                                 last_swept_at: (todayStats?.last_swept_at as string) || '',
                             },
