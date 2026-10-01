@@ -6,7 +6,3 @@ export const CHAIN_COLORS = {
 
 export type ChainName = keyof typeof CHAIN_COLORS;
 
-export function getChainColor(chain: string): string {
-    return CHAIN_COLORS[chain as ChainName] || '#9CA3AF';
-}
-

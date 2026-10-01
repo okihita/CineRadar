@@ -25,55 +25,9 @@ export function getTimeStyle(time: string): string {
 }
 
 
-// Helper to extract prices from a list of theaters
-export function extractPricesFromTheaters(theaters: TheaterSchedule[] = []): number[] {
-    const prices: number[] = [];
-    (theaters || []).forEach(t => {
-        (t.rooms || []).forEach(r => {
-            if (!r.price || typeof r.price !== 'string') return;
-            // Extract numbers from price string like "Rp 50.000 - Rp 75.000"
-            const matches = r.price.match(/\d[\d.,]*/g);
-            if (matches) {
-                matches.forEach(m => {
-                    const num = parseInt(m.replace(/[.,]/g, ''), 10);
-                    if (!isNaN(num) && num > 0 && num < 5_000_000) prices.push(num);
-                });
-            }
-        });
-    });
-    return prices;
-}
-
-// Price range extractor for all schedules
-export function extractPriceRange(schedules: Record<string, TheaterSchedule[]> = {}): { min: number; max: number } | null {
-    if (!schedules) return null;
-    const prices: number[] = [];
-    Object.values(schedules).forEach(theaters => {
-        prices.push(...extractPricesFromTheaters(theaters));
-    });
-    if (prices.length === 0) return null;
-    return { min: Math.min(...prices), max: Math.max(...prices) };
-}
-
 // Format price (Re-export or wrap)
 export function formatPrice(price: number): string {
     return formatRupiah(price);
-}
-
-// Get all showtimes from schedules
-export function getAllShowtimes(schedules: Record<string, TheaterSchedule[]> = {}): string[] {
-    if (!schedules) return [];
-    const times: string[] = [];
-    Object.values(schedules).forEach(theaters => {
-        (theaters || []).forEach(t => {
-            (t.rooms || []).forEach(r => {
-                if (Array.isArray(r.showtimes)) {
-                    times.push(...r.showtimes);
-                }
-            });
-        });
-    });
-    return times;
 }
 
 // Calculate comprehensive aggregated stats for movie schedules
