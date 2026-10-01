@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Clock, Filter, Layers, Loader2, ShieldCheck, Microscope, Users, Ban, CheckCircle2, Percent, Copy, Check } from 'lucide-react';
+import { Clock, Filter, Layers, Loader2, ShieldCheck, Microscope, Users, Ban, CheckCircle2, Percent, Copy, Check, Coins } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CHAIN_TAILWIND, getPerformanceTier, getFirestoreConsoleUrl } from '@/lib/constants';
 import { getOccupancyColor, getOccupancyBgSoft, getOccupancyBorderSoft } from '../utils/colors';
@@ -12,7 +12,8 @@ import { SeatProgressBar } from './SeatProgressBar';
 import { TriPanelAudit } from './TriPanelAudit';
 import { ShowtimeSnapshot, SortDirection } from '../types/performance';
 import { RawShowtimeData } from '../types/seat';
-import { formatOccupancy } from '../utils/format';
+import { formatOccupancy, formatRupiahCompact } from '../utils/format';
+import { resolveTicketPrice } from '../utils/performance-math';
 
 type SortField = 'showtime' | 'occupancy' | 'theatre' | 'city' | 'anomaly';
 type GroupBy = 'none' | 'theatre' | 'city' | 'merchant';
@@ -104,8 +105,9 @@ export function ShowtimeTable({ showtimes, loading = false, movieId, date }: Sho
         const totalShowtimes = processedShowtimes.length;
         const totalSeats = processedShowtimes.reduce((sum, st) => sum + (st.total_seats ?? 0), 0);
         const totalSold = processedShowtimes.reduce((sum, st) => sum + (st.audience_count ?? st.sold_seats ?? 0), 0);
+        const totalGrossRevenue = processedShowtimes.reduce((sum, st) => sum + ((st.audience_count ?? st.sold_seats ?? 0) * resolveTicketPrice(st)), 0);
         const avgOccupancy = totalSeats > 0 ? (totalSold / totalSeats * 100) : 0;
-        return { totalShowtimes, totalSeats, totalSold, avgOccupancy };
+        return { totalShowtimes, totalSeats, totalSold, totalGrossRevenue, avgOccupancy };
     }, [processedShowtimes]);
 
     const toggleSort = (field: SortField) => {
@@ -260,7 +262,13 @@ export function ShowtimeTable({ showtimes, loading = false, movieId, date }: Sho
                                     </tbody>
                                     <tfoot>
                                         <tr className="bg-muted/5 border-t font-black uppercase text-sm tracking-widest text-muted-foreground/60">
-                                            <td className="py-4 px-4" colSpan={5}>National Daily Aggregation ({summaryStats.totalShowtimes} units)</td>
+                                            <td className="py-4 px-4" colSpan={5}>
+                                                <div className="flex items-center gap-2">
+                                                    <span>National Daily Aggregation ({summaryStats.totalShowtimes} units)</span>
+                                                    <span className="opacity-30">•</span>
+                                                    <span className="text-emerald-600 dark:text-emerald-400">Est. Gross: {formatRupiahCompact(summaryStats.totalGrossRevenue)}</span>
+                                                </div>
+                                            </td>
                                             <td className="py-4 px-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
@@ -384,6 +392,7 @@ export const ShowtimeRow = memo(({ showtime: st, movieId: propMovieId, date: pro
                     <div className="flex items-center justify-end gap-3">
                         <div className="flex flex-col items-end">
                             <span className="text-sm font-bold font-mono text-foreground tabular-nums">{finalSold}<span className="opacity-20">/{(st.total_seats ?? 0)}</span></span>
+                            <span className="text-sm font-bold font-mono text-emerald-600 dark:text-emerald-400 tabular-nums">{formatRupiahCompact(finalSold * resolveTicketPrice(st))}</span>
                         </div>
                         <Button variant="outline" className="h-7 w-7 p-0 rounded-lg border-primary/10 hover:bg-primary/5">
                             <Microscope className={cn("w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-all", expanded && "text-primary scale-110")} />
@@ -427,6 +436,13 @@ export const ShowtimeRow = memo(({ showtime: st, movieId: propMovieId, date: pro
                                 </div>
 
                                 <div className="flex flex-wrap items-center gap-3 md:gap-4">
+                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/5 border border-emerald-500/10 shadow-sm transition-all hover:bg-emerald-500/10 group">
+                                        <Coins className="w-3 h-3 text-emerald-500" />
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-black text-emerald-600 leading-none">{formatRupiahCompact(finalSold * resolveTicketPrice(st))}</span>
+                                            <span className="text-sm font-bold text-emerald-600/60 uppercase tracking-tighter mt-0.5">Est. Gross</span>
+                                        </div>
+                                    </div>
                                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-green-500/5 border border-green-500/10 shadow-sm transition-all hover:bg-green-500/10 group">
                                         <Users className="w-3 h-3 text-green-500" />
                                         <div className="flex flex-col">

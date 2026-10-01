@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { StreamCircuitBreakdown, StreamMovieItem } from '../types';
 import { getChainColor } from '@/lib/constants';
+import { formatRupiahCompact } from '@/features/performances/utils/format';
 import { Radio } from 'lucide-react';
 
 interface StreamTickerProps {
@@ -30,10 +31,10 @@ export function StreamTicker({
         : 'LIVE SYNC';
 
     return (
-        <footer className="relative z-20 w-full border-t border-border bg-card/95 px-4 py-2 flex items-center justify-between gap-4 text-sm font-mono overflow-hidden">
+        <footer className="relative z-20 w-full border-t border-border bg-card px-4 py-2 flex items-center justify-between gap-4 text-sm font-mono overflow-hidden">
             {/* Kotak Kantor Station Identifier */}
             <div className="flex items-center gap-2 pr-3 border-r border-border/80 flex-shrink-0">
-                <div className="relative h-6 w-9 bg-white/95 dark:bg-white rounded px-1 py-0.5 shadow-sm border border-red-500/30 flex items-center justify-center overflow-hidden">
+                <div className="relative h-6 w-9 bg-white dark:bg-card rounded px-1 py-0.5 shadow-sm border border-border/80 flex items-center justify-center overflow-hidden">
                     <Image
                         src="/kotak-kantor-logo.png"
                         alt="Kotak Kantor"
@@ -77,7 +78,7 @@ export function StreamTicker({
                         <span key={m.id} className="inline-flex items-center gap-1.5 mx-4">
                             <span className="text-muted-foreground font-bold">#{idx + 1}</span>
                             <span className="text-foreground font-semibold uppercase">{m.title}</span>
-                            <span className="text-primary font-bold">({m.showtimes} shows · {m.showtimeSharePct}%)</span>
+                            <span className="text-primary font-bold">({m.showtimes} shows · {m.grossRevenue > 0 ? formatRupiahCompact(m.grossRevenue) : `${m.showtimeSharePct}%`})</span>
                             <span className="text-border">|</span>
                         </span>
                     ))}

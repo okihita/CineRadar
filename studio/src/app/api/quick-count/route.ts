@@ -4,6 +4,7 @@ import { getTodayJakarta, isValidDateFormat } from '@/lib/timeUtils';
 import { auth } from '@/auth';
 import { normalizeMerchant } from '@/lib/constants';
 import { StreamMovieItem, StreamSummaryMetrics, StreamCircuitBreakdown } from '@/features/stream/types';
+import { DEFAULT_TICKET_PRICE } from '@/features/performances/utils/format';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -55,6 +56,7 @@ export async function GET(request: NextRequest) {
                         totalEstimatedAdmissions: 0,
                         totalMonitoredSeats: 0,
                         nationalAvgOccupancyPct: 0,
+                        totalGrossRevenue: 0,
                         activeMoviesCount: 0,
                         circuits: [],
                         lastSweptAt: null,
@@ -141,6 +143,7 @@ export async function GET(request: NextRequest) {
                 let sold = 0;
                 let seats = 0;
                 let avgOccupancyPct = 0;
+                let grossRevenue = 0;
                 let lastSweptAt: string | undefined = undefined;
 
                 try {
@@ -148,6 +151,7 @@ export async function GET(request: NextRequest) {
                         total_sold?: number;
                         total_seats?: number;
                         avg_occupancy_pct?: number;
+                        gross_revenue?: number;
                         last_swept_at?: string;
                     }>(`movie_performance_v2/${m.id}/days`, targetDate);
 
@@ -155,10 +159,15 @@ export async function GET(request: NextRequest) {
                         sold = perfDoc.total_sold || 0;
                         seats = perfDoc.total_seats || 0;
                         avgOccupancyPct = perfDoc.avg_occupancy_pct || (seats > 0 ? (sold / seats) * 100 : 0);
+                        grossRevenue = perfDoc.gross_revenue || (sold * DEFAULT_TICKET_PRICE);
                         lastSweptAt = perfDoc.last_swept_at;
                     }
                 } catch {
                     // Fallback to schedule-only data if performance document has not yet been swept
+                }
+
+                if (grossRevenue === 0 && sold > 0) {
+                    grossRevenue = sold * DEFAULT_TICKET_PRICE;
                 }
 
                 const sharePct = nationalShowtimes > 0 ? (m.showtimes / nationalShowtimes) * 100 : 0;
@@ -173,6 +182,7 @@ export async function GET(request: NextRequest) {
                     estimatedAdmissions: sold,
                     totalSeats: seats,
                     avgOccupancyPct: Number(avgOccupancyPct.toFixed(1)),
+                    grossRevenue,
                     merchants: m.merchants.length > 0 ? m.merchants : ['XXI'],
                     citiesCount: m.citiesCount,
                     genres: m.genres,
@@ -202,11 +212,13 @@ export async function GET(request: NextRequest) {
         // National summary rollups
         let totalNationalSold = 0;
         let totalNationalSeats = 0;
+        let totalNationalGross = 0;
         const sweepTimestamps: string[] = [];
 
         enrichedMovies.forEach((m) => {
             totalNationalSold += m.estimatedAdmissions;
             totalNationalSeats += m.totalSeats;
+            totalNationalGross += m.grossRevenue;
             if (m.lastSweptAt) sweepTimestamps.push(m.lastSweptAt);
         });
 
@@ -229,6 +241,7 @@ export async function GET(request: NextRequest) {
             totalEstimatedAdmissions: totalNationalSold,
             totalMonitoredSeats: totalNationalSeats,
             nationalAvgOccupancyPct: Number(nationalAvgOccupancy.toFixed(1)),
+            totalGrossRevenue: totalNationalGross,
             activeMoviesCount: enrichedMovies.length,
             circuits,
             lastSweptAt: sweepTimestamps.length > 0 ? sweepTimestamps.sort().reverse()[0] : null,

@@ -14,6 +14,7 @@ export interface ShowtimeSnapshot {
     sold_seats: number;
     occupancy_pct: number;
     price?: number;
+    gross_revenue?: number;
     initial_unavailable?: number;
     final_unavailable?: number;
     audience_count?: number;
@@ -44,6 +45,7 @@ export interface MovieSummary {
     total_seats?: number;
     total_showtimes?: number;
     total_showtimes_scraped?: number;
+    gross_revenue?: number;
 }
 
 export interface ForensicAggregation {
@@ -52,6 +54,7 @@ export interface ForensicAggregation {
     showtime_count: number;
     audited_count: number;
     true_occupancy_pct: number;
+    total_gross_revenue: number;
 }
 
 export interface TodayStats {
@@ -63,6 +66,7 @@ export interface TodayStats {
     total_sold: number;
     cities: string[];
     last_swept_at?: string;
+    gross_revenue?: number;
 }
 
 export interface DailyPerformance {
@@ -73,6 +77,7 @@ export interface DailyPerformance {
     total_sold: number;
     cities: string[];
     last_swept_at?: string;
+    gross_revenue?: number;
 }
 
 export interface DailyPerformanceWithMeta extends DailyPerformance {

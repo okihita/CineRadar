@@ -1,9 +1,10 @@
 'use client';
 
 import Image from 'next/image';
-import { Film, Users, Ticket, Percent, Sparkles } from 'lucide-react';
+import { Film, Users, Ticket, Percent, Sparkles, Banknote } from 'lucide-react';
 import { StreamMovieItem } from '../types';
 import { getPerformanceTier, getChainTailwind } from '@/lib/constants';
+import { formatRupiahCompact } from '@/features/performances/utils/format';
 
 interface StreamMovieCardProps {
     movie: StreamMovieItem;
@@ -36,8 +37,8 @@ export function StreamMovieCard({
             className={`
                 relative overflow-hidden rounded-2xl border transition-all duration-300 flex flex-col justify-between
                 ${highlighted
-                    ? 'border-primary/80 bg-card/95 shadow-2xl shadow-primary/10 ring-1 ring-primary/40 scale-[1.01]'
-                    : 'border-border/80 bg-card/60 backdrop-blur-md hover:border-border'
+                    ? 'border-primary/80 bg-card shadow-2xl shadow-primary/10 ring-1 ring-primary/40 scale-[1.01]'
+                    : 'border-border/80 bg-card hover:border-border'
                 }
                 ${hero ? 'p-5 lg:p-6 border-primary/40' : compact ? 'p-3.5' : 'p-4'}
             `}
@@ -141,7 +142,7 @@ export function StreamMovieCard({
             </div>
 
             {/* Quick Count Performance Matrix */}
-            <div className={`mt-3 pt-3 border-t border-border/60 grid grid-cols-3 gap-2 ${hero ? 'sm:gap-3' : ''}`}>
+            <div className={`mt-3 pt-3 border-t border-border/60 grid grid-cols-2 sm:grid-cols-4 gap-2 ${hero ? 'sm:gap-3' : ''}`}>
                 {/* Showtimes & Share */}
                 <div className="flex flex-col bg-muted/40 rounded-xl p-2.5 border border-border/50">
                     <div className="flex items-center gap-1 text-muted-foreground text-sm font-medium uppercase">
@@ -171,6 +172,22 @@ export function StreamMovieCard({
                     </div>
                     <span className="text-sm font-mono text-muted-foreground mt-0.5">
                         {movie.citiesCount > 0 ? `${movie.citiesCount} cities` : 'National'}
+                    </span>
+                </div>
+
+                {/* Estimated Gross Revenue */}
+                <div className="flex flex-col bg-muted/40 rounded-xl p-2.5 border border-border/50">
+                    <div className="flex items-center gap-1 text-muted-foreground text-sm font-medium uppercase">
+                        <Banknote className="w-3 h-3 text-muted-foreground/70" />
+                        <span>Est. Gross</span>
+                    </div>
+                    <div className="flex items-baseline gap-1 mt-0.5">
+                        <span className={`font-mono font-black text-emerald-500 tracking-tight ${hero ? 'text-lg sm:text-2xl' : 'text-base sm:text-lg'}`}>
+                            {movie.grossRevenue > 0 ? formatRupiahCompact(movie.grossRevenue) : 'Pending'}
+                        </span>
+                    </div>
+                    <span className="text-sm font-mono text-muted-foreground mt-0.5">
+                        @ Rp 45k ATP
                     </span>
                 </div>
 

@@ -97,6 +97,7 @@ export function useStreamData(date: string) {
             totalEstimatedAdmissions: 0,
             totalMonitoredSeats: 0,
             nationalAvgOccupancyPct: 0,
+            totalGrossRevenue: 0,
             activeMoviesCount: 0,
             circuits: [],
             lastSweptAt: null,

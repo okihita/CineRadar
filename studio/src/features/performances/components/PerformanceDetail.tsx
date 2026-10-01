@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
-import { Target, Users, Armchair, ChevronLeft, Globe, Loader2, AlertCircle, Info } from 'lucide-react';
+import { Target, Users, Armchair, ChevronLeft, Globe, Loader2, AlertCircle, Info, Coins } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
     Tooltip,
@@ -16,7 +16,7 @@ import { PerformanceTrendCharts } from './PerformanceTrendCharts';
 import { DailyStatsBanner } from './DailyStatsBanner';
 import { MovieSummary, DailyPerformance } from '../types/performance';
 import { getOccupancyColor } from '../utils/colors';
-import { formatOccupancy } from '../utils/format';
+import { formatOccupancy, formatRupiahCompact, DEFAULT_TICKET_PRICE } from '../utils/format';
 import { cn } from '@/lib/utils';
 import { getFirestoreConsoleUrl } from '@/lib/constants';
 import { fetcher } from '@/lib/api';
@@ -124,6 +124,17 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
                         </span>
                     </div>
 
+                    {/* Total Est. Gross */}
+                    <div className="flex flex-col items-center">
+                        <div className="flex items-center gap-1.5 text-sm font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
+                            <Coins className="w-3 h-3 text-emerald-500" />
+                            EST. GROSS
+                        </div>
+                        <span className="text-xl font-black font-mono tracking-tighter tabular-nums text-emerald-600 dark:text-emerald-400">
+                            {formatRupiahCompact(movie.gross_revenue ?? ((movie.total_sold || 0) * DEFAULT_TICKET_PRICE))}
+                        </span>
+                    </div>
+
                     {/* Total Inventory */}
                     <div className="flex flex-col items-center">
                         <div className="flex items-center gap-1.5 text-sm font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">
@@ -145,7 +156,7 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
                                     <TooltipTrigger asChild>
                                         <Info className="w-2.5 h-2.5 text-primary/40 cursor-help hover:text-primary transition-colors" />
                                     </TooltipTrigger>
-                                    <TooltipContent className="max-w-[200px] bg-background/95 backdrop-blur-md border-border/40 p-3 rounded-xl shadow-xl">
+                                    <TooltipContent className="max-w-[200px] bg-background border border-border/40 p-3 rounded-xl shadow-xl">
                                         <p className="text-sm leading-relaxed font-medium text-foreground">
                                             <strong className="text-primary uppercase block mb-1">Cumulative Supply</strong>
                                             The total number of individual showtimes (units) tracked for this title since its release date.
@@ -192,6 +203,7 @@ export function PerformanceDetail({ movieId }: PerformanceDetailProps) {
                     avg_occupancy_pct: movie.avg_occupancy_pct || 0,
                     total_seats: movie.total_seats || 0,
                     total_sold: movie.total_sold || 0,
+                    gross_revenue: movie.gross_revenue,
                     cities: [],
                     marketing: movie.marketing
                 }}

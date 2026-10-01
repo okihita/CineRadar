@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 import { cn } from '@/lib/utils';
 import { DailyPerformance } from '../types/performance';
-import { formatOccupancy, formatCompactNumber } from '../utils/format';
+import { formatOccupancy, formatCompactNumber, formatRupiahCompact, DEFAULT_TICKET_PRICE } from '../utils/format';
 import { getOccupancyColor } from '../utils/colors';
 
 interface HistoryGridProps {
@@ -151,6 +151,10 @@ export function HistoryGrid({ movieId, history }: HistoryGridProps) {
                                                     {formatCompactNumber(dayData.total_sold)}
                                                 </p>
                                             </div>
+                                        </div>
+
+                                        <div className="text-center font-mono text-sm font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+                                            {formatRupiahCompact(dayData.gross_revenue ?? (dayData.total_sold * DEFAULT_TICKET_PRICE))}
                                         </div>
                                     </CardContent>
                                 </Card>

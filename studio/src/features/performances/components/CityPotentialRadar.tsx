@@ -4,7 +4,7 @@ import { Trophy, ArrowUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CityPerformance } from "../hooks/useCityAggregation";
 import { SortDirection } from "../types/performance";
-import { formatOccupancy } from "../utils/format";
+import { formatOccupancy, formatRupiahCompact } from "../utils/format";
 import { getPerformanceTier } from "@/lib/constants";
 
 interface CityPotentialRadarProps {
@@ -17,7 +17,8 @@ type SortField =
   | "theatres"
   | "potential"
   | "occupancy"
-  | "sold";
+  | "sold"
+  | "gross";
 
 function SortIcon({ field, sortField }: { field: SortField, sortField: SortField }) {
   if (sortField !== field) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-20 inline-block" />;
@@ -38,6 +39,7 @@ export function CityPotentialRadar({ cityStats }: CityPotentialRadarProps) {
         case "potential": comparison = a.totalPotential - b.totalPotential; break;
         case "occupancy": comparison = a.occupancyPct - b.occupancyPct; break;
         case "sold": comparison = a.totalSold - b.totalSold; break;
+        case "gross": comparison = a.totalGrossRevenue - b.totalGrossRevenue; break;
       }
       return sortDirection === "asc" ? comparison : -comparison;
     });
@@ -71,6 +73,7 @@ export function CityPotentialRadar({ cityStats }: CityPotentialRadarProps) {
                 <th className="py-2 px-4 text-right cursor-pointer hover:bg-muted/50 hidden sm:table-cell" onClick={() => handleSort("potential")}>Capacity <SortIcon field="potential" sortField={sortField} /></th>
                 <th className="py-2 px-4 w-28 cursor-pointer hover:bg-muted/50" onClick={() => handleSort("occupancy")}>OCR <SortIcon field="occupancy" sortField={sortField} /></th>
                 <th className="py-2 px-4 text-right cursor-pointer hover:bg-muted/50" onClick={() => handleSort("sold")}>Sold <SortIcon field="sold" sortField={sortField} /></th>
+                <th className="py-2 px-4 text-right cursor-pointer hover:bg-muted/50" onClick={() => handleSort("gross")}>Gross <SortIcon field="gross" sortField={sortField} /></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/40">
@@ -99,7 +102,8 @@ export function CityPotentialRadar({ cityStats }: CityPotentialRadarProps) {
                       <span className="text-sm font-black font-mono w-8 text-right opacity-80">{formatOccupancy(city.occupancyPct)}%</span>
                     </div>
                   </td>
-                  <td className="py-1.5 px-4 text-right font-mono font-black text-sm text-foreground tabular-nums">{city.totalSold.toLocaleString()}</td>
+                  <td className="py-1.5 px-4 text-right font-mono font-bold text-sm text-foreground tabular-nums">{city.totalSold.toLocaleString()}</td>
+                  <td className="py-1.5 px-4 text-right font-mono font-bold text-sm text-emerald-600 dark:text-emerald-400 tabular-nums">{formatRupiahCompact(city.totalGrossRevenue)}</td>
                 </tr>
               ))}
             </tbody>

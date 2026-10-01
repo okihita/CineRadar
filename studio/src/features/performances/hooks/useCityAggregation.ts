@@ -1,12 +1,14 @@
 import { useMemo } from 'react';
 import { ShowtimeSnapshot } from '../types/performance';
 import { getProvinceForCity } from '@/lib/geo-mapping';
+import { resolveTicketPrice } from '../utils/performance-math';
 
 export interface CityPerformance {
     city: string;
     totalShows: number;
     totalSeats: number;
     totalSold: number;
+    totalGrossRevenue: number;
     occupancyPct: number;
     totalTheatres: number;
     totalBlocked: number;
@@ -19,6 +21,7 @@ export interface ProvincePerformance {
     totalShows: number;
     totalSeats: number;
     totalSold: number;
+    totalGrossRevenue: number;
     occupancyPct: number;
     totalTheatres: number;
     totalBlocked: number;
@@ -42,6 +45,7 @@ export function useCityAggregation(showtimes: ShowtimeSnapshot[]): {
                     totalShows: 0,
                     totalSeats: 0,
                     totalSold: 0,
+                    totalGrossRevenue: 0,
                     occupancyPct: 0,
                     totalTheatres: 0,
                     totalBlocked: 0,
@@ -60,8 +64,9 @@ export function useCityAggregation(showtimes: ShowtimeSnapshot[]): {
                 stats._theatreSet.add(st.theatre_name);
             }
 
-            // Use audience_count if available (Phase 2), otherwise fallback to legacy sold_seats
-            stats.totalSold += st.audience_count ?? st.sold_seats ?? 0;
+            const sold = st.audience_count ?? st.sold_seats ?? 0;
+            stats.totalSold += sold;
+            stats.totalGrossRevenue += sold * resolveTicketPrice(st);
         }
 
         const cityResults = Array.from(cityMap.values()).map(stats => {
@@ -83,6 +88,7 @@ export function useCityAggregation(showtimes: ShowtimeSnapshot[]): {
                     totalShows: 0,
                     totalSeats: 0,
                     totalSold: 0,
+                    totalGrossRevenue: 0,
                     occupancyPct: 0,
                     totalTheatres: 0,
                     totalBlocked: 0,
@@ -95,6 +101,7 @@ export function useCityAggregation(showtimes: ShowtimeSnapshot[]): {
             provStats.totalShows += cityStat.totalShows;
             provStats.totalSeats += cityStat.totalSeats;
             provStats.totalSold += cityStat.totalSold;
+            provStats.totalGrossRevenue += cityStat.totalGrossRevenue;
             provStats.totalTheatres += cityStat.totalTheatres;
             provStats.totalBlocked += cityStat.totalBlocked;
             provStats.totalPotential += cityStat.totalPotential;
