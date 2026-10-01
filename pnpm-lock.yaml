@@ -347,9 +347,6 @@ importers:
 
   web:
     dependencies:
-      clsx:
-        specifier: 'catalog:'
-        version: 2.1.1
       lucide-react:
         specifier: 'catalog:'
         version: 1.47.0(react@19.3.0)
@@ -362,9 +359,6 @@ importers:
       react-dom:
         specifier: 'catalog:'
         version: 19.3.0(react@19.3.0)
-      tailwind-merge:
-        specifier: 'catalog:'
-        version: 3.7.0
     devDependencies:
       '@tailwindcss/postcss':
         specifier: 'catalog:'
