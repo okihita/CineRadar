@@ -1,5 +1,5 @@
 """City data for TIX.id scraper.
-Contains all 83 Indonesian cities with their TIX.id IDs.
+Contains all 87 Indonesian cities with their TIX.id IDs.
 """
 
 CITIES = [
@@ -10,6 +10,7 @@ CITIES = [
     {"id": "1244607994998640640", "name": "BANJARBARU"},
     {"id": "973818519542042624", "name": "BANJARMASIN"},
     {"id": "973818511182794752", "name": "BATAM"},
+    {"id": "1244607994918948864", "name": "BATU"},
     {"id": "1244607995103498240", "name": "BAUBAU"},
     {"id": "973818511732248576", "name": "BEKASI"},
     {"id": "973818519986638848", "name": "BENGKULU"},
@@ -44,11 +45,13 @@ CITIES = [
     {"id": "973818516572475392", "name": "LAMPUNG"},
     {"id": "1244607995032195072", "name": "LUBUKLINGGAU"},
     {"id": "1178839445361741824", "name": "MADIUN"},
+    {"id": "1999156743963230208", "name": "MAGELANG"},
     {"id": "973818514898948096", "name": "MAKASSAR"},
     {"id": "973818515335155712", "name": "MALANG"},
     {"id": "1244607995065749504", "name": "MAMUJU"},
     {"id": "973818515440013312", "name": "MANADO"},
     {"id": "1443370010952085504", "name": "MANOKWARI"},
+    {"id": "2105736515022831616", "name": "MAROS"},
     {"id": "973818520519315456", "name": "MATARAM"},
     {"id": "973818515087691776", "name": "MEDAN"},
     {"id": "1178839445403684864", "name": "MOJOKERTO"},
@@ -85,5 +88,6 @@ CITIES = [
     {"id": "1178839445546291200", "name": "TEGAL"},
     {"id": "996542011358056448", "name": "TERNATE"},
     {"id": "1851329662932758528", "name": "TIMIKA"},
+    {"id": "2001325042977292288", "name": "TUBAN"},
     {"id": "973818517310672896", "name": "YOGYAKARTA"},
 ]
