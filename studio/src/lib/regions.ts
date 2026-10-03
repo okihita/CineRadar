@@ -1,5 +1,5 @@
 /**
- * City to Region mapping for all 83 Indonesian cities supported by TIX.id
+ * City to Region mapping for all 87 Indonesian cities supported by TIX.id
  * FROZEN REQUIREMENT: All cities MUST be mapped. No "Others" category allowed.
  */
 export const REGION_CITIES: Record<string, string[]> = {
@@ -9,7 +9,7 @@ export const REGION_CITIES: Record<string, string[]> = {
         'TASIKMALAYA', 'KARAWANG', 'PURWAKARTA', 'GARUT', 'INDRAMAYU', 'SUMEDANG',
         'GRESIK', 'SIDOARJO', 'MOJOKERTO', 'KEDIRI', 'MADIUN', 'PONOROGO', 'PROBOLINGGO',
         'TEGAL', 'PEKALONGAN', 'PURWOKERTO', 'KLATEN', 'JEMBER', 'BLITAR', 'BONDOWOSO',
-        'CIANJUR', 'CIKARANG'
+        'CIANJUR', 'CIKARANG', 'BATU', 'MAGELANG', 'TUBAN'
     ],
     'Sumatera': [
         'MEDAN', 'PALEMBANG', 'PEKANBARU', 'PADANG', 'JAMBI', 'LAMPUNG', 'BATAM',
@@ -23,7 +23,7 @@ export const REGION_CITIES: Record<string, string[]> = {
         'KUALA KAPUAS', 'BONTANG'
     ],
     'Sulawesi': [
-        'MAKASSAR', 'MANADO', 'PALU', 'KENDARI', 'GORONTALO', 'BAUBAU', 'MAMUJU'
+        'MAKASSAR', 'MANADO', 'PALU', 'KENDARI', 'GORONTALO', 'BAUBAU', 'MAMUJU', 'MAROS'
     ],
     'Bali & NT': [
         'BALI', 'MATARAM', 'KUPANG'
